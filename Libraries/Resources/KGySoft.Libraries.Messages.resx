@@ -1,0 +1,751 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ArgumentNull" xml:space="preserve">
+    <value>Value cannot be null.</value>
+  </data>
+  <data name="ArgumentOutOfRange" xml:space="preserve">
+    <value>Specified argument was out of the range of valid values.</value>
+  </data>
+  <data name="ArrayDimension" xml:space="preserve">
+    <value>Only single dimensional arrays are supported for the requested action.</value>
+  </data>
+  <data name="ArrayTypeInvalid" xml:space="preserve">
+    <value>Target array type is not compatible with the type of items in the collection.</value>
+  </data>
+  <data name="CacheKeyNotFound" xml:space="preserve">
+    <value>Key was not found in the cache: {0}</value>
+  </data>
+  <data name="CacheMinSize" xml:space="preserve">
+    <value>Minimum cache size is 1.</value>
+  </data>
+  <data name="CacheNullLoader" xml:space="preserve">
+    <value>You must define a valid item loader that can be called when an element is not loaded into the cache. If you want to add cache elements explicitly, use Cache&lt;TKey, TValue&gt;.NullLoader</value>
+  </data>
+  <data name="CacheNullLoaderInvoke" xml:space="preserve">
+    <value>If NullLoader is used in Cache&lt;TKey, TValue&gt;, then elements must be added explicitly either by Add method or the setter of the indexer.</value>
+  </data>
+  <data name="CacheStatistics" xml:space="preserve">
+    <value>Cache&lt;{0}, {1}&gt; cache statistics:
+Count: {2}
+Capacity: {3}
+Number of writes: {4}
+Number of reads: {5}
+Number of cache hits: {6}
+Number of deletes: {7}
+Hit rate: {8:P2}</value>
+  </data>
+  <data name="CannotSetPropertyTypeDescriptor" xml:space="preserve">
+    <value>Property "{0}" not found and cannot be set via TypeDescriptor on type "{1}".</value>
+  </data>
+  <data name="CannotSetStaticPropertyTypeDescriptor" xml:space="preserve">
+    <value>A static property cannot be set via TypeDescriptor.</value>
+  </data>
+  <data name="CannotTreatPropertySetter" xml:space="preserve">
+    <value>Cannot treat method as a property setter</value>
+  </data>
+  <data name="CapacityTooSmall" xml:space="preserve">
+    <value>Capacity cannot be less than number of stored elements.</value>
+  </data>
+  <data name="ComparerFail" xml:space="preserve">
+    <value>Failed to compare two elements in the collection.</value>
+  </data>
+  <data name="DestArrayShort" xml:space="preserve">
+    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+  </data>
+  <data name="DuplicateKey" xml:space="preserve">
+    <value>An item with the same key has already been added.</value>
+  </data>
+  <data name="EmptyIndices" xml:space="preserve">
+    <value>Indexer parameters are empty.</value>
+  </data>
+  <data name="EnumerableCannotAdd" xml:space="preserve">
+    <value>Cannot add element "{0}" to type {1} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
+  </data>
+  <data name="EnumerableCannotClear" xml:space="preserve">
+    <value>Cannot clear items of type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
+  </data>
+  <data name="EnumerationCollectionModified" xml:space="preserve">
+    <value>Collection was modified; enumeration operation may not execute.</value>
+  </data>
+  <data name="EnumerationNotStartedOrFinished" xml:space="preserve">
+    <value>Enumeration has either not started or has already finished.</value>
+  </data>
+  <data name="IndexerDoesNotExist" xml:space="preserve">
+    <value>No suitable indexer found on type "{0}" for the passed parameters.</value>
+  </data>
+  <data name="IndexParamsLengthMismatch" xml:space="preserve">
+    <value>Expected number of array index arguments: {0}.</value>
+  </data>
+  <data name="IndexParamsTypeMismatch" xml:space="preserve">
+    <value>Index parameters cannot be converted to integer values.</value>
+  </data>
+  <data name="InsertByIndexNotSupported" xml:space="preserve">
+    <value>Adding an element by index is not supported.</value>
+  </data>
+  <data name="InvalidKeyType" xml:space="preserve">
+    <value>Type of key is invalid.</value>
+  </data>
+  <data name="InvalidKeyValueType" xml:space="preserve">
+    <value>Type of value should be either {0} or DictionaryEntry.</value>
+  </data>
+  <data name="InvalidMethodBase" xml:space="preserve">
+    <value>MethodInfo or ConstructorInfo expected.</value>
+  </data>
+  <data name="InvalidOffsLen" xml:space="preserve">
+    <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
+  </data>
+  <data name="InvalidValueType" xml:space="preserve">
+    <value>Type of value is invalid.</value>
+  </data>
+  <data name="KeyNotFound" xml:space="preserve">
+    <value>The given key was not present in the dictionary.</value>
+  </data>
+  <data name="ModifyNotSupported" xml:space="preserve">
+    <value>Modifying a read-only collection is not supported.</value>
+  </data>
+  <data name="NotABool" xml:space="preserve">
+    <value>"{0}" is not a boolean value.</value>
+  </data>
+  <data name="NotAnInstanceOfType" xml:space="preserve">
+    <value>Provided object is not an instance of type {0}</value>
+  </data>
+  <data name="NotAType" xml:space="preserve">
+    <value>Value "{0}" cannot be resolved as a System.Type</value>
+  </data>
+  <data name="NotSupportedMemberType" xml:space="preserve">
+    <value>Member type {0} is not supported.</value>
+  </data>
+  <data name="ParsedValueNull" xml:space="preserve">
+    <value>Value is null for a non-nullable type.</value>
+  </data>
+  <data name="ParseError" xml:space="preserve">
+    <value>Could not parse type "{0}" from value "{1}": {2}</value>
+  </data>
+  <data name="PropertyHasNoGetter" xml:space="preserve">
+    <value>Property has no getter accessor: {0}.{1}</value>
+  </data>
+  <data name="PropertyHasNoSetter" xml:space="preserve">
+    <value>Property has no setter accessor: {0}.{1}</value>
+  </data>
+  <data name="NeutralResourceFileNotFoundResX" xml:space="preserve">
+    <value>Resource file not found: {0}</value>
+  </data>
+  <data name="NeutralResourceNotFoundCompiled" xml:space="preserve">
+    <value>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</value>
+  </data>
+  <data name="NeutralResourceNotFoundHybrid" xml:space="preserve">
+    <value>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</value>
+  </data>
+  <data name="SeparatorNullOrEmpty" xml:space="preserve">
+    <value>Separator is null or empty.</value>
+  </data>
+  <data name="SetConstantField" xml:space="preserve">
+    <value>The constant field cannot be set: {0}.{1}</value>
+  </data>
+  <data name="SetIndexerTypeDescriptorNotSupported" xml:space="preserve">
+    <value>An indexer cannot be set via TypeDescriptor.</value>
+  </data>
+  <data name="SetPropertyTypeDescriptorNotSupported" xml:space="preserve">
+    <value>Setting property via TypeDescriptor is not supported in this overload of SetProperty method.</value>
+  </data>
+  <data name="StreamCannotRead" xml:space="preserve">
+    <value>Source stream cannot be read.</value>
+  </data>
+  <data name="StreamCannotSeek" xml:space="preserve">
+    <value>Cannot seek to the beginning of the stream.</value>
+  </data>
+  <data name="StreamCannotWrite" xml:space="preserve">
+    <value>Destination stream cannot be written.</value>
+  </data>
+  <data name="TypeCannotBeParsed" xml:space="preserve">
+    <value>Parsing type "{0}" is not supported and appropriate type converter is not found.</value>
+  </data>
+  <data name="TypeOrCtorInfoExpected" xml:space="preserve">
+    <value>Argument must be either Type or ConstructorInfo.</value>
+  </data>
+  <data name="TypeParameterIsNotEnum" xml:space="preserve">
+    <value>Type parameter "{0}" is not a System.Enum type.</value>
+  </data>
+  <data name="ValueCannotBeParsedAsEnum" xml:space="preserve">
+    <value>Value cannot be parsed as {0} enumeration: {1}</value>
+  </data>
+  <data name="ValueContainsIllegalPathCharacters" xml:space="preserve">
+    <value>Value "{0}" contains illegal path characters.</value>
+  </data>
+  <data name="CannotCreateGenericMethod" xml:space="preserve">
+    <value>Could not create generic method. For details see inner exception.</value>
+  </data>
+  <data name="CannotGetPropertyTypeDescriptor" xml:space="preserve">
+    <value>Property "{0}" not found and cannot be retrieved via TypeDescriptor on type "{1}".</value>
+  </data>
+  <data name="CannotGetStaticPropertyTypeDescriptor" xml:space="preserve">
+    <value>A static property cannot be retrieved via TypeDescriptor.</value>
+  </data>
+  <data name="CtorDoesNotExist" xml:space="preserve">
+    <value>No suitable constructor found on type "{0}" for the given parameters.</value>
+  </data>
+  <data name="GetFieldTypeDescriptorNotSupported" xml:space="preserve">
+    <value>A field cannot be retrieved via TypeDescriptor.</value>
+  </data>
+  <data name="GetIndexerTypeDescriptorNotSupported" xml:space="preserve">
+    <value>An indexer cannot be retrieved via TypeDescriptor.</value>
+  </data>
+  <data name="InstanceFieldDoesNotExist" xml:space="preserve">
+    <value>Instance field "{0}" not found on type "{1}".</value>
+  </data>
+  <data name="InstanceIsNull" xml:space="preserve">
+    <value>Instance is null for a non-static member.</value>
+  </data>
+  <data name="InstanceMethodDoesNotExist" xml:space="preserve">
+    <value>No suitable instance method "{0}" found on type "{1}" for the given parameters.</value>
+  </data>
+  <data name="InstancePropertyDoesNotExist" xml:space="preserve">
+    <value>No suitable instance property "{0}" found on type "{1}".</value>
+  </data>
+  <data name="InvokeMethodTypeDescriptorNotSupported" xml:space="preserve">
+    <value>Invoking a method via TypeDescriptor is not supported.</value>
+  </data>
+  <data name="SetFieldTypeDescriptorNotSupported" xml:space="preserve">
+    <value>A field cannot be set via TypeDescriptor.</value>
+  </data>
+  <data name="StaticFieldDoesNotExist" xml:space="preserve">
+    <value>Static field "{0}" not found on type "{1}".</value>
+  </data>
+  <data name="StaticMethodDoesNotExist" xml:space="preserve">
+    <value>No suitable static method "{0}" found on type "{1}" for the given parameters.</value>
+  </data>
+  <data name="StaticPropertyDoesNotExist" xml:space="preserve">
+    <value>No suitable static property "{0}" found on type "{1}".</value>
+  </data>
+  <data name="TypeArgsLengthMismatch" xml:space="preserve">
+    <value>Expected number of type arguments: {0}.</value>
+  </data>
+  <data name="TypeParamsAreNull" xml:space="preserve">
+    <value>Method to invoke is generic but no type parameters are passed.</value>
+  </data>
+  <data name="NotAMember" xml:space="preserve">
+    <value>No MemberInfo can be returned from expression type "{0}".</value>
+  </data>
+  <data name="NotAMethod" xml:space="preserve">
+    <value>Expression is not a method call.</value>
+  </data>
+  <data name="ParseCannotResolveTypeArg" xml:space="preserve">
+    <value>Cannot resolve type parameter "{0}" in generic type "{1}".</value>
+  </data>
+  <data name="ParseNotAGenericType" xml:space="preserve">
+    <value>"{0}" is not a generic type, however, it is used so in the definition "{1}".</value>
+  </data>
+  <data name="ParseTypeArgsLengthMismatch" xml:space="preserve">
+    <value>Number of awaited and actual type parameters mismatch in type definition "{0}". Expected number of type arguments: {0}.</value>
+  </data>
+  <data name="TypeSyntaxError" xml:space="preserve">
+    <value>Syntax error in generic/array type: "{0}".</value>
+  </data>
+  <data name="CannotDeserializeObject" xml:space="preserve">
+    <value>Cannot deserialize as standalone object: {0}</value>
+  </data>
+  <data name="IEnumerableExpected" xml:space="preserve">
+    <value>An IEnumerable type expected but something else found: {0}</value>
+  </data>
+  <data name="InvalidEnumBase" xml:space="preserve">
+    <value>Invalid enum base type: {0}. Serialization stream corrupted?</value>
+  </data>
+  <data name="InvalidStreamData" xml:space="preserve">
+    <value>Invalid stream data.</value>
+  </data>
+  <data name="MissingField" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized because it has no field "{1}". Use IgnoreObjectChanges option to suppress this exception.</value>
+  </data>
+  <data name="MissingFieldBase" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</value>
+  </data>
+  <data name="MissingISerializableCtor" xml:space="preserve">
+    <value>Type "{0}" does not have a special constructor to deserialize it as ISerializable</value>
+  </data>
+  <data name="ObjectHierarchyChanged" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</value>
+  </data>
+  <data name="SerializationNotSupported" xml:space="preserve">
+    <value>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</value>
+  </data>
+  <data name="SurrogateChangedObject" xml:space="preserve">
+    <value>The serialization surrogate has changed the reference of the result object, which is not supported. Object type: {0}</value>
+  </data>
+  <data name="CannotDecodeCollectionType" xml:space="preserve">
+    <value>Could not decode collection type: {0}. Serialization stream corrupted?</value>
+  </data>
+  <data name="CannotDecodeDataType" xml:space="preserve">
+    <value>Could not decode data type: {0}. Serialization stream corrupted?</value>
+  </data>
+  <data name="ReadOnlyCollectionNotSupported" xml:space="preserve">
+    <value>Creating read-only collection of type "{0}" is not supported. Serialization stream corrupted?</value>
+  </data>
+  <data name="CannotLoadAssembly" xml:space="preserve">
+    <value>Failed to load assembly by name: "{0}".</value>
+  </data>
+  <data name="CannotResolveType" xml:space="preserve">
+    <value>Could not resolve type "{0}".</value>
+  </data>
+  <data name="CannotResolveTypeInAssembly" xml:space="preserve">
+    <value>Could not resolve type "{0}" in assembly "{1}".</value>
+  </data>
+  <data name="CircularIObjectReference" xml:space="preserve">
+    <value>Deserialization of an IObjectReference instance has a circular reference to itself.</value>
+  </data>
+  <data name="DataLenghtTooSmall" xml:space="preserve">
+    <value>Data length is too small.</value>
+  </data>
+  <data name="DeserializeUnexpectedId" xml:space="preserve">
+    <value>Unexpected id on deserialization. Serialization stream corrupted?</value>
+  </data>
+  <data name="MissingFieldSurrogate" xml:space="preserve">
+    <value>Number of serializable fields in type "{0}" has been decreased since serialization so cannot deserialize type "{1}".</value>
+  </data>
+  <data name="NullReference" xml:space="preserve">
+    <value>&lt;null&gt;</value>
+  </data>
+  <data name="ObjectHierarchyChangedSurrogate" xml:space="preserve">
+    <value>Object hierarchy has been changed since serialization of type "{0}".</value>
+  </data>
+  <data name="Undefined" xml:space="preserve">
+    <value>&lt;undefined&gt;</value>
+  </data>
+  <data name="UnexpectedFieldType" xml:space="preserve">
+    <value>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</value>
+  </data>
+  <data name="UnexpectedSerializationInfoElement" xml:space="preserve">
+    <value>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</value>
+  </data>
+  <data name="ValueTypeExpected" xml:space="preserve">
+    <value>Specified type must be a value type.</value>
+  </data>
+  <data name="NotAnIXmlSerializable" xml:space="preserve">
+    <value>Type "{0}" does not implement IXmlSerializable.</value>
+  </data>
+  <data name="XmlArrayDimensionSizeMismatch" xml:space="preserve">
+    <value>Cannot restore array "{0}" because length of the {1}. dimension does not match.</value>
+  </data>
+  <data name="XmlArrayLowerBoundMismatch" xml:space="preserve">
+    <value>Cannot restore array "{0}" because lower bound of the {1}. dimension does not match.</value>
+  </data>
+  <data name="XmlArrayPropertyHasNoSetter" xml:space="preserve">
+    <value>Cannot restore array "{0}" at property "{1}.{2}" because it has no setter and its getter returns null.</value>
+  </data>
+  <data name="XmlArrayPropertyHasNoSetterNull" xml:space="preserve">
+    <value>Cannot set null value to array "{0}" at property "{1}.{2}" because it has no setter.</value>
+  </data>
+  <data name="XmlArrayRankMismatch" xml:space="preserve">
+    <value>Cannot restore array "{0}" because rank does not match. Expected rank: "{1}".</value>
+  </data>
+  <data name="XmlArraySizeMismatch" xml:space="preserve">
+    <value>Cannot restore array "{0}" because size does not match. Expected length: "{1}".</value>
+  </data>
+  <data name="XmlBinarySerializationFailed" xml:space="preserve">
+    <value>Binary serialization of type "{0}" failed with options "{1}": {2}</value>
+  </data>
+  <data name="XmlCannotCreateCollection" xml:space="preserve">
+    <value>Counstruction of type "{0}" has been failed. Missing default constructor?</value>
+  </data>
+  <data name="XmlCannotDetermineElementType" xml:space="preserve">
+    <value>Could not determine type of element in collection "{0}".</value>
+  </data>
+  <data name="XmlCannotResolveType" xml:space="preserve">
+    <value>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</value>
+  </data>
+  <data name="XmlCannotSerialize" xml:space="preserve">
+    <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
+  </data>
+  <data name="XmlCannotSerializeArrayElement" xml:space="preserve">
+    <value>Cannot serialize "{0}" as array element with following options: "{1}". You may either use fallback options or provide a type converter for container collection. If the container collection is a property in an object you may apply DesignerSerializationVisibilityAttribute with value Content on the property.</value>
+  </data>
+  <data name="XmlCannotSerializeCollectionElement" xml:space="preserve">
+    <value>Cannot serialize "{0}" as collection element with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</value>
+  </data>
+  <data name="XmlCannotSerializeProperty" xml:space="preserve">
+    <value>Cannot serialize property "{0}.{1}" with following options: "{2}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on property.</value>
+  </data>
+  <data name="XmlCannotSerializeValueType" xml:space="preserve">
+    <value>Serializing value type "{0}" is not supported with following options: "{1}". You may either use RecursiveSerializationAsFallback or BinarySerializationAsFallback options, or provide a type converter for this type.</value>
+  </data>
+  <data name="XmlCollectionPropertyHasNoSetter" xml:space="preserve">
+    <value>Cannot restore collection "{0}" at property "{1}.{2}" because it has no setter. Make sure that value of this property is not null after construction so it can be deserialized without a setter.</value>
+  </data>
+  <data name="XmlCollectionPropertyHasNoSetterNull" xml:space="preserve">
+    <value>Cannot assign null to collection "{0}" at property "{1}.{2}" because it has no setter. Make sure that value of this property is not null after construction so it can be deserialized without a setter.</value>
+  </data>
+  <data name="XmlCrcError" xml:space="preserve">
+    <value>Corrupt array data: Bad CRC.</value>
+  </data>
+  <data name="XmlCrcFormat" xml:space="preserve">
+    <value>The crc attribute should be a hex value but "{0}" found.</value>
+  </data>
+  <data name="XmlDeserializeNotSupported" xml:space="preserve">
+    <value>Deserializing type "{0}" is not supported.</value>
+  </data>
+  <data name="XmlHasNoProperty" xml:space="preserve">
+    <value>Type "{0}" has no property "{1}".</value>
+  </data>
+  <data name="XmlInconsistentArrayLength" xml:space="preserve">
+    <value>Array items length mismatch. Expected items: {0}, found items: {1}.</value>
+  </data>
+  <data name="XmlItemExpected" xml:space="preserve">
+    <value>Collection item expected but "{0}" found.</value>
+  </data>
+  <data name="XmlLengthInvalidType" xml:space="preserve">
+    <value>Length attribute should be an integer but "{0}" found.</value>
+  </data>
+  <data name="XmlMixedArrayFormats" xml:space="preserve">
+    <value>Mixed compact and non-compact array content found.</value>
+  </data>
+  <data name="XmlNoContent" xml:space="preserve">
+    <value>Serialized content of type "{0}" not found.</value>
+  </data>
+  <data name="XmlNotACollection" xml:space="preserve">
+    <value>Type "{0}" is not a regular collection so items cannot be added to it.</value>
+  </data>
+  <data name="XmlPropertyHasNoSetter" xml:space="preserve">
+    <value>Cannot restore property "{0}" in type "{1}" because it has no setter.</value>
+  </data>
+  <data name="XmlRootExpected" xml:space="preserve">
+    <value>Root object expected but "{0}" found.</value>
+  </data>
+  <data name="XmlRootTypeMissing" xml:space="preserve">
+    <value>Type of the root element is not specified.</value>
+  </data>
+  <data name="XmlSerializeReadOnlyCollection" xml:space="preserve">
+    <value>Serializing a read-only collection is not supported as root element or collection item: "{0}".</value>
+  </data>
+  <data name="XmlSerializeReadOnlyRoot" xml:space="preserve">
+    <value>Serializing a read-only collection is not supported as root element: {0}.</value>
+  </data>
+  <data name="XmlUnexpectedElement" xml:space="preserve">
+    <value>Unexpected element: "{0}" at line {1}, position {2}.</value>
+  </data>
+  <data name="DateAndTime" xml:space="preserve">
+    <value>Date and Time: </value>
+  </data>
+  <data name="ExceptionMessage" xml:space="preserve">
+    <value>Exception Message:</value>
+  </data>
+  <data name="ExceptionMessageNotAvailable" xml:space="preserve">
+    <value>Message is not available: {0}</value>
+  </data>
+  <data name="ExceptionSource" xml:space="preserve">
+    <value>Exception Source:</value>
+  </data>
+  <data name="ExceptionSourceNotAvailable" xml:space="preserve">
+    <value>Source is not available: {0}</value>
+  </data>
+  <data name="ExceptionTargetSite" xml:space="preserve">
+    <value>Exception Target Site:</value>
+  </data>
+  <data name="ExceptionTargetSiteNotAccessible" xml:space="preserve">
+    <value>Cannot not access target site infos: {0}</value>
+  </data>
+  <data name="ExceptionTargetSiteNotAvailable" xml:space="preserve">
+    <value>Target site is not available.</value>
+  </data>
+  <data name="ExceptionType" xml:space="preserve">
+    <value>Exception Type:</value>
+  </data>
+  <data name="ExceptionTypeNotAvailable" xml:space="preserve">
+    <value>Type info is not available: {0}</value>
+  </data>
+  <data name="ILOffset" xml:space="preserve">
+    <value>, IL {0:#0000}</value>
+  </data>
+  <data name="InnerException" xml:space="preserve">
+    <value>&gt;&gt;&gt;&gt; Inner Exception &gt;&gt;&gt;&gt;</value>
+  </data>
+  <data name="InnerExceptionEnd" xml:space="preserve">
+    <value>&lt;&lt;&lt;&lt; End of Inner Exception &lt;&lt;&lt;&lt;</value>
+  </data>
+  <data name="LocalStackTrace" xml:space="preserve">
+    <value>---- Local Stack Trace ----</value>
+  </data>
+  <data name="NativeOffset" xml:space="preserve">
+    <value>{0}: N {1:#00000}</value>
+  </data>
+  <data name="OperatingSystem" xml:space="preserve">
+    <value>Operating System: </value>
+  </data>
+  <data name="RemoteStackTrace" xml:space="preserve">
+    <value>---- Remote Stack Trace ----</value>
+  </data>
+  <data name="SourceOffset" xml:space="preserve">
+    <value>{0}: line {1}, col {2}</value>
+  </data>
+  <data name="StackTrace" xml:space="preserve">
+    <value>---- Stack Trace ----</value>
+  </data>
+  <data name="SystemInformation" xml:space="preserve">
+    <value>System information:</value>
+  </data>
+  <data name="UserInformation" xml:space="preserve">
+    <value>User information:</value>
+  </data>
+  <data name="Win32ErrorCode" xml:space="preserve">
+    <value>Win32 native error code: {0}</value>
+  </data>
+  <data name="XmlCircularReference" xml:space="preserve">
+    <value>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular refence use DesignerSerializationVisibilityAttribute with Hidden value on properties that lead to circular reference.</value>
+  </data>
+  <data name="XmlInvalidEscapedContent" xml:space="preserve">
+    <value>Invalid escaped string content: "{0}".</value>
+  </data>
+  <data name="XmlKeyValueTypeMissing" xml:space="preserve">
+    <value>Can not deserialize a key-value element: type information is missing.</value>
+  </data>
+  <data name="XmlKeyValueMissingKey" xml:space="preserve">
+    <value>Key element not found in key/value pair element.</value>
+  </data>
+  <data name="XmlKeyValueMissingValue" xml:space="preserve">
+    <value>Value element not found in key/value pair element.</value>
+  </data>
+  <data name="XmlMultipleKeys" xml:space="preserve">
+    <value>Multiple Key elements occured in key-value element.</value>
+  </data>
+  <data name="XmlMultipleValues" xml:space="preserve">
+    <value>Multiple Value elements occured in key-value element.</value>
+  </data>
+  <data name="XmlUnexpectedEnd" xml:space="preserve">
+    <value>Unexpected end of XML content.</value>
+  </data>
+  <data name="ApplicationDomain" xml:space="preserve">
+    <value>Application Domain: </value>
+  </data>
+  <data name="AssemblyBuildDate" xml:space="preserve">
+    <value>Assembly Build Date: </value>
+  </data>
+  <data name="AssemblyCodebase" xml:space="preserve">
+    <value>Assembly Codebase: </value>
+  </data>
+  <data name="AssemblyFullName" xml:space="preserve">
+    <value>Assembly Full Name: </value>
+  </data>
+  <data name="AssemblyVersion" xml:space="preserve">
+    <value>Assembly Version: </value>
+  </data>
+  <data name="CannotGetDomain" xml:space="preserve">
+    <value>&lt;Domain is not available&gt;</value>
+  </data>
+  <data name="ClrVersion" xml:space="preserve">
+    <value>CLR version: </value>
+  </data>
+  <data name="CommandLine" xml:space="preserve">
+    <value>Command Line: </value>
+  </data>
+  <data name="CurrentUser" xml:space="preserve">
+    <value>Current User: </value>
+  </data>
+  <data name="Environment" xml:space="preserve">
+    <value>Environment: {0}-bit</value>
+  </data>
+  <data name="MachineName" xml:space="preserve">
+    <value>Machine Name: </value>
+  </data>
+  <data name="ProcessorCount" xml:space="preserve">
+    <value>Processor Count: </value>
+  </data>
+  <data name="Uncategorized" xml:space="preserve">
+    <value>&lt;Uncategorized&gt;</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>User name: </value>
+  </data>
+  <data name="WorkingSet" xml:space="preserve">
+    <value>Working Set: {0} bytes</value>
+  </data>
+  <data name="ObjectDisposed" xml:space="preserve">
+    <value>Cannot access a dosposed object.</value>
+  </data>
+  <data name="InvalidResXReaderPropertyChange" xml:space="preserve">
+    <value>Property can be changed only before the enumeration.</value>
+  </data>
+  <data name="InvalidResXWriterPropertyChange" xml:space="preserve">
+    <value>Property can be changed only before adding a row or generating any content.</value>
+  </data>
+  <data name="InvalidResXResourceNoName" xml:space="preserve">
+    <value>Cannot find a name for the resource at line {0}, position {1}.</value>
+  </data>
+  <data name="XmlMissingAttribute" xml:space="preserve">
+    <value>"{0}" attribute is missing at line {1}, position {2}.</value>
+  </data>
+  <data name="ResXFileMimeTypeNotSupported">
+    <value>Unsupported ResX file mime type "{0}" at line {1}, position {2}.</value>
+  </data>
+  <data name="ResXMimeTypeNotSupported">
+    <value>Unsupported mime type "{0}" at line {1}, position {2}.</value>
+  </data>
+  <data name="InvalidResXFile" xml:space="preserve">
+    <value>ResX file cannot be parsed: {0}</value>
+  </data>
+  <data name="ResXReaderNotSupported" xml:space="preserve">
+    <value>Unsupported ResX reader "{0}" at line {1}, position {2}.</value>
+  </data>
+  <data name="ResXWriterNotSupported" xml:space="preserve">
+    <value>Unsupported ResX writer "{0}" at line {1}, position {2}.</value>
+  </data>
+  <data name="TypeLoadException" xml:space="preserve">
+    <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</value>
+  </data>
+  <data name="TypeLoadExceptionShort" xml:space="preserve">
+    <value>Type "{0}" cannot be resolved.</value>
+  </data>
+  <data name="ArgumentEmpty" xml:space="preserve">
+    <value>Value cannot be empty.</value>
+  </data>
+  <data name="TypeWithAssemblyName" xml:space="preserve">
+    <value>The type name should not contain the assembly name.</value>
+  </data>
+  <data name="NonStringResourceWithType" xml:space="preserve">
+    <value>Type of resource "{0}" is not string but "{1}" - use GetObject instead.</value>
+  </data>
+  <data name="ConvertFromStringNotSupportedAt" xml:space="preserve">
+    <value>Attempting to convert type "{0}" from string on line {1}, position {2} has failed: {3}</value>
+  </data>
+  <data name="ConvertFromStringNotSupported" xml:space="preserve">
+    <value>Converting from string is not supported by {0}.</value>
+  </data>
+  <data name="ConvertFromByteArrayNotSupportedAt" xml:space="preserve">
+    <value>Attempting to convert type "{0}" from byte array on line {1}, position {2} has failed: {3}</value>
+  </data>
+  <data name="ConvertFromByteArrayNotSupported" xml:space="preserve">
+    <value>Converting from byte array is not supported by {0}.</value>
+  </data>
+  <data name="ResXResourceWriterSaved" xml:space="preserve">
+    <value>Resource writer has already been saved. You may not edit it.</value>
+  </data>
+  <data name="ResXFileRefFileNotFound" xml:space="preserve">
+    <value>File in ResX file reference cannot be found: {0}. Is base path correctly set?</value>
+  </data>
+  <data name="SeparatorInvalidHex" xml:space="preserve">
+    <value>The separator contains invalid characters. Hex digits are not allowed in separator.</value>
+  </data>
+  <data name="SeparatorInvalidDec" xml:space="preserve">
+    <value>The separator is empty or contains invalid characters. Decimal digits are not allowed in separator.</value>
+  </data>
+  <data name="ArgumentInvalidString" xml:space="preserve">
+    <value>Input string contains an invalid value.</value>
+  </data>
+  <data name="HybridResSourceBinary" xml:space="preserve">
+    <value>This operation is invalid when Source is CompiledOnly.</value>
+  </data>
+</root>

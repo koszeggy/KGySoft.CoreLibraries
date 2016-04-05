@@ -1,0 +1,740 @@
+    /*
+        /// <summary>
+        /// Generic cache. Cache expansion is transparent; user needs only to use the indexer (<see cref="this"/> property).
+        /// When a non-existing key is read item will be loaded automatically.
+        /// </summary>
+        /// <typeparam name="TKey">Type of the key</typeparam>
+        /// <typeparam name="TValue">Type of the values stored in the cache</typeparam>
+        [Serializable]
+        public sealed class Cache<TKey, TValue>: IDictionary<TKey, TValue>//, System.Collections.IDictionary
+        {
+            #region Nested Types
+
+            [Serializable, StructLayout(LayoutKind.Sequential)]
+            private struct CacheElement//<T>
+            {
+                internal readonly TValue Value;
+                internal readonly uint Timestamp;
+
+                public CacheElement(uint timestamp, TValue value)
+                {
+                    Timestamp = timestamp;
+                    Value = value;
+                }
+            }
+
+            /// <summary>
+            /// Enumerates the elements of a <see cref="Cache{TKey,TValue}"/>.
+            /// </summary>
+            [Serializable, StructLayout(LayoutKind.Sequential)]
+            public struct Enumerator: IEnumerator<KeyValuePair<TKey, TValue>>//, System.Collections.IDictionaryEnumerator
+            {
+                #region Fields
+
+                private readonly Cache<TKey, TValue> cache;
+                private readonly int version;
+                private int index;
+                private KeyValuePair<TKey, TValue> current;
+                private readonly bool isGeneric;
+                private readonly IList<TKey> keys;
+
+                #endregion
+
+                #region Constructor
+
+                internal Enumerator(Cache<TKey, TValue> cache, bool isGeneric)
+                {
+                    this.cache = cache;
+                    version = cache.version;
+                    index = 0;
+                    current = default(KeyValuePair<TKey, TValue>);
+                    this.isGeneric = isGeneric;
+                    keys = cache.cacheOrder == null ? null : cache.cacheOrder.Values;
+                }
+
+                #endregion
+
+                #region IEnumerator<KeyValuePair<TKey,TValue>> Members
+
+                /// <summary>
+                /// Gets the element at the current position of the enumerator.
+                /// </summary>
+                public KeyValuePair<TKey, TValue> Current
+                {
+                    get { return current; }
+                }
+
+                #endregion
+
+                #region IDisposable Members
+
+                /// <summary>
+                /// Releases the enumerator
+                /// </summary>
+                public void Dispose()
+                {
+                }
+
+                #endregion
+
+                #region IEnumerator Members
+
+                object System.Collections.IEnumerator.Current
+                {
+                    get
+                    {
+                        if (index == 0 || index > cache.Count)
+                            throw new InvalidOperationException("Enumeration has either not started or has already finished.");
+                        if (isGeneric)
+                            return current;
+                        return new System.Collections.DictionaryEntry(current.Key, current.Value);
+                    }
+                }
+
+                public bool MoveNext()
+                {
+                    if (version != cache.version)
+                        throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
+                    if (index < cache.Count)
+                    {
+                        current = new KeyValuePair<TKey, TValue>(keys[index], cache.cacheStore[keys[index]].Value);
+                        index++;
+                        return true;
+                    }
+                    index = cache.Count + 1;
+                    current = default(KeyValuePair<TKey, TValue>);
+                    return false;
+                }
+
+                public void Reset()
+                {
+                    if (version != cache.version)
+                        throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
+                    index = 0;
+                    current = default(KeyValuePair<TKey, TValue>);
+                }
+
+                #endregion
+
+                //#region IDictionaryEnumerator Members
+
+                //public System.Collections.DictionaryEntry Entry
+                //{
+                //    get { throw new NotImplementedException(); }
+                //}
+
+                //public object Key
+                //{
+                //    get { throw new NotImplementedException(); }
+                //}
+
+                //public object Value
+                //{
+                //    get { throw new NotImplementedException(); }
+                //}
+
+                //#endregion
+            }
+
+            #endregion
+
+            #region Fields
+
+            #region Private fields
+
+            int cacheReads;
+            int cacheHit;
+            int cacheDeletes;
+            int maxSize;
+            int cacheWrites;
+            private Dictionary<TKey, CacheElement> cacheStore;
+            private SortedList<uint, TKey> cacheOrder;
+            private readonly Func<TKey, TValue> itemLoader;
+            private readonly IEqualityComparer<TKey> comparer;
+            private uint counter;
+            private int version;
+
+            private static MethodInvoker cacheOrderInsert;// = MethodInvoker.GetMethodInvoker(typeof(SortedList<uint, TKey>).GetMethod("Insert", BindingFlags.Instance | BindingFlags.NonPublic));
+
+            #endregion
+
+            #region Public fields
+
+            /// <summary>
+            /// A loader that can be used at constructors if you manage element additions to the cache manually.
+            /// If you want to get an element with a non-existing key using this loader, a <see cref="KeyNotFoundException"/> will be thrown.
+            /// This field is read-only.
+            /// </summary>
+            public readonly Func<TKey, TValue> NullLoader = TKey => { throw new KeyNotFoundException("If you use NullLoader in Cache<TKey, TValue>, then elements must be added excplicity either by Add method or the setter of the indexer!"); };
+
+            #endregion
+
+            #endregion
+
+            #region Properties and Indexers
+
+            #region Properties
+
+            /// <summary>
+            /// Maximum element count
+            /// </summary>
+            public int MaxSize
+            {
+                get { return maxSize; }
+                set
+                {
+                    if (value <= 0)
+                        throw new ArgumentOutOfRangeException("value", "Minimum cache size is 1");
+                    maxSize = value;
+                    if (Count - value > 0)
+                        RemoveLeastUsedItems(Count - value);
+                    if (Count > 0)
+                        cacheOrder.Capacity = value;
+                }
+            }
+
+            /// <summary>
+            /// Element count
+            /// </summary>
+            public int Count
+            {
+                get { return (cacheOrder == null) ? 0 : cacheOrder.Count; } // faster than dictionary Count
+            }
+
+            ///// <summary>
+            ///// String kulcs esetén megadhatjuk vele a betûérzékenységet a kulcsra (aé: true, azaz betûérzékeny)
+            ///// </summary>
+            //public bool CaseSentitivityForKey { get; set; }
+
+            /// <summary>
+            /// Gets or sets the cache behavior when cache is full and an element has to be removed.
+            /// Default value: <see cref="CacheBehavior.RemoveOldestElement"/>.
+            /// <remarks>
+            /// Note:  Changing value of this property will not reorganize cache. Cache order is maintaned on accessing a value.
+            /// </remarks>
+            /// </summary>
+            public CacheBehavior Behavior { get; set; }
+
+            /// <summary>
+            /// Returns a copy of the keys stored in the cache in evaluation order.
+            /// </summary>
+            public ICollection<TKey> Keys
+            {
+                get
+                {
+                    if (cacheOrder == null)
+                        return new TKey[0];
+                    return cacheOrder.Values.ToArray();
+                }
+            }
+
+            /// <summary>
+            /// Returns a copy of the values stored in the cache in evaluation order.
+            /// </summary>
+            public ICollection<TValue> Values
+            {
+                get
+                {
+                    if (cacheOrder == null)
+                        return new TValue[0];
+                    return (from item in cacheOrder
+                            select cacheStore[item.Value].Value).ToArray();
+                }
+            }
+
+            #endregion
+
+            #region Indexers
+
+            /// <summary>
+            /// Gets or sets the value of given <paramref name="key"/>.
+            /// Getter retrieves the needed element, while setter adds a new item (or overwrites an already existing item).
+            /// Normally only the get accessor should be used because that will load elements into the cache by the item loader passed to the constructor.
+            /// </summary>
+            /// <param name="key">Key of the element to get or set.</param>
+            public TValue this[TKey key]
+            {
+                get { return GetValue(key); }
+                set
+                {
+                    CacheElement element;
+                    if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+                    {
+                        if (Behavior == CacheBehavior.RemoveLeastRecentUsedElement)
+                            InternalTouch(key);
+                    }
+                    else
+                    {
+                        Insert(key, value);
+                    }
+                }
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            /// <summary>
+            /// Creates a new cache instance with the given <paramref name="itemLoader"/>, <paramref name="maxItems"/> and <paramref name="comparer"/>.
+            /// </summary>
+            /// <param name="maxItems">Maximum element count</param>
+            /// <param name="itemLoader">A delegate that contains the item loader routine.
+            /// This delegate is accessed whenever a non-cached item is need to be loaded. If you want to add items manually, you can use <see cref="NullLoader"/>
+            /// that will thow a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
+            /// <param name="comparer">An <see cref="IEqualityComparer{T}"/> instance that can be used for key comparison in the cache. For example,
+            /// you can use <see cref="StringComparer.InvariantCultureIgnoreCase"/> comparer for a case-insensitive cache with string key
+            /// or <see cref="EnumComparer{TEnum}.Comparer"/> for fast access cache with enum key.</param>
+            public Cache(Func<TKey, TValue> itemLoader, int maxItems, IEqualityComparer<TKey> comparer)
+            {
+                Behavior = CacheBehavior.RemoveOldestElement;
+                if (itemLoader == null)
+                    throw new ArgumentNullException("itemLoader", "You must define a valid item loader that can be called when an element is not loaded into the cache. " +
+                                                                  "If you want to add cache elements explicitly, use Cache<TKey, TValue>.NullLoader");
+                this.itemLoader = itemLoader;
+                MaxSize = maxItems;
+                this.comparer = comparer;
+            }
+
+            /// <summary>
+            /// Creates a new cache instance with the given <paramref name="itemLoader"/> and sets cache size to 100.
+            /// </summary>
+            public Cache(Func<TKey, TValue> itemLoader)
+                : this(itemLoader, 100, null)
+            {
+            }
+
+            /// <summary>
+            /// Creates a new cache instance with the given <paramref name="itemLoader"/>.
+            /// </summary>
+            /// <param name="maxItems">Maximum element count</param>
+            /// <param name="itemLoader">A delegate that contains the item loader routine.
+            /// This delegate is accessed whenever a non-cached item is need to be loaded. If you want to add items manually, you can use <see cref="NullLoader"/>
+            /// that will thow a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
+            public Cache(Func<TKey, TValue> itemLoader, int maxItems)
+                : this(itemLoader, maxItems, null)
+            {
+            }
+
+            /// <summary>
+            /// Creates a new cache instance with the given <paramref name="itemLoader"/> and <paramref name="comparer"/> and sets cache size to 100.
+            /// </summary>
+            /// <param name="itemLoader">A delegate that contains the item loader routine.
+            /// This delegate is accessed whenever a non-cached item is need to be loaded.</param>
+            /// <param name="comparer">An <see cref="IEqualityComparer{T}"/> instance that can be used for key comparison in the cache. For example,
+            /// you can use <see cref="StringComparer.InvariantCultureIgnoreCase"/> comparer for a case-insensitive cache with string key.</param>
+            public Cache(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey> comparer)
+                : this(itemLoader, 100, comparer)
+            {
+            }
+
+            static Cache()
+            {
+                cacheOrderInsert = MethodInvoker.GetMethodInvoker(typeof(SortedList<uint, TKey>).GetMethod("Insert", BindingFlags.Instance | BindingFlags.NonPublic));
+            }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            /// <summary>
+            /// Adding new element to the cache. If the element is exist in cache, an exception will be thrown.
+            /// In contrast, using the setter of the indexer (see <see cref="this"/>) replaces the old value with the new one.
+            /// If you want to renew an element in the evaluation order, use the <see cref="Touch"/> method.
+            /// Normally you do not need to call this method,
+            /// unless you have constructed the cache with the <see cref="NullLoader"/> item loader.
+            /// </summary>
+            /// <param name="key">The key of the element to add.</param>
+            /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+            public void Add(TKey key, TValue value)
+            {
+                if (key == null)
+                    throw new ArgumentNullException("key");
+                if (cacheStore != null && cacheStore.ContainsKey(key))
+                    throw new ArgumentException("An item with the same key has already been added.", "key");
+                Insert(key, value);
+            }
+
+            /// <summary>
+            /// Removes an item from the cache.
+            /// </summary>
+            /// <param name="key">Key of the item to remove.</param>
+            /// <returns>true if the element is successfully removed; otherwise, false. This method also returns false if key was not found in the cache.</returns>
+            public bool Remove(TKey key)
+            {
+                CacheElement element;
+                if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+                {
+                    InternalRemove(key, element);
+                    return true;
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// Renewes an item in the evaluation order.
+            /// </summary>
+            /// <param name="key">The key of the item to renew.</param>
+            public void Touch(TKey key)
+            {
+                CacheElement element;
+                if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+                {
+                    InternalTouch(key, element);
+                }
+                else
+                    throw new ArgumentException("Key '" + key + "' does not exist in cache.", "key");
+            }
+
+            /// <summary>
+            /// Tries to gets the value associated with the specified key without using the item loader passed in constructor.
+            /// </summary>
+            /// <returns>
+            /// true, if cache contains an element with the specified key; otherwise, false.
+            /// </returns>
+            /// <param name="key">The key whose value to get.</param>
+            /// <param name="value">When this method returns, the value associated with the specified key, if the key is found; otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
+            /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
+            public bool TryGetValue(TKey key, out TValue value)
+            {
+                cacheReads++;
+                CacheElement element;
+                if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+                {
+                    value = element.Value;
+                    cacheHit++;
+                    return true;
+                }
+                value = default(TValue);
+                return false;
+            }
+
+            /// <summary>
+            /// Refreshes the value in the cache even if it was already loaded.
+            /// </summary>
+            /// <param name="key">The key of the item to refresh.</param>
+            public void RefreshValue(TKey key)
+            {
+                Remove(key);
+                GetValue(key);
+            }
+
+            /// <summary>
+            /// Reloads the value into the cache even if it was already loaded using the item loader that was passed to the constructor.
+            /// </summary>
+            /// <param name="key">The key of the item to reload.</param>
+            /// <returns>Loaded value</returns>
+            public TValue GetValueUncached(TKey key)
+            {
+                Remove(key);
+                return GetValue(key);
+            }
+
+            /// <summary>
+            /// Gets whether a value is stored in the cache with the given key.
+            /// </summary>
+            /// <param name="key">The key of the item to check.</param>
+            public bool ContainsKey(TKey key)
+            {
+                return (cacheStore != null && cacheStore.ContainsKey(key));
+            }
+
+            /// <summary>
+            /// Clears the cache.
+            /// </summary>
+            public void Clear()
+            {
+                cacheDeletes += Count;
+                cacheOrder = null;
+                cacheStore = null;
+                version++;
+            }
+
+            /// <summary>
+            /// Clears the cache and resets statistics.
+            /// </summary>
+            public void Reset()
+            {
+                Clear();
+                cacheReads = 0;
+                cacheWrites = 0;
+                cacheDeletes = 0;
+                cacheHit = 0;
+            }
+
+            /// <summary>
+            /// Gets statistics of the cache.
+            /// </summary>
+            public string GetStatistics()
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("Cache<{0}, {1}> cache statistics:{2}", typeof(TKey).Name, typeof(TValue).Name, Environment.NewLine);
+                sb.AppendLine("Count: " + Count.ToString());
+                sb.AppendLine("MaxItems: " + maxSize.ToString());
+                sb.AppendLine("Number of writes: " + cacheWrites.ToString());
+                sb.AppendLine("Number of reads: " + cacheReads.ToString());
+                sb.AppendLine("Number of cache hits: " + cacheHit.ToString());
+                sb.AppendLine("Number of deletes: " + cacheDeletes.ToString());
+                sb.AppendLine("Hit rate: " + new decimal(cacheReads == 0 ? 0 : (double)cacheHit / cacheReads * 100).ToString("N2") + "%");
+                return sb.ToString();
+            }
+
+            /// <summary>
+            /// Returns a <see cref="string"/> that represents the current <see cref="Cache{TKey,TValue}"/> instance.
+            /// </summary>
+            public override string ToString()
+            {
+                return String.Format("Cache<{0}, {1}>; Count: {2}", typeof(TKey).Name, typeof(TValue).Name, Count);
+            }
+
+            #endregion
+
+            #region Private Methods
+
+            /// <summary>
+            /// Gets a value from the cache. If item does not exists in cache, loads it by the item loader that was passed to the constructor.
+            /// </summary>
+            /// <param name="key">The key of the item to load.</param>
+            private TValue GetValue(TKey key)
+            {
+                cacheReads++;
+
+                CacheElement element;
+                if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+                {
+                    cacheHit++;
+                    if (Behavior == CacheBehavior.RemoveLeastRecentUsedElement)
+                        InternalTouch(key, element);
+                    return element.Value;
+                }
+                else
+                {
+                    if (Count >= maxSize)
+                        RemoveLeastUsedItem();
+
+                    TValue newItem = itemLoader(key);
+                    Insert(key, newItem);
+                    return newItem;
+                }
+            }
+
+            private void InternalTouch(TKey key, CacheElement element)
+            {
+                if (cacheOrder.Keys[cacheOrder.Count - 1] == element.Timestamp)
+                    return;
+                cacheOrder.Remove(element.Timestamp);
+                uint timestamp = ++counter;// GenerateNewOrderId();
+                cacheOrderInsert.Invoke(cacheOrder, cacheOrder.Count, timestamp, key); //cacheOrder.Add(timestamp, key);
+                cacheStore[key] = new CacheElement(timestamp, element.Value);
+                version++;
+            }
+
+            private void InternalRemove(TKey key, CacheElement element)
+            {
+                cacheOrder.Remove(element.Timestamp);
+                cacheStore.Remove(key);
+                cacheDeletes++;
+                version++;
+            }
+
+            /// <summary>
+            /// Removes the least used item from the cache.
+            /// </summary>
+            private void RemoveLeastUsedItem()
+            {
+                cacheStore.Remove(cacheOrder.Values[0]);
+                cacheOrder.RemoveAt(0);
+                cacheDeletes++;
+                version++;
+            }
+
+            private void RemoveLeastUsedItems(int amount)
+            {
+                for (int i = 0; i < amount; i++)
+                    cacheStore.Remove(cacheOrder.Values[i]);
+                int oldSize = Count;
+                SortedList<uint, TKey> newOrder = new SortedList<uint, TKey>(oldSize - amount);
+                IList<uint> keys = cacheOrder.Keys;
+                IList<TKey> values = cacheOrder.Values;
+                for (int i = amount; i < oldSize; i++)
+                    newOrder.Add(keys[i], values[i]);
+                cacheOrder = newOrder;
+                cacheDeletes += amount;
+                version++;
+            }
+
+            /// <summary>
+            /// Inserting a new element into the cache
+            /// </summary>
+            private void Insert(TKey key, TValue value)
+            {
+                if (cacheStore == null)
+                {
+                    cacheStore = new Dictionary<TKey, CacheElement>(maxSize, comparer);
+                    cacheOrder = new SortedList<uint, TKey>(maxSize);
+                }
+                uint timestamp = ++counter;// GenerateNewOrderId();
+                cacheOrderInsert.Invoke(cacheOrder, cacheOrder.Count, timestamp, key); //cacheOrder.Add(timestamp, key);
+                cacheStore.Add(key, new CacheElement(timestamp, value));
+                cacheWrites++;
+                version++;
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Explicitly Implemented ICollection<KeyValuePair<TKey,TValue>> Members
+
+            void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
+            {
+                Add(item.Key, item.Value);
+            }
+
+            bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
+            {
+                if (cacheStore == null)
+                    return false;
+                CacheElement element;
+                if (cacheStore.TryGetValue(item.Key, out element))
+                {
+                    return EqualityComparer<TValue>.Default.Equals(item.Value, element.Value);
+                }
+                return false;
+            }
+
+            void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+            {
+                if (array == null)
+                    throw new ArgumentNullException("array");
+                if (arrayIndex < 0 || arrayIndex > array.Length)
+                    throw new ArgumentNullException("arrayIndex");
+                if (array.Length - arrayIndex < Count)
+                    throw new ArgumentException("Destination array is not long enough to copy all the items in the collection. Check array index and length.");
+                int count = Count;
+                if (count == 0)
+                    return;
+                IList<TKey> keys = cacheOrder.Values;
+                for (int i = 0; i < count; i++)
+                {
+                    array[arrayIndex++] = new KeyValuePair<TKey, TValue>(keys[i], cacheStore[keys[i]].Value);
+                }
+            }
+
+            bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
+            {
+                get { return false; }
+            }
+
+            bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
+            {
+                if (cacheStore == null)
+                    return false;
+                CacheElement element;
+                if (cacheStore.TryGetValue(item.Key, out element) && EqualityComparer<TValue>.Default.Equals(item.Value, element.Value))
+                {
+                    InternalRemove(item.Key, element);
+                    return true;
+                }
+                return false;
+            }
+
+            #endregion
+
+            #region IEnumerable<KeyValuePair<TKey,TValue>> Members
+
+            public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+            {
+                return new Enumerator(this, true);
+            }
+
+            #endregion
+
+            #region Explicitly Implemented IEnumerable Members
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            {
+                return new Enumerator(this, true);
+            }
+
+            #endregion
+
+            //#region IDictionary Members
+
+            //public void Add(object key, object value)
+            //{
+            //    throw new NotImplementedException();
+            //}
+
+            //public bool Contains(object key)
+            //{
+            //    throw new NotImplementedException();
+            //}
+
+            //System.Collections.IDictionaryEnumerator System.Collections.IDictionary.GetEnumerator()
+            //{
+            //    return new Enumerator(this, false);
+            //}
+
+            //public bool IsFixedSize
+            //{
+            //    get { throw new NotImplementedException(); }
+            //}
+
+            //bool System.Collections.IDictionary.IsReadOnly
+            //{
+            //    get { throw new NotImplementedException(); }
+            //}
+
+            //System.Collections.ICollection System.Collections.IDictionary.Keys
+            //{
+            //    get { throw new NotImplementedException(); }
+            //}
+
+            //public void Remove(object key)
+            //{
+            //    throw new NotImplementedException();
+            //}
+
+            //System.Collections.ICollection System.Collections.IDictionary.Values
+            //{
+            //    get { throw new NotImplementedException(); }
+            //}
+
+            //public object this[object key]
+            //{
+            //    get
+            //    {
+            //        throw new NotImplementedException();
+            //    }
+            //    set
+            //    {
+            //        throw new NotImplementedException();
+            //    }
+            //}
+
+            //#endregion
+
+            //#region ICollection Members
+
+            //public void CopyTo(Array array, int index)
+            //{
+            //    throw new NotImplementedException();
+            //}
+
+            //public bool IsSynchronized
+            //{
+            //    get { throw new NotImplementedException(); }
+            //}
+
+            //public object SyncRoot
+            //{
+            //    get { throw new NotImplementedException(); }
+            //}
+
+            //#endregion
+        }
+     */ 
