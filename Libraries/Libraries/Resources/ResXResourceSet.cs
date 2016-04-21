@@ -29,7 +29,7 @@
     // - Safer, even if SafeMode is off, because objects are deserialized only when they are accessed.
     // - load/Save to stream and textwriter, too. The manager classes work with multiple sets and files.
     // - GetxxxEnumerator metódusokhoz leírni, hogy az enumerátor DictionaryEntry.Value-ja SafeMMode-tól függ
-    // Incompatibility:
+    // Incompatibility!!!: (ha lehet, változtatni, hogy az egy stringes verzió itt is filename legyen, talán string,string, mindkettő optional, első filenév második basepath)
     // - ctor(string) itt basePath, file-ból betöltéshez ctor(string, string) kell
     // [Serializable]
     public class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable

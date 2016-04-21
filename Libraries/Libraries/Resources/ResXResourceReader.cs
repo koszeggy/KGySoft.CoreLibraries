@@ -244,6 +244,7 @@
                 nameTable.Add(ResXCommon.NameStr);
                 nameTable.Add(ResXCommon.DataStr);
                 nameTable.Add(ResXCommon.MetadataStr);
+                nameTable.Add(ResXCommon.CommentStr);
                 nameTable.Add(ResXCommon.MimeTypeStr);
                 nameTable.Add(ResXCommon.ValueStr);
                 nameTable.Add(ResXCommon.ResHeaderStr);
