@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 
 using KGySoft.Libraries.Collections;
@@ -200,7 +201,7 @@ namespace KGySoft.Libraries
         {
             if (source == null)
                 throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
-            
+
             IList list = source as IList;
             if (list != null)
             {
@@ -246,6 +247,44 @@ namespace KGySoft.Libraries
                 throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
 
             return new CircularList<TSource>(source);
+        }
+
+        /// <summary>
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
+        /// <param name="seed">The seed to use for the shuffling.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
+        {
+            return Shuffle(source, new Random(seed));
+        }
+
+        /// <summary>
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements).
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
+        {
+            return Shuffle(source, new Random());
+        }
+
+        private static IEnumerable<T> Shuffle<T>(IEnumerable<T> source, Random rand)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+
+            //return from indexedItem in
+            //           (from item in source
+            //            select new { Index = rand.Next(), Value = item })
+            //       orderby indexedItem.Index
+            //       select indexedItem.Value;
+            // above is the same as LINQ expression:
+            return source.Select(
+                item => new { Index = rand.Next(), Value = item }).OrderBy(i => i.Index).Select(i => i.Value);
         }
 
         /// <summary>
