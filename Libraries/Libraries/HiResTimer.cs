@@ -198,7 +198,12 @@ namespace KGySoft.Libraries
                 // restarting the timer in every hour to prevent precision problems
                 if (stopwatch.Elapsed.TotalHours >= 1d)
                 {
+#if NET35
+                    stopwatch.Reset();
+                    stopwatch.Start();
+#else
                     stopwatch.Restart();
+#endif
                     nextTrigger = 0f;
                 }
             }
