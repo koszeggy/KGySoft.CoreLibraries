@@ -226,6 +226,7 @@ namespace KGySoft.Libraries
                     break;
                 case TypeCode.Int32:
                     sizeMask = UInt32.MaxValue;
+                    min = Int32.MinValue;
                     max = Int32.MaxValue;
                     break;
                 case TypeCode.UInt32:
