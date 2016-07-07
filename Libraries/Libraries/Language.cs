@@ -16,7 +16,7 @@ namespace KGySoft.Libraries
     /// Represents the language settings of the current thread. Use this class if you want to be notified on
     /// language changes.
     /// </summary>
-    public static class Language
+    public static class LanguageSettings
     {
         #region Fields
 

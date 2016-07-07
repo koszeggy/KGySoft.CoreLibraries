@@ -226,7 +226,7 @@ namespace KGySoft.Libraries.Resources
 
         internal static string Get(string id)
         {
-            return resourceManager.GetString(id, Language.DisplayLanguage) ?? String.Format(unavailableResource, id);
+            return resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
         }
 
         internal static string Get(string id, params object[] args)
@@ -254,7 +254,7 @@ namespace KGySoft.Libraries.Resources
                     }
                 }
 
-                return String.Format(Language.FormattingLanguage, format, args);
+                return String.Format(LanguageSettings.FormattingLanguage, format, args);
             }
             catch (FormatException)
             {

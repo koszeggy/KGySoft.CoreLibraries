@@ -75,7 +75,7 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for this culture,
         /// the resource manager uses fallback rules to locate an appropriate resource.If this value is null,
-        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="Language.DisplayLanguage" /> property.</param>
+        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="LanguageSettings.DisplayLanguage" /> property.</param>
         /// <returns>
         /// The value of the resource, localized for the specified culture. If an appropriate resource set exists
         /// but <paramref name="name" /> cannot be found, the method returns null.

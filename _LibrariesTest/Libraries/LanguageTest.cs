@@ -18,18 +18,18 @@ namespace _LibrariesTest
         public void TestMethod()
         {
             int threadId = Thread.CurrentThread.ManagedThreadId;
-            Language.FormattingLanguageChanged += (sender, e) => PrintThread("FormattingLanguageChanged");
-            Language.FormattingLanguageChangedGlobal += (sender, e) => PrintThread("FormattingLanguageChangedGlobal " + (threadId == Thread.CurrentThread.ManagedThreadId));
+            LanguageSettings.FormattingLanguageChanged += (sender, e) => PrintThread("FormattingLanguageChanged");
+            LanguageSettings.FormattingLanguageChangedGlobal += (sender, e) => PrintThread("FormattingLanguageChangedGlobal " + (threadId == Thread.CurrentThread.ManagedThreadId));
             PrintThread("Main");
             Console.WriteLine("Setting en-GB in main");
-            Language.FormattingLanguage = CultureInfo.GetCultureInfo("en-GB");
+            LanguageSettings.FormattingLanguage = CultureInfo.GetCultureInfo("en-GB");
             Console.WriteLine();
             //ManualResetEvent mre = new ManualResetEvent(false);
 
             ThreadStart threadStart = () =>
                 {
                     Console.WriteLine("Setting hu-HU in work thread");
-                    Language.FormattingLanguage = CultureInfo.GetCultureInfo("hu-HU");
+                    LanguageSettings.FormattingLanguage = CultureInfo.GetCultureInfo("hu-HU");
                     Console.WriteLine();
                     //mre.Set();
                 };

@@ -230,7 +230,7 @@ namespace KGySoft.Libraries.Diagnostics
         public static string SysInfoToString()
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine(Res.Get(Res.DateAndTime) + DateTime.Now.ToString(Language.FormattingLanguage));
+            sb.AppendLine(Res.Get(Res.DateAndTime) + DateTime.Now.ToString(LanguageSettings.FormattingLanguage));
             sb.Append(Res.Get(Res.OperatingSystem));
             try
             {
@@ -245,7 +245,7 @@ namespace KGySoft.Libraries.Diagnostics
             sb.AppendLine();
             sb.AppendLine(Res.Get(Res.ProcessorCount) + Environment.ProcessorCount);
             sb.AppendLine(Res.Get(Res.ClrVersion) + Environment.Version);
-            sb.AppendFormat(Res.Get(Res.WorkingSet, Environment.WorkingSet.ToString("N0", Language.FormattingLanguage)));
+            sb.AppendFormat(Res.Get(Res.WorkingSet, Environment.WorkingSet.ToString("N0", LanguageSettings.FormattingLanguage)));
             sb.AppendLine();
             sb.AppendLine(Res.Get(Res.CommandLine) + Environment.CommandLine);
             sb.Append(Res.Get(Res.ApplicationDomain));

@@ -62,6 +62,9 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
+        /// <remarks>
+        /// <note>Always specify the <typeparamref name="TEnum"/> generic argument when use this method; otherwise, the less performant <see cref="Enum.ToString()"/> method will be used.</note>
+        /// </remarks>
         public static string ToString<TEnum>(this TEnum value)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
@@ -112,6 +115,9 @@ namespace KGySoft.Libraries
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
         /// <returns><c>true</c>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// <note>Always specify the <typeparamref name="TEnum"/> generic argument when use this method; otherwise, in .NET 4.0 and above the less performant <see cref="Enum.HasFlag"/> method will be used.</note>
+        /// </remarks>
         public static bool HasFlag<TEnum>(this TEnum value, TEnum flags)
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {

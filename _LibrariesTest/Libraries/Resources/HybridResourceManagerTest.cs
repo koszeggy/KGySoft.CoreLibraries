@@ -348,7 +348,7 @@ namespace _LibrariesTest
             Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
 
             // setting something in display language creates a resource set but the invariant is still missing
-            manager.SetObject("StringValue", "String " + Language.DisplayLanguage.Name);
+            manager.SetObject("StringValue", "String " + LanguageSettings.DisplayLanguage.Name);
             Assert.IsNotNull(manager.GetObject("StringValue"));
             Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
 
