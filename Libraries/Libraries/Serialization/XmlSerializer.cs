@@ -1774,7 +1774,11 @@ namespace KGySoft.Libraries.Serialization
                 XAttribute attrType = element.Attribute("type");
                 Type type = null;
                 if (attrType != null)
+                {
                     type = Reflector.ResolveType(attrType.Value);
+                    if (type == null)
+                        throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType.Value));
+                }
                 if (type == null && property != null)
                     type = property.PropertyType;
 
@@ -1988,7 +1992,11 @@ namespace KGySoft.Libraries.Serialization
                         string attrType = reader["type"];
                         Type type = null;
                         if (attrType != null)
+                        {
                             type = Reflector.ResolveType(attrType);
+                            if (type == null)
+                                throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType));
+                        }
                         if (type == null && property != null)
                             type = property.PropertyType;
 
