@@ -29,6 +29,36 @@ namespace _PerformanceTest
         }
 
         [TestMethod]
+        public void Main()
+        {
+            var isPrimeCache = new Cache<int, bool>(IsPrime, 2) { Behavior = CacheBehavior.RemoveOldestElement };
+
+            Console.WriteLine("5 is prime: {0}", isPrimeCache[5]);
+            Console.WriteLine("6 is prime: {0}", isPrimeCache[6]);
+            Console.WriteLine("5 is prime: {0}", isPrimeCache[5]);
+            Console.WriteLine("7 is prime: {0}", isPrimeCache[7]);
+            Console.WriteLine("5 is prime: {0}", isPrimeCache[5]);
+        }
+
+        private static bool IsPrime(int number)
+        {
+            Console.WriteLine("IsPrime executed for: {0}", number);
+            if (number <= 1)
+                return false;
+            if (number % 2 == 0)
+                return true;
+            int i = 3;
+            int sqrt = (int)Math.Floor(Math.Sqrt(number));
+            while (i <= sqrt)
+            {
+                if (number % i == 0)
+                    return false;
+                i += 2;
+            }
+            return true;
+        }
+
+        [TestMethod]
         public void PopulateTest()
         {
             const int iterations = 1000;

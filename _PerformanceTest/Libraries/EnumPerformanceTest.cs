@@ -527,6 +527,15 @@ namespace _PerformanceTest
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
+                bool eq = v1[0] == v1[1];
+            }
+            watch.Stop();
+            Console.WriteLine("{0}.{1} == {0}.{2}: {3} ms", enumType.Name, v1[0], v1[1], watch.ElapsedMilliseconds);
+
+            watch.Reset();
+            watch.Start();
+            for (int i = 0; i < iterations; i++)
+            {
                 v1[0].Equals(v1[1]);
             }
             watch.Stop();
@@ -576,6 +585,15 @@ namespace _PerformanceTest
             }
             watch.Stop();
             Console.WriteLine("EnumComparer<{0}>.Comparer.GetHashCode({0}.{1}): {2} ms", enumType.Name, v1[0], watch.ElapsedMilliseconds);
+
+            watch.Reset();
+            watch.Start();
+            for (int i = 0; i < iterations; i++)
+            {
+                bool eq = v1[0] > v1[1];
+            }
+            watch.Stop();
+            Console.WriteLine("{0}.{1} > {0}.{2}: {3} ms", enumType.Name, v1[0], v1[1], watch.ElapsedMilliseconds);
 
             watch.Reset();
             watch.Start();
