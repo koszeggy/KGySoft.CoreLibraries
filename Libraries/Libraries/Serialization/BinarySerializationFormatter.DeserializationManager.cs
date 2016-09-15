@@ -20,17 +20,12 @@ namespace KGySoft.Libraries.Serialization
         {
             #region Fields
 
-            private static readonly object objectReferencePlaceholder = new object();
-
-            #region Instance Fields
-
             private List<Assembly> readAssemblies;
             private List<Type> readTypes;
             private Dictionary<string, Assembly> assemblyByNameCache;
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
-
-            #endregion
+            private Dictionary<object, List<KeyValuePair<FieldInfo, object>>> objectReferences;
 
             #endregion
 
@@ -151,11 +146,7 @@ namespace KGySoft.Libraries.Serialization
                 Dictionary<int, object> cache = IdCache;
                 int id = Read7BitInt(br);
                 if (cache.TryGetValue(id, out result))
-                {
-                    if (result == objectReferencePlaceholder)
-                        throw new SerializationException(Res.Get(Res.CircularIObjectReference));
                     return true;
-                }
 
                 if (id > cache.Count)
                     throw new SerializationException(Res.Get(Res.DeserializeUnexpectedId));
@@ -172,13 +163,65 @@ namespace KGySoft.Libraries.Serialization
             {
                 Dictionary<int, object> cache = IdCache;
                 id = idCache.Count;
-                cache.Add(id, obj is IObjectReference && ((Options & BinarySerializationOptions.IgnoreIObjectReference) == BinarySerializationOptions.None) ? objectReferencePlaceholder : obj);
+                cache.Add(id, obj);
             }
 
             internal void ReplaceObjectInCache(int id, object obj)
             {
                 Dictionary<int, object> cache = IdCache;
                 cache[id] = obj;
+            }
+
+            internal void TrySetField(FieldInfo field, object obj, object value)
+            {
+                IObjectReference objRef;
+                if ((Options & BinarySerializationOptions.IgnoreIObjectReference) == BinarySerializationOptions.None
+                    && (objRef = value as IObjectReference) != null)
+                {
+                    // the object reference cannot be set yet so storing the new usage of the reference to be set later.
+                    if (objectReferences == null)
+                        objectReferences = new Dictionary<object, List<KeyValuePair<FieldInfo, object>>>(1, ReferenceEqualityComparer.Comparer);
+
+                    List<KeyValuePair<FieldInfo, object>> refUsages;
+                    if (!objectReferences.TryGetValue(objRef, out refUsages))
+                    {
+                        refUsages = new List<KeyValuePair<FieldInfo, object>>();
+                        objectReferences.Add(objRef, refUsages);
+                    }
+
+                    refUsages.Add(new KeyValuePair<FieldInfo, object>(field, obj));
+                    return;
+                }
+
+                FieldAccessor.GetFieldAccessor(field).Set(obj, value);
+            }
+
+            internal void CheckReferences(SerializationInfo si)
+            {
+                if (objectReferences == null)
+                    return;
+
+                // circular IObjectReferences can be resolved after all, except if custom deserialization is used for unresolved references
+                foreach (SerializationEntry entry in si)
+                {
+                    IObjectReference objRef = entry.Value as IObjectReference;
+                    if (objRef != null && objectReferences.ContainsKey(objRef))
+                        throw new SerializationException(Res.Get(Res.CircularIObjectReference));
+                }
+            }
+
+            internal void UpdateReferences(IObjectReference objRef, object realObject)
+            {
+                List<KeyValuePair<FieldInfo, object>> refUsages;
+                if (objectReferences == null || !objectReferences.TryGetValue(objRef, out refUsages))
+                    return;
+
+                foreach (KeyValuePair<FieldInfo, object> usage in refUsages)
+                {
+                    FieldAccessor.GetFieldAccessor(usage.Key).Set(usage.Value, realObject);
+                }
+
+                objectReferences.Remove(objRef);
             }
 
             #endregion

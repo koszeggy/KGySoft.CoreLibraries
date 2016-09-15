@@ -549,7 +549,7 @@ namespace _LibrariesTest.Libraries.Resources
                 new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
                 {
                     new int[][,] { new int[,]{ { 11, 12}, { 21, 22 } } }
-                }  
+                }
             };
 
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;

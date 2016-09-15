@@ -832,22 +832,33 @@ namespace _LibrariesTest
             public string Name { get; set; }
             public SelfReferencer Self { get; set; }
 
+            [Serializable]
+            private class Box
+            {
+                internal SelfReferencer owner;
+            }
+
+            private readonly Box selfReferenceFromChild;
+
             public SelfReferencer(string name)
             {
                 Name = name;
                 Self = this;
+                selfReferenceFromChild = new Box{owner = this};
             }
 
             private SelfReferencer(SerializationInfo info, StreamingContext context)
             {
                 Name = info.GetString("name");
                 Self = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
+                selfReferenceFromChild = (Box)info.GetValue("selfBox", typeof(Box));
             }
 
             public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("name", Name);
                 info.AddValue("self", Self);
+                info.AddValue("selfBox", selfReferenceFromChild);
             }
 
             public override bool Equals(object obj)
@@ -2501,6 +2512,7 @@ namespace _LibrariesTest
                     new CircularReferenceClass{Name = "Single"}, // no circular reference
                     new CircularReferenceClass{Name = "Parent"}.AddChild("Child").AddChild("Grandchild").Parent.Parent, // circular reference, but logically alright
                     new SelfReferencer("name"),
+                    Encoding.GetEncoding("shift_jis") // circular reference via IObjectReference instances but with no custom serialization
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -2526,7 +2538,7 @@ namespace _LibrariesTest
 
             referenceObjects = new object[]
             {
-                new SelfReferencerEvil("evil"), // the IObjectReference references itself: should throw SerializationException
+                new SelfReferencerEvil("evil"), // the IObjectReference references itself in custom serialization: should throw SerializationException
             };
 
             SystemSerializeObject(referenceObjects);
