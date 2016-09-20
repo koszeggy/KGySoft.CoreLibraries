@@ -20,7 +20,7 @@ namespace KGySoft.Libraries.Resources
     /// </summary>
     // TODO: Említeni a Dynamic-ot, mi a különbség. Itt minden művelet explicit, a bővítés és mentés is.
     [Serializable]
-    public sealed class HybridResourceManager : ResourceManager, IExpandoResourceManager
+    public class HybridResourceManager : ResourceManager, IExpandoResourceManager
     {
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
@@ -109,11 +109,13 @@ namespace KGySoft.Libraries.Resources
             set { resxResources.ResXResourcesDir = value; }
         }
 
+        internal object SyncRoot => resxResources;
+
         /// <summary>
         /// Gets or sets the source, from which the resources should be taken.
         /// </summary>
         // TODO: doc: - by default, both. - when changed, resources are not cleared
-        public ResourceManagerSources Source
+        public virtual ResourceManagerSources Source
         {
             get { return source; }
             set
@@ -123,12 +125,23 @@ namespace KGySoft.Libraries.Resources
 
                 if (!value.IsDefined())
                     throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
-                lock (resxResources)
-                {
-                    source = value;
-                    resourceSets = null;
-                    lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
-                }
+
+                SetSource(value);
+            }
+        }
+
+        /// <summary>
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal virtual void SetSource(ResourceManagerSources value)
+        {
+            lock (resxResources)
+            {
+                // nullifying the local resourceSets cache does not mean we clear the resources.
+                // they will be obtained and propery merged again on next Get...
+                source = value;
+                resourceSets = null;
+                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
             }
         }
 
@@ -348,12 +361,17 @@ namespace KGySoft.Libraries.Resources
                 // Look in the ResourceSet table
                 var localResourceSets = resourceSets;
                 ResourceSet rs;
-                if (localResourceSets == null || !localResourceSets.TryGetValue(culture.Name, out rs))
+                ProxyResourceSet proxy;
+
+                // Proxy is returned only if hierarchy is loaded. This is ok because this method is called only from
+                // methods, which call InternalGetResourceSet with LoadIfExists
+                if (localResourceSets == null || !localResourceSets.TryGetValue(culture.Name, out rs)
+                    || ((proxy = rs as ProxyResourceSet) != null && !proxy.HierarchyLoaded))
                     return null;
 
                 // update the cache with the most recent ResourceSet
                 lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, GetResultResourceSet(rs));
-                return rs;
+                return GetResultResourceSet(rs);
             }
         }
 
@@ -610,7 +628,7 @@ namespace KGySoft.Libraries.Resources
                 }
             }
 
-            Debug.Assert(!(result is ProxyResourceSet));
+            Debug.Assert(!(result is ProxyResourceSet), "This should not return a proxy result set");
             return result;                
         }
 
@@ -628,7 +646,7 @@ namespace KGySoft.Libraries.Resources
             {
                 if (!ReferenceEquals(lostRace, rs))
                 {
-                    // Note: In certain cases, we can be trying to add a ResourceSet for multiple
+                    // Note: In certain cases, we can try to add a ResourceSet for multiple
                     // cultures on one thread, while a second thread added another ResourceSet for one
                     // of those cultures.  So when we lose the race, we must make sure our ResourceSet 
                     // isn't in our dictionary before closing it.
@@ -873,7 +891,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><c>true</c> to save all of the already resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
+        /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
         /// <br/>Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />

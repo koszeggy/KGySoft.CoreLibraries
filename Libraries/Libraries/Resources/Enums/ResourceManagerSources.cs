@@ -4,6 +4,9 @@
     /// Represents the possible sources of <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes.
     /// </summary>
+    /// <seealso cref="HybridResourceManager.Source"/>
+    /// <seealso cref="LanguageSettings.DynamicResourceManagersSource"/>
+    /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
     public enum ResourceManagerSources
     {
         /// <summary>

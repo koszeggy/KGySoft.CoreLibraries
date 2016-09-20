@@ -143,7 +143,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="baseName">A base name that is the prefix of the resource files.</param>
         /// <param name="neutralResourcesLanguage">Determines the language of the neutral resources. When <see langword="null"/>,
-        /// it will be determined by the entry assembly, or if that is not available, then by the assembly of the caller's method .</param>
+        /// it will be determined by the entry assembly, or if that is not available, then by the assembly of the caller's method.</param>
         public ResXResourceManager(string baseName, CultureInfo neutralResourcesLanguage = null)
             : this(baseName, Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly())
         {
@@ -973,7 +973,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><c>true</c> to save all of the already resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
+        /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
         /// <br />Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
@@ -1015,7 +1015,7 @@ namespace KGySoft.Libraries.Resources
 
             lock (SyncRoot)
             {
-                var keys = from res in resources // T is object in .NET 3.5, and is string above
+                var keys = from res in resources // res.Key is object in .NET 3.5, and is string above
 #if NET35
                            .Cast<DictionaryEntry>()
 #endif

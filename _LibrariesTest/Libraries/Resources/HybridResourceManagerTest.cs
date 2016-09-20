@@ -199,6 +199,15 @@ namespace _LibrariesTest
             manager.Source = ResourceManagerSources.CompiledOnly;
             compiled = manager.GetObject(resName, inv);
             Assert.AreNotEqual(hybrid, compiled);
+
+            // proxy test
+            manager.Source = ResourceManagerSources.CompiledAndResX;
+            manager.ReleaseAllResources();
+            hybrid = manager.GetObject(resName, huHU); // hu and hu-HU are now proxies, last=inv
+            Assert.IsNotNull(hybrid); 
+            Assert.AreSame(hybrid, manager.GetObject(resName, huHU)); // returned from cached lastUsedResourceSet
+            Assert.AreSame(hybrid, manager.GetObject(resName, hu)); // returned from cached proxy in resourceSets
+            Assert.AreSame(hybrid, manager.GetObject(resName, inv)); // returned from cached non-proxy in resourceSets
         }
 
         [TestMethod]

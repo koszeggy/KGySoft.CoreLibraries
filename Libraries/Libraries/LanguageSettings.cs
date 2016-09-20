@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
-
+using KGySoft.Libraries.Resources;
 using Microsoft.Win32;
 
 #endregion
@@ -18,12 +18,18 @@ namespace KGySoft.Libraries
     /// </summary>
     public static class LanguageSettings
     {
+        internal const AutoSaveOptions AutoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
+        internal const AutoAppendOptions AutoAppendDefault = AutoAppendOptions.AppendNeutralCulture | AutoAppendOptions.AppendOnLoad;
+
         #region Fields
 
         private static object syncRoot;        
         private static Dictionary<int, EventHandler> formattingLanguageChangedHandlers;
         private static Dictionary<int, EventHandler> displayLanguageChangedHandlers;
         private static bool captureSystemLocaleChange;
+        private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
+        private static AutoSaveOptions dynamicResourceManagersAutoSave = AutoSaveDefault;
+        private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
 
         #endregion
 
@@ -159,6 +165,9 @@ namespace KGySoft.Libraries
         /// <seealso cref="DisplayLanguageChanged"/>
         public static event EventHandler DisplayLanguageChangedGlobal;
 
+        internal static event EventHandler DynamicResourceManagersSourceChanged;
+        internal static event EventHandler DynamicResourceManagersAutoSaveChanged;
+
         #endregion
 
         #region Properties
@@ -248,6 +257,76 @@ namespace KGySoft.Libraries
             }
         }
 
+        /// <summary>
+        /// Gets or sets the source, from which the <see cref="DynamicResourceManager"/> instances of the
+        /// current application domain should take the resources when their
+        /// <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// </summary>
+        /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
+        /// <seealso cref="DynamicResourceManager.Source"/>
+        public static ResourceManagerSources DynamicResourceManagersSource
+        {
+            get { return dynamicResourceManagersSource; }
+            set
+            {
+                if (value == dynamicResourceManagersSource)
+                    return;
+
+                if (!value.IsDefined())
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+
+                dynamicResourceManagersSource = value;
+                OnDynamicResourceManagersSourceChanged(EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the auto saving options for the <see cref="DynamicResourceManager"/> instances
+        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// <br/>
+        /// Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
+        /// </summary>
+        /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
+        /// <seealso cref="DynamicResourceManager.AutoSave"/>
+        public static AutoSaveOptions DynamicResourceManagersAutoSave
+        {
+            get { return dynamicResourceManagersAutoSave; }
+            set
+            {
+                if (value == dynamicResourceManagersAutoSave)
+                    return;
+
+                if (!value.AllFlagsDefined())
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+
+                dynamicResourceManagersAutoSave = value;
+                OnDynamicResourceManagersAutoSaveChanged(EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the auto append options for the <see cref="DynamicResourceManager"/> instances
+        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// <br/>
+        /// Default value: <see cref="AutoAppendOptions.AppendNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
+        /// </summary>
+        /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
+        /// <seealso cref="DynamicResourceManager.AutoAppend"/>
+        public static AutoAppendOptions DynamicResourceManagersAutoAppend
+        {
+            get { return dynamicResourceManagersAutoAppend; }
+            set
+            {
+                if (value == dynamicResourceManagersAutoAppend)
+                    return;
+
+                if (!value.AllFlagsDefined())
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+
+                dynamicResourceManagersAutoAppend = value;
+            }
+        }
+
         #endregion
 
         #region Private Properties
@@ -326,6 +405,16 @@ namespace KGySoft.Libraries
                 if (displayLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
                     handler.Invoke(null, e);
             }
+        }
+
+        private static void OnDynamicResourceManagersSourceChanged(EventArgs e)
+        {
+            DynamicResourceManagersSourceChanged?.Invoke(null, e);
+        }
+
+        private static void OnDynamicResourceManagersAutoSaveChanged(EventArgs e)
+        {
+            DynamicResourceManagersAutoSaveChanged?.Invoke(null, e);
         }
 
         #endregion
