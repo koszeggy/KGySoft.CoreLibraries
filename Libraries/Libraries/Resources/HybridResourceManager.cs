@@ -30,7 +30,7 @@ namespace KGySoft.Libraries.Resources
             private bool hierarchyLoaded;
 
             /// <summary>
-            /// Gets the wrapped resource set. This is always a parent of <see cref="WrappedCulture"/>.
+            /// Gets the wrapped resource set. This is always a parent of the represented resource set.
             /// </summary>
             internal ResourceSet WrappedResourceSet { get; }
 
@@ -90,7 +90,7 @@ namespace KGySoft.Libraries.Resources
                 if (value == throwException)
                     return;
 
-                lock (resxResources)
+                lock (SyncRoot)
                 {
                     resxResources.ThrowException = value;
                     throwException = value;
@@ -131,17 +131,31 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
+        /// Sets the source of the resources.
         /// Actually protected but should be visible only in this project.
         /// </summary>
         internal virtual void SetSource(ResourceManagerSources value)
         {
-            lock (resxResources)
+            lock (SyncRoot)
             {
                 // nullifying the local resourceSets cache does not mean we clear the resources.
                 // they will be obtained and propery merged again on next Get...
                 source = value;
                 resourceSets = null;
                 lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+            }
+        }
+
+        /// <summary>
+        /// Gets whether a non-proxy resource set is present for the specified culture.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal bool IsNonProxyLoaded(CultureInfo culture)
+        {
+            lock (SyncRoot)
+            {
+                ResourceSet rs;
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && !(rs is ProxyResourceSet);
             }
         }
 
@@ -157,7 +171,7 @@ namespace KGySoft.Libraries.Resources
                 if (value == base.IgnoreCase)
                     return;
 
-                lock (resxResources)
+                lock (SyncRoot)
                 {
                     resxResources.IgnoreCase = value;
                     base.IgnoreCase = value;
@@ -192,15 +206,13 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        private CultureInfo NeutralResourcesCulture
-        {
-            get
-            {
-                return neutralResourcesCulture ??
-                    (neutralResourcesCulture = (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this)
-                        ?? CultureInfo.InvariantCulture);
-            }
-        }
+        /// <summary>
+        /// Gets the <see cref="CultureInfo"/> that is specified as neutral culture in the <see cref="Assembly"/>
+        /// used to initialized this instace, or the <see cref="CultureInfo.InvariantCulture"/> if no such culture is defined.
+        /// </summary>
+        protected CultureInfo NeutralResourcesCulture => neutralResourcesCulture
+            ?? (neutralResourcesCulture =
+                (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this) ?? CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Creates a new instance of <see cref="HybridResourceManager"/> class that looks up resources in
@@ -237,6 +249,10 @@ namespace KGySoft.Libraries.Resources
             resxResources = explicitResXBaseFileName == null
                 ? new ResXResourceManager(resourceSource)
                 : new ResXResourceManager(explicitResXBaseFileName, resourceSource.Assembly);
+#if NET35
+            // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
+            Accessors.ResourceManager_neutralResourcesCulture.Set(this, GetNeutralResourcesLanguage(resourceSource.Assembly));
+#endif // elif not needed because this will not be needed in newer versions
         }
 
         /// <summary>
@@ -267,7 +283,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Returns the value of the specified non-string resource.
+        /// Returns the value of the specified resource.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <returns>
@@ -280,7 +296,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
+        /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for
@@ -300,18 +316,10 @@ namespace KGySoft.Libraries.Resources
             if (null == name)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
-            ResourceSet last = GetFirstResourceSet(culture ?? CultureInfo.CurrentUICulture);
-            IExpandoResourceSetInternal expandoRs;
             object value;
-            if (last != null)
-            {
-                expandoRs = last as IExpandoResourceSetInternal;
-                value = expandoRs != null
-                    ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode)
-                    : (isString ? last.GetString(name, IgnoreCase) : last.GetObject(name, IgnoreCase));
-                if (value != null)
-                    return value;
-            }
+            ResourceSet cached = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
+            if (value != null)
+                return value;
 
             // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
             // the inner one can return an existing resource set without the searched resource, in which case here is
@@ -323,17 +331,17 @@ namespace KGySoft.Libraries.Resources
                 if (rs == null)
                     break;
 
-                if (rs == last)
+                if (rs == cached)
                     continue;
 
-                expandoRs = rs as IExpandoResourceSetInternal;
+                var expandoRs = rs as IExpandoResourceSetInternal;
                 value = expandoRs != null
                     ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode)
                     : (isString ? rs.GetString(name, IgnoreCase) : rs.GetObject(name, IgnoreCase));
                 if (value != null)
                 {
                     // update last used ResourceSet
-                    lock (resxResources)
+                    lock (SyncRoot)
                     {
                         lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(currentCultureInfo.Name, rs);
                     }
@@ -341,38 +349,89 @@ namespace KGySoft.Libraries.Resources
                     return value;
                 }
 
-                last = rs;
+                cached = rs;
             }
 
             return null;
         }
 
+        /// <summary>
+        /// Actually should be protected AND internal...
+        /// </summary>
+        internal ResourceSet TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, out object value)
+        {
+            ResourceSet cachedRs = GetFirstResourceSet(culture);
+            if (cachedRs == null)
+            {
+                value = null;
+                return null;
+            }
+
+            Debug.Assert(!(cachedRs is ProxyResourceSet), "No proxy is expected from GetFirstResourceSet");
+            var expandoRs = cachedRs as IExpandoResourceSetInternal;
+            value = expandoRs != null
+                ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode)
+                : (isString ? cachedRs.GetString(name, IgnoreCase) : cachedRs.GetObject(name, IgnoreCase));
+
+            return cachedRs;
+        }
+
+        /// <summary>
+        /// Tries to get the first resource set in the traversal hierarchy,
+        /// so the resource set for the culture itself.
+        /// Actually should be protected AND internal...
+        /// </summary>
         private ResourceSet GetFirstResourceSet(CultureInfo culture)
         {
             // Logic from ResourceFallbackManager.GetEnumerator()
             if (culture.Name == NeutralResourcesCulture.Name)
                 culture = CultureInfo.InvariantCulture;
 
-            lock (resxResources)
+            lock (SyncRoot)
             {
+                ResourceSet rs;
+                ProxyResourceSet proxy;
                 if (culture.Name == lastUsedResourceSet.Key)
-                    return lastUsedResourceSet.Value;
+                {
+                    proxy = (rs = lastUsedResourceSet.Value) as ProxyResourceSet;
+                    if (proxy == null)
+                        return rs;
+
+                    if (IsCachedProxyAccepted(proxy, culture))
+                        return GetResultResourceSet(rs);
+                }
 
                 // Look in the ResourceSet table
                 var localResourceSets = resourceSets;
-                ResourceSet rs;
-                ProxyResourceSet proxy;
 
-                // Proxy is returned only if hierarchy is loaded. This is ok because this method is called only from
-                // methods, which call InternalGetResourceSet with LoadIfExists
-                if (localResourceSets == null || !localResourceSets.TryGetValue(culture.Name, out rs)
-                    || ((proxy = rs as ProxyResourceSet) != null && !proxy.HierarchyLoaded))
+                if (localResourceSets == null || !localResourceSets.TryGetValue(culture.Name, out rs))
+                    return null;
+
+                if ((proxy = rs as ProxyResourceSet) != null && !IsCachedProxyAccepted(proxy, culture))
                     return null;
 
                 // update the cache with the most recent ResourceSet
-                lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, GetResultResourceSet(rs));
+                lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, rs);
                 return GetResultResourceSet(rs);
             }
+        }
+
+        /// <summary>
+        /// Gets whether a cached proxy
+        /// Actually should be protected AND internal...
+        /// </summary>
+        /// <returns></returns>
+        internal virtual bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
+        {
+            // In HRM proxy is accepted only if hierarchy is loaded. This is ok because GetFirstResourceSet is called only from
+            // methods, which call InternalGetResourceSet with LoadIfExists
+            return ((ProxyResourceSet)proxy).HierarchyLoaded;
+        }
+
+        internal CultureInfo GetWrappedCulture(ResourceSet proxy)
+        {
+            Debug.Assert(proxy is ProxyResourceSet);
+            return ((ProxyResourceSet)proxy).WrappedCulture;
         }
 
         private static ResourceSet GetResultResourceSet(ResourceSet rs)
@@ -396,7 +455,7 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The resource set for the specified culture.
         /// </returns>
-        /// <exception cref="System.Resources.MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
+        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // base implementation must not be called because it wants to open main assembly in case of invariant culture
@@ -423,11 +482,11 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
-            Debug.Fail("InternalGetResourceSet is called");
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
             return InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false);
         }
 
-        private ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
+        internal ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
         {
             Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists,
                 "Behavior can be CreateIfNotExists only if expando is requested.");
@@ -437,7 +496,7 @@ namespace KGySoft.Libraries.Resources
 
             ResourceSet result = null;
             bool resourceFound;
-            lock (resxResources)
+            lock (SyncRoot)
             {
                 resourceFound = resourceSets != null && resourceSets.TryGetValue(culture.Name, out result);
             }
@@ -461,7 +520,7 @@ namespace KGySoft.Libraries.Resources
             foreach (CultureInfo currentCultureInfo in mgr)
             {
                 proxy = null;
-                lock (resxResources)
+                lock (SyncRoot)
                 {
                     resourceFound = resourceSets != null && resourceSets.TryGetValue(currentCultureInfo.Name, out result);
                 }
@@ -595,8 +654,10 @@ namespace KGySoft.Libraries.Resources
 
             if (foundCultureToAdd != null)
             {
-                lock (resxResources)
+                lock (SyncRoot)
                 {
+                    lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+
                     // we replace a proxy: we must delete proxies, which are children of the found resource.
                     if (foundProxyCulture != null && resourceSets != null)
                     {
@@ -677,7 +738,7 @@ namespace KGySoft.Libraries.Resources
         public override void ReleaseAllResources()
         {
             // we are in lock; otherwise, the nullification could occur while we access the resourceSets anywhere else
-            lock (resxResources)
+            lock (SyncRoot)
             {
                 resourceSets = null;
             }
@@ -756,7 +817,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <c>true</c>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
-        public IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
+        public virtual IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
                 throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));

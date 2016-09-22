@@ -8,7 +8,7 @@ using System.Text;
 namespace KGySoft.Libraries.Resources
 {
     /// <summary>
-    /// Represents the auto append options of a <see cref="DynamicResourceManager"/> instance.
+    /// Represents the resource auto append options of a <see cref="DynamicResourceManager"/> instance.
     /// </summary>
     /// <seealso cref="DynamicResourceManager.AutoAppend"/>
     /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoAppend"/>

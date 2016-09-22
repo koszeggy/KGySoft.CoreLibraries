@@ -30,11 +30,13 @@ namespace KGySoft.Libraries.Resources
             private ResXResourceEnumerator resxEnumerator;
             private IDictionaryEnumerator compiledEnumerator;
             private State state;
-            private DictionaryEntry entry;
+            private HybridResourceSet owner;
             private HashSet<string> resxKeys;
+            private HashSet<string> compiledKeys;
 
-            internal Enumerator(ResXResourceEnumerator resx, IDictionaryEnumerator compiled, int version)
+            internal Enumerator(HybridResourceSet owner, ResXResourceEnumerator resx, IDictionaryEnumerator compiled, int version)
             {
+                this.owner = owner;
                 state = State.NotStarted;
                 this.version = version;
                 resxEnumerator = resx;
@@ -45,10 +47,15 @@ namespace KGySoft.Libraries.Resources
             {
                 get
                 {
-                    if (state >= State.EnumeratingResX)
-                        return entry;
-                    
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    switch (state)
+                    {
+                        case State.EnumeratingResX:
+                            return resxEnumerator.Entry;
+                        case State.EnumeratingCompiled:
+                            return compiledEnumerator.Entry;
+                        default:
+                            throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    }
                 }
             }
 
@@ -56,10 +63,15 @@ namespace KGySoft.Libraries.Resources
             {
                 get
                 {
-                    if (state >= State.EnumeratingResX)
-                        return entry.Key;
-
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    switch (state)
+                    {
+                        case State.EnumeratingResX:
+                            return resxEnumerator.Key;
+                        case State.EnumeratingCompiled:
+                            return compiledEnumerator.Key;
+                        default:
+                            throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    }
                 }
             }
 
@@ -67,10 +79,15 @@ namespace KGySoft.Libraries.Resources
             {
                 get
                 {
-                    if (state >= State.EnumeratingResX)
-                        return entry.Value;
-
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    switch (state)
+                    {
+                        case State.EnumeratingResX:
+                            return resxEnumerator.Value;
+                        case State.EnumeratingCompiled:
+                            return compiledEnumerator.Value;
+                        default:
+                            throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    }
                 }
             }
 
@@ -89,14 +106,15 @@ namespace KGySoft.Libraries.Resources
                         goto case State.EnumeratingResX;
 
                     case State.EnumeratingResX:
+                        // version is checked internally here
                         if (resxEnumerator.MoveNext())
                         {
-                            entry = resxEnumerator.Entry;
                             resxKeys.Add(resxEnumerator.Key.ToString());
                             return true;
                         }
 
                         state = State.EnumeratingCompiled;
+                        compiledKeys = new HashSet<string>();
                         goto case State.EnumeratingCompiled;
 
                     case State.EnumeratingCompiled:
@@ -105,15 +123,17 @@ namespace KGySoft.Libraries.Resources
 
                         while (compiledEnumerator.MoveNext())
                         {
+                            compiledKeys.Add(compiledEnumerator.Key.ToString());
                             if (resxKeys.Contains(compiledEnumerator.Key.ToString()))
                                 continue;
 
-                            entry = compiledEnumerator.Entry;
                             return true;
                         }
 
                         resxKeys = null;
                         state = State.Finished;
+                        if (owner.compiledKeys == null)
+                            owner.compiledKeys = compiledKeys;
                         return false;
 
                     case State.Finished:
@@ -136,6 +156,8 @@ namespace KGySoft.Libraries.Resources
 
         private ResXResourceSet resxResourceSet;
         private ResourceSet compiledResourceSet;
+        private HashSet<string> compiledKeys;
+        private HashSet<string> compiledKeysCaseInsensitive;
 
         internal HybridResourceSet(ResXResourceSet resx, ResourceSet compiled)
         {
@@ -161,6 +183,8 @@ namespace KGySoft.Libraries.Resources
             // as the hybrid one (eg. changing source from mixed to single one).
             resxResourceSet = null;
             compiledResourceSet = null;
+            compiledKeys = null;
+            compiledKeysCaseInsensitive = null;
             base.Dispose(disposing);
         }
 
@@ -184,7 +208,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             // changing is checked in resx resource set
-            return new Enumerator((ResXResourceEnumerator)resx.GetEnumerator(), compiled.GetEnumerator(), ((IResXResourceContainer)resx).Version);
+            return new Enumerator(this, (ResXResourceEnumerator)resx.GetEnumerator(), compiled.GetEnumerator(), ((IResXResourceContainer)resx).Version);
         }
 
         public override object GetObject(string name)
@@ -221,6 +245,53 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             return (string)GetResource(name, ignoreCase, true, resx.SafeMode);
+        }
+
+        public bool ContainsResource(string name, bool ignoreCase)
+        {
+            ResXResourceSet resx = resxResourceSet;
+            ResourceSet compiled = compiledResourceSet;
+            if (resx == null || compiled == null)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+
+            if (resx.ContainsResource(name, ignoreCase))
+                return true;
+
+            HashSet<string> binKeys = compiledKeys;
+            if (binKeys == null)
+            {
+                binKeys = new HashSet<string>();
+                IDictionaryEnumerator compiledEnumerator = compiled.GetEnumerator();
+                while (compiledEnumerator.MoveNext())
+                {
+                    binKeys.Add(compiledEnumerator.Key.ToString());
+                }
+
+                compiledKeys = binKeys;
+            }
+
+            if (binKeys.Contains(name))
+                return true;
+
+            if (!ignoreCase)
+                return false;
+
+            HashSet<string> binKeysIgnoreCase = compiledKeysCaseInsensitive;
+            if (binKeysIgnoreCase == null)
+            {
+                compiledKeysCaseInsensitive = binKeysIgnoreCase = new HashSet<string>(binKeys, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return binKeysIgnoreCase.Contains(name);
+        }
+
+        public bool ContainsMeta(string name, bool ignoreCase)
+        {
+            ResXResourceSet resx = resxResourceSet;
+            if (resx == null)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+
+            return resx.ContainsMeta(name, ignoreCase);
         }
 
         #region IEnumerable Members

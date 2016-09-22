@@ -292,9 +292,6 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets the assembly qualified name of the node, or null, if type cannot be determined until deserializing it.
         /// </summary>
-        /// <value>
-        /// The name of the assembly qualified.
-        /// </value>
         private string AssemblyQualifiedName
         {
             get
@@ -546,7 +543,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets the assembly name defined in the source .resx file if <see cref="TypeName"/> contains an assembly alias name,
-        /// or <see langword="null"/>, if the resource does not contain the .resx information.
+        /// or <see langword="null"/>, if <see cref="TypeName"/> contains the assembly qualified name or if the resource does not contain the .resx information.
         /// </summary>
         public string AssemblyAliasValue
         {
@@ -556,7 +553,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets the type information as <see cref="string"/> as it is stored in the source .resx file. It can be either an assembly qualified name,
         /// or a type name with or without an assembly alias name. If <see cref="AssemblyAliasValue"/> is not <see langword="null"/>, this property value
-        /// contains an assembly alias name. The property returns <see langword="null"/>, if the resource does not contain the .resx information.
+        /// contains an assembly alias name. The property returns <see langword="null"/>, if the <c>type</c> attribute is not defined or if the resource does not contain the .resx information.
         /// </summary>
         public string TypeName
         {
@@ -565,7 +562,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets the MIME type as it is stored in the .resx file for this resource, or <see langword="null"/>,
-        /// if the resource does not contain the .resx information.
+        /// if the <c>mimetype</c> attribute is not defined or if the resource does not contain the .resx information.
         /// </summary>
         public string MimeType
         {
@@ -979,7 +976,7 @@ namespace KGySoft.Libraries.Resources
             if (Reflector.CanParseNatively(type))
                 return Reflector.Parse(type, dataNodeInfo.ValueData);
 
-            // 5.) null (it is possible that typeResolver resolves the winforms nullref)
+            // 5.) null
             if (type == typeof(ResXNullRef))
                 return ResXNullRef.Value;
 

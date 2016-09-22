@@ -31,6 +31,8 @@ namespace KGySoft.Libraries
         private static AutoSaveOptions dynamicResourceManagersAutoSave = AutoSaveDefault;
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
 
+        private static string untranslatedResourcePrefix = "!T!: ";
+
         #endregion
 
         #region Events
@@ -324,6 +326,23 @@ namespace KGySoft.Libraries
                     throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
 
                 dynamicResourceManagersAutoAppend = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the prefix of an untranslated <see cref="string"/> resource.
+        /// Used by the <see cref="DynamicResourceManager"/> instances if <see cref="DynamicResourceManagersAutoAppend"/>
+        /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to use auto appending.
+        /// </summary>
+        public static string UntranslatedResourcePrefix
+        {
+            get { return untranslatedResourcePrefix; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+
+                untranslatedResourcePrefix = value;
             }
         }
 

@@ -75,6 +75,7 @@ namespace KGySoft.Libraries.Resources
                 if (state != States.Enumerating)
                     throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
 
+                // if only key is requested, Value is not deserialized
                 return wrappedEnumerator.Current.Key;
             }
         }
