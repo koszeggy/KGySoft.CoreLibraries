@@ -76,7 +76,7 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to set.</param>
         /// <param name="culture">The culture of the resource to set. If this value is <see langword="null"/>,
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
-        /// <param name="value">The value of the resource to set. If <see langword="null"/>,  then a null reference will be explicitly
+        /// <param name="value">The value of the resource to set. If <see langword="null"/>, then a null reference will be explicitly
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.

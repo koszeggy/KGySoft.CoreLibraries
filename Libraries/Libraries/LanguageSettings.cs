@@ -31,7 +31,8 @@ namespace KGySoft.Libraries
         private static AutoSaveOptions dynamicResourceManagersAutoSave = AutoSaveDefault;
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
 
-        private static string untranslatedResourcePrefix = "!T!: ";
+        private static string unknownResourcePrefix = "[U]";
+        private static string untranslatedResourcePrefix = "[T]";
 
         #endregion
 
@@ -343,6 +344,23 @@ namespace KGySoft.Libraries
                     throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
 
                 untranslatedResourcePrefix = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the prefix of an unknown (non-existing) <see cref="string"/> resource.
+        /// Used by the <see cref="DynamicResourceManager"/> instances if <see cref="DynamicResourceManagersAutoAppend"/>
+        /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to add non existing resources to the invariant resource set.
+        /// </summary>
+        public static string UnknownResourcePrefix
+        {
+            get { return unknownResourcePrefix; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+
+                unknownResourcePrefix = value;
             }
         }
 

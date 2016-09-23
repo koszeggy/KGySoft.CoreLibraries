@@ -364,19 +364,161 @@ namespace KGySoft.Libraries.Resources
             EnsureMerged(culture, ResourceSetRetrieval.CreateIfNotExists);
 
             object value;
-            ResourceSet cached = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
+            ResourceSet seen = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
             if (value != null)
                 return value;
 
-            // - bejárjuk a hierarchiát. A behavior create, ha a szabályok szerint kell lennie resx-nek az adott szinten, egyébként load.
-            //   tryParents = true, hogy ha load van, létrejöjjön a hierarchia, és legközelebb a proxy visszaadódjon.
-            //   -> Teszt: ha most létrejön proxy, de a következõ elkérésre ugyanúgy megint befutunk ide is, akkor az baj, javítani az IsCachedProxyAccepted-ben
-            //   a bejárás során elmentjük az elsõ specified és neutral bõvítendõ culture-t (mint a merge-nél)
-            // - ha nincs rs a legvégén, és nincs appendinvariant, tesztelni, hogy kell-e exception-t dobni
-            //   (talán kivédhetõ, mert ha van AppendInvariant, akkor Create-tel és forceExpando-val kérjük el, egyébként sima Load, és akkor a tryParent miatt base-bõl jön az exception).
-            // - ha nincs value a legvégén, de van AppendInvariant, akkor azt bõvíteni
-            // - ha van appendelendõ neutral, bõvíteni
-            // - ha van appendelendõ specific, bõvíteni
+            // TODO: ha value null és !isString: ha seen != null && culture == inv, akkor ha seen.Contains(name), visszaadható az invariantban tárolt null
+            // megfontolni: culture == inv helyett ha a wrapped culture inv, ugyanis ha ez nem jó, azt az IsCachedProxyAccepted sem adhatná vissza
+
+            // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
+            // the inner one can return an existing resource set without the searched resource, in which case here is
+            // the fallback to the parent resource.
+            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            IExpandoResourceSet specific = null, neutral = null;
+            ResourceSet invariant = null;
+            AutoAppendOptions append = AutoAppend;
+            bool createProxy = false;
+            CultureInfo neutralCulture = null;
+            ResourceSet toCache = null;
+
+            foreach (CultureInfo currentCulture in mgr)
+            {
+                // if there should be a result set at this level due to merging, we use create; otherwise, load
+                ResourceSetRetrieval behavior =
+                    // if specific has to be appended and this is the first (topmost) specific...
+                    ((append & AutoAppendOptions.AppendSpecificCulture) != AutoAppendOptions.None && specific == null && !currentCulture.IsNeutralCulture)
+                    // ...or if neutral has to be appended and this is the first (topmost) non-invariant neutral...
+                    || (!ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (append & AutoAppendOptions.AppendNeutralCulture) != AutoAppendOptions.None && neutral == null && currentCulture.IsNeutralCulture)
+                    // ...or if invariant has to be appended and this is the invariant...
+                    || ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (append & AutoAppendOptions.AddUnknownToInvariantCulture) != AutoAppendOptions.None
+                    // ...then create; otherwise, load
+                    ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists;
+
+                // using tryParents only if invariant is requested without appending so the exception can come from the base
+                bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
+                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) != AutoAppendOptions.None;
+
+                // Expando is not forced for invariant. If needed, it will be created if unknown resource is found.
+                ResourceSet rs = InternalGetResourceSet(currentCulture, behavior, tryParents, behavior == ResourceSetRetrieval.CreateIfNotExists && !ReferenceEquals(currentCulture, CultureInfo.InvariantCulture));
+
+                if (currentCulture.Equals(culture))
+                {
+                    // if there is no stored result set for the requested culture, a proxy should be created at the end
+                    // (as if we obtained the result by tryParents=true). This should make subsequent calls faster and
+                    // we will not come here again with for the same culture.
+                    if (rs == null)
+                        createProxy = true;
+                    else
+                        toCache = rs;
+                }
+
+                if (rs == null)
+                {
+                    // invariant not found but ThrowExecption is off and no AppendInvariant is set: return
+                    if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture))
+                        return null;
+
+                    continue;
+                }
+
+                if (rs == seen)
+                    continue;
+
+                value = GetResourceFromAny(rs, name, isString);
+                if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture))
+                {
+                    invariant = rs;
+                    break;
+                }
+
+                if (value != null)
+                    break;
+
+                // specific (we don't need to unwrap rs because in this case we have Create behavior)
+                if (specific == null && (append & AutoAppendOptions.AppendSpecificCulture) != AutoAppendOptions.None && !currentCulture.IsNeutralCulture)
+                    specific = (IExpandoResourceSet)rs;
+                // neutral (we don't need to unwrap rs because in this case we have Create behavior)
+                else if (neutral == null && (append & AutoAppendOptions.AppendNeutralCulture) != AutoAppendOptions.None && currentCulture.IsNeutralCulture)
+                {
+                    neutral = (IExpandoResourceSet)rs;
+                    neutralCulture = currentCulture;
+                }
+            }
+
+            // append invariant
+            if (value == null && (append & AutoAppendOptions.AddUnknownToInvariantCulture) != AutoAppendOptions.None)
+            {
+                // now we force expando for invariant
+                var expandoInv = invariant as IExpandoResourceSet ?? (IExpandoResourceSet)InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
+
+                // new string
+                if (isString)
+                {
+                    value = LanguageSettings.UnknownResourcePrefix + name;
+                    expandoInv.SetObject(name, value);
+                }
+                // if requested as object, we may add null. This is the only case when requesting the same resource again and again
+                else
+                {
+                    if (!expandoInv.ContainsResource(name))
+                        expandoInv.SetObject(name, null);
+                }
+            }
+
+            // TODO: Ha több neutral és specific is lehet egy hieararchiában, az összeset össze kéne gyûjteni, mert az alábbi rosszul merge-ölhet
+            // Ekkor az append neutral és specific ág helyett egy mgr.Reverse-en végigmenni, és amíg az appendOptions szerint szükséges,
+            // adott culture szerint rs bõvítés, ha nem tartalmazza a name-et. Jelenleg nincs Contains mert a nem null neutral/specific épp azt jelenti, hogy az a kettõ nem tartalmazza
+
+            // adjust string (todo: nem így lesz, ha a fenti szerint full merge lesz, mert akkor minden szinten elkérünk egy object/string-et)
+            if (isString && value != null)
+            {
+                Debug.Assert(value is string);
+                value = AdjustStringToAppend(value);
+            }
+
+            // append neutral
+            if (neutral != null && value != null)
+            {
+                neutral.SetObject(name, value);
+            }
+
+            // append specific
+            if (specific != null && value != null)
+            {
+                // See if the value is in neutral. If neutral is not null, the merge has already been performed.
+                // TODO: valami ilyesmi kéne majd a full bejárásba, ha lehetséges több neutral és specific is
+                if (neutral == null)
+                {
+                    ResourceSet rs = InternalGetResourceSet(neutralCulture, ResourceSetRetrieval.LoadIfExists, false, false);
+                    value = GetResourceFromAny(rs, name, isString) ?? value;
+
+                    if (isString)
+                        value = AdjustStringToAppend(value);
+                }
+
+                specific.SetObject(name, value);
+            }
+
+            // create proxy and cache
+            if (createProxy)
+            {
+                // since the foreach above does not use tryParents for children, this will create a proxy if needed:
+                toCache = InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false);
+            }
+
+            Debug.Assert(toCache != null);
+
+            // updates last used ResourceSet in base
+            SetCache(culture, toCache);
+            return value;
+        }
+
+        private object AdjustStringToAppend(object value)
+        {
+            string strValue = (string)value;
+            string prefix = LanguageSettings.UntranslatedResourcePrefix;
+            return !strValue.StartsWith(prefix) ? prefix + strValue : value;
         }
 
         /// <summary>
@@ -384,6 +526,8 @@ namespace KGySoft.Libraries.Resources
         /// There is always a traversal if this is called.
         /// Proxy is accepted if it is no problem if a result is found in the proxied resource set.
         /// </summary>
+        /// <param name="proxy">The found proxy</param>
+        /// <param name="culture">The requested culture</param>
         internal override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
         {
             // if invariant culture is requested, this method should not be reached
@@ -396,15 +540,16 @@ namespace KGySoft.Libraries.Resources
             if (!IsAppendPossible(culture))
                 return true;
 
-            // Neutral is requested: the invariant is in the proxy. This is ok if the neutral is not about to be appended.
-            // Note: we don't check AddUnknownToInvariantCulture flag here because if we have a proxy, invariant must have already been
-            // loaded and the same reference is used in all proxies (no no new ).
+            // Note: we don't check AddUnknownToInvariantCulture flag here because if invariant cached resource is found, it is never proxied
+
+            // Neutral is requested: a parent nutral (most cases: invariant) is in the proxy.
+            // This is ok if the neutral is not about to be appended.
             if (culture.IsNeutralCulture)
                 return (AutoAppend & AutoAppendOptions.AppendNeutralCulture) == AutoAppendOptions.None;
 
-            // Specific is requested: the proxy contains a neutral or the invariant. This is ok if only neutral should be appended
-            // and the proxy contains a neutral (non-invariant) culture. This is ok because if the neutral in the proxy contains a result,
-            // it can be reurned and nothing should be appended.
+            // Specific is requested: the proxy usually contains a neutral or the invariant.
+            // This is ok if only neutral should be appended and the proxy contains a neutral (non-invariant) culture.
+            // This is ok because if the neutral in the proxy contains a result, it can be reurned and nothing should be appended.
             return (AutoAppend & (AutoAppendOptions.AppendNeutralCulture | AutoAppendOptions.AppendSpecificCulture)) == AutoAppendOptions.AppendNeutralCulture
                 && !GetWrappedCulture(proxy).Equals(CultureInfo.InvariantCulture);
         }
@@ -430,7 +575,7 @@ namespace KGySoft.Libraries.Resources
         private void EnsureMerged(CultureInfo culture, ResourceSetRetrieval behavior)
         {
             Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);
-            var append = AutoAppend;
+            AutoAppendOptions append = AutoAppend;
 
             // return if there is no append on load...
             if ((append & AutoAppendOptions.AppendOnLoad) == AutoAppendOptions.None
@@ -454,15 +599,15 @@ namespace KGySoft.Libraries.Resources
             // crawling from specific to neutral...
             foreach (CultureInfo currentCulture in mgr)
             {
-                if (currentCulture.Equals(CultureInfo.InvariantCulture) || (specific != null && neutral != null))
+                if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) || (specific != null && neutral != null))
                     break;
 
                 // specific (we could use GetExpandoResourceSet, too; but that can switch the SafeMode, which can be a surprise for the user who already obtained a ResourceSet)
+                // if behavior is LoadIfExists we may get a proxied expando but that does not belong to this culture so it is ok to not to unwrap
                 if (specific == null && (append & AutoAppendOptions.AppendSpecificCulture) != AutoAppendOptions.None && !currentCulture.IsNeutralCulture)
                     specific = InternalGetResourceSet(currentCulture, behavior, false, behavior == ResourceSetRetrieval.CreateIfNotExists) as IExpandoResourceSet;
-
                 // neutral
-                if (neutral == null && (append & AutoAppendOptions.AppendNeutralCulture) != AutoAppendOptions.None && currentCulture.IsNeutralCulture)
+                else if (neutral == null && (append & AutoAppendOptions.AppendNeutralCulture) != AutoAppendOptions.None && currentCulture.IsNeutralCulture)
                 {
                     neutral = InternalGetResourceSet(currentCulture, behavior, false, behavior == ResourceSetRetrieval.CreateIfNotExists) as IExpandoResourceSet;
                     neutralculture = currentCulture;
@@ -482,11 +627,15 @@ namespace KGySoft.Libraries.Resources
             // 2.) Merging neutral and/or invariant to specific
             if (specific != null)
             {
-                // if neutral is not null, then is is already merged so one merge step is enough
+                // if neutral is not null, then it is already merged so one merge step is enough
                 ResourceSet source = neutral as ResourceSet;
+
+                // twoSteps can occur if
+                // - neutral was a proxy (in case of LoadIfExist)
+                // - no AppendNeutral was requested. But we must merge from the right rs so loading it now if possible
                 bool twoSteps = source == null;
                 if (source == null)
-                    source = InternalGetResourceSet(neutralculture, ResourceSetRetrieval.LoadIfExists, false, false);
+                    source = Unwrap(InternalGetResourceSet(neutralculture, ResourceSetRetrieval.LoadIfExists, false, false));
                 if (source != null && IsNonProxyLoaded(neutralculture))
                     MergeResourceSets(source, specific);
                 if (twoSteps)
@@ -496,6 +645,9 @@ namespace KGySoft.Libraries.Resources
                         MergeResourceSets(invariant, specific);
                 }
             }
+
+            // TODO: Ha több neutral és specific is lehet egy hieararchiában, az összeset össze kéne gyûjteni,
+            // mert a fenti rosszul merge-ölhet
         }
 
         private void MergeResourceSets(ResourceSet source, IExpandoResourceSet target)

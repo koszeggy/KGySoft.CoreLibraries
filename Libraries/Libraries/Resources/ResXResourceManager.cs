@@ -894,7 +894,7 @@ namespace KGySoft.Libraries.Resources
         /// </remarks>
         public void RemoveObject(string name, CultureInfo culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false);
             rs?.RemoveObject(name);
         }
 
@@ -932,7 +932,7 @@ namespace KGySoft.Libraries.Resources
         /// </remarks>
         public void RemoveMetaObject(string name, CultureInfo culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
             rs?.RemoveMetaObject(name);
         }
 

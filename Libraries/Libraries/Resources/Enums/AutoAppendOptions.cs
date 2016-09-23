@@ -24,8 +24,11 @@ namespace KGySoft.Libraries.Resources
         /// <para>If a resource with an unknown key is requested, a new resource is automatically added to the
         /// invariant resource set.</para>
         /// <para>If the resource is requested as a <see cref="string"/>, the newly added
-        /// value will be initialized by the requested key, prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix"/> property.</para>
-        /// <para>If the resource is requested as an <see cref="object"/>, a <see langword="null"/> value will be added to the resource.</para>
+        /// value will be initialized by the requested key, prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix"/> property.
+        /// This new entry can be then merged into other resource sets, too.</para>
+        /// <para>If the resource is requested as an <see cref="object"/>, a <see langword="null"/> value will be added to the resource.
+        /// The <see langword="null"/> value is never merged into the other resource sets because it has a special meaning:
+        /// if a resource has a null value, the parent resources are checked for a non-null resource value.</para>
         /// <para>Enabling this flag causes that <see cref="MissingManifestResourceException"/> will never be thrown for non-existing resources.</para>
         /// <para>This flag is disabled by default.</para>
         /// </summary>
