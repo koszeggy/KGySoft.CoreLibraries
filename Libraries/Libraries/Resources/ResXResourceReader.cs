@@ -893,13 +893,13 @@
 
                 if (name == ResXCommon.ReaderStr)
                 {
-                    if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName)
+                    if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal)
                             && typeName != typeof(ResXResourceReader).FullName))
                         throw new NotSupportedException(Res.Get(Res.ResXReaderNotSupported, typeName, GetLineNumber(reader), GetLinePosition(reader)));
                 }
                 else
                 {
-                    if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName)
+                    if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal)
                             && typeName != typeof(ResXResourceReader).FullName))
                         throw new NotSupportedException(Res.Get(Res.ResXWriterNotSupported, typeName, GetLineNumber(reader), GetLinePosition(reader)));
                 }

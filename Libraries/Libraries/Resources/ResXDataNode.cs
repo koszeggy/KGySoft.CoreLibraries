@@ -177,14 +177,14 @@ namespace KGySoft.Libraries.Resources
             if (typeName != null)
             {
                 // 4.) System ResXDataNode
-                if (typeName.StartsWith(ResXCommon.ResXDataNodeNameWinForms))
+                if (typeName.StartsWith(ResXCommon.ResXDataNodeNameWinForms, StringComparison.Ordinal))
                 {
                     InitFromWinForms(value);
                     return;
                 }
 
                 // 5.) System ResXFileRef
-                if (typeName.StartsWith(ResXCommon.ResXFileRefNameWinForms))
+                if (typeName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal))
                 {
                     fileRef = ResXFileRef.InitFromWinForms(value);
                     return;
@@ -395,7 +395,7 @@ namespace KGySoft.Libraries.Resources
             // we can already throw an exception. But type is checked once again at the end, after deserialization.
             string stringName = Reflector.StringType.FullName;
             string aqn = AssemblyQualifiedName;
-            if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName)))
+            if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 throw new InvalidOperationException(Res.Get(Res.NonStringResourceWithType, Name, fileRef == null ? aqn : fileRef.TypeName));
 
             result = GetValue(null, basePath, cleanup);
@@ -439,15 +439,15 @@ namespace KGySoft.Libraries.Resources
                 return false;
 
             // the common scenario as it is saved by system resx
-            return assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameWinForms)
-                || assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameKGySoft);
+            return assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal)
+                || assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal);
         }
 
         private static bool IsNullRef(string assemblyQualifiedName)
         {
             // the common scenario as it is saved by system resx
-            return assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameWinForms)
-                || assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameKGySoft);
+            return assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameWinForms, StringComparison.Ordinal)
+                || assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -1043,7 +1043,7 @@ namespace KGySoft.Libraries.Resources
                 nodeInfo.CompatibleFormat = compatibleFormat.GetValueOrDefault();
                 if (compatibleFormat.GetValueOrDefault())
                 {
-                    if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameWinForms))
+                    if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal))
                     {
                         nodeInfo.TypeName = CompatibleFileRefTypeName;
                         nodeInfo.AssemblyAliasValue = null;
@@ -1051,7 +1051,7 @@ namespace KGySoft.Libraries.Resources
                         assemblyQualifiedName = null;
                     }
                 }
-                else if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft))
+                else if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal))
                 {
                     nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(ResXFileRef), typeNameConverter, compatibleFormat.GetValueOrDefault());
                     nodeInfo.AssemblyAliasValue = null;
@@ -1637,7 +1637,7 @@ namespace KGySoft.Libraries.Resources
         internal void DetectCompatibleFormat()
         {
             CompatibleFormat = MimeType != ResXCommon.KGySoftSerializedObjectMimeType 
-                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft)));
+                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal)));
         }
     }
 

@@ -237,7 +237,7 @@ namespace KGySoft.Libraries.Reflection
                     float result = Single.Parse(value, culture);
                     if (result.Equals(0f)
                         && (culture == null && value.Trim()[0] == '-'
-                            || culture != null && value.Trim().StartsWith(culture.NumberFormat.NegativeSign)))
+                            || culture != null && value.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal)))
                     {
                         return -0f;
                     }
@@ -249,7 +249,7 @@ namespace KGySoft.Libraries.Reflection
                     double result = Double.Parse(value, culture);
                     if (result.Equals(0d) 
                         && (culture == null && value.Trim()[0] == '-'
-                            || culture != null && value.Trim().StartsWith(culture.NumberFormat.NegativeSign)))
+                            || culture != null && value.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal)))
                     {
                         return -0d;
                     }
@@ -284,12 +284,12 @@ namespace KGySoft.Libraries.Reflection
                 }
                 if (type == typeof(DateTime))
                 {
-                    DateTimeStyles style = value.EndsWith("Z") ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                    DateTimeStyles style = value.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
                     return DateTime.Parse(value, culture, style);
                 }
                 if (type == typeof(DateTimeOffset))
                 {
-                    DateTimeStyles style = value.EndsWith("Z") ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                    DateTimeStyles style = value.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
                     return DateTimeOffset.Parse(value, culture, style);
                 }
                 if (type == ObjectType)

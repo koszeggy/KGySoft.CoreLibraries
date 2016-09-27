@@ -898,7 +898,7 @@ namespace KGySoft.Libraries.Resources
             //    writer.WriteAttributeString("xml", "space", null, "preserve");
             //}
 
-            if (value != null && mimeType == null && (typeWithAlias == null || !typeWithAlias.StartsWith("System.Byte[]")) && PreserveSpaces(value))
+            if (value != null && mimeType == null && (typeWithAlias == null || !typeWithAlias.StartsWith("System.Byte[]", StringComparison.Ordinal)) && PreserveSpaces(value))
                 writer.WriteAttributeString("xml", "space", null, "preserve");
 
             writer.WriteStartElement(ResXCommon.ValueStr);
@@ -1076,13 +1076,13 @@ namespace KGySoft.Libraries.Resources
         }
 
         private string GetTypeName(string typeName) {
-             int indexStart = typeName.IndexOf(",");
+             int indexStart = typeName.IndexOf(',');
              return ((indexStart == -1) ? typeName : typeName.Substring(0, indexStart));
         }
 
 
         private string GetFullName(string typeName) {
-             int indexStart = typeName.IndexOf(",");
+             int indexStart = typeName.IndexOf(',');
              if(indexStart == -1)
                 return null;
              return typeName.Substring(indexStart + 2);

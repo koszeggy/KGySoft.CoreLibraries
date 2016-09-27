@@ -518,7 +518,7 @@ namespace KGySoft.Libraries.Resources
         {
             string strValue = (string)value;
             string prefix = LanguageSettings.UntranslatedResourcePrefix;
-            return !strValue.StartsWith(prefix) ? prefix + strValue : value;
+            return !strValue.StartsWith(prefix, StringComparison.Ordinal) ? prefix + strValue : value;
         }
 
         /// <summary>
@@ -670,7 +670,7 @@ namespace KGySoft.Libraries.Resources
                 if (strValue == null)
                     newValue = value;
                 else
-                    newValue = strValue.StartsWith(prefix)
+                    newValue = strValue.StartsWith(prefix, StringComparison.Ordinal)
                         ? strValue
                         : prefix + strValue;
 

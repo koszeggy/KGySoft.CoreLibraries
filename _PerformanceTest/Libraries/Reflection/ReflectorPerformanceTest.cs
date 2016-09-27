@@ -1760,7 +1760,7 @@ Hit rate: 100,00 %
             string typeName = "System.Int32";
             ResetCache();
 
-            Console.WriteLine("==========Reflect type===========", typeName);
+            Console.WriteLine("==========Reflect type: {0}===========", typeName);
             Stopwatch watch = new Stopwatch();
             watch.Start();
             for (int i = 0; i < iterations; i++)

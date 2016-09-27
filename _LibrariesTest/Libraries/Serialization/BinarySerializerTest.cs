@@ -765,10 +765,10 @@ namespace _LibrariesTest
             {
                 if (dumpDetails)
                     Console.WriteLine("BindToType: {0}, {1}", assemblyName, typeName);
-                if (assemblyName.StartsWith("rev_"))
+                if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
                     assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
 
-                if (typeName.StartsWith("rev_"))
+                if (typeName.StartsWith("rev_", StringComparison.Ordinal))
                     typeName = new string(typeName.Substring(4).Reverse().ToArray());
 
                 Assembly assembly = assemblyName.Length == 0 ? null : AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
@@ -962,7 +962,7 @@ namespace _LibrariesTest
             {
                 Advance(buffer.Length);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2:X2}) - {3}", buffer.Length, buffer.ToDecimalValuesString(), buffer.ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", buffer.Length, buffer.ToDecimalValuesString(), buffer.ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
                 base.Write(buffer);
             }
 
@@ -970,7 +970,7 @@ namespace _LibrariesTest
             {
                 Advance(count);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2:X2}) - {3}", count, buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString(), buffer.Skip(index).Take(count).ToArray().ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", count, buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString(), buffer.Skip(index).Take(count).ToArray().ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
                 base.Write(buffer, index, count);
             }
 
@@ -1137,7 +1137,7 @@ namespace _LibrariesTest
                 var result = base.ReadBoolean();
                 Advance(1);
                 if (log)
-                    Console.WriteLine("bool: {0} ({0}) - {1}", result, Convert.ToInt32(result), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine("bool: {0} ({1}) - {2}", result, Convert.ToInt32(result), new StackTrace().GetFrames()[1].GetMethod().Name);
                 return result;
             }
 
