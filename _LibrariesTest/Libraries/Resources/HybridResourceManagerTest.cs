@@ -1,23 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Resources;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
-using System.Windows.Forms;
+using System.Resources;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
-using KGySoft.Libraries.Serialization;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
-    using System.Diagnostics;
-
     [TestClass]
     public class HybridResourceManagerTest: TestBase
     {

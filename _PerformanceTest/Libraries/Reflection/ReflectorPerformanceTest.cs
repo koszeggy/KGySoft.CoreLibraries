@@ -1,24 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
-using System.Linq.Expressions;
-using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-
-using KGySoft.Libraries;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
-using KGySoft.Libraries.Serialization;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries.Reflection
 {
     /// <summary>
     /// Summary description for UnitTest1

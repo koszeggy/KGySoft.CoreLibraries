@@ -1,31 +1,29 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using KGySoft.Libraries;
 using KGySoft.ComponentModel;
+using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KGyXmlSerializer = KGySoft.Libraries.Serialization.XmlSerializer;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Serialization
 {
-    using System.Diagnostics;
-
     /// <summary>
     /// Test for XmlSerializer
     /// </summary>

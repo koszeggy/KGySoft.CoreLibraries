@@ -1,5 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
@@ -7,22 +13,14 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Policy;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-
 using KGySoft.Libraries;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
-using System.Collections;
-using System.Collections.Specialized;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Serialization
 {
-    using System.Diagnostics;
-
     /// <summary>
     /// Test of <see cref="BinarySerializer"/> class.
     /// </summary>

@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Xml.Linq;
 using System.Text;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries.Serialization
 {
-    using System.Collections.Generic;
-
     /// <summary>
     /// Summary description for BinarySerializerTest
     /// </summary>

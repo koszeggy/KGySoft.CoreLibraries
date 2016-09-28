@@ -1,16 +1,12 @@
 ﻿using System;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
+using KGySoft.Libraries;
+using KGySoft.Libraries.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
-using KGySoft.Libraries.Resources;
-
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
     [TestClass]
     public class ResXResourceReaderTest: TestBase

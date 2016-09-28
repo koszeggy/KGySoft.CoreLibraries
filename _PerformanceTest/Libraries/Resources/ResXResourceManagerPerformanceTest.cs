@@ -1,18 +1,10 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Globalization;
 using System.Resources;
-
 using KGySoft.Libraries.Resources;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries.Resources
 {
-    using System.Diagnostics;
-    using System.Globalization;
-
     [TestClass]
     public class ResXResourceManagerPerformanceTest : TestBase
     {

@@ -1,12 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
     [TestClass]
     public class ResXDataNodeTest: TestBase

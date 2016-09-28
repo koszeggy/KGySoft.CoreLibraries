@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
+using System.Threading;
+using KGySoft.Libraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries
 {
-    using System.Globalization;
-    using System.Threading;
-
-    using KGySoft.Libraries;
-
     [TestClass]
     public class LanguageTest
     {

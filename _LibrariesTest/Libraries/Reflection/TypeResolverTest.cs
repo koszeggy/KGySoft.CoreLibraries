@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
-using System.Linq;
-
 using KGySoft.Libraries.Reflection;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Reflection
 {
     /// <summary>
     /// Tests for <see cref="Reflector.ResolveType(string,bool,bool)"/> method.

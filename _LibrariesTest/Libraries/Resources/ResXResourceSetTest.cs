@@ -1,27 +1,19 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
 using KGySoft.Drawing;
+using KGySoft.Libraries;
+using KGySoft.Libraries.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
-using KGySoft.Libraries.Resources;
-
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Data;
-    using System.Diagnostics;
-    using System.Drawing;
-    using System.Linq;
-    using System.Reflection;
-    using System.Reflection.Emit;
-    using System.Text;
-    using System.Windows.Forms;
-
     [TestClass]
     public class ResXResourceSetTest : TestBase
     {

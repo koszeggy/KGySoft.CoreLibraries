@@ -65,7 +65,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework"/>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -81,6 +81,7 @@
     <Compile Include="Libraries\Diagnostics\DiagnosticToolsTest.cs" />
     <Compile Include="Libraries\EnumTest.cs" />
     <Compile Include="Libraries\Extensions\ByteArrayToolsTest.cs" />
+    <Compile Include="Libraries\Resources\DynamicResourceManagerTest.cs" />
     <Compile Include="Libraries\Resources\HybridResourceManagerTest.cs" />
     <Compile Include="Libraries\LanguageTest.cs" />
     <Compile Include="Libraries\Diagnostics\ProfilerTest.cs" />

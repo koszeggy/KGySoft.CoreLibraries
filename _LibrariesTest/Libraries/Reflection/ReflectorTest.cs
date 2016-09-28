@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Reflection;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Reflection;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Reflection
 {
     [TestClass]
     public class ReflectorTest

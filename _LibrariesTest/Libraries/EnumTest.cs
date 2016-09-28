@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-
 using KGySoft.Libraries;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries
 {
-    using System.Diagnostics;
-
     /// <summary>
     /// Summary description for EnumToolsTest
     /// </summary>

@@ -1,23 +1,19 @@
-﻿using System;
-using System.Collections;
-using System.Globalization;
-using System.Resources;
+﻿using System.Collections;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Windows.Forms;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 using KGySoft.Libraries.Serialization;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
-    using System.Diagnostics;
-
     [TestClass]
     public class ResXResourceManagerTest: TestBase
     {

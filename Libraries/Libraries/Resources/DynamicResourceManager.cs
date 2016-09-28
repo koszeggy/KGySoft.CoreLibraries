@@ -603,7 +603,7 @@ namespace KGySoft.Libraries.Resources
                     break;
 
                 // specific (we could use GetExpandoResourceSet, too; but that can switch the SafeMode, which can be a surprise for the user who already obtained a ResourceSet)
-                // if behavior is LoadIfExists we may get a proxied expando but that does not belong to this culture so it is ok to not to unwrap
+                // if behavior is LoadIfExists we may get a proxied expando but that does not belong to this culture so it is ok to not to unwrap and to make the cast null
                 if (specific == null && (append & AutoAppendOptions.AppendSpecificCulture) != AutoAppendOptions.None && !currentCulture.IsNeutralCulture)
                     specific = InternalGetResourceSet(currentCulture, behavior, false, behavior == ResourceSetRetrieval.CreateIfNotExists) as IExpandoResourceSet;
                 // neutral
