@@ -9,6 +9,7 @@ namespace KGySoft.Libraries.Resources
 {
     /// <summary>
     /// Represents the resource auto append options of a <see cref="DynamicResourceManager"/> instance.
+    /// These options are ignored if <see cref="DynamicResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.
     /// </summary>
     /// <seealso cref="DynamicResourceManager.AutoAppend"/>
     /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoAppend"/>
@@ -30,42 +31,102 @@ namespace KGySoft.Libraries.Resources
         /// The <see langword="null"/> value is never merged into the other resource sets because it has a special meaning:
         /// if a resource has a null value, the parent resources are checked for a non-null resource value.</para>
         /// <para>Enabling this flag causes that <see cref="MissingManifestResourceException"/> will never be thrown for non-existing resources.</para>
-        /// <para>This flag is disabled by default.</para>
+        /// <para>This option is disabled by default.</para>
         /// </summary>
         AddUnknownToInvariantCulture = 1,
 
         /// <summary>
+        /// <para>If a resource is found in a parent resource set of the requested culture, and the traversal of the
+        /// culture hierarchy hits a neutral culture, then the resource set of the first (most derived) neutral culture
+        /// will be automatically appended by the found resource.
+        /// <br/>Let's consider the following hypothetical culture hierarchy:
+        /// <br/><c>en-Runic-GB-Yorkshire (specific) -> en-Runic-GB (specific) -> en-Runic (neutral) -> en (neutral) -> Invariant</c>
+        /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource if found in the invariant resource set,
+        /// then with this option the found resource will be added to the <c>en-Runic</c> resource set.</para>
+        /// <para>If the found resource is a <see cref="string"/>, the newly added
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option is enabled by default.</para>
+        /// </summary>
+        AppendFirstNeutralCulture = 1 << 1,
+
+        /// <summary>
         /// <para>If a resource is found in the resource set of the <see cref="CultureInfo.InvariantCulture">invariant culture</see>,
-        /// the resource will be added to the resource set of the neutral (non-region or country specific) culture of the reqested culture.
-        /// For example, if the resource is requested for the <c>en-US</c> culture but the resource is found in the invariant resource set,
-        /// then the resource will be automatically added to the <c>en</c> resource set.</para>
+        /// then the resource set of the last neutral culture (whose parent is the invariant culture)
+        /// will be automatically appended by the found resource.
+        /// <br/>Let's consider the following hypothetical culture hierarchy:
+        /// <br/><c>en-Runic-GB-Yorkshire (specific) -> en-Runic-GB (specific) -> en-Runic (neutral) -> en (neutral) -> Invariant</c>
+        /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource if found in the invariant resource set,
+        /// then with this option the found resource will be added to the <c>en</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
-        /// <para>If the found resource is not a <see cref="string"/>, the found resource will be simply added
-        /// to the resource set of the neutral culture, too.</para>
-        /// <para>This flag is enabled by default.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option is disabled by default.</para>
         /// </summary>
-        AppendNeutralCulture = 1 << 1,
+        AppendLastNeutralCulture = 1 << 2,
 
         /// <summary>
-        /// <para>If a resource is found in the resource set of the <see cref="CultureInfo.InvariantCulture">invariant culture</see>
-        /// or a neutral culture but the requested culture was a region-specific culture,
-        /// the resource will be added to the resource set of the reqested culture.
-        /// For example, if the resource is requested for the <c>en-US</c> culture but the resource is found in the <c>en</c> or invariant resource set,
-        /// then the resource will be automatically added to the <c>en-US</c> resource set.</para>
+        /// <para>If a resource is found in a parent resource set of the requested culture, and the traversal of the
+        /// culture hierarchy hits neutral cultures, then the resource sets of the neutral cultures will be automatically appended by the found resource.
+        /// <br/>Let's consider the following hypothetical culture hierarchy:
+        /// <br/><c>en-Runic-GB-Yorkshire (specific) -> en-Runic-GB (specific) -> en-Runic (neutral) -> en (neutral) -> Invariant</c>
+        /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource if found in the invariant resource set,
+        /// then with this option the found resource will be added to the <c>en</c> and <c>en-Runic</c> resource sets.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
-        /// <para>If the found resource is not a <see cref="string"/>, the found resource will be simply added
-        /// to the resource set of the specific culture, too.</para>
-        /// <para>This flag is disabled by default.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option is disabled by default.</para>
         /// </summary>
-        AppendSpecificCulture = 1 << 2,
+        AppendNeutralCultures = (1 << 3) | AppendFirstNeutralCulture | AppendLastNeutralCulture,
 
         /// <summary>
-        /// <para>If a resource set loaded, <see cref="AppendNeutralCulture"/> and <see cref="AppendSpecificCulture"/> rules are
+        /// <para>If a resource is found in a parent resource set of the requested specific culture,
+        /// then the resource set of the requested culture will be automatically appended by the found resource.
+        /// <br/>Let's consider the following hypothetical culture hierarchy:
+        /// <br/><c>en-Runic-GB-Yorkshire (specific) -> en-Runic-GB (specific) -> en-Runic (neutral) -> en (neutral) -> Invariant</c>
+        /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource if found in one of its parents,
+        /// then with this option the found resource will be added to the requested <c>en-Runic-GB-Yorkshire</c> resource set.</para>
+        /// <para>If the found resource is a <see cref="string"/>, the newly added
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option is disabled by default.</para>
+        /// </summary>
+        AppendFirstSpecificCulture = 1 << 4,
+
+        /// <summary>
+        /// <para>If a resource is found in a parent resource set of the requested specific culture,
+        /// then the resource set of the last specific culture in the traversal hierarchy (whose parent is a non-specific culture)
+        /// will be automatically appended by the found resource.
+        /// <br/>Let's consider the following hypothetical culture hierarchy:
+        /// <br/><c>en-Runic-GB-Yorkshire (specific) -> en-Runic-GB (specific) -> en-Runic (neutral) -> en (neutral) -> Invariant</c>
+        /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource if found in the invariant resource set,
+        /// then with this option the found resource will be added to the <c>en-Runic-GB</c> resource set.</para>
+        /// <para>If the found resource is a <see cref="string"/>, the newly added
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option is disabled by default.</para>
+        /// </summary>
+        AppendLastSpecificCulture = 1 << 5,
+
+        /// <summary>
+        /// <para>If a resource is found in a parent resource set of the requested specific culture,
+        /// then the resource sets of the visited specific cultures will be automatically appended by the found resource.
+        /// <br/>Let's consider the following hypothetical culture hierarchy:
+        /// <br/><c>en-Runic-GB-Yorkshire (specific) -> en-Runic-GB (specific) -> en-Runic (neutral) -> en (neutral) -> Invariant</c>
+        /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource if found in the invariant resource set,
+        /// then with this option the found resource will be added to the <c>en-Runic-GB-Yorkshire</c> and <c>en-Runic-GB</c> resource sets.</para>
+        /// <para>If the found resource is a <see cref="string"/>, the newly added
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option is disabled by default.</para>
+        /// </summary>
+        AppendSpecificCultures = (1 << 6) | AppendFirstSpecificCulture | AppendLastSpecificCulture,
+
+        /// <summary>
+        /// <para>If a resource set loaded, <see cref="AppendNeutralCultures"/> and <see cref="AppendSpecificCultures"/> rules are
         /// automatically applied for all resources.</para>
         /// <para>This flag is enabled by default.</para>
         /// </summary>
-        AppendOnLoad = 1 << 3,
+        AppendOnLoad = 1 << 7,
     }
 }

@@ -19,7 +19,7 @@ namespace KGySoft.Libraries
     public static class LanguageSettings
     {
         internal const AutoSaveOptions AutoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
-        internal const AutoAppendOptions AutoAppendDefault = AutoAppendOptions.AppendNeutralCulture | AutoAppendOptions.AppendOnLoad;
+        internal const AutoAppendOptions AutoAppendDefault = AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad;
 
         #region Fields
 
@@ -311,7 +311,7 @@ namespace KGySoft.Libraries
         /// Gets or sets the auto append options for the <see cref="DynamicResourceManager"/> instances
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
         /// <br/>
-        /// Default value: <see cref="AutoAppendOptions.AppendNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
+        /// Default value: <see cref="AutoAppendOptions.AppendNeutralCultures"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoAppend"/>

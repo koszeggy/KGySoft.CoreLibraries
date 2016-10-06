@@ -386,6 +386,9 @@ namespace KGySoft.Libraries.Resources
             if (result is string)
                 return result;
 
+            if (result == ResXNullRef.Value)
+                return null;
+
             if (result != null)
                 throw new InvalidOperationException(Res.Get(Res.NonStringResourceWithType, Name, result.GetType().ToString()));
 

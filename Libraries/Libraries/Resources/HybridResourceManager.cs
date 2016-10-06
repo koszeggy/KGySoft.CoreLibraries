@@ -107,7 +107,8 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether a <see cref="MissingManifestResourceException"/> should be thrown when a resource
-        /// .resx file or compiled manifest is not found even in the neutral culture. Default value: <c>true</c>.
+        /// .resx file or compiled manifest is not found even in the neutral culture.
+        /// <br/>Default value: <c>true</c>.
         /// </summary>
         public bool ThrowException
         {
@@ -166,7 +167,7 @@ namespace KGySoft.Libraries.Resources
             lock (SyncRoot)
             {
                 // nullifying the local resourceSets cache does not mean we clear the resources.
-                // they will be obtained and propery merged again on next Get...
+                // they will be obtained and property merged again on next Get...
                 source = value;
                 resourceSets = null;
                 lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
@@ -235,7 +236,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets the <see cref="CultureInfo"/> that is specified as neutral culture in the <see cref="Assembly"/>
-        /// used to initialized this instace, or the <see cref="CultureInfo.InvariantCulture"/> if no such culture is defined.
+        /// used to initialized this instance, or the <see cref="CultureInfo.InvariantCulture"/> if no such culture is defined.
         /// </summary>
         protected CultureInfo NeutralResourcesCulture => neutralResourcesCulture
             ?? (neutralResourcesCulture =
@@ -445,6 +446,9 @@ namespace KGySoft.Libraries.Resources
 
                     if (IsCachedProxyAccepted(proxy, culture))
                         return rs;
+
+                    Debug.Assert(resourceSets.TryGetValue(culture.Name, out rs) && rs == proxy, "Inconsistent value in cache");
+                    return null;
                 }
 
                 // Look in the ResourceSet table

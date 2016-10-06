@@ -45,7 +45,7 @@ namespace _LibrariesTest.Libraries.Resources
             Assert.AreNotEqual(resx, compiled);
             Assert.AreNotEqual(compiled, hybrid);
 
-            // When a resource exists only in compiled: resx is null, others hybrid and compiled are the same
+            // When a resource exists only in compiled: .resx is null, others hybrid and compiled are the same
             resName = "TestStringCompiled";
 
             manager.ReleaseAllResources();
