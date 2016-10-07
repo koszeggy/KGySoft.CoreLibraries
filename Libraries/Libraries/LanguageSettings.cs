@@ -19,7 +19,7 @@ namespace KGySoft.Libraries
     public static class LanguageSettings
     {
         internal const AutoSaveOptions AutoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
-        internal const AutoAppendOptions AutoAppendDefault = AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad;
+        internal const AutoAppendOptions AutoAppendDefault = AutoAppendOptions.AppendFirstNeutralCulture | AutoAppendOptions.AppendOnLoad;
 
         #region Fields
 
@@ -211,7 +211,7 @@ namespace KGySoft.Libraries
         /// When set, <see cref="DisplayLanguageChanged"/> and <see cref="DisplayLanguageChangedGlobal"/> events are triggered.
         /// </summary>
         /// <remarks>
-        /// <para>Display languagage represents the language of the user interface of the application. This value is used when
+        /// <para>Display language represents the language of the user interface of the application. This value is used when
         /// looking up localizable resources.</para>
         /// <para>Use this property instead of <see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see> to
         /// keep language changes synchronized in your application.</para>
@@ -311,7 +311,7 @@ namespace KGySoft.Libraries
         /// Gets or sets the auto append options for the <see cref="DynamicResourceManager"/> instances
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
         /// <br/>
-        /// Default value: <see cref="AutoAppendOptions.AppendNeutralCultures"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
+        /// Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoAppend"/>
@@ -323,9 +323,7 @@ namespace KGySoft.Libraries
                 if (value == dynamicResourceManagersAutoAppend)
                     return;
 
-                if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
-
+                value.CheckOptions();
                 dynamicResourceManagersAutoAppend = value;
             }
         }

@@ -345,7 +345,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             object value;
-            ResourceSet seen = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
+            ResourceSet cached = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
             if (value != null)
                 return value;
 
@@ -360,7 +360,7 @@ namespace KGySoft.Libraries.Resources
                     return null;
 
                 // we have already checked this resource
-                if (rs == seen)
+                if (rs == cached)
                     continue;
 
                 value = GetResourceFromAny(rs, name, isString);
@@ -375,7 +375,7 @@ namespace KGySoft.Libraries.Resources
                     return value;
                 }
 
-                seen = rs;
+                cached = rs;
             }
 
             return null;
@@ -807,11 +807,10 @@ namespace KGySoft.Libraries.Resources
             lock (SyncRoot)
             {
                 resourceSets = null;
+                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+                base.ReleaseAllResources();
+                resxResources.ReleaseAllResources();
             }
-            
-            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
-            base.ReleaseAllResources();
-            resxResources.ReleaseAllResources();
         }
 
         private object GetMetaInternal(string name, CultureInfo culture, bool isString)

@@ -28,6 +28,12 @@ namespace KGySoft.Libraries.Resources
         private AutoAppendOptions autoAppend = LanguageSettings.AutoAppendDefault;
 
         /// <summary>
+        /// If <see cref="autoAppend"/> contains <see cref="AutoAppendOptions.AppendOnLoad"/> flag,
+        /// contains the up-to-date cultures. Value is <c>true</c> if that culture is merged so it can be taken as a base for merge.
+        /// </summary>
+        private Dictionary<CultureInfo, bool> mergedCultures;
+
+        /// <summary>
         /// Gets or sets whether values of <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/> properties
         /// are centrally taken from the <see cref="LanguageSettings"/> class.
         /// <br/>
@@ -45,15 +51,19 @@ namespace KGySoft.Libraries.Resources
                     return;
 
                 lock (SyncRoot)
-                {
+                {                    
                     useLanguageSettings = value;
                     UnhookEvents();
                     if (value)
                     {
                         if (base.Source != LanguageSettings.DynamicResourceManagersSource)
                             SetSource(LanguageSettings.DynamicResourceManagersSource);
+                        if (LanguageSettings.DynamicResourceManagersAutoAppend.IsWidening(autoAppend))
+                            mergedCultures = null;
                         // TODO: autosave, autoappend
                     }
+                    else if (autoAppend.IsWidening(LanguageSettings.DynamicResourceManagersAutoAppend))
+                        mergedCultures = null;
 
                     HookEvents();
                 }
@@ -97,7 +107,7 @@ namespace KGySoft.Libraries.Resources
         /// When <see cref="UseLanguageSettings"/> is <c>true</c>,
         /// auto appending of resources is controlled by <see cref="LanguageSettings.DynamicResourceManagersAutoAppend">LanguageSettings.DynamicResourceManagersAutoAppend</see> property.
         /// <br/>
-        /// Default value: <see cref="AutoAppendOptions.AppendNeutralCultures"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
+        /// Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <remarks>
         /// <para>Auto appending affects the resources only. Meta data are never merged.</para>
@@ -115,8 +125,9 @@ namespace KGySoft.Libraries.Resources
                 if (autoAppend == value)
                     return;
 
-                if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+                value.CheckOptions();
+                if (autoAppend.IsWidening(value))
+                    mergedCultures = null;
 
                 autoAppend = value;
             }
@@ -156,6 +167,7 @@ namespace KGySoft.Libraries.Resources
             lock (SyncRoot)
             {
                 OnSourceChanging();
+                mergedCultures = null;
                 base.SetSource(value);
             }
         }
@@ -248,9 +260,10 @@ namespace KGySoft.Libraries.Resources
             GC.SuppressFinalize(this);
         }
 
-        // TODO: to base
+        // TODO: to base, ahol pl. a resx kinullozása, rs-ek disposeolása stb. is megtörténik
         protected virtual void Dispose(bool disposing)
         {
+            mergedCultures = null;
             UnhookEvents();
         }
 
@@ -362,8 +375,6 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         private object GetObjectWithAppend(string name, CultureInfo culture, bool isString)
         {
-            EnsureMerged(culture, ResourceSetRetrieval.CreateIfNotExists);
-
             object value;
             ResourceSet cached = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
             if (value != null)
@@ -371,6 +382,9 @@ namespace KGySoft.Libraries.Resources
 
             // TODO: ha value null és !isString: ha seen != null && culture == inv, akkor ha seen.Contains(name), visszaadható az invariantban tárolt null
             // megfontolni: culture == inv helyett ha a wrapped culture inv, ugyanis ha ez nem jó, azt az IsCachedProxyAccepted sem adhatná vissza
+            // A létezõ null visszaadás invariantból most a foreach belsejében van. Ott be kéne a cache-t is állítani, és mehet ide is az ellenõrzés
+
+            EnsureMerged(culture, ResourceSetRetrieval.CreateIfNotExists);
 
             // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
             // the inner one can return an existing resource set without the searched resource, in which case here is
@@ -578,28 +592,147 @@ namespace KGySoft.Libraries.Resources
                 || (append & (AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad)) == AutoAppendOptions.None && culture.IsNeutralCulture);
         }
 
+        /// <summary>
+        /// Tells the resource manager to call the <see cref="ResourceSet.Close" /> method on all <see cref="ResourceSet" /> objects and release all resources.
+        /// All unsaved resources will be lost.
+        /// </summary>
+        public override void ReleaseAllResources()
+        {
+            lock (SyncRoot)
+            {
+                base.ReleaseAllResources();
+                mergedCultures = null;
+            }
+        }
 
         private void EnsureMerged(CultureInfo culture, ResourceSetRetrieval behavior)
         {
             Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);
             AutoAppendOptions append = AutoAppend;
 
-            // return if there is no append on load...
-            if ((append & AutoAppendOptions.AppendOnLoad) == AutoAppendOptions.None
-                // ...or append flags are not set...
-                || (append & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None
-                // ...or the requested culture is invariant...
-                || culture.Equals(CultureInfo.InvariantCulture)
-                // ...or only AppendSpecific is on but the requested culture is neutral...
-                || ((append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && culture.IsNeutralCulture)
-                // ...or culture is already loaded/created
-                || IsNonProxyLoaded(culture))
+            lock (SyncRoot)
             {
-                return;
+                // return if there is no append on load...
+                if ((append & AutoAppendOptions.AppendOnLoad) == AutoAppendOptions.None
+                    // ...or append flags are not set...
+                    || (append & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None
+                    // ...or the requested culture is invariant...
+                    || culture.Equals(CultureInfo.InvariantCulture)
+                    // ...or only AppendSpecific is on but the requested culture is neutral...
+                    || ((append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && culture.IsNeutralCulture)
+                    // ...or merge status is already up-to-date
+                    || (mergedCultures?.ContainsKey(culture) ?? false))
+                    //// ...or culture is already loaded/created
+                    //|| IsNonProxyLoaded(culture))
+                {
+                    return;
+                }
+
+                // Phase 1: collecting cultures to merge
+                Debug.Assert(Source != ResourceManagerSources.CompiledOnly);
+                if (mergedCultures == null)
+                    mergedCultures = new Dictionary<CultureInfo, bool> { {CultureInfo.InvariantCulture, true} };
+                ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+                var toMerge = new Stack<KeyValuePair<CultureInfo, bool>>();
+                bool isFirstNeutral = true;
+                CultureInfo stopMerge = null;
+
+                // crawling from specific to neutral...
+                foreach (CultureInfo currentCulture in mgr)
+                {
+                    bool merged;
+                    // if culture is not up-to-date
+                    if (!mergedCultures.TryGetValue(currentCulture, out merged))
+                    {
+                        // TODO: ugyanez a logika kellhet a sima resource merge-be is
+                        bool isMergeNeeded =
+                            // append neutral cultures is on and current culture is a neutral one
+                            ((append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.AppendNeutralCultures && currentCulture.IsNeutralCulture)
+                            // append first neutral is on and current culture is the first neutral one
+                            || ((append & AutoAppendOptions.AppendFirstNeutralCulture) != AutoAppendOptions.None && isFirstNeutral && currentCulture.IsNeutralCulture)
+                            // append last neutral is on and parent of current neutral culture is invariant
+                            || ((append & AutoAppendOptions.AppendLastNeutralCulture) != AutoAppendOptions.None && currentCulture.IsNeutralCulture && ReferenceEquals(currentCulture.Parent, CultureInfo.InvariantCulture))
+                            // append specific cultures is on and current culture is a specific one
+                            || ((append & AutoAppendOptions.AppendSpecificCultures) == AutoAppendOptions.AppendSpecificCultures && !ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && !currentCulture.IsNeutralCulture)
+                            // append first specific is on and requested culture is a specific one
+                            || ((append & AutoAppendOptions.AppendFirstSpecificCulture) != AutoAppendOptions.None && !ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && currentCulture.Equals(culture) && !currentCulture.IsNeutralCulture)
+                            // append last specific is on and parent of current specific is neutral or invariant
+                            || ((append & AutoAppendOptions.AppendLastSpecificCulture) != AutoAppendOptions.None && !ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && !currentCulture.IsNeutralCulture && (currentCulture.Parent.IsNeutralCulture || ReferenceEquals(currentCulture.Parent, CultureInfo.InvariantCulture)))
+                            ;
+
+                        if (isFirstNeutral && currentCulture.IsNeutralCulture)
+                            isFirstNeutral = false;
+
+                        toMerge.Push(new KeyValuePair<CultureInfo, bool>(currentCulture, isMergeNeeded));
+
+                        // storing the last culture to be merged in this hierarchy
+                        if (isMergeNeeded && stopMerge == null)
+                            stopMerge = currentCulture;
+                    }
+                    // we reached an up-to-date culture: searching for a merged one to take a base or invariant
+                    else
+                    {
+                        toMerge.Push(new KeyValuePair<CultureInfo, bool>(currentCulture, merged));
+                        if (merged)
+                            break;
+                    }
+                }
+
+                // Phase 2: Performing the merge
+                Debug.Assert(toMerge.Count > 0 && toMerge.Peek().Value, "A merged culture is expected as top element on the stack ");
+
+                // actually there is nothing to merge
+                if (stopMerge == null)
+                {
+                    foreach (KeyValuePair<CultureInfo, bool> item in toMerge)
+                    {
+                        if (!mergedCultures.ContainsKey(item.Key))
+                        {
+                            Debug.Assert(!item.Value, "No merging is expected here");
+                            mergedCultures.Add(item.Key, false);
+                        }
+                    }
+
+                    return;
+                }
+
+                // taking the first element, which is merged (or is the invariant culture) and doing the merges
+                bool tryParents = ThrowException && ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture)
+                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) != AutoAppendOptions.None;
+                ResourceSet rs = base.InternalGetResourceSet(toMerge.Peek().Key, ResourceSetRetrieval.LoadIfExists, tryParents, false);
+                Debug.Assert(rs != null || ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture), "A merged culture is expected to be exist. Only invariant can be missing");
+                Debug.Assert(rs == null || IsNonProxyLoaded(toMerge.Peek().Key), "The base culture for merge should not be a proxy");
+
+                toMerge.Pop();
+                Debug.Assert(toMerge.Count > 0, "Cultures to be merged are expected on the stack");
+                KeyValuePair<CultureInfo, bool> current;
+                Dictionary<string, object> acc = new Dictionary<string, object>();
+                if (rs != null)
+                {
+                    var enumerator = rs.GetEnumerator();
+                }
+
+                // TODO: - inicializálni egy dictionary-t vagy resxresourceset-et rs-sel
+                // - A cikluson belül: 
+                //     - current rs elkérése. Ha merge kell, create-tel, egyébként load
+                //     - ha a current proxy, skip (+ assert?)
+                //     - a dictionary-be (és merge esetén a forceexpandós target rs-be) mergelni a current rs-t
+                //     - mergedCultures.Add
+                // - A ciklus után: A stack maradékát hozzáadni a mergedCultures-höz
+
+                do
+                {
+                    current = toMerge.Pop();
+                } while (!ReferenceEquals(current.Key, stopMerge));
             }
 
-            Debug.Assert(Source != ResourceManagerSources.CompiledOnly);
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+
+
+
+            ////////////////////
+
+
+
             IExpandoResourceSet specific = null, neutral = null;
             CultureInfo neutralculture = null;
 
