@@ -345,7 +345,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             object value;
-            ResourceSet cached = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
+            ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value));
             if (value != null)
                 return value;
 
@@ -360,10 +360,11 @@ namespace KGySoft.Libraries.Resources
                     return null;
 
                 // we have already checked this resource
-                if (rs == cached)
+                var unwrapped = Unwrap(rs);
+                if (unwrapped == seen)
                     continue;
 
-                value = GetResourceFromAny(rs, name, isString);
+                value = GetResourceFromAny(unwrapped, name, isString);
                 if (value != null)
                 {
                     // update last used ResourceSet
@@ -375,7 +376,7 @@ namespace KGySoft.Libraries.Resources
                     return value;
                 }
 
-                cached = rs;
+                seen = unwrapped;
             }
 
             return null;
@@ -499,6 +500,11 @@ namespace KGySoft.Libraries.Resources
 
             return rs;
         }
+
+        /// <summary>
+        /// Actually should be protected AND internal...
+        /// </summary>
+        internal static bool IsProxy(ResourceSet rs) => rs is ProxyResourceSet;
 
         /// <summary>
         /// Retrieves the resource set for a particular culture.

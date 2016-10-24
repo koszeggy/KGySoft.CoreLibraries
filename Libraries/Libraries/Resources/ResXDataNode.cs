@@ -353,6 +353,10 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Called from <see cref="ResXResourceSet"/>.
         /// </summary>
+        /// <param name="safeMode">true to get ResXDataNode as object and string without exception as string.</param>
+        /// <param name="isString">true to get as string</param>
+        /// <param name="cleanup">true to nullify nodeInfo after a non-safe retrieval</param>
+        /// <param name="basePath">if null, tries to use the original base path if any</param>
         internal object GetValueInternal(bool safeMode, bool isString, bool cleanup, string basePath)
         {
             object result;
