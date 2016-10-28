@@ -87,32 +87,6 @@ namespace _LibrariesTest.Libraries.Resources
             }
 
             huRunicHULowland = CultureInfo.GetCultureInfo("hu-Runic-HU-lowland");
-
-            //foreach (CultureInfo culture in CultureInfo.GetCultures(CultureTypes.SpecificCultures))
-            //{
-            //var culture = huRunicHULowland;
-            //int n = 0, s = 0;
-            //for (CultureInfo ci = culture; !Equals(ci, CultureInfo.InvariantCulture); ci = ci.Parent)
-            //{
-            //    if (ci.IsNeutralCulture)
-            //        n++;
-            //    else
-            //        s++;
-            //}
-
-            //if (n <= 1 && s <= 1)
-            //    continue;
-
-            //Console.Write($"S+N: {s}+{n} ");
-            //for (CultureInfo ci = culture; !Equals(ci, CultureInfo.InvariantCulture); ci = ci.Parent)
-            //{
-            //    Console.Write($"[{ci.Name}]{ci.EnglishName}:{(ci.IsNeutralCulture ? "neutral" : "specific")}");
-            //    if (!Equals(ci.Parent, CultureInfo.InvariantCulture))
-            //        Console.Write(" => ");
-            //}
-
-            //Console.WriteLine();
-            //}
         }
 
         [ClassCleanup]
@@ -213,7 +187,5 @@ namespace _LibrariesTest.Libraries.Resources
             // top/bottom/all, with neutral, too
             throw new NotImplementedException();
         }
-
-
     }
 }

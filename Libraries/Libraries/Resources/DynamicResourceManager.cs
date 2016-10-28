@@ -60,7 +60,6 @@ namespace KGySoft.Libraries.Resources
                             SetSource(LanguageSettings.DynamicResourceManagersSource);
                         if (LanguageSettings.DynamicResourceManagersAutoAppend.IsWidening(autoAppend))
                             mergedCultures = null;
-                        // TODO: autosave, autoappend
                     }
                     else if (autoAppend.IsWidening(LanguageSettings.DynamicResourceManagersAutoAppend))
                         mergedCultures = null;
@@ -376,12 +375,16 @@ namespace KGySoft.Libraries.Resources
         private object GetObjectWithAppend(string name, CultureInfo culture, bool isString)
         {
             object value;
-            ResourceSet seen = TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value);
+            ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out value);
 
-            // null is expected as object from the invariant culture
-            // TODO: megfontolni: culture == inv helyett ha a wrapped culture inv, ugyanis ha ez nem jó, azt az IsCachedProxyAccepted sem adhatná vissza
-            if (value != null || (seen != null && !isString && Equals(culture, CultureInfo.InvariantCulture) && ((seen as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) ?? false)))
+            // There is a result, or a stored null is returned from invariant resource as object
+            if (value != null
+                || (seen != null && !isString
+                    && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
+                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+            {
                 return value;
+            }
 
             EnsureMerged(culture, ResourceSetRetrieval.CreateIfNotExists);
 
@@ -390,7 +393,11 @@ namespace KGySoft.Libraries.Resources
             ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
             var toMerge = new Stack<IExpandoResourceSet>();
             bool isFirstNeutral = true;
+
+            // The culture to cache is the culture where the resource at the end comes from.
+            // The resource to cache is however can be a proxy. It can be set for sure without creating proxies if it belongs to the requested culture.
             CultureInfo cultureToCache = null;
+            ResourceSet toCache = null;
 
             // Crawling from specific to neutral and collecting the cultures to merge
             foreach (CultureInfo currentCulture in mgr)
@@ -410,21 +417,26 @@ namespace KGySoft.Libraries.Resources
                 {
                     value = GetResourceFromAny(rs, name, isString);
 
+                    // there is a result
                     if (value != null)
                     {
-                        // returning the value only if there is nothing to merge and to proxy
-                        if (toMerge.Count == 0 && currentCulture.Equals(culture))
+                        if (toMerge.Count == 0)
                         {
-                            SetCache(currentCulture, rs);
-                            return value;
+                            // returning the value immediately only if there is nothing to merge and to proxy
+                            if (currentCulture.Equals(culture))
+                            {
+                                SetCache(currentCulture, rs);
+                                return value;
+                            }
+
+                            // nothing to merge but the result is from a base culture: a proxy will be created at the end
+                            cultureToCache = currentCulture;
                         }
 
-                        if (toMerge.Count == 0)
-                            cultureToCache = currentCulture;
                         break;
                     }
                     // null as object from invariant can be returned
-                    else if (!isString && ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && ((rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) ?? false))
+                    else if (!isString && ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
                     {
                         // null is never merged so ignoring toMerge if any
                         SetCache(currentCulture, rs);
@@ -439,7 +451,11 @@ namespace KGySoft.Libraries.Resources
                 {
                     toMerge.Push((IExpandoResourceSet)rs);
                     if (cultureToCache == null)
+                    {
                         cultureToCache = currentCulture;
+                        if (Equals(culture, currentCulture))
+                            toCache = rs;
+                    }
                 }
             }
 
@@ -452,19 +468,18 @@ namespace KGySoft.Libraries.Resources
 
                 IExpandoResourceSet inv = (IExpandoResourceSet)InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
 
-                // as object: adding null to invariant and return because null is never merged
-                if (!isString)
+                // as string: adding unknown to invariant; otherwise, adding null explicitly
+                if (isString)
+                    value = LanguageSettings.UnknownResourcePrefix + name;
+
+                inv.SetObject(name, value);
+
+                // if there is nothing to merge, returning (as object, null is never merged)
+                if (!isString || toMerge.Count == 0)
                 {
-                    inv.SetObject(name, null);
                     SetCache(CultureInfo.InvariantCulture, (ResourceSet)inv);
                     return null;
                 }
-
-                // as string: adding unknown to invariant
-                value = LanguageSettings.UnknownResourcePrefix + name;
-                inv.SetObject(name, value);
-                if (toMerge.Count == 0)
-                    cultureToCache = CultureInfo.InvariantCulture;
             }
 
             // Phase 3: processing the merge
@@ -476,13 +491,26 @@ namespace KGySoft.Libraries.Resources
                 rsToMerge.SetObject(name, value);
             }
 
-            // Last step: creating the proxies for the requested culture by using tryParents = true.
-            // If no proxy is needed (the resource is found in the requested culture), the result is returned in Phase 1.
             // cultureToCache is now the most derived traversed culture in which the returned resource exists.
-            ResourceSet toCache = InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false);
-            Debug.Assert(IsProxy(toCache) || ReferenceEquals(cultureToCache, CultureInfo.InvariantCulture), "If th");
-            SetCache(cultureToCache, toCache);
+            // If cultureToCache is not the requested one, creating the proxies for the requested culture by using tryParents = true.
+            Debug.Assert(cultureToCache != null, "cultureToCache should be set here");
+            if (toCache == null)
+            {
+                toCache = InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false);
+                ResourceSet rs = Unwrap(toCache);
+                IExpandoResourceSet expandoRs = rs as IExpandoResourceSet;
 
+                // The resource set of cultureToCache id overridden by a derived resource so we cannot create the possible proxy which
+                // contains the result. It can be done by the base class only, which uses tryParent=true in all levels.
+                if ((expandoRs != null && !expandoRs.ContainsResource(name, IgnoreCase)) || rs.GetObject(name, IgnoreCase) == null)
+                {
+                    object valueByBase = isString ? base.GetString(name, culture) : base.GetObject(name, culture);
+                    Debug.Assert(value == valueByBase);
+                    return value;
+                }
+            }
+
+            SetCache(cultureToCache, toCache);
             return value;
         }
 
