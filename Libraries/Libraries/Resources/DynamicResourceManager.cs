@@ -394,9 +394,8 @@ namespace KGySoft.Libraries.Resources
             var toMerge = new Stack<IExpandoResourceSet>();
             bool isFirstNeutral = true;
 
-            // The culture to cache is the culture where the resource at the end comes from.
-            // The resource to cache is however can be a proxy. It can be set for sure without creating proxies if it belongs to the requested culture.
-            CultureInfo cultureToCache = null;
+            // The resource to cache normally should be the resource to which the requested culture belongs.
+            // Since DRM does not use tryParents = true during the traversal, the cached proxies are created on caching.
             ResourceSet toCache = null;
 
             // Crawling from specific to neutral and collecting the cultures to merge
@@ -405,6 +404,12 @@ namespace KGySoft.Libraries.Resources
                 bool isMergeNeeded = IsMergeNeeded(culture, currentCulture, isFirstNeutral);
                 if (isFirstNeutral && currentCulture.IsNeutralCulture)
                     isFirstNeutral = false;
+
+                // can occur from the 2nd iteration: the proxy to cache will be invalidated so it should be re-created
+                if (isMergeNeeded && IsProxy(toCache) && !IsExpandoExists(currentCulture))
+                {
+                    toCache = null;
+                }
 
                 // using tryParents only if invariant is requested without appending so the exception can come from the base
                 bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
@@ -420,43 +425,35 @@ namespace KGySoft.Libraries.Resources
                     // there is a result
                     if (value != null)
                     {
-                        if (toMerge.Count == 0)
+                        // returning the value immediately only if there is nothing to merge and to proxy
+                        if (toMerge.Count == 0 && currentCulture.Equals(culture))
                         {
-                            // returning the value immediately only if there is nothing to merge and to proxy
-                            if (currentCulture.Equals(culture))
-                            {
-                                SetCache(currentCulture, rs);
-                                return value;
-                            }
-
-                            // nothing to merge but the result is from a base culture: a proxy will be created at the end
-                            cultureToCache = currentCulture;
+                            SetCache(culture, rs);
+                            return value;
                         }
-
-                        break;
                     }
-                    // null as object from invariant can be returned
+                    // null as object from invariant can be returned. null is never merged so ignoring toMerge if any.
                     else if (!isString && ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
                     {
-                        // null is never merged so ignoring toMerge if any
-                        SetCache(currentCulture, rs);
+                        SetCache(culture, toCache
+                            ?? (Equals(culture, CultureInfo.InvariantCulture)
+                                ? rs
+                                : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
                         return null;
                     }
 
-                    // Unlike in base, no unwrapping here because proxies are skipped here
+                    // Unlike in base, no unwrapping for this check because proxies are skipped here
                     seen = rs;
                 }
 
+                if (Equals(culture, currentCulture))
+                    toCache = rs;
+
+                if (value != null)
+                    break;
+
                 if (isMergeNeeded)
-                {
-                    toMerge.Push((IExpandoResourceSet)rs);
-                    if (cultureToCache == null)
-                    {
-                        cultureToCache = currentCulture;
-                        if (Equals(culture, currentCulture))
-                            toCache = rs;
-                    }
-                }
+                    toMerge.Push((IExpandoResourceSet) rs);
             }
 
             // Phase 2: handling null
@@ -477,8 +474,11 @@ namespace KGySoft.Libraries.Resources
                 // if there is nothing to merge, returning (as object, null is never merged)
                 if (!isString || toMerge.Count == 0)
                 {
-                    SetCache(CultureInfo.InvariantCulture, (ResourceSet)inv);
-                    return null;
+                    SetCache(culture, toCache
+                        ?? (Equals(culture, CultureInfo.InvariantCulture) 
+                            ? (ResourceSet)inv 
+                            : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
+                    return value;
                 }
             }
 
@@ -491,26 +491,8 @@ namespace KGySoft.Libraries.Resources
                 rsToMerge.SetObject(name, value);
             }
 
-            // cultureToCache is now the most derived traversed culture in which the returned resource exists.
-            // If cultureToCache is not the requested one, creating the proxies for the requested culture by using tryParents = true.
-            Debug.Assert(cultureToCache != null, "cultureToCache should be set here");
-            if (toCache == null)
-            {
-                toCache = InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false);
-                ResourceSet rs = Unwrap(toCache);
-                IExpandoResourceSet expandoRs = rs as IExpandoResourceSet;
-
-                // The resource set of cultureToCache id overridden by a derived resource so we cannot create the possible proxy which
-                // contains the result. It can be done by the base class only, which uses tryParent=true in all levels.
-                if ((expandoRs != null && !expandoRs.ContainsResource(name, IgnoreCase)) || rs.GetObject(name, IgnoreCase) == null)
-                {
-                    object valueByBase = isString ? base.GetString(name, culture) : base.GetObject(name, culture);
-                    Debug.Assert(value == valueByBase);
-                    return value;
-                }
-            }
-
-            SetCache(cultureToCache, toCache);
+            // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
+            SetCache(culture, toCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
             return value;
         }
 
@@ -536,21 +518,27 @@ namespace KGySoft.Libraries.Resources
             if (!base.IsCachedProxyAccepted(proxy, culture))
                 return false;
 
-            // occurs if called by base.GetObjectInternal
+            AutoAppendOptions autoAppend = AutoAppend;
+
+            // There is no append for existing entries (only AddUnknownToInvariantCulture).
+            if ((autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
+                return true;
+
+            // This check matters if called by base.GetObjectInternal. Otherwise, already checked earlier.
             if (!IsAppendPossible(culture))
                 return true;
 
-            // Note: we don't check AddUnknownToInvariantCulture flag here because if invariant cached resource is found, it is never proxied
+            // Note: we don't check AddUnknownToInvariantCulture flag here because in the cache for the invariant key the resource is never proxied
 
-            // Neutral is requested: a parent nutral (most cases: invariant) is in the proxy.
+            // Neutral is requested: a parent neutral (most cases: invariant) is in the proxy.
             // This is ok if the neutral is not about to be appended.
             if (culture.IsNeutralCulture)
-                return (AutoAppend & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None;
+                return (autoAppend & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None;
 
             // Specific is requested: the proxy usually contains a neutral or the invariant.
             // This is ok if only neutral should be appended and the proxy contains a neutral (non-invariant) culture.
-            // This is ok because if the neutral in the proxy contains a result, it can be reurned and nothing should be appended.
-            return (AutoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.AppendNeutralCultures
+            // This is ok because if the neutral in the proxy contains a result, it can be returned and nothing should be appended.
+            return (autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.AppendNeutralCultures
                 && !GetWrappedCulture(proxy).Equals(CultureInfo.InvariantCulture);
         }
 
@@ -565,7 +553,7 @@ namespace KGySoft.Libraries.Resources
             return !(base.Source == ResourceManagerSources.CompiledOnly
                 // ...or there is no appending at all...
                 || (append = AutoAppend) == AutoAppendOptions.None
-                // ...invariant culture is requested but invariant is never appended...
+                // ...invariant culture is requested but invariant is not appended...
                 || (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None && Equals(culture, CultureInfo.InvariantCulture)
                 // ...a neutral culture is requested but only specific culture is appended
                 || (append & (AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad)) == AutoAppendOptions.None && culture.IsNeutralCulture);

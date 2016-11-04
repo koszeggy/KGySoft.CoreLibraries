@@ -118,6 +118,10 @@ namespace KGySoft.Libraries.Resources
         [NonSerialized]
         private object syncRoot;
 
+        /// <summary>
+        /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
+        /// has been found but the resource set was requested last time. In cases there are different this method performs usually better.
+        /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
 
@@ -337,7 +341,10 @@ namespace KGySoft.Libraries.Resources
             if (null == name)
                 throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
 
-            ResXResourceSet last = GetFirstResourceSet(culture ?? CultureInfo.CurrentUICulture);
+            if (culture == null)
+                culture = CultureInfo.CurrentUICulture;
+
+            ResXResourceSet last = GetFirstResourceSet(culture);
             object value;
             if (last != null)
             {
@@ -350,22 +357,25 @@ namespace KGySoft.Libraries.Resources
             // the inner one can return an existing resource set without the searched resource, in which case here is
             // the fallback to the parent resource.
             ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            ResXResourceSet toCache = null;
             foreach (CultureInfo currentCultureInfo in mgr)
             {
                 ResXResourceSet rs = GetResXResourceSet(currentCultureInfo, ResourceSetRetrieval.LoadIfExists, true);
                 if (rs == null)
-                    break;
+                    return null;
 
                 if (rs == last)
                     continue;
 
+                if (toCache == null)
+                    toCache = rs;
+
                 value = rs.GetResourceInternal(name, IgnoreCase, isString, safeMode);
                 if (value != null)
                 {
-                    // update last used ResourceSet
                     lock (syncRoot)
                     {
-                        lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(currentCultureInfo.Name, rs);
+                        lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(culture.Name, toCache);
                     }
 
                     return value;

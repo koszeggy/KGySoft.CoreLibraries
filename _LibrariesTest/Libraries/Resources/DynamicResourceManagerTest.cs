@@ -110,16 +110,22 @@ namespace _LibrariesTest.Libraries.Resources
 
             string key = "unknown";
 
-            // Exception is thrown through base HRM
-            Throws<MissingManifestResourceException>(() => manager.GetString(key, inv));
+            //// Exception is thrown through base HRM
+            //Throws<MissingManifestResourceException>(() => manager.GetString(key, inv));
 
-            // Due to possible append options, exception is thrown through derived DRM
-            Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
+            //// Due to possible append options, exception is thrown through derived DRM
+            //// For the neutral en culture a resource set is created during the traversal
+            //Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
+            //Assert.IsNull(manager.GetResourceSet(enUS, false, false));
+            //Assert.IsNotNull(manager.GetResourceSet(en, false, false));
 
             // Exception is not thrown any more. Instead, a new resource is automatically added
             manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
+            manager.ReleaseAllResources();
+
             Assert.IsTrue(manager.GetString(key, inv).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
             Assert.IsTrue(manager.GetString(key, en).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            // TODO: tart: következő sor (előzőek is kellenek: végig debuggolni, hogy 2x-re már cache ok)
             Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
             manager.ReleaseAllResources();
             Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));

@@ -96,6 +96,10 @@ namespace KGySoft.Libraries.Resources
         [NonSerialized]
         private Dictionary<string, ResourceSet> resourceSets;
 
+        /// <summary>
+        /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
+        /// has been found but the resource set was requested last time. In cases there are different this method performs usually better.
+        /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResourceSet> lastUsedResourceSet;
 
@@ -174,6 +178,7 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
+#if DEBUG
         /// <summary>
         /// Gets whether a non-proxy resource set is present for the specified culture.
         /// Actually protected but should be visible only in this project.
@@ -184,6 +189,20 @@ namespace KGySoft.Libraries.Resources
             {
                 ResourceSet rs;
                 return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && !(rs is ProxyResourceSet);
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Gets whether an expando resource set is present for the specified culture.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal bool IsExpandoExists(CultureInfo culture)
+        {
+            lock (SyncRoot)
+            {
+                ResourceSet rs;
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && rs is IExpandoResourceSet;
             }
         }
 
@@ -344,8 +363,10 @@ namespace KGySoft.Libraries.Resources
             if (null == name)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
+            if (culture == null)
+                culture = CultureInfo.CurrentUICulture;
             object value;
-            ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture ?? CultureInfo.CurrentUICulture, isString, out value));
+            ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, out value));
             if (value != null)
                 return value;
 
@@ -353,6 +374,7 @@ namespace KGySoft.Libraries.Resources
             // the inner one can return an existing resource set without the searched resource, in which case here is
             // the fallback to the parent resource.
             ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            ResourceSet toCache = null;
             foreach (CultureInfo currentCulture in mgr)
             {
                 ResourceSet rs = InternalGetResourceSet(currentCulture, ResourceSetRetrieval.LoadIfExists, true, false);
@@ -364,13 +386,15 @@ namespace KGySoft.Libraries.Resources
                 if (unwrapped == seen)
                     continue;
 
+                if (toCache == null)
+                    toCache = rs;
+
                 value = GetResourceFromAny(unwrapped, name, isString);
                 if (value != null)
                 {
-                    // update last used ResourceSet
                     lock (SyncRoot)
                     {
-                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(currentCulture.Name, rs);
+                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, toCache);
                     }
 
                     return value;
@@ -426,15 +450,10 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Tries to get the first resource set in the traversal hierarchy,
         /// so the resource set for the culture itself.
-        /// Actually should be protected AND internal...
         /// Warning: it CAN return a proxy
         /// </summary>
         private ResourceSet GetFirstResourceSet(CultureInfo culture)
         {
-            // Logic from ResourceFallbackManager.GetEnumerator()
-            if (culture.Name == NeutralResourcesCulture.Name)
-                culture = CultureInfo.InvariantCulture;
-
             lock (SyncRoot)
             {
                 ResourceSet rs;
@@ -605,7 +624,11 @@ namespace KGySoft.Libraries.Resources
 
                         // after some proxies, a parent culture has been found: simply return if this was the proxied culture in the children
                         if (Equals(currentCultureInfo, foundProxyCulture))
+                        {
+#error Na ez simán rossz, mert proxy helyett éles culture-t ad vissza holott proxy-t kéne, ráadásul nem cache-eli be a proxyt a requested culture-höz a resourceSets-be
+                            // TODO: ez esetben végig kéne iterálni mgr-en, és amíg null van a resourceSets-ben, AddResourceSet(új proxy)...
                             return result;
+                        }
 
                         // othwerwise, we found a parent: we need to re-create the proxies in the cache to the children
                         Debug.Assert(foundProxyCulture == null, "There is a proxy with an incostistent parent in the hierarchy.");

@@ -15,6 +15,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace _LibrariesTest.Libraries.Resources
 {
     [TestClass]
+    [DeploymentItem("Resources", "Resources")]
+    [DeploymentItem("en", "en")]
+    [DeploymentItem("en-US", "en-US")]
     public class ResXResourceManagerTest: TestBase
     {
         private static CultureInfo inv = CultureInfo.InvariantCulture;
