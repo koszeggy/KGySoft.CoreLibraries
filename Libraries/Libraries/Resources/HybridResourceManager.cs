@@ -609,7 +609,7 @@ namespace KGySoft.Libraries.Resources
                 proxy = null;
                 lock (SyncRoot)
                 {
-                    resourceFound = resourceSets != null && resourceSets.TryGetValue(currentCultureInfo.Name, out result);
+                    resourceFound = resourceSets?.TryGetValue(currentCultureInfo.Name, out result) == true;
                 }
 
                 if (resourceFound)
@@ -622,16 +622,38 @@ namespace KGySoft.Libraries.Resources
                         if (Equals(culture, currentCultureInfo))
                             return result;
 
-                        // after some proxies, a parent culture has been found: simply return if this was the proxied culture in the children
+                        // after some proxies, a parent culture has been found: returning a proxy for this if this was the proxied culture in the children
                         if (Equals(currentCultureInfo, foundProxyCulture))
                         {
-#error Na ez simán rossz, mert proxy helyett éles culture-t ad vissza holott proxy-t kéne, ráadásul nem cache-eli be a proxyt a requested culture-höz a resourceSets-be
-                            // TODO: ez esetben végig kéne iterálni mgr-en, és amíg null van a resourceSets-ben, AddResourceSet(új proxy)...
-                            return result;
+                            // The hierarchy is now up-to-date. Creating the possible missing proxies and returning the one for the requested culture
+                            lock (SyncRoot)
+                            {
+                                ResourceSet toWrap = result;
+                                result = null;
+                                foreach (CultureInfo updateCultureInfo in mgr)
+                                {
+                                    // We have found again the first proxy in the hierarchy. This is now up-to-date for sure so returning.
+                                    ResourceSet rs;
+                                    if (resourceSets.TryGetValue(updateCultureInfo.Name, out rs))
+                                    {
+                                        Debug.Assert(rs is ProxyResourceSet, "A proxy is expected to be found here.");
+                                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, result ?? rs);
+                                        return result ?? rs;
+                                    }
+                                    // There is at least one non-existing key (most specific elements in the hierarchy): new proxy creation is needed
+                                    else
+                                    {
+                                        ResourceSet newProxy = new ProxyResourceSet(toWrap, foundProxyCulture, behavior == ResourceSetRetrieval.LoadIfExists);
+                                        AddResourceSet(updateCultureInfo.Name, ref newProxy);
+                                        if (result == null)
+                                            result = newProxy;
+                                    }
+                                }
+                            }
                         }
 
                         // othwerwise, we found a parent: we need to re-create the proxies in the cache to the children
-                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an incostistent parent in the hierarchy.");
+                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
                         foundCultureToAdd = currentCultureInfo;
                         break;
                     }
