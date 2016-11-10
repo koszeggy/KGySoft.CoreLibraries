@@ -367,8 +367,15 @@ namespace KGySoft.Libraries.Resources
                 culture = CultureInfo.CurrentUICulture;
             object value;
             ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, out value));
-            if (value != null)
+
+            // There is a result, or a stored null is returned from invariant
+            if (value != null
+                || (seen != null
+                    && (Equals(culture, CultureInfo.InvariantCulture) || seen is ProxyResourceSet && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
+                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+            {
                 return value;
+            }
 
             // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
             // the inner one can return an existing resource set without the searched resource, in which case here is
@@ -637,7 +644,6 @@ namespace KGySoft.Libraries.Resources
                                     if (resourceSets.TryGetValue(updateCultureInfo.Name, out rs))
                                     {
                                         Debug.Assert(rs is ProxyResourceSet, "A proxy is expected to be found here.");
-                                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, result ?? rs);
                                         return result ?? rs;
                                     }
                                     // There is at least one non-existing key (most specific elements in the hierarchy): new proxy creation is needed
@@ -652,7 +658,7 @@ namespace KGySoft.Libraries.Resources
                             }
                         }
 
-                        // othwerwise, we found a parent: we need to re-create the proxies in the cache to the children
+                        // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
                         Debug.Assert(foundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
                         foundCultureToAdd = currentCultureInfo;
                         break;
@@ -771,7 +777,6 @@ namespace KGySoft.Libraries.Resources
             lock (SyncRoot)
             {
                 ResourceSet toReturn = null;
-                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
 
                 // we replace a proxy: we must delete proxies, which are children of the found resource.
                 if (foundProxyCulture != null && resourceSets != null)
@@ -801,9 +806,9 @@ namespace KGySoft.Libraries.Resources
                     }
 
                     ResourceSet newProxy = new ProxyResourceSet(result, foundCultureToAdd, behavior == ResourceSetRetrieval.LoadIfExists);
+                    AddResourceSet(updateCultureInfo.Name, ref newProxy);
                     if (toReturn == null)
                         toReturn = newProxy;
-                    AddResourceSet(updateCultureInfo.Name, ref newProxy);
                 }
 
                 return toReturn;
@@ -846,6 +851,8 @@ namespace KGySoft.Libraries.Resources
             {
                 resourceSets.Add(cultureName, rs);
             }
+
+            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
         }
 
         /// <summary>

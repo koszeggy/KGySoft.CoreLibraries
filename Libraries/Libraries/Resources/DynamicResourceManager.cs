@@ -337,7 +337,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ArgumentNullException(nameof(culture), Res.Get(Res.ArgumentNull));
 
             if (loadIfExists && tryParents && IsAppendPossible(culture))
-                EnsureMerged(culture, ResourceSetRetrieval.LoadIfExists);
+                EnsureLoadedWithMerge(culture, ResourceSetRetrieval.LoadIfExists);
 
             return base.GetResourceSet(culture, loadIfExists, tryParents);
         }
@@ -354,7 +354,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
 
             if (behavior != ResourceSetRetrieval.GetIfAlreadyLoaded && tryParents && IsAppendPossible(culture))
-                EnsureMerged(culture, behavior);
+                EnsureLoadedWithMerge(culture, behavior);
 
             return base.GetExpandoResourceSet(culture, behavior, tryParents);
         }
@@ -386,7 +386,7 @@ namespace KGySoft.Libraries.Resources
                 return value;
             }
 
-            EnsureMerged(culture, ResourceSetRetrieval.CreateIfNotExists);
+            EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists);
 
             // Phase 1: finding the resource and meanwhile collecting cultures to merge
             AutoAppendOptions append = AutoAppend;
@@ -572,7 +572,7 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        private void EnsureMerged(CultureInfo culture, ResourceSetRetrieval behavior)
+        private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
         {
             Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);
             AutoAppendOptions append = AutoAppend;
@@ -586,9 +586,9 @@ namespace KGySoft.Libraries.Resources
                     // ...or the requested culture is invariant...
                     || culture.Equals(CultureInfo.InvariantCulture)
                     // ...or only AppendSpecific is on but the requested culture is neutral...
-                    || ((append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && culture.IsNeutralCulture)
+                    || (append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && culture.IsNeutralCulture
                     // ...or merge status is already up-to-date
-                    || (mergedCultures?.ContainsKey(culture) ?? false))
+                    || mergedCultures?.ContainsKey(culture) == true)
                     //// ...or culture is already loaded/created
                     //|| IsNonProxyLoaded(culture))
                 {
