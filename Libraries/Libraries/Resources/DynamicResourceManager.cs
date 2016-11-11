@@ -377,9 +377,9 @@ namespace KGySoft.Libraries.Resources
             object value;
             ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out value);
 
-            // There is a result, or a stored null is returned from invariant resource as object
+            // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
             if (value != null
-                || (seen != null && !isString
+                || (seen != null
                     && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
                     && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
             {
@@ -432,8 +432,8 @@ namespace KGySoft.Libraries.Resources
                             return value;
                         }
                     }
-                    // null as object from invariant can be returned. null is never merged so ignoring toMerge if any.
-                    else if (!isString && ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
+                    // null from invariant can be returned. Stored null is never merged (even is requested as string) so ignoring toMerge if any.
+                    else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
                     {
                         SetCache(culture, toCache
                             ?? (Equals(culture, CultureInfo.InvariantCulture)

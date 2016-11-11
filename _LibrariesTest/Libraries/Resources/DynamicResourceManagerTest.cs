@@ -110,42 +110,41 @@ namespace _LibrariesTest.Libraries.Resources
 
             string key = "unknown";
 
-            //// Exception is thrown through base HRM
-            //Throws<MissingManifestResourceException>(() => manager.GetString(key, inv));
+            // Exception is thrown through base HRM
+            Throws<MissingManifestResourceException>(() => manager.GetString(key, inv));
 
-            //// Due to possible append options, exception is thrown through derived DRM
-            //// For the neutral en culture a resource set is created during the traversal
-            //Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
-            //Assert.IsNull(manager.GetResourceSet(enUS, false, false));
-            //Assert.IsNotNull(manager.GetResourceSet(en, false, false));
+            // Due to possible append options, exception is thrown through derived DRM
+            // For the neutral en culture a resource set is created during the traversal
+            Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
+            Assert.IsNull(manager.GetResourceSet(enUS, false, false));
+            Assert.IsNotNull(manager.GetResourceSet(en, false, false));
 
-            //// Exception is not thrown any more. Instead, a new resource is automatically added
-            //manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
-            //manager.ReleaseAllResources();
+            // Exception is not thrown any more. Instead, a new resource is automatically added
+            manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
+            manager.ReleaseAllResources();
 
-            //Assert.IsTrue(manager.GetString(key, inv).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            //Assert.IsTrue(manager.GetString(key, en).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            //Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            //manager.ReleaseAllResources();
-            //Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, inv).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, en).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            manager.ReleaseAllResources();
+            Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
 
-            //// If requested as derived with append, the new resource is merged into derived resources
-            //manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures;
-            //manager.ReleaseAllResources();
-            //Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            //IExpandoResourceSet rsEn = manager.GetExpandoResourceSet(en, ResourceSetRetrieval.GetIfAlreadyLoaded, false);
-            //Assert.IsTrue(rsEn.ContainsResource(key));
-            //Assert.AreSame(rsEn, manager.GetResourceSet(enUS, false, false), "en should be proxied for en-US");
-            //manager.AutoAppend |= AutoAppendOptions.AppendSpecificCultures;
-            //Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            //IExpandoResourceSet rsEnUs = manager.GetResourceSet(enUS, false, false) as IExpandoResourceSet;
-            //Assert.IsNotNull(rsEnUs);
-            //Assert.AreNotSame(rsEn, rsEnUs, "Due to merge a new resource set should have been created for en-US");
-            //Assert.IsTrue(rsEnUs.ContainsResource(key));
+            // If requested as derived with append, the new resource is merged into derived resources
+            manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures;
+            manager.ReleaseAllResources();
+            Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            IExpandoResourceSet rsEn = manager.GetExpandoResourceSet(en, ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+            Assert.IsTrue(rsEn.ContainsResource(key));
+            Assert.AreSame(rsEn, manager.GetResourceSet(enUS, false, false), "en should be proxied for en-US");
+            manager.AutoAppend |= AutoAppendOptions.AppendSpecificCultures;
+            Assert.IsTrue(manager.GetString(key, enUS).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            IExpandoResourceSet rsEnUs = manager.GetResourceSet(enUS, false, false) as IExpandoResourceSet;
+            Assert.IsNotNull(rsEnUs);
+            Assert.AreNotSame(rsEn, rsEnUs, "Due to merge a new resource set should have been created for en-US");
+            Assert.IsTrue(rsEnUs.ContainsResource(key));
 
             // As object: null is added to invariant
             manager.ReleaseAllResources();
-            // tart: ez már ok, megnézni, hogy HRM-ből sem iterál végig a base-ből jövő null-ra
             Assert.IsNull(manager.GetObject(key, inv));
             manager.GetExpandoResourceSet(inv, ResourceSetRetrieval.GetIfAlreadyLoaded, false).ContainsResource(key);
 
@@ -169,8 +168,24 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void MergeNeutralTest()
         {
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            {
+                AutoSave = AutoSaveOptions.None,
+                AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture
+            };
+
+            string key = "TestString";
+
+            // TODO: a cached proxyt nem fogadja el, pedig az abban lévő eredmény jó.
+            // Átgondolni, mennyire specifikusan lehet a problémát megfogalmazni:
+            // a.) Konkrét: Specifiusat kérünk, a első neutral appendeléssel, a proxyban, ahol az eredmény van, pont az első neutral van, tehát jó
+            // b.) Általános: Ha proxy van cache-elve, és van benne eredmény olyan rs-ből, amit már kell merge-ölni, akkor jó
+
+            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+            // beleszúrni közepébe
+
             // top/bottom/all, with specific, too
-            throw new NotImplementedException();
         }
 
         [TestMethod]
