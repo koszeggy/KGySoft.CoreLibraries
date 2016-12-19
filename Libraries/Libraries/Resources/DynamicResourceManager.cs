@@ -503,44 +503,46 @@ namespace KGySoft.Libraries.Resources
             return !strValue.StartsWith(prefix, StringComparison.Ordinal) ? prefix + strValue : value;
         }
 
-        /// <summary>
-        /// Called by GetFirstResourceSet if cache is a proxy.
-        /// There is always a traversal if this is called.
-        /// Proxy is accepted if it is no problem if a result is found in the proxied resource set.
-        /// </summary>
-        /// <param name="proxy">The found proxy</param>
-        /// <param name="culture">The requested culture</param>
-        internal override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
-        {
-            // if invariant culture is requested, this method should not be reached
-            Debug.Assert(!Equals(culture, CultureInfo.InvariantCulture), "There should be no proxy for the nnvariant culture");
+        // TODO: Ha ez tényleg nem kell, base-t is törölni, de legalábbis a culture paramétert és a virtualt
+        // TODO: Ha csak akkor rossz egy proxy, ha elõtte az AutoAppend változott, akkor annak a setterében törölni a base resourceSets-et és a last cache-t
+        ///// <summary>
+        ///// Called by GetFirstResourceSet if cache is a proxy.
+        ///// There is always a traversal if this is called.
+        ///// Proxy is accepted if it is no problem if a result is found in the proxied resource set.
+        ///// </summary>
+        ///// <param name="proxy">The found proxy</param>
+        ///// <param name="culture">The requested culture</param>
+        //internal override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
+        //{
+        //    // if invariant culture is requested, this method should not be reached
+        //    Debug.Assert(!Equals(culture, CultureInfo.InvariantCulture), "There should be no proxy for the nnvariant culture");
 
-            if (!base.IsCachedProxyAccepted(proxy, culture))
-                return false;
+        //    if (!base.IsCachedProxyAccepted(proxy, culture))
+        //        return false;
 
-            AutoAppendOptions autoAppend = AutoAppend;
+        //    AutoAppendOptions autoAppend = AutoAppend;
 
-            // There is no append for existing entries (only AddUnknownToInvariantCulture).
-            if ((autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
-                return true;
+        //    // There is no append for existing entries (only AddUnknownToInvariantCulture).
+        //    if ((autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
+        //        return true;
 
-            // This check matters if called by base.GetObjectInternal. Otherwise, already checked earlier.
-            if (!IsAppendPossible(culture))
-                return true;
+        //    // This check matters if called by base.GetObjectInternal. Otherwise, already checked earlier.
+        //    if (!IsAppendPossible(culture))
+        //        return true;
 
-            // Note: we don't check AddUnknownToInvariantCulture flag here because in the cache for the invariant key the resource is never proxied
+        //    // Note: we don't check AddUnknownToInvariantCulture flag here because in the cache for the invariant key the resource is never proxied
 
-            // Neutral is requested: a parent neutral (most cases: invariant) is in the proxy.
-            // This is ok if the neutral is not about to be appended.
-            if (culture.IsNeutralCulture)
-                return (autoAppend & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None;
+        //    // Neutral is requested: a parent neutral (most cases: invariant) is in the proxy.
+        //    // This is ok if the neutral is not about to be appended.
+        //    if (culture.IsNeutralCulture)
+        //        return (autoAppend & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None;
 
-            // Specific is requested: the proxy usually contains a neutral or the invariant.
-            // This is ok if only neutral should be appended and the proxy contains a neutral (non-invariant) culture.
-            // This is ok because if the neutral in the proxy contains a result, it can be returned and nothing should be appended.
-            return (autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.AppendNeutralCultures
-                && !GetWrappedCulture(proxy).Equals(CultureInfo.InvariantCulture);
-        }
+        //    // Specific is requested: the proxy usually contains a neutral or the invariant.
+        //    // This is ok if only neutral should be appended and the proxy contains a neutral (non-invariant) culture.
+        //    // This is ok because if the neutral in the proxy contains a result, it can be returned and nothing should be appended.
+        //    return (autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.AppendNeutralCultures
+        //        && !GetWrappedCulture(proxy).Equals(CultureInfo.InvariantCulture);
+        //}
 
         /// <summary>
         /// Checks whether append is possible
