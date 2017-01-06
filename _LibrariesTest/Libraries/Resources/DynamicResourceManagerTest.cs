@@ -175,21 +175,6 @@ namespace _LibrariesTest.Libraries.Resources
             };
 
             string key = "TestString";
-
-            // TODO: a cached proxyt nem fogadja el, pedig az abban lévő eredmény jó.
-            // Átgondolni, mennyire specifikusan lehet a problémát megfogalmazni:
-            // a.) Konkrét: Specifiusat kérünk, a első neutral appendeléssel, a proxyban, ahol az eredmény van, pont az első neutral van, tehát jó
-            // b.) Általános: Ha proxy van cache-elve, és van benne eredmény olyan rs-ből, amit már kell merge-ölni, akkor jó
-            // c.) Gordiuszi: Mindig jó a proxy, ha a hierarchia be van töltve (biztos?). Ha változik az AutoAppend, törölni a resource set cache-t és a last-ot, és akkor megint jól fog felépülni.
-            //     -> nem igaz, pl. GetResourceSet tryParenttel, miközben nincs AppendOnLoad és a culture lánc nem létezik: inv-hez jönnek létre a proxyk.
-            //        IsProxyAccepted tehát kell, de alapvetően csak azt kell ellenőrizni, hogy a wrapped culture az nem felsőbb parent-e, mint az első merge-ölendő culture a láncban. Minden hozzáadott plusz ellenőrzés is csak ezt döntse el gyorsan tesztelhető esetekben.
-            //        - Egyik megoldás a fenti, tehát mindig ellenőrzünk
-            //        - Félgordiuszi: ha csak a GetResourceSet tudja elrontani (tryParent és nem AppendOnLoad esetén), akkor egy field: canAcceptProxy, alapból true
-            //                        - set false: Get(E)ResourceSet, ha tryParents=true, culture != inv, és nincs AppendOnLoad
-            //                        - set true: Release, és minden olyan property állítás, ami töröl (AutoAppend talán törölhet csak akkor, ha false volt)
-            //                        - ha éppen false, az IsProxyAccepted ellenőrizheti a wrapped culture dolgot, egyébként csak a base-t és a bool flaget
-
-
             Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
             // beleszúrni közepébe

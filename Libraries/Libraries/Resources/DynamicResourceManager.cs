@@ -24,6 +24,7 @@ namespace KGySoft.Libraries.Resources
     public class DynamicResourceManager : HybridResourceManager, IDisposable
     {
         private bool useLanguageSettings;
+        private bool canAcceptProxy = true;
         private AutoSaveOptions autoSave = LanguageSettings.AutoSaveDefault;
         private AutoAppendOptions autoAppend = LanguageSettings.AutoAppendDefault;
 
@@ -126,7 +127,11 @@ namespace KGySoft.Libraries.Resources
 
                 value.CheckOptions();
                 if (autoAppend.IsWidening(value))
+                {
                     mergedCultures = null;
+                    if (IsAnyProxyLoaded())
+                        canAcceptProxy = false;
+                }
 
                 autoAppend = value;
             }
@@ -167,6 +172,7 @@ namespace KGySoft.Libraries.Resources
             {
                 OnSourceChanging();
                 mergedCultures = null;
+                canAcceptProxy = true;
                 base.SetSource(value);
             }
         }
@@ -338,6 +344,8 @@ namespace KGySoft.Libraries.Resources
 
             if (loadIfExists && tryParents && IsAppendPossible(culture))
                 EnsureLoadedWithMerge(culture, ResourceSetRetrieval.LoadIfExists);
+            else
+                ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
 
             return base.GetResourceSet(culture, loadIfExists, tryParents);
         }
@@ -355,9 +363,21 @@ namespace KGySoft.Libraries.Resources
 
             if (behavior != ResourceSetRetrieval.GetIfAlreadyLoaded && tryParents && IsAppendPossible(culture))
                 EnsureLoadedWithMerge(culture, behavior);
+            else
+                ReviseCanAcceptProxy(culture, behavior, tryParents);
+
 
             return base.GetExpandoResourceSet(culture, behavior, tryParents);
         }
+
+        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
+        {
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
+            ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
+
+            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
+        }
+
 
         private void AdjustCulture(ref CultureInfo culture)
         {
@@ -503,46 +523,71 @@ namespace KGySoft.Libraries.Resources
             return !strValue.StartsWith(prefix, StringComparison.Ordinal) ? prefix + strValue : value;
         }
 
-        // TODO: Ha ez tényleg nem kell, base-t is törölni, de legalábbis a culture paramétert és a virtualt
-        // TODO: Ha csak akkor rossz egy proxy, ha elõtte az AutoAppend változott, akkor annak a setterében törölni a base resourceSets-et és a last cache-t
-        ///// <summary>
-        ///// Called by GetFirstResourceSet if cache is a proxy.
-        ///// There is always a traversal if this is called.
-        ///// Proxy is accepted if it is no problem if a result is found in the proxied resource set.
-        ///// </summary>
-        ///// <param name="proxy">The found proxy</param>
-        ///// <param name="culture">The requested culture</param>
-        //internal override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
-        //{
-        //    // if invariant culture is requested, this method should not be reached
-        //    Debug.Assert(!Equals(culture, CultureInfo.InvariantCulture), "There should be no proxy for the nnvariant culture");
+        /// <summary>
+        /// Called by GetFirstResourceSet if cache is a proxy.
+        /// There is always a traversal if this is called.
+        /// Proxy is accepted if it is no problem if a result is found in the proxied resource set.
+        /// </summary>
+        /// <param name="proxy">The found proxy</param>
+        /// <param name="culture">The requested culture</param>
+        internal override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
+        {
+            // if invariant culture is requested, this method should not be reached
+            Debug.Assert(!Equals(culture, CultureInfo.InvariantCulture), "There should be no proxy for the invariant culture");
 
-        //    if (!base.IsCachedProxyAccepted(proxy, culture))
-        //        return false;
+            if (!base.IsCachedProxyAccepted(proxy, culture))
+                return false;
 
-        //    AutoAppendOptions autoAppend = AutoAppend;
+            if (canAcceptProxy)
+                return true;
 
-        //    // There is no append for existing entries (only AddUnknownToInvariantCulture).
-        //    if ((autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
-        //        return true;
+            AutoAppendOptions autoAppend = AutoAppend;
 
-        //    // This check matters if called by base.GetObjectInternal. Otherwise, already checked earlier.
-        //    if (!IsAppendPossible(culture))
-        //        return true;
+            // There is no append for existing entries (only AddUnknownToInvariantCulture).
+            if ((autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
+                return true;
 
-        //    // Note: we don't check AddUnknownToInvariantCulture flag here because in the cache for the invariant key the resource is never proxied
+            // traversing the cultures until wrapped culture in proxy is reached
+            CultureInfo wrappedCulture = GetWrappedCulture(proxy);
+            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            bool isFirstNeutral = true;
+            foreach (CultureInfo currentCulture in mgr)
+            {
+                // if we reached the wrapped culture, without merge need, we can accept the proxy
+                if (wrappedCulture.Equals(currentCulture))
+                    return true;
 
-        //    // Neutral is requested: a parent neutral (most cases: invariant) is in the proxy.
-        //    // This is ok if the neutral is not about to be appended.
-        //    if (culture.IsNeutralCulture)
-        //        return (autoAppend & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None;
+                // if merge is needed for a culture, which is a descendant of the wrapped culture, we cannot accept proxy
+                if (IsMergeNeeded(culture, currentCulture, isFirstNeutral))
+                    return false;
 
-        //    // Specific is requested: the proxy usually contains a neutral or the invariant.
-        //    // This is ok if only neutral should be appended and the proxy contains a neutral (non-invariant) culture.
-        //    // This is ok because if the neutral in the proxy contains a result, it can be returned and nothing should be appended.
-        //    return (autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.AppendNeutralCultures
-        //        && !GetWrappedCulture(proxy).Equals(CultureInfo.InvariantCulture);
-        //}
+                if (isFirstNeutral && currentCulture.IsNeutralCulture)
+                    isFirstNeutral = false;
+            }
+
+            // Internal error, no res is needed (we did not reached the proxied culture)
+            throw new InvalidOperationException("Proxied culture not found in hierarchy");
+        }
+
+        private void ReviseCanAcceptProxy(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
+        {
+            if (!canAcceptProxy)
+                return;
+
+            // accepting proxy breaks (full check must be performed in IsCachedProxyAccepted) if hierarchy is not about to be loaded...
+            if (behavior == ResourceSetRetrieval.GetIfAlreadyLoaded
+                // ...while parents are requested...
+                && tryParents
+                // ...and there is no appending on loading a new resource...
+                && (AutoAppend & AutoAppendOptions.AppendOnLoad) == AutoAppendOptions.None
+                // ...and non-invariant culture is requested...
+                && !CultureInfo.InvariantCulture.Equals(culture)
+                // ...which is either not loaded yet or a proxy is loaded for it (= non-proxy is not loaded for it yet)
+                && !IsNonProxyLoaded(culture))
+            {
+                canAcceptProxy = false;
+            }
+        }
 
         /// <summary>
         /// Checks whether append is possible
@@ -571,6 +616,7 @@ namespace KGySoft.Libraries.Resources
             {
                 base.ReleaseAllResources();
                 mergedCultures = null;
+                canAcceptProxy = true;
             }
         }
 

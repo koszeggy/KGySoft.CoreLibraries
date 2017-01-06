@@ -178,7 +178,6 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-#if DEBUG
         /// <summary>
         /// Gets whether a non-proxy resource set is present for the specified culture.
         /// Actually protected but should be visible only in this project.
@@ -191,7 +190,18 @@ namespace KGySoft.Libraries.Resources
                 return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && !(rs is ProxyResourceSet);
             }
         }
-#endif
+
+        /// <summary>
+        /// Gets whether a proxy resource set is present for any culture.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal bool IsAnyProxyLoaded()
+        {
+            lock (SyncRoot)
+            {
+                return resourceSets?.Values.Any(v => v is ProxyResourceSet) == true;
+            }
+        }
 
         /// <summary>
         /// Gets whether an expando resource set is present for the specified culture.
