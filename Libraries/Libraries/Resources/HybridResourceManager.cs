@@ -915,7 +915,7 @@ namespace KGySoft.Libraries.Resources
         /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public string GetMetaString(string name, CultureInfo culture = null)
+        public virtual string GetMetaString(string name, CultureInfo culture = null)
         {
             return (string)GetMetaInternal(name, culture, true);
         }
@@ -931,7 +931,7 @@ namespace KGySoft.Libraries.Resources
         /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public object GetMetaObject(string name, CultureInfo culture = null)
+        public virtual object GetMetaObject(string name, CultureInfo culture = null)
         {
             return GetMetaInternal(name, culture, false);
         }
@@ -981,7 +981,7 @@ namespace KGySoft.Libraries.Resources
         /// <para>If you want to remove the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject"/> method.</para>
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void SetObject(string name, object value, CultureInfo culture = null)
+        public virtual void SetObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
@@ -1007,7 +1007,7 @@ namespace KGySoft.Libraries.Resources
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void RemoveObject(string name, CultureInfo culture = null)
+        public virtual void RemoveObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
@@ -1033,7 +1033,7 @@ namespace KGySoft.Libraries.Resources
         /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet" /> method will return the meta objects with <see langword="null" /> value.
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void SetMetaObject(string name, object value, CultureInfo culture = null)
+        public virtual void SetMetaObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
@@ -1055,7 +1055,7 @@ namespace KGySoft.Libraries.Resources
         /// in the resource set in case-insensitive manner, they can be removed one by one only.
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void RemoveMetaObject(string name, CultureInfo culture = null)
+        public virtual void RemoveMetaObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
@@ -1077,7 +1077,7 @@ namespace KGySoft.Libraries.Resources
         /// <c>true</c> if the resource set of the specified <paramref name="culture" /> has been saved;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
+        public virtual bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 return false;
@@ -1095,7 +1095,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns><c>true</c> if at least one resource set has been saved; otherwise, <c>false</c>.</returns>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
-        public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
+        public virtual bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 return false;

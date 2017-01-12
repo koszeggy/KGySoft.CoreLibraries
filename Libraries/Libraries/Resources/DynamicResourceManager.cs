@@ -24,7 +24,7 @@ namespace KGySoft.Libraries.Resources
     public class DynamicResourceManager : HybridResourceManager, IDisposable
     {
         private bool useLanguageSettings;
-        private bool canAcceptProxy = true;
+        private volatile bool canAcceptProxy = true;
         private AutoSaveOptions autoSave = LanguageSettings.AutoSaveDefault;
         private AutoAppendOptions autoAppend = LanguageSettings.AutoAppendDefault;
 
@@ -197,6 +197,7 @@ namespace KGySoft.Libraries.Resources
 
         private void Save()
         {
+            // TODO: try-catch, maybe set az Exception property or trigger an error event in LaguageSettings
             SaveAllResources(compatibleFormat: CompatibleFormat);
         }
 
@@ -337,6 +338,16 @@ namespace KGySoft.Libraries.Resources
         // summary TODO: Unlike the protected InternalGetResourceSet, this gets an appended ResourceSet (and Expando, too)
         //         - appending is applied only if both loadIfExists and tryParents are true but no new resx resource set will be created. To create them use GetExpandoResourceSet with Create instead.
         //         - if no append is performed now due to the params, itt will not happen later for the retrieved resource set until a ReleaseAllResources call
+        /// <summary>
+        /// Retrieves the resource set for a particular culture.
+        /// </summary>
+        /// <param name="culture">The culture whose resources are to be retrieved.</param>
+        /// <param name="loadIfExists"><c>true</c> to load the resource set, if it has not been loaded yet and the corresponding resource file exists; otherwise, <c>false</c>.</param>
+        /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.</param>
+        /// <returns>
+        /// The resource set for the specified culture.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">culture</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             if (culture == null)
@@ -511,6 +522,10 @@ namespace KGySoft.Libraries.Resources
                 rsToMerge.SetObject(name, value);
             }
 
+            // If there is no loaded proxy at the moment (because rs creation above deleted all of them) resetting trust in proxies
+            if (!canAcceptProxy && !IsAnyProxyLoaded())
+                canAcceptProxy = true;
+
             // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
             SetCache(culture, toCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
             return value;
@@ -525,7 +540,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Called by GetFirstResourceSet if cache is a proxy.
-        /// There is always a traversal if this is called.
+        /// There is always a traversal if this is called (tryParents).
         /// Proxy is accepted if it is no problem if a result is found in the proxied resource set.
         /// </summary>
         /// <param name="proxy">The found proxy</param>
@@ -618,6 +633,24 @@ namespace KGySoft.Libraries.Resources
                 mergedCultures = null;
                 canAcceptProxy = true;
             }
+        }
+
+        public override void SetObject(string name, object value, CultureInfo culture = null)
+        {
+            base.SetObject(name, value, culture);
+
+            // if load creates a rs and this removes the proxies we may reset accepting proxies
+            if (!canAcceptProxy && !IsAnyProxyLoaded())
+                canAcceptProxy = true;
+        }
+
+        public override void RemoveObject(string name, CultureInfo culture = null)
+        {
+            base.RemoveObject(name, culture);
+
+            // if remove loads a rs and this removes the proxies we may reset accepting proxies
+            if (!canAcceptProxy && !IsAnyProxyLoaded())
+                canAcceptProxy = true;
         }
 
         private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
@@ -723,9 +756,13 @@ namespace KGySoft.Libraries.Resources
                             : ResourceSetRetrieval.LoadIfExists, false, current.Value);
 
                     // cannot be loaded
-                    if (rsTarget == null)
+                    if (rsTarget == null || IsProxy(rsTarget))
                     {
-                        mergedCultures[current.Key] = false;
+                        // not storing anything to cache if behavior is only LoadIfExist (from Get[Expando]ResourceSet) while culture should be merged
+                        // so next time this culture can be created from GetObjectWithAppend
+                        if (!(current.Value && behavior == ResourceSetRetrieval.LoadIfExists))
+                            mergedCultures[current.Key] = false;
+
                         continue;
                     }
 

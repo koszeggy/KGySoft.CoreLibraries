@@ -19,7 +19,7 @@ namespace KGySoft.Libraries.Resources
         None,
 
         /// <summary>
-        /// Represents the auto saving of resources when <see cref="LanguageSettings.FormattingLanguage"/> is changed.
+        /// Represents the auto saving of resources when <see cref="LanguageSettings.DisplayLanguage">LanguageSettings.DisplayLanguage</see> is changed.
         /// </summary>
         LanguageChange = 1,
 
@@ -29,8 +29,8 @@ namespace KGySoft.Libraries.Resources
         DomainUnload = 1 << 1,
 
         /// <summary>
-        /// Represents the auto saving of resources when <see cref="DynamicResourceManager.Source"/> or
-        /// <see cref="LanguageSettings.DynamicResourceManagersSource"/> is changed.
+        /// Represents the auto saving of resources when <see cref="DynamicResourceManager.Source">DynamicResourceManager.Source</see> or
+        /// <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> is changed.
         /// </summary>
         SourceChange = 1 << 2,
     }
