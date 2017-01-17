@@ -7,14 +7,14 @@ namespace KGySoft.Libraries
 {
     /// <summary>
     /// Represents a high resolution timer that allows precise timing even with sub-milliseconds intervals.
-    /// The timer executes on a separated high proprity thread.
+    /// The timer executes on a separated high priority thread.
     /// </summary>
     public class HiResTimer
     {
         /// <summary>
         /// The number of ticks per one millisecond.
         /// </summary>
-        private readonly static float tickFrequency = 1000f / Stopwatch.Frequency;
+        private static readonly float tickFrequency = 1000f / Stopwatch.Frequency;
 
         /// <summary>
         /// Occurs when the <see cref="Interval"/> elapses.
@@ -35,7 +35,7 @@ namespace KGySoft.Libraries
         /// <summary>
         /// Initializes a new instance of the <see cref="HiResTimer"/> class with a specified <paramref name="interval"/>.
         /// </summary>
-        /// <param name="interval">The time, in millisecods, between events. Value must be non-negative. Fractional values are allowed.</param>
+        /// <param name="interval">The time, in milliseconds, between events. Value must be non-negative. Fractional values are allowed.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="interval"/> is negative or <see cref="Single.NaN"/>.</exception>
         public HiResTimer(float interval)
         {
@@ -70,7 +70,7 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Gets or sets a threshold value, in milliseconds, to ignore an <see cref="Elapsed"/> event (and thus trying to catch up the timer)
-        /// if the next invoke lates by the given value. Value must not be zero but fractionals are allowed.
+        /// if the next invoke lates by the given value. Value must not be zero but fractions are allowed.
         /// </summary>
         /// <value>
         /// The ignore elapsed threshold.
@@ -162,11 +162,11 @@ namespace KGySoft.Libraries
                     if (diff <= 0f)
                         break;
 
-                    if (diff < 1d)
+                    if (diff < 1f)
                         Thread.SpinWait(10);
-                    else if (diff < 5d)
+                    else if (diff < 5f)
                         Thread.SpinWait(100);
-                    else if (diff < 15d)
+                    else if (diff < 15f)
                         Thread.Sleep(1);
                     else
                     {

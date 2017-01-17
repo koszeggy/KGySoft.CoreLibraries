@@ -119,6 +119,7 @@
     <Compile Include="Libraries\Reflection\PropertyAccessor.cs" />
     <Compile Include="Libraries\Reflection\ReflectionException.cs" />
     <Compile Include="Libraries\Reflection\Reflector.cs" />
+    <Compile Include="Libraries\Resources\AutoSaveErrorEventArgs.cs" />
     <Compile Include="Libraries\Resources\Enums\AutoAppendOptions.cs" />
     <Compile Include="Libraries\Resources\Enums\AutoSaveOptions.cs" />
     <Compile Include="Libraries\Resources\HybridResourceManager.cs" />
@@ -181,7 +182,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
