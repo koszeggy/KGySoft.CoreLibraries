@@ -9,6 +9,7 @@ namespace KGySoft.Libraries.Resources
     /// Represents the auto saving options of a <see cref="DynamicResourceManager"/> instance.
     /// </summary>
     /// <seealso cref="DynamicResourceManager.AutoSave"/>
+    /// <seealso cref="DynamicResourceManager.AutoSaveError"/>
     /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoSave"/>
     [Flags]
     public enum AutoSaveOptions

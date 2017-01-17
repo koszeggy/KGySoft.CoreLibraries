@@ -291,6 +291,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoSave"/>
+        /// <seealso cref="DynamicResourceManager.AutoSaveError"/>
         public static AutoSaveOptions DynamicResourceManagersAutoSave
         {
             get { return dynamicResourceManagersAutoSave; }

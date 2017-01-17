@@ -513,6 +513,14 @@ namespace _LibrariesTest.Libraries.Resources
             remote.UseDrmRemotely(true, testCulture);
             AppDomain.Unload(sandboxDomain);
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded what saved in another domain
+
+            // cleaning up the newly created resources
+            File.Delete("Resources\\TestResourceResX.hu.resx");
+            File.Delete("Resources\\TestResourceResX.hu-HU.resx");
+            File.Delete("Resources\\TestResourceResX.hu-Runic.resx");
+            File.Delete("Resources\\TestResourceResX.hu-Runic-HU.resx");
+            File.Delete("Resources\\TestResourceResX.hu-Runic-HU-Lowland.resx");
+            File.Delete("Resources\\TestResourceResX.en-GB.resx");
         }
     }
 }

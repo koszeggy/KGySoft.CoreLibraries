@@ -369,6 +369,7 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SetObjectTest()
         {
+            LanguageSettings.DisplayLanguage = enUS;
             var manager = new HybridResourceManager(GetType());
 
             // not existing base: an exception is thrown when an object is about to obtain

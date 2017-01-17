@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Resources;
+using System.Security;
 using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
@@ -33,6 +35,15 @@ namespace KGySoft.Libraries.Resources
         /// contains the up-to-date cultures. Value is <c>true</c> if that culture is merged so it can be taken as a base for merge.
         /// </summary>
         private Dictionary<CultureInfo, bool> mergedCultures;
+
+        /// <summary>
+        /// Occurs when an exception is thrown on auto saving. If this event is not subscribed, the following exception types are automatically suppressed,
+        /// as they can occur on save: <see cref="IOException"/>, <see cref="SecurityException"/>, <see cref="UnauthorizedAccessException"/>. If such an
+        /// exception is suppressed some resources might remain unsaved. Though the event is static one, the sender of the handler is the corresponding <see cref="DynamicResourceManager"/> instance.
+        /// Thus the save failures of the non public <see cref="DynamicResourceManager"/> instances (eg. resource managers of an assembly) can be tracked, too.
+        /// </summary>
+        /// <seealso cref="AutoSave"/>
+        public static event EventHandler<AutoSaveErrorEventArgs> AutoSaveError;
 
         /// <summary>
         /// Gets or sets whether values of <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/> properties
@@ -78,6 +89,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>
         /// Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
         /// </summary>
+        /// <seealso cref="AutoSaveError"/>
         public AutoSaveOptions AutoSave
         {
             get { return useLanguageSettings ? LanguageSettings.DynamicResourceManagersAutoSave : autoSave; }
@@ -180,25 +192,44 @@ namespace KGySoft.Libraries.Resources
         private void OnSourceChanging()
         {
             if ((AutoSave & AutoSaveOptions.SourceChange) != AutoSaveOptions.None)
-                Save();
+                DoAutoSave();
         }
 
         private void OnDomainUnload()
         {
             if ((AutoSave & AutoSaveOptions.DomainUnload) != AutoSaveOptions.None)
-                Save();
+                DoAutoSave();
         }
 
         private void OnLanguageChanged()
         {
             if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
-                Save();
+                DoAutoSave();
         }
 
-        private void Save()
+        private void DoAutoSave()
         {
-            // TODO: try-catch, maybe set az Exception property or trigger an error event in LaguageSettings
-            SaveAllResources(compatibleFormat: CompatibleFormat);
+            try
+            {
+                SaveAllResources(compatibleFormat: CompatibleFormat);
+            }
+            catch (Exception e)
+            {
+                if (!OnAutoSaveError(new AutoSaveErrorEventArgs(e)))
+                    throw;
+            }
+        }
+
+        private bool OnAutoSaveError(AutoSaveErrorEventArgs e)
+        {
+            EventHandler<AutoSaveErrorEventArgs> handler = AutoSaveError;
+            if (handler != null)
+            {
+                handler.Invoke(this, e);
+                return e.Handled;
+            }
+
+            return e.Exception is IOException || e.Exception is SecurityException || e.Exception is UnauthorizedAccessException;
         }
 
         private void HookEvents()

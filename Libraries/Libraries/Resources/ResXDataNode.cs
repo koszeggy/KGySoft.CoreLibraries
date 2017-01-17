@@ -714,16 +714,12 @@ namespace KGySoft.Libraries.Resources
                     return;
                 }
             }
-            catch (Exception ex)
+            catch (NotSupportedException)
             {
-                // Some custom type converters will throw in ConvertTo(string)
+                // Some custom type converters will throw this in ConvertTo(string)
                 // to indicate that this object should be serialized through ISeriazable
                 // instead of as a string. This is semi-wrong, but something we will have to
                 // live with to allow user created Cursors to be serializable.
-                if (ClientUtils.IsSecurityOrCriticalException(ex))
-                {
-                    throw;
-                }
             }
 
             // 6.) to byte[] by TypeConverter
