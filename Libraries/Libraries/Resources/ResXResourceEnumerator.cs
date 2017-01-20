@@ -62,7 +62,7 @@ namespace KGySoft.Libraries.Resources
                 if (mode == ResXEnumeratorModes.Aliases)
                     return new DictionaryEntry(current.Key, current.Value.ValueInternal);
 
-                return owner.UseResXDataNodes
+                return owner.SafeMode
                     ? new DictionaryEntry(current.Key, current.Value)
                     : new DictionaryEntry(current.Key, current.Value.GetValue(owner.TypeResolver, owner.BasePath, owner.AutoFreeXmlData));
             }

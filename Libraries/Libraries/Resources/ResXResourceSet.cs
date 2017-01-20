@@ -70,7 +70,7 @@
         /// <para>If <c>SafeMode</c> is <c>true</c>, the <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
         /// can be freed by calling the <see cref="ResXDataNode.GetValue"/>.</para>
         /// </remarks>
-        /// <seealso cref="ResXResourceReader.UseResXDataNodes"/>
+        /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
         /// <seealso cref="HybridResourceManager.SafeMode"/>
         /// <seealso cref="AutoFreeXmlData"/>
@@ -798,22 +798,22 @@
 
         #region IResXResourceContainer Members
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Resources
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources
         {
             get { return resources; }
         }
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Metadata
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata
         {
             get { return metadata; }
         }
 
-        Dictionary<string, string> IResXResourceContainer.Aliases
+        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases
         {
             get { return aliases; }
         }
 
-        bool IResXResourceContainer.UseResXDataNodes
+        bool IResXResourceContainer.SafeMode
         {
             get { return safeMode; }
         }

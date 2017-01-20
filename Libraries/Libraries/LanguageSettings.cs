@@ -11,7 +11,7 @@ using Microsoft.Win32;
 
 namespace KGySoft.Libraries
 {
-    // TODO: Megnézni, nem egyszerűbb-e, ha [ThreadStatic] field-ekkel oldjuk  meg. Ekkor az add-remove és a local invoke is sokkal egyszerűbbé válna. A leiratkozás hiánya nek okoz több leaket mint a jelenlegi verzió.
+    // TODO: Megnézni, nem egyszerűbb-e, ha [ThreadStatic] field-ekkel oldjuk  meg. Ekkor az add-remove és a local invoke is sokkal egyszerűbbé válna. A leiratkozás hiánya nem okoz-e több leaket mint a jelenlegi verzió.
     /// <summary>
     /// Represents the language settings of the current thread. Use this class if you want to be notified on
     /// language changes.

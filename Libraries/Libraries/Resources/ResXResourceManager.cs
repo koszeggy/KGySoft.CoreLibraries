@@ -219,14 +219,14 @@ namespace KGySoft.Libraries.Resources
         /// <br/>Default value: <c>false</c>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject(string)"/> and <see cref="GetMetaObject(string)"/> methods
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject(string)"/> and <see cref="GetMetaObject"/> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
         /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetString(string)"/> and <see cref="GetMetaString"/> methods
         /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
-        /// <seealso cref="ResXResourceReader.UseResXDataNodes"/>
-        /// <seealso cref="ResXResourceManager.SafeMode"/>
+        /// <seealso cref="ResXResourceReader.SafeMode"/>
+        /// <seealso cref="ResXResourceSet.SafeMode"/>
         public bool SafeMode
         {
             get { return safeMode; }

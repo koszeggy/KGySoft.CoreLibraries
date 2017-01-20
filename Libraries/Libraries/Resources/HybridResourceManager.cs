@@ -249,7 +249,7 @@ namespace KGySoft.Libraries.Resources
         /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx resource.
         /// For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
-        /// <seealso cref="ResXResourceReader.UseResXDataNodes"/>
+        /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
         public bool SafeMode

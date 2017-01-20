@@ -1,27 +1,17 @@
-﻿namespace KGySoft.Libraries.Resources
-{
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Collections.Specialized;
-    using System.ComponentModel;
-    using System.ComponentModel.Design;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Resources;
-    using System.Runtime;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.Serialization;
-    using System.Runtime.Serialization.Formatters.Binary;
-    using System.Security;
-    using System.Security.Permissions;
-    using System.Text;
-    using System.Threading;
-    using System.Xml;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Resources;
+using System.Runtime.Serialization;
+using System.Threading;
+using System.Xml;
 
+namespace KGySoft.Libraries.Resources
+{
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
     /// </summary>
@@ -91,7 +81,7 @@
                     if (mode == ResXEnumeratorModes.Aliases)
                         return new DictionaryEntry(key, value.ValueInternal);
 
-                    return owner.useResXDataNodes
+                    return owner.safeMode
                         ? new DictionaryEntry(key, value)
                         : new DictionaryEntry(key, value.GetValue(owner.typeResolver, owner.basePath, false));
                 }
@@ -280,9 +270,15 @@
         private States state = States.Created;
 
         ITypeResolutionService typeResolver;
-        private Dictionary<string, string> aliases;
-        private Dictionary<string, ResXDataNode> resources;
-        private Dictionary<string, ResXDataNode> metadata;
+
+        /// <summary>
+        /// The currently active aliases. Same as <see cref="aliases"/> if duplication is disabled.
+        /// </summary>
+        private Dictionary<string, string> activeAliases;
+
+        private ICollection<KeyValuePair<string, string>> aliases;
+        private ICollection<KeyValuePair<string, ResXDataNode>> resources;
+        private ICollection<KeyValuePair<string, ResXDataNode>> metadata;
         private LazyEnumerator enumerator;
 
         //ReaderAliasResolver aliasResolver =null;
@@ -293,10 +289,10 @@
         //private string resHeaderMimeType;
         //private string resHeaderReaderType;
         //private string resHeaderWriterType;
-        private bool useResXDataNodes;
+        private bool safeMode;
         private readonly object syncRoot = new object();
         private bool checkHeader;
-        private bool lazyEnumeration = true;
+        private bool allowDuplicatedKeys = true;
 
         //private ResXResourceReader(ITypeResolutionService typeResolver) {
         //    this.typeResolver = typeResolver;
@@ -507,23 +503,37 @@
         /// Gets or sets a value that indicates whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
         /// </summary>
         /// <remarks>
+        /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">System.Resources.ResXResourceReader</a> class.
+        /// Use <see cref="SafeMode"/> property instead.</note>
         /// </remarks>
-        /// <devdoc>
-        ///     ResXFileRef's TypeConverter automatically unwraps it, creates the referenced
-        ///     object and returns it. This property gives the user control over whether this unwrapping should
-        ///     happen, or a ResXFileRef object should be returned. Default is true for backward compat and common case
-        ///     scenario.
-        /// </devdoc>
+        /// <seealso cref="SafeMode"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
+        [Obsolete("This property is maintained due to compatibility reasons with the System.Windows.Forms.ResXResourceReader class. Use SafeMode property instead.")]
         public bool UseResXDataNodes
         {
-            get { return useResXDataNodes; }
+            get { return safeMode; }
+            set { SafeMode = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
+        /// </summary>
+        /// <remarks>
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the objects returned by the <see cref="GetEnumerator"/> and <see cref="GetMetadataEnumerator"/> methods
+        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
+        /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
+        /// </remarks>
+        /// <seealso cref="ResXResourceSet.SafeMode"/>
+        /// <seealso cref="ResXResourceManager.SafeMode"/>
+        public bool SafeMode
+        {
+            get { return safeMode; }
             set
             {
                 if (state == States.Disposed)
                     throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-                useResXDataNodes = value;
+                safeMode = value;
             }
         }
 
@@ -552,26 +562,60 @@
             }
         }
 
+        ///// <summary>
+        ///// Gets or sets whether the first enumeration should be lazy.
+        ///// <br/>Default value: <c>true</c>.
+        ///// </summary>
+        ///// <remarks>
+        ///// <para>A lazy enumeration means that the underlying .resx file should be read only on demand. It is possible that
+        ///// not the whole .resx is read, if enumeration stops. After the first enumeration elements are cached.</para>
+        ///// <para>If an element is defined more than once, and <see cref="LazyEnumeration"/> is <c>true</c>, then the first enumeration returns every occurance,
+        ///// while the further ones only the last occurance.</para>
+        ///// </remarks>
+        ///// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the XML resource file has already been accessed and is in use.</exception>
+        //public bool LazyEnumeration
+        //{
+        //    get { return lazyEnumeration; }
+        //    set
+        //    {
+        //        switch (state)
+        //        {
+        //            case States.Created:
+        //                lazyEnumeration = value;
+        //                break;
+        //            case States.Disposed:
+        //                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+        //            default:
+        //                throw new InvalidOperationException(Res.Get(Res.InvalidResXReaderPropertyChange));
+        //        }
+        //    }
+        //}
+
         /// <summary>
-        /// Gets or sets whether the first enumeration should be lazy.
+        /// Gets or sets whether all entries of same name of the .resx file should be returned.
         /// <br/>Default value: <c>true</c>.
         /// </summary>
         /// <remarks>
-        /// <para>A lazy enumeration means that the underlying .resx file should be read only on demand. It is possible that
-        /// not the whole .resx is read, if enumeration stops. After the first enumeration elements are cached.</para>
-        /// <para>If an element is defined more than once, and <see cref="LazyEnumeration"/> is <c>true</c>, then the first enumeration returns every occurance,
-        /// while the further ones only the last occurance.</para>
+        /// <para>If an element is defined more than once, and <see cref="AllowDuplicatedKeys"/> is <c>true</c>,
+        /// then the enumeration returns every occurrence of the entries with identical names.
+        /// If <see cref="AllowDuplicatedKeys"/> is <c>false</c> the enumeration returns always the last occurrence of the entries with identical names.</para>
+        /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
+        /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
+        /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>
+        /// <note>To be compatible with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">System.Resources.ResXResourceReader</a>
+        /// class set the value of this property <c>false</c>.</note>
         /// </remarks>
+        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceReader"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the XML resource file has already been accessed and is in use.</exception>
-        public bool LazyEnumeration
+        public bool AllowDuplicatedKeys
         {
-            get { return lazyEnumeration; }
+            get { return allowDuplicatedKeys; }
             set
             {
                 switch (state)
                 {
                     case States.Created:
-                        lazyEnumeration = value;
+                        allowDuplicatedKeys = value;
                         break;
                     case States.Disposed:
                         throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
@@ -689,19 +733,23 @@
                 {
                     // enumerating for the first time
                     case States.Created:
-                        resources = new Dictionary<string, ResXDataNode>();
-                        metadata = new Dictionary<string, ResXDataNode>();
-                        aliases = new Dictionary<string, string>();
 
-                        // returning a lazy enumerator if enabled
-                        if (lazyEnumeration)
+                        // returning a lazy enumerator for the first time if duplication is enabled
+                        if (allowDuplicatedKeys)
                         {
+                            resources = new List<KeyValuePair<string, ResXDataNode>>();
+                            metadata = new List<KeyValuePair<string, ResXDataNode>>();
+                            aliases = new List<KeyValuePair<string, string>>();
+                            activeAliases = new Dictionary<string, string>();
                             state = States.Reading;
                             enumerator = new LazyEnumerator(this, mode);
                             return enumerator;                            
                         }
 
-                        // non-lazy mode: caching for the first time, too.
+                        // no duplication (non-lazy mode): allocating a dictionary and caching for the first time, too.
+                        resources = new Dictionary<string, ResXDataNode>();
+                        metadata = new Dictionary<string, ResXDataNode>();
+                        aliases = activeAliases = new Dictionary<string, string>();
                         ReadAll();
                         state = States.Read;
                         return new ResXResourceEnumerator(this, mode, 0);
@@ -938,7 +986,7 @@
 
             // alias value found
             string asmName;
-            if (aliases.TryGetValue(alias, out asmName))
+            if (activeAliases.TryGetValue(alias, out asmName))
                 return asmName;
 
             // type name is with assembly name
@@ -1049,14 +1097,14 @@
                     if (name == ResXCommon.DataStr)
                     {
                         ParseDataNode(reader, out key, out value);
-                        resources[key] = value;
+                        AddNode(resources, key, value);
                         if (mode == ResXEnumeratorModes.Resources)
                             return true;
                     }
                     else if (name == ResXCommon.MetadataStr)
                     {
                         ParseDataNode(reader, out key, out value);
-                        metadata[key] = value;
+                        AddNode(metadata, key, value);
                         if (mode == ResXEnumeratorModes.Metadata)
                             return true;
                     }
@@ -1064,7 +1112,7 @@
                     {
                         string assemblyName;
                         ParseAssemblyNode(reader, out key, out assemblyName);
-                        aliases[key] = assemblyName;
+                        AddAlias(key, assemblyName);
                         if (mode == ResXEnumeratorModes.Aliases)
                         {
                             value = new ResXDataNode(key, assemblyName);
@@ -1089,6 +1137,29 @@
             reader = null;
 
             return false;
+        }
+
+        private void AddAlias(string key, string assemblyName)
+        {
+            var dict = aliases as Dictionary<string, string>;
+            if (dict != null)
+            {
+                dict[key] = assemblyName;
+                Debug.Assert(ReferenceEquals(aliases, activeAliases), "activeAliases should be the same as aliases");
+                return;
+            }
+
+            activeAliases[key] = assemblyName;
+            aliases.Add(new KeyValuePair<string, string>(key, assemblyName));
+        }
+
+        private void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
+        {
+            var dict = collection as Dictionary<string, ResXDataNode>;
+            if (dict != null)
+                dict[key] = value;
+            else
+                collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
         }
 
         // ReSharper disable once ParameterHidesMember
@@ -1266,23 +1337,23 @@
             Debug.Assert(state == States.Created);
             this.resources = resources;
             this.metadata = metadata;
-            this.aliases = aliases;
+            this.aliases = activeAliases = aliases;
             ReadAll();
         }
 
         #region IResXResourceContainer Members
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Resources
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources
         {
             get { return resources; }
         }
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Metadata
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata
         {
             get { return metadata; }
         }
 
-        Dictionary<string, string> IResXResourceContainer.Aliases
+        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases
         {
             get { return aliases; }
         }

@@ -21,16 +21,16 @@ namespace _LibrariesTest.Libraries.Resources
 
             Assert.AreNotEqual(
                 refReader.Cast<object>().Count(), // this forces immediate enumeration
-                reader.Cast<object>().Count()); // this is lazy, so returns duplicates as separated items
+                reader.Cast<object>().Count()); // this returns duplicates as separated items
 
+            Assert.AreNotEqual(
+                refReader.Cast<object>().Count(), // cached
+                reader.Cast<object>().Count()); // second enumeration is cached, though still returns duplicates
+
+            reader = new ResXResourceReader(path) { AllowDuplicatedKeys = false };
             Assert.AreEqual(
                 refReader.Cast<object>().Count(), // cached
-                reader.Cast<object>().Count()); // second enumeration is cached, does not return duplicates
-
-            reader = new ResXResourceReader(path) { LazyEnumeration = false };
-            Assert.AreEqual(
-                refReader.Cast<object>().Count(), // cached
-                reader.Cast<object>().Count()); // cached because lazy mode is off
+                reader.Cast<object>().Count()); // duplication is off (not lazy now)
         }
 
         [TestMethod]
@@ -91,13 +91,13 @@ namespace _LibrariesTest.Libraries.Resources
             resEnumCached = reader.GetEnumerator();
             resEnumCached.MoveNext();
             Assert.IsNotInstanceOfType(resEnumCached.Value, typeof(ResXDataNode));
-            reader.UseResXDataNodes = true;
+            reader.SafeMode = true;
             Assert.IsInstanceOfType(resEnumCached.Value, typeof(ResXDataNode));
 
             // however, aliases are always strings
             Assert.IsInstanceOfType(aliasEnumCached.Value, typeof(string));
             Assert.IsInstanceOfType(aliasEnumLazy.Value, typeof(string));
-            reader.UseResXDataNodes = false;
+            reader.SafeMode = false;
             Assert.IsInstanceOfType(aliasEnumCached.Value, typeof(string));
             Assert.IsInstanceOfType(aliasEnumLazy.Value, typeof(string));            
         }
@@ -113,7 +113,7 @@ namespace _LibrariesTest.Libraries.Resources
             //    };
             ResXResourceReader reader = new ResXResourceReader(path, new TypeResolver())
                 {
-                    LazyEnumeration = false,
+                    AllowDuplicatedKeys = false,
                     BasePath = Path.GetDirectoryName(path)
                 };
             //var refEnumerator = refReader.GetEnumerator(); // this reads now the whole xml BUG: System resx reader throws exception even with type resolver because the resolver is not used for file refs.

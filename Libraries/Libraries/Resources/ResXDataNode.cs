@@ -1,25 +1,21 @@
-﻿using System.Reflection.Emit;
+﻿using System;
+using System.ComponentModel;
+using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
+using System.Xml;
+
+using KGySoft.Libraries.Reflection;
+using KGySoft.Libraries.Serialization;
 
 namespace KGySoft.Libraries.Resources
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.ComponentModel.Design;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Runtime.Serialization;
-    using System.Runtime.Serialization.Formatters.Binary;
-    using System.Text;
-    using System.Xml;
-
-    using KGySoft.Libraries.Reflection;
-    using KGySoft.Libraries.Serialization;
-
     /// <summary>
     /// Represents an element in an XML resource (.resx) file.
     /// </summary>
@@ -39,6 +35,7 @@ namespace KGySoft.Libraries.Resources
     // - Nincsenek typeNameConverter-es publikus ctor-ok. Ezt kizárólag az internal GetDataNodeInfo használja, amit a writer hív, ő viszont átadhatja a saját converterét
     // New feature:
     // - DataNodeInfo elemei kivezetve
+    // - az eredeti invalidoperation-t dob nem serializálható obj-ra, ez még compat módban is támogatja (CompatibleFormat a writer-en vagy a resource set/manager-ek save-jében van)
     [Serializable]
     public sealed class ResXDataNode : ISerializable
     {

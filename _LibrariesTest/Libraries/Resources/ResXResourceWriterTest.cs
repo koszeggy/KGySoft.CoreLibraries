@@ -564,7 +564,7 @@ namespace _LibrariesTest.Libraries.Resources
             // read from file
             List<DictionaryEntry> reference, check;
             string basePath = Path.GetDirectoryName(path);
-            using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, UseResXDataNodes = true })
+            using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, SafeMode = true })
             {
                 // reference contains now string-ResXDataNode elements
                 reference = reader.Cast<DictionaryEntry>().ToList();
