@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Resources;
 using System.Text;
+using System.Xml;
 
 // ReSharper disable InconsistentNaming - Properties are named here: Type_Member. Fields: accessorType_Member
 namespace KGySoft.Libraries.Reflection
@@ -53,6 +54,8 @@ namespace KGySoft.Libraries.Reflection
         private static FieldAccessor fieldDataNodeInfo_MimeType;
         private static FieldAccessor fieldDataNodeInfo_ValueData;
         private static FieldAccessor fieldDataNodeInfo_ReaderPosition;
+        private static FieldAccessor fieldXmlException_lineNumber;
+        private static FieldAccessor fieldXmlException_linePosition;
 
         #endregion
 
@@ -115,6 +118,28 @@ namespace KGySoft.Libraries.Reflection
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
+
+        internal static FieldAccessor XmlException_lineNumber
+        {
+            get
+            {
+                if (fieldXmlException_lineNumber != null)
+                    return fieldXmlException_lineNumber;
+
+                return fieldXmlException_lineNumber = FieldAccessor.CreateFieldAccessor(typeof(XmlException).GetField("lineNumber", BindingFlags.Instance | BindingFlags.NonPublic));
+            }
+        }
+
+        internal static FieldAccessor XmlException_linePosition
+        {
+            get
+            {
+                if (fieldXmlException_linePosition != null)
+                    return fieldXmlException_linePosition;
+
+                return fieldXmlException_linePosition = FieldAccessor.CreateFieldAccessor(typeof(XmlException).GetField("linePosition", BindingFlags.Instance | BindingFlags.NonPublic));
+            }
+        }
 
         #endregion
 

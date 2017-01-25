@@ -31,6 +31,7 @@
     // - GetxxxEnumerator metódusokhoz leírni, hogy az enumerátor DictionaryEntry.Value-ja SafeMMode-tól függ
     // Incompatibility!!!: (ha lehet, változtatni, hogy az egy stringes verzió itt is filename legyen, talán string,string, mindkettő optional, első filenév második basepath)
     // - ctor(string) itt basePath, file-ból betöltéshez ctor(string, string) kell
+    // - ctor of the system may throw ArgumentException. Here ctor of a wrong resx may throw XmlException, and a GetObject/String XmlException, TypeLoadException or NotSupportedException
     // [Serializable]
     // legyen sealed vagy override-oljuk a ReadResources-t, ami dobjon NotSupportedException-t vagy ne csináljon semmit
     public class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable

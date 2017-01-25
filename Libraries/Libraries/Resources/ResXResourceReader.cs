@@ -31,6 +31,7 @@ namespace KGySoft.Libraries.Resources
     //   - Set and Manager classes see the last occurances of redefined instances. If aliases are redefined, they can be identified in UseResXDataNodes mode
     // - Header can be completely missing; however, it is checked when exists when CheckHeader is true. If header tags contain invalid values, NotSupportedException may be thrown during the enumeration.
     // - Soap? TODO: solve it without referencing Soap formatter: loading assembly, referencing as IFormatter - ony at deserialization in ResXDataNode
+    // - Getting the enumerator (or retrieving the values of ResXNodeData values) of the system version often throws ArgumentException. Here enumeration of a wrong resx may throw XmlException, TypeLoadException or NotSupportedException
     // added functions:
     // - UseResXDataNodes and BasePath can be set during the enumeration, too
     // - custom reader/writer in header
@@ -962,7 +963,9 @@ namespace KGySoft.Libraries.Resources
             value = reader[ResXCommon.NameStr];
             if (value == null)
             {
-                throw new ArgumentException(Res.Get(Res.XmlMissingAttribute, "value", GetLineNumber(reader), GetLinePosition(reader)));
+                int line = GetLineNumber(reader);
+                int col = GetLinePosition(reader);
+                throw ResXCommon.CreateXmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.NameStr, line, col), line, col);
             }
         }
 
@@ -1085,50 +1088,43 @@ namespace KGySoft.Libraries.Resources
                 return false;
             }
 
-            try
+            while (reader.Read())
             {
-                while (reader.Read())
-                {
-                    if (reader.NodeType != XmlNodeType.Element)
-                        continue;
+                if (reader.NodeType != XmlNodeType.Element)
+                    continue;
 
 #pragma warning disable 252,253 // reference equality is intended because names are added to NameTable
-                    object name = reader.LocalName;
-                    if (name == ResXCommon.DataStr)
-                    {
-                        ParseDataNode(reader, out key, out value);
-                        AddNode(resources, key, value);
-                        if (mode == ResXEnumeratorModes.Resources)
-                            return true;
-                    }
-                    else if (name == ResXCommon.MetadataStr)
-                    {
-                        ParseDataNode(reader, out key, out value);
-                        AddNode(metadata, key, value);
-                        if (mode == ResXEnumeratorModes.Metadata)
-                            return true;
-                    }
-                    else if (name == ResXCommon.AssemblyStr)
-                    {
-                        string assemblyName;
-                        ParseAssemblyNode(reader, out key, out assemblyName);
-                        AddAlias(key, assemblyName);
-                        if (mode == ResXEnumeratorModes.Aliases)
-                        {
-                            value = new ResXDataNode(key, assemblyName);
-                            return true;
-                        }
-                    }
-                    else if (name == ResXCommon.ResHeaderStr && checkHeader)
-                    {
-                        ParseResHeaderNode(reader);
-                    }
-#pragma warning restore 252,253
+                object name = reader.LocalName;
+                if (name == ResXCommon.DataStr)
+                {
+                    ParseDataNode(reader, out key, out value);
+                    AddNode(resources, key, value);
+                    if (mode == ResXEnumeratorModes.Resources)
+                        return true;
                 }
-            }
-            catch (XmlException e)
-            {
-                throw new ArgumentException(Res.Get(Res.InvalidResXFile, e.Message), e);
+                else if (name == ResXCommon.MetadataStr)
+                {
+                    ParseDataNode(reader, out key, out value);
+                    AddNode(metadata, key, value);
+                    if (mode == ResXEnumeratorModes.Metadata)
+                        return true;
+                }
+                else if (name == ResXCommon.AssemblyStr)
+                {
+                    string assemblyName;
+                    ParseAssemblyNode(reader, out key, out assemblyName);
+                    AddAlias(key, assemblyName);
+                    if (mode == ResXEnumeratorModes.Aliases)
+                    {
+                        value = new ResXDataNode(key, assemblyName);
+                        return true;
+                    }
+                }
+                else if (name == ResXCommon.ResHeaderStr && checkHeader)
+                {
+                    ParseResHeaderNode(reader);
+                }
+#pragma warning restore 252,253
             }
 
             key = null;
@@ -1170,8 +1166,10 @@ namespace KGySoft.Libraries.Resources
         private void ParseDataNode(XmlReader reader, out string key, out ResXDataNode value)
         {
             key = reader[ResXCommon.NameStr];
+            int line = GetLineNumber(reader);
+            int col = GetLinePosition(reader);
             if (key == null)
-                throw new ArgumentException(Res.Get(Res.InvalidResXResourceNoName, GetLineNumber(reader), GetLinePosition(reader)));
+                throw ResXCommon.CreateXmlException(Res.Get(Res.InvalidResXResourceNoName, line, col), line, col);
 
             DataNodeInfo nodeInfo = new DataNodeInfo
                 {
@@ -1179,8 +1177,8 @@ namespace KGySoft.Libraries.Resources
                     TypeName = reader[ResXCommon.TypeStr],
                     MimeType = reader[ResXCommon.MimeTypeStr],
                     BasePath = basePath,
-                    Line = GetLineNumber(reader),
-                    Column = GetLinePosition(reader)
+                    Line = line,
+                    Column = col
                 };
 
             nodeInfo.AssemblyAliasValue = GetAliasValueFromTypeName(nodeInfo.TypeName);
@@ -1207,8 +1205,11 @@ namespace KGySoft.Libraries.Resources
                         else if (name == ResXCommon.CommentStr)
                             nodeInfo.Comment = reader.ReadString();
                         else
-                            throw new ArgumentException(
-                                Res.Get(Res.XmlUnexpectedElement, name, GetLineNumber(reader), GetLinePosition(reader)));
+                        {
+                            line = GetLineNumber(reader);
+                            col = GetLinePosition(reader);
+                            throw ResXCommon.CreateXmlException(Res.Get(Res.XmlUnexpectedElement, name, line, col), line, col);
+                        }
                     }
                     else if (reader.NodeType == XmlNodeType.Text)
                     {

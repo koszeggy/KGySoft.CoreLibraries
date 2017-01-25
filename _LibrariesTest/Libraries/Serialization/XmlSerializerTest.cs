@@ -716,11 +716,11 @@ namespace _LibrariesTest.Libraries.Serialization
                 "🏯", // paired surrogate
            };
 
-            SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
+            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             // These strings cannot be (de)serialized with system serializer
             referenceObjects = new string[]

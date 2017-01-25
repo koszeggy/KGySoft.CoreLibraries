@@ -23,9 +23,9 @@ namespace KGySoft.Libraries
 
         #region Fields
 
-        private static object syncRoot;        
-        private static Dictionary<int, EventHandler> formattingLanguageChangedHandlers;
-        private static Dictionary<int, EventHandler> displayLanguageChangedHandlers;
+        //private static object syncRoot;        
+        //private static Dictionary<int, EventHandler> formattingLanguageChangedHandlers;
+        //private static Dictionary<int, EventHandler> displayLanguageChangedHandlers;
         private static bool captureSystemLocaleChange;
         private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
         private static AutoSaveOptions dynamicResourceManagersAutoSave = AutoSaveDefault;
@@ -40,64 +40,63 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Occurs when formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed by setting the
-        /// <see cref="FormattingLanguage"/> property. Only the delegates subscribed from the affected thread are invoked.
+        /// <see cref="FormattingLanguage"/> property. Only the subscriptions from the same thread are invoked.
         /// </summary>
         /// <remarks>
         /// Use this event if you want to be notified of changing the formatting culture of the current thread.
-        /// Subscribers of this event are grouped by the thread of the subscription, so when this event is triggered,
-        /// only the subscribers from the thread of the language change are notified.
+        /// When this event is triggered only the subscribers from the thread of the language change are notified.
         /// </remarks>
         /// <seealso cref="FormattingLanguage"/>
         /// <seealso cref="FormattingLanguageChangedGlobal"/>
-        public static event EventHandler FormattingLanguageChanged
-        {
-            add
-            {
-                if (value == null)
-                    return;
+        [field:ThreadStatic]
+        public static event EventHandler FormattingLanguageChanged;
+        //{
+        //    add
+        //    {
+        //        if (value == null)
+        //            return;
 
-                lock (SyncRoot)
-                {
-                    int id = Thread.CurrentThread.ManagedThreadId;
-                    EventHandler handler;
-                    FormattingLanguageChangedHandlers.TryGetValue(id, out handler);
-                    handler += value;
-                    formattingLanguageChangedHandlers[id] = handler;
-                }
-            }
+        //        lock (SyncRoot)
+        //        {
+        //            int id = Thread.CurrentThread.ManagedThreadId;
+        //            EventHandler handler;
+        //            FormattingLanguageChangedHandlers.TryGetValue(id, out handler);
+        //            handler += value;
+        //            formattingLanguageChangedHandlers[id] = handler;
+        //        }
+        //    }
 
-            remove
-            {
-                if (value == null || formattingLanguageChangedHandlers == null)
-                    return;
+        //    remove
+        //    {
+        //        if (value == null || formattingLanguageChangedHandlers == null)
+        //            return;
 
-                lock (SyncRoot)
-                {
-                    int id = Thread.CurrentThread.ManagedThreadId;
-                    EventHandler handler;
-                    if (!FormattingLanguageChangedHandlers.TryGetValue(id, out handler))
-                        return;
+        //        lock (SyncRoot)
+        //        {
+        //            int id = Thread.CurrentThread.ManagedThreadId;
+        //            EventHandler handler;
+        //            if (!FormattingLanguageChangedHandlers.TryGetValue(id, out handler))
+        //                return;
 
-                    handler -= value;
-                    if (handler == null)
-                        formattingLanguageChangedHandlers.Remove(id);
-                    else
-                        formattingLanguageChangedHandlers[id] = handler;
-                }
-            }
-        }
+        //            handler -= value;
+        //            if (handler == null)
+        //                formattingLanguageChangedHandlers.Remove(id);
+        //            else
+        //                formattingLanguageChangedHandlers[id] = handler;
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Occurs when formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed in any <see cref="Thread"/>
-        /// by setting <see cref="FormattingLanguage"/> property. The subscribed delegates are called from the affected thread,
-        /// which can be different from the thread of the subscriptions.
+        /// by setting <see cref="FormattingLanguage"/> property. The subscribers are invoked from all threads.
         /// </summary>
         /// <remarks>
         /// The <see cref="FormattingLanguage"/> property reflects the formatting culture of the current thread (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>).
         /// This event triggers all subscribers regardless of their source thread in the current <see cref="AppDomain"/>.
-        /// When the event triggered, the subscribers are invoked in the thread of the changed formatting language. You might
-        /// want to check if the thread of the invokation is the same as the thread of the subscription.
-        /// To notify subscribers from the affected thread only, use the <see cref="FormattingLanguageChanged"/> event instead.
+        /// When the event is triggered, the subscribers are invoked in the thread of the changed formatting language. You might
+        /// want to check if the thread of the invocation is the same as the thread of the subscription.
+        /// To notify subscribers from the affected thread only use the <see cref="FormattingLanguageChanged"/> event instead.
         /// </remarks>
         /// <seealso cref="FormattingLanguage"/>
         /// <seealso cref="FormattingLanguageChanged"/>
@@ -105,64 +104,63 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Occurs when display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed by setting the
-        /// <see cref="DisplayLanguage"/> property. Only the delegates subscribed from the affected thread are invoked.
+        /// <see cref="DisplayLanguage"/> property. Only the subscriptions from the same thread are invoked.
         /// </summary>
         /// <remarks>
         /// Use this event if you want to be notified of changing the display culture of the current thread.
-        /// Subscribers of this event are grouped by the thread of the subscription, so when this event is triggered,
-        /// only the subscribers from the thread of the language change are notified.
+        /// When this event is triggered only the subscribers from the thread of the language change are notified.
         /// </remarks>
         /// <seealso cref="DisplayLanguage"/>
         /// <seealso cref="DisplayLanguageChangedGlobal"/>
-        public static event EventHandler DisplayLanguageChanged
-        {
-            add
-            {
-                if (value == null)
-                    return;
+        [field:ThreadStatic]
+        public static event EventHandler DisplayLanguageChanged;
+        //{
+        //    add
+        //    {
+        //        if (value == null)
+        //            return;
 
-                lock (SyncRoot)
-                {
-                    int id = Thread.CurrentThread.ManagedThreadId;
-                    EventHandler handler;
-                    DisplayLanguageChangedHandlers.TryGetValue(id, out handler);
-                    handler += value;
-                    displayLanguageChangedHandlers[id] = handler;
-                }
-            }
+        //        lock (SyncRoot)
+        //        {
+        //            int id = Thread.CurrentThread.ManagedThreadId;
+        //            EventHandler handler;
+        //            DisplayLanguageChangedHandlers.TryGetValue(id, out handler);
+        //            handler += value;
+        //            displayLanguageChangedHandlers[id] = handler;
+        //        }
+        //    }
 
-            remove
-            {
-                if (value == null || displayLanguageChangedHandlers == null)
-                    return;
+        //    remove
+        //    {
+        //        if (value == null || displayLanguageChangedHandlers == null)
+        //            return;
 
-                lock (SyncRoot)
-                {
-                    int id = Thread.CurrentThread.ManagedThreadId;
-                    EventHandler handler;
-                    if (!DisplayLanguageChangedHandlers.TryGetValue(id, out handler))
-                        return;
+        //        lock (SyncRoot)
+        //        {
+        //            int id = Thread.CurrentThread.ManagedThreadId;
+        //            EventHandler handler;
+        //            if (!DisplayLanguageChangedHandlers.TryGetValue(id, out handler))
+        //                return;
 
-                    handler -= value;
-                    if (handler == null)
-                        displayLanguageChangedHandlers.Remove(id);
-                    else
-                        displayLanguageChangedHandlers[id] = handler;
-                }
-            }
-        }
+        //            handler -= value;
+        //            if (handler == null)
+        //                displayLanguageChangedHandlers.Remove(id);
+        //            else
+        //                displayLanguageChangedHandlers[id] = handler;
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Occurs when display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed in any <see cref="Thread"/>
-        /// by setting <see cref="DisplayLanguage"/> property. The subscribed delegates are called from the affected thread,
-        /// which can be different from the thread of the subscriptions.
+        /// by setting <see cref="DisplayLanguage"/> property. The subscribers are invoked from all threads.
         /// </summary>
         /// <remarks>
         /// The <see cref="DisplayLanguage"/> property reflects the display culture of the current thread (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>).
         /// This event triggers all subscribers regardless of their source thread in the current <see cref="AppDomain"/>.
-        /// When the event triggered, the subscribers are invoked in the thread of the changed display language. You might
-        /// want to check if the thread of the invokation is the same as the thread of the subscription.
-        /// To notify subscribers from the affected thread only, use the <see cref="DisplayLanguageChanged"/> event instead.
+        /// When the event is triggered, the subscribers are invoked in the thread of the changed display language. You might
+        /// want to check if the thread of the invocation is the same as the thread of the subscription.
+        /// To notify subscribers from the affected thread only use the <see cref="DisplayLanguageChanged"/> event instead.
         /// </remarks>
         /// <seealso cref="DisplayLanguage"/>
         /// <seealso cref="DisplayLanguageChanged"/>
@@ -367,33 +365,33 @@ namespace KGySoft.Libraries
 
         #region Private Properties
 
-        private static object SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                return syncRoot;
-            }
-        }
+        //private static object SyncRoot
+        //{
+        //    get
+        //    {
+        //        if (syncRoot == null)
+        //            Interlocked.CompareExchange(ref syncRoot, new object(), null);
+        //        return syncRoot;
+        //    }
+        //}
 
-        private static Dictionary<int, EventHandler> FormattingLanguageChangedHandlers
-        {
-            get
-            {
-                return formattingLanguageChangedHandlers
-                    ?? (formattingLanguageChangedHandlers = new Dictionary<int, EventHandler>());
-            }
-        }
+        //private static Dictionary<int, EventHandler> FormattingLanguageChangedHandlers
+        //{
+        //    get
+        //    {
+        //        return formattingLanguageChangedHandlers
+        //            ?? (formattingLanguageChangedHandlers = new Dictionary<int, EventHandler>());
+        //    }
+        //}
 
-        private static Dictionary<int, EventHandler> DisplayLanguageChangedHandlers
-        {
-            get
-            {
-                return displayLanguageChangedHandlers
-                    ?? (displayLanguageChangedHandlers = new Dictionary<int, EventHandler>());
-            }
-        }
+        //private static Dictionary<int, EventHandler> DisplayLanguageChangedHandlers
+        //{
+        //    get
+        //    {
+        //        return displayLanguageChangedHandlers
+        //            ?? (displayLanguageChangedHandlers = new Dictionary<int, EventHandler>());
+        //    }
+        //}
 
         #endregion
 
@@ -404,43 +402,37 @@ namespace KGySoft.Libraries
         private static void OnFormattingLanguageChanged(EventArgs e)
         {
             // raising the global event
-            EventHandler globalHandler = FormattingLanguageChangedGlobal;
-            if (globalHandler != null)
-            {
-                globalHandler.Invoke(null, e);
-            }
+            FormattingLanguageChangedGlobal?.Invoke(null, e);
 
             // raising the local event
-            lock (SyncRoot)
-            {
-                if (formattingLanguageChangedHandlers == null)
-                    return;
+            FormattingLanguageChanged?.Invoke(null, e);
+            //lock (SyncRoot)
+            //{
+            //    if (formattingLanguageChangedHandlers == null)
+            //        return;
 
-                EventHandler handler;
-                if (formattingLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
-                    handler.Invoke(null, e);
-            }
+            //    EventHandler handler;
+            //    if (formattingLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
+            //        handler.Invoke(null, e);
+            //}
         }
 
         private static void OnDisplayLanguageChanged(EventArgs e)
         {
             // raising the global event
-            EventHandler globalHandler = DisplayLanguageChangedGlobal;
-            if (globalHandler != null)
-            {
-                globalHandler.Invoke(null, e);
-            }
+            DisplayLanguageChangedGlobal?.Invoke(null, e);
 
             // raising the local event
-            lock (SyncRoot)
-            {
-                if (displayLanguageChangedHandlers == null)
-                    return;
+            DisplayLanguageChanged?.Invoke(null, e);
+            //lock (SyncRoot)
+            //{
+            //    if (displayLanguageChangedHandlers == null)
+            //        return;
 
-                EventHandler handler;
-                if (displayLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
-                    handler.Invoke(null, e);
-            }
+            //    EventHandler handler;
+            //    if (displayLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
+            //        handler.Invoke(null, e);
+            //}
         }
 
         private static void OnDynamicResourceManagersSourceChanged(EventArgs e)

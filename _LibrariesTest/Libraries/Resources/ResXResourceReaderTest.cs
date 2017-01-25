@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Xml;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -123,6 +124,20 @@ namespace _LibrariesTest.Libraries.Resources
                 //Console.Write("RefKey: {0}; RefValue: {1}; ", refEnumerator.Key, refEnumerator.Value);
                 Console.WriteLine("Key: {0}; Value: {1}", enumerator.Key, enumerator.Value);
             }
+        }
+
+        [TestMethod]
+        public void TestException()
+        {
+            string resx = @"<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <data>
+    <value>Missing name</value>
+  </data>
+</root>";
+            var reader = new ResXResourceReader(new StringReader(resx));
+
+            Throws<XmlException>(() => reader.GetEnumerator().ToEnumerable().ToArray());
         }
     }
 }

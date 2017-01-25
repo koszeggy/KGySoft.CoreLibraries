@@ -1511,7 +1511,7 @@ namespace KGySoft.Libraries.Serialization
         {
             if (collectionTypeDescriptor.Count == 0)
                 // should never occur, throwing internal error without resource
-                throw new ArgumentException("Type description is invalid", "collectionTypeDescriptor");
+                throw new ArgumentException("Type description is invalid", nameof(collectionTypeDescriptor));
 
             DataTypes collectionDataType = collectionTypeDescriptor[0];
             DataTypes elementDataType = collectionDataType & ~(DataTypes.CollectionTypes | DataTypes.Enum);

@@ -126,10 +126,10 @@ namespace KGySoft.Libraries.Resources
         public ResXDataNode(string name, object value/*, Func<Type, string> typeNameConverter*/)
         {
             if (name == null)
-                throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             if (name.Length == 0)
-                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), "name");
+                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(name));
 
             //this.typeNameConverter = typeNameConverter;
 
@@ -896,22 +896,22 @@ namespace KGySoft.Libraries.Resources
                 if (String.Equals(mimeTypeName, ResXCommon.ByteArraySerializedObjectMimeType))
                 {
                     if (String.IsNullOrEmpty(typeName))
-                        throw new XmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column));
+                        throw ResXCommon.CreateXmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
 
                     type = ResolveType(typeName, typeResolver);
                     if (type == null)
                     {
                         string newMessage = Res.Get(Res.TypeLoadException, typeName, dataNodeInfo.Line, dataNodeInfo.Column);
-                        XmlException xml = new XmlException(newMessage, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                        XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                         TypeLoadException newTle = new TypeLoadException(newMessage, xml);
                         throw newTle;
                     }
 
                     TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
-                    if (!byteArrayConverter.CanConvertFrom(typeof(byte[])))
+                    if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
                     {
                         string message = Res.Get(Res.ConvertFromByteArrayNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.Get(Res.ConvertFromByteArrayNotSupported, byteArrayConverter.GetType().FullName));
-                        XmlException xml = new XmlException(message, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                        XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
                         NotSupportedException newNse = new NotSupportedException(message, xml);
                         throw newNse;                        
                     }
@@ -927,7 +927,7 @@ namespace KGySoft.Libraries.Resources
                     catch (NotSupportedException e)
                     {
                         string message = Res.Get(Res.ConvertFromByteArrayNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
-                        XmlException xml = new XmlException(message, e, dataNodeInfo.Line, dataNodeInfo.Column);
+                        XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                         NotSupportedException newNse = new NotSupportedException(message, xml);
                         throw newNse;
                     }
@@ -967,7 +967,7 @@ namespace KGySoft.Libraries.Resources
             if (type == null)
             {
                 string newMessage = Res.Get(Res.TypeLoadException, typeName, dataNodeInfo.Line, dataNodeInfo.Column);
-                XmlException xml = new XmlException(newMessage, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                 TypeLoadException newTle = new TypeLoadException(newMessage, xml);
                 throw newTle;
             }
@@ -989,7 +989,7 @@ namespace KGySoft.Libraries.Resources
             if (!tc.CanConvertFrom(Reflector.StringType))
             {
                 string message = Res.Get(Res.ConvertFromStringNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.Get(Res.ConvertFromStringNotSupported, tc.GetType().FullName));
-                XmlException xml = new XmlException(message, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
                 NotSupportedException newNse = new NotSupportedException(message, xml);
                 throw newNse;
             }
@@ -1001,7 +1001,7 @@ namespace KGySoft.Libraries.Resources
             catch (NotSupportedException e)
             {
                 string message = Res.Get(Res.ConvertFromStringNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
-                XmlException xml = new XmlException(message, e, dataNodeInfo.Line, dataNodeInfo.Column);
+                XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                 NotSupportedException newNse = new NotSupportedException(message, xml);
                 throw newNse;
             }
