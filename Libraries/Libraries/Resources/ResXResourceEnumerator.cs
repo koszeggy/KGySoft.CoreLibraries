@@ -8,6 +8,7 @@ namespace KGySoft.Libraries.Resources
 
     /// <summary>
     /// Provides an enumerator for resx resource classes, which have already cached resource data.
+    /// Non-serializable (the original returns a ListDictionary enumerator, which is non-serializable either - and hybrid cannot be serializable either).
     /// </summary>
     internal sealed class ResXResourceEnumerator : IDictionaryEnumerator
     {

@@ -25,7 +25,7 @@ namespace KGySoft.Libraries.Resources
     // TODO: ResXResourceManager vs ResourceManager inkompatibilitás:
     // - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
     [Serializable]
-    public sealed class ResXResourceManager : ResourceManager, IExpandoResourceManager
+    public sealed class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
@@ -37,7 +37,7 @@ namespace KGySoft.Libraries.Resources
             /// <summary>
             /// Gets the wrapped resource set. This is always a parent of <see cref="WrappedCulture"/>.
             /// </summary>
-            internal ResXResourceSet ResXResourceSet { get; }
+            internal ResXResourceSet ResXResourceSet { get; private set; }
 
             /// <summary>
             /// Gets the culture of the wrapped resource set
@@ -78,6 +78,12 @@ namespace KGySoft.Libraries.Resources
             }
 
             internal bool HierarchyLoaded => !CanHaveLoadableParent && !FileExists;
+
+            protected override void Dispose(bool disposing)
+            {
+                ResXResourceSet = null;
+                base.Dispose(disposing);
+            }
         }
 
         internal const string resXFileExtension = ".resx";
@@ -92,10 +98,28 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         [NonSerialized]
         private CultureInfo neutralResourcesCulture;
+#if NET35
+        private new Hashtable ResourceSets
+        {
+            get
+            {
+                var result = base.ResourceSets;
+                if (result == null)
+                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                return result;
+            }
+            set { base.ResourceSets = value; }
+        }
 
-#if NET40 || NET45
+        private Hashtable GetBaseResources()
+        {
+            return base.ResourceSets;
+        }
+
+#elif NET40 || NET45
         /// <summary>
         /// Local cache of the resource sets stored in the base.
+        /// Must be serialized because in the base it is non-serialized. Before serializing we remove proxies and unmodified sets.
         /// </summary>
         private Dictionary<string, ResourceSet> resourceSets;
 
@@ -103,12 +127,21 @@ namespace KGySoft.Libraries.Resources
         {
             get
             {
-                return resourceSets
+                var result = resourceSets
                     ?? (resourceSets = (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this));
+                if (result == null)
+                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                return result;
             }
+            set { Accessors.ResourceManager_resourceSets.Set(this, value); }
         }
 
-#elif !NET35
+        private Dictionary<string, ResourceSet> GetBaseResources()
+        {
+            return (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this);
+        }
+
+#else
 #error .NET version is not set or not supported!
 #endif
 
@@ -399,6 +432,10 @@ namespace KGySoft.Libraries.Resources
 
         public override void ReleaseAllResources()
         {
+            // This check prevents an already disposed object from reanimation (because base re-sets the resource sets)
+            if (ResourceSets == null)
+                throw new InvalidOperationException("An ObjectDisposedExCeption should has been thrown in ResourceSets getter");
+
             base.ReleaseAllResources();
 #if NET40 || NET45
             resourceSets = null; // clearing local cache because here base creates a new instance
@@ -1002,8 +1039,8 @@ namespace KGySoft.Libraries.Resources
                 IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    ResXResourceSet rs = (ResXResourceSet)enumerator.Value;
-                    if (!rs.IsModified && !force)
+                    ResXResourceSet rs = enumerator.Value as ResXResourceSet;
+                    if (rs == null || (!rs.IsModified && !force))
                         continue;
 
                     rs.Save(GetResourceFileName((string)enumerator.Key));
@@ -1019,6 +1056,7 @@ namespace KGySoft.Libraries.Resources
         [OnSerializing]
         private void OnSerializing(StreamingContext ctx)
         {
+            // Removing unmodified sets and proxies before serializing
             var resources = ResourceSets; // var is Hashtable in .NET 3.5, and is Dictionary above
             if (resources.Count == 0)
                 return;
@@ -1037,6 +1075,30 @@ namespace KGySoft.Libraries.Resources
                     resources.Remove(key);
                 }
             }
+        }
+
+        /// <summary>
+        /// Disposes the resources of the current instance.
+        /// </summary>
+        public void Dispose()
+        {
+            var localResourceSets = GetBaseResources();
+            if (localResourceSets == null)
+                return;
+
+            // this enumerates both Hashtable and Dictionary the same way.
+            // The nongeneric enumerator is not a problem, values must be cast anyway.
+            IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                ((ResourceSet)enumerator.Value).Dispose();
+            }
+
+            ResourceSets = null;
+            resxDirFullPath = null;
+            neutralResourcesCulture = null;
+            syncRoot = null;
+            lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
         }
     }
 }

@@ -655,10 +655,7 @@ namespace KGySoft.Libraries.Resources
                 return;
 
             if (disposing)
-            {
-                if (reader != null)
-                    reader.Close();
-            }
+                reader?.Close();
 
             reader = null;
             aliases = null;

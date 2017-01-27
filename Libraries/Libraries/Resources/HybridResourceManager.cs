@@ -6,7 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
+using System.Runtime.Serialization;
 using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
@@ -21,7 +21,7 @@ namespace KGySoft.Libraries.Resources
     /// </summary>
     // TODO: Említeni a Dynamic-ot, mi a különbség. Itt minden művelet explicit, a bővítés és mentés is.
     [Serializable]
-    public class HybridResourceManager : ResourceManager, IExpandoResourceManager
+    public class HybridResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
@@ -876,8 +876,8 @@ namespace KGySoft.Libraries.Resources
             {
                 resourceSets = null;
                 lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
-                base.ReleaseAllResources();
                 resxResources.ReleaseAllResources();
+                base.ReleaseAllResources();
             }
         }
 
@@ -1104,5 +1104,61 @@ namespace KGySoft.Libraries.Resources
         }
 
         #endregion
+
+        /// <summary>
+        /// Disposes the resources of the current instance.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            IDictionary compiledResources = CompiledResourceSets;
+            if (compiledResources == null)
+                return;
+
+            if (disposing)
+            {
+                resxResources.Dispose();
+
+                // this enumerates both Hashtable and Dictionary the same way.
+                // The nongeneric enumerator is not a problem, values must be cast anyway.
+                IDictionaryEnumerator enumerator = compiledResources.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    ((ResourceSet)enumerator.Value).Dispose();
+                }
+            }
+
+            CompiledResourceSets = null;
+            resourceSets = null;
+            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+            neutralResourcesCulture = null;
+        }
+
+#if NET35
+        private Hashtable CompiledResourceSets
+        {
+            get { return base.ResourceSets; }
+            set { base.ResourceSets = value; }
+        }
+
+#elif NET40 || NET45
+        private new Dictionary<string, ResourceSet> CompiledResourceSets
+        {
+            get { return (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this); }
+            set { Accessors.ResourceManager_resourceSets.Set(this, value); }
+        }
+
+#else
+#error .NET version is not set or not supported!
+#endif
     }
 }

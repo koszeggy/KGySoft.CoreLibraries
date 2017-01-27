@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.Serialization;
 using System.Security;
 using KGySoft.Libraries.Reflection;
 
@@ -23,7 +24,7 @@ namespace KGySoft.Libraries.Resources
     // TODO: Remarks: - Míg a ResxRM/HRM konkrét add metódusokat tartalmaz, addig a bõvítés itt automatikus, a stratégia property-kkel szabályozható. Itt a mentés is lehet automatikus, pl kilépésnél, ha éppen resx/mixed mód van.
     //                - Disposable, muszáj dispose-olni, mert static eventekre iratkozik fel
     [Serializable] // TODO: static eventekre feliratkozás az OnDeserialized-ben (az õs miatt nem nagyon lehet custom ISerializable)
-    public class DynamicResourceManager : HybridResourceManager, IDisposable
+    public class DynamicResourceManager : HybridResourceManager
     {
         private bool useLanguageSettings;
         private volatile bool canAcceptProxy = true;
@@ -289,19 +290,14 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Disposes the resources of the current instance.
+        /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        // TODO: to base, ahol pl. a resx kinullozása, rs-ek disposeolása stb. is megtörténik
-        protected virtual void Dispose(bool disposing)
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
         {
             mergedCultures = null;
             UnhookEvents();
+            base.Dispose(disposing);
         }
 
         /// <summary>
@@ -939,6 +935,12 @@ namespace KGySoft.Libraries.Resources
         private void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
             OnDomainUnload();
+        }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx)
+        {
+            HookEvents();
         }
     }
 }

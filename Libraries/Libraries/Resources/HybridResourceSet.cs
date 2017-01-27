@@ -15,6 +15,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// An enumerator for a HybridResourceSet. If both resx and compiled resources contain the same key, returns only the value from the resx.
         /// Must be implemented because yield return does not work for IDictionaryEnumerator.
+        /// Cannot be serializable because the compiled enumerator is not serializable (supports reset, though).
         /// </summary>
         private class Enumerator: IDictionaryEnumerator
         {
@@ -156,8 +157,8 @@ namespace KGySoft.Libraries.Resources
 
         private ResXResourceSet resxResourceSet;
         private ResourceSet compiledResourceSet;
-        private HashSet<string> compiledKeys;
-        private HashSet<string> compiledKeysCaseInsensitive;
+        [NonSerialized] private HashSet<string> compiledKeys;
+        [NonSerialized] private HashSet<string> compiledKeysCaseInsensitive;
 
         internal HybridResourceSet(ResXResourceSet resx, ResourceSet compiled)
         {
@@ -260,6 +261,7 @@ namespace KGySoft.Libraries.Resources
             HashSet<string> binKeys = compiledKeys;
             if (binKeys == null)
             {
+                // no foreach because that would read the values, too
                 binKeys = new HashSet<string>();
                 IDictionaryEnumerator compiledEnumerator = compiled.GetEnumerator();
                 while (compiledEnumerator.MoveNext())

@@ -32,14 +32,14 @@
     // Incompatibility!!!: (ha lehet, változtatni, hogy az egy stringes verzió itt is filename legyen, talán string,string, mindkettő optional, első filenév második basepath)
     // - ctor(string) itt basePath, file-ból betöltéshez ctor(string, string) kell
     // - ctor of the system may throw ArgumentException. Here ctor of a wrong resx may throw XmlException, and a GetObject/String XmlException, TypeLoadException or NotSupportedException
-    // [Serializable]
     // legyen sealed vagy override-oljuk a ReadResources-t, ami dobjon NotSupportedException-t vagy ne csináljon semmit
+    [Serializable]
     public class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
     {
         private Dictionary<string, ResXDataNode> resources;
-        private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
+        [NonSerialized] private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
         private Dictionary<string, ResXDataNode> metadata;
-        private Dictionary<string, ResXDataNode> metadataIgnoreCase;
+        [NonSerialized] private Dictionary<string, ResXDataNode> metadataIgnoreCase;
         private Dictionary<string, string> aliases;
         private readonly string fileName;
         private bool safeMode;
