@@ -25,7 +25,7 @@ namespace KGySoft.Libraries.Resources
     // TODO: ResXResourceManager vs ResourceManager inkompatibilitás:
     // - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
     [Serializable]
-    public sealed class ResXResourceManager : ResourceManager, IExpandoResourceManager
+    public sealed class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
@@ -37,7 +37,7 @@ namespace KGySoft.Libraries.Resources
             /// <summary>
             /// Gets the wrapped resource set. This is always a parent of <see cref="WrappedCulture"/>.
             /// </summary>
-            internal ResXResourceSet ResXResourceSet { get; }
+            internal ResXResourceSet ResXResourceSet { get; private set; }
 
             /// <summary>
             /// Gets the culture of the wrapped resource set
@@ -78,6 +78,12 @@ namespace KGySoft.Libraries.Resources
             }
 
             internal bool HierarchyLoaded => !CanHaveLoadableParent && !FileExists;
+
+            protected override void Dispose(bool disposing)
+            {
+                ResXResourceSet = null;
+                base.Dispose(disposing);
+            }
         }
 
         internal const string resXFileExtension = ".resx";
@@ -92,10 +98,28 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         [NonSerialized]
         private CultureInfo neutralResourcesCulture;
+#if NET35
+        private new Hashtable ResourceSets
+        {
+            get
+            {
+                var result = base.ResourceSets;
+                if (result == null)
+                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                return result;
+            }
+            set { base.ResourceSets = value; }
+        }
 
-#if NET40 || NET45
+        private Hashtable GetBaseResources()
+        {
+            return base.ResourceSets;
+        }
+
+#elif NET40 || NET45
         /// <summary>
         /// Local cache of the resource sets stored in the base.
+        /// Must be serialized because in the base it is non-serialized. Before serializing we remove proxies and unmodified sets.
         /// </summary>
         private Dictionary<string, ResourceSet> resourceSets;
 
@@ -103,12 +127,21 @@ namespace KGySoft.Libraries.Resources
         {
             get
             {
-                return resourceSets
+                var result = resourceSets
                     ?? (resourceSets = (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this));
+                if (result == null)
+                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                return result;
             }
+            set { Accessors.ResourceManager_resourceSets.Set(this, value); }
         }
 
-#elif !NET35
+        private Dictionary<string, ResourceSet> GetBaseResources()
+        {
+            return (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this);
+        }
+
+#else
 #error .NET version is not set or not supported!
 #endif
 
@@ -118,6 +151,10 @@ namespace KGySoft.Libraries.Resources
         [NonSerialized]
         private object syncRoot;
 
+        /// <summary>
+        /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
+        /// has been found but the resource set was requested last time. In cases there are different this method performs usually better.
+        /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
 
@@ -143,7 +180,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="baseName">A base name that is the prefix of the resource files.</param>
         /// <param name="neutralResourcesLanguage">Determines the language of the neutral resources. When <see langword="null"/>,
-        /// it will be determined by the entry assembly, or if that is not available, then by the assembly of the caller's method .</param>
+        /// it will be determined by the entry assembly, or if that is not available, then by the assembly of the caller's method.</param>
         public ResXResourceManager(string baseName, CultureInfo neutralResourcesLanguage = null)
             : this(baseName, Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly())
         {
@@ -215,14 +252,14 @@ namespace KGySoft.Libraries.Resources
         /// <br/>Default value: <c>false</c>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject(string)"/> and <see cref="GetMetaObject(string)"/> methods
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject(string)"/> and <see cref="GetMetaObject"/> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
         /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetString(string)"/> and <see cref="GetMetaString"/> methods
         /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
-        /// <seealso cref="ResXResourceReader.UseResXDataNodes"/>
-        /// <seealso cref="ResXResourceManager.SafeMode"/>
+        /// <seealso cref="ResXResourceReader.SafeMode"/>
+        /// <seealso cref="ResXResourceSet.SafeMode"/>
         public bool SafeMode
         {
             get { return safeMode; }
@@ -337,7 +374,10 @@ namespace KGySoft.Libraries.Resources
             if (null == name)
                 throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
 
-            ResXResourceSet last = GetFirstResourceSet(culture ?? CultureInfo.CurrentUICulture);
+            if (culture == null)
+                culture = CultureInfo.CurrentUICulture;
+
+            ResXResourceSet last = GetFirstResourceSet(culture);
             object value;
             if (last != null)
             {
@@ -350,22 +390,25 @@ namespace KGySoft.Libraries.Resources
             // the inner one can return an existing resource set without the searched resource, in which case here is
             // the fallback to the parent resource.
             ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            ResXResourceSet toCache = null;
             foreach (CultureInfo currentCultureInfo in mgr)
             {
                 ResXResourceSet rs = GetResXResourceSet(currentCultureInfo, ResourceSetRetrieval.LoadIfExists, true);
                 if (rs == null)
-                    break;
+                    return null;
 
                 if (rs == last)
                     continue;
 
+                if (toCache == null)
+                    toCache = rs;
+
                 value = rs.GetResourceInternal(name, IgnoreCase, isString, safeMode);
                 if (value != null)
                 {
-                    // update last used ResourceSet
                     lock (syncRoot)
                     {
-                        lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(currentCultureInfo.Name, rs);
+                        lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(culture.Name, toCache);
                     }
 
                     return value;
@@ -389,6 +432,10 @@ namespace KGySoft.Libraries.Resources
 
         public override void ReleaseAllResources()
         {
+            // This check prevents an already disposed object from reanimation (because base re-sets the resource sets)
+            if (ResourceSets == null)
+                throw new InvalidOperationException("An ObjectDisposedExCeption should has been thrown in ResourceSets getter");
+
             base.ReleaseAllResources();
 #if NET40 || NET45
             resourceSets = null; // clearing local cache because here base creates a new instance
@@ -894,7 +941,7 @@ namespace KGySoft.Libraries.Resources
         /// </remarks>
         public void RemoveObject(string name, CultureInfo culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false);
             rs?.RemoveObject(name);
         }
 
@@ -932,7 +979,7 @@ namespace KGySoft.Libraries.Resources
         /// </remarks>
         public void RemoveMetaObject(string name, CultureInfo culture = null)
         {
-            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+            ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
             rs?.RemoveMetaObject(name);
         }
 
@@ -973,7 +1020,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><c>true</c> to save all of the already resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
+        /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
         /// <br />Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
@@ -992,8 +1039,8 @@ namespace KGySoft.Libraries.Resources
                 IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    ResXResourceSet rs = (ResXResourceSet)enumerator.Value;
-                    if (!rs.IsModified && !force)
+                    ResXResourceSet rs = enumerator.Value as ResXResourceSet;
+                    if (rs == null || (!rs.IsModified && !force))
                         continue;
 
                     rs.Save(GetResourceFileName((string)enumerator.Key));
@@ -1009,13 +1056,14 @@ namespace KGySoft.Libraries.Resources
         [OnSerializing]
         private void OnSerializing(StreamingContext ctx)
         {
+            // Removing unmodified sets and proxies before serializing
             var resources = ResourceSets; // var is Hashtable in .NET 3.5, and is Dictionary above
             if (resources.Count == 0)
                 return;
 
             lock (SyncRoot)
             {
-                var keys = from res in resources // T is object in .NET 3.5, and is string above
+                var keys = from res in resources // res.Key is object in .NET 3.5, and is string above
 #if NET35
                            .Cast<DictionaryEntry>()
 #endif
@@ -1027,6 +1075,30 @@ namespace KGySoft.Libraries.Resources
                     resources.Remove(key);
                 }
             }
+        }
+
+        /// <summary>
+        /// Disposes the resources of the current instance.
+        /// </summary>
+        public void Dispose()
+        {
+            var localResourceSets = GetBaseResources();
+            if (localResourceSets == null)
+                return;
+
+            // this enumerates both Hashtable and Dictionary the same way.
+            // The nongeneric enumerator is not a problem, values must be cast anyway.
+            IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                ((ResourceSet)enumerator.Value).Dispose();
+            }
+
+            ResourceSets = null;
+            resxDirFullPath = null;
+            neutralResourcesCulture = null;
+            syncRoot = null;
+            lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
         }
     }
 }

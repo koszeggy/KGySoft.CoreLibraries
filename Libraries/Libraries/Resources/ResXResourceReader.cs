@@ -1,27 +1,17 @@
-﻿namespace KGySoft.Libraries.Resources
-{
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Collections.Specialized;
-    using System.ComponentModel;
-    using System.ComponentModel.Design;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Resources;
-    using System.Runtime;
-    using System.Runtime.CompilerServices;
-    using System.Runtime.Serialization;
-    using System.Runtime.Serialization.Formatters.Binary;
-    using System.Security;
-    using System.Security.Permissions;
-    using System.Text;
-    using System.Threading;
-    using System.Xml;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Resources;
+using System.Runtime.Serialization;
+using System.Threading;
+using System.Xml;
 
+namespace KGySoft.Libraries.Resources
+{
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
     /// </summary>
@@ -41,6 +31,7 @@
     //   - Set and Manager classes see the last occurances of redefined instances. If aliases are redefined, they can be identified in UseResXDataNodes mode
     // - Header can be completely missing; however, it is checked when exists when CheckHeader is true. If header tags contain invalid values, NotSupportedException may be thrown during the enumeration.
     // - Soap? TODO: solve it without referencing Soap formatter: loading assembly, referencing as IFormatter - ony at deserialization in ResXDataNode
+    // - Getting the enumerator (or retrieving the values of ResXNodeData values) of the system version often throws ArgumentException. Here enumeration of a wrong resx may throw XmlException, TypeLoadException or NotSupportedException
     // added functions:
     // - UseResXDataNodes and BasePath can be set during the enumeration, too
     // - custom reader/writer in header
@@ -91,7 +82,7 @@
                     if (mode == ResXEnumeratorModes.Aliases)
                         return new DictionaryEntry(key, value.ValueInternal);
 
-                    return owner.useResXDataNodes
+                    return owner.safeMode
                         ? new DictionaryEntry(key, value)
                         : new DictionaryEntry(key, value.GetValue(owner.typeResolver, owner.basePath, false));
                 }
@@ -280,9 +271,15 @@
         private States state = States.Created;
 
         ITypeResolutionService typeResolver;
-        private Dictionary<string, string> aliases;
-        private Dictionary<string, ResXDataNode> resources;
-        private Dictionary<string, ResXDataNode> metadata;
+
+        /// <summary>
+        /// The currently active aliases. Same as <see cref="aliases"/> if duplication is disabled.
+        /// </summary>
+        private Dictionary<string, string> activeAliases;
+
+        private ICollection<KeyValuePair<string, string>> aliases;
+        private ICollection<KeyValuePair<string, ResXDataNode>> resources;
+        private ICollection<KeyValuePair<string, ResXDataNode>> metadata;
         private LazyEnumerator enumerator;
 
         //ReaderAliasResolver aliasResolver =null;
@@ -293,10 +290,10 @@
         //private string resHeaderMimeType;
         //private string resHeaderReaderType;
         //private string resHeaderWriterType;
-        private bool useResXDataNodes;
+        private bool safeMode;
         private readonly object syncRoot = new object();
         private bool checkHeader;
-        private bool lazyEnumeration = true;
+        private bool allowDuplicatedKeys = true;
 
         //private ResXResourceReader(ITypeResolutionService typeResolver) {
         //    this.typeResolver = typeResolver;
@@ -507,23 +504,37 @@
         /// Gets or sets a value that indicates whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
         /// </summary>
         /// <remarks>
+        /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">System.Resources.ResXResourceReader</a> class.
+        /// Use <see cref="SafeMode"/> property instead.</note>
         /// </remarks>
-        /// <devdoc>
-        ///     ResXFileRef's TypeConverter automatically unwraps it, creates the referenced
-        ///     object and returns it. This property gives the user control over whether this unwrapping should
-        ///     happen, or a ResXFileRef object should be returned. Default is true for backward compat and common case
-        ///     scenario.
-        /// </devdoc>
+        /// <seealso cref="SafeMode"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
+        [Obsolete("This property is maintained due to compatibility reasons with the System.Windows.Forms.ResXResourceReader class. Use SafeMode property instead.")]
         public bool UseResXDataNodes
         {
-            get { return useResXDataNodes; }
+            get { return safeMode; }
+            set { SafeMode = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
+        /// </summary>
+        /// <remarks>
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the objects returned by the <see cref="GetEnumerator"/> and <see cref="GetMetadataEnumerator"/> methods
+        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
+        /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
+        /// </remarks>
+        /// <seealso cref="ResXResourceSet.SafeMode"/>
+        /// <seealso cref="ResXResourceManager.SafeMode"/>
+        public bool SafeMode
+        {
+            get { return safeMode; }
             set
             {
                 if (state == States.Disposed)
                     throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-                useResXDataNodes = value;
+                safeMode = value;
             }
         }
 
@@ -552,26 +563,60 @@
             }
         }
 
+        ///// <summary>
+        ///// Gets or sets whether the first enumeration should be lazy.
+        ///// <br/>Default value: <c>true</c>.
+        ///// </summary>
+        ///// <remarks>
+        ///// <para>A lazy enumeration means that the underlying .resx file should be read only on demand. It is possible that
+        ///// not the whole .resx is read, if enumeration stops. After the first enumeration elements are cached.</para>
+        ///// <para>If an element is defined more than once, and <see cref="LazyEnumeration"/> is <c>true</c>, then the first enumeration returns every occurance,
+        ///// while the further ones only the last occurance.</para>
+        ///// </remarks>
+        ///// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the XML resource file has already been accessed and is in use.</exception>
+        //public bool LazyEnumeration
+        //{
+        //    get { return lazyEnumeration; }
+        //    set
+        //    {
+        //        switch (state)
+        //        {
+        //            case States.Created:
+        //                lazyEnumeration = value;
+        //                break;
+        //            case States.Disposed:
+        //                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+        //            default:
+        //                throw new InvalidOperationException(Res.Get(Res.InvalidResXReaderPropertyChange));
+        //        }
+        //    }
+        //}
+
         /// <summary>
-        /// Gets or sets whether the first enumeration should be lazy.
+        /// Gets or sets whether all entries of same name of the .resx file should be returned.
         /// <br/>Default value: <c>true</c>.
         /// </summary>
         /// <remarks>
-        /// <para>A lazy enumeration means that the underlying .resx file should be read only on demand. It is possible that
-        /// not the whole .resx is read, if enumeration stops. After the first enumeration elements are cached.</para>
-        /// <para>If an element is defined more than once, and <see cref="LazyEnumeration"/> is <c>true</c>, then the first enumeration returns every occurance,
-        /// while the further ones only the last occurance.</para>
+        /// <para>If an element is defined more than once, and <see cref="AllowDuplicatedKeys"/> is <c>true</c>,
+        /// then the enumeration returns every occurrence of the entries with identical names.
+        /// If <see cref="AllowDuplicatedKeys"/> is <c>false</c> the enumeration returns always the last occurrence of the entries with identical names.</para>
+        /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
+        /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
+        /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>
+        /// <note>To be compatible with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">System.Resources.ResXResourceReader</a>
+        /// class set the value of this property <c>false</c>.</note>
         /// </remarks>
+        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceReader"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the XML resource file has already been accessed and is in use.</exception>
-        public bool LazyEnumeration
+        public bool AllowDuplicatedKeys
         {
-            get { return lazyEnumeration; }
+            get { return allowDuplicatedKeys; }
             set
             {
                 switch (state)
                 {
                     case States.Created:
-                        lazyEnumeration = value;
+                        allowDuplicatedKeys = value;
                         break;
                     case States.Disposed:
                         throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
@@ -610,10 +655,7 @@
                 return;
 
             if (disposing)
-            {
-                if (reader != null)
-                    reader.Close();
-            }
+                reader?.Close();
 
             reader = null;
             aliases = null;
@@ -689,19 +731,23 @@
                 {
                     // enumerating for the first time
                     case States.Created:
-                        resources = new Dictionary<string, ResXDataNode>();
-                        metadata = new Dictionary<string, ResXDataNode>();
-                        aliases = new Dictionary<string, string>();
 
-                        // returning a lazy enumerator if enabled
-                        if (lazyEnumeration)
+                        // returning a lazy enumerator for the first time if duplication is enabled
+                        if (allowDuplicatedKeys)
                         {
+                            resources = new List<KeyValuePair<string, ResXDataNode>>();
+                            metadata = new List<KeyValuePair<string, ResXDataNode>>();
+                            aliases = new List<KeyValuePair<string, string>>();
+                            activeAliases = new Dictionary<string, string>();
                             state = States.Reading;
                             enumerator = new LazyEnumerator(this, mode);
                             return enumerator;                            
                         }
 
-                        // non-lazy mode: caching for the first time, too.
+                        // no duplication (non-lazy mode): allocating a dictionary and caching for the first time, too.
+                        resources = new Dictionary<string, ResXDataNode>();
+                        metadata = new Dictionary<string, ResXDataNode>();
+                        aliases = activeAliases = new Dictionary<string, string>();
                         ReadAll();
                         state = States.Read;
                         return new ResXResourceEnumerator(this, mode, 0);
@@ -893,13 +939,13 @@
 
                 if (name == ResXCommon.ReaderStr)
                 {
-                    if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName)
+                    if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal)
                             && typeName != typeof(ResXResourceReader).FullName))
                         throw new NotSupportedException(Res.Get(Res.ResXReaderNotSupported, typeName, GetLineNumber(reader), GetLinePosition(reader)));
                 }
                 else
                 {
-                    if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName)
+                    if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal)
                             && typeName != typeof(ResXResourceReader).FullName))
                         throw new NotSupportedException(Res.Get(Res.ResXWriterNotSupported, typeName, GetLineNumber(reader), GetLinePosition(reader)));
                 }
@@ -914,7 +960,9 @@
             value = reader[ResXCommon.NameStr];
             if (value == null)
             {
-                throw new ArgumentException(Res.Get(Res.XmlMissingAttribute, "value", GetLineNumber(reader), GetLinePosition(reader)));
+                int line = GetLineNumber(reader);
+                int col = GetLinePosition(reader);
+                throw ResXCommon.CreateXmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.NameStr, line, col), line, col);
             }
         }
 
@@ -938,7 +986,7 @@
 
             // alias value found
             string asmName;
-            if (aliases.TryGetValue(alias, out asmName))
+            if (activeAliases.TryGetValue(alias, out asmName))
                 return asmName;
 
             // type name is with assembly name
@@ -1037,50 +1085,43 @@
                 return false;
             }
 
-            try
+            while (reader.Read())
             {
-                while (reader.Read())
-                {
-                    if (reader.NodeType != XmlNodeType.Element)
-                        continue;
+                if (reader.NodeType != XmlNodeType.Element)
+                    continue;
 
 #pragma warning disable 252,253 // reference equality is intended because names are added to NameTable
-                    object name = reader.LocalName;
-                    if (name == ResXCommon.DataStr)
-                    {
-                        ParseDataNode(reader, out key, out value);
-                        resources[key] = value;
-                        if (mode == ResXEnumeratorModes.Resources)
-                            return true;
-                    }
-                    else if (name == ResXCommon.MetadataStr)
-                    {
-                        ParseDataNode(reader, out key, out value);
-                        metadata[key] = value;
-                        if (mode == ResXEnumeratorModes.Metadata)
-                            return true;
-                    }
-                    else if (name == ResXCommon.AssemblyStr)
-                    {
-                        string assemblyName;
-                        ParseAssemblyNode(reader, out key, out assemblyName);
-                        aliases[key] = assemblyName;
-                        if (mode == ResXEnumeratorModes.Aliases)
-                        {
-                            value = new ResXDataNode(key, assemblyName);
-                            return true;
-                        }
-                    }
-                    else if (name == ResXCommon.ResHeaderStr && checkHeader)
-                    {
-                        ParseResHeaderNode(reader);
-                    }
-#pragma warning restore 252,253
+                object name = reader.LocalName;
+                if (name == ResXCommon.DataStr)
+                {
+                    ParseDataNode(reader, out key, out value);
+                    AddNode(resources, key, value);
+                    if (mode == ResXEnumeratorModes.Resources)
+                        return true;
                 }
-            }
-            catch (XmlException e)
-            {
-                throw new ArgumentException(Res.Get(Res.InvalidResXFile, e.Message), e);
+                else if (name == ResXCommon.MetadataStr)
+                {
+                    ParseDataNode(reader, out key, out value);
+                    AddNode(metadata, key, value);
+                    if (mode == ResXEnumeratorModes.Metadata)
+                        return true;
+                }
+                else if (name == ResXCommon.AssemblyStr)
+                {
+                    string assemblyName;
+                    ParseAssemblyNode(reader, out key, out assemblyName);
+                    AddAlias(key, assemblyName);
+                    if (mode == ResXEnumeratorModes.Aliases)
+                    {
+                        value = new ResXDataNode(key, assemblyName);
+                        return true;
+                    }
+                }
+                else if (name == ResXCommon.ResHeaderStr && checkHeader)
+                {
+                    ParseResHeaderNode(reader);
+                }
+#pragma warning restore 252,253
             }
 
             key = null;
@@ -1091,6 +1132,29 @@
             return false;
         }
 
+        private void AddAlias(string key, string assemblyName)
+        {
+            var dict = aliases as Dictionary<string, string>;
+            if (dict != null)
+            {
+                dict[key] = assemblyName;
+                Debug.Assert(ReferenceEquals(aliases, activeAliases), "activeAliases should be the same as aliases");
+                return;
+            }
+
+            activeAliases[key] = assemblyName;
+            aliases.Add(new KeyValuePair<string, string>(key, assemblyName));
+        }
+
+        private void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
+        {
+            var dict = collection as Dictionary<string, ResXDataNode>;
+            if (dict != null)
+                dict[key] = value;
+            else
+                collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
+        }
+
         // ReSharper disable once ParameterHidesMember
         /// <summary>
         /// Parses a data or metadata node.
@@ -1099,8 +1163,10 @@
         private void ParseDataNode(XmlReader reader, out string key, out ResXDataNode value)
         {
             key = reader[ResXCommon.NameStr];
+            int line = GetLineNumber(reader);
+            int col = GetLinePosition(reader);
             if (key == null)
-                throw new ArgumentException(Res.Get(Res.InvalidResXResourceNoName, GetLineNumber(reader), GetLinePosition(reader)));
+                throw ResXCommon.CreateXmlException(Res.Get(Res.InvalidResXResourceNoName, line, col), line, col);
 
             DataNodeInfo nodeInfo = new DataNodeInfo
                 {
@@ -1108,8 +1174,8 @@
                     TypeName = reader[ResXCommon.TypeStr],
                     MimeType = reader[ResXCommon.MimeTypeStr],
                     BasePath = basePath,
-                    Line = GetLineNumber(reader),
-                    Column = GetLinePosition(reader)
+                    Line = line,
+                    Column = col
                 };
 
             nodeInfo.AssemblyAliasValue = GetAliasValueFromTypeName(nodeInfo.TypeName);
@@ -1136,8 +1202,11 @@
                         else if (name == ResXCommon.CommentStr)
                             nodeInfo.Comment = reader.ReadString();
                         else
-                            throw new ArgumentException(
-                                Res.Get(Res.XmlUnexpectedElement, name, GetLineNumber(reader), GetLinePosition(reader)));
+                        {
+                            line = GetLineNumber(reader);
+                            col = GetLinePosition(reader);
+                            throw ResXCommon.CreateXmlException(Res.Get(Res.XmlUnexpectedElement, name, line, col), line, col);
+                        }
                     }
                     else if (reader.NodeType == XmlNodeType.Text)
                     {
@@ -1266,23 +1335,23 @@
             Debug.Assert(state == States.Created);
             this.resources = resources;
             this.metadata = metadata;
-            this.aliases = aliases;
+            this.aliases = activeAliases = aliases;
             ReadAll();
         }
 
         #region IResXResourceContainer Members
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Resources
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources
         {
             get { return resources; }
         }
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Metadata
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata
         {
             get { return metadata; }
         }
 
-        Dictionary<string, string> IResXResourceContainer.Aliases
+        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases
         {
             get { return aliases; }
         }
@@ -1332,470 +1401,470 @@
         #endregion
     }
 
-    // Miscellaneous utilities
-    static internal class ClientUtils {
+//    // Miscellaneous utilities
+//    static internal class ClientUtils {
 
-        // ExecutionEngineException is obsolete and shouldn't be used (to catch, throw or reference) anymore. 
-        // Pragma added to prevent converting the "type is obsolete" warning into build error.
-        // File owner should fix this. 
-#pragma warning disable 618
-        public static bool IsCriticalException(Exception ex)
-        {
-            return ex is NullReferenceException
-                    || ex is StackOverflowException
-                    || ex is OutOfMemoryException
-                    || ex is System.Threading.ThreadAbortException
-                    || ex is ExecutionEngineException
-                    || ex is IndexOutOfRangeException
-                    || ex is AccessViolationException;
-        }
-#pragma warning restore 618
+//        // ExecutionEngineException is obsolete and shouldn't be used (to catch, throw or reference) anymore. 
+//        // Pragma added to prevent converting the "type is obsolete" warning into build error.
+//        // File owner should fix this. 
+//#pragma warning disable 618
+//        public static bool IsCriticalException(Exception ex)
+//        {
+//            return ex is NullReferenceException
+//                    || ex is StackOverflowException
+//                    || ex is OutOfMemoryException
+//                    || ex is System.Threading.ThreadAbortException
+//                    || ex is ExecutionEngineException
+//                    || ex is IndexOutOfRangeException
+//                    || ex is AccessViolationException;
+//        }
+//#pragma warning restore 618
 
-        public static bool IsSecurityOrCriticalException(Exception ex)
-        {
-            return (ex is System.Security.SecurityException) || IsCriticalException(ex);
-        }
- 
-//        public static int GetBitCount(uint x) {
-//          int count = 0; 
-//          while (x > 0){
-//              x &= x - 1;
-//              count++;
-//          } 
-//          return count;
-//        } 
- 
-
-//        // Sequential version 
-//        // assumes sequential enum members 0,1,2,3,4 -etc.
-//        //
-//        public static bool IsEnumValid(Enum enumValue, int value, int minValue, int maxValue) 
-//        {		
-//            bool valid = (value >= minValue) && (value <= maxValue); 
-//#if DEBUG 
-//            Debug_SequentialEnumIsDefinedCheck(enumValue, minValue, maxValue);
-//#endif 
-//            return valid;
-
+//        public static bool IsSecurityOrCriticalException(Exception ex)
+//        {
+//            return (ex is System.Security.SecurityException) || IsCriticalException(ex);
 //        }
  
-//        // Useful for sequential enum values which only use powers of two 0,1,2,4,8 etc: IsEnumValid(val, min, max, 1)
-//        // Valid example: TextImageRelation 0,1,2,4,8 - only one bit can ever be on, and the value is between 0 and 8. 
-//        // 
-//        //   ClientUtils.IsEnumValid((int)(relation), /*min*/(int)TextImageRelation.None, (int)TextImageRelation.TextBeforeImage,1);
-//        // 
-//        public static bool IsEnumValid(Enum enumValue, int value, int minValue, int maxValue, int maxNumberOfBitsOn) {
-//            System.Diagnostics.Debug.Assert(maxNumberOfBitsOn >=0 && maxNumberOfBitsOn<32, "expect this to be greater than zero and less than 32"); 
-
-//            bool valid = (value >= minValue) && (value <= maxValue); 
-//            //Note: if it's 0, it'll have no bits on.  If it's a power of 2, it'll have 1. 
-//            valid =  (valid && GetBitCount((uint)value) <= maxNumberOfBitsOn);
-//#if DEBUG 
-//            Debug_NonSequentialEnumIsDefinedCheck(enumValue, minValue, maxValue, maxNumberOfBitsOn, valid);
-//#endif
-//            return valid;
-//        } 
-
-//        // Useful for enums that are a subset of a bitmask 
-//        // Valid example: EdgeEffects  0, 0x800 (FillInterior), 0x1000 (Flat), 0x4000(Soft), 0x8000(Mono) 
-//        //
-//        //   ClientUtils.IsEnumValid((int)(effects), /*mask*/ FillInterior | Flat | Soft | Mono, 
-//        //          ,2);
-//        //
-//        public static bool IsEnumValid_Masked(Enum enumValue, int value, UInt32 mask) {
-//            bool valid = ((value & mask) == value); 
- 
-//#if DEBUG
-//            Debug_ValidateMask(enumValue, mask); 
-//#endif
-
-//            return valid;
-//        } 
-
- 
+////        public static int GetBitCount(uint x) {
+////          int count = 0; 
+////          while (x > 0){
+////              x &= x - 1;
+////              count++;
+////          } 
+////          return count;
+////        } 
  
 
- 
-//        // Useful for cases where you have discontiguous members of the enum.
-//        // Valid example: AutoComplete source.
-//        // if (!ClientUtils.IsEnumValid(value, AutoCompleteSource.None,
-//        //                                            AutoCompleteSource.AllSystemSources 
-//        //                                            AutoCompleteSource.AllUrl,
-//        //                                            AutoCompleteSource.CustomSource, 
-//        //                                            AutoCompleteSource.FileSystem, 
-//        //                                            AutoCompleteSource.FileSystemDirectories,
-//        //                                            AutoCompleteSource.HistoryList, 
-//        //                                            AutoCompleteSource.ListItems,
-//        //                                            AutoCompleteSource.RecentlyUsedList))
-//        //
-//        // PERF tip: put the default value in the enum towards the front of the argument list. 
-//        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-//        public static bool IsEnumValid_NotSequential(System.Enum enumValue, int value, params int[] enumValues) { 
-//             System.Diagnostics.Debug.Assert(Enum.GetValues(enumValue.GetType()).Length == enumValues.Length, "Not all the enum members were passed in."); 
-//             for (int i = 0; i < enumValues.Length; i++){
-//                 if (enumValues[i] == value){ 
-//                     return true;
-//                 }
-//             }
-//             return false; 
-//        }
- 
-//#if DEBUG 
-//        [ThreadStatic]
-//        private static Hashtable enumValueInfo; 
-//        public const int MAXCACHE = 300;  // we think we're going to get O(100) of these, put in a tripwire if it gets larger.
+////        // Sequential version 
+////        // assumes sequential enum members 0,1,2,3,4 -etc.
+////        //
+////        public static bool IsEnumValid(Enum enumValue, int value, int minValue, int maxValue) 
+////        {		
+////            bool valid = (value >= minValue) && (value <= maxValue); 
+////#if DEBUG 
+////            Debug_SequentialEnumIsDefinedCheck(enumValue, minValue, maxValue);
+////#endif 
+////            return valid;
 
-//        [SuppressMessage("Microsoft.Performance", "CA1808:AvoidCallsThatBoxValueTypes")]
-//        private class SequentialEnumInfo { 
-//            [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-//            public SequentialEnumInfo(Type t) { 
-//                int actualMinimum = Int32.MaxValue; 
-//                int actualMaximum = Int32.MinValue;
-//                int countEnumVals = 0; 
-
-//                foreach (int iVal in Enum.GetValues(t)){
-//                    actualMinimum = Math.Min(actualMinimum, iVal);
-//                    actualMaximum = Math.Max(actualMaximum, iVal); 
-//                    countEnumVals++;
-//                } 
+////        }
  
-//                if (countEnumVals -1 != (actualMaximum - actualMinimum)) {
-//                    Debug.Fail("this enum cannot be sequential."); 
-//                }
-//                MinValue = actualMinimum;
-//                MaxValue = actualMaximum;
- 
-//            }
-//            public int MinValue; 
-//            public int MaxValue; 
-//        }
- 
+////        // Useful for sequential enum values which only use powers of two 0,1,2,4,8 etc: IsEnumValid(val, min, max, 1)
+////        // Valid example: TextImageRelation 0,1,2,4,8 - only one bit can ever be on, and the value is between 0 and 8. 
+////        // 
+////        //   ClientUtils.IsEnumValid((int)(relation), /*min*/(int)TextImageRelation.None, (int)TextImageRelation.TextBeforeImage,1);
+////        // 
+////        public static bool IsEnumValid(Enum enumValue, int value, int minValue, int maxValue, int maxNumberOfBitsOn) {
+////            System.Diagnostics.Debug.Assert(maxNumberOfBitsOn >=0 && maxNumberOfBitsOn<32, "expect this to be greater than zero and less than 32"); 
 
-//        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider")]
-//        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-//        [SuppressMessage("Microsoft.Performance", "CA1808:AvoidCallsThatBoxValueTypes")] 
-//        private static void Debug_SequentialEnumIsDefinedCheck(System.Enum value, int minVal, int maxVal) {
-//            Type t = value.GetType(); 
+////            bool valid = (value >= minValue) && (value <= maxValue); 
+////            //Note: if it's 0, it'll have no bits on.  If it's a power of 2, it'll have 1. 
+////            valid =  (valid && GetBitCount((uint)value) <= maxNumberOfBitsOn);
+////#if DEBUG 
+////            Debug_NonSequentialEnumIsDefinedCheck(enumValue, minValue, maxValue, maxNumberOfBitsOn, valid);
+////#endif
+////            return valid;
+////        } 
+
+////        // Useful for enums that are a subset of a bitmask 
+////        // Valid example: EdgeEffects  0, 0x800 (FillInterior), 0x1000 (Flat), 0x4000(Soft), 0x8000(Mono) 
+////        //
+////        //   ClientUtils.IsEnumValid((int)(effects), /*mask*/ FillInterior | Flat | Soft | Mono, 
+////        //          ,2);
+////        //
+////        public static bool IsEnumValid_Masked(Enum enumValue, int value, UInt32 mask) {
+////            bool valid = ((value & mask) == value); 
  
-//            if (enumValueInfo == null) {
-//                enumValueInfo = new Hashtable(); 
-//            }
+////#if DEBUG
+////            Debug_ValidateMask(enumValue, mask); 
+////#endif
 
-//            SequentialEnumInfo sequentialEnumInfo = null;
- 
-//            if (enumValueInfo.ContainsKey(t)) {
-//                sequentialEnumInfo = enumValueInfo[t] as SequentialEnumInfo; 
-//            } 
-//            if (sequentialEnumInfo == null) {
-//                sequentialEnumInfo = new SequentialEnumInfo(t); 
-
-//                if (enumValueInfo.Count > MAXCACHE) {
-//                    // see comment next to MAXCACHE declaration.
-//                    Debug.Fail("cache is too bloated, clearing out, we need to revisit this."); 
-//                    enumValueInfo.Clear();
-//                } 
-//                enumValueInfo[t] = sequentialEnumInfo; 
-
-//            } 
-//            if (minVal != sequentialEnumInfo.MinValue) {
-//                // put string allocation in the IF block so the common case doesnt build up the string.
-//                System.Diagnostics.Debug.Fail("Minimum passed in is not the actual minimum for the enum.  Consider changing the parameters or using a different function.");
-//            } 
-//            if (maxVal != sequentialEnumInfo.MaxValue) {
-//                // put string allocation in the IF block so the common case doesnt build up the string. 
-//                Debug.Fail("Maximum passed in is not the actual maximum for the enum.  Consider changing the parameters or using a different function."); 
-//            }
- 
-//        }
-
+////            return valid;
+////        } 
 
  
-//        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider")]
-//        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")] 
-//        private static void Debug_ValidateMask(System.Enum value, UInt32 mask) { 
-//            Type t = value.GetType();
-//            UInt32 newmask = 0; 
-//            foreach (int iVal in Enum.GetValues(t)){
-//                newmask = newmask | (UInt32)iVal;
-//            }
-//            System.Diagnostics.Debug.Assert(newmask == mask, "Mask not valid in IsEnumValid!"); 
-//        }
  
-//        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider")] 
-//        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-//        [SuppressMessage("Microsoft.Performance", "CA1808:AvoidCallsThatBoxValueTypes")] 
-//        private static void Debug_NonSequentialEnumIsDefinedCheck(System.Enum value, int minVal, int maxVal, int maxBitsOn, bool isValid) {
-//               Type t = value.GetType();
-//               int actualMinimum = Int32.MaxValue;
-//               int actualMaximum = Int32.MinValue; 
-//               int checkedValue = Convert.ToInt32(value, CultureInfo.InvariantCulture);
-//               int maxBitsFound = 0; 
-//               bool foundValue = false; 
-//               foreach (int iVal in Enum.GetValues(t)){
-//                   actualMinimum = Math.Min(actualMinimum, iVal); 
-//                   actualMaximum = Math.Max(actualMaximum, iVal);
-//                   maxBitsFound = Math.Max(maxBitsFound, GetBitCount((uint)iVal));
-//                   if (checkedValue == iVal) {
-//                       foundValue = true; 
-//                   }
-//               } 
-//               if (minVal != actualMinimum) { 
-//                    // put string allocation in the IF block so the common case doesnt build up the string.
-//                   System.Diagnostics.Debug.Fail( "Minimum passed in is not the actual minimum for the enum.  Consider changing the parameters or using a different function."); 
-//               }
-//               if (maxVal != actualMaximum) {
-//                    // put string allocation in the IF block so the common case doesnt build up the string.
-//                   System.Diagnostics.Debug.Fail("Maximum passed in is not the actual maximum for the enum.  Consider changing the parameters or using a different function."); 
-//               }
+
  
-//               if (maxBitsFound != maxBitsOn) { 
-//                   System.Diagnostics.Debug.Fail("Incorrect usage of IsEnumValid function. The bits set to 1 in this enum was found to be: " + maxBitsFound.ToString(CultureInfo.InvariantCulture) + "this does not match what's passed in: " + maxBitsOn.ToString(CultureInfo.InvariantCulture));
-//               } 
-//               if (foundValue != isValid) {
-//                    System.Diagnostics.Debug.Fail(String.Format(CultureInfo.InvariantCulture, "Returning {0} but we actually {1} found the value in the enum! Consider using a different overload to IsValidEnum.", isValid, ((foundValue) ? "have" : "have not")));
-//               }
+////        // Useful for cases where you have discontiguous members of the enum.
+////        // Valid example: AutoComplete source.
+////        // if (!ClientUtils.IsEnumValid(value, AutoCompleteSource.None,
+////        //                                            AutoCompleteSource.AllSystemSources 
+////        //                                            AutoCompleteSource.AllUrl,
+////        //                                            AutoCompleteSource.CustomSource, 
+////        //                                            AutoCompleteSource.FileSystem, 
+////        //                                            AutoCompleteSource.FileSystemDirectories,
+////        //                                            AutoCompleteSource.HistoryList, 
+////        //                                            AutoCompleteSource.ListItems,
+////        //                                            AutoCompleteSource.RecentlyUsedList))
+////        //
+////        // PERF tip: put the default value in the enum towards the front of the argument list. 
+////        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+////        public static bool IsEnumValid_NotSequential(System.Enum enumValue, int value, params int[] enumValues) { 
+////             System.Diagnostics.Debug.Assert(Enum.GetValues(enumValue.GetType()).Length == enumValues.Length, "Not all the enum members were passed in."); 
+////             for (int i = 0; i < enumValues.Length; i++){
+////                 if (enumValues[i] == value){ 
+////                     return true;
+////                 }
+////             }
+////             return false; 
+////        }
  
-//           }
-//        #endif 
+////#if DEBUG 
+////        [ThreadStatic]
+////        private static Hashtable enumValueInfo; 
+////        public const int MAXCACHE = 300;  // we think we're going to get O(100) of these, put in a tripwire if it gets larger.
+
+////        [SuppressMessage("Microsoft.Performance", "CA1808:AvoidCallsThatBoxValueTypes")]
+////        private class SequentialEnumInfo { 
+////            [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+////            public SequentialEnumInfo(Type t) { 
+////                int actualMinimum = Int32.MaxValue; 
+////                int actualMaximum = Int32.MinValue;
+////                int countEnumVals = 0; 
+
+////                foreach (int iVal in Enum.GetValues(t)){
+////                    actualMinimum = Math.Min(actualMinimum, iVal);
+////                    actualMaximum = Math.Max(actualMaximum, iVal); 
+////                    countEnumVals++;
+////                } 
  
-//        /// <devdoc>
-//        ///   WeakRefCollection - a collection that holds onto weak references 
-//        ///
-//        ///   Essentially you pass in the object as it is, and under the covers
-//        ///   we only hold a weak reference to the object.
-//        /// 
-//        ///   -----------------------------------------------------------------
-//        ///   !!!IMPORTANT USAGE NOTE!!! 
-//        ///   Users of this class should set the RefCheckThreshold property 
-//        ///   explicitly or call ScavengeReferences every once in a while to
-//        ///   remove dead references. 
-//        ///   Also avoid calling Remove(item).  Instead call RemoveByHashCode(item)
-//        ///   to make sure dead refs are removed.
-//        ///   -----------------------------------------------------------------
-//        /// 
-//        /// </devdoc>
-//#if [....]_NAMESPACE || [....]_PUBLIC_GRAPHICS_LIBRARY || DRAWING_NAMESPACE 
-//        internal class WeakRefCollection : IList { 
-//            private int refCheckThreshold = Int32.MaxValue; // this means this is disabled by default.
-//            private ArrayList _innerList; 
-
-//            internal WeakRefCollection() {
-//                _innerList = new ArrayList(4);
-//            } 
-
-//            internal WeakRefCollection(int size) { 
-//                _innerList = new ArrayList(size); 
-//            }
+////                if (countEnumVals -1 != (actualMaximum - actualMinimum)) {
+////                    Debug.Fail("this enum cannot be sequential."); 
+////                }
+////                MinValue = actualMinimum;
+////                MaxValue = actualMaximum;
  
-//            internal ArrayList InnerList {
-//                get { return _innerList; }
-//            }
+////            }
+////            public int MinValue; 
+////            public int MaxValue; 
+////        }
  
-//            /// <summary>
-//            ///     Indicates the value where the collection should check its items to remove dead weakref left over. 
-//            ///     Note: When GC collects weak refs from this collection the WeakRefObject identity changes since its 
-//            ///           Target becomes null.  This makes the item unrecognizable by the collection and cannot be
-//            ///           removed - Remove(item) and Contains(item) will not find it anymore. 
-//            ///
-//            /// </summary>
-//            public int RefCheckThreshold {
-//                get{ 
-//                    return this.refCheckThreshold;
-//                } 
-//                set { 
-//                    this.refCheckThreshold = value;
-//                } 
-//            }
 
-//            public object this[int index] {
-//                get { 
-//                    WeakRefObject weakRef = InnerList[index] as WeakRefObject;
+////        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider")]
+////        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+////        [SuppressMessage("Microsoft.Performance", "CA1808:AvoidCallsThatBoxValueTypes")] 
+////        private static void Debug_SequentialEnumIsDefinedCheck(System.Enum value, int minVal, int maxVal) {
+////            Type t = value.GetType(); 
  
-//                    if ((weakRef != null) && (weakRef.IsAlive)) { 
-//                        return weakRef.Target;
-//                    } 
+////            if (enumValueInfo == null) {
+////                enumValueInfo = new Hashtable(); 
+////            }
 
-//                    return null;
-//                }
-//                set { 
-//                    InnerList[index] = CreateWeakRefObject(value);
-//                } 
-//            } 
-
-//            public void ScavengeReferences() { 
-//                int currentIndex = 0;
-//                int currentCount = Count;
-//                for (int i = 0; i < currentCount; i++) {
-//                    object item = this[currentIndex]; 
-
-//                    if (item == null) { 
-//                        InnerList.RemoveAt(currentIndex); 
-//                    }
-//                    else {   // only incriment if we have not removed the item 
-//                        currentIndex++;
-//                    }
-//                }
-//            } 
-
-//            public override bool Equals(object obj) { 
-//                WeakRefCollection other = obj as WeakRefCollection; 
-
-//                if (other == this) { 
-//                    return true;
-//                }
-
-//                if (other == null || Count != other.Count) { 
-//                    return false;
-//                } 
+////            SequentialEnumInfo sequentialEnumInfo = null;
  
-//                for (int i = 0; i < Count; i++) {
-//                    if( this.InnerList[i] != other.InnerList[i] ) { 
-//                        if( this.InnerList[i] == null || !this.InnerList[i].Equals(other.InnerList[i])) {
-//                            return false;
-//                        }
-//                    } 
-//                }
- 
-//                return true; 
-//            }
- 
-//            public override int GetHashCode() {
-//                return base.GetHashCode();
-//            }
- 
-//            private WeakRefObject CreateWeakRefObject(object value) {
-//                if (value == null) { 
-//                    return null; 
-//                }
-//                return new WeakRefObject(value); 
-//            }
+////            if (enumValueInfo.ContainsKey(t)) {
+////                sequentialEnumInfo = enumValueInfo[t] as SequentialEnumInfo; 
+////            } 
+////            if (sequentialEnumInfo == null) {
+////                sequentialEnumInfo = new SequentialEnumInfo(t); 
 
-//            private static void Copy(WeakRefCollection sourceList, int sourceIndex, WeakRefCollection destinationList, int destinationIndex, int length) {
-//                if (sourceIndex < destinationIndex) { 
-//                    // We need to copy from the back forward to prevent overwrite if source and
-//                    // destination lists are the same, so we need to flip the source/dest indices 
-//                    // to point at the end of the spans to be copied. 
-//                    sourceIndex = sourceIndex + length;
-//                    destinationIndex = destinationIndex + length; 
-//                    for (; length > 0; length--) {
-//                        destinationList.InnerList[--destinationIndex] = sourceList.InnerList[--sourceIndex];
-//                    }
-//                } 
-//                else {
-//                    for (; length > 0; length--) { 
-//                        destinationList.InnerList[destinationIndex++] = sourceList.InnerList[sourceIndex++]; 
-//                    }
-//                } 
-//            }
+////                if (enumValueInfo.Count > MAXCACHE) {
+////                    // see comment next to MAXCACHE declaration.
+////                    Debug.Fail("cache is too bloated, clearing out, we need to revisit this."); 
+////                    enumValueInfo.Clear();
+////                } 
+////                enumValueInfo[t] = sequentialEnumInfo; 
 
-//            /// <summary>
-//            ///     Removes the value using its hash code as its identity. 
-//            ///     This is needed because the underlying item in the collection may have already been collected
-//            ///     changing the identity of the WeakRefObject making it impossible for the collection to identify 
-//            ///     it.  See WeakRefObject for more info. 
-//            /// </summary>
-//            [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")] 
-//            public void RemoveByHashCode(object value) {
-//                if( value == null ) {
-//                    return;
-//                } 
-
-//                int hash = value.GetHashCode(); 
+////            } 
+////            if (minVal != sequentialEnumInfo.MinValue) {
+////                // put string allocation in the IF block so the common case doesnt build up the string.
+////                System.Diagnostics.Debug.Fail("Minimum passed in is not the actual minimum for the enum.  Consider changing the parameters or using a different function.");
+////            } 
+////            if (maxVal != sequentialEnumInfo.MaxValue) {
+////                // put string allocation in the IF block so the common case doesnt build up the string. 
+////                Debug.Fail("Maximum passed in is not the actual maximum for the enum.  Consider changing the parameters or using a different function."); 
+////            }
  
-//                for( int idx = 0; idx < this.InnerList.Count; idx++ ) {
-//                    if(this.InnerList[idx] != null && this.InnerList[idx].GetHashCode() == hash ) { 
-//                        this.RemoveAt(idx);
-//                        return;
-//                    }
-//                } 
-//            }
- 
-//            #region IList Members 
-//            public void Clear() { InnerList.Clear(); }
-//            public bool IsFixedSize { get { return InnerList.IsFixedSize; } } 
-//            public bool Contains(object value) { return InnerList.Contains(CreateWeakRefObject(value)); }
-//            public void RemoveAt(int index) { InnerList.RemoveAt(index); }
-//            public void Remove(object value) { InnerList.Remove(CreateWeakRefObject(value)); }
-//            public int IndexOf(object value) { return InnerList.IndexOf(CreateWeakRefObject(value)); } 
-//            public void Insert(int index, object value) { InnerList.Insert(index, CreateWeakRefObject(value)); }
-//            public int Add(object value) { 
-//                if (this.Count > RefCheckThreshold) { 
-//                    ScavengeReferences();
-//                } 
-//                return InnerList.Add(CreateWeakRefObject(value));
-//            }
-//        #endregion
- 
-//        #region ICollection Members
-//            /// <include file='doc\ArrangedElementCollection.uex' path='docs/doc[@for="ArrangedElementCollection.Count"]/*' /> 
-//            public int Count { get { return InnerList.Count; } } 
-//            object ICollection.SyncRoot { get { return InnerList.SyncRoot; } }
-//            public bool IsReadOnly { get { return InnerList.IsReadOnly; } } 
-//            public void CopyTo(Array array, int index) { InnerList.CopyTo(array, index); }
-//            bool ICollection.IsSynchronized { get { return InnerList.IsSynchronized; } }
-//        #endregion
- 
-//        #region IEnumerable Members
-//            public IEnumerator GetEnumerator() { 
-//                return InnerList.GetEnumerator(); 
-//            }
-//        #endregion 
+////        }
 
-//            /// <summary>
-//            ///     Wraps a weak ref object.
-//            ///     WARNING: Use this class carefully! 
-//            ///     When the weak ref is collected, this object looses its identity. This is bad when the object
-//            ///     has been added to a collection since Contains(WeakRef(item)) and Remove(WeakRef(item)) would 
-//            ///     not be able to identify the item. 
-//            /// </summary>
-//            internal class WeakRefObject { 
-//                int hash;
-//                WeakReference weakHolder;
 
-//                internal WeakRefObject(object obj) { 
-//                    Debug.Assert(obj != null, "Unexpected null object!");
-//                    weakHolder = new WeakReference(obj); 
-//                    hash = obj.GetHashCode(); 
-//                }
  
-//                internal bool IsAlive {
-//                    get { return weakHolder.IsAlive; }
-//                }
+////        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider")]
+////        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")] 
+////        private static void Debug_ValidateMask(System.Enum value, UInt32 mask) { 
+////            Type t = value.GetType();
+////            UInt32 newmask = 0; 
+////            foreach (int iVal in Enum.GetValues(t)){
+////                newmask = newmask | (UInt32)iVal;
+////            }
+////            System.Diagnostics.Debug.Assert(newmask == mask, "Mask not valid in IsEnumValid!"); 
+////        }
  
-//                internal object Target {
-//                    get { 
-//                        return weakHolder.Target; 
-//                    }
-//                } 
-
-//                public override int GetHashCode() {
-//                    return hash;
-//                } 
-
-//                public override bool Equals(object obj) { 
-//                    WeakRefObject other = obj as WeakRefObject; 
-
-//                    if( other == this ) { 
-//                        return true;
-//                    }
-
-//                    if (other == null ){ 
-//                        return false;
-//                    } 
+////        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider")] 
+////        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+////        [SuppressMessage("Microsoft.Performance", "CA1808:AvoidCallsThatBoxValueTypes")] 
+////        private static void Debug_NonSequentialEnumIsDefinedCheck(System.Enum value, int minVal, int maxVal, int maxBitsOn, bool isValid) {
+////               Type t = value.GetType();
+////               int actualMinimum = Int32.MaxValue;
+////               int actualMaximum = Int32.MinValue; 
+////               int checkedValue = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+////               int maxBitsFound = 0; 
+////               bool foundValue = false; 
+////               foreach (int iVal in Enum.GetValues(t)){
+////                   actualMinimum = Math.Min(actualMinimum, iVal); 
+////                   actualMaximum = Math.Max(actualMaximum, iVal);
+////                   maxBitsFound = Math.Max(maxBitsFound, GetBitCount((uint)iVal));
+////                   if (checkedValue == iVal) {
+////                       foundValue = true; 
+////                   }
+////               } 
+////               if (minVal != actualMinimum) { 
+////                    // put string allocation in the IF block so the common case doesnt build up the string.
+////                   System.Diagnostics.Debug.Fail( "Minimum passed in is not the actual minimum for the enum.  Consider changing the parameters or using a different function."); 
+////               }
+////               if (maxVal != actualMaximum) {
+////                    // put string allocation in the IF block so the common case doesnt build up the string.
+////                   System.Diagnostics.Debug.Fail("Maximum passed in is not the actual maximum for the enum.  Consider changing the parameters or using a different function."); 
+////               }
  
-//                    if( other.Target != this.Target ) {
-//                        if( this.Target == null || !this.Target.Equals(other.Target) ) { 
-//                            return false;
-//                        }
-//                    }
+////               if (maxBitsFound != maxBitsOn) { 
+////                   System.Diagnostics.Debug.Fail("Incorrect usage of IsEnumValid function. The bits set to 1 in this enum was found to be: " + maxBitsFound.ToString(CultureInfo.InvariantCulture) + "this does not match what's passed in: " + maxBitsOn.ToString(CultureInfo.InvariantCulture));
+////               } 
+////               if (foundValue != isValid) {
+////                    System.Diagnostics.Debug.Fail(String.Format(CultureInfo.InvariantCulture, "Returning {0} but we actually {1} found the value in the enum! Consider using a different overload to IsValidEnum.", isValid, ((foundValue) ? "have" : "have not")));
+////               }
  
-//                    return true;
-//                } 
-//            } 
-//        }
-//#endif 
+////           }
+////        #endif 
+ 
+////        /// <devdoc>
+////        ///   WeakRefCollection - a collection that holds onto weak references 
+////        ///
+////        ///   Essentially you pass in the object as it is, and under the covers
+////        ///   we only hold a weak reference to the object.
+////        /// 
+////        ///   -----------------------------------------------------------------
+////        ///   !!!IMPORTANT USAGE NOTE!!! 
+////        ///   Users of this class should set the RefCheckThreshold property 
+////        ///   explicitly or call ScavengeReferences every once in a while to
+////        ///   remove dead references. 
+////        ///   Also avoid calling Remove(item).  Instead call RemoveByHashCode(item)
+////        ///   to make sure dead refs are removed.
+////        ///   -----------------------------------------------------------------
+////        /// 
+////        /// </devdoc>
+////#if [....]_NAMESPACE || [....]_PUBLIC_GRAPHICS_LIBRARY || DRAWING_NAMESPACE 
+////        internal class WeakRefCollection : IList { 
+////            private int refCheckThreshold = Int32.MaxValue; // this means this is disabled by default.
+////            private ArrayList _innerList; 
 
-    }
+////            internal WeakRefCollection() {
+////                _innerList = new ArrayList(4);
+////            } 
+
+////            internal WeakRefCollection(int size) { 
+////                _innerList = new ArrayList(size); 
+////            }
+ 
+////            internal ArrayList InnerList {
+////                get { return _innerList; }
+////            }
+ 
+////            /// <summary>
+////            ///     Indicates the value where the collection should check its items to remove dead weakref left over. 
+////            ///     Note: When GC collects weak refs from this collection the WeakRefObject identity changes since its 
+////            ///           Target becomes null.  This makes the item unrecognizable by the collection and cannot be
+////            ///           removed - Remove(item) and Contains(item) will not find it anymore. 
+////            ///
+////            /// </summary>
+////            public int RefCheckThreshold {
+////                get{ 
+////                    return this.refCheckThreshold;
+////                } 
+////                set { 
+////                    this.refCheckThreshold = value;
+////                } 
+////            }
+
+////            public object this[int index] {
+////                get { 
+////                    WeakRefObject weakRef = InnerList[index] as WeakRefObject;
+ 
+////                    if ((weakRef != null) && (weakRef.IsAlive)) { 
+////                        return weakRef.Target;
+////                    } 
+
+////                    return null;
+////                }
+////                set { 
+////                    InnerList[index] = CreateWeakRefObject(value);
+////                } 
+////            } 
+
+////            public void ScavengeReferences() { 
+////                int currentIndex = 0;
+////                int currentCount = Count;
+////                for (int i = 0; i < currentCount; i++) {
+////                    object item = this[currentIndex]; 
+
+////                    if (item == null) { 
+////                        InnerList.RemoveAt(currentIndex); 
+////                    }
+////                    else {   // only incriment if we have not removed the item 
+////                        currentIndex++;
+////                    }
+////                }
+////            } 
+
+////            public override bool Equals(object obj) { 
+////                WeakRefCollection other = obj as WeakRefCollection; 
+
+////                if (other == this) { 
+////                    return true;
+////                }
+
+////                if (other == null || Count != other.Count) { 
+////                    return false;
+////                } 
+ 
+////                for (int i = 0; i < Count; i++) {
+////                    if( this.InnerList[i] != other.InnerList[i] ) { 
+////                        if( this.InnerList[i] == null || !this.InnerList[i].Equals(other.InnerList[i])) {
+////                            return false;
+////                        }
+////                    } 
+////                }
+ 
+////                return true; 
+////            }
+ 
+////            public override int GetHashCode() {
+////                return base.GetHashCode();
+////            }
+ 
+////            private WeakRefObject CreateWeakRefObject(object value) {
+////                if (value == null) { 
+////                    return null; 
+////                }
+////                return new WeakRefObject(value); 
+////            }
+
+////            private static void Copy(WeakRefCollection sourceList, int sourceIndex, WeakRefCollection destinationList, int destinationIndex, int length) {
+////                if (sourceIndex < destinationIndex) { 
+////                    // We need to copy from the back forward to prevent overwrite if source and
+////                    // destination lists are the same, so we need to flip the source/dest indices 
+////                    // to point at the end of the spans to be copied. 
+////                    sourceIndex = sourceIndex + length;
+////                    destinationIndex = destinationIndex + length; 
+////                    for (; length > 0; length--) {
+////                        destinationList.InnerList[--destinationIndex] = sourceList.InnerList[--sourceIndex];
+////                    }
+////                } 
+////                else {
+////                    for (; length > 0; length--) { 
+////                        destinationList.InnerList[destinationIndex++] = sourceList.InnerList[sourceIndex++]; 
+////                    }
+////                } 
+////            }
+
+////            /// <summary>
+////            ///     Removes the value using its hash code as its identity. 
+////            ///     This is needed because the underlying item in the collection may have already been collected
+////            ///     changing the identity of the WeakRefObject making it impossible for the collection to identify 
+////            ///     it.  See WeakRefObject for more info. 
+////            /// </summary>
+////            [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")] 
+////            public void RemoveByHashCode(object value) {
+////                if( value == null ) {
+////                    return;
+////                } 
+
+////                int hash = value.GetHashCode(); 
+ 
+////                for( int idx = 0; idx < this.InnerList.Count; idx++ ) {
+////                    if(this.InnerList[idx] != null && this.InnerList[idx].GetHashCode() == hash ) { 
+////                        this.RemoveAt(idx);
+////                        return;
+////                    }
+////                } 
+////            }
+ 
+////            #region IList Members 
+////            public void Clear() { InnerList.Clear(); }
+////            public bool IsFixedSize { get { return InnerList.IsFixedSize; } } 
+////            public bool Contains(object value) { return InnerList.Contains(CreateWeakRefObject(value)); }
+////            public void RemoveAt(int index) { InnerList.RemoveAt(index); }
+////            public void Remove(object value) { InnerList.Remove(CreateWeakRefObject(value)); }
+////            public int IndexOf(object value) { return InnerList.IndexOf(CreateWeakRefObject(value)); } 
+////            public void Insert(int index, object value) { InnerList.Insert(index, CreateWeakRefObject(value)); }
+////            public int Add(object value) { 
+////                if (this.Count > RefCheckThreshold) { 
+////                    ScavengeReferences();
+////                } 
+////                return InnerList.Add(CreateWeakRefObject(value));
+////            }
+////        #endregion
+ 
+////        #region ICollection Members
+////            /// <include file='doc\ArrangedElementCollection.uex' path='docs/doc[@for="ArrangedElementCollection.Count"]/*' /> 
+////            public int Count { get { return InnerList.Count; } } 
+////            object ICollection.SyncRoot { get { return InnerList.SyncRoot; } }
+////            public bool IsReadOnly { get { return InnerList.IsReadOnly; } } 
+////            public void CopyTo(Array array, int index) { InnerList.CopyTo(array, index); }
+////            bool ICollection.IsSynchronized { get { return InnerList.IsSynchronized; } }
+////        #endregion
+ 
+////        #region IEnumerable Members
+////            public IEnumerator GetEnumerator() { 
+////                return InnerList.GetEnumerator(); 
+////            }
+////        #endregion 
+
+////            /// <summary>
+////            ///     Wraps a weak ref object.
+////            ///     WARNING: Use this class carefully! 
+////            ///     When the weak ref is collected, this object looses its identity. This is bad when the object
+////            ///     has been added to a collection since Contains(WeakRef(item)) and Remove(WeakRef(item)) would 
+////            ///     not be able to identify the item. 
+////            /// </summary>
+////            internal class WeakRefObject { 
+////                int hash;
+////                WeakReference weakHolder;
+
+////                internal WeakRefObject(object obj) { 
+////                    Debug.Assert(obj != null, "Unexpected null object!");
+////                    weakHolder = new WeakReference(obj); 
+////                    hash = obj.GetHashCode(); 
+////                }
+ 
+////                internal bool IsAlive {
+////                    get { return weakHolder.IsAlive; }
+////                }
+ 
+////                internal object Target {
+////                    get { 
+////                        return weakHolder.Target; 
+////                    }
+////                } 
+
+////                public override int GetHashCode() {
+////                    return hash;
+////                } 
+
+////                public override bool Equals(object obj) { 
+////                    WeakRefObject other = obj as WeakRefObject; 
+
+////                    if( other == this ) { 
+////                        return true;
+////                    }
+
+////                    if (other == null ){ 
+////                        return false;
+////                    } 
+ 
+////                    if( other.Target != this.Target ) {
+////                        if( this.Target == null || !this.Target.Equals(other.Target) ) { 
+////                            return false;
+////                        }
+////                    }
+ 
+////                    return true;
+////                } 
+////            } 
+////        }
+////#endif 
+
+//    }
 
 //    /// <devdoc>
 //    ///     Helper class supporting Multitarget type assembly qualified name resolution for ResX API.

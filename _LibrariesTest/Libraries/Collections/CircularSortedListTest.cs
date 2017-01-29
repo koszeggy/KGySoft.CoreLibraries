@@ -1,11 +1,9 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using KGySoft.Libraries.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Collections
 {
     [TestClass]
     public class CircularSortedListTest

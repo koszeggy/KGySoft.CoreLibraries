@@ -76,7 +76,7 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to set.</param>
         /// <param name="culture">The culture of the resource to set. If this value is <see langword="null"/>,
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
-        /// <param name="value">The value of the resource to set. If <see langword="null"/>,  then a null reference will be explicitly
+        /// <param name="value">The value of the resource to set. If <see langword="null"/>, then a null reference will be explicitly
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
@@ -208,7 +208,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><c>true</c> to save all of the already resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
+        /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
         /// <br/>Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />

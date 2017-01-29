@@ -1511,7 +1511,7 @@ namespace KGySoft.Libraries.Serialization
         {
             if (collectionTypeDescriptor.Count == 0)
                 // should never occur, throwing internal error without resource
-                throw new ArgumentException("Type description is invalid", "collectionTypeDescriptor");
+                throw new ArgumentException("Type description is invalid", nameof(collectionTypeDescriptor));
 
             DataTypes collectionDataType = collectionTypeDescriptor[0];
             DataTypes elementDataType = collectionDataType & ~(DataTypes.CollectionTypes | DataTypes.Enum);
@@ -2910,6 +2910,7 @@ namespace KGySoft.Libraries.Serialization
                 if (objRef != null)
                 {
                     result = objRef.GetRealObject(Context);
+                    manager.UpdateReferences(objRef, result);
                     if (addToCache)
                         manager.ReplaceObjectInCache(id, result);
                 }
@@ -2963,8 +2964,8 @@ namespace KGySoft.Libraries.Serialization
 
                     if (field.IsNotSerialized)
                         continue;
-                    
-                    FieldAccessor.GetFieldAccessor(field).Set(obj, value);
+
+                    manager.TrySetField(field, obj, value);
                 }
             }
 
@@ -2999,12 +3000,13 @@ namespace KGySoft.Libraries.Serialization
             {
                 string name = br.ReadString();
                 object value = Read(br, false, manager);
-                Type elementType = value == null ? typeof(object) : value.GetType();
+                Type elementType = value?.GetType() ?? typeof(object);
                 if (!br.ReadBoolean())
                     elementType = manager.ReadType(br);
                 si.AddValue(name, value, elementType);
             }
 
+            manager.CheckReferences(si);
             if (surrogate == null)
             {
                 // As ISerializable: Invoking serialization constructor
@@ -3045,6 +3047,7 @@ namespace KGySoft.Libraries.Serialization
                 // end level is marked with empty string
             } while (br.ReadString() != String.Empty);
 
+            manager.CheckReferences(si);
             if (surrogate == null)
             {
                 // As ISerializable: Invoking serialization constructor
@@ -3100,7 +3103,7 @@ namespace KGySoft.Libraries.Serialization
                     object value;
                     if (elements.TryGetValue(field.Name, out value))
                     {
-                        FieldAccessor.GetFieldAccessor(field).Set(obj, value);
+                        manager.TrySetField(field, obj, value);
                         if (checkFields)
                             elements.Remove(field.Name);
                     }

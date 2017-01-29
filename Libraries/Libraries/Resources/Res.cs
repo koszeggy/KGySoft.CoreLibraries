@@ -219,6 +219,7 @@ namespace KGySoft.Libraries.Resources
         internal const string SeparatorInvalidHex = "SeparatorInvalidHex";
         internal const string SeparatorInvalidDec = "SeparatorInvalidDec";
         internal const string HybridResSourceBinary = "HybridResSourceBinary";
+        internal const string InvalidDrmPropertyChange = "InvalidDrmPropertyChange";
 
         private const string nullReference = "NullReference";
         private const string unavailableResource = "Resource ID not found: {0}";

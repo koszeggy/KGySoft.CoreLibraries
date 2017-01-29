@@ -1,18 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-
+using KGySoft.Libraries.Diagnostics;
+using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using KGySoft.Libraries.Diagnostics;
-
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries.Diagnostics
 {
-    using KGySoft.Libraries.Reflection;
-
     [TestClass]
     public class ProfilerPerformanceTest : TestBase
     {

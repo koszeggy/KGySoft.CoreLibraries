@@ -1,27 +1,19 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
 using KGySoft.Drawing;
+using KGySoft.Libraries;
+using KGySoft.Libraries.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
-using KGySoft.Libraries.Resources;
-
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Data;
-    using System.Diagnostics;
-    using System.Drawing;
-    using System.Linq;
-    using System.Reflection;
-    using System.Reflection.Emit;
-    using System.Text;
-    using System.Windows.Forms;
-
     [TestClass]
     public class ResXResourceSetTest : TestBase
     {
@@ -109,10 +101,10 @@ namespace _LibrariesTest
             Assert.AreEqual("576, 17", rs.GetString("TestPoint"));
 
             // for a file reference, the reference value is returned...
-            Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib"));
+            Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib", StringComparison.Ordinal));
 
             // ...even if it refers to a string...
-            Assert.IsTrue(rs.GetString("TestTextFile").StartsWith("TestTextFile.txt;System.String, mscorlib"));
+            Assert.IsTrue(rs.GetString("TestTextFile").StartsWith("TestTextFile.txt;System.String, mscorlib", StringComparison.Ordinal));
 
             rs.SafeMode = false;
             o = rs.GetString("TestTextFile");
@@ -120,7 +112,7 @@ namespace _LibrariesTest
             rs.SafeMode = true;
 
             // ...unless the string value is already obtained and cached
-            Assert.IsFalse(rs.GetString("TestTextFile").StartsWith("TestTextFile.txt;System.String, mscorlib"));
+            Assert.IsFalse(rs.GetString("TestTextFile").StartsWith("TestTextFile.txt;System.String, mscorlib", StringComparison.Ordinal));
 
             // but a non-string file reference will still return the file reference even if the result is cached (with AutoCleanup, this time with full path)
             Assert.IsTrue(rs.GetString("TestBinFile").Contains("TestBinFile.bin;System.Byte[], mscorlib"));
@@ -145,7 +137,7 @@ namespace _LibrariesTest
             Assert.AreEqual("576, 17", rs.GetString("TestPoint"));
 
             // for fileref, in safe mode, path/type is expected
-            Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib"));
+            Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib", StringComparison.Ordinal));
 
             // in non-safe mode, raw value is cleared once an object is generated
             rs.SafeMode = false;
@@ -153,7 +145,7 @@ namespace _LibrariesTest
 
             // when safe mode is turned on again, raw value is re-generated from fileRef
             rs.SafeMode = true;
-            Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib"));
+            Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib", StringComparison.Ordinal));
         }
 
         [TestMethod]

@@ -1,13 +1,12 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Collections;
 
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries.Collections
 {
     [TestClass]
     public class CircularSortedListPerformanceTest

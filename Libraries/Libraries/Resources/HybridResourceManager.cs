@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Resources;
 using System;
+using System.Collections;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
+using System.Runtime.Serialization;
 using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
@@ -20,17 +21,18 @@ namespace KGySoft.Libraries.Resources
     /// </summary>
     // TODO: Említeni a Dynamic-ot, mi a különbség. Itt minden művelet explicit, a bővítés és mentés is.
     [Serializable]
-    public sealed class HybridResourceManager : ResourceManager, IExpandoResourceManager
+    public class HybridResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
         /// </summary>
         private sealed class ProxyResourceSet : ResourceSet
         {
+            private const string errorMessage = "Internal error: This operation is invalid on a ProxyResourceSet";
             private bool hierarchyLoaded;
 
             /// <summary>
-            /// Gets the wrapped resource set. This is always a parent of <see cref="WrappedCulture"/>.
+            /// Gets the wrapped resource set. This is always a parent of the represented resource set.
             /// </summary>
             internal ResourceSet WrappedResourceSet { get; }
 
@@ -59,6 +61,31 @@ namespace KGySoft.Libraries.Resources
                 WrappedCulture = wrappedCulture;
                 this.hierarchyLoaded = hierarchyLoaded;
             }
+
+            public override object GetObject(string name, bool ignoreCase)
+            {
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            public override object GetObject(string name)
+            {
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            public override string GetString(string name)
+            {
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            public override string GetString(string name, bool ignoreCase)
+            {
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            public override IDictionaryEnumerator GetEnumerator()
+            {
+                throw new InvalidOperationException(errorMessage);
+            }
         }
 
         private readonly ResXResourceManager resxResources; // used as sync obj as well because this reference lives along with parent lifetime and is invisible from outside
@@ -69,6 +96,10 @@ namespace KGySoft.Libraries.Resources
         [NonSerialized]
         private Dictionary<string, ResourceSet> resourceSets;
 
+        /// <summary>
+        /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
+        /// has been found but the resource set was requested last time. In cases there are different this method performs usually better.
+        /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResourceSet> lastUsedResourceSet;
 
@@ -80,7 +111,8 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether a <see cref="MissingManifestResourceException"/> should be thrown when a resource
-        /// .resx file or compiled manifest is not found even in the neutral culture. Default value: <c>true</c>.
+        /// .resx file or compiled manifest is not found even in the neutral culture.
+        /// <br/>Default value: <c>true</c>.
         /// </summary>
         public bool ThrowException
         {
@@ -90,7 +122,7 @@ namespace KGySoft.Libraries.Resources
                 if (value == throwException)
                     return;
 
-                lock (resxResources)
+                lock (SyncRoot)
                 {
                     resxResources.ThrowException = value;
                     throwException = value;
@@ -109,11 +141,13 @@ namespace KGySoft.Libraries.Resources
             set { resxResources.ResXResourcesDir = value; }
         }
 
+        internal object SyncRoot => resxResources;
+
         /// <summary>
         /// Gets or sets the source, from which the resources should be taken.
         /// </summary>
         // TODO: doc: - by default, both. - when changed, resources are not cleared
-        public ResourceManagerSources Source
+        public virtual ResourceManagerSources Source
         {
             get { return source; }
             set
@@ -123,12 +157,62 @@ namespace KGySoft.Libraries.Resources
 
                 if (!value.IsDefined())
                     throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
-                lock (resxResources)
-                {
-                    source = value;
-                    resourceSets = null;
-                    lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
-                }
+
+                SetSource(value);
+            }
+        }
+
+        /// <summary>
+        /// Sets the source of the resources.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal virtual void SetSource(ResourceManagerSources value)
+        {
+            lock (SyncRoot)
+            {
+                // nullifying the local resourceSets cache does not mean we clear the resources.
+                // they will be obtained and property merged again on next Get...
+                source = value;
+                resourceSets = null;
+                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+            }
+        }
+
+        /// <summary>
+        /// Gets whether a non-proxy resource set is present for the specified culture.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal bool IsNonProxyLoaded(CultureInfo culture)
+        {
+            lock (SyncRoot)
+            {
+                ResourceSet rs;
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && !(rs is ProxyResourceSet);
+            }
+        }
+
+        /// <summary>
+        /// Gets whether a proxy resource set is present for any culture.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal bool IsAnyProxyLoaded()
+        {
+            lock (SyncRoot)
+            {
+                return resourceSets?.Values.Any(v => v is ProxyResourceSet) == true;
+            }
+        }
+
+        /// <summary>
+        /// Gets whether an expando resource set is present for the specified culture.
+        /// Actually protected but should be visible only in this project.
+        /// </summary>
+        internal bool IsExpandoExists(CultureInfo culture)
+        {
+            lock (SyncRoot)
+            {
+                ResourceSet rs;
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && rs is IExpandoResourceSet;
             }
         }
 
@@ -144,7 +228,7 @@ namespace KGySoft.Libraries.Resources
                 if (value == base.IgnoreCase)
                     return;
 
-                lock (resxResources)
+                lock (SyncRoot)
                 {
                     resxResources.IgnoreCase = value;
                     base.IgnoreCase = value;
@@ -165,7 +249,7 @@ namespace KGySoft.Libraries.Resources
         /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx resource.
         /// For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
-        /// <seealso cref="ResXResourceReader.UseResXDataNodes"/>
+        /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
         public bool SafeMode
@@ -179,15 +263,13 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        private CultureInfo NeutralResourcesCulture
-        {
-            get
-            {
-                return neutralResourcesCulture ??
-                    (neutralResourcesCulture = (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this)
-                        ?? CultureInfo.InvariantCulture);
-            }
-        }
+        /// <summary>
+        /// Gets the <see cref="CultureInfo"/> that is specified as neutral culture in the <see cref="Assembly"/>
+        /// used to initialized this instance, or the <see cref="CultureInfo.InvariantCulture"/> if no such culture is defined.
+        /// </summary>
+        protected CultureInfo NeutralResourcesCulture => neutralResourcesCulture
+            ?? (neutralResourcesCulture =
+                (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this) ?? CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Creates a new instance of <see cref="HybridResourceManager"/> class that looks up resources in
@@ -224,6 +306,10 @@ namespace KGySoft.Libraries.Resources
             resxResources = explicitResXBaseFileName == null
                 ? new ResXResourceManager(resourceSource)
                 : new ResXResourceManager(explicitResXBaseFileName, resourceSource.Assembly);
+#if NET35
+            // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
+            Accessors.ResourceManager_neutralResourcesCulture.Set(this, GetNeutralResourcesLanguage(resourceSource.Assembly));
+#endif // elif not needed because this will not be needed in newer versions
         }
 
         /// <summary>
@@ -254,7 +340,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Returns the value of the specified non-string resource.
+        /// Returns the value of the specified resource.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <returns>
@@ -267,7 +353,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
+        /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for
@@ -287,77 +373,159 @@ namespace KGySoft.Libraries.Resources
             if (null == name)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
-            ResourceSet last = GetFirstResourceSet(culture ?? CultureInfo.CurrentUICulture);
-            IExpandoResourceSetInternal expandoRs;
+            if (culture == null)
+                culture = CultureInfo.CurrentUICulture;
             object value;
-            if (last != null)
+            ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, out value));
+
+            // There is a result, or a stored null is returned from invariant
+            if (value != null
+                || (seen != null
+                    && (Equals(culture, CultureInfo.InvariantCulture) || seen is ProxyResourceSet && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
+                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
             {
-                expandoRs = last as IExpandoResourceSetInternal;
-                value = expandoRs != null
-                    ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode)
-                    : (isString ? last.GetString(name, IgnoreCase) : last.GetObject(name, IgnoreCase));
-                if (value != null)
-                    return value;
+                return value;
             }
 
             // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
             // the inner one can return an existing resource set without the searched resource, in which case here is
             // the fallback to the parent resource.
             ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
-            foreach (CultureInfo currentCultureInfo in mgr)
+            ResourceSet toCache = null;
+            foreach (CultureInfo currentCulture in mgr)
             {
-                ResourceSet rs = InternalGetResourceSet(currentCultureInfo, ResourceSetRetrieval.LoadIfExists, true, false);
+                ResourceSet rs = InternalGetResourceSet(currentCulture, ResourceSetRetrieval.LoadIfExists, true, false);
                 if (rs == null)
-                    break;
+                    return null;
 
-                if (rs == last)
+                // we have already checked this resource
+                var unwrapped = Unwrap(rs);
+                if (unwrapped == seen)
                     continue;
 
-                expandoRs = rs as IExpandoResourceSetInternal;
-                value = expandoRs != null
-                    ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode)
-                    : (isString ? rs.GetString(name, IgnoreCase) : rs.GetObject(name, IgnoreCase));
+                if (toCache == null)
+                    toCache = rs;
+
+                value = GetResourceFromAny(unwrapped, name, isString);
                 if (value != null)
                 {
-                    // update last used ResourceSet
-                    lock (resxResources)
+                    lock (SyncRoot)
                     {
-                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(currentCultureInfo.Name, rs);
+                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, toCache);
                     }
 
                     return value;
                 }
 
-                last = rs;
+                seen = unwrapped;
             }
 
             return null;
         }
 
+        /// <summary>
+        /// Actually should be protected AND internal...
+        /// Warning: it CAN return a proxy
+        /// </summary>
+        internal ResourceSet TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, out object value)
+        {
+            ResourceSet cachedRs = GetFirstResourceSet(culture);
+            if (cachedRs == null)
+            {
+                value = null;
+                return null;
+            }
+
+            value = GetResourceFromAny(cachedRs, name, isString);
+            return cachedRs;
+        }
+
+        /// <summary>
+        /// Updates last used ResourceSet
+        /// Actually should be protected AND internal...
+        /// </summary>
+        internal void SetCache(CultureInfo culture, ResourceSet rs)
+        {
+            lock (SyncRoot)
+            {
+                lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, rs);
+            }
+        }
+
+        /// <summary>
+        /// Actually should be protected AND internal...
+        /// </summary>
+        internal object GetResourceFromAny(ResourceSet rs, string name, bool isString)
+        {
+            ResourceSet realRs = Unwrap(rs);
+            var expandoRs = realRs as IExpandoResourceSetInternal;
+            return expandoRs != null
+                ? expandoRs.GetResource(name, IgnoreCase, isString, safeMode)
+                : (isString ? realRs.GetString(name, IgnoreCase) : realRs.GetObject(name, IgnoreCase));
+        }
+
+        /// <summary>
+        /// Tries to get the first resource set in the traversal hierarchy,
+        /// so the resource set for the culture itself.
+        /// Warning: it CAN return a proxy
+        /// </summary>
         private ResourceSet GetFirstResourceSet(CultureInfo culture)
         {
-            // Logic from ResourceFallbackManager.GetEnumerator()
-            if (culture.Name == NeutralResourcesCulture.Name)
-                culture = CultureInfo.InvariantCulture;
-
-            lock (resxResources)
+            lock (SyncRoot)
             {
+                ResourceSet rs;
+                ProxyResourceSet proxy;
                 if (culture.Name == lastUsedResourceSet.Key)
-                    return lastUsedResourceSet.Value;
+                {
+                    proxy = (rs = lastUsedResourceSet.Value) as ProxyResourceSet;
+                    if (proxy == null)
+                        return rs;
+
+                    if (IsCachedProxyAccepted(proxy, culture))
+                        return rs;
+
+                    Debug.Assert(resourceSets.TryGetValue(culture.Name, out rs) && rs == proxy, "Inconsistent value in cache");
+                    return null;
+                }
 
                 // Look in the ResourceSet table
                 var localResourceSets = resourceSets;
-                ResourceSet rs;
+
                 if (localResourceSets == null || !localResourceSets.TryGetValue(culture.Name, out rs))
                     return null;
 
+                if ((proxy = rs as ProxyResourceSet) != null && !IsCachedProxyAccepted(proxy, culture))
+                    return null;
+
                 // update the cache with the most recent ResourceSet
-                lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, GetResultResourceSet(rs));
+                lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, rs);
                 return rs;
             }
         }
 
-        private static ResourceSet GetResultResourceSet(ResourceSet rs)
+        /// <summary>
+        /// Gets whether a cached proxy
+        /// Actually should be protected AND internal...
+        /// </summary>
+        /// <param name="proxy">The found proxy</param>
+        /// <param name="culture">The requested culture</param>
+        internal virtual bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
+        {
+            // In HRM proxy is accepted only if hierarchy is loaded. This is ok because GetFirstResourceSet is called only from
+            // methods, which call InternalGetResourceSet with LoadIfExists
+            return ((ProxyResourceSet)proxy).HierarchyLoaded;
+        }
+
+        internal CultureInfo GetWrappedCulture(ResourceSet proxy)
+        {
+            Debug.Assert(proxy is ProxyResourceSet);
+            return ((ProxyResourceSet)proxy).WrappedCulture;
+        }
+
+        /// <summary>
+        /// Actually should be protected AND internal...
+        /// </summary>
+        internal static ResourceSet Unwrap(ResourceSet rs)
         {
             if (rs == null)
                 return null;
@@ -370,6 +538,11 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
+        /// Actually should be protected AND internal...
+        /// </summary>
+        internal static bool IsProxy(ResourceSet rs) => rs is ProxyResourceSet;
+
+        /// <summary>
         /// Retrieves the resource set for a particular culture.
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
@@ -378,11 +551,11 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The resource set for the specified culture.
         /// </returns>
-        /// <exception cref="System.Resources.MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
+        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // base implementation must not be called because it wants to open main assembly in case of invariant culture
-            ResourceSet result = InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false);
+            ResourceSet result = Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
 
             // this.SafeMode is not used to set the SafeMode of the wrapped ResourceSets when resources are accessed so setting it only when the user obtains a ResX/HybridResourceSet instance.
             IExpandoResourceSetInternal expandoRs = result as IExpandoResourceSetInternal;
@@ -397,7 +570,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="culture">The culture object to look for.</param>
         /// <param name="loadIfExists">true to load the resource set, if it has not been loaded yet; otherwise, false.</param>
-        /// <param name="tryParents">true to check parent <see cref="T:System.Globalization.CultureInfo" /> objects if the resource set cannot be loaded; otherwise, false.</param>
+        /// <param name="tryParents">true to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, false.</param>
         /// <returns>
         /// The specified resource set.
         /// </returns>
@@ -405,11 +578,14 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
-            Debug.Fail("InternalGetResourceSet is called");
-            return InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false);
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
+            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
         }
 
-        private ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
+        /// <summary>
+        /// Warning: It CAN return a proxy
+        /// </summary>
+        internal ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
         {
             Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists,
                 "Behavior can be CreateIfNotExists only if expando is requested.");
@@ -419,7 +595,7 @@ namespace KGySoft.Libraries.Resources
 
             ResourceSet result = null;
             bool resourceFound;
-            lock (resxResources)
+            lock (SyncRoot)
             {
                 resourceFound = resourceSets != null && resourceSets.TryGetValue(culture.Name, out result);
             }
@@ -428,12 +604,17 @@ namespace KGySoft.Libraries.Resources
             if (resourceFound)
             {
                 // returning the cached resource if that is not a proxy or when the proxy does not have to be (possibly) replaced
-                if ((((proxy = result as ProxyResourceSet) == null) // result is not a proxy but an actual resource
-                     || behavior == ResourceSetRetrieval.GetIfAlreadyLoaded // nothing new should be loaded 
-                     || (behavior == ResourceSetRetrieval.LoadIfExists && proxy.HierarchyLoaded)) // nothing new can be loaded in the hierarchy
-                    && (!forceExpandoResult || result is IExpandoResourceSet))
+                // if result is not a proxy but an actual resource...
+                if ((((proxy = result as ProxyResourceSet) == null)
+                       // ...or is a proxy but nothing new should be loaded...
+                       || behavior == ResourceSetRetrieval.GetIfAlreadyLoaded
+                       // ...or is a proxy but nothing new can be loaded in the hierarchy
+                       || (behavior == ResourceSetRetrieval.LoadIfExists && proxy.HierarchyLoaded))
+                    // AND not expando is requested or result (wraps) an expando.
+                    // Due to the conditions above it will not return proxied expando with Create behavior.
+                    && (!forceExpandoResult || Unwrap(result) is IExpandoResourceSet))
                 {
-                    return GetResultResourceSet(result);
+                    return result;
                 }
             }
 
@@ -443,9 +624,9 @@ namespace KGySoft.Libraries.Resources
             foreach (CultureInfo currentCultureInfo in mgr)
             {
                 proxy = null;
-                lock (resxResources)
+                lock (SyncRoot)
                 {
-                    resourceFound = resourceSets != null && resourceSets.TryGetValue(currentCultureInfo.Name, out result);
+                    resourceFound = resourceSets?.TryGetValue(currentCultureInfo.Name, out result) == true;
                 }
 
                 if (resourceFound)
@@ -458,12 +639,37 @@ namespace KGySoft.Libraries.Resources
                         if (Equals(culture, currentCultureInfo))
                             return result;
 
-                        // after some proxies, a parent culture has been found: simply return if this was the proxied culture in the children
+                        // after some proxies, a parent culture has been found: returning a proxy for this if this was the proxied culture in the children
                         if (Equals(currentCultureInfo, foundProxyCulture))
-                            return result;
+                        {
+                            // The hierarchy is now up-to-date. Creating the possible missing proxies and returning the one for the requested culture
+                            lock (SyncRoot)
+                            {
+                                ResourceSet toWrap = result;
+                                result = null;
+                                foreach (CultureInfo updateCultureInfo in mgr)
+                                {
+                                    // We have found again the first proxy in the hierarchy. This is now up-to-date for sure so returning.
+                                    ResourceSet rs;
+                                    if (resourceSets.TryGetValue(updateCultureInfo.Name, out rs))
+                                    {
+                                        Debug.Assert(rs is ProxyResourceSet, "A proxy is expected to be found here.");
+                                        return result ?? rs;
+                                    }
+                                    // There is at least one non-existing key (most specific elements in the hierarchy): new proxy creation is needed
+                                    else
+                                    {
+                                        ResourceSet newProxy = new ProxyResourceSet(toWrap, foundProxyCulture, behavior == ResourceSetRetrieval.LoadIfExists);
+                                        AddResourceSet(updateCultureInfo.Name, ref newProxy);
+                                        if (result == null)
+                                            result = newProxy;
+                                    }
+                                }
+                            }
+                        }
 
-                        // othwerwise, we found a parent: we need to re-create the proxies in the cache to the children
-                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an incostistent parent in the hierarchy.");
+                        // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
+                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
                         foundCultureToAdd = currentCultureInfo;
                         break;
                     }
@@ -575,43 +781,48 @@ namespace KGySoft.Libraries.Resources
                 }
             }
 
-            if (foundCultureToAdd != null)
+            if (foundCultureToAdd == null)
+                return null;
+
+            lock (SyncRoot)
             {
-                lock (resxResources)
+                ResourceSet toReturn = null;
+
+                // we replace a proxy: we must delete proxies, which are children of the found resource.
+                if (foundProxyCulture != null && resourceSets != null)
                 {
-                    // we replace a proxy: we must delete proxies, which are children of the found resource.
-                    if (foundProxyCulture != null && resourceSets != null)
+                    Debug.Assert(forceExpandoResult || !Equals(foundProxyCulture, foundCultureToAdd), "The culture to add is the same as the existing proxies, while no expando result is forced.");
+
+                    List<string> keysToRemove = resourceSets.Where(item =>
+                                item.Value is ProxyResourceSet && ResXResourceManager.IsParentCulture(foundCultureToAdd, item.Key))
+                        .Select(item => item.Key).ToList();
+
+                    foreach (string key in keysToRemove)
                     {
-                        Debug.Assert(forceExpandoResult || !Equals(foundProxyCulture, foundCultureToAdd), "The culture to add is the same as the existing proxies, while no expando result is forced.");
-
-                        List<string> keysToRemove = resourceSets.Where(item =>
-                            item.Value is ProxyResourceSet && ResXResourceManager.IsParentCulture(foundCultureToAdd, item.Key))
-                            .Select(item => item.Key).ToList();
-
-                        foreach (string key in keysToRemove)
-                        {
-                            resourceSets.Remove(key);
-                        }
-                    }
-
-                    // add entries to the cache for the cultures we have gone through
-                    foreach (CultureInfo updateCultureInfo in mgr)
-                    {
-                        // stop when we've added current or reached invariant (top of chain)
-                        if (ReferenceEquals(updateCultureInfo, foundCultureToAdd))
-                        {
-                            AddResourceSet(updateCultureInfo.Name, ref result);
-                            break;
-                        }
-
-                        ResourceSet newProxy = new ProxyResourceSet(result, foundCultureToAdd, behavior == ResourceSetRetrieval.LoadIfExists);
-                        AddResourceSet(updateCultureInfo.Name, ref newProxy);
+                        resourceSets.Remove(key);
                     }
                 }
-            }
 
-            Debug.Assert(!(result is ProxyResourceSet));
-            return result;                
+                // add entries to the cache for the cultures we have gone through
+                foreach (CultureInfo updateCultureInfo in mgr)
+                {
+                    // stop when we've added current or reached invariant (top of chain)
+                    if (ReferenceEquals(updateCultureInfo, foundCultureToAdd))
+                    {
+                        AddResourceSet(updateCultureInfo.Name, ref result);
+                        if (toReturn == null)
+                            toReturn = result;
+                        break;
+                    }
+
+                    ResourceSet newProxy = new ProxyResourceSet(result, foundCultureToAdd, behavior == ResourceSetRetrieval.LoadIfExists);
+                    AddResourceSet(updateCultureInfo.Name, ref newProxy);
+                    if (toReturn == null)
+                        toReturn = newProxy;
+                }
+
+                return toReturn;
+            }
         }
 
         private void AddResourceSet(string cultureName, ref ResourceSet rs)
@@ -628,7 +839,7 @@ namespace KGySoft.Libraries.Resources
             {
                 if (!ReferenceEquals(lostRace, rs))
                 {
-                    // Note: In certain cases, we can be trying to add a ResourceSet for multiple
+                    // Note: In certain cases, we can try to add a ResourceSet for multiple
                     // cultures on one thread, while a second thread added another ResourceSet for one
                     // of those cultures.  So when we lose the race, we must make sure our ResourceSet 
                     // isn't in our dictionary before closing it.
@@ -650,6 +861,8 @@ namespace KGySoft.Libraries.Resources
             {
                 resourceSets.Add(cultureName, rs);
             }
+
+            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
         }
 
         /// <summary>
@@ -659,14 +872,13 @@ namespace KGySoft.Libraries.Resources
         public override void ReleaseAllResources()
         {
             // we are in lock; otherwise, the nullification could occur while we access the resourceSets anywhere else
-            lock (resxResources)
+            lock (SyncRoot)
             {
                 resourceSets = null;
+                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+                resxResources.ReleaseAllResources();
+                base.ReleaseAllResources();
             }
-            
-            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
-            base.ReleaseAllResources();
-            resxResources.ReleaseAllResources();
         }
 
         private object GetMetaInternal(string name, CultureInfo culture, bool isString)
@@ -678,7 +890,7 @@ namespace KGySoft.Libraries.Resources
                 return null;
 
             // in case of metadata there is no hierarchy traversal
-            IExpandoResourceSetInternal rs = InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false) as IExpandoResourceSetInternal;
+            IExpandoResourceSetInternal rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSetInternal;
             return rs?.GetMeta(name, IgnoreCase, isString, safeMode);
         }
 
@@ -703,7 +915,7 @@ namespace KGySoft.Libraries.Resources
         /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public string GetMetaString(string name, CultureInfo culture = null)
+        public virtual string GetMetaString(string name, CultureInfo culture = null)
         {
             return (string)GetMetaInternal(name, culture, true);
         }
@@ -719,7 +931,7 @@ namespace KGySoft.Libraries.Resources
         /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public object GetMetaObject(string name, CultureInfo culture = null)
+        public virtual object GetMetaObject(string name, CultureInfo culture = null)
         {
             return GetMetaInternal(name, culture, false);
         }
@@ -738,12 +950,12 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <c>true</c>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
-        public IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
+        public virtual IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
                 throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
 
-            IExpandoResourceSet result = InternalGetResourceSet(culture, behavior, tryParents, true) as IExpandoResourceSet;
+            IExpandoResourceSet result = Unwrap(InternalGetResourceSet(culture, behavior, tryParents, true)) as IExpandoResourceSet;
             if (result != null)
                 result.SafeMode = safeMode;
 
@@ -757,7 +969,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to set.</param>
         /// <param name="culture">The culture of the resource to set. If this value is <see langword="null"/>,
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
-        /// <param name="value">The value of the resource to set. If <see langword="null" />.</param>
+        /// <param name="value">The value of the resource to set. If <see langword="null"/>, then a null reference will be explicitly
+        /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveObject"/> method: the subsequent <see cref="GetObject(string, CultureInfo)" /> calls
@@ -768,11 +981,12 @@ namespace KGySoft.Libraries.Resources
         /// <para>If you want to remove the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject"/> method.</para>
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void SetObject(string name, object value, CultureInfo culture = null)
+        public virtual void SetObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
 
+            // because of create no proxy is returned
             IExpandoResourceSet rs = (IExpandoResourceSet)InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
             rs.SetObject(name, value);
         }
@@ -793,13 +1007,13 @@ namespace KGySoft.Libraries.Resources
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void RemoveObject(string name, CultureInfo culture = null)
+        public virtual void RemoveObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
 
             // forcing expando result is not needed because there is nothing to remove from compiled resources
-            IExpandoResourceSet rs = InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.GetIfAlreadyLoaded, false, false) as IExpandoResourceSet;
+            IExpandoResourceSet rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSet;
             rs?.RemoveObject(name);
         }
 
@@ -819,11 +1033,12 @@ namespace KGySoft.Libraries.Resources
         /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet" /> method will return the meta objects with <see langword="null" /> value.
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void SetMetaObject(string name, object value, CultureInfo culture = null)
+        public virtual void SetMetaObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
 
+            // because of create no proxy is returned
             IExpandoResourceSet rs = (IExpandoResourceSet)InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
             rs.SetMetaObject(name, value);
         }
@@ -840,13 +1055,13 @@ namespace KGySoft.Libraries.Resources
         /// in the resource set in case-insensitive manner, they can be removed one by one only.
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
-        public void RemoveMetaObject(string name, CultureInfo culture = null)
+        public virtual void RemoveMetaObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 throw new InvalidOperationException(Res.HybridResSourceBinary);
 
             // forcing expando result is not needed because there is nothing to remove from compiled resources
-            IExpandoResourceSet rs = InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, false, false) as IExpandoResourceSet;
+            IExpandoResourceSet rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSet;
             rs?.RemoveObject(name);
         }
 
@@ -862,7 +1077,7 @@ namespace KGySoft.Libraries.Resources
         /// <c>true</c> if the resource set of the specified <paramref name="culture" /> has been saved;
         /// otherwise, <c>false</c>.
         /// </returns>
-        public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
+        public virtual bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 return false;
@@ -873,14 +1088,14 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><c>true</c> to save all of the already resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
+        /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
         /// <br/>Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns><c>true</c> if at least one resource set has been saved; otherwise, <c>false</c>.</returns>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
-        public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
+        public virtual bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             if (source == ResourceManagerSources.CompiledOnly)
                 return false;
@@ -889,5 +1104,61 @@ namespace KGySoft.Libraries.Resources
         }
 
         #endregion
+
+        /// <summary>
+        /// Disposes the resources of the current instance.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            IDictionary compiledResources = CompiledResourceSets;
+            if (compiledResources == null)
+                return;
+
+            if (disposing)
+            {
+                resxResources.Dispose();
+
+                // this enumerates both Hashtable and Dictionary the same way.
+                // The nongeneric enumerator is not a problem, values must be cast anyway.
+                IDictionaryEnumerator enumerator = compiledResources.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    ((ResourceSet)enumerator.Value).Dispose();
+                }
+            }
+
+            CompiledResourceSets = null;
+            resourceSets = null;
+            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+            neutralResourcesCulture = null;
+        }
+
+#if NET35
+        private Hashtable CompiledResourceSets
+        {
+            get { return base.ResourceSets; }
+            set { base.ResourceSets = value; }
+        }
+
+#elif NET40 || NET45
+        private new Dictionary<string, ResourceSet> CompiledResourceSets
+        {
+            get { return (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this); }
+            set { Accessors.ResourceManager_resourceSets.Set(this, value); }
+        }
+
+#else
+#error .NET version is not set or not supported!
+#endif
     }
 }

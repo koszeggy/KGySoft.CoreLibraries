@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Globalization;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using KGySoft.Libraries.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using _PerformanceTest.Libraries.Reflection;
 
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries.Collections
 {
-    using KGySoft.Libraries;
-
     /// <summary>
     /// In this test out-of-cache retrieval is fast to demonstrate that RemoveLeastRecentUsed behavior is just a little bit slower than RemoveOldest.
     /// See <see cref="ReflectorPerformanceTest.TestMethodInvoke"/> to test a simulation of re-using the most recent elements

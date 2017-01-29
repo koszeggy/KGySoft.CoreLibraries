@@ -137,6 +137,22 @@ using System.IO;
         string GetAliasValue(string alias);
 
         /// <summary>
+        /// Gets whether the current <see cref="IExpandoResourceSet"/> contains a resource with the given <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to check.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <returns><c>true</c>, if the current <see cref="IExpandoResourceSet"/> contains a resource with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
+        bool ContainsResource(string name, bool ignoreCase = false);
+
+        /// <summary>
+        /// Gets whether the current <see cref="IExpandoResourceSet"/> contains a metadata with the given <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the metadata to check.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <returns><c>true</c>, if the current <see cref="IExpandoResourceSet"/> contains a metadata with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
+        bool ContainsMeta(string name, bool ignoreCase = false);
+
+        /// <summary>
         /// Adds or replaces a resource object in the current <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">Name of the resource value to set.</param>

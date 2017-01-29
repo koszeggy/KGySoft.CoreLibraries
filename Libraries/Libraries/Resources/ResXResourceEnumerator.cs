@@ -8,6 +8,7 @@ namespace KGySoft.Libraries.Resources
 
     /// <summary>
     /// Provides an enumerator for resx resource classes, which have already cached resource data.
+    /// Non-serializable (the original returns a ListDictionary enumerator, which is non-serializable either - and hybrid cannot be serializable either).
     /// </summary>
     internal sealed class ResXResourceEnumerator : IDictionaryEnumerator
     {
@@ -62,7 +63,7 @@ namespace KGySoft.Libraries.Resources
                 if (mode == ResXEnumeratorModes.Aliases)
                     return new DictionaryEntry(current.Key, current.Value.ValueInternal);
 
-                return owner.UseResXDataNodes
+                return owner.SafeMode
                     ? new DictionaryEntry(current.Key, current.Value)
                     : new DictionaryEntry(current.Key, current.Value.GetValue(owner.TypeResolver, owner.BasePath, owner.AutoFreeXmlData));
             }
@@ -75,6 +76,7 @@ namespace KGySoft.Libraries.Resources
                 if (state != States.Enumerating)
                     throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
 
+                // if only key is requested, Value is not deserialized
                 return wrappedEnumerator.Current.Key;
             }
         }

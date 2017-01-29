@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
 using KGySoft.Libraries;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Collections
 {
     /// <summary>
     /// CircularList Test

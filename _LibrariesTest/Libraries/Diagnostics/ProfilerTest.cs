@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Diagnostics
 {
-    using System.Diagnostics;
-
     [TestClass]
     public class ProfilerTest
     {

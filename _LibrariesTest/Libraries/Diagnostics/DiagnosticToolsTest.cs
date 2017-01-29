@@ -1,12 +1,11 @@
-﻿using KGySoft.Libraries.Diagnostics;
+﻿using System;
+using System.Reflection;
+using System.Security.Policy;
+using KGySoft.Libraries.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Diagnostics
 {
-    using System.Reflection;
-    using System.Security.Policy;
-
     /// <summary>
     /// This is a test class for DiagnosticToolsTest and is intended
     /// to contain all DiagnosticToolsTest Unit Tests

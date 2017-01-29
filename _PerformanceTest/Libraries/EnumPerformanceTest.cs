@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Text;
 using System.Collections.Generic;
-using System.Linq;
-
+using System.Diagnostics;
 using KGySoft.Libraries;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _PerformanceTest
+namespace _PerformanceTest.Libraries
 {
     /// <summary>
     /// Summary description for EnumTest

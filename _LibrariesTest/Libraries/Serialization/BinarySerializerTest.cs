@@ -1,5 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
@@ -7,22 +13,14 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Policy;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-
 using KGySoft.Libraries;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
-using System.Collections;
-using System.Collections.Specialized;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Serialization
 {
-    using System.Diagnostics;
-
     /// <summary>
     /// Test of <see cref="BinarySerializer"/> class.
     /// </summary>
@@ -765,10 +763,10 @@ namespace _LibrariesTest
             {
                 if (dumpDetails)
                     Console.WriteLine("BindToType: {0}, {1}", assemblyName, typeName);
-                if (assemblyName.StartsWith("rev_"))
+                if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
                     assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
 
-                if (typeName.StartsWith("rev_"))
+                if (typeName.StartsWith("rev_", StringComparison.Ordinal))
                     typeName = new string(typeName.Substring(4).Reverse().ToArray());
 
                 Assembly assembly = assemblyName.Length == 0 ? null : AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
@@ -832,22 +830,33 @@ namespace _LibrariesTest
             public string Name { get; set; }
             public SelfReferencer Self { get; set; }
 
+            [Serializable]
+            private class Box
+            {
+                internal SelfReferencer owner;
+            }
+
+            private readonly Box selfReferenceFromChild;
+
             public SelfReferencer(string name)
             {
                 Name = name;
                 Self = this;
+                selfReferenceFromChild = new Box{owner = this};
             }
 
             private SelfReferencer(SerializationInfo info, StreamingContext context)
             {
                 Name = info.GetString("name");
                 Self = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
+                selfReferenceFromChild = (Box)info.GetValue("selfBox", typeof(Box));
             }
 
             public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("name", Name);
                 info.AddValue("self", Self);
+                info.AddValue("selfBox", selfReferenceFromChild);
             }
 
             public override bool Equals(object obj)
@@ -951,7 +960,7 @@ namespace _LibrariesTest
             {
                 Advance(buffer.Length);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2:X2}) - {3}", buffer.Length, buffer.ToDecimalValuesString(), buffer.ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", buffer.Length, buffer.ToDecimalValuesString(), buffer.ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
                 base.Write(buffer);
             }
 
@@ -959,7 +968,7 @@ namespace _LibrariesTest
             {
                 Advance(count);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2:X2}) - {3}", count, buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString(), buffer.Skip(index).Take(count).ToArray().ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", count, buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString(), buffer.Skip(index).Take(count).ToArray().ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
                 base.Write(buffer, index, count);
             }
 
@@ -1126,7 +1135,7 @@ namespace _LibrariesTest
                 var result = base.ReadBoolean();
                 Advance(1);
                 if (log)
-                    Console.WriteLine("bool: {0} ({0}) - {1}", result, Convert.ToInt32(result), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine("bool: {0} ({1}) - {2}", result, Convert.ToInt32(result), new StackTrace().GetFrames()[1].GetMethod().Name);
                 return result;
             }
 
@@ -2501,6 +2510,7 @@ namespace _LibrariesTest
                     new CircularReferenceClass{Name = "Single"}, // no circular reference
                     new CircularReferenceClass{Name = "Parent"}.AddChild("Child").AddChild("Grandchild").Parent.Parent, // circular reference, but logically alright
                     new SelfReferencer("name"),
+                    Encoding.GetEncoding("shift_jis") // circular reference via IObjectReference instances but with no custom serialization
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -2526,7 +2536,7 @@ namespace _LibrariesTest
 
             referenceObjects = new object[]
             {
-                new SelfReferencerEvil("evil"), // the IObjectReference references itself: should throw SerializationException
+                new SelfReferencerEvil("evil"), // the IObjectReference references itself in custom serialization: should throw SerializationException
             };
 
             SystemSerializeObject(referenceObjects);

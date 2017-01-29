@@ -549,7 +549,7 @@ namespace _LibrariesTest.Libraries.Resources
                 new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
                 {
                     new int[][,] { new int[,]{ { 11, 12}, { 21, 22 } } }
-                }  
+                }
             };
 
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;
@@ -564,7 +564,7 @@ namespace _LibrariesTest.Libraries.Resources
             // read from file
             List<DictionaryEntry> reference, check;
             string basePath = Path.GetDirectoryName(path);
-            using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, UseResXDataNodes = true })
+            using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, SafeMode = true })
             {
                 // reference contains now string-ResXDataNode elements
                 reference = reader.Cast<DictionaryEntry>().ToList();

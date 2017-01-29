@@ -31,13 +31,15 @@
     // - GetxxxEnumerator metódusokhoz leírni, hogy az enumerátor DictionaryEntry.Value-ja SafeMMode-tól függ
     // Incompatibility!!!: (ha lehet, változtatni, hogy az egy stringes verzió itt is filename legyen, talán string,string, mindkettő optional, első filenév második basepath)
     // - ctor(string) itt basePath, file-ból betöltéshez ctor(string, string) kell
-    // [Serializable]
+    // - ctor of the system may throw ArgumentException. Here ctor of a wrong resx may throw XmlException, and a GetObject/String XmlException, TypeLoadException or NotSupportedException
+    // legyen sealed vagy override-oljuk a ReadResources-t, ami dobjon NotSupportedException-t vagy ne csináljon semmit
+    [Serializable]
     public class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
     {
         private Dictionary<string, ResXDataNode> resources;
-        private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
+        [NonSerialized] private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
         private Dictionary<string, ResXDataNode> metadata;
-        private Dictionary<string, ResXDataNode> metadataIgnoreCase;
+        [NonSerialized] private Dictionary<string, ResXDataNode> metadataIgnoreCase;
         private Dictionary<string, string> aliases;
         private readonly string fileName;
         private bool safeMode;
@@ -69,7 +71,7 @@
         /// <para>If <c>SafeMode</c> is <c>true</c>, the <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
         /// can be freed by calling the <see cref="ResXDataNode.GetValue"/>.</para>
         /// </remarks>
-        /// <seealso cref="ResXResourceReader.UseResXDataNodes"/>
+        /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
         /// <seealso cref="HybridResourceManager.SafeMode"/>
         /// <seealso cref="AutoFreeXmlData"/>
@@ -155,6 +157,7 @@
         {
             using (reader)
             {
+                // this will not deserialize anything just quickly parses the .resx and stores the raw nodes
                 reader.ReadAllInternal(resources, metadata, aliases);
             }
         }
@@ -663,20 +666,48 @@
             return GetValueInternal(name, ignoreCase, isString, asSafe, metadata, ref metadataIgnoreCase);
         }
 
-        internal bool ContainsResource(string name, bool ignoreCase)
+        /// <summary>
+        /// Gets whether the current <see cref="ResXResourceSet"/> contains a resource with the given <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to check.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a resource with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
+        public bool ContainsResource(string name, bool ignoreCase)
         {
-            Dictionary<string, ResXDataNode> data = resources;
+            return ContainsInternal(name, ignoreCase, resources, ref resourcesIgnoreCase);
+        }
+
+        /// <summary>
+        /// Gets whether the current <see cref="ResXResourceSet"/> contains a metadata with the given <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the metadata to check.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a metadata with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
+        public bool ContainsMeta(string name, bool ignoreCase)
+        {
+            return ContainsInternal(name, ignoreCase, metadata, ref metadataIgnoreCase);
+        }
+
+        private bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
+        {
             if (data == null)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
-            if (data.ContainsKey(name))
-                return true;
+            lock (data)
+            {
+                if (data.ContainsKey(name))
+                    return true;
 
-            data = resourcesIgnoreCase;
-            if (!ignoreCase || data == null)
-                return false;
+                if (!ignoreCase)
+                    return false;
 
-            return data.ContainsKey(name);
+                if (dataCaseInsensitive == null)
+                {
+                    dataCaseInsensitive = InitCaseInsensitive(data);
+                }
+
+                return dataCaseInsensitive.ContainsKey(name);
+            }
         }
 
         private object GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
@@ -698,11 +729,7 @@
 
                 if (dataCaseInsensitive == null)
                 {
-                    dataCaseInsensitive = new Dictionary<string, ResXDataNode>(data.Count, StringComparer.OrdinalIgnoreCase);
-                    foreach (KeyValuePair<string, ResXDataNode> item in data)
-                    {
-                        dataCaseInsensitive[item.Key] = item.Value;
-                    }
+                    dataCaseInsensitive = InitCaseInsensitive(data);
                 }
 
                 if (dataCaseInsensitive.TryGetValue(name, out result))
@@ -710,6 +737,17 @@
             }
 
             return null;
+        }
+
+        private Dictionary<string, ResXDataNode> InitCaseInsensitive(Dictionary<string, ResXDataNode> data)
+        {
+            var result = new Dictionary<string, ResXDataNode>(data.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, ResXDataNode> item in data)
+            {
+                result[item.Key] = item.Value;
+            }
+
+            return result;
         }
 
         private void SetValueInternal(string name, object value, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
@@ -761,22 +799,22 @@
 
         #region IResXResourceContainer Members
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Resources
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources
         {
             get { return resources; }
         }
 
-        Dictionary<string, ResXDataNode> IResXResourceContainer.Metadata
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata
         {
             get { return metadata; }
         }
 
-        Dictionary<string, string> IResXResourceContainer.Aliases
+        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases
         {
             get { return aliases; }
         }
 
-        bool IResXResourceContainer.UseResXDataNodes
+        bool IResXResourceContainer.SafeMode
         {
             get { return safeMode; }
         }

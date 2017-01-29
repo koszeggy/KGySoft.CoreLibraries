@@ -748,4 +748,7 @@ Hit rate: {8:P2}</value>
   <data name="HybridResSourceBinary" xml:space="preserve">
     <value>This operation is invalid when Source is CompiledOnly.</value>
   </data>
+  <data name="InvalidDrmPropertyChange" xml:space="preserve">
+    <value>Setting this property is invalid when UseLanguageSettings is true.</value>
+  </data>
 </root>

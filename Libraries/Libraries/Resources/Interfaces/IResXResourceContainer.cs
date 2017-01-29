@@ -8,10 +8,10 @@ namespace KGySoft.Libraries.Resources
     /// </summary>
     internal interface IResXResourceContainer
     {
-        Dictionary<string, ResXDataNode> Resources { get; }
-        Dictionary<string, ResXDataNode> Metadata { get; }
-        Dictionary<string, string> Aliases { get; }
-        bool UseResXDataNodes { get; }
+        ICollection<KeyValuePair<string, ResXDataNode>> Resources { get; }
+        ICollection<KeyValuePair<string, ResXDataNode>> Metadata { get; }
+        ICollection<KeyValuePair<string, string>> Aliases { get; }
+        bool SafeMode { get; }
         bool AutoFreeXmlData { get; }
         ITypeResolutionService TypeResolver { get; }
         string BasePath { get; }

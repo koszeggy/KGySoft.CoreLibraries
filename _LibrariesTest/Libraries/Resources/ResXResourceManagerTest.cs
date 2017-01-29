@@ -1,24 +1,24 @@
-﻿using System;
-using System.Collections;
-using System.Globalization;
-using System.Resources;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Windows.Forms;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 using KGySoft.Libraries.Serialization;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
-    using System.Diagnostics;
-
     [TestClass]
+    [DeploymentItem("Resources", "Resources")]
+    [DeploymentItem("en", "en")]
+    [DeploymentItem("en-US", "en-US")]
     public class ResXResourceManagerTest: TestBase
     {
         private static CultureInfo inv = CultureInfo.InvariantCulture;
@@ -163,6 +163,7 @@ namespace _LibrariesTest
         [TestMethod]
         public void SetObjectTest()
         {
+            LanguageSettings.DisplayLanguage = enUS;
             var manager = new ResXResourceManager("UnknownBaseName");
 
             // not existing base: an exception is thrown when an object is about to obtain

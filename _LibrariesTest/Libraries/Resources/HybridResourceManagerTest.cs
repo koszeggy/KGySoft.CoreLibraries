@@ -1,24 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Resources;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
-using System.Windows.Forms;
+using System.Resources;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
-using KGySoft.Libraries.Serialization;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace _LibrariesTest
+namespace _LibrariesTest.Libraries.Resources
 {
-    using System.Diagnostics;
-
     [TestClass]
+    [DeploymentItem("Resources", "Resources")]
+    [DeploymentItem("en", "en")]
+    [DeploymentItem("en-US", "en-US")]
     public class HybridResourceManagerTest: TestBase
     {
         private static CultureInfo inv = CultureInfo.InvariantCulture;
@@ -53,7 +48,7 @@ namespace _LibrariesTest
             Assert.AreNotEqual(resx, compiled);
             Assert.AreNotEqual(compiled, hybrid);
 
-            // When a resource exists only in compiled: resx is null, others hybrid and compiled are the same
+            // When a resource exists only in compiled: .resx is null, others hybrid and compiled are the same
             resName = "TestStringCompiled";
 
             manager.ReleaseAllResources();
@@ -199,6 +194,15 @@ namespace _LibrariesTest
             manager.Source = ResourceManagerSources.CompiledOnly;
             compiled = manager.GetObject(resName, inv);
             Assert.AreNotEqual(hybrid, compiled);
+
+            // proxy test
+            manager.Source = ResourceManagerSources.CompiledAndResX;
+            manager.ReleaseAllResources();
+            hybrid = manager.GetObject(resName, huHU); // hu and hu-HU are now proxies, last=inv
+            Assert.IsNotNull(hybrid); 
+            Assert.AreSame(hybrid, manager.GetObject(resName, huHU)); // returned from cached lastUsedResourceSet
+            Assert.AreSame(hybrid, manager.GetObject(resName, hu)); // returned from cached proxy in resourceSets
+            Assert.AreSame(hybrid, manager.GetObject(resName, inv)); // returned from cached non-proxy in resourceSets
         }
 
         [TestMethod]
@@ -314,8 +318,8 @@ namespace _LibrariesTest
             // creating inv, inv(en), inv(enGB) (these have unloaded parent); inv(hu), inv(huHU) (these have no unloaded parents)
             manager.ReleaseAllResources();
             rsInv = manager.GetResourceSet(inv, loadIfExists: true, tryParents: false);
-            manager.GetResourceSet(enGB, loadIfExists: false, tryParents: true);
-            manager.GetResourceSet(huHU, loadIfExists: false, tryParents: true);
+            Assert.AreSame(rsInv, manager.GetResourceSet(enGB, loadIfExists: false, tryParents: true));
+            Assert.AreSame(rsInv, manager.GetResourceSet(huHU, loadIfExists: false, tryParents: true));
 
             // now the hu branch is up-to-date but en-GB has unloaded parents because en actually exists but not loaded
             var resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetInstanceFieldByName(manager, "resourceSets");
@@ -328,20 +332,44 @@ namespace _LibrariesTest
             // but loading en clears en-GB, since it depends on that. Re-accessing enGB returns now en
             ResourceSet rsEN;
             Assert.AreNotSame(rsInv, rsEN = manager.GetResourceSet(en, loadIfExists: true, tryParents: false));
-            Assert.AreEqual(sets, 1 + resourceSets.Count);
+            Assert.AreEqual(sets - 1, resourceSets.Count);
             Assert.AreSame(rsEN, manager.GetResourceSet(enGB, loadIfExists: false, tryParents: true));
             Assert.AreEqual(sets, resourceSets.Count);
 
             // similarly, creating hu clears hu-HU, and re-accessing hu-HU returns hu
             Assert.AreNotSame(rsInv, rsHU = (ResourceSet)manager.GetExpandoResourceSet(hu, ResourceSetRetrieval.CreateIfNotExists, tryParents: false));
-            Assert.AreEqual(sets, 1 + resourceSets.Count);
+            Assert.AreEqual(sets - 1, resourceSets.Count);
             Assert.AreSame(rsHU, manager.GetResourceSet(huHU, loadIfExists: true, tryParents: true));
             Assert.AreEqual(sets, resourceSets.Count);
+
+            // creating inv, inv(en) (unloaded resource); inv(hu), (no unloaded resource)
+            manager.ReleaseAllResources();
+            rsInv = manager.GetResourceSet(inv, loadIfExists: true, tryParents: false);
+            Assert.AreSame(rsInv, manager.GetResourceSet(en, loadIfExists: false, tryParents: true));
+            Assert.AreSame(rsInv, manager.GetResourceSet(hu, loadIfExists: true, tryParents: true));
+            resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetInstanceFieldByName(manager, "resourceSets");
+            sets = resourceSets.Count;
+
+            // accessing en-GB will replace en proxy and returns that for en-GB
+            var rsENGB = manager.GetResourceSet(enGB, loadIfExists: true, tryParents: true);
+            Assert.AreEqual(sets + 1, resourceSets.Count);
+            rsEN = manager.GetResourceSet(en, loadIfExists: false, tryParents: false);
+            Assert.AreSame(rsEN, rsENGB);
+            Assert.AreNotSame(inv, rsENGB);
+            sets = resourceSets.Count;
+
+            // but accessing hu-HU just returns the proxy of hu (=inv) and creates a new proxy for hu-HU
+            var rsHUHU = manager.GetResourceSet(huHU, loadIfExists: true, tryParents: true);
+            Assert.AreEqual(sets + 1, resourceSets.Count);
+            rsHU = manager.GetResourceSet(hu, loadIfExists: false, tryParents: false);
+            Assert.AreSame(rsHU, rsHUHU);
+            Assert.AreSame(rsInv, rsHU);
         }
 
         [TestMethod]
         public void SetObjectTest()
         {
+            LanguageSettings.DisplayLanguage = enUS;
             var manager = new HybridResourceManager(GetType());
 
             // not existing base: an exception is thrown when an object is about to obtain

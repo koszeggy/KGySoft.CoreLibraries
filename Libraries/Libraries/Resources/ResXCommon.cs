@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Xml;
 using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
@@ -95,6 +95,21 @@ namespace KGySoft.Libraries.Resources
             if (valueData.Length > lineLength)
                 valueData = Environment.NewLine + valueData + Environment.NewLine + "    ";
             return valueData;
+        }
+
+        /// <summary>
+        /// Creates an XmlException with already localized position message and still set position.
+        /// </summary>
+        /// <param name="message">The already formatted and localized message.</param>
+        /// <param name="line">The line to set.</param>
+        /// <param name="pos">The position to set.</param>
+        /// <returns></returns>
+        internal static XmlException CreateXmlException(string message, int line, int pos, Exception innerException = null)
+        {
+            var result = new XmlException(message, innerException);
+            Accessors.XmlException_lineNumber.Set(result, line);
+            Accessors.XmlException_linePosition.Set(result, pos);
+            return result;
         }
     }
 }

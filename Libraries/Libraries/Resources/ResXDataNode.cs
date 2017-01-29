@@ -1,25 +1,21 @@
-﻿using System.Reflection.Emit;
+﻿using System;
+using System.ComponentModel;
+using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
+using System.Xml;
+
+using KGySoft.Libraries.Reflection;
+using KGySoft.Libraries.Serialization;
 
 namespace KGySoft.Libraries.Resources
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.ComponentModel.Design;
-    using System.Diagnostics;
-    using System.Globalization;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Runtime.Serialization;
-    using System.Runtime.Serialization.Formatters.Binary;
-    using System.Text;
-    using System.Xml;
-
-    using KGySoft.Libraries.Reflection;
-    using KGySoft.Libraries.Serialization;
-
     /// <summary>
     /// Represents an element in an XML resource (.resx) file.
     /// </summary>
@@ -39,6 +35,7 @@ namespace KGySoft.Libraries.Resources
     // - Nincsenek typeNameConverter-es publikus ctor-ok. Ezt kizárólag az internal GetDataNodeInfo használja, amit a writer hív, ő viszont átadhatja a saját converterét
     // New feature:
     // - DataNodeInfo elemei kivezetve
+    // - az eredeti invalidoperation-t dob nem serializálható obj-ra, ez még compat módban is támogatja (CompatibleFormat a writer-en vagy a resource set/manager-ek save-jében van)
     [Serializable]
     public sealed class ResXDataNode : ISerializable
     {
@@ -129,10 +126,10 @@ namespace KGySoft.Libraries.Resources
         public ResXDataNode(string name, object value/*, Func<Type, string> typeNameConverter*/)
         {
             if (name == null)
-                throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             if (name.Length == 0)
-                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), "name");
+                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(name));
 
             //this.typeNameConverter = typeNameConverter;
 
@@ -177,14 +174,14 @@ namespace KGySoft.Libraries.Resources
             if (typeName != null)
             {
                 // 4.) System ResXDataNode
-                if (typeName.StartsWith(ResXCommon.ResXDataNodeNameWinForms))
+                if (typeName.StartsWith(ResXCommon.ResXDataNodeNameWinForms, StringComparison.Ordinal))
                 {
                     InitFromWinForms(value);
                     return;
                 }
 
                 // 5.) System ResXFileRef
-                if (typeName.StartsWith(ResXCommon.ResXFileRefNameWinForms))
+                if (typeName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal))
                 {
                     fileRef = ResXFileRef.InitFromWinForms(value);
                     return;
@@ -292,9 +289,6 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets the assembly qualified name of the node, or null, if type cannot be determined until deserializing it.
         /// </summary>
-        /// <value>
-        /// The name of the assembly qualified.
-        /// </value>
         private string AssemblyQualifiedName
         {
             get
@@ -356,6 +350,10 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Called from <see cref="ResXResourceSet"/>.
         /// </summary>
+        /// <param name="safeMode">true to get ResXDataNode as object and string without exception as string.</param>
+        /// <param name="isString">true to get as string</param>
+        /// <param name="cleanup">true to nullify nodeInfo after a non-safe retrieval</param>
+        /// <param name="basePath">if null, tries to use the original base path if any</param>
         internal object GetValueInternal(bool safeMode, bool isString, bool cleanup, string basePath)
         {
             object result;
@@ -389,6 +387,9 @@ namespace KGySoft.Libraries.Resources
             if (result is string)
                 return result;
 
+            if (result == ResXNullRef.Value)
+                return null;
+
             if (result != null)
                 throw new InvalidOperationException(Res.Get(Res.NonStringResourceWithType, Name, result.GetType().ToString()));
 
@@ -398,7 +399,7 @@ namespace KGySoft.Libraries.Resources
             // we can already throw an exception. But type is checked once again at the end, after deserialization.
             string stringName = Reflector.StringType.FullName;
             string aqn = AssemblyQualifiedName;
-            if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName)))
+            if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 throw new InvalidOperationException(Res.Get(Res.NonStringResourceWithType, Name, fileRef == null ? aqn : fileRef.TypeName));
 
             result = GetValue(null, basePath, cleanup);
@@ -442,15 +443,15 @@ namespace KGySoft.Libraries.Resources
                 return false;
 
             // the common scenario as it is saved by system resx
-            return assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameWinForms)
-                || assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameKGySoft);
+            return assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal)
+                || assemblyQualifiedName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal);
         }
 
         private static bool IsNullRef(string assemblyQualifiedName)
         {
             // the common scenario as it is saved by system resx
-            return assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameWinForms)
-                || assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameKGySoft);
+            return assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameWinForms, StringComparison.Ordinal)
+                || assemblyQualifiedName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -546,7 +547,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets the assembly name defined in the source .resx file if <see cref="TypeName"/> contains an assembly alias name,
-        /// or <see langword="null"/>, if the resource does not contain the .resx information.
+        /// or <see langword="null"/>, if <see cref="TypeName"/> contains the assembly qualified name or if the resource does not contain the .resx information.
         /// </summary>
         public string AssemblyAliasValue
         {
@@ -556,7 +557,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets the type information as <see cref="string"/> as it is stored in the source .resx file. It can be either an assembly qualified name,
         /// or a type name with or without an assembly alias name. If <see cref="AssemblyAliasValue"/> is not <see langword="null"/>, this property value
-        /// contains an assembly alias name. The property returns <see langword="null"/>, if the resource does not contain the .resx information.
+        /// contains an assembly alias name. The property returns <see langword="null"/>, if the <c>type</c> attribute is not defined or if the resource does not contain the .resx information.
         /// </summary>
         public string TypeName
         {
@@ -565,7 +566,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets the MIME type as it is stored in the .resx file for this resource, or <see langword="null"/>,
-        /// if the resource does not contain the .resx information.
+        /// if the <c>mimetype</c> attribute is not defined or if the resource does not contain the .resx information.
         /// </summary>
         public string MimeType
         {
@@ -710,16 +711,12 @@ namespace KGySoft.Libraries.Resources
                     return;
                 }
             }
-            catch (Exception ex)
+            catch (NotSupportedException)
             {
-                // Some custom type converters will throw in ConvertTo(string)
+                // Some custom type converters will throw this in ConvertTo(string)
                 // to indicate that this object should be serialized through ISeriazable
                 // instead of as a string. This is semi-wrong, but something we will have to
                 // live with to allow user created Cursors to be serializable.
-                if (ClientUtils.IsSecurityOrCriticalException(ex))
-                {
-                    throw;
-                }
             }
 
             // 6.) to byte[] by TypeConverter
@@ -899,22 +896,22 @@ namespace KGySoft.Libraries.Resources
                 if (String.Equals(mimeTypeName, ResXCommon.ByteArraySerializedObjectMimeType))
                 {
                     if (String.IsNullOrEmpty(typeName))
-                        throw new XmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column));
+                        throw ResXCommon.CreateXmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
 
                     type = ResolveType(typeName, typeResolver);
                     if (type == null)
                     {
                         string newMessage = Res.Get(Res.TypeLoadException, typeName, dataNodeInfo.Line, dataNodeInfo.Column);
-                        XmlException xml = new XmlException(newMessage, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                        XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                         TypeLoadException newTle = new TypeLoadException(newMessage, xml);
                         throw newTle;
                     }
 
                     TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
-                    if (!byteArrayConverter.CanConvertFrom(typeof(byte[])))
+                    if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
                     {
                         string message = Res.Get(Res.ConvertFromByteArrayNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.Get(Res.ConvertFromByteArrayNotSupported, byteArrayConverter.GetType().FullName));
-                        XmlException xml = new XmlException(message, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                        XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
                         NotSupportedException newNse = new NotSupportedException(message, xml);
                         throw newNse;                        
                     }
@@ -930,7 +927,7 @@ namespace KGySoft.Libraries.Resources
                     catch (NotSupportedException e)
                     {
                         string message = Res.Get(Res.ConvertFromByteArrayNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
-                        XmlException xml = new XmlException(message, e, dataNodeInfo.Line, dataNodeInfo.Column);
+                        XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                         NotSupportedException newNse = new NotSupportedException(message, xml);
                         throw newNse;
                     }
@@ -970,7 +967,7 @@ namespace KGySoft.Libraries.Resources
             if (type == null)
             {
                 string newMessage = Res.Get(Res.TypeLoadException, typeName, dataNodeInfo.Line, dataNodeInfo.Column);
-                XmlException xml = new XmlException(newMessage, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                 TypeLoadException newTle = new TypeLoadException(newMessage, xml);
                 throw newTle;
             }
@@ -979,7 +976,7 @@ namespace KGySoft.Libraries.Resources
             if (Reflector.CanParseNatively(type))
                 return Reflector.Parse(type, dataNodeInfo.ValueData);
 
-            // 5.) null (it is possible that typeResolver resolves the winforms nullref)
+            // 5.) null
             if (type == typeof(ResXNullRef))
                 return ResXNullRef.Value;
 
@@ -992,7 +989,7 @@ namespace KGySoft.Libraries.Resources
             if (!tc.CanConvertFrom(Reflector.StringType))
             {
                 string message = Res.Get(Res.ConvertFromStringNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.Get(Res.ConvertFromStringNotSupported, tc.GetType().FullName));
-                XmlException xml = new XmlException(message, null, dataNodeInfo.Line, dataNodeInfo.Column);
+                XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
                 NotSupportedException newNse = new NotSupportedException(message, xml);
                 throw newNse;
             }
@@ -1004,7 +1001,7 @@ namespace KGySoft.Libraries.Resources
             catch (NotSupportedException e)
             {
                 string message = Res.Get(Res.ConvertFromStringNotSupportedAt, typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
-                XmlException xml = new XmlException(message, e, dataNodeInfo.Line, dataNodeInfo.Column);
+                XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                 NotSupportedException newNse = new NotSupportedException(message, xml);
                 throw newNse;
             }
@@ -1046,7 +1043,7 @@ namespace KGySoft.Libraries.Resources
                 nodeInfo.CompatibleFormat = compatibleFormat.GetValueOrDefault();
                 if (compatibleFormat.GetValueOrDefault())
                 {
-                    if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameWinForms))
+                    if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameWinForms, StringComparison.Ordinal))
                     {
                         nodeInfo.TypeName = CompatibleFileRefTypeName;
                         nodeInfo.AssemblyAliasValue = null;
@@ -1054,7 +1051,7 @@ namespace KGySoft.Libraries.Resources
                         assemblyQualifiedName = null;
                     }
                 }
-                else if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft))
+                else if (String.IsNullOrEmpty(nodeInfo.TypeName) || !nodeInfo.TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal))
                 {
                     nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(ResXFileRef), typeNameConverter, compatibleFormat.GetValueOrDefault());
                     nodeInfo.AssemblyAliasValue = null;
@@ -1640,7 +1637,7 @@ namespace KGySoft.Libraries.Resources
         internal void DetectCompatibleFormat()
         {
             CompatibleFormat = MimeType != ResXCommon.KGySoftSerializedObjectMimeType 
-                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft)));
+                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal)));
         }
     }
 
