@@ -14,7 +14,7 @@ namespace _PerformanceTest
     /// Summary description for EnumTest
     /// </summary>
     [TestClass]
-    public class EnumPerformanceTest
+    public class EnumPerformanceTest: TestBase
     {
         private enum TestEnum: long
         {
@@ -514,6 +514,8 @@ namespace _PerformanceTest
         [TestMethod]
         public void EnumComparerTest()
         {
+            CheckTestingFramework();
+
             const int iterations = 10000000;
             Type enumType = typeof(TestEnum);
 
