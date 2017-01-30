@@ -28,7 +28,7 @@ namespace KGySoft.Libraries.Resources
     {
         private bool useLanguageSettings;
         private volatile bool canAcceptProxy = true;
-        private AutoSaveOptions autoSave = LanguageSettings.AutoSaveDefault;
+        private AutoSaveOptions autoSave;
         private AutoAppendOptions autoAppend = LanguageSettings.AutoAppendDefault;
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace KGySoft.Libraries.Resources
         /// When <see cref="UseLanguageSettings"/> is <c>true</c>,
         /// auto saving is controlled by <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see> property.
         /// <br/>
-        /// Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
+        /// Default value: <see cref="AutoSaveOptions.None"/>
         /// </summary>
         /// <seealso cref="AutoSaveError"/>
         public AutoSaveOptions AutoSave
@@ -221,6 +221,10 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
+        /// <summary>
+        /// Raises the <see cref="AutoSaveError" /> event.
+        /// </summary>
+        /// <returns><c>true</c> if the error is handled and should not be re-thrown.</returns>
         private bool OnAutoSaveError(AutoSaveErrorEventArgs e)
         {
             EventHandler<AutoSaveErrorEventArgs> handler = AutoSaveError;
@@ -257,8 +261,10 @@ namespace KGySoft.Libraries.Resources
             LanguageSettings.DynamicResourceManagersSourceChanged -= LanguageSettings_DynamicResourceManagersSourceChanged;
             LanguageSettings.DynamicResourceManagersAutoSaveChanged -= LanguageSettings_DynamicResourceManagersAutoSaveChanged;
             LanguageSettings.DisplayLanguageChanged -= LanguageSettings_DisplayLanguageChanged;
-            AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-            AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+                AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
+            else
+                AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
         }
 
         /// <summary>
@@ -273,7 +279,6 @@ namespace KGySoft.Libraries.Resources
         public DynamicResourceManager(string baseName, Assembly assembly, string explicitResXBaseFileName = null)
             : base(baseName, assembly, explicitResXBaseFileName)
         {
-            HookEvents();
         }
 
         /// <summary>
@@ -286,7 +291,6 @@ namespace KGySoft.Libraries.Resources
         public DynamicResourceManager(Type resourceSource, string explicitResxBaseFileName = null)
             : base(resourceSource, explicitResxBaseFileName)
         {
-            HookEvents();
         }
 
         /// <summary>
@@ -295,6 +299,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
+            if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)
+                DoAutoSave();
             mergedCultures = null;
             UnhookEvents();
             base.Dispose(disposing);
@@ -314,7 +320,7 @@ namespace KGySoft.Libraries.Resources
         // TODO: returns/remarks: autoappend
         public override object GetObject(string name, CultureInfo culture)
         {
-            if (null == name)
+            if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             AdjustCulture(ref culture);
@@ -347,7 +353,7 @@ namespace KGySoft.Libraries.Resources
         /// </returns>
         public override string GetString(string name, CultureInfo culture)
         {
-            if (null == name)
+            if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             AdjustCulture(ref culture);

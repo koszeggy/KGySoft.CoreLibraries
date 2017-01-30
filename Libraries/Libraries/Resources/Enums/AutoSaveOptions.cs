@@ -34,5 +34,10 @@ namespace KGySoft.Libraries.Resources
         /// <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> is changed.
         /// </summary>
         SourceChange = 1 << 2,
+
+        /// <summary>
+        /// Represents the auto saving of resources when a <see cref="DynamicResourceManager"/> is being disposed explicitly.
+        /// </summary>
+        Dispose = 1 << 3
     }
 }

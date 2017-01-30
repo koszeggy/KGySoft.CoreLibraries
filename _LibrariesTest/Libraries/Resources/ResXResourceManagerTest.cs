@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -535,6 +536,16 @@ namespace _LibrariesTest.Libraries.Resources
             manager = manager.DeepClone();
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));
+        }
+
+        [TestMethod]
+        public void DisposeTest()
+        {
+            var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
+            manager.Dispose();
+            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            manager.Dispose(); // this will not throw anything
         }
 
         private ResourceManager CreateResourceManager(string name, CultureInfo neutralLang)

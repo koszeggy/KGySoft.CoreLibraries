@@ -25,7 +25,7 @@ namespace KGySoft.Libraries.Resources
     // TODO: ResXResourceManager vs ResourceManager inkompatibilitás:
     // - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
     [Serializable]
-    public sealed class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
+    public class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
@@ -127,13 +127,16 @@ namespace KGySoft.Libraries.Resources
         {
             get
             {
-                var result = resourceSets
-                    ?? (resourceSets = (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this));
+                var result = resourceSets ?? (resourceSets = GetBaseResources());
                 if (result == null)
                     throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
                 return result;
             }
-            set { Accessors.ResourceManager_resourceSets.Set(this, value); }
+            set
+            {
+                Accessors.ResourceManager_resourceSets.Set(this, value);
+                resourceSets = value;
+            }
         }
 
         private Dictionary<string, ResourceSet> GetBaseResources()
@@ -263,12 +266,7 @@ namespace KGySoft.Libraries.Resources
         public bool SafeMode
         {
             get { return safeMode; }
-            set
-            {
-                //if (resources == null)
-                //    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-                safeMode = value;
-            }
+            set { safeMode = value; }
         }
 
         private object SyncRoot
@@ -371,7 +369,7 @@ namespace KGySoft.Libraries.Resources
 
         private object GetObjectInternal(string name, CultureInfo culture, bool isString)
         {
-            if (null == name)
+            if (name == null)
                 throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
 
             if (culture == null)
@@ -422,7 +420,7 @@ namespace KGySoft.Libraries.Resources
 
         private object GetMetaInternal(string name, CultureInfo culture, bool isString)
         {
-            if (null == name)
+            if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             // in case of metadata there is no hierarchy traversal
@@ -538,7 +536,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
-            Debug.Fail("InternalGetResourceSet is called");
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
 
             // the base tries to parse the stream as binary. It would be better if GrovelForResourceSet
             // would be protected in base, so it would be enough to override only that (at least in .NET 4 and above).
@@ -1082,16 +1080,29 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
             var localResourceSets = GetBaseResources();
             if (localResourceSets == null)
                 return;
 
-            // this enumerates both Hashtable and Dictionary the same way.
-            // The nongeneric enumerator is not a problem, values must be cast anyway.
-            IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
-            while (enumerator.MoveNext())
+            if (disposing)
             {
-                ((ResourceSet)enumerator.Value).Dispose();
+                // this enumerates both Hashtable and Dictionary the same way.
+                // The nongeneric enumerator is not a problem, values must be cast anyway.
+                IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    ((ResourceSet)enumerator.Value).Dispose();
+                }
             }
 
             ResourceSets = null;
@@ -1099,6 +1110,17 @@ namespace KGySoft.Libraries.Resources
             neutralResourcesCulture = null;
             syncRoot = null;
             lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
+        }
+
+        /// <summary>
+        /// Determines whether this instance is disposed.
+        /// </summary>
+        /// <returns>
+        ///   <c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+        /// </returns>
+        public bool IsDisposed()
+        {
+            return GetBaseResources() == null;
         }
     }
 }

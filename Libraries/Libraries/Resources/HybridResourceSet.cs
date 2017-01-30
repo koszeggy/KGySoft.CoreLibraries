@@ -17,7 +17,7 @@ namespace KGySoft.Libraries.Resources
         /// Must be implemented because yield return does not work for IDictionaryEnumerator.
         /// Cannot be serializable because the compiled enumerator is not serializable (supports reset, though).
         /// </summary>
-        private class Enumerator: IDictionaryEnumerator
+        private sealed class Enumerator: IDictionaryEnumerator
         {
             enum State
             {

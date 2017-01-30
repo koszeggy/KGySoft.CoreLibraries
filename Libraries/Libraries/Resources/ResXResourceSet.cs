@@ -34,7 +34,7 @@
     // - ctor of the system may throw ArgumentException. Here ctor of a wrong resx may throw XmlException, and a GetObject/String XmlException, TypeLoadException or NotSupportedException
     // legyen sealed vagy override-oljuk a ReadResources-t, ami dobjon NotSupportedException-t vagy ne csináljon semmit
     [Serializable]
-    public class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
+    public sealed class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
     {
         private Dictionary<string, ResXDataNode> resources;
         [NonSerialized] private Dictionary<string, ResXDataNode> resourcesIgnoreCase;

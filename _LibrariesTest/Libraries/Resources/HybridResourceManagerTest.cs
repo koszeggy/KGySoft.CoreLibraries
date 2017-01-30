@@ -567,5 +567,50 @@ namespace _LibrariesTest.Libraries.Resources
             Assert.IsTrue(manager.IsModified);
             Assert.IsTrue(manager.SaveResourceSet(inv));
         }
+
+        [TestMethod]
+        public void SerializationTest()
+        {
+            var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var resName = "TestString";
+
+            // serializing and de-serializing removes the unchanged resources
+            string testResRef = refManager.GetString(resName);
+            string testRes = manager.GetString(resName);
+            Assert.IsNotNull(testResRef);
+            Assert.IsNotNull(testRes);
+            // TODO .NET 3.5: get/set pointer fields by FieldAccessor
+            refManager = refManager.DeepClone();
+            manager = manager.DeepClone();
+            Assert.AreEqual(testResRef, refManager.GetString(resName));
+            Assert.AreEqual(testRes, manager.GetString(resName));
+
+            // introducing a change: serialization preserves the change
+            Assert.IsFalse(manager.IsModified);
+            manager.SetObject(resName, "new string");
+            Assert.IsTrue(manager.IsModified);
+            CheckTestingFramework(); // the modified resource sets are searched in ResourceManager.ResourceSets Hashtable in .NET 3.5 and in ResXResourceManager.resourceSets Dictionary above.
+            manager = manager.DeepClone();
+            Assert.IsTrue(manager.IsModified);
+            Assert.AreNotEqual(testRes, manager.GetString(resName));
+        }
+
+        [TestMethod]
+        public void DisposeTest()
+        {
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            manager.Dispose();
+            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            manager.Dispose(); // this will not throw anything
+
+            manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            manager.Dispose();
+            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            manager.Dispose(); // this will not throw anything
+        }
     }
 }

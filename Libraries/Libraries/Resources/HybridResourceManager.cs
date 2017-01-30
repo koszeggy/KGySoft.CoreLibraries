@@ -255,12 +255,7 @@ namespace KGySoft.Libraries.Resources
         public bool SafeMode
         {
             get { return safeMode; }
-            set
-            {
-                //if (resources == null)
-                //    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-                safeMode = value;
-            }
+            set { safeMode = value; }
         }
 
         /// <summary>
@@ -370,7 +365,7 @@ namespace KGySoft.Libraries.Resources
 
         private object GetObjectInternal(string name, CultureInfo culture, bool isString)
         {
-            if (null == name)
+            if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             if (culture == null)
@@ -597,7 +592,7 @@ namespace KGySoft.Libraries.Resources
             bool resourceFound;
             lock (SyncRoot)
             {
-                resourceFound = resourceSets != null && resourceSets.TryGetValue(culture.Name, out result);
+                resourceFound = resourceSets?.TryGetValue(culture.Name, out result) == true;
             }
 
             ProxyResourceSet proxy;
@@ -704,7 +699,12 @@ namespace KGySoft.Libraries.Resources
                 // from assemblies
                 ResourceSet compiled = null;
                 if (source != ResourceManagerSources.ResXOnly)
+                {
+                    // otherwise, disposed state is checked by ResXResourceSet
+                    if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed())
+                        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
                     compiled = base.InternalGetResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+                }
 
                 // result found
                 if (resx != null || compiled != null)
@@ -883,7 +883,7 @@ namespace KGySoft.Libraries.Resources
 
         private object GetMetaInternal(string name, CultureInfo culture, bool isString)
         {
-            if (null == name)
+            if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             if (source == ResourceManagerSources.CompiledOnly)
