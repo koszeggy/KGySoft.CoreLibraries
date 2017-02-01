@@ -1,42 +1,72 @@
-﻿#region Used namespaces
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: LanguageSettings.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+
 using KGySoft.Libraries.Resources;
+
 using Microsoft.Win32;
 
 #endregion
 
 namespace KGySoft.Libraries
 {
-    // TODO: Megnézni, nem egyszerűbb-e, ha [ThreadStatic] field-ekkel oldjuk  meg. Ekkor az add-remove és a local invoke is sokkal egyszerűbbé válna. A leiratkozás hiánya nem okoz-e több leaket mint a jelenlegi verzió.
     /// <summary>
     /// Represents the language settings of the current thread. Use this class if you want to be notified on
-    /// language changes.
+    /// language changes and to control the behavior of the <see cref="DynamicResourceManager"/> instances,
+    /// which use centralized settings.
     /// </summary>
+    /// <seealso cref="DynamicResourceManager"/>
+    /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
     public static class LanguageSettings
     {
-        private const AutoSaveOptions AutoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
+        #region Constants
+
+        #region Internal Constants
+
         internal const AutoAppendOptions AutoAppendDefault = AutoAppendOptions.AppendFirstNeutralCulture | AutoAppendOptions.AppendOnLoad;
+
+        #endregion
+
+        #region Private Constants
+
+        private const AutoSaveOptions AutoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
+
+        #endregion
+
+        #endregion
 
         #region Fields
 
-        //private static object syncRoot;        
-        //private static Dictionary<int, EventHandler> formattingLanguageChangedHandlers;
-        //private static Dictionary<int, EventHandler> displayLanguageChangedHandlers;
         private static bool captureSystemLocaleChange;
         private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
         private static AutoSaveOptions dynamicResourceManagersAutoSave = AutoSaveDefault;
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
-
         private static string unknownResourcePrefix = "[U]";
         private static string untranslatedResourcePrefix = "[T]";
 
         #endregion
 
         #region Events
+
+        #region Public Events
 
         /// <summary>
         /// Occurs when formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed by setting the
@@ -48,44 +78,8 @@ namespace KGySoft.Libraries
         /// </remarks>
         /// <seealso cref="FormattingLanguage"/>
         /// <seealso cref="FormattingLanguageChangedGlobal"/>
-        [field:ThreadStatic]
+        [field: ThreadStatic]
         public static event EventHandler FormattingLanguageChanged;
-        //{
-        //    add
-        //    {
-        //        if (value == null)
-        //            return;
-
-        //        lock (SyncRoot)
-        //        {
-        //            int id = Thread.CurrentThread.ManagedThreadId;
-        //            EventHandler handler;
-        //            FormattingLanguageChangedHandlers.TryGetValue(id, out handler);
-        //            handler += value;
-        //            formattingLanguageChangedHandlers[id] = handler;
-        //        }
-        //    }
-
-        //    remove
-        //    {
-        //        if (value == null || formattingLanguageChangedHandlers == null)
-        //            return;
-
-        //        lock (SyncRoot)
-        //        {
-        //            int id = Thread.CurrentThread.ManagedThreadId;
-        //            EventHandler handler;
-        //            if (!FormattingLanguageChangedHandlers.TryGetValue(id, out handler))
-        //                return;
-
-        //            handler -= value;
-        //            if (handler == null)
-        //                formattingLanguageChangedHandlers.Remove(id);
-        //            else
-        //                formattingLanguageChangedHandlers[id] = handler;
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// Occurs when formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed in any <see cref="Thread"/>
@@ -112,44 +106,8 @@ namespace KGySoft.Libraries
         /// </remarks>
         /// <seealso cref="DisplayLanguage"/>
         /// <seealso cref="DisplayLanguageChangedGlobal"/>
-        [field:ThreadStatic]
+        [field: ThreadStatic]
         public static event EventHandler DisplayLanguageChanged;
-        //{
-        //    add
-        //    {
-        //        if (value == null)
-        //            return;
-
-        //        lock (SyncRoot)
-        //        {
-        //            int id = Thread.CurrentThread.ManagedThreadId;
-        //            EventHandler handler;
-        //            DisplayLanguageChangedHandlers.TryGetValue(id, out handler);
-        //            handler += value;
-        //            displayLanguageChangedHandlers[id] = handler;
-        //        }
-        //    }
-
-        //    remove
-        //    {
-        //        if (value == null || displayLanguageChangedHandlers == null)
-        //            return;
-
-        //        lock (SyncRoot)
-        //        {
-        //            int id = Thread.CurrentThread.ManagedThreadId;
-        //            EventHandler handler;
-        //            if (!DisplayLanguageChangedHandlers.TryGetValue(id, out handler))
-        //                return;
-
-        //            handler -= value;
-        //            if (handler == null)
-        //                displayLanguageChangedHandlers.Remove(id);
-        //            else
-        //                displayLanguageChangedHandlers[id] = handler;
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// Occurs when display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed in any <see cref="Thread"/>
@@ -166,21 +124,26 @@ namespace KGySoft.Libraries
         /// <seealso cref="DisplayLanguageChanged"/>
         public static event EventHandler DisplayLanguageChangedGlobal;
 
+        #endregion
+
+        #region Internal Events
+
         internal static event EventHandler DynamicResourceManagersSourceChanged;
+
         internal static event EventHandler DynamicResourceManagersAutoSaveChanged;
 
         #endregion
 
-        #region Properties
+        #endregion
 
-        #region Public Properties
+        #region Properties
 
         /// <summary>
         /// Gets or sets the formatting language of the current <see cref="Thread"/> (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>).
         /// When set, <see cref="FormattingLanguageChanged"/> and <see cref="FormattingLanguageChangedGlobal"/> events are triggered.
         /// </summary>
         /// <remarks>
-        /// <para>Formatting languagage represents the regional setting of formatting and parsing numbers, date and time values,
+        /// <para>Formatting language represents the regional setting of formatting and parsing numbers, date and time values,
         /// currency, etc.</para>
         /// <para>Use this property instead of <see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see> to
         /// keep language changes synchronized in your application.</para>
@@ -217,7 +180,7 @@ namespace KGySoft.Libraries
         /// which makes possible for example to refresh the language of the UI on the fly.</para>
         /// </remarks>
         /// <value>The display language of the current <see cref="Thread"/>. By default equals to the display of the operating system.</value>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see kangword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static CultureInfo DisplayLanguage
         {
             get { return Thread.CurrentThread.CurrentUICulture; }
@@ -363,41 +326,9 @@ namespace KGySoft.Libraries
 
         #endregion
 
-        #region Private Properties
-
-        //private static object SyncRoot
-        //{
-        //    get
-        //    {
-        //        if (syncRoot == null)
-        //            Interlocked.CompareExchange(ref syncRoot, new object(), null);
-        //        return syncRoot;
-        //    }
-        //}
-
-        //private static Dictionary<int, EventHandler> FormattingLanguageChangedHandlers
-        //{
-        //    get
-        //    {
-        //        return formattingLanguageChangedHandlers
-        //            ?? (formattingLanguageChangedHandlers = new Dictionary<int, EventHandler>());
-        //    }
-        //}
-
-        //private static Dictionary<int, EventHandler> DisplayLanguageChangedHandlers
-        //{
-        //    get
-        //    {
-        //        return displayLanguageChangedHandlers
-        //            ?? (displayLanguageChangedHandlers = new Dictionary<int, EventHandler>());
-        //    }
-        //}
-
-        #endregion
-
-        #endregion
-
         #region Methods
+
+        #region Private Methods
 
         private static void OnFormattingLanguageChanged(EventArgs e)
         {
@@ -406,15 +337,6 @@ namespace KGySoft.Libraries
 
             // raising the local event
             FormattingLanguageChanged?.Invoke(null, e);
-            //lock (SyncRoot)
-            //{
-            //    if (formattingLanguageChangedHandlers == null)
-            //        return;
-
-            //    EventHandler handler;
-            //    if (formattingLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
-            //        handler.Invoke(null, e);
-            //}
         }
 
         private static void OnDisplayLanguageChanged(EventArgs e)
@@ -424,15 +346,6 @@ namespace KGySoft.Libraries
 
             // raising the local event
             DisplayLanguageChanged?.Invoke(null, e);
-            //lock (SyncRoot)
-            //{
-            //    if (displayLanguageChangedHandlers == null)
-            //        return;
-
-            //    EventHandler handler;
-            //    if (displayLanguageChangedHandlers.TryGetValue(Thread.CurrentThread.ManagedThreadId, out handler))
-            //        handler.Invoke(null, e);
-            //}
         }
 
         private static void OnDynamicResourceManagersSourceChanged(EventArgs e)
@@ -447,8 +360,7 @@ namespace KGySoft.Libraries
 
         #endregion
 
-        #region Event Handlers
-        //ReSharper disable InconsistentNaming
+        #region Event handlers
 
         static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
@@ -459,7 +371,8 @@ namespace KGySoft.Libraries
             OnFormattingLanguageChanged(EventArgs.Empty);
         }
 
-        //ReSharper restore InconsistentNaming
+        #endregion
+
         #endregion
     }
 }
