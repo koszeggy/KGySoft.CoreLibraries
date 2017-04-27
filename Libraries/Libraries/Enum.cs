@@ -3,16 +3,17 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 using KGySoft.Libraries.Collections;
+using KGySoft.Libraries.Resources;
 
 #endregion
 
 namespace KGySoft.Libraries
 {
-    using KGySoft.Libraries.Resources;
-
+    // TODO: ToObject helyett: http://stackoverflow.com/questions/10387095/cast-int-to-generic-enum-in-c-sharp
     /// <summary>
     /// Generic helper class for <see cref="Enum"/> class.
     /// Provides faster solutions for already existing functionalities in <see cref="Enum"/> class along with
@@ -26,7 +27,7 @@ namespace KGySoft.Libraries
         private static readonly Type underlyingType;
         private static readonly bool isFlags;
         private static readonly bool isSigned;
-        private static readonly ulong sizeMask; // masking is needed because binary represenation of (ulong)(1L << 31) != (1UL << 31), for example
+        private static readonly ulong sizeMask; // masking is needed because binary representation of (ulong)(1L << 31) != (1UL << 31), for example
         private static readonly object syncRoot = new object(); // locks are used so that multiple threads may assign a field multiple times but it is still faster than locking fields even on non-null access
 
         private static long min;
@@ -278,7 +279,7 @@ namespace KGySoft.Libraries
         /// <summary>
         /// Retrieves the name of the constant in the specified enumeration that has the specified <paramref name="value"/>.
         /// </summary>
-        /// <param name="value">The enum value whose name is required.</param>
+        /// <param name="value">The <see langword="enum"/> value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/> if no such constant is found.</returns>
         public static string GetName(TEnum value)
         {
@@ -369,7 +370,7 @@ namespace KGySoft.Libraries
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
-        /// <param name="flags">A flags enum value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
+        /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
         /// <returns><c>true</c>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <c>false</c>.</returns>
@@ -453,7 +454,7 @@ namespace KGySoft.Libraries
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in <typeparamref name="TEnum"/>.
         /// </summary>
-        /// <param name="flags">A flags enum value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
+        /// <param name="flags">A flags <see langword="enum"/> value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
@@ -497,12 +498,12 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed enum is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/> or is empty, then comma (",") separator is used.</param>
         /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed enum value.</param>
+        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
         /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
@@ -618,11 +619,11 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed enum is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed enum value.</param>
+        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
         /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         public static bool TryParse(string value, bool ignoreCase, out TEnum result)
@@ -632,11 +633,11 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed enum is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/> or is empty, then comma-space (", ") separator is used.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed enum value.</param>
+        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
         /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">If <paramref name="value"/> is not a simple field or numeric value</exception>
@@ -647,10 +648,10 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed enum is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed enum value.</param>
+        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
         /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         public static bool TryParse(string value, out TEnum result)
@@ -664,7 +665,7 @@ namespace KGySoft.Libraries
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/> or is empty, then comma (",") separator is used.</param>
         /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
-        /// <returns>The parsed enum value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> and <paramref name="separator"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, string separator, bool ignoreCase)
@@ -681,7 +682,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
-        /// <returns>The parsed enum value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, bool ignoreCase)
@@ -698,7 +699,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values.</param>
-        /// <returns>The parsed enum value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> and <paramref name="separator"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value, string separator)
@@ -714,7 +715,7 @@ namespace KGySoft.Libraries
         /// Convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <returns>The parsed enum value.</returns>
+        /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
         public static TEnum Parse(string value)
@@ -727,7 +728,7 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> <paramref name="value"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="format">Formatting option.</param>
@@ -760,7 +761,7 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> <paramref name="value"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (", ") separator is used.</param>
@@ -771,7 +772,7 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> <paramref name="value"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="format">Formatting option.</param>
@@ -783,7 +784,7 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> <paramref name="value"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
@@ -793,10 +794,23 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
+        /// Gets the defined flags in <typeparamref name="TEnum"/>, where each flags are returned as distinct values.
+        /// </summary>
+        /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <typeparamref name="TEnum"/> as distinct values.</returns>
+        /// <remarks>
+        /// <para>Flag values are the ones whose binary representation contains only a single bit.</para>
+        /// <para>It is not checked whether <typeparamref name="TEnum"/> is really marked by <see cref="FlagsAttribute"/>.</para>
+        /// </remarks>
+        public static IEnumerable<TEnum> GetFlags()
+        {
+            return Values.Where(IsSingleFlag);
+        }
+
+        /// <summary>
         /// Gets an <see cref="IEnumerable{TEnum}"/> enumeration of <paramref name="flags"/>,
         /// where each flags are returned as distinct values.
         /// </summary>
-        /// <param name="flags">A flags enum value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
+        /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <param name="onlyDefinedValues">When <c>true</c>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>

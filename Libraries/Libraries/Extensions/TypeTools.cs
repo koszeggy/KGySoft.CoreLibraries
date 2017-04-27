@@ -122,7 +122,7 @@ namespace KGySoft.Libraries
         /// Gets whether given <paramref name="type"/> is a <see cref="Nullable{T}"/> type.
         /// </summary>
         /// <param name="type">The type to check</param>
-        /// <returns><c>true</c>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type, othwerwise, <c>false</c>.</returns>
+        /// <returns><c>true</c>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <c>false</c>.</returns>
         public static bool IsNullable(this Type type)
         {
             return type.IsGenericType && type.GetGenericTypeDefinition() == nullableType;
