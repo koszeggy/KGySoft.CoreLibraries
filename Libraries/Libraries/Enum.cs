@@ -800,10 +800,11 @@ namespace KGySoft.Libraries
         /// <remarks>
         /// <para>Flag values are the ones whose binary representation contains only a single bit.</para>
         /// <para>It is not checked whether <typeparamref name="TEnum"/> is really marked by <see cref="FlagsAttribute"/>.</para>
+        /// <para>Flags with the same values but different names are returned only once.</para>
         /// </remarks>
         public static IEnumerable<TEnum> GetFlags()
         {
-            return Values.Where(IsSingleFlag);
+            return Values.Where(IsSingleFlag).Distinct();
         }
 
         /// <summary>
