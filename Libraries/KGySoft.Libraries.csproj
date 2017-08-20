@@ -161,6 +161,7 @@
     <Compile Include="Libraries\WinApi\ASSEMBLY_INFO.cs" />
     <Compile Include="Libraries\WinApi\Fusion.cs" />
     <Compile Include="Libraries\WinApi\IAssemblyCache.cs" />
+    <None Include="LICENSE" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Libraries\Unicode.cs" />
     <Compile Include="ComponentModel\EncodingConverter.cs" />
@@ -182,7 +183,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
