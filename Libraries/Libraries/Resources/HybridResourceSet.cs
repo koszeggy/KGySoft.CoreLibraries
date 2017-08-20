@@ -1,8 +1,28 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: HybridResourceSet.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Resources;
+
+#endregion
 
 namespace KGySoft.Libraries.Resources
 {
@@ -12,13 +32,19 @@ namespace KGySoft.Libraries.Resources
     [Serializable]
     internal sealed class HybridResourceSet : ResourceSet, IExpandoResourceSet, IExpandoResourceSetInternal, IEnumerable
     {
+        #region Nested classes
+
+        #region Enumerator class
+
         /// <summary>
         /// An enumerator for a HybridResourceSet. If both resx and compiled resources contain the same key, returns only the value from the resx.
         /// Must be implemented because yield return does not work for IDictionaryEnumerator.
         /// Cannot be serializable because the compiled enumerator is not serializable (supports reset, though).
         /// </summary>
-        private sealed class Enumerator: IDictionaryEnumerator
+        private sealed class Enumerator : IDictionaryEnumerator
         {
+            #region Enumerations
+
             enum State
             {
                 NotStarted = -1,
@@ -27,22 +53,25 @@ namespace KGySoft.Libraries.Resources
                 Finished = -2
             }
 
+            #endregion
+
+            #region Fields
+
             private readonly int version;
-            private ResXResourceEnumerator resxEnumerator;
-            private IDictionaryEnumerator compiledEnumerator;
+
+            private readonly ResXResourceEnumerator resxEnumerator;
+            private readonly IDictionaryEnumerator compiledEnumerator;
+
             private State state;
+
             private HybridResourceSet owner;
+
             private HashSet<string> resxKeys;
             private HashSet<string> compiledKeys;
 
-            internal Enumerator(HybridResourceSet owner, ResXResourceEnumerator resx, IDictionaryEnumerator compiled, int version)
-            {
-                this.owner = owner;
-                state = State.NotStarted;
-                this.version = version;
-                resxEnumerator = resx;
-                compiledEnumerator = compiled;
-            }
+            #endregion
+
+            #region Properties
 
             public DictionaryEntry Entry
             {
@@ -92,10 +121,24 @@ namespace KGySoft.Libraries.Resources
                 }
             }
 
-            public object Current
+            public object Current => Entry;
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(HybridResourceSet owner, ResXResourceEnumerator resx, IDictionaryEnumerator compiled, int version)
             {
-                get { return Entry; }
+                this.owner = owner;
+                state = State.NotStarted;
+                this.version = version;
+                resxEnumerator = resx;
+                compiledEnumerator = compiled;
             }
+
+            #endregion
+
+            #region Methods
 
             public bool MoveNext()
             {
@@ -153,19 +196,32 @@ namespace KGySoft.Libraries.Resources
                 resxKeys = null;
                 state = State.NotStarted;
             }
+
+            #endregion
         }
+
+        #endregion
+
+        #endregion
+
+        #region Fields
 
         private ResXResourceSet resxResourceSet;
         private ResourceSet compiledResourceSet;
+
         [NonSerialized] private HashSet<string> compiledKeys;
         [NonSerialized] private HashSet<string> compiledKeysCaseInsensitive;
+
+        #endregion
+
+        #region Constructors
 
         internal HybridResourceSet(ResXResourceSet resx, ResourceSet compiled)
         {
             if (resx == null)
-                throw new ArgumentNullException("resx", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(resx), Res.Get(Res.ArgumentNull));
             if (compiled == null)
-                throw new ArgumentNullException("compiled", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(compiled), Res.Get(Res.ArgumentNull));
             resxResourceSet = resx;
             compiledResourceSet = compiled;
 
@@ -173,21 +229,11 @@ namespace KGySoft.Libraries.Resources
             Table = null;
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            ResourceSet resx = resxResourceSet;
-            ResourceSet compiled = compiledResourceSet;
-            if (resx == null || compiled == null)
-                return;
+        #endregion
 
-            // not disposing the wrapped resource sets just nullifying them because their life cycle can be longer
-            // as the hybrid one (eg. changing source from mixed to single one).
-            resxResourceSet = null;
-            compiledResourceSet = null;
-            compiledKeys = null;
-            compiledKeysCaseInsensitive = null;
-            base.Dispose(disposing);
-        }
+        #region Methods
+
+        #region Public Methods
 
         public override Type GetDefaultReader()
         {
@@ -248,53 +294,29 @@ namespace KGySoft.Libraries.Resources
             return (string)GetResource(name, ignoreCase, true, resx.SafeMode);
         }
 
-        public bool ContainsResource(string name, bool ignoreCase)
+        #endregion
+
+        #region Protected Methods
+
+        protected override void Dispose(bool disposing)
         {
-            ResXResourceSet resx = resxResourceSet;
+            ResourceSet resx = resxResourceSet;
             ResourceSet compiled = compiledResourceSet;
             if (resx == null || compiled == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                return;
 
-            if (resx.ContainsResource(name, ignoreCase))
-                return true;
-
-            HashSet<string> binKeys = compiledKeys;
-            if (binKeys == null)
-            {
-                // no foreach because that would read the values, too
-                binKeys = new HashSet<string>();
-                IDictionaryEnumerator compiledEnumerator = compiled.GetEnumerator();
-                while (compiledEnumerator.MoveNext())
-                {
-                    binKeys.Add(compiledEnumerator.Key.ToString());
-                }
-
-                compiledKeys = binKeys;
-            }
-
-            if (binKeys.Contains(name))
-                return true;
-
-            if (!ignoreCase)
-                return false;
-
-            HashSet<string> binKeysIgnoreCase = compiledKeysCaseInsensitive;
-            if (binKeysIgnoreCase == null)
-            {
-                compiledKeysCaseInsensitive = binKeysIgnoreCase = new HashSet<string>(binKeys, StringComparer.OrdinalIgnoreCase);
-            }
-
-            return binKeysIgnoreCase.Contains(name);
+            // not disposing the wrapped resource sets just nullifying them because their life cycle can be longer
+            // than the hybrid one (eg. changing source from mixed to single one).
+            resxResourceSet = null;
+            compiledResourceSet = null;
+            compiledKeys = null;
+            compiledKeysCaseInsensitive = null;
+            base.Dispose(disposing);
         }
 
-        public bool ContainsMeta(string name, bool ignoreCase)
-        {
-            ResXResourceSet resx = resxResourceSet;
-            if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+        #endregion
 
-            return resx.ContainsMeta(name, ignoreCase);
-        }
+        #endregion
 
         #region IEnumerable Members
 
@@ -351,7 +373,7 @@ namespace KGySoft.Libraries.Resources
                 ResXResourceSet resx = resxResourceSet;
                 if (resx == null)
                     throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-                
+
                 return resx.SafeMode;
             }
             set
@@ -359,7 +381,7 @@ namespace KGySoft.Libraries.Resources
                 ResXResourceSet resx = resxResourceSet;
                 if (resx == null)
                     throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-                
+
                 resx.SafeMode = value;
             }
         }
@@ -391,6 +413,54 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             return resx.GetAliasEnumerator();
+        }
+
+        public bool ContainsResource(string name, bool ignoreCase)
+        {
+            ResXResourceSet resx = resxResourceSet;
+            ResourceSet compiled = compiledResourceSet;
+            if (resx == null || compiled == null)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+
+            if (resx.ContainsResource(name, ignoreCase))
+                return true;
+
+            HashSet<string> binKeys = compiledKeys;
+            if (binKeys == null)
+            {
+                // no foreach because that would evaluate (deserialize) the values, too
+                binKeys = new HashSet<string>();
+                IDictionaryEnumerator compiledEnumerator = compiled.GetEnumerator();
+                while (compiledEnumerator.MoveNext())
+                {
+                    binKeys.Add(compiledEnumerator.Key.ToString());
+                }
+
+                compiledKeys = binKeys;
+            }
+
+            if (binKeys.Contains(name))
+                return true;
+
+            if (!ignoreCase)
+                return false;
+
+            HashSet<string> binKeysIgnoreCase = compiledKeysCaseInsensitive;
+            if (binKeysIgnoreCase == null)
+            {
+                compiledKeysCaseInsensitive = binKeysIgnoreCase = new HashSet<string>(binKeys, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return binKeysIgnoreCase.Contains(name);
+        }
+
+        public bool ContainsMeta(string name, bool ignoreCase)
+        {
+            ResXResourceSet resx = resxResourceSet;
+            if (resx == null)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+
+            return resx.ContainsMeta(name, ignoreCase);
         }
 
         public object GetMetaObject(string name, bool ignoreCase = false)

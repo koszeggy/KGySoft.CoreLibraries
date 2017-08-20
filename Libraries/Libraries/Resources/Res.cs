@@ -1,6 +1,26 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Res.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 
 using KGySoft.Libraries.Reflection;
+
+#endregion
 
 namespace KGySoft.Libraries.Resources
 {
@@ -9,221 +29,241 @@ namespace KGySoft.Libraries.Resources
     /// </summary>
     internal static class Res
     {
-        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.Libraries.Messages", Reflector.KGySoftLibrariesAssembly);
+        #region Constants
 
-        internal const string ArgumentNull = "ArgumentNull";
-        internal const string ArgumentOutOfRange = "ArgumentOutOfRange";
-        internal const string ArgumentInvalidString = "ArgumentInvalidString";
-        internal const string KeyNotFound = "KeyNotFound";
-        internal const string ObjectDisposed = "ObjectDisposed";
-        internal const string ArgumentEmpty = "ArgumentEmpty";
-        internal const string DuplicateKey = "DuplicateKey";
+        #region Internal Constants
 
-        internal const string NeutralResourceFileNotFoundResX = "NeutralResourceFileNotFoundResX";
-        internal const string NeutralResourceNotFoundCompiled = "NeutralResourceNotFoundCompiled";
-        internal const string NeutralResourceNotFoundHybrid = "NeutralResourceNotFoundHybrid";
-        internal const string ValueContainsIllegalPathCharacters = "ValueContainsIllegalPathCharacters";
-        internal const string TypeParameterIsNotEnum = "TypeParameterIsNotEnum";
-        internal const string ValueCannotBeParsedAsEnum = "ValueCannotBeParsedAsEnum";
-        internal const string InvalidKeyType = "InvalidKeyType";
-        internal const string InvalidValueType = "InvalidValueType";
-        internal const string ModifyNotSupported = "ModifyNotSupported";
-        internal const string DestArrayShort = "DestArrayShort";
-        internal const string EnumerationNotStartedOrFinished = "EnumerationNotStartedOrFinished";
-        internal const string EnumerationCollectionModified = "EnumerationCollectionModified";
-        internal const string ArrayDimension = "ArrayDimension";
-        internal const string ArrayTypeInvalid = "ArrayTypeInvalid";
-        internal const string CacheNullLoaderInvoke = "CacheNullLoaderInvoke";
-        internal const string CacheNullLoader = "CacheNullLoader";
-        internal const string CacheKeyNotFound = "CacheKeyNotFound";
-        internal const string CacheMinSize = "CacheMinSize";
-        internal const string CacheStatistics = "CacheStatistics";
-        internal const string InvalidOffsLen = "InvalidOffsLen";
-        internal const string ComparerFail = "ComparerFail";
-        internal const string CapacityTooSmall = "CapacityTooSmall";
-        internal const string InsertByIndexNotSupported = "InsertByIndexNotSupported";
-        internal const string InvalidKeyValueType = "InvalidKeyValueType";
-        internal const string EnumerableCannotAdd = "EnumerableCannotAdd";
-        internal const string EnumerableCannotClear = "EnumerableCannotClear";
-        internal const string StreamCannotRead = "StreamCannotRead";
-        internal const string StreamCannotWrite = "StreamCannotWrite";
-        internal const string StreamCannotSeek = "StreamCannotSeek";
-        internal const string SeparatorNullOrEmpty = "SeparatorNullOrEmpty";
-        internal const string NotAnInstanceOfType = "NotAnInstanceOfType";
-        internal const string SetConstantField = "SetConstantField";
-        internal const string NotSupportedMemberType = "NotSupportedMemberType";
-        internal const string InvalidMethodBase = "InvalidMethodBase";
-        internal const string CannotTreatPropertySetter = "CannotTreatPropertySetter";
-        internal const string TypeOrCtorInfoExpected = "TypeOrCtorInfoExpected";
-        internal const string PropertyHasNoGetter = "PropertyHasNoGetter";
-        internal const string PropertyHasNoSetter = "PropertyHasNoSetter";
-        internal const string ParsedValueNull = "ParsedValueNull";
-        internal const string NotABool = "NotABool";
-        internal const string NotAType = "NotAType";
-        internal const string TypeCannotBeParsed = "TypeCannotBeParsed";
-        internal const string ParseError = "ParseError";
-        internal const string SetPropertyTypeDescriptorNotSupported = "SetPropertyTypeDescriptorNotSupported";
-        internal const string CannotSetStaticPropertyTypeDescriptor = "CannotSetStaticPropertyTypeDescriptor";
-        internal const string CannotSetPropertyTypeDescriptor = "CannotSetPropertyTypeDescriptor";
-        internal const string InstancePropertyDoesNotExist = "InstancePropertyDoesNotExist";
-        internal const string StaticPropertyDoesNotExist = "StaticPropertyDoesNotExist";
-        internal const string EmptyIndices = "EmptyIndices";
-        internal const string SetIndexerTypeDescriptorNotSupported = "SetIndexerTypeDescriptorNotSupported";
-        internal const string IndexParamsLengthMismatch = "IndexParamsLengthMismatch";
-        internal const string IndexParamsTypeMismatch = "IndexParamsTypeMismatch";
-        internal const string IndexerDoesNotExist = "IndexerDoesNotExist";
-        internal const string InstanceIsNull = "InstanceIsNull";
-        internal const string CannotGetPropertyTypeDescriptor = "CannotGetPropertyTypeDescriptor";
-        internal const string CannotGetStaticPropertyTypeDescriptor = "CannotGetStaticPropertyTypeDescriptor";
-        internal const string GetIndexerTypeDescriptorNotSupported = "GetIndexerTypeDescriptorNotSupported";
-        internal const string TypeParamsAreNull = "TypeParamsAreNull";
-        internal const string TypeArgsLengthMismatch = "TypeArgsLengthMismatch";
-        internal const string CannotCreateGenericMethod = "CannotCreateGenericMethod";
-        internal const string InvokeMethodTypeDescriptorNotSupported = "InvokeMethodTypeDescriptorNotSupported";
-        internal const string InstanceMethodDoesNotExist = "InstanceMethodDoesNotExist";
-        internal const string StaticMethodDoesNotExist = "StaticMethodDoesNotExist";
-        internal const string CtorDoesNotExist = "CtorDoesNotExist";
-        internal const string SetFieldTypeDescriptorNotSupported = "SetFieldTypeDescriptorNotSupported";
-        internal const string InstanceFieldDoesNotExist = "InstanceFieldDoesNotExist";
-        internal const string StaticFieldDoesNotExist = "StaticFieldDoesNotExist";
-        internal const string GetFieldTypeDescriptorNotSupported = "GetFieldTypeDescriptorNotSupported";
-        internal const string ParseNotAGenericType = "ParseNotAGenericType";
-        internal const string ParseTypeArgsLengthMismatch = "ParseTypeArgsLengthMismatch";
-        internal const string ParseCannotResolveTypeArg = "ParseCannotResolveTypeArg";
-        internal const string TypeSyntaxError = "TypeSyntaxError";
-        internal const string NotAMember = "NotAMember";
-        internal const string NotAMethod = "NotAMethod";
-        internal const string SerializationNotSupported = "SerializationNotSupported";
-        internal const string IEnumerableExpected = "IEnumerableExpected";
-        internal const string InvalidStreamData = "InvalidStreamData";
-        internal const string InvalidEnumBase = "InvalidEnumBase";
-        internal const string CannotDeserializeObject = "CannotDeserializeObject";
-        internal const string ObjectHierarchyChanged = "ObjectHierarchyChanged";
-        internal const string MissingField = "MissingField";
-        internal const string MissingFieldBase = "MissingFieldBase";
-        internal const string MissingISerializableCtor = "MissingISerializableCtor";
-        internal const string SurrogateChangedObject = "SurrogateChangedObject";
-        internal const string CannotDecodeDataType = "CannotDecodeDataType";
-        internal const string CannotDecodeCollectionType = "CannotDecodeCollectionType";
-        internal const string ReadOnlyCollectionNotSupported = "ReadOnlyCollectionNotSupported";
-        internal const string CannotResolveType = "CannotResolveType";
-        internal const string CircularIObjectReference = "CircularIObjectReference";
-        internal const string DeserializeUnexpectedId = "DeserializeUnexpectedId";
-        internal const string CannotResolveTypeInAssembly = "CannotResolveTypeInAssembly";
-        internal const string CannotLoadAssembly = "CannotLoadAssembly";
-        internal const string ValueTypeExpected = "ValueTypeExpected";
-        internal const string DataLenghtTooSmall = "DataLenghtTooSmall";
-        internal const string UnexpectedSerializationInfoElement = "UnexpectedSerializationInfoElement";
-        internal const string ObjectHierarchyChangedSurrogate = "ObjectHierarchyChangedSurrogate";
-        internal const string MissingFieldSurrogate = "MissingFieldSurrogate";
-        internal const string UnexpectedFieldType = "UnexpectedFieldType";
-        internal const string Undefined = "Undefined";
-        internal const string XmlSerializeReadOnlyRoot = "XmlSerializeReadOnlyRoot";
-        internal const string XmlCannotSerialize = "XmlCannotSerialize";
-        internal const string XmlRootExpected = "XmlRootExpected";
-        internal const string XmlCannotResolveType = "XmlCannotResolveType";
-        internal const string XmlRootTypeMissing = "XmlRootTypeMissing";
-        internal const string XmlDeserializeNotSupported = "XmlDeserializeNotSupported";
-        internal const string XmlSerializeReadOnlyCollection = "XmlSerializeReadOnlyCollection";
-        internal const string XmlCannotSerializeProperty = "XmlCannotSerializeProperty";
-        internal const string XmlCannotSerializeValueType = "XmlCannotSerializeValueType";
-        internal const string XmlBinarySerializationFailed = "XmlBinarySerializationFailed";
-        internal const string XmlCannotSerializeArrayElement = "XmlCannotSerializeArrayElement";
-        internal const string XmlCannotSerializeCollectionElement = "XmlCannotSerializeCollectionElement";
-        internal const string NotAnIXmlSerializable = "NotAnIXmlSerializable";
-        internal const string XmlArrayPropertyHasNoSetter = "XmlArrayPropertyHasNoSetter";
-        internal const string XmlArrayPropertyHasNoSetterNull = "XmlArrayPropertyHasNoSetterNull";
-        internal const string XmlCollectionPropertyHasNoSetterNull = "XmlCollectionPropertyHasNoSetterNull";
-        internal const string XmlCollectionPropertyHasNoSetter = "XmlCollectionPropertyHasNoSetter";
-        internal const string XmlCannotCreateCollection = "XmlCannotCreateCollection";
-        internal const string XmlPropertyHasNoSetter = "XmlPropertyHasNoSetter";
-        internal const string XmlItemExpected = "XmlItemExpected";
-        internal const string XmlCannotDetermineElementType = "XmlCannotDetermineElementType";
-        internal const string XmlNotACollection = "XmlNotACollection";
-        internal const string XmlHasNoProperty = "XmlHasNoProperty";
-        internal const string XmlNoContent = "XmlNoContent";
-        internal const string XmlLengthInvalidType = "XmlLengthInvalidType";
-        internal const string XmlArraySizeMismatch = "XmlArraySizeMismatch";
-        internal const string XmlArrayRankMismatch = "XmlArrayRankMismatch";
-        internal const string XmlArrayDimensionSizeMismatch = "XmlArrayDimensionSizeMismatch";
-        internal const string XmlArrayLowerBoundMismatch = "XmlArrayLowerBoundMismatch";
-        internal const string XmlCrcError = "XmlCrcError";
-        internal const string XmlInconsistentArrayLength = "XmlInconsistentArrayLength";
-        internal const string XmlCrcFormat = "XmlCrcFormat";
-        internal const string XmlMixedArrayFormats = "XmlMixedArrayFormats";
-        internal const string XmlUnexpectedElement = "XmlUnexpectedElement";
-        internal const string XmlKeyValueTypeMissing = "XmlKeyValueTypeMissing";
-        internal const string XmlKeyValueMissingKey = "XmlKeyValueMissingKey";
-        internal const string XmlKeyValueMissingValue = "XmlKeyValueMissingValue";
-        internal const string XmlMultipleKeys = "XmlMultipleKeys";
-        internal const string XmlMultipleValues = "XmlMultipleValues";
-        internal const string XmlInvalidEscapedContent = "XmlInvalidEscapedContent";
-        internal const string XmlUnexpectedEnd = "XmlUnexpectedEnd";
-        internal const string XmlCircularReference = "XmlCircularReference";
-        internal const string ExceptionMessage = "ExceptionMessage";
-        internal const string ExceptionMessageNotAvailable = "ExceptionMessageNotAvailable";
-        internal const string InnerException = "InnerException";
-        internal const string InnerExceptionEnd = "InnerExceptionEnd";
-        internal const string Win32ErrorCode = "Win32ErrorCode";
-        internal const string SystemInformation = "SystemInformation";
-        internal const string UserInformation = "UserInformation";
-        internal const string ExceptionSource = "ExceptionSource";
-        internal const string ExceptionSourceNotAvailable = "ExceptionSourceNotAvailable";
-        internal const string ExceptionType = "ExceptionType";
-        internal const string ExceptionTypeNotAvailable = "ExceptionTypeNotAvailable";
-        internal const string ExceptionTargetSite = "ExceptionTargetSite";
-        internal const string ExceptionTargetSiteNotAvailable = "ExceptionTargetSiteNotAvailable";
-        internal const string ExceptionTargetSiteNotAccessible = "ExceptionTargetSiteNotAccessible";
-        internal const string RemoteStackTrace = "RemoteStackTrace";
-        internal const string StackTrace = "StackTrace";
-        internal const string LocalStackTrace = "LocalStackTrace";
-        internal const string NativeOffset = "NativeOffset";
-        internal const string SourceOffset = "SourceOffset";
-        internal const string ILOffset = "ILOffset";
-        internal const string DateAndTime = "DateAndTime";
-        internal const string OperatingSystem = "OperatingSystem";
-        internal const string Environment = "Environment";
-        internal const string ProcessorCount = "ProcessorCount";
-        internal const string ClrVersion = "ClrVersion";
-        internal const string WorkingSet = "WorkingSet";
-        internal const string CommandLine = "CommandLine";
-        internal const string ApplicationDomain = "ApplicationDomain";
-        internal const string MachineName = "MachineName";
-        internal const string UserName = "UserName";
-        internal const string CurrentUser = "CurrentUser";
-        internal const string CannotGetDomain = "CannotGetDomain";
-        internal const string AssemblyCodebase = "AssemblyCodebase";
-        internal const string AssemblyFullName = "AssemblyFullName";
-        internal const string AssemblyVersion = "AssemblyVersion";
-        internal const string AssemblyBuildDate = "AssemblyBuildDate";
-        internal const string Uncategorized = "Uncategorized";
-        internal const string InvalidResXReaderPropertyChange = "InvalidResXReaderPropertyChange";
-        internal const string InvalidResXResourceNoName = "InvalidResXResourceNoName";
-        internal const string XmlMissingAttribute = "XmlMissingAttribute";
-        internal const string ResXFileMimeTypeNotSupported = "ResXFileMimeTypeNotSupported";
-        internal const string ResXMimeTypeNotSupported = "ResXMimeTypeNotSupported";
-        internal const string ResXReaderNotSupported = "ResXReaderNotSupported";
-        internal const string ResXWriterNotSupported = "ResXWriterNotSupported";
-        internal const string InvalidResXFile = "InvalidResXFile";
-        internal const string TypeLoadException = "TypeLoadException";
-        internal const string TypeLoadExceptionShort = "TypeLoadExceptionShort";
-        internal const string TypeWithAssemblyName = "TypeWithAssemblyName";
-        internal const string NonStringResourceWithType = "NonStringResourceWithType";
-        internal const string ConvertFromStringNotSupportedAt = "ConvertFromStringNotSupportedAt";
-        internal const string ConvertFromStringNotSupported = "ConvertFromStringNotSupported";
-        internal const string ConvertFromByteArrayNotSupportedAt = "ConvertFromByteArrayNotSupportedAt";
-        internal const string ConvertFromByteArrayNotSupported = "ConvertFromByteArrayNotSupported";
-        internal const string InvalidResXWriterPropertyChange = "InvalidResXWriterPropertyChange";
-        internal const string ResXResourceWriterSaved = "ResXResourceWriterSaved";
-        internal const string ResXFileRefFileNotFound = "ResXFileRefFileNotFound";
-        internal const string SeparatorInvalidHex = "SeparatorInvalidHex";
-        internal const string SeparatorInvalidDec = "SeparatorInvalidDec";
-        internal const string HybridResSourceBinary = "HybridResSourceBinary";
-        internal const string InvalidDrmPropertyChange = "InvalidDrmPropertyChange";
+        internal const string ArgumentNull = nameof(ArgumentNull);
+        internal const string ArgumentOutOfRange = nameof(ArgumentOutOfRange);
+        internal const string ArgumentInvalidString = nameof(ArgumentInvalidString);
+        internal const string KeyNotFound = nameof(KeyNotFound);
+        internal const string ObjectDisposed = nameof(ObjectDisposed);
+        internal const string ArgumentEmpty = nameof(ArgumentEmpty);
+        internal const string DuplicateKey = nameof(DuplicateKey);
+
+        internal const string NeutralResourceFileNotFoundResX = nameof(NeutralResourceFileNotFoundResX);
+        internal const string NeutralResourceNotFoundCompiled = nameof(NeutralResourceNotFoundCompiled);
+        internal const string NeutralResourceNotFoundHybrid = nameof(NeutralResourceNotFoundHybrid);
+        internal const string ValueContainsIllegalPathCharacters = nameof(ValueContainsIllegalPathCharacters);
+        internal const string TypeParameterIsNotEnum = nameof(TypeParameterIsNotEnum);
+        internal const string ValueCannotBeParsedAsEnum = nameof(ValueCannotBeParsedAsEnum);
+        internal const string InvalidKeyType = nameof(InvalidKeyType);
+        internal const string InvalidValueType = nameof(InvalidValueType);
+        internal const string ModifyNotSupported = nameof(ModifyNotSupported);
+        internal const string DestArrayShort = nameof(DestArrayShort);
+        internal const string EnumerationNotStartedOrFinished = nameof(EnumerationNotStartedOrFinished);
+        internal const string EnumerationCollectionModified = nameof(EnumerationCollectionModified);
+        internal const string ArrayDimension = nameof(ArrayDimension);
+        internal const string ArrayTypeInvalid = nameof(ArrayTypeInvalid);
+        internal const string CacheNullLoaderInvoke = nameof(CacheNullLoaderInvoke);
+        internal const string CacheNullLoader = nameof(CacheNullLoader);
+        internal const string CacheKeyNotFound = nameof(CacheKeyNotFound);
+        internal const string CacheMinSize = nameof(CacheMinSize);
+        internal const string CacheStatistics = nameof(CacheStatistics);
+        internal const string InvalidOffsLen = nameof(InvalidOffsLen);
+        internal const string ComparerFail = nameof(ComparerFail);
+        internal const string CapacityTooSmall = nameof(CapacityTooSmall);
+        internal const string InsertByIndexNotSupported = nameof(InsertByIndexNotSupported);
+        internal const string InvalidKeyValueType = nameof(InvalidKeyValueType);
+        internal const string EnumerableCannotAdd = nameof(EnumerableCannotAdd);
+        internal const string EnumerableCannotClear = nameof(EnumerableCannotClear);
+        internal const string StreamCannotRead = nameof(StreamCannotRead);
+        internal const string StreamCannotWrite = nameof(StreamCannotWrite);
+        internal const string StreamCannotSeek = nameof(StreamCannotSeek);
+        internal const string SeparatorNullOrEmpty = nameof(SeparatorNullOrEmpty);
+        internal const string NotAnInstanceOfType = nameof(NotAnInstanceOfType);
+        internal const string SetConstantField = nameof(SetConstantField);
+        internal const string NotSupportedMemberType = nameof(NotSupportedMemberType);
+        internal const string InvalidMethodBase = nameof(InvalidMethodBase);
+        internal const string CannotTreatPropertySetter = nameof(CannotTreatPropertySetter);
+        internal const string TypeOrCtorInfoExpected = nameof(TypeOrCtorInfoExpected);
+        internal const string PropertyHasNoGetter = nameof(PropertyHasNoGetter);
+        internal const string PropertyHasNoSetter = nameof(PropertyHasNoSetter);
+        internal const string ParsedValueNull = nameof(ParsedValueNull);
+        internal const string NotABool = nameof(NotABool);
+        internal const string NotAType = nameof(NotAType);
+        internal const string TypeCannotBeParsed = nameof(TypeCannotBeParsed);
+        internal const string ParseError = nameof(ParseError);
+        internal const string SetPropertyTypeDescriptorNotSupported = nameof(SetPropertyTypeDescriptorNotSupported);
+        internal const string CannotSetStaticPropertyTypeDescriptor = nameof(CannotSetStaticPropertyTypeDescriptor);
+        internal const string CannotSetPropertyTypeDescriptor = nameof(CannotSetPropertyTypeDescriptor);
+        internal const string InstancePropertyDoesNotExist = nameof(InstancePropertyDoesNotExist);
+        internal const string StaticPropertyDoesNotExist = nameof(StaticPropertyDoesNotExist);
+        internal const string EmptyIndices = nameof(EmptyIndices);
+        internal const string SetIndexerTypeDescriptorNotSupported = nameof(SetIndexerTypeDescriptorNotSupported);
+        internal const string IndexParamsLengthMismatch = nameof(IndexParamsLengthMismatch);
+        internal const string IndexParamsTypeMismatch = nameof(IndexParamsTypeMismatch);
+        internal const string IndexerDoesNotExist = nameof(IndexerDoesNotExist);
+        internal const string InstanceIsNull = nameof(InstanceIsNull);
+        internal const string CannotGetPropertyTypeDescriptor = nameof(CannotGetPropertyTypeDescriptor);
+        internal const string CannotGetStaticPropertyTypeDescriptor = nameof(CannotGetStaticPropertyTypeDescriptor);
+        internal const string GetIndexerTypeDescriptorNotSupported = nameof(GetIndexerTypeDescriptorNotSupported);
+        internal const string TypeParamsAreNull = nameof(TypeParamsAreNull);
+        internal const string TypeArgsLengthMismatch = nameof(TypeArgsLengthMismatch);
+        internal const string CannotCreateGenericMethod = nameof(CannotCreateGenericMethod);
+        internal const string InvokeMethodTypeDescriptorNotSupported = nameof(InvokeMethodTypeDescriptorNotSupported);
+        internal const string InstanceMethodDoesNotExist = nameof(InstanceMethodDoesNotExist);
+        internal const string StaticMethodDoesNotExist = nameof(StaticMethodDoesNotExist);
+        internal const string CtorDoesNotExist = nameof(CtorDoesNotExist);
+        internal const string SetFieldTypeDescriptorNotSupported = nameof(SetFieldTypeDescriptorNotSupported);
+        internal const string InstanceFieldDoesNotExist = nameof(InstanceFieldDoesNotExist);
+        internal const string StaticFieldDoesNotExist = nameof(StaticFieldDoesNotExist);
+        internal const string GetFieldTypeDescriptorNotSupported = nameof(GetFieldTypeDescriptorNotSupported);
+        internal const string ParseNotAGenericType = nameof(ParseNotAGenericType);
+        internal const string ParseTypeArgsLengthMismatch = nameof(ParseTypeArgsLengthMismatch);
+        internal const string ParseCannotResolveTypeArg = nameof(ParseCannotResolveTypeArg);
+        internal const string TypeSyntaxError = nameof(TypeSyntaxError);
+        internal const string NotAMember = nameof(NotAMember);
+        internal const string NotAMethod = nameof(NotAMethod);
+        internal const string SerializationNotSupported = nameof(SerializationNotSupported);
+        internal const string IEnumerableExpected = nameof(IEnumerableExpected);
+        internal const string InvalidStreamData = nameof(InvalidStreamData);
+        internal const string InvalidEnumBase = nameof(InvalidEnumBase);
+        internal const string CannotDeserializeObject = nameof(CannotDeserializeObject);
+        internal const string ObjectHierarchyChanged = nameof(ObjectHierarchyChanged);
+        internal const string MissingField = nameof(MissingField);
+        internal const string MissingFieldBase = nameof(MissingFieldBase);
+        internal const string MissingISerializableCtor = nameof(MissingISerializableCtor);
+        internal const string SurrogateChangedObject = nameof(SurrogateChangedObject);
+        internal const string CannotDecodeDataType = nameof(CannotDecodeDataType);
+        internal const string CannotDecodeCollectionType = nameof(CannotDecodeCollectionType);
+        internal const string ReadOnlyCollectionNotSupported = nameof(ReadOnlyCollectionNotSupported);
+        internal const string CannotResolveType = nameof(CannotResolveType);
+        internal const string CircularIObjectReference = nameof(CircularIObjectReference);
+        internal const string DeserializeUnexpectedId = nameof(DeserializeUnexpectedId);
+        internal const string CannotResolveTypeInAssembly = nameof(CannotResolveTypeInAssembly);
+        internal const string CannotLoadAssembly = nameof(CannotLoadAssembly);
+        internal const string ValueTypeExpected = nameof(ValueTypeExpected);
+        internal const string DataLenghtTooSmall = nameof(DataLenghtTooSmall);
+        internal const string UnexpectedSerializationInfoElement = nameof(UnexpectedSerializationInfoElement);
+        internal const string ObjectHierarchyChangedSurrogate = nameof(ObjectHierarchyChangedSurrogate);
+        internal const string MissingFieldSurrogate = nameof(MissingFieldSurrogate);
+        internal const string UnexpectedFieldType = nameof(UnexpectedFieldType);
+        internal const string Undefined = nameof(Undefined);
+        internal const string XmlSerializeReadOnlyRoot = nameof(XmlSerializeReadOnlyRoot);
+        internal const string XmlCannotSerialize = nameof(XmlCannotSerialize);
+        internal const string XmlRootExpected = nameof(XmlRootExpected);
+        internal const string XmlCannotResolveType = nameof(XmlCannotResolveType);
+        internal const string XmlRootTypeMissing = nameof(XmlRootTypeMissing);
+        internal const string XmlDeserializeNotSupported = nameof(XmlDeserializeNotSupported);
+        internal const string XmlSerializeReadOnlyCollection = nameof(XmlSerializeReadOnlyCollection);
+        internal const string XmlCannotSerializeProperty = nameof(XmlCannotSerializeProperty);
+        internal const string XmlCannotSerializeValueType = nameof(XmlCannotSerializeValueType);
+        internal const string XmlBinarySerializationFailed = nameof(XmlBinarySerializationFailed);
+        internal const string XmlCannotSerializeArrayElement = nameof(XmlCannotSerializeArrayElement);
+        internal const string XmlCannotSerializeCollectionElement = nameof(XmlCannotSerializeCollectionElement);
+        internal const string NotAnIXmlSerializable = nameof(NotAnIXmlSerializable);
+        internal const string XmlArrayPropertyHasNoSetter = nameof(XmlArrayPropertyHasNoSetter);
+        internal const string XmlArrayPropertyHasNoSetterNull = nameof(XmlArrayPropertyHasNoSetterNull);
+        internal const string XmlCollectionPropertyHasNoSetterNull = nameof(XmlCollectionPropertyHasNoSetterNull);
+        internal const string XmlCollectionPropertyHasNoSetter = nameof(XmlCollectionPropertyHasNoSetter);
+        internal const string XmlCannotCreateCollection = nameof(XmlCannotCreateCollection);
+        internal const string XmlPropertyHasNoSetter = nameof(XmlPropertyHasNoSetter);
+        internal const string XmlItemExpected = nameof(XmlItemExpected);
+        internal const string XmlCannotDetermineElementType = nameof(XmlCannotDetermineElementType);
+        internal const string XmlNotACollection = nameof(XmlNotACollection);
+        internal const string XmlHasNoProperty = nameof(XmlHasNoProperty);
+        internal const string XmlNoContent = nameof(XmlNoContent);
+        internal const string XmlLengthInvalidType = nameof(XmlLengthInvalidType);
+        internal const string XmlArraySizeMismatch = nameof(XmlArraySizeMismatch);
+        internal const string XmlArrayRankMismatch = nameof(XmlArrayRankMismatch);
+        internal const string XmlArrayDimensionSizeMismatch = nameof(XmlArrayDimensionSizeMismatch);
+        internal const string XmlArrayLowerBoundMismatch = nameof(XmlArrayLowerBoundMismatch);
+        internal const string XmlCrcError = nameof(XmlCrcError);
+        internal const string XmlInconsistentArrayLength = nameof(XmlInconsistentArrayLength);
+        internal const string XmlCrcFormat = nameof(XmlCrcFormat);
+        internal const string XmlMixedArrayFormats = nameof(XmlMixedArrayFormats);
+        internal const string XmlUnexpectedElement = nameof(XmlUnexpectedElement);
+        internal const string XmlKeyValueTypeMissing = nameof(XmlKeyValueTypeMissing);
+        internal const string XmlKeyValueMissingKey = nameof(XmlKeyValueMissingKey);
+        internal const string XmlKeyValueMissingValue = nameof(XmlKeyValueMissingValue);
+        internal const string XmlMultipleKeys = nameof(XmlMultipleKeys);
+        internal const string XmlMultipleValues = nameof(XmlMultipleValues);
+        internal const string XmlInvalidEscapedContent = nameof(XmlInvalidEscapedContent);
+        internal const string XmlUnexpectedEnd = nameof(XmlUnexpectedEnd);
+        internal const string XmlCircularReference = nameof(XmlCircularReference);
+        internal const string ExceptionMessage = nameof(ExceptionMessage);
+        internal const string ExceptionMessageNotAvailable = nameof(ExceptionMessageNotAvailable);
+        internal const string InnerException = nameof(InnerException);
+        internal const string InnerExceptionEnd = nameof(InnerExceptionEnd);
+        internal const string Win32ErrorCode = nameof(Win32ErrorCode);
+        internal const string SystemInformation = nameof(SystemInformation);
+        internal const string UserInformation = nameof(UserInformation);
+        internal const string ExceptionSource = nameof(ExceptionSource);
+        internal const string ExceptionSourceNotAvailable = nameof(ExceptionSourceNotAvailable);
+        internal const string ExceptionType = nameof(ExceptionType);
+        internal const string ExceptionTypeNotAvailable = nameof(ExceptionTypeNotAvailable);
+        internal const string ExceptionTargetSite = nameof(ExceptionTargetSite);
+        internal const string ExceptionTargetSiteNotAvailable = nameof(ExceptionTargetSiteNotAvailable);
+        internal const string ExceptionTargetSiteNotAccessible = nameof(ExceptionTargetSiteNotAccessible);
+        internal const string RemoteStackTrace = nameof(RemoteStackTrace);
+        internal const string StackTrace = nameof(StackTrace);
+        internal const string LocalStackTrace = nameof(LocalStackTrace);
+        internal const string NativeOffset = nameof(NativeOffset);
+        internal const string SourceOffset = nameof(SourceOffset);
+        internal const string ILOffset = nameof(ILOffset);
+        internal const string DateAndTime = nameof(DateAndTime);
+        internal const string OperatingSystem = nameof(OperatingSystem);
+        internal const string Environment = nameof(Environment);
+        internal const string ProcessorCount = nameof(ProcessorCount);
+        internal const string ClrVersion = nameof(ClrVersion);
+        internal const string WorkingSet = nameof(WorkingSet);
+        internal const string CommandLine = nameof(CommandLine);
+        internal const string ApplicationDomain = nameof(ApplicationDomain);
+        internal const string MachineName = nameof(MachineName);
+        internal const string UserName = nameof(UserName);
+        internal const string CurrentUser = nameof(CurrentUser);
+        internal const string CannotGetDomain = nameof(CannotGetDomain);
+        internal const string AssemblyCodebase = nameof(AssemblyCodebase);
+        internal const string AssemblyFullName = nameof(AssemblyFullName);
+        internal const string AssemblyVersion = nameof(AssemblyVersion);
+        internal const string AssemblyBuildDate = nameof(AssemblyBuildDate);
+        internal const string Uncategorized = nameof(Uncategorized);
+        internal const string InvalidResXReaderPropertyChange = nameof(InvalidResXReaderPropertyChange);
+        internal const string InvalidResXResourceNoName = nameof(InvalidResXResourceNoName);
+        internal const string XmlMissingAttribute = nameof(XmlMissingAttribute);
+        internal const string ResXFileMimeTypeNotSupported = nameof(ResXFileMimeTypeNotSupported);
+        internal const string ResXMimeTypeNotSupported = nameof(ResXMimeTypeNotSupported);
+        internal const string ResXReaderNotSupported = nameof(ResXReaderNotSupported);
+        internal const string ResXWriterNotSupported = nameof(ResXWriterNotSupported);
+        internal const string InvalidResXFile = nameof(InvalidResXFile);
+        internal const string TypeLoadException = nameof(TypeLoadException);
+        internal const string TypeLoadExceptionShort = nameof(TypeLoadExceptionShort);
+        internal const string TypeWithAssemblyName = nameof(TypeWithAssemblyName);
+        internal const string NonStringResourceWithType = nameof(NonStringResourceWithType);
+        internal const string ConvertFromStringNotSupportedAt = nameof(ConvertFromStringNotSupportedAt);
+        internal const string ConvertFromStringNotSupported = nameof(ConvertFromStringNotSupported);
+        internal const string ConvertFromByteArrayNotSupportedAt = nameof(ConvertFromByteArrayNotSupportedAt);
+        internal const string ConvertFromByteArrayNotSupported = nameof(ConvertFromByteArrayNotSupported);
+        internal const string InvalidResXWriterPropertyChange = nameof(InvalidResXWriterPropertyChange);
+        internal const string ResXResourceWriterSaved = nameof(ResXResourceWriterSaved);
+        internal const string ResXFileRefFileNotFound = nameof(ResXFileRefFileNotFound);
+        internal const string SeparatorInvalidHex = nameof(SeparatorInvalidHex);
+        internal const string SeparatorInvalidDec = nameof(SeparatorInvalidDec);
+        internal const string HybridResSourceBinary = nameof(HybridResSourceBinary);
+        internal const string InvalidDrmPropertyChange = nameof(InvalidDrmPropertyChange);
+
+        #endregion
+        
+        #region Private Constants
 
         private const string nullReference = "NullReference";
         private const string unavailableResource = "Resource ID not found: {0}";
         private const string invalidResource = "Resource text is not valid for {0} arguments: {1}";
+
+        #endregion
+        
+        #endregion
+
+        #region Fields
+
+        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.Libraries.Messages", Reflector.KGySoftLibrariesAssembly);
+
+        #endregion
+
+        #region Methods
+
+        #region Internal Methods
 
         internal static string Get(string id)
         {
@@ -239,6 +279,10 @@ namespace KGySoft.Libraries.Resources
 
             return SafeFormat(format, args);
         }
+
+        #endregion
+
+        #region Private Methods
 
         private static string SafeFormat(string format, object[] args)
         {
@@ -262,5 +306,9 @@ namespace KGySoft.Libraries.Resources
                 return String.Format(invalidResource, args.Length, format);
             }
         }
+
+        #endregion
+
+        #endregion
     }
 }

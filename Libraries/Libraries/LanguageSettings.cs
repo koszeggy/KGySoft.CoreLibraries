@@ -47,7 +47,7 @@ namespace KGySoft.Libraries
 
         #region Private Constants
 
-        private const AutoSaveOptions AutoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
+        private const AutoSaveOptions autoSaveDefault = AutoSaveOptions.LanguageChange | AutoSaveOptions.DomainUnload | AutoSaveOptions.SourceChange;
 
         #endregion
 
@@ -57,7 +57,7 @@ namespace KGySoft.Libraries
 
         private static bool captureSystemLocaleChange;
         private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
-        private static AutoSaveOptions dynamicResourceManagersAutoSave = AutoSaveDefault;
+        private static AutoSaveOptions dynamicResourceManagersAutoSave = autoSaveDefault;
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
         private static string unknownResourcePrefix = "[U]";
         private static string untranslatedResourcePrefix = "[T]";

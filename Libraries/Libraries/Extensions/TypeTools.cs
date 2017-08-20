@@ -155,6 +155,7 @@ namespace KGySoft.Libraries
             if (type.IsPointer)
                 return GetTypeName(type.GetElementType(), useAqn) + "*";
 
+            // non-generic type or generic type definition
             if (!(type.IsGenericType && !type.IsGenericTypeDefinition)) // same as: !type.IsConstructedGenericType from .NET4
                 return useAqn && type.Assembly != Reflector.mscorlibAssembly ? type.AssemblyQualifiedName : type.FullName;
 

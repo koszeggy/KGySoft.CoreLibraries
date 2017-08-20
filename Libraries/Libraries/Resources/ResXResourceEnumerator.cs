@@ -1,17 +1,38 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXResourceEnumerator.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+#endregion
+
 namespace KGySoft.Libraries.Resources
 {
-
     /// <summary>
     /// Provides an enumerator for resx resource classes, which have already cached resource data.
     /// Non-serializable (the original returns a ListDictionary enumerator, which is non-serializable either - and hybrid cannot be serializable either).
     /// </summary>
     internal sealed class ResXResourceEnumerator : IDictionaryEnumerator
     {
+        #region Enumerations
+
         private enum States
         {
             BeforeFirst,
@@ -19,38 +40,22 @@ namespace KGySoft.Libraries.Resources
             AfterLast
         }
 
+        #endregion
+
+        #region Fields
+
         private readonly IResXResourceContainer owner;
         private readonly ResXEnumeratorModes mode;
         private readonly int version;
+
         private IEnumerator<KeyValuePair<string, ResXDataNode>> wrappedEnumerator;
         private States state;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ResXResourceEnumerator"/> class.
-        /// Should be called from lock.
-        /// </summary>
-        internal ResXResourceEnumerator(IResXResourceContainer owner, ResXEnumeratorModes mode, int version)
-        {
-            this.owner = owner;
-            this.mode = mode;
-            this.version = version;
-            state = States.BeforeFirst;
-            switch (mode)
-            {
-                case ResXEnumeratorModes.Resources:
-                    if (owner.Resources != null)
-                        wrappedEnumerator = owner.Resources.GetEnumerator();
-                    break;
-                case ResXEnumeratorModes.Metadata:
-                    if (owner.Metadata != null)
-                        wrappedEnumerator = owner.Metadata.GetEnumerator();
-                    break;
-                case ResXEnumeratorModes.Aliases:
-                    if (owner.Aliases != null)
-                        wrappedEnumerator = owner.Aliases.Select(SelectAlias).GetEnumerator();
-                    break;
-            }
-        }
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
 
         public DictionaryEntry Entry
         {
@@ -81,17 +86,63 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        public object Value
-        {
-            get { return Entry.Value; }
-        }
+        public object Value => Entry.Value;
 
-        public object Current
-        {
-            get { return Entry; }
-        }
+        public object Current => Entry;
+
+        #endregion
+
+        #region Internal Properties
 
         internal int OwnerVersion => owner.Version;
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResXResourceEnumerator"/> class.
+        /// Should be called from lock.
+        /// </summary>
+        internal ResXResourceEnumerator(IResXResourceContainer owner, ResXEnumeratorModes mode, int version)
+        {
+            this.owner = owner;
+            this.mode = mode;
+            this.version = version;
+            state = States.BeforeFirst;
+            switch (mode)
+            {
+                case ResXEnumeratorModes.Resources:
+                    if (owner.Resources != null)
+                        wrappedEnumerator = owner.Resources.GetEnumerator();
+                    break;
+                case ResXEnumeratorModes.Metadata:
+                    if (owner.Metadata != null)
+                        wrappedEnumerator = owner.Metadata.GetEnumerator();
+                    break;
+                case ResXEnumeratorModes.Aliases:
+                    if (owner.Aliases != null)
+                        wrappedEnumerator = owner.Aliases.Select(SelectAlias).GetEnumerator();
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        internal static KeyValuePair<string, ResXDataNode> SelectAlias(KeyValuePair<string, string> alias)
+        {
+            return new KeyValuePair<string, ResXDataNode>(alias.Key, new ResXDataNode(alias.Key, alias.Value));
+        }
+
+        #endregion
+
+        #region Instance Methods
 
         public bool MoveNext()
         {
@@ -128,9 +179,8 @@ namespace KGySoft.Libraries.Resources
             wrappedEnumerator.Reset();
         }
 
-        internal static KeyValuePair<string, ResXDataNode> SelectAlias(KeyValuePair<string, string> alias)
-        {
-            return new KeyValuePair<string, ResXDataNode>(alias.Key, new ResXDataNode(alias.Key, alias.Value));
-        }
+        #endregion
+
+        #endregion
     }
 }

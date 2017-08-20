@@ -1,11 +1,36 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXCommon.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Xml;
+
 using KGySoft.Libraries.Reflection;
+
+#endregion
 
 namespace KGySoft.Libraries.Resources
 {
     internal static class ResXCommon
     {
+        #region Constants
+
+        #region Internal Constants
+
         internal const string TypeStr = "type";
         internal const string NameStr = "name";
         internal const string DataStr = "data";
@@ -21,10 +46,6 @@ namespace KGySoft.Libraries.Resources
         internal const string AssemblyStr = "assembly";
         internal const string AliasStr = "alias";
 
-        private const string beta2CompatSerializedObjectMimeType = "text/microsoft-urt/psuedoml-serialized/base64";
-        private const string compatBinSerializedObjectMimeType = "text/microsoft-urt/binary-serialized/base64";
-        //internal const string CompatSoapSerializedObjectMimeType = "text/microsoft-urt/soap-serialized/base64";
-
         internal const string ResXNullRefNameWinForms = "System.Resources.ResXNullRef, System.Windows.Forms";
         internal const string ResXFileRefNameWinForms = "System.Resources.ResXFileRef, System.Windows.Forms";
         internal const string ResXDataNodeNameWinForms = "System.Resources.ResXDataNode, System.Windows.Forms";
@@ -33,6 +54,20 @@ namespace KGySoft.Libraries.Resources
         internal const string ResXResourceReaderNameWinForms = "System.Resources.ResXResourceReader, System.Windows.Forms";
         internal const string ResXResourceWriterNameWinForms = "System.Resources.ResXResourceWriter, System.Windows.Forms";
 
+        internal const string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
+        internal const string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
+        internal const string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
+        internal const string KGySoftSerializedObjectMimeType = "text/kgysoft.net/object.binary.base64";
+        internal const string ResMimeType = "text/microsoft-resx";
+
+        internal const string Version = "2.0";
+
+        #endregion
+
+        #region Private Constants
+
+        private const string beta2CompatSerializedObjectMimeType = "text/microsoft-urt/psuedoml-serialized/base64";
+        private const string compatBinSerializedObjectMimeType = "text/microsoft-urt/binary-serialized/base64";
 #if NET35
         private const string winformsPostfix = ", Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 #elif NET40 || NET45
@@ -42,15 +77,17 @@ namespace KGySoft.Libraries.Resources
 #error .NET version is not set or not supported!
 #endif
 
-        internal const string BinSerializedObjectMimeType = "application/x-microsoft.net.object.binary.base64";
-        //internal const string SoapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
-        internal const string DefaultSerializedObjectMimeType = BinSerializedObjectMimeType;
-        internal const string ByteArraySerializedObjectMimeType = "application/x-microsoft.net.object.bytearray.base64";
-        internal const string KGySoftSerializedObjectMimeType = "text/kgysoft.net/object.binary.base64";
-        internal const string ResMimeType = "text/microsoft-resx";
-        internal static readonly string Version = "2.0";
+        #endregion
+
+        #endregion
+
+        #region Fields
 
         internal static readonly string[] BinSerializedMimeTypes = { BinSerializedObjectMimeType, beta2CompatSerializedObjectMimeType, compatBinSerializedObjectMimeType };
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Gets assembly info for the corresponding type. If the delegate is provided it is used to get this information.
@@ -103,7 +140,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="message">The already formatted and localized message.</param>
         /// <param name="line">The line to set.</param>
         /// <param name="pos">The position to set.</param>
-        /// <returns></returns>
+        /// <param name="innerException">The original exception to wrap (if any).</param>
+        /// <returns>A new <see cref="XmlException"/>.</returns>
         internal static XmlException CreateXmlException(string message, int line, int pos, Exception innerException = null)
         {
             var result = new XmlException(message, innerException);
@@ -111,5 +149,7 @@ namespace KGySoft.Libraries.Resources
             Accessors.XmlException_linePosition.Set(result, pos);
             return result;
         }
+
+        #endregion
     }
 }
