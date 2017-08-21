@@ -402,7 +402,7 @@
         /// <summary>
         /// Gets the assembly name for the specified <paramref name="alias"/>.
         /// </summary>
-        /// <param name="alias">The alias of the the assembly name, which should be retrieved.</param>
+        /// <param name="alias">The alias of the assembly name, which should be retrieved.</param>
         /// <returns>The assembly name of the <paramref name="alias"/>, or <see langword="null"/> if there is no such alias defined.</returns>
         /// <remarks>If an alias is redefined in the .resx file, then this method returns the last occurrence of the alias value.</remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>

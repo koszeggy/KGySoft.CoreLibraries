@@ -1,15 +1,37 @@
-﻿namespace KGySoft.Libraries.Resources
-{
-    using System;
-    using System.Collections;
-    using System.Resources;
-using System.IO;
+﻿#region Copyright
 
+///////////////////////////////////////////////////////////////////////////////
+//  File: IExpandoResourceSet.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+using System.Collections;
+using System.IO;
+using System.Resources;
+
+#endregion
+
+namespace KGySoft.Libraries.Resources
+{
     /// <summary>
     /// Represents a <see cref="ResourceSet"/> class that can hold replaceable resources.
     /// </summary>
-    public interface IExpandoResourceSet: IDisposable
+    public interface IExpandoResourceSet : IDisposable
     {
+        #region Properties
+
         /// <summary>
         /// Gets or sets whether the <see cref="IExpandoResourceSet"/> works in safe mode. In safe mode the retrieved
         /// objects returned from .resx sources are not deserialized automatically. See Remarks section for details.
@@ -34,13 +56,9 @@ using System.IO;
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         bool IsModified { get; }
 
-        ///// <summary>
-        ///// Gets the base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.
-        ///// </summary>
-        ///// <returns>
-        ///// A path that, if prepended to the relative file path specified in a <see cref="ResXFileRef"/> object, yields an absolute path to a resource file.
-        ///// </returns>
-        //string BasePath { get; }
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Returns an <see cref="IDictionaryEnumerator" /> that can iterate through the resources of the <see cref="IExpandoResourceSet" />.
@@ -129,7 +147,7 @@ using System.IO;
         /// <summary>
         /// Gets the assembly name for the specified <paramref name="alias"/>.
         /// </summary>
-        /// <param name="alias">The alias of the the assembly name, which should be retrieved.</param>
+        /// <param name="alias">The alias of the assembly name, which should be retrieved.</param>
         /// <returns>The assembly name of the <paramref name="alias"/>, or <see langword="null"/> if there is no such alias defined.</returns>
         /// <remarks>If an alias is redefined in the .resx file, then this method returns the last occurrence of the alias value.</remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
@@ -221,7 +239,7 @@ using System.IO;
         void RemoveAliasValue(string alias);
 
         /// <summary>
-        /// Saves the <see cref="IExpandoResourceSet"/> to the specified file. If the currect <see cref="IExpandoResourceSet"/> instance
+        /// Saves the <see cref="IExpandoResourceSet"/> to the specified file. If the current <see cref="IExpandoResourceSet"/> instance
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="fileName">The location of the file where you want to save the resources.</param>
@@ -239,7 +257,7 @@ using System.IO;
         void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
 
         /// <summary>
-        /// Saves the <see cref="IExpandoResourceSet"/> to the specified <paramref name="stream"/>. If the currect <see cref="IExpandoResourceSet"/> instance
+        /// Saves the <see cref="IExpandoResourceSet"/> to the specified <paramref name="stream"/>. If the current <see cref="IExpandoResourceSet"/> instance
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="stream">The stream to which you want to save.</param>
@@ -257,7 +275,7 @@ using System.IO;
         void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
 
         /// <summary>
-        /// Saves the <see cref="IExpandoResourceSet"/> to the specified file. If the currect <see cref="IExpandoResourceSet"/> instance
+        /// Saves the <see cref="IExpandoResourceSet"/> to the specified <paramref name="textWriter"/>. If the current <see cref="IExpandoResourceSet"/> instance
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="textWriter">The text writer to which you want to save.</param>
@@ -273,5 +291,7 @@ using System.IO;
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
+
+        #endregion
     }
 }

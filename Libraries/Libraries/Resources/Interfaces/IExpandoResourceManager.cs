@@ -1,7 +1,27 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: IExpandoResourceManager.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
 using System.IO;
 using System.Resources;
+
+#endregion
 
 namespace KGySoft.Libraries.Resources
 {
@@ -10,6 +30,23 @@ namespace KGySoft.Libraries.Resources
     /// </summary>
     public interface IExpandoResourceManager
     {
+        #region Properties
+
+        /// <summary>
+        /// Gets or sets a value that indicates whether the resource manager allows case-insensitive resource lookups in the
+        /// <see cref="GetString" /> and <see cref="GetObject" /> methods.
+        /// </summary>
+        bool IgnoreCase { get; set; }
+
+        /// <summary>
+        /// Gets whether this <see cref="IExpandoResourceManager"/> instance has modified and unsaved data.
+        /// </summary>
+        bool IsModified { get; }
+
+        #endregion
+
+        #region Methods
+
         /// <summary>
         /// Retrieves the resource set for a particular culture, which can be dynamically modified.
         /// </summary>
@@ -44,16 +81,6 @@ namespace KGySoft.Libraries.Resources
         /// </returns>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found.</exception>
         string GetString(string name, CultureInfo culture = null);
-
-        // Use SetObject
-        ///// <summary>
-        ///// Sets the value of the specified string resource for the specified culture.
-        ///// Setting <see langword="null"/> value clears the string resource for the specified culture.
-        ///// </summary>
-        ///// <param name="name">The name of the resource to set.</param>
-        ///// <param name="culture">The culture of the resource to set. If <see langword="null"/>, then resource of the caller's current UI culture will be set.</param>
-        ///// <param name="value">The value of the resource to set. If <see langword="null"/>, then the string resource for the specified culture and name will be cleared.</param>
-        //void SetString(string name, CultureInfo culture, string value);
 
         /// <summary>
         /// Gets the value of the specified non-string resource localized for the specified culture.
@@ -101,7 +128,7 @@ namespace KGySoft.Libraries.Resources
         /// <remarks>
         /// <para>If this <see cref="IExpandoResourceManager"/> instance is a <see cref="HybridResourceManager"/>, and there is a binary resource
         /// defined for <paramref name="name"/> and <paramref name="culture"/>, then after this call the originally defined value will be returned by <see cref="GetObject(string,CultureInfo)"/> method from the binary resources.
-        /// If you want to force hiding the binary resource and make <see cref="GetObject(string,CultureInfo)"/> to default to the parent <see cref="CultureInfo"/> of the specified <paramref name="culture"/>, 
+        /// If you want to force hiding the binary resource and make <see cref="GetObject(string,CultureInfo)"/> to default to the parent <see cref="CultureInfo"/> of the specified <paramref name="culture"/>,
         /// then use the <see cref="SetObject"/> method with a <see langword="null"/> value</para>.
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
@@ -141,7 +168,7 @@ namespace KGySoft.Libraries.Resources
         /// <paramref name="name"/> for the specified <paramref name="culture"/>.
         /// </summary>
         /// <param name="name">The name of the metadata to set.</param>
-        /// <param name="culture">The culture of the metadata to set. 
+        /// <param name="culture">The culture of the metadata to set.
         /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.</param>
         /// <param name="value">The value of the metadata to set. If <see langword="null"/>,  then a null reference will be explicitly
         /// stored for the specified <paramref name="culture"/>.</param>
@@ -170,26 +197,6 @@ namespace KGySoft.Libraries.Resources
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         void RemoveMetaObject(string name, CultureInfo culture = null);
 
-        // Use GetExpandoResourceSet.Get/Set/RemoveAliasValue/Enumerator instead
-        ///// <summary>
-        ///// Gets the alias value for the given <paramref name="name"/>.
-        ///// </summary>
-        ///// <param name="name">The alias name whose value should be returned.</param>
-        ///// <returns>The alias value of the alias <paramref name="name"/> stored in this <see cref="IExpandoResourceSet"/>,
-        ///// or <see langword="null"/> if name is not found.</returns>
-        //string Get/Set/RemoveAliasValue(string name);
-
-        /// <summary>
-        /// Gets or sets a value that indicates whether the resource manager allows case-insensitive resource lookups in the
-        /// <see cref="GetString" /> and <see cref="GetObject" /> methods.
-        /// </summary>
-        bool IgnoreCase { get; set; }
-
-        /// <summary>
-        /// Gets whether this <see cref="IExpandoResourceManager"/> instance has modified and unsaved data.
-        /// </summary>
-        bool IsModified { get; }
-
         /// <summary>
         /// Saves the resource set of a particular <paramref name="culture"/> if it has been already loaded.
         /// </summary>
@@ -216,5 +223,7 @@ namespace KGySoft.Libraries.Resources
         /// <returns><c>true</c> if at least one resource set has been saved; otherwise, <c>false</c>.</returns>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
         bool SaveAllResources(bool force = false, bool compatibleFormat = false);
+
+        #endregion
     }
 }
