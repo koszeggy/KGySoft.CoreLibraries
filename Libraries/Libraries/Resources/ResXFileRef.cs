@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXFileRef.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -6,316 +24,100 @@ using System.Text;
 
 using KGySoft.Libraries.Reflection;
 
+#endregion
+
 namespace KGySoft.Libraries.Resources
 {
     /// <summary>
     /// Represents a link to an external resource.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a> class.
     /// </summary>
-    // TODO: doc: incompatibility: public ctor is strongly typed
-    // new feature: (try)parse - todo: doc
+    /// <remarks>
+    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXFileRef</a> section to see the differences.</note>
+    /// <para>The <see cref="ResXFileRef"/> class is used to include references to files in an XML resource (.resx) file.
+    /// A <see cref="ResXFileRef"/> object represents a link to an external resource in an XML resource (.resx) file.
+    /// You can add a <see cref="ResXFileRef"/> object to a .resx file programmatically by one of the following options:
+    /// <list type="bullet">
+    /// <item>Call the <see cref="ResXResourceWriter.AddResource(string,object)">ResXResourceWriter.AddResource(string, object)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance.</item>
+    /// <item>Or, call the <see cref="ResXDataNode"/>create a new instance of a <see cref="ResXDataNode"/> class initialized by a <see cref="ResXFileRef"/> instance and then use one of the following options:
+    /// <list type="bullet">
+    /// <item>Call the <see cref="ResXResourceWriter.AddResource(ResXDataNode)">ResXResourceWriter.AddResource(ResXDataNode)</see> method with the created <see cref="ResXFileRef"/> instance.</item>
+    /// <item>Call the <see cref="ResXResourceSet.SetObject">ResXResourceSet.SetObject(string, object)</see> method with the created <see cref="ResXFileRef"/> instance and then save the <see cref="ResXResourceSet"/> instance.</item>
+    /// <item>Call the <see cref="ResXResourceManager.SetObject">ResXResourceManager.SetObject(string, object, CultureInfo)</see> method with the created <see cref="ResXFileRef"/> instance and then save the <see cref="ResXResourceManager"/> instance.</item>
+    /// <item>Call the <see cref="HybridResourceManager.SetObject">HybridResourceManager.SetObject(string, object, CultureInfo)</see> method with the created <see cref="HybridResourceManager"/> instance and then save the <see cref="ResXResourceManager"/> instance.</item>
+    /// </list></item>
+    /// </list>
+    /// </para>
+    /// <h1 class="heading">Comparison with System.Resources.ResXFileRef<a name="comparison">&#160;</a></h1>
+    /// <para>Incompatibility with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>:
+    /// <list type="bullet">
+    /// <item>The constructor of this class (see <see cref="ResXFileRef(string,Type,Encoding)"/>) is incompatible with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>
+    /// implementation. Unlike in system version you must specify the type by a <see cref="Type"/> instance instead of a string.</item>
+    /// </list></para>
+    /// <para>New features compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>:
+    /// <list type="bullet">
+    /// <item><em>Parsing:</em> A string can parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</item>
+    /// </list></para>
+    /// </remarks>
+    /// <seealso cref="ResXDataNode"/>
+    /// <seealso cref="ResXResourceWriter"/>
+    /// <seealso cref="ResXResourceSet"/>
+    /// <seealso cref="ResXResourceManager"/>
+    /// <seealso cref="HybridResourceManager"/>
     [TypeConverter(typeof(Converter))]
+    [Serializable]
     public class ResXFileRef
     {
-        private readonly string fileName;
-        private readonly string typeName;
-        private readonly string encoding;
+        #region Nested classes
 
-        [NonSerialized]
-        private Encoding textFileEncoding;
-
-        ///// <summary>
-        ///// Creates a new instance of the <see cref="T:System.Resources.ResXFileRef"/> class that references the specified file.
-        ///// </summary>
-        ///// <param name="fileName">The file to reference. </param><param name="typeName">The type of the resource that is referenced. </param><exception cref="T:System.ArgumentNullException"><paramref name="fileName"/> or <paramref name="typeName "/>is null.</exception>
-        ///// <devdoc>
-        /////     Creates a new ResXFileRef that points to the specified file.
-        /////     The type refered to by typeName must support a constructor
-        /////     that accepts a System.IO.Stream as a parameter.
-        ///// </devdoc>
-        //private ResXFileRef(string fileName, string typeName)
-        //{
-        //    //if (fileName == null)
-        //    //{
-        //    //    throw (new ArgumentNullException("fileName"));
-        //    //}
-        //    //if (typeName == null)
-        //    //{
-        //    //    throw (new ArgumentNullException("typeName"));
-        //    //}
-        //}
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:System.Resources.ResXFileRef"/> class that references the specified file.
-        /// </summary>
-        /// <param name="fileName">The file to reference. </param>
-        /// <param name="type">The type of the resource that is referenced. Should be either <see cref="string"/>, array of <see cref="byte"/>, <see cref="MemoryStream"/> or a type, which has a constructor with one <see cref="Stream"/> parameter.</param>
-        /// <param name="textFileEncoding">The encoding used in the referenced file. Used if <paramref name="type"/> is <see cref="string"/>.</param>
-        /// <devdoc>
-        ///     Creates a new ResXFileRef that points to the specified file.
-        ///     The type refered to by typeName must support a constructor
-        ///     that accepts a System.IO.Stream as a parameter.
-        /// </devdoc>
-        public ResXFileRef(string fileName, Type type, Encoding textFileEncoding = null)
-        {
-            if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
-            if (type == null)
-                throw (new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull)));
-
-            this.fileName = fileName;
-            typeName = type.Assembly == Reflector.mscorlibAssembly ? type.FullName : type.AssemblyQualifiedName;
-            if (textFileEncoding != null)
-            {
-                this.textFileEncoding = textFileEncoding;
-                encoding = textFileEncoding.WebName;
-            }
-        }
-
-        internal ResXFileRef(string fileName, string typeName, string encoding)
-        {
-            this.fileName = fileName;
-            this.typeName = typeName;
-            this.encoding = encoding;
-        }
-
-        internal ResXFileRef Clone()
-        {
-            return new ResXFileRef(fileName, typeName, encoding);
-        }
-
-        public static ResXFileRef Parse(string s)
-        {
-            if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
-
-            ResXFileRef result;
-            if (TryParse(s, out result))
-                return result;
-
-            throw new ArgumentException(Res.ArgumentInvalidString, nameof(s));
-        }
-
-        public static bool TryParse(string s, out ResXFileRef result)
-        {
-            string[] fileRefDetails = Converter.ParseResXFileRefString(s);
-            if (fileRefDetails == null || fileRefDetails.Length < 2 || fileRefDetails.Length > 3)
-            {
-                result = null;
-                return false;
-            }
-
-            result = new ResXFileRef(fileRefDetails[0], fileRefDetails[1], fileRefDetails.Length > 2 ? fileRefDetails[2] : null);
-            return true;
-        }
-
-        /// <summary>
-        /// Gets the file name specified in the current <see cref="ResXFileRef(string,string)"/> constructor.
-        /// </summary>
-        /// <returns>
-        /// The name of the referenced file.
-        /// </returns>
-        public string FileName
-        {
-            get
-            {
-                return fileName;
-            }
-        }
-
-        /// <summary>
-        /// Gets the type name specified in the current <see cref="ResXFileRef(string,string)"/> constructor.
-        /// </summary>
-        /// <returns>
-        /// The type name of the resource that is referenced.
-        /// </returns>
-        public string TypeName
-        {
-            get { return typeName; }
-        }
-
-        /// <summary>
-        /// Gets the encoding specified in the current <see cref="ResXFileRef(string,string)"/> constructor.
-        /// </summary>
-        /// <returns>
-        /// The encoding used in the referenced file.
-        /// </returns>
-        public Encoding TextFileEncoding
-        {
-            get
-            {
-                if (textFileEncoding != null)
-                    return textFileEncoding;
-
-                if (encoding == null)
-                    return null;
-
-                return textFileEncoding = Encoding.GetEncoding(encoding);
-            }
-        }
-
-        internal string EncodingName
-        {
-            get { return encoding; }
-        }
-
-        // TODO: delete
-        ///// <include file='doc\ResXFileRef.uex' path='docs/doc[@for="ResXFileRef.PathDifference"]/*' />
-        ///// <devdoc>
-        /////    path1+result = path2
-        /////   A string which is the relative path difference between path1 and
-        /////  path2 such that if path1 and the calculated difference are used
-        /////  as arguments to Combine(), path2 is returned
-        ///// </devdoc>
-        //private static string PathDifference(string path1, string path2, bool compareCase)
-        //{
-        //    int i;
-        //    int si = -1;
-
-        //    for (i = 0; (i < path1.Length) && (i < path2.Length); ++i)
-        //    {
-        //        if ((path1[i] != path2[i]) && (compareCase || (Char.ToLower(path1[i], CultureInfo.InvariantCulture) != Char.ToLower(path2[i], CultureInfo.InvariantCulture))))
-        //        {
-        //            break;
-
-        //        }
-        //        else if (path1[i] == Path.DirectorySeparatorChar)
-        //        {
-        //            si = i;
-        //        }
-        //    }
-
-        //    if (i == 0)
-        //    {
-        //        return path2;
-        //    }
-        //    if ((i == path1.Length) && (i == path2.Length))
-        //    {
-        //        return String.Empty;
-        //    }
-
-        //    StringBuilder relPath = new StringBuilder();
-
-        //    for (; i < path1.Length; ++i)
-        //    {
-        //        if (path1[i] == Path.DirectorySeparatorChar)
-        //        {
-        //            relPath.Append(".." + Path.DirectorySeparatorChar);
-        //        }
-        //    }
-        //    return relPath.ToString() + path2.Substring(si + 1);
-        //}
-
-
-        //internal void MakeFilePathRelative(string basePath)
-        //{
-        //    if (string.IsNullOrEmpty(basePath))
-        //        return;
-
-        //    fileName = PathDifference(basePath, fileName, false);
-        //}
-
-        /// <summary>
-        /// Gets the text representation of the current <see cref="ResXFileRef"/> object.
-        /// </summary>
-        /// <returns>
-        /// A string that consists of the concatenated text representations of the parameters specified in the current <see cref="ResXFileRef(string, string, string)"/> constructor.
-        /// </returns>
-        public override string ToString()
-        {
-            return ToString(fileName, typeName, encoding);
-        }
-
-        internal static string ToString(string fileName, string typeName, string encoding)
-        {
-            string result = "";
-
-            if (fileName.IndexOf(';') != -1 || fileName.IndexOf('"') != -1)
-            {
-                result += ("\"" + fileName + "\";");
-            }
-            else
-            {
-                result += (fileName + ";");
-            }
-            result += typeName;
-            if (encoding != null)
-            {
-                result += (";" + encoding);
-            }
-            return result;
-        }
-
-        internal object GetValue(Type objectType, string basePath)
-        {
-            return Converter.ConvertFrom(ToString(), objectType, basePath);
-        }
+        #region Converter class
 
         private class Converter : TypeConverter
         {
-            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-            {
-                return sourceType == Reflector.StringType;
-            }
+            #region Methods
 
-            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            {
-                return destinationType == Reflector.StringType;
-            }
-
-            public override Object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-            {
-                return destinationType == Reflector.StringType ? value.ToString() : null;
-            }
+            #region Static Methods
 
             internal static string[] ParseResXFileRefString(string stringValue)
             {
-                string[] result = null;
-                if (stringValue != null)
-                {
-                    stringValue = stringValue.Trim();
-                    string fileName;
-                    string remainingString;
-                    if (stringValue.Length > 0 && stringValue[0] == '"')
-                    {
-                        int lastIndexOfQuote = stringValue.LastIndexOf('"');
-                        if (lastIndexOfQuote - 1 < 0)
-                            return null;
-                        fileName = stringValue.Substring(1, lastIndexOfQuote - 1); // remove the quotes in" ..... " 
-                        if (lastIndexOfQuote + 2 > stringValue.Length)
-                            return null;
-                        remainingString = stringValue.Substring(lastIndexOfQuote + 2);
-                    }
-                    else
-                    {
-                        int nextSemiColumn = stringValue.IndexOf(';');
-                        if (nextSemiColumn == -1)
-                            return null;
-                        fileName = stringValue.Substring(0, nextSemiColumn);
-                        if (nextSemiColumn + 1 > stringValue.Length)
-                            return null;
-                        remainingString = stringValue.Substring(nextSemiColumn + 1);
-                    }
-                    string[] parts = remainingString.Split(new char[] { ';' });
-                    if (parts.Length > 1)
-                    {
-                        result = new string[] { fileName, parts[0], parts[1] };
-                    }
-                    else if (parts.Length > 0)
-                    {
-                        result = new string[] { fileName, parts[0] };
-                    }
-                    else
-                    {
-                        result = new string[] { fileName };
-                    }
-                }
-                return result;
-            }
+                if (stringValue == null)
+                    return null;
 
-            public override Object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-            {
-                string stringValue = value as string;
-                return stringValue != null ? ConvertFrom(stringValue, null, null) : null;
+                stringValue = stringValue.Trim();
+                string fileName;
+                string remainingString;
+                if (stringValue.Length > 0 && stringValue[0] == '"')
+                {
+                    int lastIndexOfQuote = stringValue.LastIndexOf('"');
+                    if (lastIndexOfQuote - 1 < 0)
+                        return null;
+                    fileName = stringValue.Substring(1, lastIndexOfQuote - 1);
+                    if (lastIndexOfQuote + 2 > stringValue.Length)
+                        return null;
+                    remainingString = stringValue.Substring(lastIndexOfQuote + 2);
+                }
+                else
+                {
+                    int nextSemicolon = stringValue.IndexOf(';');
+                    if (nextSemicolon == -1)
+                        return null;
+                    fileName = stringValue.Substring(0, nextSemicolon);
+                    if (nextSemicolon + 1 > stringValue.Length)
+                        return null;
+                    remainingString = stringValue.Substring(nextSemicolon + 1);
+                }
+
+                string[] parts = remainingString.Split(';');
+                string[] result;
+                if (parts.Length > 1)
+                    result = new string[] { fileName, parts[0], parts[1] };
+                else if (parts.Length > 0)
+                    result = new string[] { fileName, parts[0] };
+                else
+                    result = new string[] { fileName };
+
+                return result;
             }
 
             internal static object ConvertFrom(string stringValue, Type objectType, string basePath)
@@ -363,6 +165,206 @@ namespace KGySoft.Libraries.Resources
 
                 return Reflector.Construct(toCreate, ReflectionWays.Auto, memStream);
             }
+
+            #endregion
+
+            #region Instance Methods
+
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+            {
+                return sourceType == Reflector.StringType;
+            }
+
+            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+            {
+                return destinationType == Reflector.StringType;
+            }
+
+            public override Object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+            {
+                return destinationType == Reflector.StringType ? value.ToString() : null;
+            }
+
+            public override Object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+            {
+                string stringValue = value as string;
+                return stringValue != null ? ConvertFrom(stringValue, null, null) : null;
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Fields
+
+        private readonly string fileName;
+        private readonly string typeName;
+        private readonly string encoding;
+
+        [NonSerialized]
+        private Encoding textFileEncoding;
+
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets the file name specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// </summary>
+        /// <returns>
+        /// The name of the referenced file.
+        /// </returns>
+        public string FileName => fileName;
+
+        /// <summary>
+        /// Gets the type name specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// </summary>
+        /// <returns>
+        /// The type name of the resource that is referenced.
+        /// </returns>
+        public string TypeName => typeName;
+
+        /// <summary>
+        /// Gets the encoding specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// </summary>
+        /// <returns>
+        /// The encoding used in the referenced file.
+        /// </returns>
+        public Encoding TextFileEncoding
+        {
+            get
+            {
+                if (textFileEncoding != null)
+                    return textFileEncoding;
+
+                if (encoding == null)
+                    return null;
+
+                return textFileEncoding = Encoding.GetEncoding(encoding);
+            }
+        }
+
+        #endregion
+
+        #region Internal Properties
+
+        internal string EncodingName => encoding;
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        #region Public Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResXFileRef"/> class that references the specified file.
+        /// </summary>
+        /// <param name="fileName">The file to reference. </param>
+        /// <param name="type">The type of the resource that is referenced. Should be either <see cref="string"/>, array of <see cref="byte"/>, <see cref="MemoryStream"/> or a type, which has a constructor with one <see cref="Stream"/> parameter.</param>
+        /// <param name="textFileEncoding">The encoding used in the referenced file. Used if <paramref name="type"/> is <see cref="string"/>.</param>
+        public ResXFileRef(string fileName, Type type, Encoding textFileEncoding = null)
+        {
+            if (fileName == null)
+                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+
+            this.fileName = fileName;
+            typeName = type.Assembly == Reflector.mscorlibAssembly ? type.FullName : type.AssemblyQualifiedName;
+            if (textFileEncoding != null)
+            {
+                this.textFileEncoding = textFileEncoding;
+                encoding = textFileEncoding.WebName;
+            }
+        }
+
+        #endregion
+
+        #region Internal Constructors
+
+        internal ResXFileRef(string fileName, string typeName, string encoding)
+        {
+            this.fileName = fileName;
+            this.typeName = typeName;
+            this.encoding = encoding;
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Converts the string representation of a file reference to a <see cref="ResXFileRef"/> instance.
+        /// </summary>
+        /// <param name="s">The string representation of the file reference to convert.</param>
+        /// <returns>A <see cref="ResXFileRef"/> instance that represents the file reference specified in <paramref name="s"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="s"/> is contains invalid value.</exception>
+        public static ResXFileRef Parse(string s)
+        {
+            if (s == null)
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+
+            ResXFileRef result;
+            if (TryParse(s, out result))
+                return result;
+
+            throw new ArgumentException(Res.ArgumentInvalidString, nameof(s));
+        }
+
+        /// <summary>
+        /// Converts the string representation of a file reference to a <see cref="ResXFileRef"/> instance. A return value indicates whether the conversion succeeded.
+        /// </summary>
+        /// <param name="s">The string representation of the file reference to convert.</param>
+        /// <param name="result">When this method returns, contains a <see cref="ResXFileRef"/> instance that represents the file reference specified in <paramref name="s"/>,
+        /// if the conversion succeeded, or <see langword="null"/> if the conversion failed.</param>
+        /// <returns><c>true</c> if <paramref name="s"/> was converted successfully; otherwise, <c>false</c>.</returns>
+        public static bool TryParse(string s, out ResXFileRef result)
+        {
+            string[] fileRefDetails = Converter.ParseResXFileRefString(s);
+            if (fileRefDetails == null || fileRefDetails.Length < 2 || fileRefDetails.Length > 3)
+            {
+                result = null;
+                return false;
+            }
+
+            result = new ResXFileRef(fileRefDetails[0], fileRefDetails[1], fileRefDetails.Length > 2 ? fileRefDetails[2] : null);
+            return true;
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal static string ToString(string fileName, string typeName, string encoding)
+        {
+            string result = "";
+
+            if (fileName.IndexOf(';') != -1 || fileName.IndexOf('"') != -1)
+                result += "\"" + fileName + "\";";
+            else
+                result += fileName + ";";
+
+            result += typeName;
+            if (encoding != null)
+                result += ";" + encoding;
+
+            return result;
         }
 
         internal static ResXFileRef InitFromWinForms(object other)
@@ -372,5 +374,44 @@ namespace KGySoft.Libraries.Resources
                 Accessors.ResXFileRef_typeName_Get(other),
                 Accessors.ResXFileRef_textFileEncoding_Get(other)?.WebName);
         }
+
+        #endregion
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Gets the text representation of the current <see cref="ResXFileRef"/> object.
+        /// </summary>
+        /// <returns>
+        /// A string that consists of the concatenated text representations of the parameters specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// </returns>
+        public override string ToString()
+        {
+            return ToString(fileName, typeName, encoding);
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal ResXFileRef Clone()
+        {
+            return new ResXFileRef(fileName, typeName, encoding);
+        }
+
+        internal object GetValue(Type objectType, string basePath)
+        {
+            return Converter.ConvertFrom(ToString(), objectType, basePath);
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
     }
 }
