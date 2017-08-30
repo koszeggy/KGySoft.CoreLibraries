@@ -541,7 +541,7 @@
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
         /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
         /// <br/>Default value: <c>false</c></param>
@@ -561,7 +561,7 @@
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
         /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
         /// <br/>Default value: <c>false</c></param>
@@ -581,7 +581,7 @@
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
         /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
         /// <br/>Default value: <c>false</c></param>

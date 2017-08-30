@@ -18,9 +18,6 @@ namespace KGySoft.Libraries.Resources
     /// <remarks>
     /// </remarks>
     // TODO: Remarks:
-    // - Unlike winforms version, this is lazy (when LazyEnumeration os true)
-    // - safe mode (UseResXDataNodes): can be always toggled, provides more information
-    // - enumerators for meta/resources/aliases
     // - see msdn 4.5/6 remarks
     // - unless you want to use a custom type resolver, or to sequentially access all resources, even the redefined ones (see LazyEnumeration), use ResXResourceSet instead. To manage multiple cultures, use ResXResourceManager, HRM or DRM.
     // incompatibilities:
@@ -30,15 +27,20 @@ namespace KGySoft.Libraries.Resources
     // - if a key or assembly alias is defined more times, first enumeration returns all occurences, further ones only the last occurance. System version returns always the last occurance (and aliases cannot be enumerated at all).
     //   - Set and Manager classes see the last occurances of redefined instances. If aliases are redefined, they can be identified in UseResXDataNodes mode
     // - Header can be completely missing; however, it is checked when exists when CheckHeader is true. If header tags contain invalid values, NotSupportedException may be thrown during the enumeration.
-    // - Soap? TODO: solve it without referencing Soap formatter: loading assembly, referencing as IFormatter - ony at deserialization in ResXDataNode
     // - Getting the enumerator (or retrieving the values of ResXNodeData values) of the system version often throws ArgumentException. Here enumeration of a wrong resx may throw XmlException, TypeLoadException or NotSupportedException
-    // added functions:
+    // added functions/improvements:
+    // - Unlike winforms version, this is lazy (when LazyEnumeration os true)
+    // - AllowDuplicatedKeys
+    // - safe mode (UseResXDataNodes): can be always toggled, provides more information
+    // - enumerators for meta/resources/aliases
+    // - Soap is supported without referencing Soap formatter (tries to load it from GAC if possible, otherwise, throws NotSupportedException)
     // - UseResXDataNodes and BasePath can be set during the enumeration, too
     // - custom reader/writer in header
     // - custom serializations (new mimetypes)
     //   - Custom binary
     //   - XML
     // - type resolver is used for FileRefs, too (actually not here but in ResXDataNode)
+    // - security+performance: még akkor sincs deserialize (see ResXDataNode desc), ha a SafeMode (UseResXDataNode) false.
     public sealed class ResXResourceReader : IResourceReader, IResXResourceContainer
     {
         /// <summary>
@@ -504,7 +506,7 @@ namespace KGySoft.Libraries.Resources
         /// Gets or sets a value that indicates whether <see cref="ResXDataNode"/> objects are returned when reading the current XML resource file or stream.
         /// </summary>
         /// <remarks>
-        /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">System.Resources.ResXResourceReader</a> class.
+        /// <note>This property is maintained due to compatibility reasons with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
         /// Use <see cref="SafeMode"/> property instead.</note>
         /// </remarks>
         /// <seealso cref="SafeMode"/>
@@ -603,7 +605,7 @@ namespace KGySoft.Libraries.Resources
         /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
         /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
         /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>
-        /// <note>To be compatible with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx">System.Resources.ResXResourceReader</a>
+        /// <note>To be compatible with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
         /// class set the value of this property <c>false</c>.</note>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceReader"/> is already disposed.</exception>

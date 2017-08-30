@@ -7,7 +7,7 @@ namespace KGySoft.Libraries
     /// <summary>
     /// This class provides constants for Unicode characters.
     /// Constant names are the standard SGML entity names defined at
-    /// <a href="ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MISC/SGML.TXT"/>
+    /// <a href="ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MISC/SGML.TXT" target="_blank"/>
     /// </summary>
     public static class Unicode
     {

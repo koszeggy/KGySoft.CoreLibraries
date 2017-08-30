@@ -30,7 +30,7 @@ namespace _LibrariesTest.Libraries.Resources
             Assert.IsNotNull(node.ValueData);
 
             // a cleanup deletes the .resx info
-            node.GetValue(cleanupNodeInfo: true);
+            node.GetValue(cleanupRawData: true);
             Assert.IsNull(node.MimeType);
             Assert.IsNull(node.TypeName);
             Assert.IsNull(node.ValueData);
@@ -79,7 +79,7 @@ namespace _LibrariesTest.Libraries.Resources
             var node = (ResXDataNode)rs.GetObject("string");
 
             Assert.IsNotNull(node.ValueData);
-            node.GetValue(cleanupNodeInfo: true);
+            node.GetValue(cleanupRawData: true);
             Assert.IsNull(node.ValueData);
         }
     }

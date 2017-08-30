@@ -35,6 +35,7 @@ namespace KGySoft.Libraries.Resources
     // - public field-ek hiányoznak
     // - Az AddAlias hívása után a System verzióban már nem lesz assembly node az xml-hez adva, ott tehát ez egy belső mapping, ami sosincs kiírva. Itt ki lesz, de kérhető, hogy csak az első hivatkozás esetén, ha még nem szerepel.
     // - Better whitespace preserve logic even if compatibleformat is true
+    // - null: az invalid módon tárolt null visszaírva helyesen serializálódik, így újra olvasáskor is null lesz. Az eredetiben ez átáll üres string-re (valójában a hiba a ResXNodeRef-ben van javítva, de itt releváns)
     // - DateTime(Offset) másképp íródik, így a millisec infó sem vész el. A System verzió is tudja deserializálni, de úgy a Kind mindig Local lesz.
     // - float/double/decimal: -0 támogatása (kompat módban is). A System verzió is tudja deserializálni, de a float/double -0-ból mindig +0 lesz.
     // - float/double/decimal: -0 támogatása (kompat módban is). A System verzió is tudja deserializálni, de a float/double -0-ból mindig +0 lesz.

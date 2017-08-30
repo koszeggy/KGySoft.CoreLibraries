@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Runtime.Serialization;
 using System.Xml;
 
 using KGySoft.Libraries.Reflection;
@@ -68,6 +69,9 @@ namespace KGySoft.Libraries.Resources
 
         private const string beta2CompatSerializedObjectMimeType = "text/microsoft-urt/psuedoml-serialized/base64";
         private const string compatBinSerializedObjectMimeType = "text/microsoft-urt/binary-serialized/base64";
+        private const string soapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
+        private const string compatSoapSerializedObjectMimeType = "text/microsoft-urt/soap-serialized/base64";
+
 #if NET35
         private const string winformsPostfix = ", Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 #elif NET40 || NET45
@@ -77,13 +81,26 @@ namespace KGySoft.Libraries.Resources
 #error .NET version is not set or not supported!
 #endif
 
+        private const string soapFormatterTypeName = "System.Runtime.Serialization.Formatters.Soap.SoapFormatter, System.Runtime.Serialization.Formatters.Soap";
+
         #endregion
 
         #endregion
 
         #region Fields
 
+        #region Internal Fields
+
         internal static readonly string[] BinSerializedMimeTypes = { BinSerializedObjectMimeType, beta2CompatSerializedObjectMimeType, compatBinSerializedObjectMimeType };
+        internal static readonly string[] SoapSerializedMimeTypes = { soapSerializedObjectMimeType, compatSoapSerializedObjectMimeType };
+
+        #endregion
+
+        #region Private Fields
+
+        private static IFormatter soapFormatter;
+
+        #endregion
 
         #endregion
 
@@ -148,6 +165,27 @@ namespace KGySoft.Libraries.Resources
             Accessors.XmlException_lineNumber.Set(result, line);
             Accessors.XmlException_linePosition.Set(result, pos);
             return result;
+        }
+
+        internal static IFormatter GetSoapFormatter()
+        {
+            if (soapFormatter == null)
+            {
+                try
+                {
+                    Type type = Reflector.ResolveType(soapFormatterTypeName, true, true);
+
+                    // no Reflector or Accessor is needed because this is a static instance so will be invoked once. In this case Reflector would be slower for that single run.
+                    if (type != null)
+                        soapFormatter = (IFormatter)Activator.CreateInstance(type);
+                }
+                catch (ReflectionException)
+                {
+                    return null;
+                }
+            }
+
+            return soapFormatter;
         }
 
         #endregion

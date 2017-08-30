@@ -30,10 +30,10 @@ namespace KGySoft.Libraries.Resources
 {
     /// <summary>
     /// Represents a link to an external resource.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a> class.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> class.
     /// </summary>
     /// <remarks>
-    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>
+    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXFileRef</a> section to see the differences.</note>
     /// <para>The <see cref="ResXFileRef"/> class is used to include references to files in an XML resource (.resx) file.
     /// A <see cref="ResXFileRef"/> object represents a link to an external resource in an XML resource (.resx) file.
@@ -50,14 +50,17 @@ namespace KGySoft.Libraries.Resources
     /// </list>
     /// </para>
     /// <h1 class="heading">Comparison with System.Resources.ResXFileRef<a name="comparison">&#160;</a></h1>
-    /// <para>Incompatibility with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>:
+    /// <note>The compatibility with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
+    /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, the <strong>Save</strong> overloads of <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
+    /// the result will be able to be parsed by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> type, too.</note>
+    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>:
     /// <list type="bullet">
-    /// <item>The constructor of this class (see <see cref="ResXFileRef(string,Type,Encoding)"/>) is incompatible with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>
+    /// <item>The constructor of this class (see <see cref="ResXFileRef(string,Type,Encoding)"/>) is incompatible with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
     /// implementation. Unlike in system version you must specify the type by a <see cref="Type"/> instance instead of a string.</item>
     /// </list></para>
-    /// <para>New features compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx">System.Resources.ResXFileRef</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>:
     /// <list type="bullet">
-    /// <item><em>Parsing:</em> A string can parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</item>
+    /// <item><term>Parsing</term><description>A string can parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</description></item>
     /// </list></para>
     /// </remarks>
     /// <seealso cref="ResXDataNode"/>
@@ -151,7 +154,6 @@ namespace KGySoft.Libraries.Resources
                     throw new FileNotFoundException(Res.Get(Res.ResXFileRefFileNotFound, fileName), fileName);
                 using (FileStream s = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    //Debug.Assert(s != null, "Couldn't open " + fileName);
                     buffer = new byte[s.Length];
                     s.Read(buffer, 0, (int)s.Length);
                 }

@@ -595,7 +595,7 @@ namespace _LibrariesTest.Libraries.Resources
             using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb)) { AutoGenerateAlias = generateAliases, CompatibleFormat = compatibilityMode })
             {
                 // cleaning up nodes during the compare so DataNodeInfos will be nullified in reference
-                reference.ForEach(de => writer.AddResource(de.Key.ToString(), ((ResXDataNode)de.Value).GetValue(cleanupNodeInfo: true)));
+                reference.ForEach(de => writer.AddResource(de.Key.ToString(), ((ResXDataNode)de.Value).GetValue(cleanupRawData: true)));
             }
 
             // re-read from string
