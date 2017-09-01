@@ -14,11 +14,37 @@ namespace KGySoft.Libraries.Resources
 {
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
     /// </summary>
     /// <remarks>
+    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceReader</a> section to see the differences.</note>
+    /// <para>You can use the <see cref="ResXResourceReader"/> class to enumerate resources in .resx files by traversing the dictionary enumerator (<see cref="IDictionaryEnumerator"/>) that is returned by the
+    /// <see cref="GetEnumerator">GetEnumerator</see> method. You call the methods provided by <see cref="IDictionaryEnumerator"/> to advance to the next resource and to read the name and value of each resource in the .resx file.
+    /// <note>The <see cref="ResXResourceReader"/> class provides more enumerators.
+    /// <list type="bullet">
+    /// <item>The <see cref="GetEnumerator">GetEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the resources.
+    /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the resource names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <c>true</c>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <c>false</c>.</item>
+    /// <item>The <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the metadata entries.
+    /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the metadata names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <c>true</c>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <c>false</c>.</item>
+    /// <item>The <see cref="GetAliasEnumerator">GetAliasEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the aliases in the .resx file.
+    /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the alias names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// returns the corresponding assembly name for the alias name.</item>
+    /// <item>As an explicit interface implementation, <see cref="ResXResourceReader"/> implements <see cref="IEnumerable.GetEnumerator">IEnumerable.GetEnumerator</see> method, which returns the same enumerator as
+    /// <see cref="GetEnumerator">GetEnumerator</see> as an <see cref="IEnumerator"/> instance. The <see cref="IEnumerator.Current">IEnumerator.Current</see> property will return <see cref="DictionaryEntry"/> instances.</item>
+    /// </list>
+    /// </note>
+    /// </para>
+    /// TODO: similar example to ResXDataNode (+alias +Safe off)
+    /// TODO: lazyness + example
+    /// TODO: when to use reader instead of set (see todo below)
+    /// <h1 class="heading">Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h1>
+    /// TODO: see below
     /// </remarks>
-    // TODO: Remarks:
-    // - see msdn 4.5/6 remarks
+    
+    // TODO: Remarks: 
     // - unless you want to use a custom type resolver, or to sequentially access all resources, even the redefined ones (see LazyEnumeration), use ResXResourceSet instead. To manage multiple cultures, use ResXResourceManager, HRM or DRM.
     // incompatibilities:
     // - no AssemblyName[] ctors because they use the obsolete Assembly.LoadPartial. However, type will be found among in all loaded assemblies, and an ITypeResolutionService can be used as well.
