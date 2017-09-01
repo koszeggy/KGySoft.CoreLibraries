@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -67,9 +68,141 @@ namespace KGySoft.Libraries.Resources
     /// methods in a similar way as in case of the <see cref="ResXResourceReader"/> class.</item>
     /// <item>Instantiate a new <see cref="ResXResourceManager"/> class, set <see cref="ResXResourceManager.SafeMode">ResXResourceManager.SafeMode</see> to <c>true</c>,
     /// and call the <see cref="ResXResourceManager.GetObject(string)">ResXResourceManager.GetObject</see> or <see cref="ResXResourceManager.GetMetaObject">ResXResourceManager.GetMetaObject</see>
-    /// methods with a key, which exists in the .resx file.</item>
+    /// methods with a key, which exists in the .resx file. See the example below for illustration.</item>
     /// </list>
     /// </para>
+    /// <example>
+    /// The following example shows how to retrieve <see cref="ResXDataNode"/> instances from the <see cref="IDictionaryEnumerator"/> returned by <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see>
+    /// and <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> methods. For example, you can check the type information before serialization if the .resx file is from an untrusted source.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.IO;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// public class Example
+    /// {
+    ///     private string resx = @"<?xml version='1.0' encoding='utf-8'?>
+    /// <root>
+    ///   <data name='string'>
+    ///     <value>Test string</value>
+    ///     <comment>Default data type is string.</comment>
+    ///   </data>
+    /// 
+    ///   <metadata name='meta string'>
+    ///     <value>Meta String</value>
+    ///   </metadata>
+    /// 
+    ///   <data name='int' type='System.Int32'>
+    ///     <value>42</value>
+    ///   </data>
+    /// 
+    ///   <assembly alias='CustomAlias' name='System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' />
+    /// 
+    ///   <data name='color' type='System.Drawing.Color, CustomAlias'>
+    ///     <value>Red</value>
+    ///     <comment>When this entry is deserialized, System.Drawing assembly will be loaded.</comment>
+    ///   </data>
+    /// 
+    ///   <data name='bytes' type='System.Byte[]'>
+    ///     <value>VGVzdCBieXRlcw==</value>
+    ///   </data>
+    ///   
+    ///   <data name='dangerous' mimetype='application/x-microsoft.net.object.binary.base64'>
+    ///     <value>YmluYXJ5</value>
+    ///     <comment>BinaryFormatter will throw an exception for this invalid content.</comment>
+    ///   </data>
+    /// 
+    /// </root>";
+    /// 
+    ///     public static void Main()
+    ///     {
+    ///         // In SafeMode the enumerator values will be ResXDataNode instances instead of deserialized objects
+    ///         var reader = new ResXResourceReader(new StringReader(resx)) { SafeMode = true };
+    /// 
+    ///         Console.WriteLine("____Resources in .resx:____");
+    ///         Dump(reader.GetEnumerator());
+    /// 
+    ///         Console.WriteLine("____Metadata in .resx:____");
+    ///         Dump(reader.GetMetadataEnumerator());
+    ///     }
+    /// 
+    ///     private void Dump(IDictionaryEnumerator enumerator)
+    ///     {
+    ///         while (enumerator.MoveNext())
+    ///         {
+    ///             var node = (ResXDataNode)enumerator.Value;
+    ///             Console.WriteLine($"Name: {node.Name}");
+    ///             Console.WriteLine($"  Type:        {node.TypeName}");
+    ///             Console.WriteLine($"  Alias value: {node.AssemblyAliasValue}");
+    ///             Console.WriteLine($"  MIME type:   {node.MimeType}");
+    ///             Console.WriteLine($"  Comment:     {node.Comment}");
+    ///             Console.WriteLine($"  Raw value:   {node.ValueData}");
+    ///             try
+    ///             {
+    ///                 var value = node.GetValue();
+    ///                 Console.WriteLine($"  Real value:  {value} ({value.GetType()})");
+    ///             }
+    ///             catch (Exception e)
+    ///             {
+    ///                 Console.WriteLine($"Deserialization of the node thrown an exception: {e.Message}");
+    ///             }
+    ///             Console.WriteLine();
+    ///         }
+    ///     }
+    /// }]]>
+    /// 
+    /// // The example displays the following output:
+    /// // ____Resources in .resx:____
+    /// // Name: string
+    /// //   Type:        
+    /// //   Alias value: 
+    /// //   MIME type:   
+    /// //   Comment:     Default data type is string.
+    /// //   Raw value:   Test string
+    /// //   Real value:  Test string (System.String)
+    /// // 
+    /// // Name: int
+    /// //   Type:        System.Int32
+    /// //   Alias value: 
+    /// //   MIME type:   
+    /// //   Comment:     
+    /// //   Raw value:   42
+    /// //   Real value:  42 (System.Int32)
+    /// // 
+    /// // Name: color
+    /// //   Type:        System.Drawing.Color, CustomAlias
+    /// //   Alias value: System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a
+    /// //   MIME type:   
+    /// //   Comment:     When this entry is deserialized, System.Drawing assembly will be loaded.
+    /// //   Raw value:   Red
+    /// //   Real value:  Color[Red] (System.Drawing.Color)
+    /// // 
+    /// // Name: bytes
+    /// //   Type:        System.Byte[]
+    /// //   Alias value: 
+    /// //   MIME type:   
+    /// //   Comment:     
+    /// //   Raw value:   VGVzdCBieXRlcw==
+    /// //   Real value:  System.Byte[] (System.Byte[])
+    /// // 
+    /// // Name: dangerous
+    /// //   Type:        
+    /// //   Alias value: 
+    /// //   MIME type:   application/x-microsoft.net.object.binary.base64
+    /// //   Comment:     BinaryFormatter will throw an exception for this invalid content.
+    /// //   Raw value:   YmluYXJ5
+    /// // Deserialization of the node thrown an exception: End of Stream encountered before parsing was completed.
+    /// // 
+    /// // ____Metadata in .resx:____
+    /// // Name: meta string
+    /// //   Type:        
+    /// //   Alias value: 
+    /// //   MIME type:   
+    /// //   Comment:     
+    /// //   Raw value:   Meta String
+    /// //   Real value:  Meta String (System.String)</code>
+    /// </example>
     /// <h1 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h1>
     /// <para>
     /// If instantiated from a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
@@ -127,7 +260,7 @@ namespace KGySoft.Libraries.Resources
     /// <description>This <see cref="ResXDataNode"/> class uses a special <see cref="SerializationBinder"/> implementation, which supports generic types correctly.</description></item>
     /// </list></para>
     /// </remarks>
-    /// <seealso cref="ResXDataNode"/>
+    /// <seealso cref="ResXResourceReader"/>
     /// <seealso cref="ResXResourceWriter"/>
     /// <seealso cref="ResXResourceSet"/>
     /// <seealso cref="ResXResourceManager"/>
@@ -761,7 +894,7 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The object that corresponds to the stored value.
         /// </returns>
-        /// <param name="typeResolver">The type resolution service to use when looking for a type converter.
+        /// <param name="typeResolver">A custom type resolution service to use for resolving type names.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
         /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.

@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections;
+using System.IO;
 using System.Text;
 using KGySoft.Libraries;
 using KGySoft.Libraries.Resources;
