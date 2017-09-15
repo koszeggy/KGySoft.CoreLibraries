@@ -31,7 +31,7 @@ namespace KGySoft.Libraries.Resources
     /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <c>true</c>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <c>false</c>.</item>
     /// <item>The <see cref="GetAliasEnumerator">GetAliasEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the aliases in the .resx file.
     /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the alias names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
-    /// returns the corresponding assembly name for the alias name.</item>
+    /// returns the corresponding assembly names for the alias names.</item>
     /// <item>As an explicit interface implementation, <see cref="ResXResourceReader"/> implements <see cref="IEnumerable.GetEnumerator">IEnumerable.GetEnumerator</see> method, which returns the same enumerator as
     /// <see cref="GetEnumerator">GetEnumerator</see> as an <see cref="IEnumerator"/> instance. The <see cref="IEnumerator.Current">IEnumerator.Current</see> property will return <see cref="DictionaryEntry"/> instances.</item>
     /// </list>
