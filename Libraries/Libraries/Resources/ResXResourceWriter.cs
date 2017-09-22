@@ -21,16 +21,6 @@ namespace KGySoft.Libraries.Resources
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
     /// </summary>
-    // Ha Set-ből íródik:
-    // - az alias dictionary az újradefiniálások miatt nem biztos, hogy elég infó
-    // - ezért végigmenni a data/metadata elemeken, és az aliasokat első szükséges előforduláskor dumpolni
-    //   - ha volt újradefiniált alias, és nem változott a beolvasás óta az elem, ez látszódni fog a DataNodeInfo-ban, így ki lehet írni
-    //   - ha egy datahoz nincs alias (mert nem is volt, vagy új elem), de a dictionary-ben van hozzá, első előforduláskor kiírni
-    //   - ha marad kiíratlan elem a dictionaryben, akkor azok utólag lettek hozzáadva, a legvégén ezeket egyben kiírjuk különösebb cél nélkül
-    // - a fentiek alapján az alias dictionary-ből vagy ki kell venni a feldolgozott elemeket, vagy trackelni egy másik dictionaryben, hogy mik az aktuálisan élő aliasok
-    // Ha nem setből
-    // - baromi egyszerű, minden szekvenciálisan jön. Így lehet duplikált elemeket is hozzáadni
-    // - lehetne egy AutoGenerateAlias, ez esetben AddAlias nélkül generáljuk őket (mint most), ha meg ki van kapcsolva, mindig AssemblyQualifiedName használata a nem mscorlib típusokhoz, FullName az mscorlibhez, semmi a stringhez (már ha objectként írjuk, és nem ResXDataNode-ként)
     // Inkompatibilitás/javítások/jobbítások
     // - public field-ek hiányoznak
     // - Az AddAlias hívása után a System verzióban már nem lesz assembly node az xml-hez adva, ott tehát ez egy belső mapping, ami sosincs kiírva. Itt ki lesz, de kérhető, hogy csak az első hivatkozás esetén, ha még nem szerepel.
@@ -44,8 +34,9 @@ namespace KGySoft.Libraries.Resources
     // - bármilyen típus, amiben invalid char/string van: a system és a kompat verzió nem garantált, hogy jó lesz. Nem kompat módban jó lesz.
     // - generikus típus serializálása TypConverterrel: a system verzió elhasalhat a generikus típusok parse-olásánál, nem compatban működik
     // Új funkciók
-    // - AutoGenerateAlias
-    // - CompatibleFormat. Ha ki van kapcsolva, lásd a leírását meg a fenti felsorolást is
+    // - AutoGenerateAlias: ez esetben AddAlias nélkül generáljuk őket (mint most), ha meg ki van kapcsolva, mindig AssemblyQualifiedName használata a nem mscorlib típusokhoz, FullName az mscorlibhez, semmi a stringhez (már ha objectként írjuk, és nem ResXDataNode-ként)
+    // - CompatibleFormat. Ha ki van kapcsolva, lásd a leírását meg a fenti felsorolást is. New MIME type: reader leirasbol
+    // - bármilyen nem serializable típus
     public sealed class ResXResourceWriter : IResourceWriter
     {
         /// <summary>

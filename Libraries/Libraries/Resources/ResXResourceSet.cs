@@ -25,6 +25,7 @@
     // - SetObject/Meta/Alias: ha az ignoreCase dictionary nem null, ahhoz is hozzáadni
     // Remarks todo:
     // - Compatible with winforms version but see constructors
+    // - Duplicates are disabled
     // - Performance is much better because only the actually accessed objects are deserialized.
     // - Safer, even if SafeMode is off, because objects are deserialized only when they are accessed.
     // - load/Save to stream and textwriter, too. The manager classes work with multiple sets and files.

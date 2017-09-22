@@ -5,13 +5,18 @@ using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Xml;
+using KGySoft.Libraries.Reflection;
+using KGySoft.Libraries.Serialization;
 
 namespace KGySoft.Libraries.Resources
 {
+#pragma warning disable 618
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
     /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
@@ -37,36 +42,261 @@ namespace KGySoft.Libraries.Resources
     /// </list>
     /// </note>
     /// </para>
-    /// TODO: similar example to ResXDataNode (+alias +Safe off)
-    /// TODO: lazyness + example
-    /// TODO: when to use reader instead of set (see todo below)
+    /// <para>If you want to retrieve named resources from a .resx file rather than enumerating its resources, you can instantiate a <see cref="ResXResourceSet"/> object and call its
+    /// <see cref="ResXResourceSet.GetString(string)">GetString</see>/<see cref="ResXResourceSet.GetObject(string)">GetObject</see>, <see cref="ResXResourceSet.GetMetaString">GetMetaString</see>/<see cref="ResXResourceSet.GetMetaObject">GetMetaObject</see> and <see cref="ResXResourceSet.GetAliasValue">GetAliasValue</see> and  methods.
+    /// <see cref="ResXResourceSet"/> supports <see cref="ResXResourceSet.SafeMode"/>, too.</para>
+    /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property is a <see cref="ResXDataNode"/>
+    /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
+    /// <example>
+    /// The following example shows how to enumerate the resources, metadata and aliases of a .resx file and what is the difference between safe and non-safe mode.
+    /// Please note that <see cref="SafeMode"/> property can be switched on and off during the enumeration, too. Please also note that the values returned by the <see cref="GetAliasEnumerator">GetAliasEnumerator</see> are always
+    /// strings, regardless of the value of <see cref="SafeMode"/> property. See also the example of the <see cref="ResXDataNode"/> class to see how to examine the properties of the <see cref="ResXDataNode"/> instances
+    /// in safe mode.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.IO;
+    /// using KGySoft.Libraries.Resources;
+    ///
+    /// public class Example
+    /// {
+    ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
+    /// <root>
+    ///   <data name='string'>
+    ///     <value>Test string</value>
+    ///     <comment>Default data type is string.</comment>
+    ///   </data>
+    /// 
+    ///   <metadata name='meta string'>
+    ///     <value>Meta String</value>
+    ///   </metadata>
+    /// 
+    ///   <data name='int' type='System.Int32'>
+    ///     <value>42</value>
+    ///   </data>
+    /// 
+    ///   <assembly alias='CustomAlias' name='System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' />
+    /// 
+    ///   <data name='color' type='System.Drawing.Color, CustomAlias'>
+    ///     <value>Red</value>
+    ///     <comment>When this entry is deserialized, System.Drawing assembly will be loaded.</comment>
+    ///   </data>
+    /// 
+    ///   <data name='bytes' type='System.Byte[]'>
+    ///     <value>VGVzdCBieXRlcw==</value>
+    ///   </data>
+    ///   
+    ///   <data name='dangerous' mimetype='application/x-microsoft.net.object.binary.base64'>
+    ///     <value>YmluYXJ5</value>
+    ///     <comment>BinaryFormatter will throw an exception for this invalid content.</comment>
+    ///   </data>
+    /// 
+    /// </root>";
+    /// 
+    ///    public static void Main()
+    ///    {
+    ///        var reader = new ResXResourceReader(new StringReader(resx));
+    ///
+    ///        Console.WriteLine("____Resources in .resx:____");
+    ///        Dump(reader, reader.GetEnumerator);
+    ///
+    ///        Console.WriteLine("____Metadata in .resx:____");
+    ///        Dump(reader, reader.GetMetadataEnumerator);
+    ///
+    ///        Console.WriteLine("____Aliases in .resx:____");
+    ///        Dump(reader, reader.GetAliasEnumerator);
+    ///    }
+    ///
+    ///    private static void Dump(ResXResourceReader reader, Func<IDictionaryEnumerator> getEnumeratorFunction)
+    ///    {
+    ///        var enumerator = getEnumeratorFunction();
+    ///        while (enumerator.MoveNext())
+    ///        {
+    ///            Console.WriteLine($"Name: {enumerator.Key}");
+    ///            reader.SafeMode = true;
+    ///            Console.WriteLine($"  Value in SafeMode:     {enumerator.Value} ({enumerator.Value.GetType()})");
+    ///            try
+    ///            {
+    ///                reader.SafeMode = false;
+    ///                Console.WriteLine($"  Value in non-SafeMode: {enumerator.Value} ({enumerator.Value.GetType()})");
+    ///            }
+    ///            catch (Exception e)
+    ///            {
+    ///                Console.WriteLine($"Getting the deserialized value thrown an exception: {e.Message}");
+    ///            }
+    ///            Console.WriteLine();
+    ///        }
+    ///    }
+    ///}]]>
+    /// 
+    /// // The example displays the following output:
+    /// // ____Resources in .resx:____
+    /// // Name: string
+    /// // Value in SafeMode:     Test string (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: Test string (System.String)
+    /// 
+    /// // Name: int
+    /// // Value in SafeMode:     42 (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: 42 (System.Int32)
+    /// 
+    /// // Name: color
+    /// // Value in SafeMode:     Red (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: Color[Red] (System.Drawing.Color)
+    /// 
+    /// // Name: bytes
+    /// // Value in SafeMode:     VGVzdCBieXRlcw== (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: System.Byte[] (System.Byte[])
+    /// 
+    /// // Name: dangerous
+    /// // Value in SafeMode:     YmluYXJ5 (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Getting the deserialized value thrown an exception: End of Stream encountered before parsing was completed.
+    /// 
+    /// // ____Metadata in .resx:____
+    /// // Name: meta string
+    /// // Value in SafeMode:     Meta String (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: Meta String (System.String)
+    /// 
+    /// // ____Aliases in .resx:____
+    /// // Name: CustomAlias
+    /// // Value in SafeMode:     System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)
+    /// // Value in non-SafeMode: System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)</code>
+    /// </example>
+    /// <para>
+    /// By default, <see cref="ResXResourceReader"/> allows duplicated keys with different values (see <see cref="AllowDuplicatedKeys"/> property). Though such a .resx file is not strictly valid, its
+    /// complete content can be retrieved. When <see cref="AllowDuplicatedKeys"/> is <c>true</c>, <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and
+    /// <see cref="GetAliasEnumerator">GetAliasEnumerator</see> return a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
+    /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined values will be returned of a redefined name. This behavior is
+    /// similar to the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, which does not allow duplicates.
+    /// </para>
+    /// <example>
+    /// The following example demonstrates the difference of lazy (allowing duplicates) and greedy (disabling duplicates) reading.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.IO;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// public class Example
+    /// {
+    ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
+    /// <root>
+    ///   <data name='item'>
+    ///     <value>Test string</value>
+    ///   </data>
+    /// 
+    ///   <data name='item'>
+    ///     <value>This is a duplicate for key 'item'.</value>
+    ///   </data>
+    /// </root>";
+    /// 
+    ///     public static void Main()
+    ///     {
+    ///         // Allowing duplicates and lazy reading.
+    ///         Console.WriteLine("-------Lazy reading------");
+    ///         var reader = new ResXResourceReader(new StringReader(resx)) { AllowDuplicatedKeys = true };
+    ///         IDictionaryEnumerator enumerator = reader.GetEnumerator();
+    ///         Dump(enumerator); // if resx contains a syntax error, an exception is thrown during the enumeration.
+    /// 
+    ///         // Disabling duplicates and lazy reading
+    ///         Console.WriteLine("-------Greedy reading------");
+    ///         reader = new ResXResourceReader(new StringReader(resx)) { AllowDuplicatedKeys = false };
+    ///         enumerator = reader.GetEnumerator(); // if resx contains a syntax error, an exception is thrown here.
+    ///         Dump(enumerator);
+    ///     }
+    /// 
+    ///     private static void Dump(IDictionaryEnumerator enumerator)
+    ///     {
+    ///         while (enumerator.MoveNext())
+    ///         {
+    ///             Console.WriteLine($"Key: {enumerator.Key}");
+    ///             Console.WriteLine($"Value: {enumerator.Value}");
+    ///             Console.WriteLine();
+    ///         }
+    ///     }
+    /// }]]>
+    /// 
+    /// // The example displays the following output:
+    /// // -------Lazy reading------
+    /// // Key: item
+    /// // Value: Test string
+    /// // 
+    /// // Key: item
+    /// // Value: This is a duplicate for key 'item'.
+    /// // 
+    /// // -------Greedy reading------
+    /// // Key: item
+    /// // Value: This is a duplicate for key 'item'.</code>
+    /// </example>
+    /// <h1 class="heading">When to use <c>ResXResourceReader</c> instead of <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
+    /// <para><see cref="ResXResourceReader"/> is the most low-level option to read the content of a .resx file. <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/>
+    /// classes also instantiate it internally but there are some cases when it is needed to use a <see cref="ResXResourceReader"/> explicitly:
+    /// <list type="bullet">
+    /// <item>The .resx file may contain redefined keys and duplications needed to be retrieved (see <see cref="AllowDuplicatedKeys"/> property). <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes do not allow duplicates.</item>
+    /// <item>Custom type resolution is needed. You can pass a <see cref="ITypeResolutionService"/> instance to one of the constructors to handle the type resolutions.</item>
+    /// </list>
+    /// </para>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h1>
-    /// TODO: see below
+    /// <para><see cref="ResXResourceReader"/> can read .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.</para>
+    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>:
+    /// <list type="bullet">
+    /// <item>Constructors do not have overloads with <see cref="AssemblyName">AssemblyName[]</see> parameters. The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// uses them to load the assemblies in advance occasionally by calling the obsolete <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadPartial</see> method. However, this <see cref="ResXResourceReader"/>
+    /// implementation can handle finding and loading assemblies automatically. If an assembly needs to be loaded from a partial name, the <see cref="Reflector.ResolveAssembly">Reflector.ResolveAssembly</see> method is called, which does not use
+    /// obsolete techniques. If you need a completely custom type resolution the constructor overloads with <see cref="ITypeResolutionService"/> parameters still can be used.</item>
+    /// <item>This <see cref="ResXResourceReader"/> is a sealed class.</item>
+    /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method the enumerators cannot be obtained: an <see cref="ObjectDisposedException"/> will be thrown
+    /// on calling <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.</item>
+    /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method every source stream will be closed (if any).</item>
+    /// <item>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, this implementation returns every resources and metadata of the
+    /// same name by default. This behavior can be adjusted by <see cref="AllowDuplicatedKeys"/> property.</item>
+    /// <item><a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> often throws <see cref="ArgumentException"/> on getting the enumerator
+    /// or on retrieving the value of a <see cref="ResXDataNode"/> instance, which contains invalid data. In contrast, this implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
+    /// <item>Though the <see cref="UseResXDataNodes"/> property is still supported, it is obsolete in favor of <see cref="SafeMode"/> property.</item>
+    /// <item>In the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> version if <see cref="UseResXDataNodes"/> property is <c>true</c>,
+    /// the resource and metadata entries are mixed in the returned enumerator, while when it is <c>false</c>, then only the resources are returned. In this implementation the <see cref="GetEnumerator">GetEnumerator</see> always
+    /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> or <see cref="SafeMode"/> value.</item>
+    /// </list>
+    /// </para>
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>:
+    /// <list type="bullet">
+    /// <item><term>Lazy processing</term>
+    /// <description>If <see cref="AllowDuplicatedKeys"/> is <c>true</c>, the .resx file is processed on demand, during the actual enumeration. The .resx file is processed immediately if
+    /// <see cref="AllowDuplicatedKeys"/> is <c>false</c>. If <see cref="AllowDuplicatedKeys"/> is <c>true</c> and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
+    /// <item><term>Handling duplicates</term>
+    /// <description>If <see cref="AllowDuplicatedKeys"/> is <c>true</c>, every occurrence of a duplicated name is returned by the enumerators. Otherwise, only the last occurrence of
+    /// a name is returned.</description></item>
+    /// <item><term>Headers</term>
+    /// <description>The .resx header is allowed to be completely missing; however, it is checked when exists and <see cref="CheckHeader"/> property is <c>true</c>. If header tags contain invalid values a <see cref="NotSupportedException"/> may be thrown during the enumeration.
+    /// You can configure the <see cref="ResXResourceWriter"/> class to omit the header by the <see cref="ResXResourceWriter.OmitHeader">ResXResourceWriter.OmitHeader</see> property.</description></item>
+    /// <item><term>Using <see cref="ResXDataNode"/> instances</term>
+    /// <description>The <see cref="SafeMode"/> (<see cref="UseResXDataNodes"/>) property can be toggled also after getting an enumerator or even during the enumeration.</description></item>
+    /// <item><term>Clear purpose of the enumerators</term>
+    /// <description>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.getenumerator.aspx" target="_blank">System.Resources.ResXResourceReader.GetEnumerator</a> either returns resources only or returns both resources and metadata mixed together
+    /// depending on the value of the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.useresxdatanodes.aspx" target="_blank">System.Resources.ResXResourceReader.UseResXDataNodes</a> property.
+    /// This <see cref="ResXResourceReader"/> implementation has separated <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see>
+    /// methods, which return always the resources, metadata and aliases, respectively.</description></item>
+    /// <item><term>Security</term>
+    /// <description>If <see cref="SafeMode"/> is <c>true</c>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method
+    /// on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
+    /// <item><term>Base path</term>
+    /// <description>The <see cref="BasePath"/> property, which is used for resolving file references can be set during the enumeration, too.</description></item>
+    /// <item><term>New MIME type</term>
+    /// <description>A new MIME type <c>text/kgysoft.net/object.binary.base64</c> is supported, indicating that an object is serialized by <see cref="BinarySerializationFormatter"/> instead of <see cref="BinaryFormatter"/>.
+    /// The <see cref="ResXResourceWriter"/> can produce such .resx content if <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> is <c>false</c>.</description></item>
+    /// <item><term>Soap formatter support</term>
+    /// <description>The Soap formatter support is provided without referencing the <c>System.Runtime.Serialization.Formatters.Soap.dll</c> assembly. If the assembly cannot be loaded from the GAC (platform dependent),
+    /// then a <see cref="NotSupportedException"/> will be thrown.</description></item>
+    /// <item><term>Type resolving</term>
+    /// <description>If a <see cref="ITypeResolutionService"/> instance is passed to one of the constructors, it is used also for the type references in <see cref="ResXFileRef"/> instances.</description></item>
+    /// </list></para>
     /// </remarks>
-    
-    // TODO: Remarks: 
-    // - unless you want to use a custom type resolver, or to sequentially access all resources, even the redefined ones (see LazyEnumeration), use ResXResourceSet instead. To manage multiple cultures, use ResXResourceManager, HRM or DRM.
-    // incompatibilities:
-    // - no AssemblyName[] ctors because they use the obsolete Assembly.LoadPartial. However, type will be found among in all loaded assemblies, and an ITypeResolutionService can be used as well.
-    // - after dispose/close enumerator cannot be get - ObjectDisposedException is thrown
-    // - after dispose/close the source stream is closed as well (in orig, too, but MSDN says it does not happen)
-    // - if a key or assembly alias is defined more times, first enumeration returns all occurences, further ones only the last occurance. System version returns always the last occurance (and aliases cannot be enumerated at all).
-    //   - Set and Manager classes see the last occurances of redefined instances. If aliases are redefined, they can be identified in UseResXDataNodes mode
-    // - Header can be completely missing; however, it is checked when exists when CheckHeader is true. If header tags contain invalid values, NotSupportedException may be thrown during the enumeration.
-    // - Getting the enumerator (or retrieving the values of ResXNodeData values) of the system version often throws ArgumentException. Here enumeration of a wrong resx may throw XmlException, TypeLoadException or NotSupportedException
-    // added functions/improvements:
-    // - Unlike winforms version, this is lazy (when LazyEnumeration os true)
-    // - AllowDuplicatedKeys
-    // - safe mode (UseResXDataNodes): can be always toggled, provides more information
-    // - enumerators for meta/resources/aliases
-    // - Soap is supported without referencing Soap formatter (tries to load it from GAC if possible, otherwise, throws NotSupportedException)
-    // - UseResXDataNodes and BasePath can be set during the enumeration, too
-    // - custom reader/writer in header
-    // - custom serializations (new mimetypes)
-    //   - Custom binary
-    //   - XML
-    // - type resolver is used for FileRefs, too (actually not here but in ResXDataNode)
-    // - security+performance: még akkor sincs deserialize (see ResXDataNode desc), ha a SafeMode (UseResXDataNode) false.
+    /// <seealso cref="ResXDataNode"/>
+    /// <seealso cref="ResXResourceWriter"/>
+    /// <seealso cref="ResXResourceSet"/>
+    /// <seealso cref="ResXResourceManager"/>
+    /// <seealso cref="HybridResourceManager"/>
+    /// <seealso cref="DynamicResourceManager"/>
+#pragma warning restore 618
     public sealed class ResXResourceReader : IResourceReader, IResXResourceContainer
     {
         /// <summary>

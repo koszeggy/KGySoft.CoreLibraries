@@ -73,7 +73,7 @@ namespace KGySoft.Libraries.Resources
     /// </para>
     /// <example>
     /// The following example shows how to retrieve <see cref="ResXDataNode"/> instances from the <see cref="IDictionaryEnumerator"/> returned by <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see>
-    /// and <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> methods. For example, you can check the type information before serialization if the .resx file is from an untrusted source.
+    /// and <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> methods. For example, you can check the type information before deserialization if the .resx file is from an untrusted source.
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections;
@@ -82,7 +82,7 @@ namespace KGySoft.Libraries.Resources
     /// 
     /// public class Example
     /// {
-    ///     private string resx = @"<?xml version='1.0' encoding='utf-8'?>
+    ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
     /// <root>
     ///   <data name='string'>
     ///     <value>Test string</value>
@@ -127,7 +127,7 @@ namespace KGySoft.Libraries.Resources
     ///         Dump(reader.GetMetadataEnumerator());
     ///     }
     /// 
-    ///     private void Dump(IDictionaryEnumerator enumerator)
+    ///     private static void Dump(IDictionaryEnumerator enumerator)
     ///     {
     ///         while (enumerator.MoveNext())
     ///         {
@@ -233,6 +233,7 @@ namespace KGySoft.Libraries.Resources
     /// from the <c>System.Drawing</c> assembly, which is not referenced by this library. Use <see cref="GetNodeLinePosition">GetNodeLinePosition</see> and <see cref="GetNodeColumnPosition">GetNodeColumnPosition</see> methods instead.</item>
     /// <item>The <see cref="FileRef"/> property returns the same reference during the lifetime of the <see cref="ResXDataNode"/> instance. This is alright as <see cref="ResXFileRef"/> is immutable.
     /// Unlike the system version, the <see cref="FileRef"/> property in this <see cref="ResXDataNode"/> contains exactly the same type information as the original .resx file.</item>
+    /// <item>The <see cref="ResXDataNode.">ResXDataNode.</see> instance, which contains invalid data. In contrast, this implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">
