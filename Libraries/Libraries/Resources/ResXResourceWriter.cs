@@ -1,26 +1,106 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
+using System.Diagnostics;
 
 using KGySoft.Libraries.Serialization;
+using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
 {
-    using System.Diagnostics;
-    using System.Linq;
 
-    using KGySoft.Libraries.Reflection;
 
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
     /// </summary>
+    /// <remarks>
+    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section to see the differences.</note>
+    /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
+    /// <para>If <see cref="CompatibleFormat"/> property is <c>true</c>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
+    /// but by the original <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
+    /// <h1 class="heading">Comparison with System.Resources.ResXResourceWriter<a name="comparison">&#160;</a></h1>
+    /// <note>When writing a .resx file in <see cref="CompatibleFormat"/>, the <c>System.Windows.Forms.dll</c> is not loaded when referencing
+    /// <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> and <strong>System.Resources.ResXNullRef</strong> types.</note>
+    /// <example>
+    /// The following example shows how to create a resource file by <see cref="ResXResourceWriter"/> and add different kind of resource objects to it. At the end it displays the resulting .resx file content.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Drawing;
+    /// using System.IO;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// public class Example
+    /// {
+    ///     [Serializable]
+    ///     private class MyCustomClass
+    ///     {
+    ///         public string StringProp { get; set; }
+    ///         public int IntProp { get; set; }
+    ///     }
+    /// 
+    ///     public static void Main()
+    ///     {
+    ///         // Check the result with CompatibleFormat = true as well.
+    ///         // You will get a much longer result, which will be able to read by System.Resources.ResXResourceReader, too.
+    ///         var result = new StringWriter();
+    ///         using (var writer = new ResXResourceWriter(result) { CompatibleFormat = false })
+    ///         {
+    ///             writer.AddResource("string", "string value");
+    ///             writer.AddResource("int", 42);
+    ///             writer.AddResource("null", (object)null);
+    ///             writer.AddResource("file", new ResXFileRef(@"images\Image.jpg", typeof(Bitmap)));
+    ///             writer.AddResource("custom", new MyCustomClass { IntProp = 42, StringProp = "blah" });
+    ///         }
+    /// 
+    ///         Console.WriteLine(result.GetStringBuilder());
+    ///     }
+    /// }
+    ///
+    /// // The example displays the following output:
+    /// // <?xml version="1.0" encoding="utf-8"?>
+    /// // <root>
+    /// //   <data name="string">
+    /// //     <value>string value</value>
+    /// //   </data>
+    /// //   <data name="int" type="System.Int32">
+    /// //     <value>42</value>
+    /// //   </data>
+    /// //   <data name="null" type="KGySoft.Libraries.Resources.ResXNullRef, KGySoft.Libraries">
+    /// //     <value />
+    /// //   </data>
+    /// //   <assembly alias="KGySoft.Libraries" name="KGySoft.Libraries, Version=3.6.3.1, Culture=neutral, PublicKeyToken=b45eba277439ddfe" />
+    /// //   <data name="file" type="KGySoft.Libraries.Resources.ResXFileRef, KGySoft.Libraries">
+    /// //     <value>images\Image.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    /// //   </data>
+    /// //   <data name="custom" mimetype="text/kgysoft.net/object.binary.base64">
+    /// //     <value>
+    /// //       PgAChAQFQkNvbnNvbGVBcHAxLCBWZXJzaW9uPTEuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49bnVsbBVF
+    /// //       eGFtcGxlK015Q3VzdG9tQ2xhc3MBAhs8U3RyaW5nUHJvcD5rX19CYWNraW5nRmllbGQDEgAEYmxhaBg8SW50UHJvcD5rX19CYWNr
+    /// //       aW5nRmllbGQECEAqAA==
+    /// //     </value>
+    /// //   </data>
+    /// // </root>]]></code>
+    /// </example>
+    /// <h1 class="heading">When to use <see cref="ResXResourceWriter"/> instead of <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
+    /// <para><see cref="ResXResourceWriter"/> is the most low-level option to write the content of a .resx file. <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/>
+    /// classes also instantiate it internally when their <c>Save</c> methods are called but there are some cases when it is needed to use a <see cref="ResXResourceWriter"/> explicitly:
+    /// <list type="bullet">
+    /// <para>Though re-using the same name multiple times is not preferred, you can do it by using a <see cref="ResXResourceWriter"/> instance. To read such a content you need to
+    /// use a <see cref="ResXResourceReader"/> and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <c>true</c>.</para>
+    /// <para>
+    // mikor hasznaljunk writert set helyett 2, 3, ...
+    /// </para>
+    /// </list>
+    /// </para>
+    /// 
+    /// </remarks>
+
     // Inkompatibilitás/javítások/jobbítások
     // - public field-ek hiányoznak
     // - Az AddAlias hívása után a System verzióban már nem lesz assembly node az xml-hez adva, ott tehát ez egy belső mapping, ami sosincs kiírva. Itt ki lesz, de kérhető, hogy csak az első hivatkozás esetén, ha még nem szerepel.
@@ -1112,6 +1192,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <exception cref="InvalidOperationException">The resource has already been saved.</exception>
         /// <exception cref="ObjectDisposedException">The writer has already been disposed.</exception>
+        /// NOTE: does not need to be called in using, Close/Dispose calls it internally
         public void Generate()
         {
             if (writer == null)

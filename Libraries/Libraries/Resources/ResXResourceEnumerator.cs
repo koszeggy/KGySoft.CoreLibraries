@@ -106,7 +106,7 @@ namespace KGySoft.Libraries.Resources
         /// Initializes a new instance of the <see cref="ResXResourceEnumerator"/> class.
         /// Should be called from lock.
         /// </summary>
-        internal ResXResourceEnumerator(IResXResourceContainer owner, ResXEnumeratorModes mode, int version)
+        internal ResXResourceEnumerator(IResXResourceContainer owner, ResXEnumeratorModes mode, int version = 0)
         {
             this.owner = owner;
             this.mode = mode;
