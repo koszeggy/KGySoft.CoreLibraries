@@ -138,6 +138,7 @@
     <Compile Include="Libraries\Resources\ResXDataNode.cs" />
     <Compile Include="Libraries\Resources\Enums\ResXEnumeratorModes.cs" />
     <Compile Include="Libraries\Resources\ResXFileRef.cs" />
+    <Compile Include="Libraries\Resources\ResXNullRef.cs" />
     <Compile Include="Libraries\Resources\ResXResourceEnumerator.cs" />
     <Compile Include="Libraries\Resources\ResXResourceManager.cs" />
     <Compile Include="Libraries\Resources\ResXResourceReader.cs" />
@@ -185,7 +186,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
