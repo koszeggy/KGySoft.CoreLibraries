@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Resources;
@@ -13,8 +14,6 @@ using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
 {
-
-
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
     /// </summary>
@@ -24,6 +23,18 @@ namespace KGySoft.Libraries.Resources
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
     /// <para>If <see cref="CompatibleFormat"/> property is <c>true</c>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
     /// but by the original <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
+    /// <h1 class="heading">When to use <see cref="ResXResourceWriter"/> instead of <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
+    /// <para><see cref="ResXResourceWriter"/> is the most low-level option to write the content of a .resx file. <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/>
+    /// classes also instantiate it internally when their <c>Save</c> methods are called but there are some cases when it is needed to use a <see cref="ResXResourceWriter"/> explicitly:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>Though re-using the same name multiple times is not preferred, you can do it by using a <see cref="ResXResourceWriter"/> instance. To read such a content you need to
+    /// use a <see cref="ResXResourceReader"/> and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <c>true</c>.</item>
+    /// <item>If you need to adjust the alias generation manually you have to use a <see cref="ResXResourceWriter"/>. Use the <see cref="AddAlias(string,AssemblyName,bool)">AddAlias</see> method to
+    /// define a custom alias for an assembly. The <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes use auto alias generation (See <see cref="AutoGenerateAlias"/> property).</item>
+    /// <item>If you need to use special custom names for some types while serializing resources containing binary serialized data you have to instantiate a <see cref="ResXResourceWriter"/> with a <c>typeNameConverter</c>.
+    /// To read such a custom .resx content you might need to use a <see cref="ResXResourceReader"/> with a <c>typeResolver</c>.</item>
+    /// </list>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceWriter<a name="comparison">&#160;</a></h1>
     /// <note>When writing a .resx file in <see cref="CompatibleFormat"/>, the <c>System.Windows.Forms.dll</c> is not loaded when referencing
     /// <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> and <strong>System.Resources.ResXNullRef</strong> types.</note>
@@ -87,36 +98,87 @@ namespace KGySoft.Libraries.Resources
     /// //   </data>
     /// // </root>]]></code>
     /// </example>
-    /// <h1 class="heading">When to use <see cref="ResXResourceWriter"/> instead of <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
-    /// <para><see cref="ResXResourceWriter"/> is the most low-level option to write the content of a .resx file. <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/>
-    /// classes also instantiate it internally when their <c>Save</c> methods are called but there are some cases when it is needed to use a <see cref="ResXResourceWriter"/> explicitly:
+    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>:
     /// <list type="bullet">
-    /// <para>Though re-using the same name multiple times is not preferred, you can do it by using a <see cref="ResXResourceWriter"/> instance. To read such a content you need to
-    /// use a <see cref="ResXResourceReader"/> and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <c>true</c>.</para>
-    /// <para>
-    // mikor hasznaljunk writert set helyett 2, 3, ...
-    /// </para>
+    /// <item>The System version has several public string fields, which are not intended to be accessed by a consumer code. Therefore the following fields are missing (they are not public) in this version:</item>
+    /// <list type="bullet">
+    /// <item><c>BinSerializedObjectMimeType</c></item>
+    /// <item><c>ByteArraySerializedObjectMimeType</c></item>
+    /// <item><c>DefaultSerializedObjectMimeType</c></item>
+    /// <item><c>ResMimeType</c></item>
+    /// <item><c>ResourceSchema</c></item>
+    /// <item><c>SoapSerializedObjectMimeType</c></item>
+    /// <item><c>Version</c></item>
+    /// </list>
+    /// <item>In this version there are no one parameter constructors. Instead, the second parameter (<c>typeNameConverter</c>) is optional. If used purely from C# (no reflection or similar), this change is a
+    /// compatible one.</item>
+    /// <item>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.AddAlias.aspx" target="_blank">System.Resources.ResXResourceWriter.AddAlias</a> method just
+    /// populates an inner alias list causing that the alias will be recognized on further processing but will never be dumped into the output stream. In this <see cref="ResXResourceWriter"/> implementation
+    /// the <see cref="AddAlias(string,AssemblyName,bool)">AddAlias</see> method is somewhat different: not just registers the alias as a known one but also dumps that into the output stream.
+    /// It can be selected though, whether the dump should be deferred until the first occurrence.</item>
     /// </list>
     /// </para>
-    /// 
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>:
+    /// <list type="bullet">
+    /// <item><term>Compatibility</term>
+    /// <description>If <see cref="CompatibleFormat"/> is <c>true</c>, the resulting .resx file can be read by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.</description></item>
+    /// <item><term>Compactness</term>
+    /// <description>The more compact output is achieved in multiple ways:
+    /// <list type="bullet">
+    /// <item>If <see cref="OmitHeader"/> is <c>true</c>, the header and the schema is not dumped into the resulting .resx file. If <see cref="CompatibleFormat"/> is <c>true</c>, then only
+    /// the header comment can be omitted.</item>
+    /// <item>Whitespace preserving to string values is applied only if it is really necessary (even if <see cref="CompatibleFormat"/> is <c>true</c>).</item>
+    /// <item>If an object can only be binary serialized, then instead of using <see cref="BinaryFormatter"/> it is serialized by <see cref="BinarySerializationFormatter"/>, which produces a much more compact result (only if <see cref="CompatibleFormat"/> is <c>false</c>).
+    /// A new MIME type has been introduced to identify binary data serialized this new way.</item>
+    /// </list></description></item>
+    /// <item><term>New overloads</term>
+    /// <description><list type="bullet">
+    /// <item><see cref="AddAlias(string,string,bool)">AddAlias</see> method now can be called with a <see cref="string"/> assembly name and not just by an <see cref="AssemblyName"/> instance.
+    /// Both overloads have now an optional <see cref="bool"/> argument for specifying whether the alias must be dumped immediately.</item>
+    /// <item>New <see cref="AddMetadata(ResXDataNode)">AddMetadata(ResXDataNode)</see> overload, working similarly to the existing <see cref="AddResource(ResXDataNode)">AddResource(ResXDataNode)</see> method.</item>
+    /// </list></description></item>
+    /// <item><term><see cref="AutoGenerateAlias"/> property</term>
+    /// <description>If <c>true</c>, alias names for assemblies will be automatically generated without calling <see cref="AddAlias(string,string,bool)">AddAlias</see> method.
+    /// If <c>false</c>, the assembly qualified names will be used for non-mscorlib types, unless an alias name was defined by <see cref="AddAlias(string,string,bool)">AddAlias</see> method or the <see cref="ResXDataNode"/> to dump already contains an alias name.</description></item>
+    /// <item><term>Better support of several types</term>
+    /// <description><list type="table">
+    /// <listheader><term>Type</term><term>Improvement</term><term>How it is handled by the System version</term></listheader>
+    /// <item>
+    /// <term><see langword="null"/> value</term>
+    /// <term>Invalid .resx representations of <see langword="null"/> value is fixed when re-written by <see cref="ResXResourceWriter"/>.
+    /// </term><term>When the System version rewrites such an invalid <see langword="null"/> node, it turns into empty string.</term></item>
+    /// <item><term>Array of <see cref="sbyte"/></term>
+    /// <term>Serializing <see cref="sbyte">sbyte[]</see> type works properly.</term>
+    /// <term>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> changes the <see cref="sbyte">sbyte[]</see> types to <see cref="byte">byte[]</see>.</term></item>
+    /// <item><term><see cref="char"/></term>
+    /// <term>Support of unpaired surrogate characters.</term>
+    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize unpaired surrogates, though 
+    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <c>true</c>.</term></item>
+    /// <item><term><see cref="string"/> and any type serialized by a <see cref="TypeConverter"/>.</term>
+    /// <term>Strings containing unpaired surrogates and invalid Unicode characters can be written without any error.</term>
+    /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize such strings, though 
+    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <c>true</c>.</term></item>
+    /// <item><term><see cref="DateTime"/> and <see cref="DateTimeOffset"/></term>
+    /// <term>Serialized in a different way so even the milliseconds part is preserved.</term>
+    /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
+    /// however, the <see cref="DateTime.Kind">DateTime.Kind</see> will be always <see cref="DateTimeKind.Local"/>.</term></item>
+    /// <item><term><see cref="float"/>, <see cref="double"/> and <see cref="decimal"/></term>
+    /// <term>-0 (negative zero) value is handled correctly.</term>
+    /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
+    /// however, in case of <see cref="float"/> and <see cref="double"/> -0 will always turn to +0.</term></item>
+    /// <item><term>Generic types</term>
+    /// <term>Generic types with a <see cref="TypeConverter"/> are handled correctly.</term>
+    /// <term>Parsing generic type names may fail with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.
+    /// The problem does not occur on binary serialization because in that case the type name is not dumped into the .resx file but is encoded in the binary stream.</term></item>
+    /// <item><term>Any non-serializable type</term>
+    /// <term>As long as the <see cref="BinarySerializationFormatter"/> can serialize the non-serializable type, this implementation supports non-serializable types as well. This works even if <see cref="CompatibleFormat"/> is <c>true</c>.</term>
+    /// <term>If <see cref="CompatibleFormat"/> is <c>true</c> during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// as long as <c>KGySoft.Libraries</c> assembly can be loaded and <see cref="BinaryFormatter"/> can find the <see cref="AnyObjectSerializerWrapper"/> class.</term></item>
+    /// </list></description></item>
+    /// </list>
+    /// </para>
     /// </remarks>
-
-    // Inkompatibilitás/javítások/jobbítások
-    // - public field-ek hiányoznak
-    // - Az AddAlias hívása után a System verzióban már nem lesz assembly node az xml-hez adva, ott tehát ez egy belső mapping, ami sosincs kiírva. Itt ki lesz, de kérhető, hogy csak az első hivatkozás esetén, ha még nem szerepel.
-    // - Better whitespace preserve logic even if compatibleformat is true
-    // - null: az invalid módon tárolt null visszaírva helyesen serializálódik, így újra olvasáskor is null lesz. Az eredetiben ez átáll üres string-re (valójában a hiba a ResXNodeRef-ben van javítva, de itt releváns)
-    // - DateTime(Offset) másképp íródik, így a millisec infó sem vész el. A System verzió is tudja deserializálni, de úgy a Kind mindig Local lesz.
-    // - float/double/decimal: -0 támogatása (kompat módban is). A System verzió is tudja deserializálni, de a float/double -0-ból mindig +0 lesz.
-    // - float/double/decimal: -0 támogatása (kompat módban is). A System verzió is tudja deserializálni, de a float/double -0-ból mindig +0 lesz.
-    // - char: unpaired surrogate támogatása (kompat módban is). A System verzió ilyet nem tud serializálni, de ezt kompat módban is jól tudja deserializálni.
-    // - sbyte[] - a system verzió ezt byte[]-ként serializálja. Ha ezzel csináljunk, kompat módban is jól tudja deserializálni.
-    // - bármilyen típus, amiben invalid char/string van: a system és a kompat verzió nem garantált, hogy jó lesz. Nem kompat módban jó lesz.
-    // - generikus típus serializálása TypConverterrel: a system verzió elhasalhat a generikus típusok parse-olásánál, nem compatban működik
-    // Új funkciók
-    // - AutoGenerateAlias: ez esetben AddAlias nélkül generáljuk őket (mint most), ha meg ki van kapcsolva, mindig AssemblyQualifiedName használata a nem mscorlib típusokhoz, FullName az mscorlibhez, semmi a stringhez (már ha objectként írjuk, és nem ResXDataNode-ként)
-    // - CompatibleFormat. Ha ki van kapcsolva, lásd a leírását meg a fenti felsorolást is. New MIME type: reader leirasbol
-    // - bármilyen nem serializable típus
+#error osztály doksi kész(sandcstleben ellenőrizni), jönnek a memberek
     public sealed class ResXResourceWriter : IResourceWriter
     {
         /// <summary>
@@ -477,6 +539,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="fileName">The file to send output to.</param>
         /// <param name="typeNameConverter">The delegate that can be used to target earlier versions of assemblies or the .NET Framework.</param>
+        // TODO: typeNameConverter használata valójában: csak binary serialization esetén hívódik: ha egy type-ra null, arra marad a default működés, egyébként spéci név
         public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
         {
             if (fileName == null)
@@ -503,6 +566,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to send the output to.</param>
         /// <param name="typeNameConverter">The delegate that can be used to target earlier versions of assemblies or the .NET Framework.</param>
+        // TODO: typeNameConverter használata valójában: ha egy type-ra null, arra marad a default működés, egyébként spéci név
         public ResXResourceWriter(Stream stream, Func<Type, string> typeNameConverter = null)
         {
             //writer = XmlWriter.Create(stream, GetWriterSettings());
@@ -526,6 +590,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="textWriter">The <see cref="TextWriter"/> object to send output to.</param>
         /// <param name="typeNameConverter">The delegate that can be used to target earlier versions of assemblies or the .NET Framework.</param>
+        // TODO: typeNameConverter használata valójában: ha egy type-ra null, arra marad a default működés, egyébként spéci név
         public ResXResourceWriter(TextWriter textWriter, Func<Type, string> typeNameConverter = null)
         {
             //writer = XmlWriter.Create(textWriter, GetWriterSettings());
