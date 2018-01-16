@@ -22,8 +22,14 @@ namespace KGySoft.Libraries.Resources
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
     /// New elements can be added as well, which can be saved into the <c>.resx</c> files.
     /// </summary>
-    // TODO: ResXResourceManager vs ResourceManager inkompatibilitás:
+    /// <remarks>
+    /// </remarks>
+    // - When to use XXXResourceManager, Set, Reader/Writer (minden managerbe)
+    // - sok-sok example, kb. a ResXResourceSet mintájára. + resource hozzáadás új cluture szerint, milyen file-ok jönnek létre
+    // ResXResourceManager vs ResourceManager inkompatibilitás:
     // - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
+    // New features in addition to ResourceManager:
+    // - new members
     [Serializable]
     public class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
@@ -637,7 +643,7 @@ namespace KGySoft.Libraries.Resources
                 if (behavior == ResourceSetRetrieval.CreateIfNotExists)
                 {
                     foundCultureToAdd = currentCultureInfo;
-                    rs = new ResXResourceSet(GetResourceDirName());
+                    rs = new ResXResourceSet(basePath: GetResourceDirName());
                     break;
                 }
             }
@@ -850,7 +856,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         internal ResXResourceSet CreateResourceSet(CultureInfo culture)
         {
-            ResourceSet result = new ResXResourceSet(GetResourceDirName());
+            ResourceSet result = new ResXResourceSet(basePath: GetResourceDirName());
             lock (SyncRoot)
             {
                 AddResourceSet(ResourceSets, culture.Name, ref result);

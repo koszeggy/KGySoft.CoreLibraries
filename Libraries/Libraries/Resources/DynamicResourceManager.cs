@@ -20,10 +20,14 @@ namespace KGySoft.Libraries.Resources
     /// which can be saved into <c>.resx</c> files.
     /// </summary>
     /// <remarks></remarks>
-    // TODO: - Már az õs legyen disposable (meg a resx is).
-    // TODO: Remarks: - Míg a ResxRM/HRM konkrét add metódusokat tartalmaz, addig a bõvítés itt automatikus, a stratégia property-kkel szabályozható. Itt a mentés is lehet automatikus, pl kilépésnél, ha éppen resx/mixed mód van.
-    //                - Disposable, muszáj dispose-olni, mert static eventekre iratkozik fel
-    [Serializable] // TODO: static eventekre feliratkozás az OnDeserialized-ben (az õs miatt nem nagyon lehet custom ISerializable)
+    // - Belül ResXResourcemanagert használ
+    // - Disposable, muszáj dispose-olni, mert static eventekre iratkozik fel (felsorolni)
+    // - When to use XXXResourceManager (minden managerbe)
+    //   - Míg a ResxRM/HRM konkrét add metódusokat tartalmaz, addig a bõvítés itt automatikus, a stratégia property-kkel szabályozható. Itt a mentés is lehet automatikus, pl kilépésnél, ha éppen resx/mixed mód van.
+    // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-bõl
+    // New features in addition to HybridResourceManager:
+    // - new members
+    [Serializable]
     public class DynamicResourceManager : HybridResourceManager
     {
         private bool useLanguageSettings;

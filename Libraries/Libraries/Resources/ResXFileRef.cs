@@ -70,7 +70,7 @@ namespace KGySoft.Libraries.Resources
     /// <seealso cref="HybridResourceManager"/>
     [TypeConverter(typeof(Converter))]
     [Serializable]
-    public class ResXFileRef
+    public sealed class ResXFileRef
     {
         #region Nested classes
 

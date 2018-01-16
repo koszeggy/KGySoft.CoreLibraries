@@ -19,7 +19,11 @@ namespace KGySoft.Libraries.Resources
     /// It can handle both compiled resources from <c>.dll</c> and <c>.exe</c> files, and <c>.resx</c> files at
     /// the same time. New elements can be added as well, which can be saved into <c>.resx</c> files.
     /// </summary>
-    // TODO: Említeni a Dynamic-ot, mi a különbség. Itt minden művelet explicit, a bővítés és mentés is.
+    // - Belül ResXResourcemanagert használ
+    // - When to use XXXResourceManager (minden managerbe)
+    // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-ből
+    // New features in addition to ResourceManager:
+    // - new members (Resourcemanagerhez képest, tehát mindaz is, ami ResXResourceManagerben fel van sorolva)
     [Serializable]
     public class HybridResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {

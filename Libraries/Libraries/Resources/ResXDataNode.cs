@@ -233,7 +233,8 @@ namespace KGySoft.Libraries.Resources
     /// from the <c>System.Drawing</c> assembly, which is not referenced by this library. Use <see cref="GetNodeLinePosition">GetNodeLinePosition</see> and <see cref="GetNodeColumnPosition">GetNodeColumnPosition</see> methods instead.</item>
     /// <item>The <see cref="FileRef"/> property returns the same reference during the lifetime of the <see cref="ResXDataNode"/> instance. This is alright as <see cref="ResXFileRef"/> is immutable.
     /// Unlike the system version, the <see cref="FileRef"/> property in this <see cref="ResXDataNode"/> contains exactly the same type information as the original .resx file.</item>
-    /// <item>The <see cref="ResXDataNode.">ResXDataNode.</see> instance, which contains invalid data. In contrast, this implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
+    /// <item>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.getvalue.aspx" target="_blank">System.Resources.ResXDataNode.GetValue</a> methods often throw <see cref="XmlException"/> if the node contains invalid data. In contrast,
+    /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">

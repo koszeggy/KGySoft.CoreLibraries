@@ -28,7 +28,7 @@ namespace _LibrariesTest.Libraries.Resources
     [TestClass]
     public class ResXResourceWriterTest : TestBase
     {
-        private class ByteListConverter: TypeConverter
+        private class ByteListConverter : TypeConverter
         {
             public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
             {
@@ -82,7 +82,9 @@ namespace _LibrariesTest.Libraries.Resources
             }
         }
 
-        private enum TestEnum : byte {}
+        private enum TestEnum : byte
+        {
+        }
 
         private class NonSerializableClass
         {
@@ -99,7 +101,10 @@ namespace _LibrariesTest.Libraries.Resources
             }
         }
 
-        protected override bool IsResourceTest { get { return true; } }
+        protected override bool IsResourceTest
+        {
+            get { return true; }
+        }
 
         [TestMethod]
         public void ReadWriteRead()
@@ -152,7 +157,7 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeEnums()
         {
-            Enum[] referenceObjects = 
+            Enum[] referenceObjects =
             {
                 ConsoleColor.White, // mscorlib enum
                 ConsoleColor.Black, // mscorlib enum
@@ -179,7 +184,7 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeFloatingPointNumbers()
         {
-            object[] referenceObjects = 
+            object[] referenceObjects =
             {
                 +0.0f,
                 -0.0f,
@@ -235,7 +240,7 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeChars()
         {
-            object[] referenceObjects = 
+            object[] referenceObjects =
             {
                 'a',
                 'á',
@@ -263,7 +268,7 @@ namespace _LibrariesTest.Libraries.Resources
             KGySerializeObjects(referenceObjects);
 
             // system serializer fails here
-            referenceObjects = new object[] 
+            referenceObjects = new object[]
             {
                 Char.ConvertFromUtf32(0x1D161)[0], // unpaired surrogate
             };
@@ -275,7 +280,7 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeStrings()
         {
-            string[] referenceObjects = 
+            string[] referenceObjects =
             {
                 null,
                 String.Empty,
@@ -293,14 +298,14 @@ namespace _LibrariesTest.Libraries.Resources
                 "x\r\rx",
                 "x\n\nx",
                 " ",
-                 "\t",
+                "\t",
                 @"new
 
                     lines  ",
                 "<>\\'\"&{}{{}}\0\\0000",
                 "\xffff", // U+FFFF = <noncharacter-FFFF>
                 "🏯", // paired surrogate
-                new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿'}),
+                new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿' }),
             };
 
             SystemSerializeObjects(referenceObjects);
@@ -320,22 +325,22 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeTypes()
         {
-            Type[] referenceObjects = 
+            Type[] referenceObjects =
             {
-                typeof(int),                                // mscorlib
-                typeof(int).MakeByRefType(),                // mscorlib
-                typeof(int).MakePointerType(),              // mscorlib
-                typeof(List<int>),                          // mscorlib
-                typeof(List<ICache>),                       // mixed
-                typeof(ICache),                             // custom
-                typeof(CircularList<int>),                  // mixed
-                typeof(CircularList<ICache>),               // custom
-                typeof(List<>),                             // mscorlib, generic template
-                typeof(int[]),                              // 1D zero based array
-                typeof(int[,]),                             // multi-dim array
-                typeof(int[][,]),                           // mixed jagged array
-                Array.CreateInstance(typeof(int),new[]{3},new[]{-1}).GetType(), // nonzero based 1D array
-                typeof(List<>).GetGenericArguments()[0]     // this can be only binary serialized
+                typeof(int), // mscorlib
+                typeof(int).MakeByRefType(), // mscorlib
+                typeof(int).MakePointerType(), // mscorlib
+                typeof(List<int>), // mscorlib
+                typeof(List<ICache>), // mixed
+                typeof(ICache), // custom
+                typeof(CircularList<int>), // mixed
+                typeof(CircularList<ICache>), // custom
+                typeof(List<>), // mscorlib, generic template
+                typeof(int[]), // 1D zero based array
+                typeof(int[,]), // multi-dim array
+                typeof(int[][,]), // mixed jagged array
+                Array.CreateInstance(typeof(int), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array
+                typeof(List<>).GetGenericArguments()[0] // this can be only binary serialized
             };
 
             SystemSerializeObjects(referenceObjects);
@@ -389,17 +394,17 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeByteArrays()
         {
-            IList[] referenceObjects = 
+            IList[] referenceObjects =
             {
                 new byte[0], // empty array
-                new byte[] { 1, 2, 3}, // single byte array
-                new byte[][] { new byte[] {11, 12, 13}, new byte[] {21, 22, 23, 24, 25}, null }, // jagged byte array
-                new byte[,] { {11, 12, 13}, {21, 22, 23} }, // multidimensional byte array
-                new byte[][,] { new byte[,] {{11, 12, 13}, {21, 22, 23}}, new byte[,] {{11, 12, 13, 14}, {21, 22, 23, 24}, {31, 32, 33, 34}} }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
-                new byte[,][] { {new byte[] {11, 12, 13}, new byte[] { 21, 22, 23}}, { new byte[] {11, 12, 13, 14}, new byte[] {21, 22, 23, 24}} }, // crazy jagged byte array 2 (1D array of 2D matrices)
-                new byte[][,,] { new byte[,,] { { {11, 12, 13}, {21, 21, 23} } }, null }, // crazy jagged byte array containing null reference
-                Array.CreateInstance(typeof(byte), new int[] {3}, new int[]{-1}), // array with -1..1 index interval
-                Array.CreateInstance(typeof(byte), new int[] {3, 3}, new int[]{-1, 1}) // array with [-1..1 and 1..3] index interval
+                new byte[] { 1, 2, 3 }, // single byte array
+                new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }, // jagged byte array
+                new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, // multidimensional byte array
+                new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
+                new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // crazy jagged byte array 2 (1D array of 2D matrices)
+                new byte[][,,] { new byte[,,] { { { 11, 12, 13 }, { 21, 21, 23 } } }, null }, // crazy jagged byte array containing null reference
+                Array.CreateInstance(typeof(byte), new int[] { 3 }, new int[] { -1 }), // array with -1..1 index interval
+                Array.CreateInstance(typeof(byte), new int[] { 3, 3 }, new int[] { -1, 1 }) // array with [-1..1 and 1..3] index interval
             };
 
             SystemSerializeObjects(referenceObjects);
@@ -413,11 +418,11 @@ namespace _LibrariesTest.Libraries.Resources
         [TestMethod]
         public void SerializeStringArrays()
         {
-            Array[] referenceObjects = 
+            Array[] referenceObjects =
             {
                 new string[] { "Egy", "Kettő" }, // single string array
-                new string[][] { new string[] {"Egy", "Kettő", "Három"}, new string[] {"One", "Two", null}, null }, // jagged string array with null values (first null as string, second null as array)
-                new string[,] { {"Egy", "Kettő"}, {"One", "Two"} }, // multidimensional string array
+                new string[][] { new string[] { "Egy", "Kettő", "Három" }, new string[] { "One", "Two", null }, null }, // jagged string array with null values (first null as string, second null as array)
+                new string[,] { { "Egy", "Kettő" }, { "One", "Two" } }, // multidimensional string array
             };
 
             SystemSerializeObjects(referenceObjects);
@@ -427,7 +432,7 @@ namespace _LibrariesTest.Libraries.Resources
             // system serializer fails here: cannot cast string[*] to object[]
             referenceObjects = new[]
             {
-                Array.CreateInstance(typeof(string), new int[] {3}, new int[]{-1}) // array with -1..1 index interval
+                Array.CreateInstance(typeof(string), new int[] { 3 }, new int[] { -1 }) // array with -1..1 index interval
             };
 
             KGySerializeObjects(referenceObjects);
@@ -438,27 +443,27 @@ namespace _LibrariesTest.Libraries.Resources
         public void SerializeSimpleArrays()
         {
             IList[] referenceObjects =
-                {
-                    new object[0],
-                    new object[] {new object(), null},
-                    new bool[] {true, false},
-                    new sbyte[] {1, 2},
-                    new byte[] {1, 2},
-                    new short[] {1, 2},
-                    new ushort[] {1, 2},
-                    new int[] {1, 2},
-                    new uint[] {1, 2},
-                    new long[] {1, 2},
-                    new ulong[] {1, 2},
-                    new char[] {'a', Char.ConvertFromUtf32(0x1D161)[0]}, //U+1D161 = MUSICAL SYMBOL SIXTEENTH NOTE, serializing its low-surrogate
-                    new string[] {"alma", null},
-                    new float[] {1, 2},
-                    new double[] {1, 2},
-                    new decimal[] {1, 2},
-                    new DateTime[] {DateTime.UtcNow, DateTime.Now},
-                    new IntPtr[] {new IntPtr(1), IntPtr.Zero},
-                    new UIntPtr[] {new UIntPtr(1), UIntPtr.Zero},
-                };
+            {
+                new object[0],
+                new object[] { new object(), null },
+                new bool[] { true, false },
+                new sbyte[] { 1, 2 },
+                new byte[] { 1, 2 },
+                new short[] { 1, 2 },
+                new ushort[] { 1, 2 },
+                new int[] { 1, 2 },
+                new uint[] { 1, 2 },
+                new long[] { 1, 2 },
+                new ulong[] { 1, 2 },
+                new char[] { 'a', Char.ConvertFromUtf32(0x1D161)[0] }, //U+1D161 = MUSICAL SYMBOL SIXTEENTH NOTE, serializing its low-surrogate
+                new string[] { "alma", null },
+                new float[] { 1, 2 },
+                new double[] { 1, 2 },
+                new decimal[] { 1, 2 },
+                new DateTime[] { DateTime.UtcNow, DateTime.Now },
+                new IntPtr[] { new IntPtr(1), IntPtr.Zero },
+                new UIntPtr[] { new UIntPtr(1), UIntPtr.Zero },
+            };
 
             // SystemSerializeObjects(referenceObjects); - system serialization fails for sbyte[] and char[]
             //KGySerializeObjects(referenceObjects); //- assert check fails for char[] because BinaryFormatter cannot handle it correctly
@@ -476,15 +481,15 @@ namespace _LibrariesTest.Libraries.Resources
             Reflector.RegisterTypeConverter<HashSet<byte>, ByteListConverter>();
             Reflector.RegisterTypeConverter<HashSet<TestEnum>, ByteListConverter>();
             IEnumerable[] referenceObjects =
-                {
-                    new List<int> { 1, 2, 3 }, // no converter - raw
-                    new List<byte> { 1, 2, 3}, // full mscorlib
-                    new List<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3}, // mscorlib generic type with custom element
+            {
+                new List<int> { 1, 2, 3 }, // no converter - raw
+                new List<byte> { 1, 2, 3 }, // full mscorlib
+                new List<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 }, // mscorlib generic type with custom element
 
-                    new HashSet<int> { 1, 2, 3 },  // no converter - raw
-                    new HashSet<byte> { 1, 2, 3},  // non-mscorlib type with mscorlib element
-                    new HashSet<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3}, // full non-mscorlib generic type
-                };
+                new HashSet<int> { 1, 2, 3 }, // no converter - raw
+                new HashSet<byte> { 1, 2, 3 }, // non-mscorlib type with mscorlib element
+                new HashSet<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 }, // full non-mscorlib generic type
+            };
 
             //SystemSerializeObjects(referenceObjects); // system serializer fails on generic types
             //KGySerializeObjects(referenceObjects, true, false); // system reader fails on full non-mscorlib type parsing
@@ -497,7 +502,7 @@ namespace _LibrariesTest.Libraries.Resources
             // - winforms.FileRef/ResXDataNode - valszeg külön teszt, mert az egyenlőség nem fog stimmelni
             object[] referenceObjects =
             {
-                new NonSerializableClass(), 
+                new NonSerializableClass(),
             };
 
             // SystemSerializeObjects(referenceObjects);
@@ -513,11 +518,11 @@ namespace _LibrariesTest.Libraries.Resources
             object[] referenceObjects =
             {
                 // binary wrapper
-                new AnyObjectSerializerWrapper("test", false), 
+                new AnyObjectSerializerWrapper("test", false),
 
                 // legacy formats: KGy version converts these to self formats
-                new System.Resources.ResXFileRef(path, "System.String"), 
-                new System.Resources.ResXDataNode("TestString", "string"), 
+                new System.Resources.ResXFileRef(path, "System.String"),
+                new System.Resources.ResXDataNode("TestString", "string"),
                 new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
             };
 
@@ -529,7 +534,7 @@ namespace _LibrariesTest.Libraries.Resources
             {
                 // self formats: supported only by KGySoft
                 new ResXFileRef(path, typeof(string)),
-                new ResXDataNode("TestString", "string"), 
+                new ResXDataNode("TestString", "string"),
                 new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
             };
 
@@ -548,7 +553,7 @@ namespace _LibrariesTest.Libraries.Resources
                 CultureInfo.CurrentCulture, // special handling for culture info
                 new List<int[][,]> // generic type: system ResXSerializationBinder parses it wrongly, but if versions do not change, it fortunately works due to concatenation
                 {
-                    new int[][,] { new int[,]{ { 11, 12}, { 21, 22 } } }
+                    new int[][,] { new int[,] { { 11, 12 }, { 21, 22 } } }
                 }
             };
 
@@ -642,11 +647,11 @@ namespace _LibrariesTest.Libraries.Resources
                     new SystemResXResourceWriter(new StringWriter(sb))
 
 #elif NET40 || NET45
-                    new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
+                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
 #else
 #error Unsupported .NET version
 #endif
-                    )
+                )
                 {
                     int i = 0;
                     foreach (object item in referenceObjects)
@@ -677,7 +682,7 @@ namespace _LibrariesTest.Libraries.Resources
         {
             Console.WriteLine("------------------KGySoft ResXResourceWriter (Items Count: {0}; Compatibility mode: {1})--------------------", referenceObjects.Length, compatibilityMode);
             StringBuilder sb = new StringBuilder();
-            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb), typeNameConverter){ CompatibleFormat = compatibilityMode})
+            using (ResXResourceWriter writer = new ResXResourceWriter(new StringWriter(sb), typeNameConverter) { CompatibleFormat = compatibilityMode })
             {
                 int i = 0;
                 foreach (object item in referenceObjects)

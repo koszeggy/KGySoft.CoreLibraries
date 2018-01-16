@@ -118,7 +118,8 @@ namespace KGySoft.Libraries.Resources
         /// Searches for a metadata object with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">Name of the metadata to search for.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns>
         /// The requested metadata, or when <see cref="SafeMode"/> is <c>true</c>, a <see cref="ResXDataNode"/> instance
         /// from which the metadata can be obtained. If the requested <paramref name="name"/> cannot be found, <see langword="null"/> is returned.
@@ -134,7 +135,8 @@ namespace KGySoft.Libraries.Resources
         /// Searches for a <see cref="string" /> metadata with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">Name of the metadata to search for.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns>
         /// The <see cref="string"/> value of a metadata.
         /// If <see cref="SafeMode"/> is <c>false</c>, an <see cref="InvalidOperationException"/> will be thrown for
@@ -158,7 +160,8 @@ namespace KGySoft.Libraries.Resources
         /// Gets whether the current <see cref="IExpandoResourceSet"/> contains a resource with the given <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of the resource to check.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns><c>true</c>, if the current <see cref="IExpandoResourceSet"/> contains a resource with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
         bool ContainsResource(string name, bool ignoreCase = false);
 
@@ -166,7 +169,8 @@ namespace KGySoft.Libraries.Resources
         /// Gets whether the current <see cref="IExpandoResourceSet"/> contains a metadata with the given <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of the metadata to check.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns><c>true</c>, if the current <see cref="IExpandoResourceSet"/> contains a metadata with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
         bool ContainsMeta(string name, bool ignoreCase = false);
 
@@ -212,7 +216,7 @@ namespace KGySoft.Libraries.Resources
         /// If this <see cref="IExpandoResourceSet"/> represents a hybrid resource set, then the original value of <paramref name="name"/>
         /// will be restored (if existed).
         /// </summary>
-        /// <param name="name">Name of the resource value to remove.</param>
+        /// <param name="name">Name of the resource value to remove. Name is treated case sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
@@ -225,7 +229,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Removes a metadata object in the current <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
-        /// <param name="name">Name of the metadata value to remove.</param>
+        /// <param name="name">Name of the metadata value to remove. Name is treated case sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         void RemoveMetaObject(string name);

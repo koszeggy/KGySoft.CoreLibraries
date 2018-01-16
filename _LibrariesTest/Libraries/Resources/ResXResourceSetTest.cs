@@ -277,7 +277,7 @@ namespace _LibrariesTest.Libraries.Resources
         public void Save()
         {
             var path = Path.GetTempPath();
-            var rs = new ResXResourceSet(path) { SafeMode = true };
+            var rs = new ResXResourceSet(basePath: path) { SafeMode = true };
             var newFile = Path.GetTempFileName();
             rs.SetObject("fileref", new ResXFileRef(newFile, typeof(string)));
             var filerefRef = ((ResXDataNode)rs.GetObject("fileref")).FileRef;

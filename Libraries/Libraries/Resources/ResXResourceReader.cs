@@ -272,7 +272,7 @@ namespace KGySoft.Libraries.Resources
     /// <item>Though the <see cref="UseResXDataNodes"/> property is still supported, it is obsolete in favor of <see cref="SafeMode"/> property.</item>
     /// <item>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <c>true</c>,
     /// the resource and metadata entries are mixed in the returned enumerator, while when it is <c>false</c>, then only the resources are returned. In this implementation the <see cref="GetEnumerator">GetEnumerator</see> always
-    /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> or <see cref="SafeMode"/> properties.</item>
+    /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> and <see cref="SafeMode"/> properties.</item>
     /// </list>
     /// </para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>:

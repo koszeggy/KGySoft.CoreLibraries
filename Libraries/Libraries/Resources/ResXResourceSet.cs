@@ -1,39 +1,367 @@
-﻿namespace KGySoft.Libraries.Resources
-{
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.ComponentModel.Design;
-    using System.IO;
-    using System.Resources;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.IO;
+using System.Resources;
+using System.Xml;
 
+namespace KGySoft.Libraries.Resources
+{
     /// <summary>
-    /// Represents all resources in an XML resource (.resx) file.
+    /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
     /// </summary>
-    // TODO:
-    // - ctor(TextReader) és amit még a reader fogadni tud
-    // - static LoadFrom(string)
-    // + override GetString/etc an use locks, dictionaries
-    // + disposed, ha a resources null
-    // - ha streamből lett létrehozva, a Save() csak akkor használható, ha a FileName-t besetteljük
-    // - Save(fileName), Save(Stream), Save(StringBuilder/TextWriter) és amit még a Writer fogadni tud
-    //   - forceEmbedded paraméter
-    //   - compatibleFormat paraméter
-    // + SafeMode: default=false
-    // + AutoCleanup - AutoFreeXmlData: default=true
-    // ? Serialization: ISerializable, forget base class members (Note: RuntimeResourceSet is not serializable)
-    // - SetObject/Meta/Alias: ha az ignoreCase dictionary nem null, ahhoz is hozzáadni
-    // Remarks todo:
-    // - Compatible with winforms version but see constructors
-    // - Duplicates are disabled
-    // - Performance is much better because only the actually accessed objects are deserialized.
-    // - Safer, even if SafeMode is off, because objects are deserialized only when they are accessed.
-    // - load/Save to stream and textwriter, too. The manager classes work with multiple sets and files.
-    // - GetxxxEnumerator metódusokhoz leírni, hogy az enumerátor DictionaryEntry.Value-ja SafeMMode-tól függ
-    // Incompatibility!!!: (ha lehet, változtatni, hogy az egy stringes verzió itt is filename legyen, talán string,string, mindkettő optional, első filenév második basepath)
-    // - ctor(string) itt basePath, file-ból betöltéshez ctor(string, string) kell
-    // - ctor of the system may throw ArgumentException. Here ctor of a wrong resx may throw XmlException, and a GetObject/String XmlException, TypeLoadException or NotSupportedException
-    // legyen sealed vagy override-oljuk a ReadResources-t, ami dobjon NotSupportedException-t vagy ne csináljon semmit
+    /// <remarks>
+    /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section to see the differences.</note>
+    /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>
+    /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
+    /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
+    /// (<see cref="GetString(string)">GetString</see> and <see cref="GetObject(string)">GetObject</see> methods for resources, <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see>
+    /// for metadata, and <see cref="GetAliasValue">GetAliasValue</see> for aliases).</para>
+    /// <example>
+    /// The following example demonstrates how to access the content of a .resx file by the <see cref="ResXResourceSet"/> class using the enumerators.
+    /// This is very similar to the first example of <see cref="ResXResourceReader"/>.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.IO;
+    /// using KGySoft.Libraries.Resources;
+    /// public class Example
+    /// {
+    ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
+    /// <root>
+    ///   <data name='string'>
+    ///     <value>Test string</value>
+    ///     <comment>Default data type is string.</comment>
+    ///   </data>
+    ///
+    ///   <metadata name='meta string'>
+    ///     <value>Meta String</value>
+    ///   </metadata>
+    ///
+    ///   <data name='int' type='System.Int32'>
+    ///     <value>42</value>
+    ///   </data>
+    ///
+    ///   <assembly alias='CustomAlias' name='System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' />
+    ///
+    ///   <data name='color' type='System.Drawing.Color, CustomAlias'>
+    ///     <value>Red</value>
+    ///     <comment>When this entry is deserialized, System.Drawing assembly will be loaded.</comment>
+    ///   </data>
+    ///
+    ///   <data name='bytes' type='System.Byte[]'>
+    ///     <value>VGVzdCBieXRlcw==</value>
+    ///   </data>
+    ///
+    ///   <data name='dangerous' mimetype='application/x-microsoft.net.object.binary.base64'>
+    ///     <value>YmluYXJ5</value>
+    ///     <comment>BinaryFormatter will throw an exception for this invalid content.</comment>
+    ///   </data>
+    ///
+    /// </root>";
+    ///
+    ///    public static void Main()
+    ///    {
+    ///        var set = new ResXResourceSet(new StringReader(resx));
+    ///        Console.WriteLine("____Resources in .resx:____");
+    ///        Dump(set, set.GetEnumerator);
+    ///        Console.WriteLine("____Metadata in .resx:____");
+    ///        Dump(set, set.GetMetadataEnumerator);
+    ///        Console.WriteLine("____Aliases in .resx:____");
+    ///        Dump(set, set.GetAliasEnumerator);
+    ///    }
+    /// 
+    ///    private static void Dump(ResXResourceSet set, Func<IDictionaryEnumerator> getEnumeratorFunction)
+    ///    {
+    ///        var enumerator = getEnumeratorFunction();
+    ///        while (enumerator.MoveNext())
+    ///        {
+    ///            Console.WriteLine($"Name: {enumerator.Key}");
+    ///            set.SafeMode = true;
+    ///            Console.WriteLine($"  Value in SafeMode:     {enumerator.Value} ({enumerator.Value.GetType()})");
+    ///            try
+    ///            {
+    ///                set.SafeMode = false;
+    ///                Console.WriteLine($"  Value in non-SafeMode: {enumerator.Value} ({enumerator.Value.GetType()})");
+    ///            }
+    ///            catch (Exception e)
+    ///            {
+    ///                Console.WriteLine($"Getting the deserialized value thrown an exception: {e.Message}");
+    ///            }
+    ///            Console.WriteLine();
+    ///        }
+    ///    }
+    ///}]]>
+    ///
+    /// // The example displays the following output:
+    /// // ____Resources in .resx:____
+    /// // Name: string
+    /// // Value in SafeMode:     Test string (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: Test string (System.String)
+    ///
+    /// // Name: int
+    /// // Value in SafeMode:     42 (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: 42 (System.Int32)
+    ///
+    /// // Name: color
+    /// // Value in SafeMode:     Red (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: Color[Red] (System.Drawing.Color)
+    ///
+    /// // Name: bytes
+    /// // Value in SafeMode:     VGVzdCBieXRlcw== (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: System.Byte[] (System.Byte[])
+    ///
+    /// // Name: dangerous
+    /// // Value in SafeMode:     YmluYXJ5 (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Getting the deserialized value thrown an exception: End of Stream encountered before parsing was completed.
+    ///
+    /// // ____Metadata in .resx:____
+    /// // Name: meta string
+    /// // Value in SafeMode:     Meta String (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in non-SafeMode: Meta String (System.String)
+    ///
+    /// // ____Aliases in .resx:____
+    /// // Name: CustomAlias
+    /// // Value in SafeMode:     System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)
+    /// // Value in non-SafeMode: System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)</code>
+    /// </example>
+    /// <para>The <see cref="ResXResourceSet"/> class supports adding new resources (<see cref="SetObject">SetObject</see>), metadata (<see cref="SetMetaObject">SetMetaObject</see>) and aliases (<see cref="SetAliasValue">SetAliasValue</see>).
+    /// Existing entries can be removed by <see cref="RemoveObject">RemoveObject</see>, <see cref="RemoveMetaObject">RemoveMetaObject</see> and <see cref="RemoveAliasValue">RemoveAliasValue</see> methods.
+    /// The changed set can be saved by the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> overloads.</para>
+    /// <example>
+    /// The following example shows how to create a new resource set, add a new resource and save the content. It demonstrates the usage of the key-based resource access, too.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.IO;
+    /// using System.Text;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// public class Example
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         const string key = "myKey";
+    ///         var set = new ResXResourceSet();
+    /// 
+    ///         // GetString/GetObject: read a resource by key (GetMetaString/GetMetaObject for metadata, GetAliasValue for alias)
+    ///         Console.WriteLine($"Getting a non-existing key: {set.GetString(key) ?? "<null>"}");
+    /// 
+    ///         // SetObject: adds a new resource or replaces an existing one (SetMetaObject for metadata, SetAliasValue for assembly alias)
+    ///         // you can even remove entries by RemoveObject/RemoveMetaObject/RemoveAliasValue)
+    ///         set.SetObject(key, "a string value");
+    ///         Console.WriteLine($"Getting an existing key: {set.GetString(key) ?? "<null>"}");
+    /// 
+    ///         var savedContent = new StringBuilder();
+    ///         set.Save(new StringWriter(savedContent), compatibleFormat: false); // try compatibleFormat: true as well
+    ///         Console.WriteLine("Saved .resx content:");
+    ///         Console.WriteLine(savedContent);
+    ///     }
+    ///}
+    ///
+    /// // The example displays the following output:
+    /// // Getting a non-existing key: <null>
+    /// // Getting an existing key: a string value
+    /// // Saved .resx content:
+    /// // <?xml version="1.0" encoding="utf-8"?>
+    /// // <root>
+    /// //   <data name="myKey">
+    /// //     <value>a string value</value>
+    /// //   </data>
+    /// // </root>]]></code>
+    /// </example>
+    /// <para>If a .resx content contains the same resource name multiple times, <see cref="ResXResourceSet"/> will contain the lastly defined key. To obtain redefined values use <see cref="ResXResourceReader"/> explicitly
+    /// and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <c>true</c>.</para>
+    /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property returned by the enumerator methods is a <see cref="ResXDataNode"/>
+    /// instance rather than the resource value. The same applies for the return value of <see cref="GetObject(string)">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.
+    /// <note>Even if <see cref="SafeMode"/> is <c>false</c>, loading a .resx content with corrupt or malicious entry will have no effect until we try to obtain the corresponding value. See the example below for the demonstration.</note>
+    /// </para>
+    /// <example>
+    /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// public class Example
+    /// {
+    ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
+    /// <root>
+    ///   <data name='string'>
+    ///     <value>Test string</value>
+    ///     <comment>Default data type is string (when there is neither 'type' nor 'mimetype' attribute).</comment>
+    ///   </data>
+    /// 
+    ///   <data name='binary' type='System.Byte[]'>
+    ///     <value>VGVzdCBieXRlcw==</value>
+    ///   </data>
+    /// 
+    ///   <data name='dangerous' mimetype='application/x-microsoft.net.object.binary.base64'>
+    ///     <value>boo!</value>
+    ///     <comment>BinaryFormatter will throw an exception for this invalid content.</comment>
+    ///   </data>
+    /// </root>";
+    /// 
+    ///     public static void Main()
+    ///     {
+    ///         // please note that default value of SafeMode is false. Nevertheless, reading the .resx containing an invalid node (dangerous)
+    ///         // will not cause any problem because nothing is deserialized yet.
+    ///         var set = ResXResourceSet.FromFileContents(resx); // same as "new ResXResourceSet(new StringReader(resx));"
+    /// 
+    ///         // enabling SafeMode changes the GetObject/GetString behavior
+    ///         set.SafeMode = true;
+    /// 
+    ///         Console.WriteLine($"Return type of GetObject in safe mode: {set.GetObject("string").GetType()}");
+    /// 
+    ///         Console.WriteLine();
+    ///         Console.WriteLine("*** Demonstrating SafeMode=true ***");
+    ///         TreatSafely(set, "unknown");
+    ///         TreatSafely(set, "string");
+    ///         TreatSafely(set, "binary");
+    ///         TreatSafely(set, "dangerous");
+    /// 
+    ///         set.SafeMode = false;
+    ///         Console.WriteLine();
+    ///         Console.WriteLine("*** Demonstrating SafeMode=false ***");
+    ///         TreatUnsafely(set, "unknown");
+    ///         TreatUnsafely(set, "string");
+    ///         TreatUnsafely(set, "binary");
+    ///         TreatUnsafely(set, "dangerous");
+    ///     }
+    /// 
+    ///     private static void TreatSafely(ResXResourceSet set, string resourceName)
+    ///     {
+    ///         // in SafeMode GetObject returns a ResXDataNode
+    ///         var resource = set.GetObject(resourceName) as ResXDataNode;
+    ///         if (resource == null)
+    ///         {
+    ///             Console.WriteLine($"Resource name '{resourceName}' does not exist in resource set or SafeMode is off.");
+    ///             return;
+    ///         }
+    /// 
+    ///         if (resource.TypeName == null && resource.MimeType == null)
+    ///         {
+    ///             // to deserialize a node considered safe call GetValue
+    ///             Console.WriteLine($"Resource with name '{resourceName}' is a string so it is safe. Its value is '{resource.GetValue()}'");
+    ///             return;
+    ///         }
+    /// 
+    ///         if (resource.TypeName != null)
+    ///         {
+    ///             Console.WriteLine($"Resource with name '{resourceName}' is a '{resource.TypeName}'. If we trust this type we can call GetValue to deserialize it.");
+    ///         }
+    ///         else
+    ///         {
+    ///             Console.WriteLine($"Resource with name '{resourceName}' has only mime type: '{resource.MimeType}'.");
+    ///             Console.WriteLine("  We cannot tell its type before we deserialize it. We can consider this entry potentially dangerous.");
+    ///         }
+    /// 
+    ///         // In SafeMode GetString(resourceName) never fails.
+    ///         // resource.ValueData is similar but ValueData can be null if we allow cleanup .resx content after deserialization.
+    ///         Console.WriteLine($"  Raw string value: {set.GetString(resourceName)}");
+    ///     }
+    /// 
+    ///     private static void TreatUnsafely(ResXResourceSet set, string resourceName)
+    ///     {
+    ///         // If SafeMode is false, GetObject returns null for existing resources containing null value, too.
+    ///         // Use ContainsResource to distinct non-existing and null values.
+    ///         if (!set.ContainsResource(resourceName))
+    ///         {
+    ///             Console.WriteLine($"The resource set does not contain a resource named '{resourceName}'.");
+    ///             return;
+    ///         }
+    ///         try
+    ///         {
+    ///             // If SafeMode is false, GetObject tries to deserialize the resource.
+    ///             // GetString would throw an InvalidOperationException on non-string values.
+    ///             var value = set.GetObject(resourceName);
+    ///             Console.WriteLine($"Type of resource with name '{resourceName}' is {value?.GetType().ToString() ?? "<none>"}. String representation: {value ?? "<null>"}");
+    ///         }
+    ///         catch (Exception e)
+    ///         {
+    ///             Console.WriteLine($"Obtaining '{resourceName}' failed with an error: {e.Message}");
+    ///         }
+    ///     }
+    /// }]]>
+    /// 
+    /// // The example displays the following output:
+    /// // Return type of GetObject in safe mode: KGySoft.Libraries.Resources.ResXDataNode
+    /// // 
+    /// // *** Demonstrating SafeMode=true ***
+    /// // Resource name 'unknown' does not exist in resource set or SafeMode is off.
+    /// // Resource with name 'string' is a string so it is safe. Its value is 'Test string'
+    /// // Resource with name 'binary' is a 'System.Byte[]'. If we trust this type we can call GetValue to deserialize it.
+    /// //   Raw string value: VGVzdCBieXRlcw==
+    /// // Resource with name 'dangerous' has only mime type: 'application/x-microsoft.net.object.binary.base64'.
+    /// //   We cannot tell its type before we deserialize it. We can consider this entry potentially dangerous.
+    /// //   Raw string value: boo!
+    /// // 
+    /// // *** Demonstrating SafeMode=false ***
+    /// // The resource set does not contain a resource named 'unknown'.
+    /// // Type of resource with name 'string' is System.String. String representation: Test string
+    /// // Type of resource with name 'binary' is System.Byte[]. String representation: System.Byte[]
+    /// // Obtaining 'dangerous' failed with an error: The input is not a valid Base-64 string as it contains a non-base 64 character,
+    /// // more than two padding characters, or an illegal character among the padding characters.</code>
+    /// </example>
+    /// <h1 class="heading">When to use <see cref="ResXResourceReader"/>/<see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
+    /// <para><see cref="ResXResourceReader"/> and <see cref="ResXResourceWriter"/> are the most low-level classes to read and write the content of a .resx file; <see cref="ResXResourceSet"/> uses them internally, too.
+    /// You need to use them, if:
+    /// <list type="bullet">
+    /// <item>The .resx file may contain redefined keys and duplications needed to be retrieved (see <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> property). <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes do not allow duplicates.</item>
+    /// <item>Custom type naming is needed. When writing resources, you can pass a <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> to the <see cref="ResXResourceWriter"/> constructors to write custom type names.
+    /// And when reading resources, you can pass a <see cref="ITypeResolutionService"/> instance to the <see cref="ResXResourceReader"/> constructors to handle the type resolutions.</item>
+    /// <item>If lazy enumeration is needed (eg. a .resx file is syntactically incorrect) you can use a <see cref="ResXResourceReader"/> to read the .resx file until the problematic position.</item>
+    /// </list>
+    /// </para>
+    /// <para>The <see cref="ResXResourceSet"/> class represents full .resx content in memory. Use this class if:
+    /// <list type="bullet">
+    /// <item>Reading or writing a single .resx content is needed.</item>
+    /// <item>You want to access the resources (and/or metadata) in the .resx file by name.</item>
+    /// <item>You need to load/write .resx content as a <see cref="Stream"/> or <see cref="TextReader"/>/<see cref="TextWriter"/>.</item>
+    /// </list>
+    /// </para>
+    /// <para>The <see cref="ResXResourceManager"/> (and other manager classes such as <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>) access the .resx content always as files.
+    /// Use those classes if you want to access .resx files by cultures in the same way as <see cref="ResourceManager"/> handles them.</para>
+    /// <h1 class="heading">Comparison with System.Resources.ResXResourceSet<a name="comparison">&#160;</a></h1>
+    /// <para><see cref="ResXResourceSet"/> can load .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.
+    /// <note>When reading a .resx file written by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class,
+    /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
+    /// and <strong>System.Resources.ResXNullRef</strong> types.</note>
+    /// </para>
+    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
+    /// <list type="bullet">
+    /// <item>There are no constructors with single <see cref="string"/> and <see cref="Stream"/> arguments; though if using pure C# (without reflection) this is a compatible change as the second parameter of the constructors is optional.</item>
+    /// <item>The constructors of <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> throw an <see cref="ArgumentException"/> on any
+    /// kind of error, including when an object cannot be deserialized. This <see cref="ResXResourceSet"/> implementation does not deserialize anything on construction just parses the raw XML content. If there is a syntax error in the .resx
+    /// content an <see cref="XmlException"/> will be thrown from the constructors. If an entry cannot be deserialized, the <see cref="GetObject(string)">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see> or
+    /// <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> methods will throw an <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> based on the nature of the error.</item>
+    /// <item>This <see cref="ResXResourceSet"/> is a sealed class.</item>
+    /// </list>
+    /// </para>
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
+    /// <list type="bullet">
+    /// <item><term>Supporting file references</term>
+    /// <description>If the .resx file contains file references <see cref="ResXFileRef"/> with relative paths, then a base path can be defined in the constructors so the file references can be resolved successfully.</description></item>
+    /// <item><term>Full .resx support</term>
+    /// <description>A .resx file can contain also metadata and assembly alias entries in top of resources and this <see cref="ResXResourceSet"/> implementation handles them.</description></item>
+    /// <item><term>Performance</term>
+    /// <description>Load time is much faster because the constructors just simply parse the raw XML content. The actual deserialization occurs on demand only for the really accessed resources and metadata.
+    /// Memory footprint is tried to be kept minimal as well. If <see cref="AutoFreeXmlData"/> is <c>true</c>, then raw XML data is freed after deserializing and caching an entry.</description></item>
+    /// <item><term>Security</term>
+    /// <description>This <see cref="ResXResourceSet"/> is much more safe, even if <see cref="SafeMode"/> is <c>false</c>, because no object is deserialized at load time.
+    /// If <see cref="SafeMode"/> is <c>true</c>, then security is even more increased as <see cref="GetObject(string,bool)">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods, and the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// property of the enumerators returned by <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return a <see cref="ResXDataNode"/> instance instead of a deserialized object
+    /// so you can check whether the resource or metadata can be treat as a safe object before actually deserializing it. See the example above for more details.</description></item>
+    /// <item><term>Write support</term>
+    /// <description>The .resx file content can be expanded, existing entries can be replaced or removed and the new content can be saved. You can start even with a completely empty set, add content dynamically and save the new resource set.</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    /// <seealso cref="ResXResourceReader"/>
+    /// <seealso cref="ResXResourceWriter"/>
+    /// <seealso cref="ResXResourceManager"/>
+    /// <seealso cref="HybridResourceManager"/>
+    /// <seealso cref="DynamicResourceManager"/>
     [Serializable]
     public sealed class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
     {
@@ -53,10 +381,7 @@
         /// If this <see cref="ResXResourceSet"/> has been created from a file, returns the name of the original file.
         /// This property will not change if the <see cref="ResXResourceSet"/> is saved into another file.
         /// </summary>
-        public string FileName
-        {
-            get { return fileName; }
-        }
+        public string FileName => fileName;
 
         /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceSet"/> works in safe mode. In safe mode the retrieved
@@ -64,13 +389,13 @@
         /// <br/>Default value: <c>false</c>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject(string,bool)"/> and <see cref="GetMetaObject"/> methods
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject(string,bool)">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
-        /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetString(string,bool)"/> and <see cref="GetMetaString"/> methods
+        /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetString(string,bool)">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
         /// <para>If <c>SafeMode</c> is <c>true</c>, the <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
-        /// can be freed by calling the <see cref="ResXDataNode.GetValue"/>.</para>
+        /// can be freed when calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// </remarks>
         /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
@@ -87,6 +412,7 @@
             }
         }
 
+#error itt tartok
         /// <summary>
         /// Gets the base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.
         /// </summary>
@@ -154,7 +480,7 @@
             }
         }
 
-        private ResXResourceSet(string basePath, ResXResourceReader reader): this(basePath)
+        private void Initialize(ResXResourceReader reader)
         {
             using (reader)
             {
@@ -168,7 +494,8 @@
         /// </summary>
         /// <param name="basePath">The base path for the relative file paths specified in the <see cref="ResXFileRef"/> objects,
         /// which will be added to this empty <see cref="ResXResourceSet"/> instance.</param>
-        public ResXResourceSet(string basePath = null)
+        /// <remarks>This constructor is private so the single string parameter in the public constructors means file name, which is compatible with the system version.</remarks>
+        private ResXResourceSet(string basePath)
         {
             Table = null; // base ctor initializes that; however, we don't need it.
             this.basePath = basePath;
@@ -180,12 +507,27 @@
         /// <summary>
         /// Initializes a new instance of a <see cref="ResXResourceSet"/> class using the <see cref="ResXResourceReader"/> that opens and reads resources from the specified file.
         /// </summary>
-        /// <param name="fileName">The name of the file to read resources from. </param>
-        /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. If <see langword="null"/>, the directory part of <paramref name="fileName"/> will be used.</param>
-        public ResXResourceSet(string fileName, string basePath)
-            : this(basePath, new ResXResourceReader(fileName) { BasePath = basePath ?? Path.GetDirectoryName(fileName) })
+        /// <param name="fileName">The name of the file to read resources from. If <see langword="null"/>, just an empty <see cref="ResXResourceSet"/> will be created.</param>
+        /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. If <see langword="null"/> and <paramref name="fileName"/> is not <see langword="null"/>, the directory part of <paramref name="fileName"/> will be used.</param>
+        public ResXResourceSet(string fileName = null, string basePath = null)
+            : this(basePath)
         {
             this.fileName = fileName;
+            if (fileName != null)
+            {
+                Initialize(new ResXResourceReader(fileName) { BasePath = basePath ?? Path.GetDirectoryName(fileName) });
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ResXResourceSet"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
+        /// </summary>
+        /// <param name="fileContents">A string containing XML resource-formatted information.</param>
+        /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.</param>
+        /// <returns></returns>
+        public static ResXResourceSet FromFileContents(string fileContents, string basePath = null)
+        {
+            return new ResXResourceSet(new StringReader(fileContents), basePath);
         }
 
         /// <summary>
@@ -194,8 +536,9 @@
         /// <param name="stream">The <see cref="Stream"/> of resources to be read. The stream should refer to a valid resource file content.</param>
         /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. If <see langword="null"/>, the current directory will be used.</param>
         public ResXResourceSet(Stream stream, string basePath = null)
-            : this(basePath, new ResXResourceReader(stream) { BasePath = basePath })
+            : this(basePath)
         {
+            Initialize(new ResXResourceReader(stream) { BasePath = basePath });
         }
 
         /// <summary>
@@ -204,8 +547,9 @@
         /// <param name="textReader">The <see cref="TextReader"/> of resources to be read. The reader should refer to a valid resource file content.</param>
         /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. If <see langword="null"/>, the current directory will be used.</param>
         public ResXResourceSet(TextReader textReader, string basePath = null)
-            : this(basePath, new ResXResourceReader(textReader) { BasePath = basePath })
+            : this(basePath)
         {
+            Initialize(new ResXResourceReader(textReader) { BasePath = basePath });
         }
 
         /// <summary>
@@ -368,7 +712,8 @@
         /// Searches for a metadata object with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">Name of the metadata to search for.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns>
         /// The requested metadata, or when <see cref="SafeMode"/> is <c>true</c>, a <see cref="ResXDataNode"/> instance
         /// from which the metadata can be obtained. If the requested <paramref name="name"/> cannot be found, <see langword="null"/> is returned.
@@ -387,7 +732,8 @@
         /// Searches for a <see cref="string" /> metadata with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">Name of the metadata to search for.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns>
         /// The <see cref="string"/> value of a metadata.
         /// If <see cref="SafeMode"/> is <c>false</c>, an <see cref="InvalidOperationException"/> will be thrown for
@@ -492,7 +838,7 @@
         /// <summary>
         /// Removes a resource object from the current <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
-        /// <param name="name">Name of the resource value to remove.</param>
+        /// <param name="name">Name of the resource value to remove. Name is treated case sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         public void RemoveObject(string name)
@@ -503,7 +849,7 @@
         /// <summary>
         /// Removes a metadata object in the current <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
-        /// <param name="name">Name of the metadata value to remove.</param>
+        /// <param name="name">Name of the metadata value to remove. Name is treated case sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         public void RemoveMetaObject(string name)
@@ -614,7 +960,7 @@
                 }
             }
 
-            // ReSharper disable PossibleNullReferenceException - false alarm, ReSharper does not recognise the effect of ?? operator
+            // ReSharper disable PossibleNullReferenceException - false alarm, ReSharper does not recognize the effect of ?? operator
             // 2. Adding resources (not freeing xml data during saving)
             bool adjustPath = basePath != null && basePath != writer.BasePath;
             lock (resources)
@@ -671,9 +1017,10 @@
         /// Gets whether the current <see cref="ResXResourceSet"/> contains a resource with the given <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of the resource to check.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a resource with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
-        public bool ContainsResource(string name, bool ignoreCase)
+        public bool ContainsResource(string name, bool ignoreCase = false)
         {
             return ContainsInternal(name, ignoreCase, resources, ref resourcesIgnoreCase);
         }
@@ -682,9 +1029,10 @@
         /// Gets whether the current <see cref="ResXResourceSet"/> contains a metadata with the given <paramref name="name"/>.
         /// </summary>
         /// <param name="name">The name of the metadata to check.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
+        /// <br/>Default value: <c>false</c></param>
         /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a metadata with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
-        public bool ContainsMeta(string name, bool ignoreCase)
+        public bool ContainsMeta(string name, bool ignoreCase = false)
         {
             return ContainsInternal(name, ignoreCase, metadata, ref metadataIgnoreCase);
         }
