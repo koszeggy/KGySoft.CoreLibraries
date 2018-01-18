@@ -76,6 +76,7 @@ namespace KGySoft.Libraries.Resources
     /// using System.Collections;
     /// using System.IO;
     /// using KGySoft.Libraries.Resources;
+    /// 
     /// public class Example
     /// {
     ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
@@ -591,6 +592,7 @@ namespace KGySoft.Libraries.Resources
         /// The currently active aliases. Same as <see cref="aliases"/> if duplication is disabled.
         /// </summary>
         private Dictionary<string, string> activeAliases;
+
         private ICollection<KeyValuePair<string, string>> aliases;
         private ICollection<KeyValuePair<string, ResXDataNode>> resources;
         private ICollection<KeyValuePair<string, ResXDataNode>> metadata;
@@ -896,6 +898,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <remarks>
         /// <para>The <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is always a <see cref="string"/> regardless of the value of the <see cref="SafeMode"/> property.</para>
+        /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <c>true</c>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined alias.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>

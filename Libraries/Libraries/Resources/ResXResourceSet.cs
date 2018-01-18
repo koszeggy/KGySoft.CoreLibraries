@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
+using System.Reflection;
 using System.Resources;
 using System.Xml;
 
 namespace KGySoft.Libraries.Resources
 {
+#error elvileg kész, tesztelni a teljes doksit, utána jön a ResXResourceManager
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
     /// </summary>
@@ -27,6 +29,7 @@ namespace KGySoft.Libraries.Resources
     /// using System.Collections;
     /// using System.IO;
     /// using KGySoft.Libraries.Resources;
+    /// 
     /// public class Example
     /// {
     ///     private const string resx = @"<?xml version='1.0' encoding='utf-8'?>
@@ -307,10 +310,16 @@ namespace KGySoft.Libraries.Resources
     /// <para><see cref="ResXResourceReader"/> and <see cref="ResXResourceWriter"/> are the most low-level classes to read and write the content of a .resx file; <see cref="ResXResourceSet"/> uses them internally, too.
     /// You need to use them, if:
     /// <list type="bullet">
-    /// <item>The .resx file may contain redefined keys and duplications needed to be retrieved (see <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> property). <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes do not allow duplicates.</item>
-    /// <item>Custom type naming is needed. When writing resources, you can pass a <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> to the <see cref="ResXResourceWriter"/> constructors to write custom type names.
-    /// And when reading resources, you can pass a <see cref="ITypeResolutionService"/> instance to the <see cref="ResXResourceReader"/> constructors to handle the type resolutions.</item>
-    /// <item>If lazy enumeration is needed (eg. a .resx file is syntactically incorrect) you can use a <see cref="ResXResourceReader"/> to read the .resx file until the problematic position.</item>
+    /// <item><term>You need to retrieve all instances of a redefined key.</term>
+    /// <description>The .resx file may contain redefined keys and duplications needed to be retrieved (see <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> property). <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes do not allow duplicates.</description></item>
+    /// <item><term>Custom type naming is needed.</term>
+    /// <description>When writing resources, you can pass a <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> to the <see cref="ResXResourceWriter"/> constructors to write custom type names.
+    /// And when reading resources, you can pass a <see cref="ITypeResolutionService"/> instance to the <see cref="ResXResourceReader"/> constructors to handle the type resolutions.</description></item>
+    /// <item><term>Lazy enumeration is needed (eg. a .resx file is syntactically incorrect).</term>
+    /// <description>In such case you can use a <see cref="ResXResourceReader"/> to read the .resx file until the problematic position.</description></item>
+    /// <item><term>Forced alias values are needed to be dumped.</term>
+    /// <description>Though you can add custom alias values by the <see cref="SetAliasValue">SetAliasValue</see> method it will dump an alias only if it is really referenced. To emit aliases explicitly use the <see cref="ResXResourceWriter"/>
+    /// class and its <see cref="ResXResourceWriter.AddAlias(string,string,bool)">ResXResourceWriter.AddAlias</see> method.</description></item>
     /// </list>
     /// </para>
     /// <para>The <see cref="ResXResourceSet"/> class represents full .resx content in memory. Use this class if:
@@ -365,17 +374,24 @@ namespace KGySoft.Libraries.Resources
     [Serializable]
     public sealed class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
     {
+        #region Fields
+
+        private readonly string fileName;
+
         private Dictionary<string, ResXDataNode> resources;
         [NonSerialized] private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
         private Dictionary<string, ResXDataNode> metadata;
         [NonSerialized] private Dictionary<string, ResXDataNode> metadataIgnoreCase;
         private Dictionary<string, string> aliases;
-        private readonly string fileName;
         private bool safeMode;
         private bool autoFreeXmlData = true;
         private string basePath;
         private bool isModified;
         private int version;
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// If this <see cref="ResXResourceSet"/> has been created from a file, returns the name of the original file.
@@ -396,6 +412,7 @@ namespace KGySoft.Libraries.Resources
         /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
         /// <para>If <c>SafeMode</c> is <c>true</c>, the <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
         /// can be freed when calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
+        /// <para>For examples see the documentation of the <see cref="ResXResourceSet"/> class.</para>
         /// </remarks>
         /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
@@ -412,37 +429,15 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-#error itt tartok
         /// <summary>
         /// Gets the base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.
         /// </summary>
         /// <returns>
         /// A path that, if prepended to the relative file path specified in a <see cref="ResXFileRef"/> object, yields an absolute path to a resource file.
         /// </returns>
-        public string BasePath
-        {
-            get { return basePath; }
-
-            //// TODO: delete
-            //set
-            //{
-            //    if (resources == null)
-            //        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-            //    basePath = value;
-            //}
-        }
-
-        // TODO: ez majd csak a Writerben és DRM-ben lesz property, minden másik osztályban a save-ben megmondható
-        //public bool CompatibilityMode
-        //{
-        //    get { return compatibilityMode; }
-        //    set
-        //    {
-        //        if (resources == null)
-        //            throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-        //        compatibilityMode = value;
-        //    }
-        //}
+        /// <remarks>This property is read-only. To define a base path specify it in the constructors. When a <see cref="ResXResourceSet"/> is saved by
+        /// one of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods you can define an alternative path, which will nor overwrite the value of this property.</remarks>
+        public string BasePath => basePath;
 
         /// <summary>
         /// Gets or sets whether the raw XML data of the stored elements should be freed once their value has been deserialized.
@@ -464,7 +459,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets whether this <see cref="ResXResourceSet" /> instance is modified.
+        /// Gets whether this <see cref="ResXResourceSet" /> instance is modified (contains unsaved data).
         /// </summary>
         /// <value>
         /// <c>true</c> if this instance is modified; otherwise, <c>false</c>.
@@ -480,29 +475,11 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        private void Initialize(ResXResourceReader reader)
-        {
-            using (reader)
-            {
-                // this will not deserialize anything just quickly parses the .resx and stores the raw nodes
-                reader.ReadAllInternal(resources, metadata, aliases);
-            }
-        }
+        #endregion
 
-        /// <summary>
-        /// Initializes a new, empty instance of the <see cref="ResXResourceSet"/> class.
-        /// </summary>
-        /// <param name="basePath">The base path for the relative file paths specified in the <see cref="ResXFileRef"/> objects,
-        /// which will be added to this empty <see cref="ResXResourceSet"/> instance.</param>
-        /// <remarks>This constructor is private so the single string parameter in the public constructors means file name, which is compatible with the system version.</remarks>
-        private ResXResourceSet(string basePath)
-        {
-            Table = null; // base ctor initializes that; however, we don't need it.
-            this.basePath = basePath;
-            resources = new Dictionary<string, ResXDataNode>();
-            metadata = new Dictionary<string, ResXDataNode>(0);
-            aliases = new Dictionary<string, string>(0);
-        }
+        #region Constructors
+
+        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of a <see cref="ResXResourceSet"/> class using the <see cref="ResXResourceReader"/> that opens and reads resources from the specified file.
@@ -517,17 +494,6 @@ namespace KGySoft.Libraries.Resources
             {
                 Initialize(new ResXResourceReader(fileName) { BasePath = basePath ?? Path.GetDirectoryName(fileName) });
             }
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="ResXResourceSet"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
-        /// </summary>
-        /// <param name="fileContents">A string containing XML resource-formatted information.</param>
-        /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.</param>
-        /// <returns></returns>
-        public static ResXResourceSet FromFileContents(string fileContents, string basePath = null)
-        {
-            return new ResXResourceSet(new StringReader(fileContents), basePath);
         }
 
         /// <summary>
@@ -552,11 +518,55 @@ namespace KGySoft.Libraries.Resources
             Initialize(new ResXResourceReader(textReader) { BasePath = basePath });
         }
 
+        #endregion
+
+        #region Private Constructors
+
         /// <summary>
-        /// Returns the preferred resource reader class for this kind of <see cref="ResXResourceSet"/>.
+        /// Initializes a new, empty instance of the <see cref="ResXResourceSet"/> class.
+        /// </summary>
+        /// <param name="basePath">The base path for the relative file paths specified in the <see cref="ResXFileRef"/> objects,
+        /// which will be added to this empty <see cref="ResXResourceSet"/> instance.</param>
+        /// <remarks>This constructor is private so the single string parameter in the public constructors means file name, which is compatible with the system version.</remarks>
+        private ResXResourceSet(string basePath)
+        {
+            Table = null; // base ctor initializes that; however, we don't need it.
+            this.basePath = basePath;
+            resources = new Dictionary<string, ResXDataNode>();
+            metadata = new Dictionary<string, ResXDataNode>(0);
+            aliases = new Dictionary<string, string>(0);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        /// <summary>
+        /// Creates a new <see cref="ResXResourceSet"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
+        /// </summary>
+        /// <param name="fileContents">A string containing XML resource-formatted information.</param>
+        /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.</param>
+        /// <returns></returns>
+        public static ResXResourceSet FromFileContents(string fileContents, string basePath = null)
+        {
+            return new ResXResourceSet(new StringReader(fileContents), basePath);
+        }
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Returns the type of <see cref="ResXResourceReader"/>, which is the preferred resource reader class for <see cref="ResXResourceSet"/>.
         /// </summary>
         /// <returns>
-        /// The <see cref="Type"/> of the preferred resource reader for this kind of <see cref="ResXResourceSet"/>.
+        /// The <see cref="Type"/> of <see cref="ResXResourceReader"/>, which is the preferred resource reader for <see cref="ResXResourceSet"/>.
         /// </returns>
         public override Type GetDefaultReader()
         {
@@ -564,10 +574,10 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Returns the preferred resource writer class for this kind of <see cref="ResXResourceSet"/>.
+        /// Returns the type of <see cref="ResXResourceWriter"/>, which is the preferred resource writer class for <see cref="ResXResourceSet"/>.
         /// </summary>
         /// <returns>
-        /// The <see cref="Type"/> of the preferred resource writer for this kind of <see cref="ResXResourceSet"/>.
+        /// The <see cref="Type"/> of <see cref="ResXResourceWriter"/>, which is the preferred resource writer for <see cref="ResXResourceSet"/>.
         /// </returns>
         public override Type GetDefaultWriter()
         {
@@ -575,25 +585,23 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Releases resources (other than memory) associated with the current instance, closing internal managed objects if requested.
-        /// </summary>
-        /// <param name="disposing">Indicates whether the objects contained in the current instance should be explicitly closed.</param>
-        protected override void Dispose(bool disposing)
-        {
-            resources = null;
-            metadata = null;
-            aliases = null;
-            resourcesIgnoreCase = null;
-            metadataIgnoreCase = null;
-            basePath = null;
-        }
-
-        /// <summary>
         /// Returns an <see cref="IDictionaryEnumerator" /> that can iterate through the resources of the <see cref="ResXResourceSet" />.
         /// </summary>
         /// <returns>
-        /// An <see cref="IDictionaryEnumerator" /> for this <see cref="ResXResourceSet" />.
+        /// An <see cref="IDictionaryEnumerator" /> for the resources of this <see cref="ResXResourceSet" />.
         /// </returns>
+        /// <remarks>
+        /// <para>The returned enumerator iterates through the resources of the <see cref="ResXResourceSet"/>.
+        /// To obtain a specific resource by name, use the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see> or <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString">GetString</see> methods.
+        /// To obtain an enumerator for the metadata entries instead, use the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method instead.</para>
+        /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
+        /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
+        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// </remarks>
+        /// <seealso cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject"/>
+        /// <seealso cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString"/>
+        /// <seealso cref="GetMetadataEnumerator"/>
+        /// <seealso cref="GetAliasEnumerator"/>
         public override IDictionaryEnumerator GetEnumerator()
         {
             return GetEnumeratorInternal(ResXEnumeratorModes.Resources);
@@ -603,8 +611,20 @@ namespace KGySoft.Libraries.Resources
         /// Returns an <see cref="IDictionaryEnumerator" /> that can iterate through the metadata of the <see cref="ResXResourceSet" />.
         /// </summary>
         /// <returns>
-        /// An <see cref="IDictionaryEnumerator" /> for this <see cref="ResXResourceSet" />.
+        /// An <see cref="IDictionaryEnumerator" /> for the metadata of this <see cref="ResXResourceSet" />.
         /// </returns>
+        /// <remarks>
+        /// <para>The returned enumerator iterates through the metadata entries of the <see cref="ResXResourceSet"/>.
+        /// To obtain a specific metadata by name, use the <see cref="GetMetaObject">GetMetaObject</see> or <see cref="GetMetaString">GetMetaString</see> methods.
+        /// To obtain an enumerator for the resources instead, use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
+        /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
+        /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
+        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// </remarks>
+        /// <seealso cref="GetMetaObject"/>
+        /// <seealso cref="GetMetaString"/>
+        /// <seealso cref="GetEnumerator"/>
+        /// <seealso cref="GetAliasEnumerator"/>
         public IDictionaryEnumerator GetMetadataEnumerator()
         {
             return GetEnumeratorInternal(ResXEnumeratorModes.Metadata);
@@ -614,28 +634,22 @@ namespace KGySoft.Libraries.Resources
         /// Returns an <see cref="IDictionaryEnumerator" /> that can iterate through the aliases of the <see cref="ResXResourceSet" />.
         /// </summary>
         /// <returns>
-        /// An <see cref="IDictionaryEnumerator" /> for this <see cref="ResXResourceSet" />.
+        /// An <see cref="IDictionaryEnumerator" /> for the aliases of this <see cref="ResXResourceSet" />.
         /// </returns>
+        /// <remarks>
+        /// <para>The returned enumerator iterates through the assembly aliases of the <see cref="ResXResourceSet"/>.
+        /// To obtain a specific alias value by assembly name, use the <see cref="GetAliasValue">GetAliasValue</see> method.
+        /// To obtain an enumerator for the resources instead, use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
+        /// <para>The <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is always a <see cref="string"/> regardless of the value of the <see cref="SafeMode"/> property.</para>
+        /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>
+        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// </remarks>
+        /// <seealso cref="GetAliasValue"/>
+        /// <seealso cref="GetEnumerator"/>
+        /// <seealso cref="GetMetadataEnumerator"/>
         public IDictionaryEnumerator GetAliasEnumerator()
         {
             return GetEnumeratorInternal(ResXEnumeratorModes.Aliases);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumeratorInternal(ResXEnumeratorModes.Resources);
-        }
-
-        private IDictionaryEnumerator GetEnumeratorInternal(ResXEnumeratorModes mode)
-        {
-            var syncObj = resources;
-            if (syncObj == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-
-            lock (syncObj)
-            {
-                return new ResXResourceEnumerator(this, mode, version);
-            }
         }
 
         /// <summary>
@@ -647,9 +661,10 @@ namespace KGySoft.Libraries.Resources
         /// from which the resource can be obtained. If the requested <paramref name="name"/> cannot be found, <see langword="null"/> is returned.
         /// </returns>
         /// <remarks>
-        /// When <see cref="SafeMode"/> is <c>true</c>, the returned object is a <see cref="ResXDataNode"/> instance
-        /// from which the resource can be obtained.
+        /// <para>When <see cref="SafeMode"/> is <c>true</c>, the returned object is a <see cref="ResXDataNode"/> instance from which the resource can be obtained.</para>
+        /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> and <see cref="ResXDataNode"/> classes.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         public override object GetObject(string name)
         {
@@ -666,9 +681,10 @@ namespace KGySoft.Libraries.Resources
         /// from which the resource can be obtained. If the requested <paramref name="name"/> cannot be found, <see langword="null"/> is returned.
         /// </returns>
         /// <remarks>
-        /// When <see cref="SafeMode"/> is <c>true</c>, the returned object is a <see cref="ResXDataNode"/> instance
-        /// from which the resource can be obtained.
+        /// <para>When <see cref="SafeMode"/> is <c>true</c>, the returned object is a <see cref="ResXDataNode"/> instance from which the resource can be obtained.</para>
+        /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> and <see cref="ResXDataNode"/> classes.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         public override object GetObject(string name, bool ignoreCase)
         {
@@ -684,6 +700,10 @@ namespace KGySoft.Libraries.Resources
         /// If <see cref="SafeMode"/> is <c>false</c>, an <see cref="InvalidOperationException"/> will be thrown for
         /// non-string resources. If <see cref="SafeMode"/> is <c>true</c>, the raw XML value will be returned for non-string resources.
         /// </returns>
+        /// <remarks>
+        /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the resource is not <see cref="string"/>.</exception>
         public override string GetString(string name)
@@ -701,6 +721,10 @@ namespace KGySoft.Libraries.Resources
         /// If <see cref="SafeMode"/> is <c>false</c>, an <see cref="InvalidOperationException"/> will be thrown for
         /// non-string resources. If <see cref="SafeMode"/> is <c>true</c>, the raw XML value will be returned for non-string resources.
         /// </returns>
+        /// <remarks>
+        /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the resource is not <see cref="string"/>.</exception>
         public override string GetString(string name, bool ignoreCase)
@@ -722,6 +746,7 @@ namespace KGySoft.Libraries.Resources
         /// When <see cref="SafeMode"/> is <c>true</c>, the returned object is a <see cref="ResXDataNode"/> instance
         /// from which the metadata can be obtained.
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         public object GetMetaObject(string name, bool ignoreCase = false)
         {
@@ -739,6 +764,7 @@ namespace KGySoft.Libraries.Resources
         /// If <see cref="SafeMode"/> is <c>false</c>, an <see cref="InvalidOperationException"/> will be thrown for
         /// non-string metadata. If <see cref="SafeMode"/> is <c>true</c>, the raw XML value will be returned for non-string metadata.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the metadata is not <see cref="string"/>.</exception>
         public string GetMetaString(string name, bool ignoreCase = false)
@@ -764,7 +790,7 @@ namespace KGySoft.Libraries.Resources
             lock (dict)
             {
                 if (!dict.TryGetValue(alias, out result))
-                    return null;                
+                    return null;
             }
 
             return result;
@@ -781,6 +807,13 @@ namespace KGySoft.Libraries.Resources
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveObject"/> method (<see cref="GetObject(string)"/> will return <see langword="null"/> in both cases),
         /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetEnumerator"/> method.</para>
+        /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
+        /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
+        /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
+        /// If <c>forceEmbeddedResources</c> is <c>true</c> on saving, the file references will be converted to embedded ones.</para>
+        /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
+        /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
+        /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
         public void SetObject(string name, object value)
         {
@@ -798,6 +831,13 @@ namespace KGySoft.Libraries.Resources
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveMetaObject"/> method (<see cref="GetMetaObject"/> will return <see langword="null"/> in both cases),
         /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetMetadataEnumerator"/> method.</para>
+        /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
+        /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
+        /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
+        /// If <c>forceEmbeddedResources</c> is <c>true</c> on saving, the file references will be converted to embedded ones.</para>
+        /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
+        /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
+        /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
         public void SetMetaObject(string name, object value)
         {
@@ -809,6 +849,10 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="alias">The alias name to use instead of <paramref name="assemblyName"/> in the saved .resx file.</param>
         /// <param name="assemblyName">The fully or partially qualified name of the assembly.</param>
+        /// <remarks>
+        /// <note>The added alias values are dumped on saving on demand: only when a resource type is defined in the <see cref="Assembly"/>, whose name is the <paramref name="assemblyName"/>.
+        /// Other alias names will be auto generated for non-specified assemblies.</note>
+        /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> or <paramref name="alias"/> is <see langword="null"/>.</exception>
         public void SetAliasValue(string alias, string assemblyName)
@@ -818,10 +862,10 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (alias == null)
-                throw new ArgumentNullException("alias", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(alias), Res.Get(Res.ArgumentNull));
 
             if (assemblyName == null)
-                throw new ArgumentNullException("assemblyName", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(assemblyName), Res.Get(Res.ArgumentNull));
 
             lock (dict)
             {
@@ -854,7 +898,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         public void RemoveMetaObject(string name)
         {
-            RemoveValueInternal(name, metadata, ref metadataIgnoreCase);            
+            RemoveValueInternal(name, metadata, ref metadataIgnoreCase);
         }
 
         /// <summary>
@@ -885,13 +929,15 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
         /// <param name="fileName">The location of the file where you want to save the resources.</param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
-        /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
-        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
+        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
+        /// <br/>Default value: <c>false</c>.</param>
         /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
         /// <br/>Default value: <c>false</c></param>
+        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
+        /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.
+        /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
@@ -905,13 +951,15 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
         /// <param name="stream">The stream to which you want to save.</param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
-        /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
-        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
+        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
+        /// <br/>Default value: <c>false</c>.</param>
         /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
         /// <br/>Default value: <c>false</c></param>
+        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
+        /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.
+        /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
@@ -925,13 +973,14 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
         /// <param name="textWriter">The text writer to which you want to save.</param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
-        /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
         /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
         /// <br/>Default value: <c>false</c></param>
+        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
+        /// Applicable if <paramref name="forceEmbeddedResources"/> is <c>false</c>.
+        /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
@@ -939,6 +988,88 @@ namespace KGySoft.Libraries.Resources
             using (var writer = new ResXResourceWriter(textWriter) { BasePath = basePath ?? this.basePath, CompatibleFormat = compatibleFormat })
             {
                 Save(writer, forceEmbeddedResources);
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the current <see cref="ResXResourceSet"/> contains a resource with the given <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to check.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional.
+        /// <br/>Default value: <c>false</c></param>
+        /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a resource with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
+        public bool ContainsResource(string name, bool ignoreCase = false)
+        {
+            return ContainsInternal(name, ignoreCase, resources, ref resourcesIgnoreCase);
+        }
+
+        /// <summary>
+        /// Gets whether the current <see cref="ResXResourceSet"/> contains a metadata with the given <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the metadata to check.</param>
+        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional.
+        /// <br/>Default value: <c>false</c></param>
+        /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a metadata with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
+        public bool ContainsMeta(string name, bool ignoreCase = false)
+        {
+            return ContainsInternal(name, ignoreCase, metadata, ref metadataIgnoreCase);
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal object GetResourceInternal(string name, bool ignoreCase, bool isString, bool asSafe)
+        {
+            return GetValueInternal(name, ignoreCase, isString, asSafe, resources, ref resourcesIgnoreCase);
+        }
+
+        internal object GetMetaInternal(string name, bool ignoreCase, bool isString, bool asSafe)
+        {
+            return GetValueInternal(name, ignoreCase, isString, asSafe, metadata, ref metadataIgnoreCase);
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// Releases the resources of the current <see cref="ResXResourceSet"/> instance.
+        /// </summary>
+        /// <param name="disposing">Indicates whether the objects contained in the current instance should be explicitly closed.</param>
+        protected override void Dispose(bool disposing)
+        {
+            // base.Dispose is not called because Table is nullified in ctor and Reader is never set
+            resources = null;
+            metadata = null;
+            aliases = null;
+            resourcesIgnoreCase = null;
+            metadataIgnoreCase = null;
+            basePath = null;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void Initialize(ResXResourceReader reader)
+        {
+            using (reader)
+            {
+                // this will not deserialize anything just quickly parses the .resx and stores the raw nodes
+                reader.ReadAllInternal(resources, metadata, aliases);
+            }
+        }
+
+        private IDictionaryEnumerator GetEnumeratorInternal(ResXEnumeratorModes mode)
+        {
+            var syncObj = resources;
+            if (syncObj == null)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+
+            lock (syncObj)
+            {
+                return new ResXResourceEnumerator(this, mode, version);
             }
         }
 
@@ -1001,40 +1132,6 @@ namespace KGySoft.Libraries.Resources
             }
 
             return node;
-        }
-
-        internal object GetResourceInternal(string name, bool ignoreCase, bool isString, bool asSafe)
-        {
-            return GetValueInternal(name, ignoreCase, isString, asSafe, resources, ref resourcesIgnoreCase);
-        }
-
-        internal object GetMetaInternal(string name, bool ignoreCase, bool isString, bool asSafe)
-        {
-            return GetValueInternal(name, ignoreCase, isString, asSafe, metadata, ref metadataIgnoreCase);
-        }
-
-        /// <summary>
-        /// Gets whether the current <see cref="ResXResourceSet"/> contains a resource with the given <paramref name="name"/>.
-        /// </summary>
-        /// <param name="name">The name of the resource to check.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
-        /// <br/>Default value: <c>false</c></param>
-        /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a resource with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
-        public bool ContainsResource(string name, bool ignoreCase = false)
-        {
-            return ContainsInternal(name, ignoreCase, resources, ref resourcesIgnoreCase);
-        }
-
-        /// <summary>
-        /// Gets whether the current <see cref="ResXResourceSet"/> contains a metadata with the given <paramref name="name"/>.
-        /// </summary>
-        /// <param name="name">The name of the metadata to check.</param>
-        /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored. This parameter is optional
-        /// <br/>Default value: <c>false</c></param>
-        /// <returns><c>true</c>, if the current <see cref="ResXResourceSet"/> contains a metadata with name <paramref name="name"/>; otherwise, <c>false</c>.</returns>
-        public bool ContainsMeta(string name, bool ignoreCase = false)
-        {
-            return ContainsInternal(name, ignoreCase, metadata, ref metadataIgnoreCase);
         }
 
         private bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
@@ -1146,32 +1243,32 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumeratorInternal(ResXEnumeratorModes.Resources);
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
         #region IResXResourceContainer Members
 
-        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources
-        {
-            get { return resources; }
-        }
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources => resources;
 
-        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata
-        {
-            get { return metadata; }
-        }
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata => metadata;
 
-        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases
-        {
-            get { return aliases; }
-        }
+        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases => aliases;
 
-        bool IResXResourceContainer.SafeMode
-        {
-            get { return safeMode; }
-        }
+        bool IResXResourceContainer.SafeMode => safeMode;
 
-        ITypeResolutionService IResXResourceContainer.TypeResolver
-        {
-            get { return null; }
-        }
+        ITypeResolutionService IResXResourceContainer.TypeResolver => null;
 
         int IResXResourceContainer.Version => version;
 
@@ -1180,14 +1277,10 @@ namespace KGySoft.Libraries.Resources
         #region IExpandoResourceSetInternal Members
 
         object IExpandoResourceSetInternal.GetResource(string name, bool ignoreCase, bool isString, bool asSafe)
-        {
-            return GetResourceInternal(name, ignoreCase, isString, asSafe);
-        }
+            => GetResourceInternal(name, ignoreCase, isString, asSafe);
 
         object IExpandoResourceSetInternal.GetMeta(string name, bool ignoreCase, bool isString, bool asSafe)
-        {
-            return GetMetaInternal(name, ignoreCase, isString, asSafe);
-        }
+            => GetMetaInternal(name, ignoreCase, isString, asSafe);
 
         #endregion
     }

@@ -90,6 +90,7 @@ namespace KGySoft.Libraries.Resources
     ///         Console.WriteLine(result.GetStringBuilder());
     ///     }
     /// }
+    /// 
     /// // The example displays the following output:
     /// // <?xml version="1.0" encoding="utf-8"?>
     /// // <root>
