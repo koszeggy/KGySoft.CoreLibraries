@@ -31,7 +31,7 @@ namespace KGySoft.Libraries
     /// <summary>
     /// Represents the language settings of the current thread. Use this class if you want to be notified on
     /// language changes and to control the behavior of the <see cref="DynamicResourceManager"/> instances,
-    /// which use centralized settings.
+    /// which are configured to use centralized settings.
     /// </summary>
     /// <seealso cref="DynamicResourceManager"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>

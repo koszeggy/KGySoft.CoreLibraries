@@ -481,6 +481,20 @@ namespace _LibrariesTest.Libraries.Resources
         }
 
         [TestMethod]
+        public void IsModifiedTests()
+        {
+            var manager = new ResXResourceManager("TestResourceResX");
+
+            // this loads inv and creates proxies for hu-HU and hu
+            manager.GetResourceSet(huHU, true, true);
+            Assert.IsFalse(manager.IsModified);
+
+            // this replaces hu with ResXResourceSet and removes hu-HU proxy as it is invalidated
+            manager.SetObject("new", "new", hu);
+            Assert.IsTrue(manager.IsModified);
+        }
+
+        [TestMethod]
         public void SaveTest()
         {
             var manager = new ResXResourceManager("TestResourceResX");

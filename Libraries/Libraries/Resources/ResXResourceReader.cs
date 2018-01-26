@@ -43,6 +43,8 @@ namespace KGySoft.Libraries.Resources
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceReader</a> section to see the differences.</note>
+    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>You can use the <see cref="ResXResourceReader"/> class to enumerate resources in .resx files by traversing the dictionary enumerator (<see cref="IDictionaryEnumerator"/>) that is returned by the
     /// <see cref="GetEnumerator">GetEnumerator</see> method. You call the methods provided by <see cref="IDictionaryEnumerator"/> to advance to the next resource and to read the name and value of each resource in the .resx file.
     /// <note>The <see cref="ResXResourceReader"/> class provides more enumerators.
@@ -242,14 +244,6 @@ namespace KGySoft.Libraries.Resources
     /// // Key: item
     /// // Value: This is a duplicate for key 'item'.</code>
     /// </example>
-    /// <h1 class="heading">When to use <see cref="ResXResourceReader"/> instead of <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
-    /// <para><see cref="ResXResourceReader"/> is the most low-level option to read the content of a .resx file. <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/>
-    /// classes also instantiate it internally but there are some cases when it is needed to use a <see cref="ResXResourceReader"/> explicitly:
-    /// <list type="bullet">
-    /// <item>The .resx file may contain redefined keys and duplications needed to be retrieved (see <see cref="AllowDuplicatedKeys"/> property). <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes do not allow duplicates.</item>
-    /// <item>Custom type resolution is needed. You can pass a <see cref="ITypeResolutionService"/> instance to one of the constructors to handle the type resolutions.</item>
-    /// </list>
-    /// </para>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h1>
     /// <para><see cref="ResXResourceReader"/> can read .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.
     /// <note>When reading a .resx file written by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class,

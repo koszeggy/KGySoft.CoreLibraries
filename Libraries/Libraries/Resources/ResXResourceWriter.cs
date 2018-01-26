@@ -37,25 +37,16 @@ namespace KGySoft.Libraries.Resources
 {
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section to see the differences.</note>
+    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
     /// <para>If <see cref="CompatibleFormat"/> property is <c>true</c>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
     /// but by the original <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
-    /// <h1 class="heading">When to use <see cref="ResXResourceWriter"/> instead of <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
-    /// <para><see cref="ResXResourceWriter"/> is the most low-level option to write the content of a .resx file. <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/>
-    /// classes also instantiate it internally when their <c>Save</c> methods are called but there are some cases when it is needed to use a <see cref="ResXResourceWriter"/> explicitly:
-    /// </para>
-    /// <list type="bullet">
-    /// <item>Though re-using the same name multiple times is not preferred, you can do it by using a <see cref="ResXResourceWriter"/> instance. To read such a content you need to
-    /// use a <see cref="ResXResourceReader"/> and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <c>true</c>.</item>
-    /// <item>If you need to adjust the alias generation manually you have to use a <see cref="ResXResourceWriter"/>. Use the <see cref="AddAlias(string,AssemblyName,bool)">AddAlias</see> method to
-    /// define a custom alias for an assembly. The <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes use auto alias generation (See <see cref="AutoGenerateAlias"/> property).</item>
-    /// <item>If you need to use special custom names for some types while serializing resources containing binary serialized data you have to instantiate a <see cref="ResXResourceWriter"/> with a <c>typeNameConverter</c>.
-    /// To read such a custom .resx content you might need to use a <see cref="ResXResourceReader"/> with a <c>typeResolver</c>.</item>
-    /// </list>
     /// <example>
     /// The following example shows how to create a resource file by <see cref="ResXResourceWriter"/> and add different kind of resource objects to it. At the end it displays the resulting .resx file content.
     /// <code lang="C#"><![CDATA[
@@ -530,7 +521,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets or sets whether the header should be written. If both <see cref="CompatibleFormat"/> and <see cref="OmitHeader"/> are <c>true</c>, then
+        /// Gets or sets whether the header should be omitted. If both <see cref="CompatibleFormat"/> and <see cref="OmitHeader"/> are <c>true</c>, then
         /// only the XML comment will be omitted. If <see cref="CompatibleFormat"/> is <c>false</c> and <see cref="OmitHeader"/> is <c>true</c>, then
         /// the comment, the .resx schema and the <c>&lt;resheader&gt;</c> elements will be omitted, too.
         /// <br/>Default value: <c>true</c>.

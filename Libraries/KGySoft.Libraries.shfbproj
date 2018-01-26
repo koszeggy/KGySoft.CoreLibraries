@@ -37,7 +37,7 @@ Contains the &lt;strong&gt;Reflector&lt;/strong&gt; class that provides most of 
       <NamespaceSummaryItem name="KGySoft.Libraries.Serialization" isDocumented="True">Contains classes both for XML and binary serialization.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="KGySoft.Libraries.Diagnostics" isDocumented="True">Contains diagnostic tools and &lt;strong&gt;Exception&lt;/strong&gt; utilities along with some generic debugger views.</NamespaceSummaryItem>
       <NamespaceSummaryItem name="KGySoft.Libraries.Collections" isDocumented="True">Contains generic collections such as &lt;strong&gt;Cache&lt;/strong&gt; or &lt;strong&gt;CircularList&lt;/strong&gt; classes.</NamespaceSummaryItem>
-      <NamespaceSummaryItem name="KGySoft.Libraries.Resources" isDocumented="True">Contains classes for resource management, which support read-write access directly to .resx files (&lt;strong&gt;ResXResourceManager&lt;/strong&gt;) or even combined access to compiled and .resx resoruces (&lt;strong&gt;HybridResourceManager&lt;/strong&gt;, &lt;strong&gt;DynamicResourceManager&lt;/strong&gt;).</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="KGySoft.Libraries.Resources" isDocumented="True" />
     </NamespaceSummaries>
     <SyntaxFilters>Standard</SyntaxFilters>
     <CleanIntermediates>True</CleanIntermediates>

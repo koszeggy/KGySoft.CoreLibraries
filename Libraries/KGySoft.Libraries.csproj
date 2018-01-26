@@ -131,6 +131,7 @@
     <Compile Include="Libraries\Resources\Interfaces\IExpandoResourceSetInternal.cs" />
     <Compile Include="Libraries\Resources\Interfaces\IResXResourceContainer.cs" />
     <Compile Include="Libraries\Resources\Interfaces\IExpandoResourceManager.cs" />
+    <Compile Include="Libraries\Resources\NamespaceDoc.cs" />
     <Compile Include="Libraries\Resources\ResourceFallbackManager.cs" />
     <Compile Include="Libraries\Resources\Enums\ResourceManagerSources.cs" />
     <Compile Include="Libraries\Resources\Enums\ResourceSetRetrieval.cs" />
@@ -186,7 +187,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

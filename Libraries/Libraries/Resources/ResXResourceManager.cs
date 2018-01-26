@@ -21,15 +21,50 @@ namespace KGySoft.Libraries.Resources
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
     /// New elements can be added as well, which can be saved into the <c>.resx</c> files.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <see cref="ResourceManager"/> class.
     /// </summary>
     /// <remarks>
+    /// <para><see cref="ResXResourceManager"/> class is derived from <see cref="ResourceManager"/> so it can be used the same way.
+    /// The main difference is that instead of working with binary compiled resources the <see cref="ResXResourceManager"/> class uses XML resources (.resx files) directly.
+    /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures and it can save the changed contents.</para>
+    /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
+    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// <h1 class="heading">Using XML resources created by Visual Studio</h1>
+    /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.</para>
+    /// <list type="number">
+    #error itt tartok
+    /// todo
+    /// - Az egész h1 rész egy Examples fejezetnek felel meg, ezért nincs <example></example> részben. Rövid leírások, screenshotok és kódrészek válthatják egymást az alábbi lépések szerint
+    /// - Create resources by Visual Studio (screenshots) - eg en-US, en, inv. Lehet inv-ben egy kép és egy file reference is, mutatni, a folderbe mik másolódnak.
+    /// - Turn off EmbeddedResource, turn on Copy if newer
+    /// - Use Resources folder or change <see cref="ResXResourcesDir"/>
+    /// - Proper constructor
+    /// - If add new resources, compatibility mode = on so it can be changes by VS (do not forget to copy back)
+    /// </list>
+    /// 
+    /// todo - itt jöhetnek újabb example blokkok, kb. a ResXResourceSet mintájára.
+    /// - valami mint kb a unit testekben: en-US szerint elkérés, majd en és en-GB szerint, esetleg en-GB-hez hozzáadás, majd save, milyen file-ok jönnek létre. Utalás a fenti példára is.
+    /// - SafeMode, obj resource-ok
+    /// <h1 class="heading">Comparison with ResourceManager<a name="comparison">&#160;</a></h1>
+    /// <para>While <see cref="ResourceManager"/> is read-only and works on binary resources, <see cref="ResXResourceManager"/> supports expansion (see <see cref="IExpandoResourceManager"/>) and works on XML resource (.resx) files.</para>
+    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
+    /// <list type="bullet">
+    /// todo - konstruktorok, és neutralResourcesLanguage forrása
+    /// todo - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
+    /// </list>
+    /// </para>
+    /// <para><strong>New features and improvements</strong> compared to <see cref="ResourceManager"/>:
+    /// <list type="bullet">
+    /// <item><term>todo</term>
+    /// <description>todo</description></item>
+    /// New features in addition to ResourceManager:
+    /// - write/delete/etc
+    /// - SafeMode
+    /// - new members
+    /// </list>
+    /// </para>
     /// </remarks>
-    // - When to use XXXResourceManager, Set, Reader/Writer (minden managerbe)
-    // - sok-sok example, kb. a ResXResourceSet mintájára. + resource hozzáadás új cluture szerint, milyen file-ok jönnek létre
-    // ResXResourceManager vs ResourceManager inkompatibilitás:
-    // - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
-    // New features in addition to ResourceManager:
-    // - new members
     [Serializable]
     public class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
@@ -52,7 +87,7 @@ namespace KGySoft.Libraries.Resources
 
             /// <summary>
             /// Gets whether this proxy has been loaded by <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and trying parents.
-            /// In this can there might be unloaded parents for this resource set.
+            /// In this case there might be unloaded parents for this resource set.
             /// </summary>
             internal bool CanHaveLoadableParent
             {
@@ -92,7 +127,7 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        internal const string resXFileExtension = ".resx";
+        private const string resXFileExtension = ".resx";
 
         private string resxResourcesDir = "Resources";
 
@@ -162,7 +197,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
-        /// has been found but the resource set was requested last time. In cases there are different this method performs usually better.
+        /// has been found but the resource set was requested last time. In cases it means difference this method performs usually better (no unneeded traversal again and again).
         /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
@@ -434,6 +469,9 @@ namespace KGySoft.Libraries.Resources
             return rs?.GetMetaInternal(name, IgnoreCase, isString, safeMode);
         }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         public override void ReleaseAllResources()
         {
             // This check prevents an already disposed object from reanimation (because base re-sets the resource sets)
@@ -502,8 +540,7 @@ namespace KGySoft.Libraries.Resources
 
         private string GetResourceFileName(string cultureName)
         {
-            StringBuilder result = new StringBuilder(260);
-            result.Append(BaseName);
+            StringBuilder result = new StringBuilder(BaseName, BaseName.Length + 32);
             if (CultureInfo.InvariantCulture.Name != cultureName)
             {
                 result.Append('.');
@@ -542,11 +579,12 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
+            // Internally just call the internal GetResXResourceSet instead. Via public methods GetExpandoResourceSet is called, which adjusts safe mode of the result accordingly to this instance.
             Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
 
             // the base tries to parse the stream as binary. It would be better if GrovelForResourceSet
-            // would be protected in base, so it would be enough to override only that (at least in .NET 4 and above).
-            // Or, not exactly because we cache the non-found cultures differently via a proxy.
+            // would be protected in base, so it would be enough to override only that one (at least in .NET 4 and above).
+            // Actually that would not be enough because we cache the non-found cultures differently via a proxy.
             return GetResXResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
         }
 
@@ -600,8 +638,8 @@ namespace KGySoft.Libraries.Resources
                         if (Equals(currentCultureInfo, foundProxyCulture))
                             return resx;
 
-                        // othwerwise, we found a parent: we need to re-create the proxies in the cache to the children
-                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an incostistent parent in the hierarchy.");
+                        // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
+                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
                         foundCultureToAdd = currentCultureInfo;
                         break;
                     }
@@ -878,7 +916,8 @@ namespace KGySoft.Libraries.Resources
             {
                 lock (SyncRoot)
                 {
-                    return ResourceSets.Values.Cast<ResXResourceSet>().Any(rs => rs.IsModified);
+                    // skipping proxies for this check
+                    return ResourceSets.Values.OfType<ResXResourceSet>().Any(rs => rs.IsModified);
                 }
             }
         }

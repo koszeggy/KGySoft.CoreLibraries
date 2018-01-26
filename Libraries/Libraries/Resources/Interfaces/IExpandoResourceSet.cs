@@ -215,10 +215,10 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, and this <see cref="IExpandoResourceSet"/> instance
-        /// is a hybrid resource set, <see cref="GetObject"/> will always return <see langword="null"/>, even if <paramref name="name"/> is
+        /// is a hybrid resource set, <see cref="GetObject">GetObject</see> will always return <see langword="null"/>, even if <paramref name="name"/> is
         /// defined in the original binary resource set. Thus you can force to take the parent resource set for example in case of a <see cref="HybridResourceManager"/>.</para>
         /// <para>To remove the user-defined content and reset the original resource defined in the binary resource set (if any), use
-        /// the <see cref="RemoveObject"/> method.</para>
+        /// the <see cref="RemoveObject">RemoveObject</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="IExpandoResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.IExpandoResourceSet.Save">Save</see> methods.
@@ -237,7 +237,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
-        /// <para>To remove the user-defined content use the <see cref="RemoveMetaObject"/> method.</para>
+        /// <para>To remove the user-defined content use the <see cref="RemoveMetaObject">RemoveMetaObject</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="IExpandoResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.IExpandoResourceSet.Save">Save</see> methods.
@@ -271,8 +271,8 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
         /// <para>If this <see cref="IExpandoResourceSet"/> instance is a hybrid resource set, and there is a binary resource
-        /// defined for <paramref name="name"/>, then after this call the originally defined value will be returned by <see cref="GetObject"/> method.
-        /// If you want to force <see cref="GetObject"/> to return always <see langword="null"/> for this resource set, then use the <see cref="SetObject"/> method with a <see langword="null"/> value</para>
+        /// defined for <paramref name="name"/>, then after this call the originally defined value will be returned by <see cref="GetObject">GetObject</see> method.
+        /// If you want to force <see cref="GetObject">GetObject</see> to return always <see langword="null"/> for this resource set, then use the <see cref="SetObject">SetObject</see> method with a <see langword="null"/> value</para>
         /// </remarks>
         void RemoveObject(string name);
 
@@ -297,10 +297,10 @@ namespace KGySoft.Libraries.Resources
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="fileName">The location of the file where you want to save the resources.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>), but the result can be read only by <see cref="ResXResourceReader"/>
         /// <br/>Default value: <c>false</c>.</param>
-        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced into embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced to embedded resources.
         /// <br/>Default value: <c>false</c></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
@@ -315,10 +315,10 @@ namespace KGySoft.Libraries.Resources
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="stream">The stream to which you want to save.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>), but the result can be read only by <see cref="ResXResourceReader"/>.
         /// <br/>Default value: <c>false</c></param>
-        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced into embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced to embedded resources.
         /// <br/>Default value: <c>false</c></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
@@ -333,10 +333,10 @@ namespace KGySoft.Libraries.Resources
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="textWriter">The text writer to which you want to save.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>), but the result can be read only by <see cref="ResXResourceReader"/>.
         /// <br/>Default value: <c>false</c></param>
-        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced into embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced to embedded resources.
         /// <br/>Default value: <c>false</c></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.

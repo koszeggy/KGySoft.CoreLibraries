@@ -19,9 +19,18 @@ namespace KGySoft.Libraries.Resources
     /// It can handle both compiled resources from <c>.dll</c> and <c>.exe</c> files, and <c>.resx</c> files at
     /// the same time. New elements can be added as well, which can be saved into <c>.resx</c> files.
     /// </summary>
-    // - Belül ResXResourcemanagert használ
-    // - When to use XXXResourceManager (minden managerbe)
+    /// <remarks>
+    /// <para><see cref="HybridResourceManager"/> class is derived from <see cref="ResourceManager"/> and uses a <see cref="ResXResourceManager"/> internally.
+    /// The <see cref="HybridResourceManager"/> combines the functionality of the regular <see cref="ResourceManager"/> and the <see cref="ResXResourceManager"/> classes.
+    /// The source of the resources can be chosen by the <see cref="Source"/> property (see <see cref="ResourceManagerSources"/> enumeration).
+    /// Enabling both binary and .resx resources makes possible to expand or override the resources originally come from binary resources.
+    /// Just like the <see cref="ResXResourceManager"/> it is an <see cref="IExpandoResourceManager"/> implementation. The replacement and newly added content is saved into .resx files.</para>
+    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// 
+    /// </remarks>
     // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-ből
+    //   - VS-ből binárisba forduló [default] resource hozzáadása, hogy lehet azt programból elérni. -> resx resource hozzáadásához lásd ResXResourceManager ... lépését, és akkor betöltés így és így (vagy copy-paste onnan a megfelelő rész)
     // New features in addition to ResourceManager:
     // - new members (Resourcemanagerhez képest, tehát mindaz is, ami ResXResourceManagerben fel van sorolva)
     [Serializable]

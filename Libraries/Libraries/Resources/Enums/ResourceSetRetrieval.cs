@@ -17,7 +17,7 @@
 namespace KGySoft.Libraries.Resources
 {
     /// <summary>
-    /// Represents the retrieval behavior of an <see cref="IExpandoResourceSet"/> in <see cref="IExpandoResourceManager.GetExpandoResourceSet"/> method.
+    /// Represents the retrieval behavior of an <see cref="IExpandoResourceSet"/> in <see cref="IExpandoResourceManager.GetExpandoResourceSet">IExpandoResourceManager.GetExpandoResourceSet</see> method.
     /// </summary>
     public enum ResourceSetRetrieval
     {

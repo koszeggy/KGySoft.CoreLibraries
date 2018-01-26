@@ -19,11 +19,20 @@ namespace KGySoft.Libraries.Resources
     /// is not found in a language, it can automatically expand the resource with the text of the neutral resource,
     /// which can be saved into <c>.resx</c> files.
     /// </summary>
-    /// <remarks></remarks>
-    // - Belül ResXResourcemanagert használ
-    // - Disposable, muszáj dispose-olni, mert static eventekre iratkozik fel (felsorolni)
-    // - When to use XXXResourceManager (minden managerbe)
-    //   - Míg a ResxRM/HRM konkrét add metódusokat tartalmaz, addig a bõvítés itt automatikus, a stratégia property-kkel szabályozható. Itt a mentés is lehet automatikus, pl kilépésnél, ha éppen resx/mixed mód van.
+    /// <remarks>
+    /// <para><see cref="DynamicResourceManager"/> class is derived from <see cref="HybridResourceManager"/> and adds the functionality
+    /// of automatically appending the resources with the non-translated and/or unknown entries as well as
+    /// auto-saving the changes. This makes possible to automatically create the .resx files if the language
+    /// of the application is changed to a language, which has no translation yet. See also the static <see cref="LanguageSettings"/> class.
+    /// The strategy of auto appending and saving can be chosen by the <see cref="AutoAppend"/>
+    /// and <see cref="AutoSave"/> properties (see <see cref="AutoAppendOptions"/> and <see cref="AutoSaveOptions"/> enumerations).</para>
+    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>,
+    /// <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// 
+    /// </remarks>
+    // - Disposable, bár a default beállításai szerint nem iratkozik fel semmire, ha a következõket állítjuk, muszáj dispose-olni, mert static eventekre iratkozik fel: UseLanguageSettings=true, AutoSave:LanguageChanged/DomainUnload, AutoAppend.
+    // - példa arra, hogyan használjunk saját, mások által is bõvíthetõ secure resource managert egy saját appba.
     // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-bõl
     // New features in addition to HybridResourceManager:
     // - new members

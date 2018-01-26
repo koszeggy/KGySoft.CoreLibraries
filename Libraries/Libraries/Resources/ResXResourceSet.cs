@@ -1,4 +1,20 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXResourceSet.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -9,13 +25,15 @@ using System.Xml;
 
 namespace KGySoft.Libraries.Resources
 {
-#error elvileg kész, tesztelni a teljes doksit, utána jön a ResXResourceManager
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section to see the differences.</note>
+    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>
     /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
     /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
@@ -148,7 +166,7 @@ namespace KGySoft.Libraries.Resources
     ///         const string key = "myKey";
     ///         var set = new ResXResourceSet();
     /// 
-    ///         // GetString/GetObject: read a resource by key (GetMetaString/GetMetaObject for metadata, GetAliasValue for alias)
+    ///         // GetString/GetObject: reads a resource by key (GetMetaString/GetMetaObject for metadata, GetAliasValue for alias)
     ///         Console.WriteLine($"Getting a non-existing key: {set.GetString(key) ?? "<null>"}");
     /// 
     ///         // SetObject: adds a new resource or replaces an existing one (SetMetaObject for metadata, SetAliasValue for assembly alias)
@@ -306,31 +324,6 @@ namespace KGySoft.Libraries.Resources
     /// // Obtaining 'dangerous' failed with an error: The input is not a valid Base-64 string as it contains a non-base 64 character,
     /// // more than two padding characters, or an illegal character among the padding characters.</code>
     /// </example>
-    /// <h1 class="heading">When to use <see cref="ResXResourceReader"/>/<see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/></h1>
-    /// <para><see cref="ResXResourceReader"/> and <see cref="ResXResourceWriter"/> are the most low-level classes to read and write the content of a .resx file; <see cref="ResXResourceSet"/> uses them internally, too.
-    /// You need to use them, if:
-    /// <list type="bullet">
-    /// <item><term>You need to retrieve all instances of a redefined key.</term>
-    /// <description>The .resx file may contain redefined keys and duplications needed to be retrieved (see <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> property). <see cref="ResXResourceSet"/> and <see cref="ResXResourceManager"/> classes do not allow duplicates.</description></item>
-    /// <item><term>Custom type naming is needed.</term>
-    /// <description>When writing resources, you can pass a <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> to the <see cref="ResXResourceWriter"/> constructors to write custom type names.
-    /// And when reading resources, you can pass a <see cref="ITypeResolutionService"/> instance to the <see cref="ResXResourceReader"/> constructors to handle the type resolutions.</description></item>
-    /// <item><term>Lazy enumeration is needed (eg. a .resx file is syntactically incorrect).</term>
-    /// <description>In such case you can use a <see cref="ResXResourceReader"/> to read the .resx file until the problematic position.</description></item>
-    /// <item><term>Forced alias values are needed to be dumped.</term>
-    /// <description>Though you can add custom alias values by the <see cref="SetAliasValue">SetAliasValue</see> method it will dump an alias only if it is really referenced. To emit aliases explicitly use the <see cref="ResXResourceWriter"/>
-    /// class and its <see cref="ResXResourceWriter.AddAlias(string,string,bool)">ResXResourceWriter.AddAlias</see> method.</description></item>
-    /// </list>
-    /// </para>
-    /// <para>The <see cref="ResXResourceSet"/> class represents full .resx content in memory. Use this class if:
-    /// <list type="bullet">
-    /// <item>Reading or writing a single .resx content is needed.</item>
-    /// <item>You want to access the resources (and/or metadata) in the .resx file by name.</item>
-    /// <item>You need to load/write .resx content as a <see cref="Stream"/> or <see cref="TextReader"/>/<see cref="TextWriter"/>.</item>
-    /// </list>
-    /// </para>
-    /// <para>The <see cref="ResXResourceManager"/> (and other manager classes such as <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>) access the .resx content always as files.
-    /// Use those classes if you want to access .resx files by cultures in the same way as <see cref="ResourceManager"/> handles them.</para>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceSet<a name="comparison">&#160;</a></h1>
     /// <para><see cref="ResXResourceSet"/> can load .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.
     /// <note>When reading a .resx file written by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class,
@@ -350,7 +343,7 @@ namespace KGySoft.Libraries.Resources
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
     /// <list type="bullet">
     /// <item><term>Supporting file references</term>
-    /// <description>If the .resx file contains file references <see cref="ResXFileRef"/> with relative paths, then a base path can be defined in the constructors so the file references can be resolved successfully.</description></item>
+    /// <description>If the .resx file contains file references with relative paths, then a base path can be defined in the constructors so the file references can be resolved successfully. See also the <see cref="ResXFileRef"/> class.</description></item>
     /// <item><term>Full .resx support</term>
     /// <description>A .resx file can contain also metadata and assembly alias entries in top of resources and this <see cref="ResXResourceSet"/> implementation handles them.</description></item>
     /// <item><term>Performance</term>
@@ -362,10 +355,13 @@ namespace KGySoft.Libraries.Resources
     /// property of the enumerators returned by <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return a <see cref="ResXDataNode"/> instance instead of a deserialized object
     /// so you can check whether the resource or metadata can be treat as a safe object before actually deserializing it. See the example above for more details.</description></item>
     /// <item><term>Write support</term>
-    /// <description>The .resx file content can be expanded, existing entries can be replaced or removed and the new content can be saved. You can start even with a completely empty set, add content dynamically and save the new resource set.</description></item>
+    /// <description>The .resx file content can be expanded, existing entries can be replaced or removed and the new content can be saved by the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
+    /// You can start even with a completely empty set, add content dynamically and save the new resource set.</description></item>
     /// </list>
     /// </para>
     /// </remarks>
+    /// <seealso cref="ResXDataNode"/>
+    /// <seealso cref="ResXFileRef"/>
     /// <seealso cref="ResXResourceReader"/>
     /// <seealso cref="ResXResourceWriter"/>
     /// <seealso cref="ResXResourceManager"/>
@@ -436,7 +432,7 @@ namespace KGySoft.Libraries.Resources
         /// A path that, if prepended to the relative file path specified in a <see cref="ResXFileRef"/> object, yields an absolute path to a resource file.
         /// </returns>
         /// <remarks>This property is read-only. To define a base path specify it in the constructors. When a <see cref="ResXResourceSet"/> is saved by
-        /// one of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods you can define an alternative path, which will nor overwrite the value of this property.</remarks>
+        /// one of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods you can define an alternative path, which will not overwrite the value of this property.</remarks>
         public string BasePath => basePath;
 
         /// <summary>
@@ -448,9 +444,10 @@ namespace KGySoft.Libraries.Resources
         /// </value>
         /// <remarks>
         /// <para>If the value of the property is <c>true</c>, then the stored raw XML data will be automatically freed when
-        /// a resource or metadata item is obtained by <see cref="GetObject(string)"/>, <see cref="GetMetaObject"/>, <see cref="GetString(string)"/> or <see cref="GetMetaString"/> and their overloads.
+        /// a resource or metadata item is obtained by <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
+        /// <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString">GetString</see> or <see cref="GetMetaString">GetMetaString</see> methods.
         /// The raw XML data is re-generated on demand if needed, it is transparent to the user.</para>
-        /// <para>If <see cref="SafeMode"/> is <c>true</c>, this property has no effect and the clean-up can be controlled by the <see cref="ResXDataNode.GetValue"/> method.</para>
+        /// <para>If <see cref="SafeMode"/> is <c>true</c>, this property has no effect and the clean-up can be controlled by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// </remarks>
         public bool AutoFreeXmlData
         {
@@ -662,7 +659,7 @@ namespace KGySoft.Libraries.Resources
         /// </returns>
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <c>true</c>, the returned object is a <see cref="ResXDataNode"/> instance from which the resource can be obtained.</para>
-        /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> and <see cref="ResXDataNode"/> classes.</para>
+        /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> class</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
@@ -805,8 +802,8 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
-        /// Its effect is similar to the <see cref="RemoveObject"/> method (<see cref="GetObject(string)"/> will return <see langword="null"/> in both cases),
-        /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetEnumerator"/> method.</para>
+        /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method (<see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see> will return <see langword="null"/> in both cases),
+        /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetEnumerator">GetEnumerator</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
@@ -829,8 +826,8 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
-        /// Its effect is similar to the <see cref="RemoveMetaObject"/> method (<see cref="GetMetaObject"/> will return <see langword="null"/> in both cases),
-        /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetMetadataEnumerator"/> method.</para>
+        /// Its effect is similar to the <see cref="RemoveMetaObject">RemoveMetaObject</see> method (<see cref="GetMetaObject">GetMetaObject</see> will return <see langword="null"/> in both cases),
+        /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
@@ -891,7 +888,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Removes a metadata object in the current <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.
+        /// Removes a metadata object from the current <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">Name of the metadata value to remove. Name is treated case sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
@@ -902,7 +899,7 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Removes an assembly alias value in the current <see cref="ResXResourceSet"/>.
+        /// Removes an assembly alias value from the current <see cref="ResXResourceSet"/>.
         /// </summary>
         /// <param name="alias">The alias, which should be removed.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
@@ -914,7 +911,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (alias == null)
-                throw new ArgumentNullException("alias", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(alias), Res.Get(Res.ArgumentNull));
 
             lock (dict)
             {
@@ -929,10 +926,10 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
         /// <param name="fileName">The location of the file where you want to save the resources.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
         /// <br/>Default value: <c>false</c>.</param>
-        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced to embedded resources.
         /// <br/>Default value: <c>false</c></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
@@ -949,12 +946,12 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
+        /// Saves the <see cref="ResXResourceSet" /> to the specified <paramref name="stream"/>.</summary>
         /// <param name="stream">The stream to which you want to save.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
         /// <br/>Default value: <c>false</c>.</param>
-        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced to embedded resources.
         /// <br/>Default value: <c>false</c></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
@@ -971,11 +968,11 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Saves the <see cref="ResXResourceSet" /> to the specified file.</summary>
+        /// Saves the <see cref="ResXResourceSet" /> to the specified <paramref name="textWriter"/>.</summary>
         /// <param name="textWriter">The text writer to which you want to save.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the system <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">ResXResourceReader</a> class
+        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
         /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" /><br />Default value: <c>false</c>.</param>
-        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced into embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <c>true</c> the resources using a file reference (<see cref="ResXFileRef" />) will be replaced to embedded resources.
         /// <br/>Default value: <c>false</c></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
