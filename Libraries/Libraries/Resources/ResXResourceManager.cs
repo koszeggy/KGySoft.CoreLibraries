@@ -33,7 +33,8 @@ namespace KGySoft.Libraries.Resources
     /// <h1 class="heading">Using XML resources created by Visual Studio</h1>
     /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.</para>
     /// <list type="number">
-    #error itt tartok
+    #error TODO: itt tartok
+    /// <item>Create a new project (eg. Console Application)</item>
     /// todo
     /// - Az egész h1 rész egy Examples fejezetnek felel meg, ezért nincs <example></example> részben. Rövid leírások, screenshotok és kódrészek válthatják egymást az alábbi lépések szerint
     /// - Create resources by Visual Studio (screenshots) - eg en-US, en, inv. Lehet inv-ben egy kép és egy file reference is, mutatni, a folderbe mik másolódnak.
