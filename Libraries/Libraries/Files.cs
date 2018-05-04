@@ -209,7 +209,7 @@ namespace KGySoft.Libraries
         /// </summary>
         public static string GetExecutingPath()
         {
-            return Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath);
+            return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         }
     }
 }

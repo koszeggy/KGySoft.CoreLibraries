@@ -219,7 +219,7 @@ namespace KGySoft.Libraries.Diagnostics
 
         private static string GetDefaultDir()
         {
-            return Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? String.Empty, "Profiler");
+            return Path.Combine(Files.GetExecutingPath() ?? String.Empty, "Profiler");
         }
 
         private static void DumpResults()
