@@ -1,22 +1,22 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Text;
+using System.Threading;
+
+using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
 {
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Runtime.CompilerServices;
-    using System.Text;
-
-    using KGySoft.Libraries.Reflection;
-    using System.Threading;
 
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
@@ -30,19 +30,62 @@ namespace KGySoft.Libraries.Resources
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
-    /// <h1 class="heading">Using XML resources created by Visual Studio</h1>
+    /// <h1 class="heading">Example: Using XML resources created by Visual Studio</h1>
     /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.</para>
     /// <list type="number">
-    #error TODO: itt tartok
     /// <item>Create a new project (eg. Console Application)</item>
-    /// todo
-    /// - Az egész h1 rész egy Examples fejezetnek felel meg, ezért nincs <example></example> részben. Rövid leírások, screenshotok és kódrészek válthatják egymást az alábbi lépések szerint
-    /// - Create resources by Visual Studio (screenshots) - eg en-US, en, inv. Lehet inv-ben egy kép és egy file reference is, mutatni, a folderbe mik másolódnak.
-    /// - Turn off EmbeddedResource, turn on Copy if newer
-    /// - Use Resources folder or change <see cref="ResXResourcesDir"/>
-    /// - Proper constructor
-    /// - If add new resources, compatibility mode = on so it can be changes by VS (do not forget to copy back)
+    /// <item>In Solution Explorer right click on <c>ConsoleApp1</c>, Add, New Folder, name it <c>Resources</c>.</item>
+    /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.</item>
+    /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c> it not named otherwise) and select Properties</item>
+    /// <item>The default value of <c>Build Action</c> is <c>Embedded Resource</c>, which means that the resource will be compiled into the assembly and will be able to be read by the <see cref="ResourceManager"/> class.
+    /// To be able to handle it by the <see cref="ResXResourceManager"/> we might want to deploy the .resx file with the application. To do so, select <c>Copy if newer</c> at <c>Copy to Output directory</c>.
+    /// If we want to use purely the .rex file, then we can change the <c>Build Action</c> to <c>None</c> and we can clear the default <c>Custom Tool</c> value because we do not need the generated file.
+    /// <note>To use both the compiled binary resources and the .resx file you can use the <see cref="HybridResourceManager"/> or <see cref="DynamicResourceManager"/> classes.</note></item>
+    /// <item>Now we can either use the built-on resource editor of Visual Studio or just edit the .resx file by the XML Editor. If we add new or existing files to the resources, they will be automatically added to the project's Resources folder.
+    /// Do not forget to set <c>Copy if newer</c> for the linked resources as well so they will be copied to the output directory along with the .resx file. Add some string resources and files if you wish.</item>
+    /// <item>To add culture-specific resources you can add further resource files with the same base name, extended by culture names. For example, if the invariant resource is called <c>Resource1.resx</c>, then a
+    /// region neutral English resource can be called <c>Resource1.en.resx</c> and the American English resource can be called <c>Resource1.en-US.resx</c>.</item>
+    /// <item>Reference <c>KGySoft.Libraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
     /// </list>
+    /// <code lang="C#"><![CDATA[
+    /// /// using System;
+    /// using System.Globalization;
+    /// using KGySoft.Libraries;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// public class Program
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         var enUS = CultureInfo.GetCultureInfo("en-US");
+    ///         var en = enUS.Parent;
+    /// 
+    ///         // The base name parameter is the name of the resource file without extension and culture specifier.
+    ///         // The ResXResourcesDir property denotes the relative path to the resource files. Actually "Resources" is the default value.
+    ///         var resourceManager = new ResXResourceManager(baseName: "Resource1") { ResXResourcesDir = "Resources" };
+    /// 
+    ///         // Tries to get the resource from Resource1.en-US.resx, then Resource1.en.resx, then Resource1.resx and writes the result to the console.
+    ///         Console.WriteLine(resourceManager.GetString("String1", enUS));
+    /// 
+    ///         // Sets the UI culture (similarly to Thread.CurrentThread.CurrentUICulture) so now this is the default culture for looking up resources.
+    ///         LanguageSettings.DisplayLanguage = en;
+    /// 
+    ///         // The Current UI Culture is now en so tries to get the resource from Resource1.en.resx, then Resource1.resx and writes the result to the console.
+    ///         Console.WriteLine(resourceManager.GetString("String1"));
+    ///     }
+    /// }]]>
+    /// 
+    /// // A possible result of the example above (depending on the created resource files and the added content)
+    /// // 
+    /// // Test string in en-US resource set.
+    /// // Test string in en resource set.</code>
+    /// <h1 class="heading">Example: Adding and saving new resources at runtime</h1>
+    #error itt tartok
+    /// - Itt lehet mondjuk a type-os konstruktor használata. Komment: ha van már ilyen file, betölti.
+    /// - Adjunk hozzá egy új elemet az invarianthoz. Lekérdezés en-US alapján.
+    /// - Adjunk hozzá egy új elemet az en-US-hez. Lekérdezés en-US alapján.
+    /// - Save. Rövid mese a compatible formatról
+    /// - If add new resources, compatibility mode = on so it can be changes by VS (do not forget to copy back)
     /// 
     /// todo - itt jöhetnek újabb example blokkok, kb. a ResXResourceSet mintájára.
     /// - valami mint kb a unit testekben: en-US szerint elkérés, majd en és en-GB szerint, esetleg en-GB-hez hozzáadás, majd save, milyen file-ok jönnek létre. Utalás a fenti példára is.
@@ -242,6 +285,12 @@ namespace KGySoft.Libraries.Resources
             : this(resourceSource?.Name, resourceSource?.Assembly)
         {
         }
+
+        /// <summary>
+        /// Gets the type of the resource set object that the <see cref="ResXResourceManager"/> uses.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public sealed override Type ResourceSetType => typeof(ResXResourceSet);
 
         /// <summary>
         /// Gets or sets the relative path to .resx resource files.

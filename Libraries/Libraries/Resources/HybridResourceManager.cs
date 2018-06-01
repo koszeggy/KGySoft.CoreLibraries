@@ -2,6 +2,7 @@
 using System.Resources;
 using System;
 using System.Collections;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace KGySoft.Libraries.Resources
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// 
     /// </remarks>
-    // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-ből
+    // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-ből. A Step-by-step leírás lehet a ResxResourceManager koppintása, csak egyszerre Embedded Resource-ként és Copy if newer .resx-ként
     //   - VS-ből binárisba forduló [default] resource hozzáadása, hogy lehet azt programból elérni. -> resx resource hozzáadásához lásd ResXResourceManager ... lépését, és akkor betöltés így és így (vagy copy-paste onnan a megfelelő rész)
     // New features in addition to ResourceManager:
     // - new members (Resourcemanagerhez képest, tehát mindaz is, ami ResXResourceManagerben fel van sorolva)
@@ -153,6 +154,13 @@ namespace KGySoft.Libraries.Resources
             get { return resxResources.ResXResourcesDir; }
             set { resxResources.ResXResourcesDir = value; }
         }
+
+        /// <summary>
+        /// Gets the type of the resource set object that the <see cref="HybridResourceManager"/> uses to create a resource set for the binary resources.
+        /// Please note that for .resx based resources other types can be created as well.
+        /// </summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public override Type ResourceSetType => base.ResourceSetType;
 
         internal object SyncRoot => resxResources;
 
