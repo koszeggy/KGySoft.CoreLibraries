@@ -33,6 +33,9 @@ namespace KGySoft.Libraries
             // checking null value: if not reference or nullable, null is wrong
             if (value == null)
                 return (!type.IsValueType || type.IsNullable());
+
+            if (type.IsNullable())
+                type = Nullable.GetUnderlyingType(type);
             
             // getting the type of the real instance
             Type instanceType = value.GetType();
