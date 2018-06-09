@@ -962,7 +962,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
         /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
-        /// <br/>Default value: <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</param>
+        /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
         /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns>The resource set for the specified culture, or <see langeword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,

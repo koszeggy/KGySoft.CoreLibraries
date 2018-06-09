@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -17,7 +16,6 @@ using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
 {
-
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
     /// New elements can be added as well, which can be saved into the <c>.resx</c> files.
@@ -31,7 +29,7 @@ namespace KGySoft.Libraries.Resources
     /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Using XML resources created by Visual Studio</h1>
-    /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.</para>
+    /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.
     /// <list type="number">
     /// <item>Create a new project (eg. Console Application)</item>
     /// <item>In Solution Explorer right click on <c>ConsoleApp1</c>, Add, New Folder, name it <c>Resources</c>.</item>
@@ -46,9 +44,9 @@ namespace KGySoft.Libraries.Resources
     /// <item>To add culture-specific resources you can add further resource files with the same base name, extended by culture names. For example, if the invariant resource is called <c>Resource1.resx</c>, then a
     /// region neutral English resource can be called <c>Resource1.en.resx</c> and the American English resource can be called <c>Resource1.en-US.resx</c>.</item>
     /// <item>Reference <c>KGySoft.Libraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
-    /// </list>
+    /// </list></para>
     /// <code lang="C#"><![CDATA[
-    /// /// using System;
+    /// using System;
     /// using System.Globalization;
     /// using KGySoft.Libraries;
     /// using KGySoft.Libraries.Resources;
@@ -79,22 +77,133 @@ namespace KGySoft.Libraries.Resources
     /// // 
     /// // Test string in en-US resource set.
     /// // Test string in en resource set.</code>
+    /// <para>Considering there are .resx files in the background not just <see cref="string"/> and other <see cref="object"/> resources
+    /// can be obtained by <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> methods
+    /// but metadata as well by <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. Please note that accessing aliases are not exposed
+    /// by the <see cref="ResXResourceManager"/> class, but you can still access them by via the <see cref="IExpandoResourceSet"/> type returned by the <see cref="GetExpandoResourceSet"/> method.
+    /// <note>Please note that unlike in case of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> methods,
+    /// there is no falling back to the parent cultures (as seen in the example above) for metadata accessed by the <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods.</note></para>
+    /// <h1 class="heading">Instantiating a <see cref="ResXResourceManager"/> object</h1>
+    /// <para>You instantiate a <see cref="ResXResourceManager"/> object that retrieves resources from .resx files by calling one of its class constructor overloads.
+    /// This tightly couples a <see cref="ResXResourceManager"/> object with a particular set of .resx files (see the previous example as well).</para>
+    /// <para>There are three possible constructors to use:
+    /// <list type="bullet">
+    /// <item><see cref="ResXResourceManager(string,CultureInfo)">ResXResourceManager(baseName string, CultureInfo neutralResourcesLanguage = null)</see>
+    /// looks up resources in <c>baseName.culture.resx</c> files, where <c>baseName.resx</c> contains the resource set of the ultimate fallback culture (also known as default or invariant or neutral resources culture).
+    /// If <c>neutralResourcesLanguage</c> is specified, then <see cref="ResXResourceManager"/> will use the <c>baseName.resx</c> file when the culture to be used to access a resource equals to the <c>neutralResourcesLanguage</c>.
+    /// If <c>neutralResourcesLanguage</c> is not specified, then the default culture is auto detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
+    /// If it is not defined, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as default culture.
+    /// <code lang="C#">var manager = new ResXResourceManager("MyResources", CultureInfo.GetCultureInfo("en-US"));</code></item>
+    /// <item><see cref="ResXResourceManager(string,Assembly)">ResXResourceManager(baseName string, Assembly assembly)</see> is similar to the previous one, except that
+    /// it does not set the default culture explicitly but tries to detect it from the provided <see cref="Assembly"/>. If it has a <see cref="NeutralResourcesLanguageAttribute"/> defined,
+    /// then it will be used; otherwise, the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as the default culture.
+    /// <code lang="C#">var manager = new ResXResourceManager("MyResources", typeof(Example).Assembly);</code></item>
+    /// <item><see cref="ResXResourceManager(Type)">ResXResourceManager(Type resourceSource)</see> will use the name of the provided <see cref="Type"/> as base name, and its <see cref="Assembly"/> to detect the default culture.
+    /// <code lang="C#">var manager = new ResXResourceManager(typeof(Example));</code></item></list></para>
+    /// <para><note>If a <see cref="ResXResourceManager"/> instance is created with a <c>baseName</c> without corresponding .resx file for the default culture, then accessing a non-existing
+    /// resource will throw a <see cref="MissingManifestResourceException"/> unless <see cref="ThrowException"/> property is <c>false</c>, in which case only a <see langword="null"/> value will be
+    /// returned in such case. The exception can be avoided, if a resource set is created for the default culture either by adding a new resource (see next section) or by creating the resource set
+    /// explicitly by calling the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method with <see cref="ResourceSetRetrieval.CreateIfNotExists"/> behavior.</note></para>
     /// <h1 class="heading">Example: Adding and saving new resources at runtime</h1>
-    #error itt tartok
-    /// - Itt lehet mondjuk a type-os konstruktor használata. Komment: ha van már ilyen file, betölti.
-    /// - Adjunk hozzá egy új elemet az invarianthoz. Lekérdezés en-US alapján.
-    /// - Adjunk hozzá egy új elemet az en-US-hez. Lekérdezés en-US alapján.
-    /// - Save. Rövid mese a compatible formatról
-    /// - If add new resources, compatibility mode = on so it can be changes by VS (do not forget to copy back)
+    /// <para>As <see cref="ResXResourceManager"/> maintains <see cref="ResXResourceSet"/> instances for each culture, it also supports adding new resources at runtime.
+    /// By <see cref="SetObject">SetObject</see> method you can add a resource to a specific culture. You can add metadata as well by <see cref="SetMetaObject">SetMetaObject</see> method.
+    /// The resources and metadata can be removed, too (see <see cref="RemoveObject">RemoveObject</see> and <see cref="RemoveMetaObject">RemoveMetaObject</see> methods).</para>
+    /// <para>The changes in the resource sets can be saved by calling the <see cref="SaveAllResources">SaveAllResources</see> method. A single resource set can be saved
+    /// by calling the <see cref="SaveResourceSet">SaveResourceSet</see> method.
+    /// <note>The <see cref="ResXResourceManager"/> always saves the resources into files and never embeds the resources in file references. If you need more control
+    /// over saving you can call the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method to access the various <see cref="O:KGySoft.Libraries.Resources.IExpandoResourceSet.Save">Save</see> overloads)</note></para>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Globalization;
+    /// using System.Resources;
+    /// using KGySoft.Libraries;
+    /// using KGySoft.Libraries.Resources;
     /// 
-    /// todo - itt jöhetnek újabb example blokkok, kb. a ResXResourceSet mintájára.
-    /// - valami mint kb a unit testekben: en-US szerint elkérés, majd en és en-GB szerint, esetleg en-GB-hez hozzáadás, majd save, milyen file-ok jönnek létre. Utalás a fenti példára is.
-    /// - SafeMode, obj resource-ok
+    /// // You can put this into AssemblyInfo.cs. Indicates that the invariant (default) resource set uses the American English culture.
+    /// // Try commenting out next line and see the differences.
+    /// [assembly:NeutralResourcesLanguage("en-US")]
+    /// 
+    /// public static class Example
+    /// {
+    ///     private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
+    ///     private static CultureInfo en = enUS.Parent;
+    ///     private static CultureInfo invariant = en.Parent;
+    /// 
+    ///     // Now that we not specify the neutralResourcesLanguage optional parameter it will be auto detected
+    ///     private static ResXResourceManager manager = new ResXResourceManager("NewResource");
+    /// 
+    ///     public static void Main()
+    ///     {
+    ///         // If NewResource.resx does not exist yet a MissingManifestResourceException will be thrown here
+    ///         DumpValue("unknown");
+    /// 
+    ///         // This now creates the resource set for the default culture
+    ///         manager.SetObject("StringValue", "This is a string in the default resource", invariant);
+    /// 
+    ///         // No exception is thrown any more because the default resource set exists now.
+    ///         DumpValue("unknown");
+    /// 
+    ///         // If NeutralResourcesLanguage attribute above is active, invariant == enUS now. 
+    ///         manager.SetObject("StringValue", "This is a string in the English resource", en);
+    ///         manager.SetObject("StringValue", "This is a string in the American English resource", enUS);
+    /// 
+    ///         manager.SetObject("IntValue", 42, invariant);
+    ///         manager.SetObject("IntValue", 52, en);
+    ///         manager.SetObject("IntValue", 62, enUS);
+    /// 
+    ///         manager.SetObject("DefaultOnly", "This resource is the same everywhere", invariant);
+    /// 
+    ///         DumpValue("StringValue", invariant);
+    ///         DumpValue("StringValue", en);
+    ///         DumpValue("StringValue", enUS);
+    /// 
+    ///         DumpValue("IntValue", invariant);
+    ///         DumpValue("IntValue", en);
+    ///         DumpValue("IntValue", enUS);
+    /// 
+    ///         DumpValue("DefaultOnly", invariant);
+    ///         DumpValue("DefaultOnly", en);
+    ///         DumpValue("DefaultOnly", enUS);
+    /// 
+    ///         // This now creates NewResource.resx and NewResource.en.resx files
+    ///         manager.SaveAllResources(compatibleFormat: true); // so the saved files can be edited by VisualStudio
+    ///     }
+    /// 
+    ///     private static void DumpValue(string name, CultureInfo culture = null)
+    ///     {
+    ///         try
+    ///         {
+    ///             Console.WriteLine($"Value of resource '{name}' for culture '{culture ?? LanguageSettings.DisplayLanguage}': " +
+    ///                 $"{manager.GetObject(name, culture) ?? "<null>"}");
+    ///         }
+    ///         catch (Exception e)
+    ///         {
+    ///             Console.WriteLine($"Accessing resource '{name}' caused an exception: {e.Message}");
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// // If NeutralLanguagesResource is en-US, the example above produces the following output:
+    /// // 
+    /// // Accessing resource 'unknown' caused an exception: Resource file not found: D:\ConsoleApp1\bin\Debug\Resources\NewResource.resx
+    /// // Value of resource 'unknown' for culture 'en-US': <null>
+    /// // Value of resource 'StringValue' for culture '': This is a string in the American English resource
+    /// // Value of resource 'StringValue' for culture 'en': This is a string in the English resource
+    /// // Value of resource 'StringValue' for culture 'en-US': This is a string in the American English resource
+    /// // Value of resource 'IntValue' for culture '': 62
+    /// // Value of resource 'IntValue' for culture 'en': 52
+    /// // Value of resource 'IntValue' for culture 'en-US': 62
+    /// // Value of resource 'DefaultOnly' for culture '': This resource is the same everywhere
+    /// // Value of resource 'DefaultOnly' for culture 'en': This resource is the same everywhere
+    /// // Value of resource 'DefaultOnly' for culture 'en-US': This resource is the same everywhere]]></code>
+    /// <h1 class="heading">Safety</h1>
+    #error itt tartok
+    /// TODO: lényegében ugyanaz, mint a Resxressetnél. Vagy utalni rá, vagy átvenni
+    /// - SafeMode, string/obj
     /// <h1 class="heading">Comparison with ResourceManager<a name="comparison">&#160;</a></h1>
     /// <para>While <see cref="ResourceManager"/> is read-only and works on binary resources, <see cref="ResXResourceManager"/> supports expansion (see <see cref="IExpandoResourceManager"/>) and works on XML resource (.resx) files.</para>
     /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
     /// <list type="bullet">
-    /// todo - konstruktorok, és neutralResourcesLanguage forrása
     /// todo - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
     /// </list>
     /// </para>
@@ -246,14 +355,14 @@ namespace KGySoft.Libraries.Resources
         [NonSerialized]
         private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
 
-        // todo: mese a neutralResourcesLanguage-ről: (a többi overload remarksjába is)
+        // todo: a mesét a neutralResourcesLanguage-ről az osztály leírásából ide és a többi overloadba is
         // - az assembly csak a NeutralResourcesLanguageAttribute miatt, ha az nincs benne, InvariantCulture
         // - Itt azt jelenti, hogy ha ez egybeesik az elkért nyelvvel, akkor mindenképpen az invariant resx-ből próbálunk olvasni (vö. Translate esetén, ahol ilyenkor nincs fordítás, ott InvariantLanguage prop alapján)
         public ResXResourceManager(string baseName, Assembly assembly)
             : base(baseName, assembly, typeof(ResXResourceSet))
         {
             // - this will set MainAssembly and BaseNameField directly
-            // - resx will be searched in dynamicResourcesDir\baseName[.Culture].resx
+            // - resx will be searched in resxResourcesDir\baseName[.Culture].resx
             // - _userResourceSet is set to ResXResourceSet and thus is returned by ResourceSetType; however, it will never be used by base because InternalGetResourceSet is overridden
             // - _neutralResourcesCulture is initialized from assembly (> .NET4 only)
 #if NET35
@@ -285,12 +394,6 @@ namespace KGySoft.Libraries.Resources
             : this(resourceSource?.Name, resourceSource?.Assembly)
         {
         }
-
-        /// <summary>
-        /// Gets the type of the resource set object that the <see cref="ResXResourceManager"/> uses.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public sealed override Type ResourceSetType => typeof(ResXResourceSet);
 
         /// <summary>
         /// Gets or sets the relative path to .resx resource files.
@@ -466,11 +569,11 @@ namespace KGySoft.Libraries.Resources
             if (culture == null)
                 culture = CultureInfo.CurrentUICulture;
 
-            ResXResourceSet last = GetFirstResourceSet(culture);
+            ResXResourceSet first = GetFirstResourceSet(culture);
             object value;
-            if (last != null)
+            if (first != null)
             {
-                value = last.GetResourceInternal(name, IgnoreCase, isString, safeMode);
+                value = first.GetResourceInternal(name, IgnoreCase, isString, safeMode);
                 if (value != null)
                     return value;
             }
@@ -486,7 +589,7 @@ namespace KGySoft.Libraries.Resources
                 if (rs == null)
                     return null;
 
-                if (rs == last)
+                if (rs == first)
                     continue;
 
                 if (toCache == null)
@@ -503,7 +606,7 @@ namespace KGySoft.Libraries.Resources
                     return value;
                 }
 
-                last = rs;
+                first = rs;
             }
 
             return null;
@@ -537,6 +640,9 @@ namespace KGySoft.Libraries.Resources
             lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
         }
 
+        /// <summary>
+        /// Tries to get the first resource set in the traversal path from the caches.
+        /// </summary>
         private ResXResourceSet GetFirstResourceSet(CultureInfo culture)
         {
             // Logic from ResourceFallbackManager.GetEnumerator()
@@ -977,7 +1083,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
         /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
-        /// <br/>Default value: <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</param>
+        /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
         /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns>The resource set for the specified culture, or <see langeword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>.</returns>
