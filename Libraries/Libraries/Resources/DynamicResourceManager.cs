@@ -26,7 +26,7 @@ namespace KGySoft.Libraries.Resources
     /// of the application is changed to a language, which has no translation yet. See also the static <see cref="LanguageSettings"/> class.
     /// The strategy of auto appending and saving can be chosen by the <see cref="AutoAppend"/>
     /// and <see cref="AutoSave"/> properties (see <see cref="AutoAppendOptions"/> and <see cref="AutoSaveOptions"/> enumerations).</para>
-    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>,
+    /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>,
     /// <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// 

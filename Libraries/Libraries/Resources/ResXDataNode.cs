@@ -262,6 +262,7 @@ namespace KGySoft.Libraries.Resources
     /// <description>This <see cref="ResXDataNode"/> class uses a special <see cref="SerializationBinder"/> implementation, which supports generic types correctly.</description></item>
     /// </list></para>
     /// </remarks>
+    /// <seealso cref="ResXFileRef"/>
     /// <seealso cref="ResXResourceReader"/>
     /// <seealso cref="ResXResourceWriter"/>
     /// <seealso cref="ResXResourceSet"/>

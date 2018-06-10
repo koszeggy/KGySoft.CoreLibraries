@@ -32,7 +32,7 @@ namespace KGySoft.Libraries.Resources
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section to see the differences.</note>
-    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>
     /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
@@ -194,10 +194,12 @@ namespace KGySoft.Libraries.Resources
     /// </example>
     /// <para>If a .resx content contains the same resource name multiple times, <see cref="ResXResourceSet"/> will contain the lastly defined key. To obtain redefined values use <see cref="ResXResourceReader"/> explicitly
     /// and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <c>true</c>.</para>
-    /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property returned by the enumerator methods is a <see cref="ResXDataNode"/>
-    /// instance rather than the resource value. The same applies for the return value of <see cref="GetObject(string)">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.
-    /// <note>Even if <see cref="SafeMode"/> is <c>false</c>, loading a .resx content with corrupt or malicious entry will have no effect until we try to obtain the corresponding value. See the example below for the demonstration.</note>
+    /// <para>If the <see cref="SafeMode"/> property is <c>true</c> the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property returned by the enumerator methods is a <see cref="ResXDataNode"/>
+    /// instance rather than the resource value. The same applies for the return value of <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.
+    /// <note type="security">Even if <see cref="SafeMode"/> is <c>false</c>, loading a .resx content with corrupt or malicious entry will have no effect until we try to obtain the corresponding value. See the example below for the demonstration.</note>
     /// </para>
+    /// <para>If <see cref="SafeMode"/> property is <c>true</c> the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods will not throw an
+    /// <see cref="InvalidOperationException"/> even for non-string entries; they return the raw XML value instead.</para>
     /// <example>
     /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).
     /// <code lang="C#"><![CDATA[

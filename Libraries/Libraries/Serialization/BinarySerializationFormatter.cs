@@ -152,7 +152,7 @@ namespace KGySoft.Libraries.Serialization
     /// option.</description></item>
     /// </list>
     /// </note>
-    /// <note type="implementnotes">
+    /// <note>
     /// If you serialize a collection of <see cref="IBinarySerializable"/> type implementations, then using the <see cref="IBinarySerializable"/> interface itself as array base type or generic argument
     /// may produce longer result than using the actual type. The shortest result can be achieved by using <see langword="sealed"/> classes or value types as array base types and generic parameters.
     /// </note>

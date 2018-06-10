@@ -43,7 +43,7 @@ namespace KGySoft.Libraries.Resources
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceReader</a> section to see the differences.</note>
-    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>You can use the <see cref="ResXResourceReader"/> class to enumerate resources in .resx files by traversing the dictionary enumerator (<see cref="IDictionaryEnumerator"/>) that is returned by the
     /// <see cref="GetEnumerator">GetEnumerator</see> method. You call the methods provided by <see cref="IDictionaryEnumerator"/> to advance to the next resource and to read the name and value of each resource in the .resx file.

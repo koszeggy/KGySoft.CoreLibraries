@@ -179,7 +179,7 @@ namespace KGySoft.Libraries.Serialization
     ///    }
     ///}
     /// </code>
-    /// <note type="implementnotes">
+    /// <note type="implement">
     /// Of course the special constructor way can be used here, too.
     /// Derived constructors should just call the base constructor, which should call <c>DeserializeContent</c>.
     /// In that case <strong>FxCop</strong> and <strong>ReSharper</strong> may emit a warning that

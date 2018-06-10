@@ -42,7 +42,7 @@ namespace KGySoft.Libraries.Resources
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section to see the differences.</note>
-    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
     /// <para>If <see cref="CompatibleFormat"/> property is <c>true</c>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>

@@ -26,21 +26,21 @@ namespace KGySoft.Libraries.Resources
     /// The main difference is that instead of working with binary compiled resources the <see cref="ResXResourceManager"/> class uses XML resources (.resx files) directly.
     /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures and it can save the changed contents.</para>
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
-    /// <note>To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
+    /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Using XML resources created by Visual Studio</h1>
     /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.
     /// <list type="number">
-    /// <item>Create a new project (eg. Console Application)</item>
+    /// <item>Create a new project (Console Application)</item>
     /// <item>In Solution Explorer right click on <c>ConsoleApp1</c>, Add, New Folder, name it <c>Resources</c>.</item>
     /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.</item>
-    /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c> it not named otherwise) and select Properties</item>
+    /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c> if not named otherwise) and select Properties</item>
     /// <item>The default value of <c>Build Action</c> is <c>Embedded Resource</c>, which means that the resource will be compiled into the assembly and will be able to be read by the <see cref="ResourceManager"/> class.
     /// To be able to handle it by the <see cref="ResXResourceManager"/> we might want to deploy the .resx file with the application. To do so, select <c>Copy if newer</c> at <c>Copy to Output directory</c>.
     /// If we want to use purely the .rex file, then we can change the <c>Build Action</c> to <c>None</c> and we can clear the default <c>Custom Tool</c> value because we do not need the generated file.
-    /// <note>To use both the compiled binary resources and the .resx file you can use the <see cref="HybridResourceManager"/> or <see cref="DynamicResourceManager"/> classes.</note></item>
+    /// <note>To use both the compiled binary resources and the .resx file you can use the <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/> classes.</note></item>
     /// <item>Now we can either use the built-on resource editor of Visual Studio or just edit the .resx file by the XML Editor. If we add new or existing files to the resources, they will be automatically added to the project's Resources folder.
-    /// Do not forget to set <c>Copy if newer</c> for the linked resources as well so they will be copied to the output directory along with the .resx file. Add some string resources and files if you wish.</item>
+    /// Do not forget to set <c>Copy if newer</c> for the linked resources as well so they will be copied to the output directory along with the .resx file. Now add some string resources and files if you wish.</item>
     /// <item>To add culture-specific resources you can add further resource files with the same base name, extended by culture names. For example, if the invariant resource is called <c>Resource1.resx</c>, then a
     /// region neutral English resource can be called <c>Resource1.en.resx</c> and the American English resource can be called <c>Resource1.en-US.resx</c>.</item>
     /// <item>Reference <c>KGySoft.Libraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
@@ -59,16 +59,20 @@ namespace KGySoft.Libraries.Resources
     ///         var en = enUS.Parent;
     /// 
     ///         // The base name parameter is the name of the resource file without extension and culture specifier.
-    ///         // The ResXResourcesDir property denotes the relative path to the resource files. Actually "Resources" is the default value.
+    ///         // The ResXResourcesDir property denotes the relative path to the resource files.
+    ///         // Actually "Resources" is the default value.
     ///         var resourceManager = new ResXResourceManager(baseName: "Resource1") { ResXResourcesDir = "Resources" };
     /// 
-    ///         // Tries to get the resource from Resource1.en-US.resx, then Resource1.en.resx, then Resource1.resx and writes the result to the console.
+    ///         // Tries to get the resource from Resource1.en-US.resx, then Resource1.en.resx, then Resource1.resx
+    ///         // and writes the result to the console.
     ///         Console.WriteLine(resourceManager.GetString("String1", enUS));
     /// 
-    ///         // Sets the UI culture (similarly to Thread.CurrentThread.CurrentUICulture) so now this is the default culture for looking up resources.
+    ///         // Sets the UI culture (similarly to Thread.CurrentThread.CurrentUICulture) so now this is the default
+    ///         // culture for looking up resources.
     ///         LanguageSettings.DisplayLanguage = en;
     /// 
-    ///         // The Current UI Culture is now en so tries to get the resource from Resource1.en.resx, then Resource1.resx and writes the result to the console.
+    ///         // The Current UI Culture is now en so tries to get the resource from Resource1.en.resx, then Resource1.resx
+    ///         // and writes the result to the console.
     ///         Console.WriteLine(resourceManager.GetString("String1"));
     ///     }
     /// }]]>
@@ -80,7 +84,7 @@ namespace KGySoft.Libraries.Resources
     /// <para>Considering there are .resx files in the background not just <see cref="string"/> and other <see cref="object"/> resources
     /// can be obtained by <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> methods
     /// but metadata as well by <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. Please note that accessing aliases are not exposed
-    /// by the <see cref="ResXResourceManager"/> class, but you can still access them by via the <see cref="IExpandoResourceSet"/> type returned by the <see cref="GetExpandoResourceSet"/> method.
+    /// by the <see cref="ResXResourceManager"/> class, but you can still access them via the <see cref="IExpandoResourceSet"/> type returned by the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method.
     /// <note>Please note that unlike in case of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> methods,
     /// there is no falling back to the parent cultures (as seen in the example above) for metadata accessed by the <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods.</note></para>
     /// <h1 class="heading">Instantiating a <see cref="ResXResourceManager"/> object</h1>
@@ -90,7 +94,7 @@ namespace KGySoft.Libraries.Resources
     /// <list type="bullet">
     /// <item><see cref="ResXResourceManager(string,CultureInfo)">ResXResourceManager(baseName string, CultureInfo neutralResourcesLanguage = null)</see>
     /// looks up resources in <c>baseName.culture.resx</c> files, where <c>baseName.resx</c> contains the resource set of the ultimate fallback culture (also known as default or invariant or neutral resources culture).
-    /// If <c>neutralResourcesLanguage</c> is specified, then <see cref="ResXResourceManager"/> will use the <c>baseName.resx</c> file when the culture to be used to access a resource equals to the <c>neutralResourcesLanguage</c>.
+    /// If <c>neutralResourcesLanguage</c> is specified, then <see cref="ResXResourceManager"/> will use the <c>baseName.resx</c> file when the culture to be used equals to the <c>neutralResourcesLanguage</c>.
     /// If <c>neutralResourcesLanguage</c> is not specified, then the default culture is auto detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
     /// If it is not defined, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as default culture.
     /// <code lang="C#">var manager = new ResXResourceManager("MyResources", CultureInfo.GetCultureInfo("en-US"));</code></item>
@@ -110,7 +114,7 @@ namespace KGySoft.Libraries.Resources
     /// The resources and metadata can be removed, too (see <see cref="RemoveObject">RemoveObject</see> and <see cref="RemoveMetaObject">RemoveMetaObject</see> methods).</para>
     /// <para>The changes in the resource sets can be saved by calling the <see cref="SaveAllResources">SaveAllResources</see> method. A single resource set can be saved
     /// by calling the <see cref="SaveResourceSet">SaveResourceSet</see> method.
-    /// <note>The <see cref="ResXResourceManager"/> always saves the resources into files and never embeds the resources in file references. If you need more control
+    /// <note>The <see cref="ResXResourceManager"/> always saves the resources into files and never embeds the resources if they are file references (see <see cref="ResXFileRef"/>). If you need more control
     /// over saving you can call the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method to access the various <see cref="O:KGySoft.Libraries.Resources.IExpandoResourceSet.Save">Save</see> overloads)</note></para>
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -196,31 +200,69 @@ namespace KGySoft.Libraries.Resources
     /// // Value of resource 'DefaultOnly' for culture '': This resource is the same everywhere
     /// // Value of resource 'DefaultOnly' for culture 'en': This resource is the same everywhere
     /// // Value of resource 'DefaultOnly' for culture 'en-US': This resource is the same everywhere]]></code>
-    /// <h1 class="heading">Safety</h1>
-    #error itt tartok
-    /// TODO: lényegében ugyanaz, mint a Resxressetnél. Vagy utalni rá, vagy átvenni
-    /// - SafeMode, string/obj
+    /// <h1 class="heading">Safety<a name="safety">&#160;</a></h1>
+    /// <para>Similarly to <see cref="ResXResourceSet"/> and <see cref="ResXResourceReader"/>, the <see cref="ResXResourceManager"/>
+    /// class also has a <see cref="SafeMode"/> which changes the behavior of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
+    /// and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
+    /// methods:
+    /// <list type="bullet">
+    /// <item>If the <see cref="SafeMode"/> property is <c>true</c> the return value of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see>
+    /// and <see cref="GetMetaObject">GetMetaObject</see> methods is a <see cref="ResXDataNode"/> rather than the resource or metadata value.
+    /// This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source.
+    /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.
+    /// See also the third example at the <see cref="ResXResourceSet"/> class.</item>
+    /// <item>If the <see cref="SafeMode"/> property is <c>true</c>, then <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see>
+    /// and <see cref="GetMetaString">GetMetaString</see> methods will not throw an <see cref="InvalidOperationException"/>
+    /// even for non-string entries; they return the raw XML value instead.</item>
+    /// </list>
+    /// <note type="security">Even if <see cref="SafeMode"/> is <c>false</c>, loading a .resx content with corrupt or malicious entry
+    /// will have no effect until we try to obtain the corresponding value. See the last example at <see cref="ResXResourceSet"/> for the demonstration
+    /// and the example at <see cref="ResXDataNode"/> to see what members can be checked in safe mode.
+    /// </note>
+    /// </para>
     /// <h1 class="heading">Comparison with ResourceManager<a name="comparison">&#160;</a></h1>
     /// <para>While <see cref="ResourceManager"/> is read-only and works on binary resources, <see cref="ResXResourceManager"/> supports expansion (see <see cref="IExpandoResourceManager"/>) and works on XML resource (.resx) files.</para>
-    /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a>:
+    /// <para><strong>Incompatibility</strong> with <see cref="ResourceManager"/>:
     /// <list type="bullet">
-    /// todo - a gyári GetResourceSet createIfNotExists = false esetén becache-el egy parent culture-t, ha talál, onnantól mindig azt adja vissza, még ha a file létezik is, hiába hívjuk később true-val. Ez itt jól működik.
+    /// <item>There is no constructor where the type of the resource sets can be specified. The <see cref="ResourceManager.ResourceSetType"/> property
+    /// returns always the type of <see cref="ResXResourceSet"/>.</item>
+    /// <item>If <see cref="ResourceManager.GetResourceSet">ResourceManager.GetResourceSet</see> method is called with <c>createIfNotExists = false</c> for a culture,
+    /// which has a corresponding but not loaded resource file, then a resource set for a parent culture might be cached and on successive calls that cached parent set will be
+    /// returned even if the <c>createIfNotExists</c> argument is <c>true</c>. In <see cref="ResXResourceManager"/> the <see cref="GetResourceSet"/> method
+    /// the corresponding argument is called <c>loadIfExists</c> and works as expected.</item>
     /// </list>
     /// </para>
     /// <para><strong>New features and improvements</strong> compared to <see cref="ResourceManager"/>:
     /// <list type="bullet">
-    /// <item><term>todo</term>
-    /// <description>todo</description></item>
-    /// New features in addition to ResourceManager:
-    /// - write/delete/etc
-    /// - SafeMode
-    /// - new members
+    /// <item><term>Write support</term>
+    /// <description>The stored content can be expanded or existing entries can be replaced (see <see cref="SetObject">SetObject</see>/<see cref="SetMetaObject">SetMetaObject</see>),
+    /// the entries can be removed (see <see cref="RemoveObject">RemoveObject</see>/<see cref="RemoveMetaObject">RemoveMetaObject</see>),
+    /// and the new content can be saved (see <see cref="SaveAllResources">SaveAllResources</see>/<see cref="SaveResourceSet">SaveResourceSet</see>).
+    /// You can start even with a completely empty manager, add content dynamically and save the new resources (see the example above).</description></item>
+    /// <item><term>Security</term>
+    /// <description>During the initialization of <see cref="ResXResourceManager"/> and loading of a resource set no object is deserialized even if <see cref="SafeMode"/>
+    /// property is <c>false</c>. Objects are deserialized only when they are accessed (see <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>).
+    /// If <see cref="SafeMode"/> is <c>true</c>, then security is even more increased as <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+    /// return a <see cref="ResXDataNode"/> instance instead of a deserialized object so you can check whether the resource or metadata
+    /// can be treat as a safe object before actually deserializing it. See the <a href="#safety">Safety</a> section above for more details.</description></item>
+    /// <item><term>Disposal</term>
+    /// <description>As <see cref="ResourceSet"/> implementations are disposable objects, <see cref="ResXResourceManager"/> itself implements
+    /// the <see cref="IDisposable"/> interface as well.</description></item>
     /// </list>
     /// </para>
     /// </remarks>
+    /// <seealso cref="LanguageSettings"/>
+    /// <seealso cref="ResXDataNode"/>
+    /// <seealso cref="ResXFileRef"/>
+    /// <seealso cref="ResXResourceReader"/>
+    /// <seealso cref="ResXResourceWriter"/>
+    /// <seealso cref="ResXResourceSet"/>
+    /// <seealso cref="HybridResourceManager"/>
+    /// <seealso cref="DynamicResourceManager"/>
     [Serializable]
     public class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
     {
+#error itt tartok: memberek leírása jön
         /// <summary>
         /// Represents a cached resource set for a child culture, which might be replaced later.
         /// </summary>
