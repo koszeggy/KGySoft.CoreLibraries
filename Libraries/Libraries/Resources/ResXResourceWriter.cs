@@ -622,7 +622,7 @@ namespace KGySoft.Libraries.Resources
         public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException("fileName", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
 
             writer = new ResXWriter(fileName);
             this.typeNameConverter = typeNameConverter;

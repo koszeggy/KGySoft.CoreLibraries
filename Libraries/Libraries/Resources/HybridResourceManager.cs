@@ -569,7 +569,7 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The resource set for the specified culture.
         /// </returns>
-        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <c>true</c>.</exception>
+        /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="ThrowException"/> are <c>true</c> and the .resx file of the neutral culture was not found.</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // base implementation must not be called because it wants to open main assembly in case of invariant culture
@@ -724,7 +724,7 @@ namespace KGySoft.Libraries.Resources
                 if (source != ResourceManagerSources.ResXOnly)
                 {
                     // otherwise, disposed state is checked by ResXResourceSet
-                    if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed())
+                    if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed)
                         throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
                     compiled = base.InternalGetResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
                 }
@@ -912,8 +912,10 @@ namespace KGySoft.Libraries.Resources
             if (source == ResourceManagerSources.CompiledOnly)
                 return null;
 
-            // in case of metadata there is no hierarchy traversal
+            // in case of metadata there is no hierarchy traversal so if there is no result trying to provoke the missing manifest exception
             IExpandoResourceSetInternal rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSetInternal;
+            if (rs == null && ThrowException)
+                InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, true, false);
             return rs?.GetMeta(name, IgnoreCase, isString, safeMode);
         }
 
@@ -1127,6 +1129,11 @@ namespace KGySoft.Libraries.Resources
         }
 
         #endregion
+
+        /// <summary>
+        /// Gets whether this <see cref="HybridResourceManager"/> instance is disposed.
+        /// </summary>
+        public bool IsDisposed => resxResources.IsDisposed;
 
         /// <summary>
         /// Disposes the resources of the current instance.

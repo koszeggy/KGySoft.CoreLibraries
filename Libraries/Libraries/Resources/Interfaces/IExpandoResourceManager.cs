@@ -28,7 +28,7 @@ namespace KGySoft.Libraries.Resources
     /// <summary>
     /// Represents a <see cref="ResourceManager"/> with write capabilities.
     /// </summary>
-    public interface IExpandoResourceManager
+    public interface IExpandoResourceManager : IDisposable
     {
         #region Properties
 
@@ -42,6 +42,29 @@ namespace KGySoft.Libraries.Resources
         /// Gets whether this <see cref="IExpandoResourceManager"/> instance has modified and unsaved data.
         /// </summary>
         bool IsModified { get; }
+
+        /// <summary>
+        /// Gets or sets whether the <see cref="IExpandoResourceManager"/> works in safe mode. In safe mode the retrieved
+        /// objects returned from .resx sources are not deserialized automatically. See Remarks section for details.
+        /// <br/>Default value: <c>false</c>.
+        /// </summary>
+        /// <remarks>
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
+        /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
+        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx resource.
+        /// For non-string elements the raw XML string value will be returned.</para>
+        /// </remarks>
+        bool SafeMode { get; set; }
+
+        /// <summary>
+        /// Gets whether this <see cref="IExpandoResourceManager"/> instance is disposed.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+        /// </value>
+        bool IsDisposed { get; }
 
         #endregion
 
@@ -79,7 +102,11 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The value of the resource localized for the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
-        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the resource is not <see cref="string"/>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetString(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -102,15 +129,15 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the resource to set.</param>
         /// <param name="culture">The culture of the resource to set. If this value is <see langword="null"/>,
-        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
+        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <param name="value">The value of the resource to set. If <see langword="null"/>, then a null reference will be explicitly
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
-        /// Its effect is similar to the <see cref="RemoveObject"/> method: the subsequent <see cref="GetObject(string, CultureInfo)" /> calls
+        /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method: the subsequent <see cref="GetObject">GetObject</see> calls
         /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
-        /// <see cref="GetExpandoResourceSet"/> method will return the resources with <see langword="null" /> value.</para>
+        /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the resources with <see langword="null" /> value.</para>
         /// <para>If the current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and you want to remove
         /// the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject"/> method.</para>
         /// </remarks>
@@ -124,12 +151,12 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The case-sensitive name of the resource to remove.</param>
         /// <param name="culture">The culture of the resource to remove. If this value is <see langword="null"/>,
-        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
+        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <remarks>
         /// <para>If this <see cref="IExpandoResourceManager"/> instance is a <see cref="HybridResourceManager"/>, and there is a binary resource
-        /// defined for <paramref name="name"/> and <paramref name="culture"/>, then after this call the originally defined value will be returned by <see cref="GetObject(string,CultureInfo)"/> method from the binary resources.
-        /// If you want to force hiding the binary resource and make <see cref="GetObject(string,CultureInfo)"/> to default to the parent <see cref="CultureInfo"/> of the specified <paramref name="culture"/>,
-        /// then use the <see cref="SetObject"/> method with a <see langword="null"/> value</para>.
+        /// defined for <paramref name="name"/> and <paramref name="culture"/>, then after this call the originally defined value will be returned by <see cref="GetObject">GetObject</see> method from the binary resources.
+        /// If you want to force hiding the binary resource and make <see cref="GetObject">GetObject</see> to default to the parent <see cref="CultureInfo"/> of the specified <paramref name="culture"/>,
+        /// then use the <see cref="SetObject">SetObject</see> method with a <see langword="null"/> value</para>.
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
         /// </remarks>
@@ -142,8 +169,8 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
-        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.
-        /// Unlike in case of <see cref="GetString(string,CultureInfo)"/> method, no fallback is used if the metadata is not found in the specified culture.
+        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
+        /// Unlike in case of <see cref="GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.
         /// </param>
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
@@ -155,8 +182,8 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
-        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.
-        /// Unlike in case of <see cref="GetObject(string,CultureInfo)"/> method, no fallback is used if the metadata is not found in the specified culture.
+        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
+        /// Unlike in case of <see cref="GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.
         /// </param>
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
@@ -169,14 +196,14 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the metadata to set.</param>
         /// <param name="culture">The culture of the metadata to set.
-        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.</param>
+        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.</param>
         /// <param name="value">The value of the metadata to set. If <see langword="null"/>,  then a null reference will be explicitly
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
-        /// Its effect is similar to the <see cref="RemoveMetaObject"/> method: the subsequent <see cref="GetMetaObject" /> calls
+        /// Its effect is similar to the <see cref="RemoveMetaObject">RemoveMetaObject</see> method: the subsequent <see cref="GetMetaObject">GetMetaObject</see> calls
         /// with the same <paramref name="culture" /> will return <see langword="null" />.
-        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet"/> method will return the meta objects with <see langword="null" /> value.</para>
+        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null" /> value.</para>
         /// </remarks>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
@@ -188,7 +215,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The case-sensitive name of the metadata to remove.</param>
         /// <param name="culture">The culture of the metadata to remove.
-        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.</param>
+        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.</param>
         /// <remarks>
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
@@ -204,7 +231,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="force"><c>true</c> to save the resource set even if it has not been modified; <c>false</c> to save it only if it has been modified.
         /// <br/>Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
-        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
+        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+        /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns><c>true</c> if the resource set of the specified <paramref name="culture"/> has been saved;
         /// otherwise, <c>false</c>.</returns>
@@ -218,7 +246,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
         /// <br/>Default value: <c>false</c>.</param>
         /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
-        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by <see cref="ResXResourceReader" />
+        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+        /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns><c>true</c> if at least one resource set has been saved; otherwise, <c>false</c>.</returns>
         /// <exception cref="IOException">A resource set could not be saved.</exception>

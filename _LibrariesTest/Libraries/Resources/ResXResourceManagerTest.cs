@@ -197,14 +197,13 @@ namespace _LibrariesTest.Libraries.Resources
         {
             var manager = new ResXResourceManager("UnknownBaseName");
 
-            // not existing base: unlike for objects, there is no missing manifest exception because meta does not use parent fallback
-            Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
-            Assert.IsNull(manager.GetMetaObject("unknown"));
+            // not existing base: missing manifest exception
+            Throws<MissingManifestResourceException>(() => manager.GetMetaObject("unknown"));
 
-            // setting something without culture sets the invariant language so there is no exception for getobject anymore
+            // setting something without culture sets the invariant language so there is no exception anymore
             manager.SetMetaObject("StringValue", "String invariant");
             Assert.IsNotNull(manager.GetMetaObject("StringValue"));
-            Assert.IsNull(manager.GetObject("unknown"));
+            Assert.IsNull(manager.GetMetaObject("unknown"));
 
             // this creates a derived en resource set
             manager.SetMetaObject("enOnly", 42, en);

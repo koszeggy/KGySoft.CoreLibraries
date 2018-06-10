@@ -1161,7 +1161,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (name == null)
-                throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             lock (data)
             {
@@ -1201,7 +1201,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (name == null)
-                throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             lock (data)
             {
@@ -1227,7 +1227,7 @@ namespace KGySoft.Libraries.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (name == null)
-                throw new ArgumentNullException("name", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
 
             lock (data)
             {
