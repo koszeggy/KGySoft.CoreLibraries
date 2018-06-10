@@ -73,7 +73,7 @@ namespace KGySoft.Libraries.Serialization
         {
             if (type == null)
             {
-                throw new ArgumentNullException("type", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
             }
 
             if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(typeof(string), typeof(UIntPtr)))
@@ -99,9 +99,9 @@ namespace KGySoft.Libraries.Serialization
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
             if (info == null)
-                throw new ArgumentNullException("info", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(info), Res.Get(Res.ArgumentNull));
 
             Type type = obj.GetType();
 
@@ -123,9 +123,9 @@ namespace KGySoft.Libraries.Serialization
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
             if (info == null)
-                throw new ArgumentNullException("info", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(info), Res.Get(Res.ArgumentNull));
 
             // can occur if the original type was ISerializable and GetObjectData has changed the type to a non-ISerializable one
             // Example: .NET 4.6 EnumEqualityComparer->ObjectEqualityComparer

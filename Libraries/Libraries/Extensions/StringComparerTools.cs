@@ -22,7 +22,7 @@ namespace KGySoft.Libraries
         public static bool EqualsAny(this StringComparer comparer, string s, params string[] set)
         {
             if (comparer == null)
-                throw new ArgumentNullException("comparer", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(comparer), Res.Get(Res.ArgumentNull));
 
             int length;
             if (set == null || (length = set.Length) == 0)

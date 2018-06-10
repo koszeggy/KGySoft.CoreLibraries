@@ -91,7 +91,7 @@ namespace KGySoft.Libraries.Reflection
         public static PropertyAccessor GetPropertyAccessor(PropertyInfo property)
         {
             if (property == null)
-                throw new ArgumentNullException("property", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull));
             if (CachingEnabled)
                 return (PropertyAccessor)GetCreateAccessor(property);
             else

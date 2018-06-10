@@ -635,7 +635,7 @@ namespace KGySoft.Libraries.Collections
                 if (value != items.Length) // deleted: || startIndex > 0
                 {
                     if (value < size)
-                        throw new ArgumentOutOfRangeException("value", Res.Get(Res.CapacityTooSmall));
+                        throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CapacityTooSmall));
 
                     if (value > 0)
                     {
@@ -719,7 +719,7 @@ namespace KGySoft.Libraries.Collections
         public CircularList(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
 
             ICollection<T> c = collection as ICollection<T> ?? collection.ToArray();
             int length = c.Count;
@@ -858,7 +858,7 @@ namespace KGySoft.Libraries.Collections
         public void AddRange(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
 
             AddLast(collection);
         }
@@ -901,9 +901,9 @@ namespace KGySoft.Libraries.Collections
         public int IndexOf(T item, int index, int count)
         {
             if ((uint)index > (uint)size)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (count < 0 || index > size - count)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (
 #if NET35
@@ -1024,17 +1024,17 @@ isNonIntEnum
         public int LastIndexOf(T item, int index, int count)
         {
             if (size != 0 && index < 0)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (size != 0 && count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (size == 0)
                 return -1;
 
             if (index >= size)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (count > index + 1)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (
 #if NET35
@@ -1116,12 +1116,12 @@ isNonIntEnum
         public int FindIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)size)
-                throw new ArgumentOutOfRangeException("startIndex", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.Get(Res.ArgumentOutOfRange));
             if (count < 0 || startIndex > size - count)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int length = items.Length;
             int start = this.startIndex + startIndex;
@@ -1193,11 +1193,11 @@ isNonIntEnum
         public int FindLastIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)size)
-                throw new ArgumentOutOfRangeException("startIndex", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.Get(Res.ArgumentOutOfRange));
             if (count < 0 || startIndex - count + 1 < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int length = items.Length;
             int start = this.startIndex + startIndex;
@@ -1237,7 +1237,7 @@ isNonIntEnum
         public T Find(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int length = items.Length;
             int carry = startIndex + size - length;
@@ -1270,7 +1270,7 @@ isNonIntEnum
         public T FindLast(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int length = items.Length;
             int carry = startIndex + size - length;
@@ -1302,7 +1302,7 @@ isNonIntEnum
         public IEnumerable<T> FindAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int length = items.Length;
             int carry = startIndex + size - length;
@@ -1335,7 +1335,7 @@ isNonIntEnum
         public void InsertRange(int index, IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException("collection", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
 
             if (index == 0)
             {
@@ -1351,7 +1351,7 @@ isNonIntEnum
 
             // if we are here, shifting is necessary
             if ((uint)index > (uint)size)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
             ICollection<T> c = collection as ICollection<T>;
             T[] array = null;
@@ -1430,10 +1430,10 @@ isNonIntEnum
         public void RemoveRange(int index, int count)
         {
             if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
@@ -1520,9 +1520,9 @@ isNonIntEnum
         public void Reverse(int index, int count)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
@@ -1610,7 +1610,7 @@ isNonIntEnum
         public void Sort(Comparison<T> comparison)
         {
             if (comparison == null)
-                throw new ArgumentNullException("comparison", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(comparison), Res.Get(Res.ArgumentNull));
 
             if (size > 0)
             {
@@ -1644,9 +1644,9 @@ isNonIntEnum
         public void Sort(int index, int count, IComparer<T> comparer)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
@@ -1792,9 +1792,9 @@ isNonIntEnum
         public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
             if (comparer == null && isEnum)
@@ -1882,10 +1882,10 @@ isNonIntEnum
         public CircularList<T> GetRange(int index, int count)
         {
             if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
@@ -1922,7 +1922,7 @@ isNonIntEnum
         public bool TrueForAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int length = items.Length;
             int carry = startIndex + size - length;
@@ -1955,7 +1955,7 @@ isNonIntEnum
         public void ForEach(Action<T> action)
         {
             if (action == null)
-                throw new ArgumentNullException("action", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(action), Res.Get(Res.ArgumentNull));
 
             int ver = version;
             int length = items.Length;
@@ -2007,7 +2007,7 @@ isNonIntEnum
         public CircularList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
         {
             if (converter == null)
-                throw new ArgumentNullException("converter", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(converter), Res.Get(Res.ArgumentNull));
 
             CircularList<TOutput> list = new CircularList<TOutput>(size);
             int targetIndex = 0;
@@ -2075,10 +2075,10 @@ isNonIntEnum
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
             if (array == null)
-                throw new ArgumentNullException("array", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
 
             if (array.Length - arrayIndex < count)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), "array");
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
             // Delegating rest error checking to Array.Copy.
             if (size <= 0)
@@ -2116,7 +2116,7 @@ isNonIntEnum
         public int RemoveAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException("match", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             // the first free slot in items array
             int freeIndex = 0;
@@ -2629,7 +2629,7 @@ isNonIntEnum
             {
                 // if we are here, shifting is necessary
                 if ((uint)index > (uint)size)
-                    throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
                 if (size == items.Length)
                 {
@@ -2678,7 +2678,7 @@ isNonIntEnum
         public void RemoveAt(int index)
         {
             if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
             if (index == 0)
             {
@@ -2728,7 +2728,7 @@ isNonIntEnum
             {
                 // casting to uint reduces the range check by one
                 if ((uint)index >= (uint)size)
-                    throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
                 // not calling ElementAt to be sure this code is inlined
                 if (startIndex == 0)
@@ -2746,7 +2746,7 @@ isNonIntEnum
             {
                 // casting to uint reduces the range check by one
                 if ((uint)index >= (uint)size)
-                    throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
                 SetElementAt(index, value);
                 version++;
@@ -2829,10 +2829,10 @@ isNonIntEnum
         public void CopyTo(T[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException("array", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
 
             if (array.Length - arrayIndex < size)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), "array");
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
             // Delegating rest error checking to Array.Copy.
             if (size <= 0)
@@ -2908,7 +2908,7 @@ isNonIntEnum
         int IList.Add(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
             AddLast((T)value);
             return size - 1;
         }
@@ -2916,21 +2916,21 @@ isNonIntEnum
         bool IList.Contains(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
             return Contains((T)value);
         }
 
         int IList.IndexOf(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
             return IndexOf((T)value);
         }
 
         void IList.Insert(int index, object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
             Insert(index, (T)value);
         }
 
@@ -2947,7 +2947,7 @@ isNonIntEnum
         void IList.Remove(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
             Remove((T)value);
         }
 
@@ -2957,7 +2957,7 @@ isNonIntEnum
             set
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -2969,7 +2969,7 @@ isNonIntEnum
         void ICollection.CopyTo(Array array, int index)
         {
             if (array != null && array.Rank != 1)
-                throw new ArgumentException(Res.Get(Res.ArrayDimension), "array");
+                throw new ArgumentException(Res.Get(Res.ArrayDimension), nameof(array));
 
             T[] typedArray = array as T[];
             if (typedArray != null)

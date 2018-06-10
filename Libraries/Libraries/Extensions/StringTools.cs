@@ -104,7 +104,7 @@ namespace KGySoft.Libraries
         public static byte[] ParseHexBytes(this string s, string separator)
         {
             if (s == null)
-                throw new ArgumentNullException("s", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
 
             if (string.IsNullOrEmpty(separator))
                 return ParseHexBytes(s);
@@ -124,13 +124,13 @@ namespace KGySoft.Libraries
         public static byte[] ParseHexBytes(this string s)
         {
             if (s == null)
-                throw new ArgumentNullException("s", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
 
             if (s.Length == 0)
                 return new byte[0];
 
             if (s.Length % 2 != 0)
-                throw new ArgumentException("Source length error", "s");
+                throw new ArgumentException("Source length error", nameof(s));
 
             byte[] result = new byte[s.Length >> 1];
             for (int i = 0; i < (s.Length >> 1); i++)
@@ -146,10 +146,10 @@ namespace KGySoft.Libraries
         public static byte[] ParseDecimalBytes(this string s, string separator)
         {
             if (s == null)
-                throw new ArgumentNullException("s", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
 
             if (String.IsNullOrEmpty(separator))
-                throw new ArgumentException(Res.Get(Res.SeparatorNullOrEmpty), "separator");
+                throw new ArgumentException(Res.Get(Res.SeparatorNullOrEmpty), nameof(separator));
 
             string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
             byte[] result = new byte[values.Length];
@@ -166,7 +166,7 @@ namespace KGySoft.Libraries
         public static Regex ToWildcardsRegex(this string s)
         {
             if (s == null)
-                throw new ArgumentNullException("s", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
             return new Regex("^" + Regex.Escape(s).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase);
         }
 
@@ -176,9 +176,9 @@ namespace KGySoft.Libraries
         public static string Repeat(this string s, int count)
         {
             if (s == null)
-                throw new ArgumentNullException("s", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
             if (count < 0)
-                throw new ArgumentOutOfRangeException("count", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (s.Length == 0 || count == 1)
                 return s;

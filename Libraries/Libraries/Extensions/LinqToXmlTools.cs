@@ -23,7 +23,7 @@ namespace KGySoft.Libraries
         public static string GetMultilineValue(this XElement element)
         {
             if (element == null)
-                throw new ArgumentNullException("element", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(element), Res.Get(Res.ArgumentNull));
 
             return element.IsEmpty ? null : CorrectNewLine(element.Value);
         }
@@ -39,7 +39,7 @@ namespace KGySoft.Libraries
         public static string GetMultilineValue(this XComment element)
         {
             if (element == null)
-                throw new ArgumentNullException("element", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(element), Res.Get(Res.ArgumentNull));
 
             return CorrectNewLine(element.Value);
         }
@@ -55,7 +55,7 @@ namespace KGySoft.Libraries
         public static string GetMultilineValue(this XText element)
         {
             if (element == null)
-                throw new ArgumentNullException("element", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(element), Res.Get(Res.ArgumentNull));
 
             return CorrectNewLine(element.Value);
         }

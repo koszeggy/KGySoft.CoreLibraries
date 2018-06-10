@@ -61,7 +61,7 @@ namespace KGySoft.Libraries.Reflection
             set
             {
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value", Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
                 else if (value == 0)
                 {
                     CachingEnabled = false;
@@ -240,11 +240,11 @@ namespace KGySoft.Libraries.Reflection
         protected DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
             if (methodBase == null)
-                throw new ArgumentNullException("methodBase", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(methodBase), Res.Get(Res.ArgumentNull));
             MethodInfo method = methodBase as MethodInfo;
             ConstructorInfo ctor = methodBase as ConstructorInfo;
             if (method == null && ctor == null)
-                throw new ArgumentException(Res.Get(Res.InvalidMethodBase), "methodBase");
+                throw new ArgumentException(Res.Get(Res.InvalidMethodBase), nameof(methodBase));
 
             Type returnType = ctor != null ? DeclaringType : method.ReturnType;
             Type dmReturnType = returnType == typeof(void) ? typeof(void) : typeof(object);

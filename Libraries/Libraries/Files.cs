@@ -24,7 +24,7 @@ namespace KGySoft.Libraries
         static public bool CanCreate(string fileName, bool canOverwrite)
         {
             if (fileName == null)
-                throw new ArgumentNullException("fileName", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
 
             try
             {
@@ -74,7 +74,7 @@ namespace KGySoft.Libraries
         static public string GetNextFileName(string path, string postfixSeparator)
         {
             if (path == null)
-                throw new ArgumentNullException("path", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(path), Res.Get(Res.ArgumentNull));
 
             postfixSeparator = postfixSeparator ?? String.Empty;
 
@@ -139,9 +139,9 @@ namespace KGySoft.Libraries
             // TODO: test this:
             //return new Uri(baseDirectory).MakeRelativeUri(new Uri(target)).LocalPath;
             if (target == null)
-                throw new ArgumentNullException("target", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(target), Res.Get(Res.ArgumentNull));
             if (baseDirectory == null)
-                throw new ArgumentNullException("baseDirectory", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(baseDirectory), Res.Get(Res.ArgumentNull));
 
             if (!Path.IsPathRooted(target))
                 target = Path.GetFullPath(target);
@@ -197,9 +197,9 @@ namespace KGySoft.Libraries
         public static bool IsWildcardMatch(string pattern, string fileName)
         {
             if (pattern == null)
-                throw new ArgumentNullException("pattern", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(pattern), Res.Get(Res.ArgumentNull));
             if (fileName == null)
-                throw new ArgumentNullException("fileName", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
 
             return new Regex("^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase).IsMatch(fileName);
         }

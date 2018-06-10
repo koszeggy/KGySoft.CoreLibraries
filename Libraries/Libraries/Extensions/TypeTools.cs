@@ -97,7 +97,7 @@ namespace KGySoft.Libraries
                 return false;
 
             if (!instance.GetType().IsAssignableFrom(type))
-                throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType), "instance");
+                throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType), nameof(instance));
 
             IList list = instance as IList;
             if (list != null)

@@ -49,7 +49,7 @@ namespace KGySoft.Libraries.Reflection
         public static MethodInvoker GetMethodInvoker(MethodInfo method)
         {
             if (method == null)
-                throw new ArgumentNullException("method", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull));
             if (CachingEnabled)
                 return (MethodInvoker)GetCreateAccessor(method);
             else

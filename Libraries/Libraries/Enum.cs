@@ -337,7 +337,7 @@ namespace KGySoft.Libraries
         public static bool IsDefined(string value)
         {
             if (value == null)
-                throw new ArgumentNullException("value", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
 
             return NameValuePairs.ContainsKey(value);
         }
@@ -509,7 +509,7 @@ namespace KGySoft.Libraries
         public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
         {
             if (value == null)
-                throw new ArgumentNullException("value", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
             
             // simple name match test
             if (NameValuePairs.TryGetValue(value, out result))
@@ -672,7 +672,7 @@ namespace KGySoft.Libraries
         {
             TEnum result;
             if (!TryParse(value, separator, ignoreCase, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), "value");
+                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
 
             return result;
         }
@@ -689,7 +689,7 @@ namespace KGySoft.Libraries
         {
             TEnum result;
             if (!TryParse(value, EnumTools.DefaultParseSeparator, ignoreCase, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), "value");
+                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
 
             return result;
         }
@@ -706,7 +706,7 @@ namespace KGySoft.Libraries
         {
             TEnum result;
             if (!TryParse(value, separator, false, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), "value");
+                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
 
             return result;
         }
@@ -722,7 +722,7 @@ namespace KGySoft.Libraries
         {
             TEnum result;
             if (!TryParse(value, EnumTools.DefaultParseSeparator, false, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), "value");
+                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
 
             return result;
         }
@@ -738,7 +738,7 @@ namespace KGySoft.Libraries
         public static string ToString(TEnum value, EnumFormattingOptions format, string separator)
         {
             if ((uint)format > (uint)EnumFormattingOptions.CompoundFlagsAndNumber)
-                throw new ArgumentOutOfRangeException("format", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(format), Res.Get(Res.ArgumentOutOfRange));
 
             if (format == EnumFormattingOptions.DistinctFlags)
                 return FormatDistinctFlags(value, separator);

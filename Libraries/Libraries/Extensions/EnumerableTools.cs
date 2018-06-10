@@ -23,9 +23,9 @@ namespace KGySoft.Libraries
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             if (source == null)
-                throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
             if (action == null)
-                throw new ArgumentNullException("action", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(action), Res.Get(Res.ArgumentNull));
 
             foreach (T item in source)
             {
@@ -126,7 +126,7 @@ namespace KGySoft.Libraries
         internal static void Add(this IEnumerable source, object item)
         {
             if (source == null)
-                throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
 
             IList list = source as IList;
             if (list != null
@@ -200,7 +200,7 @@ namespace KGySoft.Libraries
         internal static void Clear(this IEnumerable source)
         {
             if (source == null)
-                throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
 
             IList list = source as IList;
             if (list != null)
@@ -244,7 +244,7 @@ namespace KGySoft.Libraries
         public static CircularList<TSource> ToCircularList<TSource>(this IEnumerable<TSource> source)
         {
             if (source == null)
-                throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
 
             return new CircularList<TSource>(source);
         }
@@ -298,7 +298,7 @@ namespace KGySoft.Libraries
         public static IEnumerable<T> ToEnumerable<T>(this IEnumerator enumerator)
         {
             if (enumerator == null)
-                throw new ArgumentNullException("enumerator", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(enumerator), Res.Get(Res.ArgumentNull));
 
             while (enumerator.MoveNext())
                 yield return (T)enumerator.Current;
@@ -315,7 +315,7 @@ namespace KGySoft.Libraries
         public static IEnumerable<T> ToEnumerable<T>(this IEnumerator<T> enumerator)
         {
             if (enumerator == null)
-                throw new ArgumentNullException("enumerator", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(enumerator), Res.Get(Res.ArgumentNull));
 
             while (enumerator.MoveNext())
                 yield return enumerator.Current;
@@ -331,7 +331,7 @@ namespace KGySoft.Libraries
         public static IEnumerable<DictionaryEntry> ToEnumerable(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
-                throw new ArgumentNullException("enumerator", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(enumerator), Res.Get(Res.ArgumentNull));
 
             while (enumerator.MoveNext())
                 yield return enumerator.Entry;
@@ -349,7 +349,7 @@ namespace KGySoft.Libraries
         public static IEnumerable<KeyValuePair<TKey, TValue>> ToEnumerable<TKey, TValue>(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
-                throw new ArgumentNullException("enumerator", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(enumerator), Res.Get(Res.ArgumentNull));
 
             while (enumerator.MoveNext())
                 yield return new KeyValuePair<TKey, TValue>((TKey)enumerator.Key, (TValue)enumerator.Value);

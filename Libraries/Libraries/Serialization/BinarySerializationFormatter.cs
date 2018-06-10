@@ -417,7 +417,7 @@ namespace KGySoft.Libraries.Serialization
             {
                 if (!value.AllFlagsDefined())
                 {
-                    throw new ArgumentOutOfRangeException("value", Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
                 }
 
                 serializationOptions = value;
@@ -1862,7 +1862,7 @@ namespace KGySoft.Libraries.Serialization
 
                 default:
                     // should never occur, throwing internal error without resource
-                    throw new ArgumentOutOfRangeException("length");
+                    throw new ArgumentOutOfRangeException(nameof(length));
             }
 
             // storing the value as 7-bit encoded int, which will be shorter

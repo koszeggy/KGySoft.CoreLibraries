@@ -216,14 +216,14 @@ namespace KGySoft.Libraries.Collections
             bool IList.Contains(object value)
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 return typeKey.CanAcceptValue(value) && Contains((TKey)value);
             }
 
             int IList.IndexOf(object value)
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 return typeKey.CanAcceptValue(value) ? IndexOf((TKey)value) : -1;
             }
 
@@ -906,7 +906,7 @@ namespace KGySoft.Libraries.Collections
             : this((dictionary != null) ? dictionary.Count : 0, comparer)
         {
             if (dictionary == null)
-                throw new ArgumentNullException("dictionary", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
 
             // bug in SortedList: this way of initialization would allow duplicate keys:
             //keys.AddRange(dictionary.Keys);
@@ -965,11 +965,11 @@ namespace KGySoft.Libraries.Collections
         public int Add(TKey key, TValue value)
         {
             if (key == null)
-                throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
 
             int pos = SearchKeyOptimizedLastOrFirst(key);
             if (pos >= 0)
-                throw new ArgumentException(Res.Get(Res.DuplicateKey), "key");
+                throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
 
             pos = ~pos;
             Insert(pos, key, value);
@@ -986,7 +986,7 @@ namespace KGySoft.Libraries.Collections
         public int IndexOfKey(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
 
             int index = keys.BinarySearch(key, comparer);
             if (index < 0)
@@ -1293,7 +1293,7 @@ namespace KGySoft.Libraries.Collections
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
 
                 int index = SearchKeyOptimizedLastOrFirst(key);
                 if (index >= 0)
@@ -1397,14 +1397,14 @@ namespace KGySoft.Libraries.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException("array", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
 
             if ((arrayIndex < 0) || (arrayIndex > array.Length))
-                throw new ArgumentOutOfRangeException("arrayIndex", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.Get(Res.ArgumentOutOfRange));
 
             int size = keys.Count;
             if ((array.Length - arrayIndex) < size)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), "array");
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
             for (int i = 0; i < size; i++)
             {
@@ -1479,18 +1479,18 @@ namespace KGySoft.Libraries.Collections
         void IDictionary.Add(object key, object value)
         {
             if (key == null)
-                throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.Get(Res.InvalidKeyType), "key");
+                throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
             if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
             Add((TKey)key, (TValue)value);
         }
 
         bool IDictionary.Contains(object key)
         {
             if (key == null)
-                throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
             return typeKey.CanAcceptValue(key) && ContainsKey((TKey)key);
         }
 
@@ -1517,7 +1517,7 @@ namespace KGySoft.Libraries.Collections
         void IDictionary.Remove(object key)
         {
             if (key == null)
-                throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
             if (typeKey.CanAcceptValue(key))
                 Remove((TKey)key);
         }
@@ -1532,19 +1532,19 @@ namespace KGySoft.Libraries.Collections
             get
             {
                 if (key == null)
-                    throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), "key");
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
                 return this[(TKey)key];
             }
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException("key", Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), "key");
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
                 if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
                 this[(TKey)key] = (TValue)value;
             }
         }
@@ -1556,13 +1556,13 @@ namespace KGySoft.Libraries.Collections
         void ICollection.CopyTo(Array array, int index)
         {
             if (array == null)
-                throw new ArgumentNullException("array", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
             if (index < 0 || index > array.Length)
-                throw new ArgumentOutOfRangeException("index", Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (array.Length - index < Count)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), "index");
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(index));
             if (array.Rank != 1)
-                throw new ArgumentException(Res.Get(Res.ArrayDimension), "array");
+                throw new ArgumentException(Res.Get(Res.ArrayDimension), nameof(array));
 
             int size = keys.Count;
             if (size == 0)
@@ -1618,7 +1618,7 @@ namespace KGySoft.Libraries.Collections
         int IList.Add(object value)
         {
             if (value == null)
-                throw new ArgumentNullException("value", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
 
             if (value is KeyValuePair<TKey, TValue>)
             {
@@ -1630,13 +1630,13 @@ namespace KGySoft.Libraries.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
                 return Add((TKey)elem.Key, (TValue)elem.Value);
             }
 
-            throw new ArgumentException(Res.Get(Res.InvalidKeyValueType, typeof(KeyValuePair<TKey, TValue>)), "value");
+            throw new ArgumentException(Res.Get(Res.InvalidKeyValueType, typeof(KeyValuePair<TKey, TValue>)), nameof(value));
         }
 
         bool IList.Contains(object value)
@@ -1648,9 +1648,9 @@ namespace KGySoft.Libraries.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
                 return IndexOf(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value)) >= 0;
             }
 
@@ -1666,9 +1666,9 @@ namespace KGySoft.Libraries.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
                 return IndexOf(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value));
             }
 
@@ -1702,9 +1702,9 @@ namespace KGySoft.Libraries.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), "value");
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
                 ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value));
             }
         }

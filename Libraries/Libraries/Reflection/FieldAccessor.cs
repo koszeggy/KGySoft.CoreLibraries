@@ -181,7 +181,7 @@ namespace KGySoft.Libraries.Reflection
         public static FieldAccessor GetFieldAccessor(FieldInfo field)
         {
             if (field == null)
-                throw new ArgumentNullException("field", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(field), Res.Get(Res.ArgumentNull));
             if (CachingEnabled)
                 return (FieldAccessor)GetCreateAccessor(field);
             else

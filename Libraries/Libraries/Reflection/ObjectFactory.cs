@@ -55,7 +55,7 @@ namespace KGySoft.Libraries.Reflection
         public static ObjectFactory GetObjectFactory(Type type)
         {
             if (type == null)
-                throw new ArgumentNullException("type", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
             if (CachingEnabled)
                 return (ObjectFactory)GetCreateAccessor(type);
             else
@@ -70,7 +70,7 @@ namespace KGySoft.Libraries.Reflection
         public static ObjectFactory GetObjectFactory(ConstructorInfo ctor)
         {
             if (ctor == null)
-                throw new ArgumentNullException("ctor", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(ctor), Res.Get(Res.ArgumentNull));
             if (CachingEnabled)
                 return (ObjectFactory)GetCreateAccessor(ctor);
             else
@@ -98,7 +98,7 @@ namespace KGySoft.Libraries.Reflection
                 // late-initialization of MemberInfo to avoid caching
                 return new ObjectFactoryDefault((Type)member) { MemberInfo = member };
             else
-                throw new ArgumentException(Res.Get(Res.TypeOrCtorInfoExpected), "member");
+                throw new ArgumentException(Res.Get(Res.TypeOrCtorInfoExpected), nameof(member));
         }
 
         /// <summary>

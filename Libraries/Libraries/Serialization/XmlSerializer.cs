@@ -138,7 +138,7 @@ namespace KGySoft.Libraries.Serialization
         public static void Serialize(XmlWriter writer, object obj, XmlSerializationOptions options)
         {
             if (writer == null)
-                throw new ArgumentNullException("writer", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
 
             writer.WriteStartElement("object");
             if (obj == null)
@@ -200,7 +200,7 @@ namespace KGySoft.Libraries.Serialization
         public static void Serialize(string fileName, object obj, XmlSerializationOptions options)
         {
             if (fileName == null)
-                throw new ArgumentNullException("fileName", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
 
             XmlWriter xmlWriter = XmlWriter.Create(fileName, new XmlWriterSettings
             {
@@ -245,7 +245,7 @@ namespace KGySoft.Libraries.Serialization
         public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options)
         {
             if (writer == null)
-                throw new ArgumentNullException("writer", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
 
             XmlWriter xmlWriter = XmlWriter.Create(writer, new XmlWriterSettings
             {
@@ -293,7 +293,7 @@ namespace KGySoft.Libraries.Serialization
         public static void Serialize(Stream stream, object obj, XmlSerializationOptions options)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(stream), Res.Get(Res.ArgumentNull));
 
             XmlWriter writer = XmlWriter.Create(stream, new XmlWriterSettings
             {
@@ -426,10 +426,10 @@ namespace KGySoft.Libraries.Serialization
         public static object Deserialize(XElement content)
         {
             if (content == null)
-                throw new ArgumentNullException("content", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(content), Res.Get(Res.ArgumentNull));
 
             if (content.Name.LocalName != "object")
-                throw new ArgumentException(Res.Get(Res.XmlRootExpected, content.Name.LocalName), "content");
+                throw new ArgumentException(Res.Get(Res.XmlRootExpected, content.Name.LocalName), nameof(content));
 
             if (content.IsEmpty)
                 return null;
@@ -448,7 +448,7 @@ namespace KGySoft.Libraries.Serialization
             if (!TryDeserializeObject(objType, content, out result))
             {
                 if (attrType == null)
-                    throw new ArgumentException(Res.Get(Res.XmlRootTypeMissing), "content");
+                    throw new ArgumentException(Res.Get(Res.XmlRootTypeMissing), nameof(content));
 
                 throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, objType));
             }
@@ -473,11 +473,11 @@ namespace KGySoft.Libraries.Serialization
         public static object Deserialize(XmlReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException("reader", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(reader), Res.Get(Res.ArgumentNull));
 
             ReadToNodeType(reader, XmlNodeType.Element);
             if (reader.Name != "object")
-                throw new ArgumentException(Res.Get(Res.XmlRootExpected, reader.Name), "reader");
+                throw new ArgumentException(Res.Get(Res.XmlRootExpected, reader.Name), nameof(reader));
 
             if (reader.IsEmptyElement)
                 return null;
@@ -495,7 +495,7 @@ namespace KGySoft.Libraries.Serialization
             if (!TryDeserializeObject(objType, reader, out result))
             {
                 if (attrType == null)
-                    throw new ArgumentException(Res.Get(Res.XmlRootTypeMissing), "reader");
+                    throw new ArgumentException(Res.Get(Res.XmlRootTypeMissing), nameof(reader));
 
                 throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, objType));
             }
@@ -515,7 +515,7 @@ namespace KGySoft.Libraries.Serialization
         public static object Deserialize(TextReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException("reader", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(reader), Res.Get(Res.ArgumentNull));
 
             XmlTextReader xmlReader = new XmlTextReader(reader)
             {
@@ -546,7 +546,7 @@ namespace KGySoft.Libraries.Serialization
         public static object Deserialize(string fileName)
         {
             if (fileName == null)
-                throw new ArgumentNullException("fileName", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
 
             XmlTextReader xmlReader = new XmlTextReader(fileName)
             {
@@ -577,7 +577,7 @@ namespace KGySoft.Libraries.Serialization
         public static object Deserialize(Stream stream)
         {
             if (stream == null)
-                throw new ArgumentNullException("stream", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(stream), Res.Get(Res.ArgumentNull));
 
             XmlTextReader xmlReader = new XmlTextReader(stream)
             {
@@ -645,9 +645,9 @@ namespace KGySoft.Libraries.Serialization
         private static void SerializeComponent(object obj, XElement parent, XmlSerializationOptions options)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
             if (parent == null)
-                throw new ArgumentNullException("parent", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(parent), Res.Get(Res.ArgumentNull));
 
             try
             {
@@ -694,9 +694,9 @@ namespace KGySoft.Libraries.Serialization
         private static void SerializeComponent(object obj, XmlWriter writer, XmlSerializationOptions options)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
             if (writer == null)
-                throw new ArgumentNullException("writer", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
             Type objType = obj.GetType();
             try
             {
@@ -1734,9 +1734,9 @@ namespace KGySoft.Libraries.Serialization
         private static void DeserializeComponent(object obj, XElement parent)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
             if (parent == null)
-                throw new ArgumentNullException("parent", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(parent), Res.Get(Res.ArgumentNull));
             Type objType = obj.GetType();
             //if (objType.IsValueType)
             //    throw new ArgumentException("Deserialize cannot receive value type as a root object.", "obj");
@@ -1947,9 +1947,9 @@ namespace KGySoft.Libraries.Serialization
         private static void DeserializeComponent(object obj, XmlReader reader)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
             if (reader == null)
-                throw new ArgumentNullException("reader");
+                throw new ArgumentNullException(nameof(reader));
 
             Type objType = obj.GetType();
 
@@ -2199,7 +2199,7 @@ namespace KGySoft.Libraries.Serialization
         private static void DeserializeArray(ref Array array, Type elementType, XElement element)
         {
             if (array == null && elementType == null)
-                throw new ArgumentNullException("elementType", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(elementType), Res.Get(Res.ArgumentNull));
 
             int length = 0;
             int[] lengths = null;
@@ -2327,7 +2327,7 @@ namespace KGySoft.Libraries.Serialization
         private static void DeserializeArray(ref Array array, Type arrayType, XmlReader reader)
         {
             if (array == null && arrayType == null)
-                throw new ArgumentNullException("arrayType", Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(arrayType), Res.Get(Res.ArgumentNull));
 
             int length = 0;
             int[] lengths = null;
