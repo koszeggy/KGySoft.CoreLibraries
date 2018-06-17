@@ -8,16 +8,15 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
-using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Resources
 {
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific resources at run time.
     /// As it is derived from <see cref="HybridResourceManager"/>, it can handle both compiled resources from <c>.dll</c> and
-    /// <c>.exe</c> files, and <c>.resx</c> files at the same time. Based on the selected strategies, when a resource
-    /// is not found in a language, it can automatically expand the resource with the text of the neutral resource,
-    /// which can be saved into <c>.resx</c> files.
+    /// <c>.exe</c> files, and XML resources from <c>.resx</c> files at the same time. Based on the selected strategies, when a resource
+    /// is not found in a language, it can automatically add it from a base culture or even create completely new resources,
+    /// which can be saved into <c>.resx</c> files. For text entries the untranslated elements will be marked so they can be found easily for localization.
     /// </summary>
     /// <remarks>
     /// <para><see cref="DynamicResourceManager"/> class is derived from <see cref="HybridResourceManager"/> and adds the functionality
@@ -29,13 +28,240 @@ namespace KGySoft.Libraries.Resources
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>,
     /// <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// <para><see cref="DynamicResourceManager"/> combines the functionality of <see cref="ResourceManager"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/>
+    /// and extends these with the feature of auto expansion. It can be an ideal choice to use it as a resource manager of an application or a class library
+    /// because it gives you freedom (or to the consumer of your library) to choose the strategy. If <see cref="AutoAppend"/> and <see cref="AutoSave"/> functionalities
+    /// are completely disabled, then it is equivalent to a <see cref="HybridResourceManager"/>, which can handle resource both from compiled and XML sources but you must
+    /// explicitly add new content and save it (see the example of the <see cref="HybridResourceManager"/> base class).
+    /// If you restrict even the source of the resources, then you can get the functionality of the <see cref="ResXResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.ResXOnly"/>),
+    /// or the <see cref="ResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>).</para>
+    /// <h1 class="heading">New features compared to <see cref="HybridResourceManager"/></h1>
+    /// <para><strong>Auto Appending</strong>:
+    /// <br/>The automatic expansion of the resources can be controlled by the <see cref="AutoAppend"/> property and it covers three different strategies, which can be combined:
+    /// <list type="number">
+    /// <item><term>Unknown resources</term>
+    /// <description>If <see cref="AutoAppendOptions.AddUnknownToInvariantCulture"/> option is enabled and an unknown resource is requested, then the resource set
+    /// of the invariant culture will be appended by the newly requested resource. It also means, that <see cref="MissingManifestResourceException"/> will never be thrown,
+    /// even if <see cref="HybridResourceManager.ThrowException"/> property is <c>true</c>. If the unknown resource is requested by <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see>
+    /// methods, then the value of the requested name will be the name itself prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see> property; otherwise,
+    /// a <see langword="null"/> value will be added.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using KGySoft.Libraries.Resources;
     /// 
+    /// class Example
+    /// {
+    ///     static void Main(string[] args)
+    ///     {
+    ///         var manager = new DynamicResourceManager(typeof(Example));
+    ///         manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
+    /// 
+    ///         // Without the option above the following line would throw a MissingManifestResourceException
+    ///         Console.WriteLine(manager.GetString("UnknownString")); // prints [U]UnknownString
+    ///         Console.WriteLine(manager.GetObject("UnknownObject")); // prints empty line
+    /// 
+    ///         manager.SaveAllResources();
+    ///     }
+    /// }]]></code>
+    /// The example above creates a <c>Resources\Example.resx</c> file under the binary output folder of the console application
+    /// with the following content:
+    /// <code lang="XML"><![CDATA[
+    /// <?xml version="1.0"?>
+    /// <root>
+    ///   <data name="UnknownString">
+    ///     <value>[U]UnknownString</value>
+    ///   </data>
+    ///   <assembly alias="KGySoft.Libraries" name="KGySoft.Libraries, Version=3.6.3.1, Culture=neutral, PublicKeyToken=b45eba277439ddfe" />
+    ///   <data name="UnknownObject" type="KGySoft.Libraries.Resources.ResXNullRef, KGySoft.Libraries">
+    ///     <value />
+    ///   </data>
+    /// </root>]]></code></description></item>
+    /// <item><term>Appending neutral and specific cultures</term>
+    /// <description>The previous section was about expanding the resource file of the invariant culture represented by the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
+    /// Every other <see cref="CultureInfo"/> instance can be classified as either a neutral or specific culture. Neutral cultures are region independent (eg. <c>en</c> is the English culture in general), whereas
+    /// specific cultures are related to a specific region (eg. <c>en-US</c> is the American English culture). The parent of a specific culture can be another specific or a neutral one, and the parent
+    /// of a neutral culture can be another neutral or the invariant culture. In most cases there is one specific and one neutral culture in a full chain, for example:
+    /// <br/><c>en-US (specific) -> en (neutral) -> Invariant</c>
+    /// <br/>But sometimes there can be more neutral cultures:
+    /// <br/><c>ku-Arab-IR (specific) -> ku-Arab (neutral) -> ku (neutral) -> Invariant</c>
+    /// <br/>Or more specific cultures:
+    /// <br/><c>ca-ES-valencia (specific) -> ca-es (specific) -> ca (neutral) -> Invariant</c>
+    /// <br/> There are two group of options, which control where the untranslated resources should be merged from and to:
+    /// <list type="number">
+    /// <item><see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendLastNeutralCulture"/> and <see cref="AutoAppendOptions.AppendNeutralCultures"/> options
+    /// will append the neutral cultures (eg. <c>en</c>) if a requested resource if found in the invariant culture.</item>
+    /// <item><see cref="AutoAppendOptions.AppendFirstSpecificCulture"/> and <see cref="AutoAppendOptions.AppendSpecificCultures"/> options
+    /// will append the specific cultures (eg. <c>en-US</c>) if a requested resource if found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
+    /// except that the found resource must be in the resource set of a non-specific culture..</item>
+    /// </list>
+    /// If the merged resource is requested by <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see>
+    /// methods, then the value of the existing resource will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property, and
+    /// this prefixed string will be saved in the target resource; otherwise, the original value will be duplicated in the target resource.
+    /// <note>"First" and "last" terms above refer the first and last neutral/specific cultures in the order from
+    /// most specific to least specific one as in the examples above. See the descriptions of the referred <see cref="AutoAppendOptions"/> options for more details and for examples
+    /// with a fully artificial culture hierarchy with multiple neutral and specific cultures.</note>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Globalization;
+    /// using KGySoft.Libraries;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// class Example
+    /// {
+    ///     private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US"); 
+    ///     private static CultureInfo en = enUS.Parent;
+    ///     private static CultureInfo inv = en.Parent;
+    /// 
+    ///     static void Main(string[] args)
+    ///     {
+    ///         var manager = new DynamicResourceManager(typeof(Example));
+    /// 
+    ///         // this will cause to copy the non-existing entries in en if not exists
+    ///         manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
+    ///         
+    ///         // preparation
+    ///         manager.SetObject("TestString", "Test string in invariant culture", inv);
+    ///         manager.SetObject("TestString", "Test string in English culture", en);
+    ///         manager.SetObject("TestString2", "Another test string in invariant culture", inv);
+    ///         manager.SetObject("TestObject", 42, inv);
+    ///         manager.SetObject("DontCareObject", new byte[0], inv);
+    /// 
+    ///         // setting the UI culture so we do not need to specify the culture in GetString/Object
+    ///         LanguageSettings.DisplayLanguage = enUS;
+    /// 
+    ///         Console.WriteLine(manager.GetString("TestString")); // already exists in en
+    ///         Console.WriteLine(manager.GetString("TestString2")); // copy to en with prefix
+    ///         Console.WriteLine(manager.GetObject("TestObject")); // copy to en
+    ///         // Console.WriteLine(manager.GetObject("DontCareObject")); // not copied because not accessed
+    /// 
+    ///         // saving the changes
+    ///         manager.SaveAllResources();
+    ///     }
+    /// }]]></code>
+    /// The example above creates a <c>Example.resx</c> and <c>Example.en.resx</c> files.
+    /// No <c>Example.en-US.resx</c> is created because we chose appending the first neutral culture only. The content of <c>Example.en.resx</c> will be the following:
+    /// <code lang="XML"><![CDATA[
+    /// <?xml version="1.0"?>
+    /// <root>
+    ///   <data name="TestString">
+    ///     <value>Test string in English culture</value>
+    ///   </data>
+    ///   <data name="TestString2">
+    ///     <value>[T]Another test string in invariant culture</value>
+    ///   </data>
+    ///   <data name="TestObject" type="System.Int32">
+    ///     <value>42</value>
+    ///   </data>
+    /// </root>]]></code>
+    /// By looking for <c>[T]</c> we can easily find the merges strings to translate.</description></item>
+    /// <item><term>Merging complete resource sets</term>
+    /// <description>The example above demonstrates how the untranslated entries will be applied to the target language files. However, in that example only the
+    /// really requested entries will be copied on demand. It is possible that we want to generate a full language file in order to be able to make complete translations.
+    /// If that is what we need we can use the <see cref="AutoAppendOptions.AppendOnLoad"/> option. This option should be used together with at least one of the options from
+    /// the previous point to have any effect.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Globalization;
+    /// using System.Resources;
+    /// using KGySoft.Libraries;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// // we can tell what is the language of the invariant resource 
+    /// [assembly: NeutralResourcesLanguage("en")]
+    /// 
+    /// class Example
+    /// {
+    ///     static void Main(string[] args)
+    ///     {
+    ///         var manager = new DynamicResourceManager(typeof(Example));
+    /// 
+    ///         // actually this is the default option:
+    ///         manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture | AutoAppendOptions.AppendOnLoad;
+    /// 
+    ///         // we prepara only the invariant resource
+    ///         manager.SetObject("TestString", "Test string", CultureInfo.InvariantCulture);
+    ///         manager.SetObject("TestString2", "Another test string", CultureInfo.InvariantCulture);
+    ///         manager.SetObject("TestObject", 42, CultureInfo.InvariantCulture);
+    ///         manager.SetObject("AnotherObject", new byte[0], CultureInfo.InvariantCulture);
+    /// 
+    ///         // Setting an English resource will not create the en.resx file because this is
+    ///         // the default language of our application thanks to the NeutralResourcesLanguage attribute
+    ///         LanguageSettings.DisplayLanguage = CultureInfo.GetCultureInfo("en-US");
+    ///         Console.WriteLine(manager.GetString("TestString")); // Displays "Test string", no resource is created
+    /// 
+    ///         LanguageSettings.DisplayLanguage = CultureInfo.GetCultureInfo("fr-FR");
+    ///         Console.WriteLine(manager.GetString("TestString")); // Displays "[T]Test string", resource fr is created
+    /// 
+    ///         // saving the changes
+    ///         manager.SaveAllResources();
+    ///     }
+    /// }]]></code>
+    /// The example above creates <c>Example.resx</c> and <c>Example.fr.resx</c>. Please note that no <c>Example.en.resx</c> is created because
+    /// the <see cref="NeutralResourcesLanguageAttribute"/> indicates that the language of the invariant resource is English. If we open the
+    /// created <c>Example.fr.resx</c> file we can see that every resource was copied from the invariant resource even though we accessed a single item:
+    /// <code lang="XML"><![CDATA[
+    /// <?xml version="1.0"?>
+    /// <root>
+    ///   <data name="TestString">
+    ///     <value>[T]Test string</value>
+    ///   </data>
+    ///   <data name="TestString2">
+    ///     <value>[T]Another test string</value>
+    ///   </data>
+    ///   <data name="TestObject" type="System.Int32">
+    ///     <value>42</value>
+    ///   </data>
+    ///   <data name="AnotherObject" type="System.Byte[]">
+    ///     <value />
+    ///   </data>
+    /// </root>]]></code></description></item>
+    /// </list>
+    /// <note>Please note that auto appending affects resources only. Metadata are never merged.</note>
+    /// </para>
+    /// <para><strong>Auto Saving</strong>:
+    /// <br/>By setting the <see cref="AutoSave"/> property, the <see cref="DynamicResourceManager"/> is able to save the dynamically created content automatically on specific events:
+    /// <list type="bullet">
+    /// <item><term>Changing the display language</term>
+    /// <description>If <see cref="AutoSaveOptions.LanguageChange"/> option is enabled, the changes are saved whenever the current UI culture is set via the
+    /// <see cref="LanguageSettings.DisplayLanguage">LanguageSettings.DisplayLanguage</see> property.
+    /// <note>Enabling this option makes the <see cref="DynamicResourceManager"/> to subscribe to the static <see cref="LanguageSettings.DisplayLanguageChanged">LanguageSettings.DisplayLanguageChanged</see>
+    /// event. To prevent leaking resources make sure to dispose the <see cref="DynamicResourceManager"/> if it is used in a non-static or short-living context.</note>
+    /// </description></item>
+    /// <item><term>Application exit</term>
+    #error itt tartok
+    /// <description>TODO
+    /// <note>Enabling this option makes the <see cref="DynamicResourceManager"/> to subscribe to the <see cref="AppDomain.ProcessExit">AppDomain.ProcessExit</see>
+    /// or <see cref="AppDomain.DomainUnload">AppDomain.DomainUnload</see> event. To prevent leaking resources make sure to dispose the <see cref="DynamicResourceManager"/> if it is used in a non-static or short-living context.
+    /// However, to utilize saving changes on application exit or domain unload, <see cref="DynamicResourceManager"/> is best to be used in a static context.</note>
+    /// </description></item>
+    /// <item><term>Changing resource source</term>
+    /// <description>TODO</description></item>
+    /// <item><term>Disposing</term>
+    /// <description>TODO - ehhez lehet egy kis example is usingban</description></item>
+    /// </list>
+    /// </para>
+    /// <para>TODO: CompatibleFormat property</para>
+    /// <para>TODO: AutoSaveError event</para>
+    /// <para><strong>Centralized vs. individual settings</strong>:
+    /// <br/>
+    /// <list type="bullet">
+    /// <item><term>Term</term>
+    /// <description>Desc</description></item>
+    /// </list>
+    /// <note>note</note>
+    /// </para>
+    /// <h1 class="heading">Recommended usage for a class library</h1>
+    /// TODO
+    /// - egy applikációban egyszerûbb a helyzet, mert ott akár UI-ra is kivezethetjük az append stratégia megválasztását, vagy beégethetjük, ami nekünk tetszik
+    /// - általános libnél a manager nem jó, ha direktben elérhetõ, ugyanakkor jó lenne meghagyni a stratégia megválasztását annak, aki használja a libünket, emellett jó lenne
+    ///   biztosítani, hogy egy preparált .resx file ne okozhasson kárt.
+    /// - Step-by-step ahol az invariant english compiled és a dll-lel szállítjuk, a többi meg on-demand jön létre
+    /// - LanguageSettings-re hagyatkozás, SafeMode, példa RES
     /// </remarks>
     // - Disposable, bár a default beállításai szerint nem iratkozik fel semmire, ha a következõket állítjuk, muszáj dispose-olni, mert static eventekre iratkozik fel: UseLanguageSettings=true, AutoSave:LanguageChanged/DomainUnload, AutoAppend.
+    // - Hogyan használjuk VS-bõl kreált resource-okkal: see HRM example
     // - példa arra, hogyan használjunk saját, mások által is bõvíthetõ secure resource managert egy saját appba.
-    // - sok-sok example, kb. a ResXResourceSet/Manager mintájára. + binary resource törlés/felülírás resx-bõl
-    // New features in addition to HybridResourceManager:
-    // - new members
+    // - a memberekben hivatkozni az itteni example-ökre
     [Serializable]
     public class DynamicResourceManager : HybridResourceManager
     {
@@ -136,7 +362,7 @@ namespace KGySoft.Libraries.Resources
         /// Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <remarks>
-        /// <para>Auto appending affects the resources only. Meta data are never merged.</para>
+        /// <para>Auto appending affects the resources only. Metadata are never merged.</para>
         /// <para>Auto appending options are ignored if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/></para>
         /// </remarks>
         /// <seealso cref="AutoAppendOptions"/>
@@ -282,7 +508,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Creates a new instance of <see cref="DynamicResourceManager"/> class that looks up resources in
-        /// satellite assemblies and resource XML files based on information from the specified <paramref name="baseName"/>
+        /// compiled assemblies and resource XML files based on information from the specified <paramref name="baseName"/>
         /// and <paramref name="assembly"/>.
         /// </summary>
         /// <param name="baseName">A root name that is the prefix of the resource files without the extension.</param>
@@ -296,7 +522,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Creates a new instance of <see cref="DynamicResourceManager"/> class that looks up resources in
-        /// satellite assemblies and resource XML files based on information from the specified type object.
+        /// compiled assemblies and resource XML files based on information from the specified type object.
         /// </summary>
         /// <param name="resourceSource">A type from which the resource manager derives all information for finding resource files.</param>
         /// <param name="explicitResxBaseFileName">When <see langword="null"/>, .resx file name will be constructed based on the

@@ -28,6 +28,7 @@ namespace KGySoft.Libraries.Resources
     /// Represents the resource auto append options of a <see cref="DynamicResourceManager"/> instance.
     /// These options are ignored if <see cref="DynamicResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.
     /// </summary>
+    /// <seealso cref="DynamicResourceManager"/>
     /// <seealso cref="DynamicResourceManager.AutoAppend"/>
     /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoAppend"/>
     [Flags]
@@ -42,7 +43,7 @@ namespace KGySoft.Libraries.Resources
         /// <para>If a resource with an unknown key is requested, a new resource is automatically added to the
         /// invariant resource set.</para>
         /// <para>If the resource is requested as a <see cref="string"/>, the newly added
-        /// value will be initialized by the requested key, prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix"/> property.
+        /// value will be initialized by the requested key, prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see> property.
         /// This new entry can be then merged into other resource sets, too.</para>
         /// <para>If the resource is requested as an <see cref="object"/>, a <see langword="null"/> value will be added to the resource.
         /// The <see langword="null"/> value is never merged into the other resource sets because it has a special meaning:
@@ -61,7 +62,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource is found in the invariant resource set,
         /// then with this option the found resource will be added to the <c>en-Runic</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is enabled by default.</para>
         /// </summary>
@@ -76,7 +77,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource is found in the invariant resource set,
         /// then with this option the found resource will be added to the <c>en</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
@@ -90,8 +91,9 @@ namespace KGySoft.Libraries.Resources
         /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource is found in the invariant resource set,
         /// then with this option the found resource will be added to the <c>en</c> and <c>en-Runic</c> resource sets.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option includes <see cref="AppendFirstNeutralCulture"/> and <see cref="AppendLastNeutralCulture"/> options.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
         AppendNeutralCultures = (1 << 3) | AppendFirstNeutralCulture | AppendLastNeutralCulture,
@@ -104,7 +106,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource is found in one of its parents,
         /// then with this option the found resource will be added to the requested <c>en-Runic-GB-Yorkshire</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
@@ -119,7 +121,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource is found in the invariant resource set,
         /// then with this option the found resource will be added to the <c>en-Runic-GB</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
@@ -133,8 +135,9 @@ namespace KGySoft.Libraries.Resources
         /// <br/>If the requested culture is <c>en-Runic-GB-Yorkshire</c> and the resource is found in the invariant resource set,
         /// then with this option the found resource will be added to the <c>en-Runic-GB-Yorkshire</c> and <c>en-Runic-GB</c> resource sets.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
-        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix"/> property.</para>
+        /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>This option includes <see cref="AppendFirstSpecificCulture"/> and <see cref="AppendLastSpecificCulture"/> options.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
         AppendSpecificCultures = (1 << 6) | AppendFirstSpecificCulture | AppendLastSpecificCulture,

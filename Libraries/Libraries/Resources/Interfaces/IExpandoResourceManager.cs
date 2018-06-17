@@ -34,7 +34,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets a value that indicates whether the resource manager allows case-insensitive resource lookups in the
-        /// <see cref="GetString" /> and <see cref="GetObject" /> methods.
+        /// <see cref="GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> and <see cref="GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see> methods.
         /// </summary>
         bool IgnoreCase { get; set; }
 
@@ -81,15 +81,22 @@ namespace KGySoft.Libraries.Resources
         /// <returns>The resource set for the specified culture, or <see langeword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,
         /// or when this <see cref="IExpandoResourceManager"/> instance is configured so that it cannot return an <see cref="IExpandoResourceSet"/> instance.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <c>true</c>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
         IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false);
 
         /// <summary>
-        /// Tells the resource manager to call the <see cref="ResourceSet.Close" /> method on all <see cref="ResourceSet" /> objects and release all resources.
+        /// Tells the resource manager to call the <see cref="ResourceSet.Close">Close</see> method on all <see cref="ResourceSet" /> objects and release all resources.
         /// All unsaved resources will be lost.
         /// </summary>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <remarks>
+        /// <note type="caution">By calling this method all of the unsaved changes will be lost.</note>
+        /// <para>By the <see cref="IsModified"/> property you can check whether there are unsaved changes.</para>
+        /// <para>To save the changes you can call the <see cref="SaveAllResources">SaveAllResources</see> method.</para>
+        /// </remarks>
         void ReleaseAllResources();
 
         /// <summary>
@@ -98,13 +105,14 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the resource is localized. If the resource is not localized for
         /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
-        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
+        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <returns>
         /// The value of the resource localized for the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the resource is not <see cref="string"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
+        /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetString(string name, CultureInfo culture = null);
@@ -115,12 +123,15 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for
         /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
-        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture" /> property.</param>
+        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <returns>
         /// The value of the resource, localized for the specified culture. If an appropriate resource set exists but <paramref name="name" /> cannot be found,
         /// the method returns <see langword="null"/>.
         /// </returns>
-        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         object GetObject(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -134,13 +145,15 @@ namespace KGySoft.Libraries.Resources
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
-        /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method: the subsequent <see cref="GetObject">GetObject</see> calls
+        /// As a result, the subsequent <see cref="GetObject">GetObject</see> calls
         /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
         /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the resources with <see langword="null" /> value.</para>
         /// <para>If the current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and you want to remove
-        /// the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject"/> method.</para>
+        /// the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject">RemoveObject</see> method.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         void SetObject(string name, object value, CultureInfo culture = null);
@@ -160,6 +173,8 @@ namespace KGySoft.Libraries.Resources
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         void RemoveObject(string name, CultureInfo culture = null);
@@ -175,6 +190,12 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException">The type of the metadata is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
+        /// non-string entry is from a compiled resource.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetMetaString(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -188,6 +209,10 @@ namespace KGySoft.Libraries.Resources
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         object GetMetaObject(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -205,6 +230,8 @@ namespace KGySoft.Libraries.Resources
         /// with the same <paramref name="culture" /> will return <see langword="null" />.
         /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null" /> value.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         void SetMetaObject(string name, object value, CultureInfo culture = null);
@@ -220,6 +247,8 @@ namespace KGySoft.Libraries.Resources
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         void RemoveMetaObject(string name, CultureInfo culture = null);
@@ -236,6 +265,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns><c>true</c> if the resource set of the specified <paramref name="culture"/> has been saved;
         /// otherwise, <c>false</c>.</returns>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="IOException">The resource set could not be saved.</exception>
         bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false);
@@ -250,6 +280,7 @@ namespace KGySoft.Libraries.Resources
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
         /// <br/>Default value: <c>false</c>.</param>
         /// <returns><c>true</c> if at least one resource set has been saved; otherwise, <c>false</c>.</returns>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
         bool SaveAllResources(bool force = false, bool compatibleFormat = false);
 

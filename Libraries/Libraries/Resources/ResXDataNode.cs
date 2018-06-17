@@ -910,7 +910,7 @@ namespace KGySoft.Libraries.Resources
         /// <remarks>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
         /// <para>If the resource is a file reference, <see cref="GetValue">GetValue</see> tries to open the file and deserialize its content.</para>
-        /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the string content stored on the .resx file.</para>
+        /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the string content stored in the .resx file.</para>
         /// </remarks>
         public object GetValue(ITypeResolutionService typeResolver = null, string basePath = null, bool cleanupRawData = false)
         {
