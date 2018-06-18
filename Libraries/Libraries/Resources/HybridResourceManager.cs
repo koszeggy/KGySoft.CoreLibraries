@@ -44,20 +44,24 @@ namespace KGySoft.Libraries.Resources
     /// The source of the resources can be chosen by the <see cref="Source"/> property (see <see cref="ResourceManagerSources"/> enumeration).
     /// Enabling both binary and .resx resources makes possible to expand or override the resources originally come from binary resources.
     /// Just like the <see cref="ResXResourceManager"/> it is an <see cref="IExpandoResourceManager"/> implementation. The replacement and newly added content can be saved into .resx files.</para>
+    /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Expanding compiled resources created by Visual Studio</h1>
     /// <para>You can create compiled resources by Visual Studio and you can dynamically expand them by <see cref="HybridResourceManager"/>. The new and overridden content
     /// will be saved as .resx files. See the following example for a step-by-step guide.
     /// <list type="number">
-    /// <item>Create a new project (Console Application)</item>
+    /// <item>Create a new project (Console Application)
+    /// <br/><img src="../Help/Images/NewConsoleApp.png" alt="New console application"/></item>
     /// <item>In Solution Explorer right click on <c>ConsoleApp1</c>, Add, New Folder, name it <c>Resources</c>.</item>
-    /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.</item>
+    /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.
+    /// <br/><img src="../Help/Images/NewResourcesFile.png" alt="New Resources file"/></item>
     /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c> if not named otherwise) and select Properties</item>
     /// <item>The default value of <c>Build Action</c> is <c>Embedded Resource</c>, which means that the resource will be compiled into the assembly.
     /// The <see cref="HybridResourceManager"/> will be able to read these compiled resources if its <see cref="Source"/> property is <see cref="ResourceManagerSources.CompiledOnly"/> or <see cref="ResourceManagerSources.CompiledAndResX"/>.
     /// We can clear the default <c>Custom Tool</c> value because the generated file uses a <see cref="ResourceManager"/> class internally, which cannot handle the dynamic expansions.
-    /// <note>To use purely the .resx files you can use the <see cref="ResXResourceManager"/> class. To provide dynamic creation and expansion of new .resx files with the untranslated items for any language use the <see cref="DynamicResourceManager"/> class.</note></item>
+    /// <br/><img src="../Help/Images/ResourceFileProperties_HybridResourceManager.png" alt="Resources1.resx properties"/>
+    /// <note type="tip">To use purely the .resx files you can use the <see cref="ResXResourceManager"/> class. To provide dynamic creation and expansion of new .resx files with the untranslated items for any language use the <see cref="DynamicResourceManager"/> class.</note></item>
     /// <item>Now we can either use the built-on resource editor of Visual Studio or just edit the .resx file by the XML Editor. If we add new or existing files to the resources, they will be automatically added to the project's Resources folder.</item>
     /// <item>To add culture-specific resources you can add further resource files with the same base name, extended by culture names. For example, if the invariant resource is called <c>Resource1.resx</c>, then a
     /// region neutral English resource can be called <c>Resource1.en.resx</c> and the American English resource can be called <c>Resource1.en-US.resx</c>.</item>

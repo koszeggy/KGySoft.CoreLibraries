@@ -35,9 +35,27 @@ namespace KGySoft.Libraries.Resources
     /// explicitly add new content and save it (see the example of the <see cref="HybridResourceManager"/> base class).
     /// If you restrict even the source of the resources, then you can get the functionality of the <see cref="ResXResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.ResXOnly"/>),
     /// or the <see cref="ResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>).</para>
-    /// <h1 class="heading">New features compared to <see cref="HybridResourceManager"/></h1>
+    /// <h1 class="heading">Additional features compared to <see cref="HybridResourceManager"/></h1>
+    /// <para><strong>Centralized vs. individual settings</strong>:
+    /// <br/>The behavior of <see cref="DynamicResourceManager"/> instances can be controlled in two ways, which can be configured by the <see cref="UseLanguageSettings"/> property.
+    /// <list type="bullet">
+    /// <item><term>Individual control</term>
+    /// <description>If <see cref="UseLanguageSettings"/> is <c>false</c>, which is the default value, then the <see cref="DynamicResourceManager"/> behavior is simply determined by its other properties.
+    /// This can be alright for short-living <see cref="DynamicResourceManager"/> instances (for example, in a <see langword="using"/> block), or when you are sure you don't want to let the
+    /// consumers of your library to customize the settings of resource managers.</description></item>
+    /// <item><term>Centralized control</term>
+    /// <description>If you use the <see cref="DynamicResourceManager"/> class as the resource manager of a class library, you might want to let the consumers of your library to control
+    /// how <see cref="DynamicResourceManager"/> instances should behave. For example, maybe one consumer wants to allow generating new .resx language files by using custom <see cref="AutoAppendOptions"/>,
+    /// and another one does not want to let generating .resx files at all. If <see cref="UseLanguageSettings"/> is <c>true</c>, then <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/>
+    /// properties will be taken from the static <see cref="LanguageSettings"/> class. This makes possible to control the behavior of <see cref="DynamicResourceManager"/> instances, which enable
+    /// centralized settings, without exposing the instances to the public. See also the example at the <a href="#recommendation">Recommended usage for a class library</a> section.</description></item>
+    /// </list>
+    /// <note>Turning on the <see cref="UseLanguageSettings"/> property makes the <see cref="DynamicResourceManager"/> to subscribe multiple events. If such a <see cref="DynamicResourceManager"/>
+    /// is used in a non-static or short-living context make sure to dispose it to prevent leaking resources.</note>
+    /// </para>
     /// <para><strong>Auto Appending</strong>:
-    /// <br/>The automatic expansion of the resources can be controlled by the <see cref="AutoAppend"/> property and it covers three different strategies, which can be combined:
+    /// <br/>The automatic expansion of the resources can be controlled by the <see cref="AutoAppend"/> property (or by <see cref="LanguageSettings.DynamicResourceManagersAutoAppend">LanguageSettings.DynamicResourceManagersAutoAppend</see>,
+    /// property, if <see cref="UseLanguageSettings"/> is <c>true</c>), and it covers three different strategies, which can be combined:
     /// <list type="number">
     /// <item><term>Unknown resources</term>
     /// <description>If <see cref="AutoAppendOptions.AddUnknownToInvariantCulture"/> option is enabled and an unknown resource is requested, then the resource set
@@ -60,7 +78,7 @@ namespace KGySoft.Libraries.Resources
     ///         Console.WriteLine(manager.GetString("UnknownString")); // prints [U]UnknownString
     ///         Console.WriteLine(manager.GetObject("UnknownObject")); // prints empty line
     /// 
-    ///         manager.SaveAllResources();
+    ///         manager.SaveAllResources(compatibleFormat: false);
     ///     }
     /// }]]></code>
     /// The example above creates a <c>Resources\Example.resx</c> file under the binary output folder of the console application
@@ -135,7 +153,7 @@ namespace KGySoft.Libraries.Resources
     ///         // Console.WriteLine(manager.GetObject("DontCareObject")); // not copied because not accessed
     /// 
     ///         // saving the changes
-    ///         manager.SaveAllResources();
+    ///         manager.SaveAllResources(compatibleFormat: false);
     ///     }
     /// }]]></code>
     /// The example above creates a <c>Example.resx</c> and <c>Example.en.resx</c> files.
@@ -193,7 +211,7 @@ namespace KGySoft.Libraries.Resources
     ///         Console.WriteLine(manager.GetString("TestString")); // Displays "[T]Test string", resource fr is created
     /// 
     ///         // saving the changes
-    ///         manager.SaveAllResources();
+    ///         manager.SaveAllResources(compatibleFormat: false);
     ///     }
     /// }]]></code>
     /// The example above creates <c>Example.resx</c> and <c>Example.fr.resx</c>. Please note that no <c>Example.en.resx</c> is created because
@@ -219,7 +237,8 @@ namespace KGySoft.Libraries.Resources
     /// <note>Please note that auto appending affects resources only. Metadata are never merged.</note>
     /// </para>
     /// <para><strong>Auto Saving</strong>:
-    /// <br/>By setting the <see cref="AutoSave"/> property, the <see cref="DynamicResourceManager"/> is able to save the dynamically created content automatically on specific events:
+    /// <br/>By setting the <see cref="AutoSave"/> property (or <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see>,
+    /// if <see cref="UseLanguageSettings"/> is <c>true</c>), the <see cref="DynamicResourceManager"/> is able to save the dynamically created content automatically on specific events:
     /// <list type="bullet">
     /// <item><term>Changing the display language</term>
     /// <description>If <see cref="AutoSaveOptions.LanguageChange"/> option is enabled, the changes are saved whenever the current UI culture is set via the
@@ -228,34 +247,49 @@ namespace KGySoft.Libraries.Resources
     /// event. To prevent leaking resources make sure to dispose the <see cref="DynamicResourceManager"/> if it is used in a non-static or short-living context.</note>
     /// </description></item>
     /// <item><term>Application exit</term>
-    #error itt tartok
-    /// <description>TODO
+    /// <description>If <see cref="AutoSaveOptions.DomainUnload"/> options is enabled, the changes are saved when current <see cref="AppDomain"/> is being unloaded, including the case when
+    /// the application exits.
     /// <note>Enabling this option makes the <see cref="DynamicResourceManager"/> to subscribe to the <see cref="AppDomain.ProcessExit">AppDomain.ProcessExit</see>
     /// or <see cref="AppDomain.DomainUnload">AppDomain.DomainUnload</see> event. To prevent leaking resources make sure to dispose the <see cref="DynamicResourceManager"/> if it is used in a non-static or short-living context.
     /// However, to utilize saving changes on application exit or domain unload, <see cref="DynamicResourceManager"/> is best to be used in a static context.</note>
     /// </description></item>
     /// <item><term>Changing resource source</term>
-    /// <description>TODO</description></item>
+    /// <description>If <see cref="Source"/> property changes it may cause data loss in terms of unsaved changes. To prevent this, you can enable <see cref="AutoSaveOptions.SourceChange"/> option
+    /// so the changes will be saved before actualizing the new value of the <see cref="Source"/> property.</description></item>
     /// <item><term>Disposing</term>
-    /// <description>TODO - ehhez lehet egy kis example is usingban</description></item>
-    /// </list>
+    /// <description>Enabling the <see cref="AutoSaveOptions.Dispose"/> option makes possible to save changes automatically when the <see cref="DynamicResourceManager"/> is being disposed.
+    /// <code lang="C#"><![CDATA[
+    /// using System.Globalization;
+    /// using KGySoft.Libraries.Resources;
+    /// 
+    /// class Example
+    /// {
+    ///     static void Main(string[] args)
+    ///     {
+    ///         // thanks to the AutoSave = Dispose the Example.resx will be created at the end of the using block
+    ///         using (var manager = new DynamicResourceManager(typeof(Example)) { AutoSave = AutoSaveOptions.Dispose })
+    ///         {
+    ///             manager.SetObject("Test string", "Test value", CultureInfo.InvariantCulture);
+    ///         }
+    ///     }
+    /// }]]></code></description></item></list></para>
+    /// <para>Considering <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method is not explicitly called on auto save, you cannot set its parameters directly.
+    /// However, by setting the <see cref="CompatibleFormat"/> property, you can tell whether the result .resx files should be able to be read by a
+    /// <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
+    /// and the Visual Studio Resource Editor. If it is <c>false</c> the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+    /// but the result can be read only by the <see cref="ResXResourceReader" /> class.</para>
+    /// <para>Normally, if you save the changes by the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method, you can handle the possible exceptions locally.
+    /// To handle errors occurred during auto save you can subscribe the <see cref="AutoSaveError"/> event.</para>
+    /// <h1 class="heading">Recommended usage for a class library<a name="recommendation">&#160;</a></h1>
+    /// <para>A class library can be used by any consumers who want to use the features of that library. If it contains resources it can be useful if we allow the consumer
+    /// of our class library to create translations for it in any language. In an application it can be the decision of the consumer whether generating new XML resource (.resx) files
+    /// should be allowed or not. If so, we must be prepared for invalid files or malicious content (for example, the .resx file can contain serialized data of any type, whose constructor
+    /// can run any code when deserialized). The following example takes all of these aspects into consideration.
+    /// <note>In the following example there is a single compiled resource created in a class library, without any satellite assemblies. The additional language files
+    /// can be generated at run-time if the consumer application allows it.</note>
     /// </para>
-    /// <para>TODO: CompatibleFormat property</para>
-    /// <para>TODO: AutoSaveError event</para>
-    /// <para><strong>Centralized vs. individual settings</strong>:
-    /// <br/>
-    /// <list type="bullet">
-    /// <item><term>Term</term>
-    /// <description>Desc</description></item>
-    /// </list>
-    /// <note>note</note>
-    /// </para>
-    /// <h1 class="heading">Recommended usage for a class library</h1>
-    /// TODO
-    /// - egy applikációban egyszerûbb a helyzet, mert ott akár UI-ra is kivezethetjük az append stratégia megválasztását, vagy beégethetjük, ami nekünk tetszik
-    /// - általános libnél a manager nem jó, ha direktben elérhetõ, ugyanakkor jó lenne meghagyni a stratégia megválasztását annak, aki használja a libünket, emellett jó lenne
-    ///   biztosítani, hogy egy preparált .resx file ne okozhasson kárt.
-    /// - Step-by-step ahol az invariant english compiled és a dll-lel szállítjuk, a többi meg on-demand jön létre
+    /// 
+    /// - Step-by-step ahol az invariant english compiled és a dll-lel szállítjuk, a többi meg on-demand jön létre (+screenshots)
     /// - LanguageSettings-re hagyatkozás, SafeMode, példa RES
     /// </remarks>
     // - Disposable, bár a default beállításai szerint nem iratkozik fel semmire, ha a következõket állítjuk, muszáj dispose-olni, mert static eventekre iratkozik fel: UseLanguageSettings=true, AutoSave:LanguageChanged/DomainUnload, AutoAppend.
@@ -411,11 +445,12 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets or sets whether the .resx files should use a compatible format when the resources are
-        /// automatically saved.
-        /// <br/>
-        /// Default value: <c>false</c>
+        /// Gets or sets whether the .resx files should use a compatible format when the resources are automatically saved.
+        /// <br/>Default value: <c>false</c>
         /// </summary>
+        /// <remarks>If <see cref="CompatibleFormat"/> is <c>true</c> the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+        /// instance and the Visual Studio Resource Editor. If it is <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+        /// but the result can be read only by the <see cref="ResXResourceReader" /> class.</remarks>
         public bool CompatibleFormat { get; set; }
 
         internal override void SetSource(ResourceManagerSources value)
@@ -786,7 +821,7 @@ namespace KGySoft.Libraries.Resources
             }
 
             // Phase 3: processing the merge
-            // Unlike in EnsureMerged, not merged levels are missing here because we can be sure that the resource does not exist at mid-level.
+            // Unlike in EnsureLoadedWithMerge, not merged levels are missing here because we can be sure that the resource does not exist at mid-level.
             foreach (IExpandoResourceSet rsToMerge in toMerge)
             {
                 if (isString)
@@ -925,6 +960,9 @@ namespace KGySoft.Libraries.Resources
                 canAcceptProxy = true;
         }
 
+        /// <summary>
+        /// Applies the AppenOnLoad rule.
+        /// </summary>
         private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
         {
             Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);

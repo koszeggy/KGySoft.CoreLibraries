@@ -51,13 +51,16 @@ namespace KGySoft.Libraries.Resources
     /// <h1 class="heading">Example: Using XML resources created by Visual Studio</h1>
     /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.
     /// <list type="number">
-    /// <item>Create a new project (Console Application)</item>
+    /// <item>Create a new project (Console Application)
+    /// <br/><img src="../Help/Images/NewConsoleApp.png" alt="New console application"/></item>
     /// <item>In Solution Explorer right click on <c>ConsoleApp1</c>, Add, New Folder, name it <c>Resources</c>.</item>
-    /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.</item>
+    /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.
+    /// <br/><img src="../Help/Images/NewResourcesFile.png" alt="New Resources file"/></item>
     /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c> if not named otherwise) and select Properties</item>
     /// <item>The default value of <c>Build Action</c> is <c>Embedded Resource</c>, which means that the resource will be compiled into the assembly and will be able to be read by the <see cref="ResourceManager"/> class.
     /// To be able to handle it by the <see cref="ResXResourceManager"/> we might want to deploy the .resx file with the application. To do so, select <c>Copy if newer</c> at <c>Copy to Output directory</c>.
     /// If we want to use purely the .resx file, then we can change the <c>Build Action</c> to <c>None</c> and we can clear the default <c>Custom Tool</c> value because we do not need the generated file.
+    /// <br/><img src="../Help/Images/ResourceFileProperties_ResXResourceManager.png" alt="Resources1.resx properties"/>
     /// <note>To use both the compiled binary resources and the .resx file you can use the <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/> classes.</note></item>
     /// <item>Now we can either use the built-on resource editor of Visual Studio or just edit the .resx file by the XML Editor. If we add new or existing files to the resources, they will be automatically added to the project's Resources folder.
     /// Do not forget to set <c>Copy if newer</c> for the linked resources as well so they will be copied to the output directory along with the .resx file. Now add some string resources and files if you wish.</item>
