@@ -93,6 +93,30 @@ Contains the &lt;strong&gt;Reflector&lt;/strong&gt; class that provides most of 
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">
   </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Help\" />
+    <Folder Include="Help\Images\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\Images\ResourceFileProperties_ResXResourceManager.png">
+      <ImageId>ResourceFileProperties_ResXResourceManager</ImageId>
+      <AlternateText>Resource File Properties ResXResource Manager</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewResourcesFile.png">
+      <ImageId>NewResourcesFile</ImageId>
+      <AlternateText>New Resources File</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewConsoleApp.png">
+      <ImageId>NewConsoleApp</ImageId>
+      <AlternateText>New Console App</AlternateText>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\Images\ResourceFileProperties_HybridResourceManager.png">
+      <ImageId>ResourceFileProperties_HybridResourceManager</ImageId>
+      <AlternateText>Resource File Properties Hybrid Resource Manager</AlternateText>
+    </Content>
+  </ItemGroup>
   <!-- Import the SHFB build targets -->
   <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />
 </Project>
