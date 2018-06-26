@@ -18,6 +18,7 @@
 
 using System;
 using System.Globalization;
+using System.Resources;
 using System.Threading;
 
 using KGySoft.Libraries.Resources;
@@ -36,7 +37,7 @@ namespace KGySoft.Libraries
     /// <seealso cref="DynamicResourceManager"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
     /// <remarks>For an example to see how to configure a resource manager for a class library
-    /// see the <em>Recommended usage for a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</remarks>
+    /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</remarks>
     public static class LanguageSettings
     {
         #region Constants
@@ -58,7 +59,7 @@ namespace KGySoft.Libraries
         #region Fields
 
         private static bool captureSystemLocaleChange;
-        private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
+        private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
         private static AutoSaveOptions dynamicResourceManagersAutoSave = autoSaveDefault;
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
         private static string unknownResourcePrefix = "[U]";
@@ -227,7 +228,12 @@ namespace KGySoft.Libraries
         /// Gets or sets the source, from which the <see cref="DynamicResourceManager"/> instances of the
         /// current application domain should take the resources when their
         /// <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// <br/>Default value: <see cref="ResourceManagerSources.CompiledOnly"/>
         /// </summary>
+        /// <remarks>Considering default value is <see cref="ResourceManagerSources.CompiledOnly"/>, all <see cref="DynamicResourceManager"/> instances, which
+        /// use <see cref="DynamicResourceManager.UseLanguageSettings"/> property with <c>true</c> value, will work fully compatible with the <see cref="ResourceManager"/>
+        /// class by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
+        /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly.</remarks>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.Source"/>
         public static ResourceManagerSources DynamicResourceManagersSource
@@ -249,8 +255,7 @@ namespace KGySoft.Libraries
         /// <summary>
         /// Gets or sets the auto saving options for the <see cref="DynamicResourceManager"/> instances
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
-        /// <br/>
-        /// Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
+        /// <br/>Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoSave"/>
@@ -274,8 +279,7 @@ namespace KGySoft.Libraries
         /// <summary>
         /// Gets or sets the auto append options for the <see cref="DynamicResourceManager"/> instances
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
-        /// <br/>
-        /// Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
+        /// <br/>Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoAppend"/>
@@ -296,6 +300,7 @@ namespace KGySoft.Libraries
         /// Gets or sets the prefix of an untranslated <see cref="string"/> resource.
         /// Used by the <see cref="DynamicResourceManager"/> instances if <see cref="DynamicResourceManagersAutoAppend"/>
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to use auto appending.
+        /// <br/>Default value: <c>[T]</c>
         /// </summary>
         public static string UntranslatedResourcePrefix
         {
@@ -313,6 +318,7 @@ namespace KGySoft.Libraries
         /// Gets or sets the prefix of an unknown (non-existing) <see cref="string"/> resource.
         /// Used by the <see cref="DynamicResourceManager"/> instances if <see cref="DynamicResourceManagersAutoAppend"/>
         /// or <see cref="DynamicResourceManager.AutoAppend"/> property is configured to add non existing resources to the invariant resource set.
+        /// <br/>Default value: <c>[U]</c>
         /// </summary>
         public static string UnknownResourcePrefix
         {

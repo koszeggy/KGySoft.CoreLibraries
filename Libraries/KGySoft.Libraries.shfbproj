@@ -117,6 +117,20 @@ Contains the &lt;strong&gt;Reflector&lt;/strong&gt; class that provides most of 
       <AlternateText>Resource File Properties Hybrid Resource Manager</AlternateText>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\Images\ResourceFileProperties_DynamicResourceManager.png">
+      <ImageId>ResourceFileProperties_DynamicResourceManager</ImageId>
+      <AlternateText>Resource File Properties Dynamic Resource Manager</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewClassLibrary.png">
+      <ImageId>NewClassLibrary</ImageId>
+      <AlternateText>New Class Library</AlternateText>
+    </Content>
+    <Content Include="Help\Images\DynamicResourceManager_ExampleResources.png">
+      <ImageId>DynamicResourceManager_ExampleResources</ImageId>
+      <AlternateText>Dynamic Resource Manager Example Resources</AlternateText>
+    </Content>
+  </ItemGroup>
   <!-- Import the SHFB build targets -->
   <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />
 </Project>

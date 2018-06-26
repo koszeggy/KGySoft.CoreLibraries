@@ -273,11 +273,7 @@ namespace KGySoft.Libraries.Resources
         internal static string Get(string id, params object[] args)
         {
             string format = Get(id);
-
-            if ((args == null) || (args.Length == 0))
-                return format;
-
-            return SafeFormat(format, args);
+            return args == null || args.Length == 0 ? format : SafeFormat(format, args);
         }
 
         #endregion

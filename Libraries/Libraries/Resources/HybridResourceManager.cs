@@ -76,10 +76,10 @@ namespace KGySoft.Libraries.Resources
     /// <item>In Solution Explorer right click on <c>ConsoleApp1 (unavailable)</c>, Edit ConsoleApp1.csproj</item>
     /// <item>Search for the <c>EmbeddedResource</c> nodes and edit them as follows:
     /// <code lang="XML"><![CDATA[
-    /// <EmbeddedResource Include = "Resources\Resource1.resx" >
+    /// <EmbeddedResource Include="Resources\Resource1.resx" >
     ///   <LogicalName>MyResources.resources</LogicalName>
     /// </EmbeddedResource>
-    /// <EmbeddedResource Include = "Resources\Resource1.en.resx" >
+    /// <EmbeddedResource Include="Resources\Resource1.en.resx" >
     ///   <LogicalName>MyResources.en.resources</LogicalName>
     /// </EmbeddedResource>]]></code></item>
     /// <item>In Solution Explorer right click on <c>ConsoleApp1 (unavailable)</c>, Reload ConsoleApp1.csproj</item>
