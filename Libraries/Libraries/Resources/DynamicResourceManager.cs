@@ -1,3 +1,21 @@
+#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: DynamicResourceManager.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +26,8 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
+
+#endregion
 
 namespace KGySoft.Libraries.Resources
 {
@@ -73,18 +93,18 @@ namespace KGySoft.Libraries.Resources
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using KGySoft.Libraries.Resources;
-    /// 
+    ///
     /// class Example
     /// {
     ///     static void Main(string[] args)
     ///     {
     ///         var manager = new DynamicResourceManager(typeof(Example));
     ///         manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
-    /// 
+    ///
     ///         // Without the option above the following line would throw a MissingManifestResourceException
     ///         Console.WriteLine(manager.GetString("UnknownString")); // prints [U]UnknownString
     ///         Console.WriteLine(manager.GetObject("UnknownObject")); // prints empty line
-    /// 
+    ///
     ///         manager.SaveAllResources(compatibleFormat: false);
     ///     }
     /// }]]></code>
@@ -130,35 +150,35 @@ namespace KGySoft.Libraries.Resources
     /// using System.Globalization;
     /// using KGySoft.Libraries;
     /// using KGySoft.Libraries.Resources;
-    /// 
+    ///
     /// class Example
     /// {
-    ///     private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US"); 
+    ///     private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
     ///     private static CultureInfo en = enUS.Parent;
     ///     private static CultureInfo inv = en.Parent;
-    /// 
+    ///
     ///     static void Main(string[] args)
     ///     {
     ///         var manager = new DynamicResourceManager(typeof(Example));
-    /// 
+    ///
     ///         // this will cause to copy the non-existing entries from invariant to "en"
     ///         manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
-    ///         
+    ///
     ///         // preparation
     ///         manager.SetObject("TestString", "Test string in invariant culture", inv);
     ///         manager.SetObject("TestString", "Test string in English culture", en);
     ///         manager.SetObject("TestString2", "Another test string in invariant culture", inv);
     ///         manager.SetObject("TestObject", 42, inv);
     ///         manager.SetObject("DontCareObject", new byte[0], inv);
-    /// 
+    ///
     ///         // setting the UI culture so we do not need to specify the culture in GetString/Object
     ///         LanguageSettings.DisplayLanguage = enUS;
-    /// 
+    ///
     ///         Console.WriteLine(manager.GetString("TestString")); // already exists in en
     ///         Console.WriteLine(manager.GetString("TestString2")); // copy to en with prefix
     ///         Console.WriteLine(manager.GetObject("TestObject")); // copy to en
     ///         // Console.WriteLine(manager.GetObject("DontCareObject")); // not copied because not accessed
-    /// 
+    ///
     ///         // saving the changes
     ///         manager.SaveAllResources(compatibleFormat: false);
     ///     }
@@ -190,33 +210,33 @@ namespace KGySoft.Libraries.Resources
     /// using System.Resources;
     /// using KGySoft.Libraries;
     /// using KGySoft.Libraries.Resources;
-    /// 
+    ///
     /// // we can tell what the language of the invariant resource is
     /// [assembly: NeutralResourcesLanguage("en")]
-    /// 
+    ///
     /// class Example
     /// {
     ///     static void Main(string[] args)
     ///     {
     ///         var manager = new DynamicResourceManager(typeof(Example));
-    /// 
+    ///
     ///         // actually this is the default option:
     ///         manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture | AutoAppendOptions.AppendOnLoad;
-    /// 
+    ///
     ///         // we prepare only the invariant resource
     ///         manager.SetObject("TestString", "Test string", CultureInfo.InvariantCulture);
     ///         manager.SetObject("TestString2", "Another test string", CultureInfo.InvariantCulture);
     ///         manager.SetObject("TestObject", 42, CultureInfo.InvariantCulture);
     ///         manager.SetObject("AnotherObject", new byte[0], CultureInfo.InvariantCulture);
-    /// 
+    ///
     ///         // Getting an English resource will not create the en.resx file because this is
     ///         // the default language of our application thanks to the NeutralResourcesLanguage attribute
     ///         LanguageSettings.DisplayLanguage = CultureInfo.GetCultureInfo("en-US");
     ///         Console.WriteLine(manager.GetString("TestString")); // Displays "Test string", no resource is created
-    /// 
+    ///
     ///         LanguageSettings.DisplayLanguage = CultureInfo.GetCultureInfo("fr-FR");
     ///         Console.WriteLine(manager.GetString("TestString")); // Displays "[T]Test string", resource "fr" is created
-    /// 
+    ///
     ///         // saving the changes
     ///         manager.SaveAllResources(compatibleFormat: false);
     ///     }
@@ -268,7 +288,7 @@ namespace KGySoft.Libraries.Resources
     /// <code lang="C#"><![CDATA[
     /// using System.Globalization;
     /// using KGySoft.Libraries.Resources;
-    /// 
+    ///
     /// class Example
     /// {
     ///     static void Main(string[] args)
@@ -305,7 +325,7 @@ namespace KGySoft.Libraries.Resources
     /// using System;
     /// using KGySoft.Libraries;
     /// using KGySoft.Libraries.Resources;
-    /// 
+    ///
     /// namespace ClassLibrary1
     /// {
     ///     internal static class Res
@@ -313,7 +333,7 @@ namespace KGySoft.Libraries.Resources
     ///         private const string nullReference = "NullReference";
     ///         private const string unavailableResource = "Resource ID not found: {0}";
     ///         private const string invalidResource = "Resource text is not valid for {0} arguments: {1}";
-    /// 
+    ///
     ///         private static readonly DynamicResourceManager resourceManager =
     ///             // the name of the compiled resources must match (see also point 5)
     ///             new DynamicResourceManager("ClassLibrary1.Messages", typeof(Res).Assembly)
@@ -322,16 +342,16 @@ namespace KGySoft.Libraries.Resources
     ///                 UseLanguageSettings = true,
     ///                 // CompatibleFormat = true // use this if you want to edit the result files with VS resource editor
     ///             };
-    /// 
+    ///
     ///         internal static string Get(string id) =>
     ///             resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
-    /// 
+    ///
     ///         internal static string Get(string id, params object[] args)
     ///         {
     ///             string format = Get(id);
     ///             return args == null || args.Length == 0 ? format : SafeFormat(format, args);
     ///         }
-    /// 
+    ///
     ///         private static string SafeFormat(string format, object[] args)
     ///         {
     ///             try
@@ -346,7 +366,7 @@ namespace KGySoft.Libraries.Resources
     ///                             args[i] = nullRef;
     ///                     }
     ///                 }
-    /// 
+    ///
     ///                 return String.Format(LanguageSettings.FormattingLanguage, format, args);
     ///             }
     ///             catch (FormatException)
@@ -387,7 +407,7 @@ namespace KGySoft.Libraries.Resources
     /// <item>You can retrieve any resources in your library as it is shown in the example below:
     /// <code lang="C#"><![CDATA[
     /// using System;
-    /// 
+    ///
     /// namespace ClassLibrary1
     /// {
     ///     public class Example
@@ -411,7 +431,7 @@ namespace KGySoft.Libraries.Resources
     /// using ClassLibrary1;
     /// using KGySoft.Libraries;
     /// using KGySoft.Libraries.Resources;
-    /// 
+    ///
     /// namespace ConsoleApp1
     /// {
     ///     class Program
@@ -421,13 +441,13 @@ namespace KGySoft.Libraries.Resources
     ///             // Enabling dynamic .resx creation for all DynamicResourceManager instances in this application,
     ///             // which are configured to use centralized settings
     ///             LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
-    /// 
+    ///
     ///             // Setting the language of the application
     ///             LanguageSettings.DisplayLanguage = CultureInfo.GetCultureInfo("fr-FR");
-    /// 
+    ///
     ///             LaunchMyApplication();
     ///         }
-    /// 
+    ///
     ///         private static void LaunchMyApplication()
     ///         {
     ///             // if we use anything that has a reference to the Res class in ClassLibrary1, then
@@ -460,7 +480,8 @@ namespace KGySoft.Libraries.Resources
     [Serializable]
     public class DynamicResourceManager : HybridResourceManager
     {
-#error TODO: format code, then comment members
+        #region Fields
+
         private bool useLanguageSettings;
         private volatile bool canAcceptProxy = true;
         private AutoSaveOptions autoSave;
@@ -472,6 +493,10 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         private Dictionary<CultureInfo, bool> mergedCultures;
 
+        #endregion
+
+        #region Events
+
         /// <summary>
         /// Occurs when an exception is thrown on auto saving. If this event is not subscribed, the following exception types are automatically suppressed,
         /// as they can occur on save: <see cref="IOException"/>, <see cref="SecurityException"/>, <see cref="UnauthorizedAccessException"/>. If such an
@@ -481,14 +506,20 @@ namespace KGySoft.Libraries.Resources
         /// <seealso cref="AutoSave"/>
         public static event EventHandler<AutoSaveErrorEventArgs> AutoSaveError;
 
+        #endregion
+
+        #region Properties
+
         /// <summary>
         /// Gets or sets whether values of <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/> properties
-        /// are centrally taken from the <see cref="LanguageSettings"/> class.
+        /// are taken centrally from the <see cref="LanguageSettings"/> class.
         /// <br/>Default value: <c>false</c>.
         /// </summary>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersSource"/>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoAppend"/>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoSave"/>
+        /// <remarks><note>For examples see the <em>Centralized vs. individual settings</em> and <em>Recommended usage for string resources in a class library</em>
+        /// sections at the description of the <see cref="DynamicResourceManager"/> class.</note></remarks>
         public bool UseLanguageSettings
         {
             get => useLanguageSettings;
@@ -498,7 +529,7 @@ namespace KGySoft.Libraries.Resources
                     return;
 
                 lock (SyncRoot)
-                {                    
+                {
                     useLanguageSettings = value;
                     UnhookEvents();
                     if (value)
@@ -524,6 +555,10 @@ namespace KGySoft.Libraries.Resources
         /// <br/>Default value: <see cref="AutoSaveOptions.None"/>
         /// </summary>
         /// <seealso cref="AutoSaveError"/>
+        /// <remarks>The default value of this property is <see cref="AutoSaveOptions.None"/>. Though, if <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// the <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see> property is used, whose default value is
+        /// <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>.
+        /// <note>For more details see the <em>Auto Saving</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></remarks>
         public AutoSaveOptions AutoSave
         {
             get { return useLanguageSettings ? LanguageSettings.DynamicResourceManagersAutoSave : autoSave; }
@@ -558,6 +593,7 @@ namespace KGySoft.Libraries.Resources
         /// <remarks>
         /// <para>Auto appending affects the resources only. Metadata are never merged.</para>
         /// <para>Auto appending options are ignored if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/></para>
+        /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
         /// </remarks>
         /// <seealso cref="AutoAppendOptions"/>
         public AutoAppendOptions AutoAppend
@@ -588,10 +624,14 @@ namespace KGySoft.Libraries.Resources
         /// gets or sets the source, from which the resources should be taken.
         /// When <see cref="UseLanguageSettings"/> is <c>true</c>,
         /// the source is controlled by <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> property.
+        /// <br/>Default value: <see cref="ResourceManagerSources.CompiledAndResX"/>
         /// </summary>
         /// <seealso cref="UseLanguageSettings"/>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersSource"/>
         /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <c>true</c>.</exception>
+        /// <remarks>The default value of this property is <see cref="ResourceManagerSources.CompiledAndResX"/>. Though, if <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// the <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> property is used, whose default value is
+        /// <see cref="ResourceManagerSources.CompiledOnly"/>.</remarks>
         public override ResourceManagerSources Source
         {
             get { return useLanguageSettings ? LanguageSettings.DynamicResourceManagersSource : base.Source; }
@@ -608,98 +648,18 @@ namespace KGySoft.Libraries.Resources
         /// Gets or sets whether the .resx files should use a compatible format when the resources are automatically saved.
         /// <br/>Default value: <c>false</c>
         /// </summary>
-        /// <remarks>If <see cref="CompatibleFormat"/> is <c>true</c> the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+        /// <remarks>
+        /// <para>The changes can be always saved by the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method, where compatible format
+        /// can be explicitly requested. This property affects the result of auto saving controlled by the <see cref="AutoSave"/> property.</para>
+        /// <para>If <see cref="CompatibleFormat"/> is <c>true</c> the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
         /// instance and the Visual Studio Resource Editor. If it is <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
-        /// but the result can be read only by the <see cref="ResXResourceReader" /> class.</remarks>
+        /// but the result can be read only by the <see cref="ResXResourceReader"/> class.</para>
+        /// </remarks>
         public bool CompatibleFormat { get; set; }
 
-        internal override void SetSource(ResourceManagerSources value)
-        {
-            lock (SyncRoot)
-            {
-                OnSourceChanging();
-                mergedCultures = null;
-                canAcceptProxy = true;
-                base.SetSource(value);
-            }
-        }
+        #endregion
 
-        private void OnSourceChanging()
-        {
-            if ((AutoSave & AutoSaveOptions.SourceChange) != AutoSaveOptions.None)
-                DoAutoSave();
-        }
-
-        private void OnDomainUnload()
-        {
-            if ((AutoSave & AutoSaveOptions.DomainUnload) != AutoSaveOptions.None)
-                DoAutoSave();
-        }
-
-        private void OnLanguageChanged()
-        {
-            if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
-                DoAutoSave();
-        }
-
-        private void DoAutoSave()
-        {
-            try
-            {
-                SaveAllResources(compatibleFormat: CompatibleFormat);
-            }
-            catch (Exception e)
-            {
-                if (!OnAutoSaveError(new AutoSaveErrorEventArgs(e)))
-                    throw;
-            }
-        }
-
-        /// <summary>
-        /// Raises the <see cref="AutoSaveError" /> event.
-        /// </summary>
-        /// <returns><c>true</c> if the error is handled and should not be re-thrown.</returns>
-        private bool OnAutoSaveError(AutoSaveErrorEventArgs e)
-        {
-            EventHandler<AutoSaveErrorEventArgs> handler = AutoSaveError;
-            if (handler != null)
-            {
-                handler.Invoke(this, e);
-                return e.Handled;
-            }
-
-            return e.Exception is IOException || e.Exception is SecurityException || e.Exception is UnauthorizedAccessException;
-        }
-
-        private void HookEvents()
-        {
-            if (useLanguageSettings)
-            {
-                LanguageSettings.DynamicResourceManagersSourceChanged += LanguageSettings_DynamicResourceManagersSourceChanged;
-                LanguageSettings.DynamicResourceManagersAutoSaveChanged += LanguageSettings_DynamicResourceManagersAutoSaveChanged;
-            }
-
-            if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
-                LanguageSettings.DisplayLanguageChanged += LanguageSettings_DisplayLanguageChanged;
-            if ((AutoSave & AutoSaveOptions.DomainUnload) != AutoSaveOptions.None)
-            {
-                if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-                    AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-                else
-                    AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
-            }
-        }
-
-        private void UnhookEvents()
-        {
-            LanguageSettings.DynamicResourceManagersSourceChanged -= LanguageSettings_DynamicResourceManagersSourceChanged;
-            LanguageSettings.DynamicResourceManagersAutoSaveChanged -= LanguageSettings_DynamicResourceManagersAutoSaveChanged;
-            LanguageSettings.DisplayLanguageChanged -= LanguageSettings_DisplayLanguageChanged;
-            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-                AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-            else
-                AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
-        }
+        #region Constructors
 
         /// <summary>
         /// Creates a new instance of <see cref="DynamicResourceManager"/> class that looks up resources in
@@ -708,8 +668,9 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="baseName">A root name that is the prefix of the resource files without the extension.</param>
         /// <param name="assembly">The main assembly for the resources.</param>
-        /// <param name="explicitResXBaseFileName">When <see langword="null"/>, .resx file name will be constructed based on the
-        /// <paramref name="baseName"/> parameter; otherwise, the given <see cref="string"/> will be used. This parameter is optional.</param>
+        /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
+        /// <paramref name="baseName"/> parameter; otherwise, the given <see cref="string"/> will be used.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public DynamicResourceManager(string baseName, Assembly assembly, string explicitResXBaseFileName = null)
             : base(baseName, assembly, explicitResXBaseFileName)
         {
@@ -720,25 +681,19 @@ namespace KGySoft.Libraries.Resources
         /// compiled assemblies and resource XML files based on information from the specified type object.
         /// </summary>
         /// <param name="resourceSource">A type from which the resource manager derives all information for finding resource files.</param>
-        /// <param name="explicitResxBaseFileName">When <see langword="null"/>, .resx file name will be constructed based on the
-        /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used.</param>
+        /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
+        /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public DynamicResourceManager(Type resourceSource, string explicitResxBaseFileName = null)
             : base(resourceSource, explicitResxBaseFileName)
         {
         }
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)
-                DoAutoSave();
-            mergedCultures = null;
-            UnhookEvents();
-            base.Dispose(disposing);
-        }
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
@@ -749,8 +704,13 @@ namespace KGySoft.Libraries.Resources
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="LanguageSettings.DisplayLanguage" /> property.</param>
         /// <returns>
         /// The value of the resource, localized for the specified culture. If an appropriate resource set exists
-        /// but <paramref name="name" /> cannot be found, the method returns null.
+        /// but <paramref name="name" /> cannot be found, the method returns <see langword="null"/>.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+     #error itt tartok
         // TODO: returns/remarks: autoappend
         public override object GetObject(string name, CultureInfo culture)
         {
@@ -848,161 +808,51 @@ namespace KGySoft.Libraries.Resources
             return base.GetExpandoResourceSet(culture, behavior, tryParents);
         }
 
-        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
-        {
-            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
-            ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
-
-            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
-        }
-
-
-        private void AdjustCulture(ref CultureInfo culture)
-        {
-            if (culture == null)
-                culture = CultureInfo.CurrentUICulture;
-
-            // Logic from ResourceFallbackManager.GetEnumerator()
-            if (culture.Name == NeutralResourcesCulture.Name)
-                culture = CultureInfo.InvariantCulture;
-        }
-
         /// <summary>
-        /// Similar to base.GetObjectInternal but applies appending rules
+        /// Tells the resource manager to call the <see cref="ResourceSet.Close" /> method on all <see cref="ResourceSet" /> objects and release all resources.
+        /// All unsaved resources will be lost.
         /// </summary>
-        private object GetObjectWithAppend(string name, CultureInfo culture, bool isString)
+        public override void ReleaseAllResources()
         {
-            object value;
-            ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out value);
-
-            // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
-            if (value != null
-                || (seen != null
-                    && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
-                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+            lock (SyncRoot)
             {
-                return value;
+                base.ReleaseAllResources();
+                mergedCultures = null;
+                canAcceptProxy = true;
             }
+        }
 
-            EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists);
+        public override void SetObject(string name, object value, CultureInfo culture = null)
+        {
+            base.SetObject(name, value, culture);
 
-            // Phase 1: finding the resource and meanwhile collecting cultures to merge
-            AutoAppendOptions append = AutoAppend;
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
-            var toMerge = new Stack<IExpandoResourceSet>();
-            bool isFirstNeutral = true;
-
-            // The resource to cache normally should be the resource to which the requested culture belongs.
-            // Since DRM does not use tryParents = true during the traversal, the cached proxies are created on caching.
-            ResourceSet toCache = null;
-
-            // Crawling from specific to neutral and collecting the cultures to merge
-            foreach (CultureInfo currentCulture in mgr)
-            {
-                bool isMergeNeeded = IsMergeNeeded(culture, currentCulture, isFirstNeutral);
-                if (isFirstNeutral && currentCulture.IsNeutralCulture)
-                    isFirstNeutral = false;
-
-                // can occur from the 2nd iteration: the proxy to cache will be invalidated so it should be re-created
-                if (isMergeNeeded && IsProxy(toCache) && !IsExpandoExists(currentCulture))
-                {
-                    toCache = null;
-                }
-
-                // using tryParents only if invariant is requested without appending so the exception can come from the base
-                bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
-                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
-                ResourceSet rs = InternalGetResourceSet(currentCulture, isMergeNeeded ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists, tryParents, isMergeNeeded);
-
-                // Proxies are considered only at TryGetFromCachedResourceSet.
-                // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
-                if (rs != null && rs != seen && !IsProxy(rs))
-                {
-                    value = GetResourceFromAny(rs, name, isString);
-
-                    // there is a result
-                    if (value != null)
-                    {
-                        // returning the value immediately only if there is nothing to merge and to proxy
-                        if (toMerge.Count == 0 && currentCulture.Equals(culture))
-                        {
-                            SetCache(culture, rs);
-                            return value;
-                        }
-                    }
-                    // null from invariant can be returned. Stored null is never merged (even is requested as string) so ignoring toMerge if any.
-                    else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
-                    {
-                        SetCache(culture, toCache
-                            ?? (Equals(culture, CultureInfo.InvariantCulture)
-                                ? rs
-                                : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
-                        return null;
-                    }
-
-                    // Unlike in base, no unwrapping for this check because proxies are skipped here
-                    seen = rs;
-                }
-
-                if (Equals(culture, currentCulture))
-                    toCache = rs;
-
-                if (value != null)
-                    break;
-
-                if (isMergeNeeded)
-                    toMerge.Push((IExpandoResourceSet) rs);
-            }
-
-            // Phase 2: handling null
-            if (value == null)
-            {
-                // no append of invariant: exit
-                if ((append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None)
-                    return null;
-
-                IExpandoResourceSet inv = (IExpandoResourceSet)InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
-
-                // as string: adding unknown to invariant; otherwise, adding null explicitly
-                if (isString)
-                    value = LanguageSettings.UnknownResourcePrefix + name;
-
-                inv.SetObject(name, value);
-
-                // if there is nothing to merge, returning (as object, null is never merged)
-                if (!isString || toMerge.Count == 0)
-                {
-                    SetCache(culture, toCache
-                        ?? (Equals(culture, CultureInfo.InvariantCulture) 
-                            ? (ResourceSet)inv 
-                            : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
-                    return value;
-                }
-            }
-
-            // Phase 3: processing the merge
-            // Unlike in EnsureLoadedWithMerge, not merged levels are missing here because we can be sure that the resource does not exist at mid-level.
-            foreach (IExpandoResourceSet rsToMerge in toMerge)
-            {
-                if (isString)
-                    value = AdjustStringToAppend(value);
-                rsToMerge.SetObject(name, value);
-            }
-
-            // If there is no loaded proxy at the moment (because rs creation above deleted all of them) resetting trust in proxies
+            // if load creates a rs and this removes the proxies we may reset accepting proxies
             if (!canAcceptProxy && !IsAnyProxyLoaded())
                 canAcceptProxy = true;
-
-            // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
-            SetCache(culture, toCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
-            return value;
         }
 
-        private object AdjustStringToAppend(object value)
+        public override void RemoveObject(string name, CultureInfo culture = null)
         {
-            string strValue = (string)value;
-            string prefix = LanguageSettings.UntranslatedResourcePrefix;
-            return !strValue.StartsWith(prefix, StringComparison.Ordinal) ? prefix + strValue : value;
+            base.RemoveObject(name, culture);
+
+            // if remove loads a rs and this removes the proxies we may reset accepting proxies
+            if (!canAcceptProxy && !IsAnyProxyLoaded())
+                canAcceptProxy = true;
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal override void SetSource(ResourceManagerSources value)
+        {
+            lock (SyncRoot)
+            {
+                OnSourceChanging();
+                mergedCultures = null;
+                canAcceptProxy = true;
+                base.SetSource(value);
+            }
         }
 
         /// <summary>
@@ -1051,6 +901,260 @@ namespace KGySoft.Libraries.Resources
             throw new InvalidOperationException("Proxied culture not found in hierarchy");
         }
 
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)
+                DoAutoSave();
+            mergedCultures = null;
+            UnhookEvents();
+            base.Dispose(disposing);
+        }
+
+        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
+        {
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
+            ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
+
+            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private void OnSourceChanging()
+        {
+            if ((AutoSave & AutoSaveOptions.SourceChange) != AutoSaveOptions.None)
+                DoAutoSave();
+        }
+
+        private void OnDomainUnload()
+        {
+            if ((AutoSave & AutoSaveOptions.DomainUnload) != AutoSaveOptions.None)
+                DoAutoSave();
+        }
+
+        private void OnLanguageChanged()
+        {
+            if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
+                DoAutoSave();
+        }
+
+        private void DoAutoSave()
+        {
+            try
+            {
+                SaveAllResources(compatibleFormat: CompatibleFormat);
+            }
+            catch (Exception e)
+            {
+                if (!OnAutoSaveError(new AutoSaveErrorEventArgs(e)))
+                    throw;
+            }
+        }
+
+        /// <summary>
+        /// Raises the <see cref="AutoSaveError" /> event.
+        /// </summary>
+        /// <returns><c>true</c> if the error is handled and should not be re-thrown.</returns>
+        private bool OnAutoSaveError(AutoSaveErrorEventArgs e)
+        {
+            EventHandler<AutoSaveErrorEventArgs> handler = AutoSaveError;
+            if (handler != null)
+            {
+                handler.Invoke(this, e);
+                return e.Handled;
+            }
+
+            return e.Exception is IOException || e.Exception is SecurityException || e.Exception is UnauthorizedAccessException;
+        }
+
+        private void HookEvents()
+        {
+            if (useLanguageSettings)
+            {
+                LanguageSettings.DynamicResourceManagersSourceChanged += LanguageSettings_DynamicResourceManagersSourceChanged;
+                LanguageSettings.DynamicResourceManagersAutoSaveChanged += LanguageSettings_DynamicResourceManagersAutoSaveChanged;
+            }
+
+            if ((AutoSave & AutoSaveOptions.LanguageChange) != AutoSaveOptions.None)
+                LanguageSettings.DisplayLanguageChanged += LanguageSettings_DisplayLanguageChanged;
+            if ((AutoSave & AutoSaveOptions.DomainUnload) != AutoSaveOptions.None)
+            {
+                if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+                    AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+                else
+                    AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
+            }
+        }
+
+        private void UnhookEvents()
+        {
+            LanguageSettings.DynamicResourceManagersSourceChanged -= LanguageSettings_DynamicResourceManagersSourceChanged;
+            LanguageSettings.DynamicResourceManagersAutoSaveChanged -= LanguageSettings_DynamicResourceManagersAutoSaveChanged;
+            LanguageSettings.DisplayLanguageChanged -= LanguageSettings_DisplayLanguageChanged;
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+                AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
+            else
+                AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
+        }
+
+        private void AdjustCulture(ref CultureInfo culture)
+        {
+            if (culture == null)
+                culture = CultureInfo.CurrentUICulture;
+
+            // Logic from ResourceFallbackManager.GetEnumerator()
+            if (culture.Name == NeutralResourcesCulture.Name)
+                culture = CultureInfo.InvariantCulture;
+        }
+
+        /// <summary>
+        /// Similar to base.GetObjectInternal but applies appending rules
+        /// </summary>
+        private object GetObjectWithAppend(string name, CultureInfo culture, bool isString)
+        {
+            object value;
+            ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out value);
+
+            // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
+            if (value != null
+                || (seen != null
+                        && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
+                        && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+            {
+                return value;
+            }
+
+            EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists);
+
+            // Phase 1: finding the resource and meanwhile collecting cultures to merge
+            AutoAppendOptions append = AutoAppend;
+            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            var toMerge = new Stack<IExpandoResourceSet>();
+            bool isFirstNeutral = true;
+
+            // The resource to cache normally should be the resource to which the requested culture belongs.
+            // Since DRM does not use tryParents = true during the traversal, the cached proxies are created on caching.
+            ResourceSet toCache = null;
+
+            // Crawling from specific to neutral and collecting the cultures to merge
+            foreach (CultureInfo currentCulture in mgr)
+            {
+                bool isMergeNeeded = IsMergeNeeded(culture, currentCulture, isFirstNeutral);
+                if (isFirstNeutral && currentCulture.IsNeutralCulture)
+                    isFirstNeutral = false;
+
+                // can occur from the 2nd iteration: the proxy to cache will be invalidated so it should be re-created
+                if (isMergeNeeded && IsProxy(toCache) && !IsExpandoExists(currentCulture))
+                {
+                    toCache = null;
+                }
+
+                // using tryParents only if invariant is requested without appending so the exception can come from the base
+                bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
+                        && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
+                ResourceSet rs = InternalGetResourceSet(currentCulture, isMergeNeeded ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists, tryParents, isMergeNeeded);
+
+                // Proxies are considered only at TryGetFromCachedResourceSet.
+                // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
+                if (rs != null && rs != seen && !IsProxy(rs))
+                {
+                    value = GetResourceFromAny(rs, name, isString);
+
+                    // there is a result
+                    if (value != null)
+                    {
+                        // returning the value immediately only if there is nothing to merge and to proxy
+                        if (toMerge.Count == 0 && currentCulture.Equals(culture))
+                        {
+                            SetCache(culture, rs);
+                            return value;
+                        }
+                    }
+                    // null from invariant can be returned. Stored null is never merged (even is requested as string) so ignoring toMerge if any.
+                    else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
+                    {
+                        SetCache(culture, toCache
+                                ?? (Equals(culture, CultureInfo.InvariantCulture)
+                                        ? rs
+                                        : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
+                        return null;
+                    }
+
+                    // Unlike in base, no unwrapping for this check because proxies are skipped here
+                    seen = rs;
+                }
+
+                if (Equals(culture, currentCulture))
+                    toCache = rs;
+
+                if (value != null)
+                    break;
+
+                if (isMergeNeeded)
+                    toMerge.Push((IExpandoResourceSet)rs);
+            }
+
+            // Phase 2: handling null
+            if (value == null)
+            {
+                // no append of invariant: exit
+                if ((append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None)
+                    return null;
+
+                IExpandoResourceSet inv = (IExpandoResourceSet)InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
+
+                // as string: adding unknown to invariant; otherwise, adding null explicitly
+                if (isString)
+                    value = LanguageSettings.UnknownResourcePrefix + name;
+
+                inv.SetObject(name, value);
+
+                // if there is nothing to merge, returning (as object, null is never merged)
+                if (!isString || toMerge.Count == 0)
+                {
+                    SetCache(culture, toCache
+                            ?? (Equals(culture, CultureInfo.InvariantCulture)
+                                    ? (ResourceSet)inv
+                                    : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
+                    return value;
+                }
+            }
+
+            // Phase 3: processing the merge
+            // Unlike in EnsureLoadedWithMerge, not merged levels are missing here because we can be sure that the resource does not exist at mid-level.
+            foreach (IExpandoResourceSet rsToMerge in toMerge)
+            {
+                if (isString)
+                    value = AdjustStringToAppend(value);
+                rsToMerge.SetObject(name, value);
+            }
+
+            // If there is no loaded proxy at the moment (because rs creation above deleted all of them) resetting trust in proxies
+            if (!canAcceptProxy && !IsAnyProxyLoaded())
+                canAcceptProxy = true;
+
+            // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
+            SetCache(culture, toCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
+            return value;
+        }
+
+        private object AdjustStringToAppend(object value)
+        {
+            string strValue = (string)value;
+            string prefix = LanguageSettings.UntranslatedResourcePrefix;
+            return !strValue.StartsWith(prefix, StringComparison.Ordinal) ? prefix + strValue : value;
+        }
+
         private void ReviseCanAcceptProxy(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
             if (!canAcceptProxy)
@@ -1080,44 +1184,12 @@ namespace KGySoft.Libraries.Resources
 
             // append is not possible if only compiled resources are used...
             return !(base.Source == ResourceManagerSources.CompiledOnly
-                // ...or there is no appending at all...
-                || (append = AutoAppend) == AutoAppendOptions.None
-                // ...invariant culture is requested but invariant is not appended...
-                || (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None && Equals(culture, CultureInfo.InvariantCulture)
-                // ...a neutral culture is requested but only specific culture is appended
-                || (append & (AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad)) == AutoAppendOptions.None && culture.IsNeutralCulture);
-        }
-
-        /// <summary>
-        /// Tells the resource manager to call the <see cref="ResourceSet.Close" /> method on all <see cref="ResourceSet" /> objects and release all resources.
-        /// All unsaved resources will be lost.
-        /// </summary>
-        public override void ReleaseAllResources()
-        {
-            lock (SyncRoot)
-            {
-                base.ReleaseAllResources();
-                mergedCultures = null;
-                canAcceptProxy = true;
-            }
-        }
-
-        public override void SetObject(string name, object value, CultureInfo culture = null)
-        {
-            base.SetObject(name, value, culture);
-
-            // if load creates a rs and this removes the proxies we may reset accepting proxies
-            if (!canAcceptProxy && !IsAnyProxyLoaded())
-                canAcceptProxy = true;
-        }
-
-        public override void RemoveObject(string name, CultureInfo culture = null)
-        {
-            base.RemoveObject(name, culture);
-
-            // if remove loads a rs and this removes the proxies we may reset accepting proxies
-            if (!canAcceptProxy && !IsAnyProxyLoaded())
-                canAcceptProxy = true;
+                    // ...or there is no appending at all...
+                    || (append = AutoAppend) == AutoAppendOptions.None
+                    // ...invariant culture is requested but invariant is not appended...
+                    || (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None && Equals(culture, CultureInfo.InvariantCulture)
+                    // ...a neutral culture is requested but only specific culture is appended
+                    || (append & (AutoAppendOptions.AddUnknownToInvariantCulture | AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendOnLoad)) == AutoAppendOptions.None && culture.IsNeutralCulture);
         }
 
         /// <summary>
@@ -1140,8 +1212,8 @@ namespace KGySoft.Libraries.Resources
                     || (append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && culture.IsNeutralCulture
                     // ...or merge status is already up-to-date
                     || mergedCultures?.ContainsKey(culture) == true)
-                    //// ...or culture is already loaded/created
-                    //|| IsNonProxyLoaded(culture))
+                //// ...or culture is already loaded/created
+                //|| IsNonProxyLoaded(culture))
                 {
                     return;
                 }
@@ -1149,7 +1221,7 @@ namespace KGySoft.Libraries.Resources
                 // Phase 1: collecting cultures to merge
                 Debug.Assert(Source != ResourceManagerSources.CompiledOnly);
                 if (mergedCultures == null)
-                    mergedCultures = new Dictionary<CultureInfo, bool> { {CultureInfo.InvariantCulture, true} };
+                    mergedCultures = new Dictionary<CultureInfo, bool> { { CultureInfo.InvariantCulture, true } };
                 ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
                 var toMerge = new Stack<KeyValuePair<CultureInfo, bool>>();
                 bool isFirstNeutral = true;
@@ -1202,7 +1274,7 @@ namespace KGySoft.Libraries.Resources
                 // taking the first element of the stack, which is merged (or is the invariant culture) and doing the merges
                 // tryParents is always true in callers; otherwise, there would be no merge.
                 bool tryParents = ThrowException && ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture)
-                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
+                        && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
                 ResourceSet rs = InternalGetResourceSet(toMerge.Peek().Key, ResourceSetRetrieval.LoadIfExists, tryParents, false);
                 Debug.Assert(rs != null || ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture), "A merged culture is expected to be exist. Only invariant can be missing.");
                 Debug.Assert(rs == null || IsNonProxyLoaded(toMerge.Peek().Key), "The base culture for merge should not be a proxy");
@@ -1221,9 +1293,9 @@ namespace KGySoft.Libraries.Resources
                 {
                     current = toMerge.Pop();
                     ResourceSet rsTarget = InternalGetResourceSet(current.Key,
-                        behavior == ResourceSetRetrieval.CreateIfNotExists && current.Value
-                            ? ResourceSetRetrieval.CreateIfNotExists
-                            : ResourceSetRetrieval.LoadIfExists, false, current.Value);
+                            behavior == ResourceSetRetrieval.CreateIfNotExists && current.Value
+                                ? ResourceSetRetrieval.CreateIfNotExists
+                                : ResourceSetRetrieval.LoadIfExists, false, current.Value);
 
                     // cannot be loaded
                     if (rsTarget == null || IsProxy(rsTarget))
@@ -1351,6 +1423,16 @@ namespace KGySoft.Libraries.Resources
             return null;
         }
 
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx)
+        {
+            HookEvents();
+        }
+
+        #endregion
+
+        #region Event handlers
+
         private void LanguageSettings_DynamicResourceManagersSourceChanged(object sender, EventArgs e)
         {
             SetSource(LanguageSettings.DynamicResourceManagersSource);
@@ -1380,10 +1462,8 @@ namespace KGySoft.Libraries.Resources
             OnDomainUnload();
         }
 
-        [OnDeserialized]
-        private void OnDeserialized(StreamingContext ctx)
-        {
-            HookEvents();
-        }
+        #endregion
+
+        #endregion
     }
 }

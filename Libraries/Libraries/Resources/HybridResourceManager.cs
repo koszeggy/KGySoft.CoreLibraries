@@ -485,7 +485,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="baseName">A root name that is the prefix of the resource files without the extension.</param>
         /// <param name="assembly">The main assembly for the resources. The compiled resource will be searched in this assembly.</param>
-        /// <param name="explicitResXBaseFileName">When <see langword="null"/>, .resx file name will be constructed based on the
+        /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
         /// <paramref name="baseName"/> parameter; otherwise, the given <see cref="string"/> will be used.
         /// <br/>Default value: <see langword="null"/>.</param>
         public HybridResourceManager(string baseName, Assembly assembly, string explicitResXBaseFileName = null)
@@ -504,8 +504,8 @@ namespace KGySoft.Libraries.Resources
         /// compiled assemblies and resource XML files based on information from the specified type object.
         /// </summary>
         /// <param name="resourceSource">A type from which the resource manager derives all information for finding resource files.</param>
-        /// <param name="explicitResXBaseFileName">When <see langword="null"/>, .resx file name will be constructed based on the
-        /// <paramref name="baseName"/> parameter; otherwise, the given <see cref="string"/> will be used.
+        /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
+        /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used.
         /// <br/>Default value: <see langword="null"/>.</param>
         public HybridResourceManager(Type resourceSource, string explicitResXBaseFileName = null)
             : base(resourceSource)
@@ -565,7 +565,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public override string GetString(string name) => (string)GetObjectInternal(name, null, true);
 
         /// <summary>
@@ -583,7 +583,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true);
 
         /// <summary>
@@ -597,7 +597,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public override object GetObject(string name) => GetObjectInternal(name, null, false);
 
         /// <summary>
@@ -614,7 +614,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false);
 
         /// <summary>
@@ -677,7 +677,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public virtual string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true);
 
         /// <summary>
@@ -693,7 +693,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public virtual object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false);
 
         /// <summary>

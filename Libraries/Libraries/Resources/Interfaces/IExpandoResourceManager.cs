@@ -114,7 +114,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetString(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         object GetObject(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="InvalidOperationException">The type of the metadata is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetMetaString(string name, CultureInfo culture = null);
 
         /// <summary>
@@ -212,7 +212,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         object GetMetaObject(string name, CultureInfo culture = null);
 
         /// <summary>

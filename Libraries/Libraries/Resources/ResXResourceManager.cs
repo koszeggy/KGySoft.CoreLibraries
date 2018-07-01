@@ -766,7 +766,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
         public override string GetString(string name) => (string)GetObjectInternal(name, null, true);
 
@@ -784,7 +784,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
         public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true);
 
@@ -799,7 +799,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
         public override object GetObject(string name) => GetObjectInternal(name, null, false);
 
@@ -817,7 +817,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
         public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false);
 
@@ -836,7 +836,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <c>false</c> and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true);
 
         /// <summary>
@@ -853,7 +853,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under "Instantiating a ResXResourceManager object" section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false);
 
         /// <summary>
