@@ -34,9 +34,9 @@ namespace KGySoft.Libraries.Resources
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific resources at run time.
     /// As it is derived from <see cref="HybridResourceManager"/>, it can handle both compiled resources from <c>.dll</c> and
-    /// <c>.exe</c> files, and XML resources from <c>.resx</c> files at the same time. Based on the selected strategies, when a resource
-    /// is not found in a language, it can automatically add it from a base culture or even create completely new resources
-    /// and save them into <c>.resx</c> files. For text entries the untranslated elements will be marked so they can be found easily for localization.
+    /// <c>.exe</c> files, and XML resources from <c>.resx</c> files at the same time. Based on the selected strategies when a resource
+    /// is not found in a language it can automatically add the missing resource from a base culture or even create completely new resource sets
+    /// and save them into <c>.resx</c> files. For text entries the untranslated elements will be marked so they can be found easily for translation.
     /// </summary>
     /// <remarks>
     /// <para><see cref="DynamicResourceManager"/> class is derived from <see cref="HybridResourceManager"/> and adds the functionality
@@ -61,7 +61,7 @@ namespace KGySoft.Libraries.Resources
     /// <list type="bullet">
     /// <item><term>Individual control</term>
     /// <description>If <see cref="UseLanguageSettings"/> is <c>false</c>, which is the default value, then the <see cref="DynamicResourceManager"/> behavior is simply determined by its other properties.
-    /// This can be alright for short-living <see cref="DynamicResourceManager"/> instances (for example, in a <see langword="using"/> block), or when you are sure you don't want to let the
+    /// This can be alright for short-living <see cref="DynamicResourceManager"/> instances (for example, in a <see langword="using"/> block), or when you are sure you don't want let the
     /// consumers of your library to customize the settings of resource managers.</description></item>
     /// <item><term>Centralized control</term>
     /// <description>If you use the <see cref="DynamicResourceManager"/> class as the resource manager of a class library, you might want to let the consumers of your library to control
@@ -134,9 +134,9 @@ namespace KGySoft.Libraries.Resources
     /// <br/> There are two groups of options, which control where the untranslated resources should be merged from and to:
     /// <list type="number">
     /// <item><see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendLastNeutralCulture"/> and <see cref="AutoAppendOptions.AppendNeutralCultures"/> options
-    /// will append the neutral cultures (eg. <c>en</c>) if a requested resource if found in the invariant culture.</item>
+    /// will append the neutral cultures (eg. <c>en</c>) if a requested resource is found in the invariant culture.</item>
     /// <item><see cref="AutoAppendOptions.AppendFirstSpecificCulture"/> and <see cref="AutoAppendOptions.AppendSpecificCultures"/> options
-    /// will append the specific cultures (eg. <c>en-US</c>) if a requested resource if found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
+    /// will append the specific cultures (eg. <c>en-US</c>) if a requested resource is found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
     /// except that the found resource must be in the resource set of a non-specific culture..</item>
     /// </list>
     /// If the merged resource is requested by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetString">GetString</see>
@@ -274,7 +274,7 @@ namespace KGySoft.Libraries.Resources
     /// event. To prevent leaking resources make sure to dispose the <see cref="DynamicResourceManager"/> if it is used in a non-static or short-living context.</note>
     /// </description></item>
     /// <item><term>Application exit</term>
-    /// <description>If <see cref="AutoSaveOptions.DomainUnload"/> options is enabled the changes are saved when current <see cref="AppDomain"/> is being unloaded, including the case when
+    /// <description>If <see cref="AutoSaveOptions.DomainUnload"/> option is enabled the changes are saved when current <see cref="AppDomain"/> is being unloaded, including the case when
     /// the application exits.
     /// <note>Enabling this option makes the <see cref="DynamicResourceManager"/> to subscribe to the <see cref="AppDomain.ProcessExit">AppDomain.ProcessExit</see>
     /// or <see cref="AppDomain.DomainUnload">AppDomain.DomainUnload</see> event. To prevent leaking resources make sure to dispose the <see cref="DynamicResourceManager"/> if it is used in a non-static or short-living context.
@@ -372,7 +372,7 @@ namespace KGySoft.Libraries.Resources
     ///             catch (FormatException)
     ///             {
     ///                 return String.Format(invalidResource, args.Length, format);
-    ///             }t
+    ///             }
     ///         }
     ///     }
     /// }]]></code></item>
@@ -383,7 +383,7 @@ namespace KGySoft.Libraries.Resources
     /// <list type="bullet">
     /// <item>In Solution Explorer right click on <c>ClassLibrary1</c>, Unload Project</item>
     /// <item>In Solution Explorer right click on <c>ClassLibrary1 (unavailable)</c>, Edit ClassLibrary1.csproj</item>
-    /// <item>Search for the <c>EmbeddedResource</c> node and edit it as follows:
+    /// <item>Search for the <c>EmbeddedResource</c> element and edit it as follows:
     /// <code lang="XML"><![CDATA[
     /// <EmbeddedResource Include="Resource1.resx" >
     ///   <LogicalName>ClassLibrary1.Messages.resources</LogicalName>
@@ -403,7 +403,9 @@ namespace KGySoft.Libraries.Resources
     /// Add <c>NullReference</c> key as well as it is used by the default <c>Res</c> implementation.
     /// <br/><img src="../Help/Images/DynamicResourceManager_ExampleResources.png" alt="Example resources"/></item>
     /// <item>Define a constant for all of your resource names in the <c>Res</c> class. For example:
-    /// <code lang="C#"><![CDATA[internal const string MyResourceExample = nameof(MyResourceExample);]]></code></item>
+    /// <code lang="C#"><![CDATA[
+    /// internal const string MyResourceExample = nameof(MyResourceExample);
+    /// internal const string MyResourceFormatExample = nameof(MyResourceFormatExample);]]></code></item>
     /// <item>You can retrieve any resources in your library as it is shown in the example below:
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -415,7 +417,11 @@ namespace KGySoft.Libraries.Resources
     ///         public void SomeMethod(int someParameter)
     ///         {
     ///             if (someParameter == 42)
+    ///                 // simple resource
     ///                 throw new InvalidOperationException(Res.Get(Res.MyResourceExample));
+    ///             if (someParameter == -42)
+    ///                 // formatted resource - enough arguments must be specified for placeholders (though errors are handled in Res)
+    ///                 throw new ArgumentException(Res.Get(Res.MyResourceFormatExample, "x", 123), nameof(someParameter));
     ///         }
     ///     }
     /// }]]></code></item>
@@ -474,6 +480,9 @@ namespace KGySoft.Libraries.Resources
     ///   <data name="MyResourceExample">
     ///     <value>[T]This is a resource value will be used in my library</value>
     ///   </data>
+    ///   <data name="MyResourceFormatExample">
+    ///     <value>[T]This is a resource format string with two placeholders: {0}, {1}</value>
+    ///   </data>
     /// </root>]]></code>
     /// By looking for the <c>[T]</c> prefixes you can easily find the untranslated elements.</item></list></para>
     /// </remarks>
@@ -486,7 +495,7 @@ namespace KGySoft.Libraries.Resources
         private volatile bool canAcceptProxy = true;
         private AutoSaveOptions autoSave;
         private AutoAppendOptions autoAppend = LanguageSettings.AutoAppendDefault;
-
+        
         /// <summary>
         /// If <see cref="autoAppend"/> contains <see cref="AutoAppendOptions.AppendOnLoad"/> flag,
         /// contains the up-to-date cultures. Value is <c>true</c> if that culture is merged so it can be taken as a base for merge.
@@ -555,6 +564,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>Default value: <see cref="AutoSaveOptions.None"/>
         /// </summary>
         /// <seealso cref="AutoSaveError"/>
+        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <c>true</c>.</exception>
         /// <remarks>The default value of this property is <see cref="AutoSaveOptions.None"/>. Though, if <see cref="UseLanguageSettings"/> is <c>true</c>,
         /// the <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see> property is used, whose default value is
         /// <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>.
@@ -590,6 +600,7 @@ namespace KGySoft.Libraries.Resources
         /// <br/>
         /// Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
+        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <c>true</c>.</exception>
         /// <remarks>
         /// <para>Auto appending affects the resources only. Metadata are never merged.</para>
         /// <para>Auto appending options are ignored if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/></para>
@@ -678,14 +689,14 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Creates a new instance of <see cref="DynamicResourceManager"/> class that looks up resources in
-        /// compiled assemblies and resource XML files based on information from the specified type object.
+        /// compiled assemblies and resource XML files based on information from the specified <see cref="Type"/> object.
         /// </summary>
         /// <param name="resourceSource">A type from which the resource manager derives all information for finding resource files.</param>
         /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
         /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used.
         /// <br/>Default value: <see langword="null"/>.</param>
-        public DynamicResourceManager(Type resourceSource, string explicitResxBaseFileName = null)
-            : base(resourceSource, explicitResxBaseFileName)
+        public DynamicResourceManager(Type resourceSource, string explicitResXBaseFileName = null)
+            : base(resourceSource, explicitResXBaseFileName)
         {
         }
 
@@ -700,18 +711,21 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for this culture,
-        /// the resource manager uses fallback rules to locate an appropriate resource. If this value is null,
+        /// the resource manager uses fallback rules to locate an appropriate resource. If this value is <see langword="null"/>,
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="LanguageSettings.DisplayLanguage" /> property.</param>
         /// <returns>
-        /// The value of the resource, localized for the specified culture. If an appropriate resource set exists
-        /// but <paramref name="name" /> cannot be found, the method returns <see langword="null"/>.
+        /// If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
+        /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible; however, it
+        /// does not affect the return value of this method.</para>
+        /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-     #error itt tartok
-        // TODO: returns/remarks: autoappend
         public override object GetObject(string name, CultureInfo culture)
         {
             if (name == null)
@@ -729,13 +743,19 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <returns>
-        /// The value of the resource localized for the caller's current culture settings.
-        /// If an appropriate resource set exists but <paramref name="name" /> cannot be found, the method returns null.
+        /// If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
+        /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
-        public override object GetObject(string name)
-        {
-            return GetObject(name, null);
-        }
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible; however, it
+        /// does not affect the return value of this method.</para>
+        /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public override object GetObject(string name) => GetObject(name, null);
 
         /// <summary>
         /// Returns the value of the string resource localized for the specified culture.
@@ -743,8 +763,23 @@ namespace KGySoft.Libraries.Resources
         /// <param name="name">The name of the resource to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the resource is localized.</param>
         /// <returns>
-        /// The value of the resource localized for the specified culture, or null if <paramref name="name" /> cannot be found in a resource set.
+        /// The value of the resource localized for the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <c>false</c> or the current
+        /// non-string entry is from a compiled resource.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        /// <remarks>
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible.
+        /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
+        /// or <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see>.
+        /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
+        /// </para>
+        /// </remarks>
         public override string GetString(string name, CultureInfo culture)
         {
             if (name == null)
@@ -757,24 +792,50 @@ namespace KGySoft.Libraries.Resources
             return (string)GetObjectWithAppend(name, culture, true);
         }
 
-        public override string GetString(string name)
-        {
-            return GetString(name, null);
-        }
+        /// <summary>
+        /// Returns the value of the specified string resource.
+        /// </summary>
+        /// <param name="name">The name of the resource to retrieve.</param>
+        /// <returns>
+        /// The value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible.
+        /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
+        /// or <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see>.
+        /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
+        /// </para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
+        /// non-string entry is from a compiled resource.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public override string GetString(string name) => GetString(name, null);
 
-        // summary TODO: Unlike the protected InternalGetResourceSet, this gets an appended ResourceSet (and Expando, too)
-        //         - appending is applied only if both loadIfExists and tryParents are true but no new resx resource set will be created. To create them use GetExpandoResourceSet with Create instead.
-        //         - if no append is performed now due to the params, itt will not happen later for the retrieved resource set until a ReleaseAllResources call
         /// <summary>
         /// Retrieves the resource set for a particular culture.
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
         /// <param name="loadIfExists"><c>true</c> to load the resource set, if it has not been loaded yet and the corresponding resource file exists; otherwise, <c>false</c>.</param>
         /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.</param>
-        /// <returns>
-        /// The resource set for the specified culture.
-        /// </returns>
-        /// <exception cref="System.ArgumentNullException">culture</exception>
+        /// <returns>The resource set for the specified culture.</returns>
+        /// <remarks>
+        /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the result sets is possible during this call.
+        /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
+        /// </para>
+        /// <para>Appending is applied only if both <paramref name="loadIfExists"/> and <paramref name="tryParents"/> are <c>true</c>, though no new resource set will be created.
+        /// To make possible to create a completely new resource set call the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method with <see cref="ResourceSetRetrieval.CreateIfNotExists"/> behavior instead.</para>
+        /// <para>If due to the current parameters no auto appending is performed during the call, then it will not happen later for the retrieved resource set until the <see cref="ReleaseAllResources">ReleaseAllResources</see>
+        /// method is called.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
+        /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <c>true</c> and
+        /// the resource of the neutral culture was not found.</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             if (culture == null)
@@ -788,9 +849,31 @@ namespace KGySoft.Libraries.Resources
             return base.GetResourceSet(culture, loadIfExists, tryParents);
         }
 
-        // summary TODO: Unlike the protected InternalGetResourceSet, this gets an appended ResourceSet (and GetResourceSet, too)
-        //         - appending is applied only if behavior is load/create and tryParents is true. If behavior is only load, then no new resx resource set will be created.
-        //         - if no append is performed now due to the params, itt will not happen later for the retrieved resource set until a ReleaseAllResources call
+        /// <summary>
+        /// Retrieves the resource set for a particular culture, which can be dynamically modified.
+        /// </summary>
+        /// <param name="culture">The culture whose resources are to be retrieved.</param>
+        /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
+        /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
+        /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.
+        /// <br/>Default value: <c>false</c>.</param>
+        /// <returns>
+        /// The resource set for the specified culture, or <see langword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,
+        /// or when <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/> so it cannot return an <see cref="IExpandoResourceSet"/> instance.
+        /// </returns>
+        /// <remarks>
+        /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the result sets is possible during this call.
+        /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
+        /// </para>
+        /// <para>Appending is applied only if <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and <paramref name="tryParents"/> is <c>true</c>.</para>
+        /// <para>If due to the current parameters no auto appending is performed during the call, then it will not happen later for the retrieved resource set until the <see cref="ReleaseAllResources">ReleaseAllResources</see>
+        /// method is called.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
+        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <c>true</c>
+        /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
         public override IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (culture == null)
@@ -809,9 +892,14 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Tells the resource manager to call the <see cref="ResourceSet.Close" /> method on all <see cref="ResourceSet" /> objects and release all resources.
+        /// Tells the resource manager to call the <see cref="ResourceSet.Close">ResourceSet.Close</see> method on all <see cref="ResourceSet"/> objects and release all resources.
         /// All unsaved resources will be lost.
         /// </summary>
+        /// <remarks>
+        /// <note type="caution">By calling this method all of the unsaved changes will be lost.</note>
+        /// <para>By the <see cref="HybridResourceManager.IsModified"/> property you can check whether there are unsaved changes.</para>
+        /// <para>To save the changes you can call the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method.</para>
+        /// </remarks>
         public override void ReleaseAllResources()
         {
             lock (SyncRoot)
@@ -822,6 +910,28 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
+        /// <summary>
+        /// Adds or replaces a resource object in the current <see cref="DynamicResourceManager" /> with the specified
+        /// <paramref name="name" /> for the specified <paramref name="culture" />.
+        /// </summary>
+        /// <param name="name">The name of the resource to set.</param>
+        /// <param name="culture">The culture of the resource to set. If this value is <see langword="null"/>,
+        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
+        /// <param name="value">The value of the resource to set. If <see langword="null"/>, then a null reference will be explicitly
+        /// stored for the specified <paramref name="culture"/>.</param>
+        /// <remarks>
+        /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
+        /// As a result, the subsequent <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> calls
+        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
+        /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
+        /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> and <see cref="GetResourceSet">GetResourceSet</see> methods will return the resources with <see langword="null" /> value.</para>
+        /// <para>If you want to remove the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject">RemoveObject</see> method.</para>
+        /// <note>If you use the <see cref="DynamicResourceManager"/> with some enabled options in the <see cref="AutoAppend"/> property, then do not need to call this method explicitly.
+        /// For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         public override void SetObject(string name, object value, CultureInfo culture = null)
         {
             base.SetObject(name, value, culture);
@@ -831,6 +941,24 @@ namespace KGySoft.Libraries.Resources
                 canAcceptProxy = true;
         }
 
+        /// <summary>
+        /// Removes a resource object from the current <see cref="DynamicResourceManager"/> with the specified
+        /// <paramref name="name" /> for the specified <paramref name="culture" />.
+        /// </summary>
+        /// <param name="name">The case-sensitive name of the resource to remove.</param>
+        /// <param name="culture">The culture of the resource to remove. If this value is <see langword="null"/>,
+        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
+        /// <remarks>
+        /// <para>If there is a binary resource defined for <paramref name="name" /> and <paramref name="culture" />,
+        /// then after this call the originally defined value will be returned by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> method from the binary resources.
+        /// If you want to force hiding the binary resource and make <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> to default to the parent <see cref="CultureInfo" /> of the specified <paramref name="culture" />,
+        /// then use the <see cref="SetObject">SetObject</see> method with a <see langword="null" /> value.</para>
+        /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
+        /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
         public override void RemoveObject(string name, CultureInfo culture = null)
         {
             base.RemoveObject(name, culture);
@@ -918,6 +1046,19 @@ namespace KGySoft.Libraries.Resources
             base.Dispose(disposing);
         }
 
+        /// <summary>
+        /// Provides the implementation for finding a resource set.
+        /// </summary>
+        /// <param name="culture">The culture object to look for.</param>
+        /// <param name="loadIfExists"><c>true</c> to load the resource set, if it has not been loaded yet; otherwise, <c>false</c>.</param>
+        /// <param name="tryParents"><c>true</c> to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <c>false</c>.</param>
+        /// <returns>
+        /// The specified resource set.
+        /// </returns>
+        /// <remarks>Unlike in case of <see cref="GetResourceSet">GetResourceSet</see> and <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> methods,
+        /// no auto appending occurs when this method is called.</remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
+        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are both <c>true</c>.</exception>
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
@@ -1424,19 +1565,14 @@ namespace KGySoft.Libraries.Resources
         }
 
         [OnDeserialized]
-        private void OnDeserialized(StreamingContext ctx)
-        {
-            HookEvents();
-        }
+        private void OnDeserialized(StreamingContext ctx) => HookEvents();
 
         #endregion
 
         #region Event handlers
 
         private void LanguageSettings_DynamicResourceManagersSourceChanged(object sender, EventArgs e)
-        {
-            SetSource(LanguageSettings.DynamicResourceManagersSource);
-        }
+            => SetSource(LanguageSettings.DynamicResourceManagersSource);
 
         private void LanguageSettings_DynamicResourceManagersAutoSaveChanged(object sender, EventArgs e)
         {
@@ -1447,20 +1583,11 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        private void LanguageSettings_DisplayLanguageChanged(object sender, EventArgs e)
-        {
-            OnLanguageChanged();
-        }
+        private void LanguageSettings_DisplayLanguageChanged(object sender, EventArgs e) => OnLanguageChanged();
 
-        private void CurrentDomain_DomainUnload(object sender, EventArgs e)
-        {
-            OnDomainUnload();
-        }
+        private void CurrentDomain_DomainUnload(object sender, EventArgs e) => OnDomainUnload();
 
-        private void CurrentDomain_ProcessExit(object sender, EventArgs e)
-        {
-            OnDomainUnload();
-        }
+        private void CurrentDomain_ProcessExit(object sender, EventArgs e) => OnDomainUnload();
 
         #endregion
 

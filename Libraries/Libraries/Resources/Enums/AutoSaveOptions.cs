@@ -32,7 +32,7 @@ namespace KGySoft.Libraries.Resources
     public enum AutoSaveOptions
     {
         /// <summary>
-        /// Represents that no auto saving.
+        /// Represents no auto saving.
         /// </summary>
         None,
 

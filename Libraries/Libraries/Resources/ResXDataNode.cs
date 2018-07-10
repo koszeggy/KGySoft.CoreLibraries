@@ -243,6 +243,7 @@ namespace KGySoft.Libraries.Resources
     /// The system version may replace type information with assembly qualified names when the .resx file is parsed. If the assembly qualified name is really needed, you can get it
     /// after explicit deserialization by calling <see cref="Type.AssemblyQualifiedName">GetType().AssemblyQualifiedName</see> on the <see cref="object"/> returned by the <see cref="GetValue">GetValue</see> method.</description></item>
     /// <item><term>Raw content</term><description>You can use the <see cref="ValueData"/> property to read the original raw <see cref="string"/> content stored in the .resx file for this element.</description></item>
+    /// <item><term>Advanced string representation</term><description>The <see cref="ToString">ToString</see> method displays the string representation (either of the deserialized object if already cached, or the raw content) so can be used easily in a format argument and provides more debugging information.</description></item>
     /// <item><term>Security</term>
     /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> method.
     /// If a .resx file is read from an untrusted source, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
