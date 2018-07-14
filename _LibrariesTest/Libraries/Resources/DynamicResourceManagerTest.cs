@@ -35,7 +35,10 @@ namespace _LibrariesTest.Libraries.Resources
                 if (!useLanguageSettings)
                     manager.AutoSave = AutoSaveOptions.DomainUnload;
                 else
+                {
                     LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.DomainUnload;
+                    LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
+                }
 
                 manager.SetObject("TestResourceKey", "TestResourceValue", testCulture);
             }
