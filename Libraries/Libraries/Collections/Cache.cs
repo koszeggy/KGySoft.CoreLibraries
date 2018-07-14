@@ -8,7 +8,7 @@ using System.Text;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
-
+using KGySoft.Libraries.Annotations;
 using KGySoft.Libraries.Diagnostics;
 
 #endregion
@@ -880,7 +880,8 @@ namespace KGySoft.Libraries.Collections
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="NullLoader"/>
         /// <seealso cref="Behavior"/>
-        public Cache(Func<TKey, TValue> itemLoader, int capacity, IEqualityComparer<TKey> comparer)
+        [CollectionAccess(CollectionAccessType.UpdatedContent)]
+        public Cache([NotNull]Func<TKey, TValue> itemLoader, int capacity, IEqualityComparer<TKey> comparer)
         {
             if (itemLoader == null)
                 throw new ArgumentNullException(nameof(itemLoader), Res.Get(Res.CacheNullLoader));
@@ -907,7 +908,8 @@ namespace KGySoft.Libraries.Collections
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="NullLoader"/>
         /// <seealso cref="Behavior"/>
-        public Cache(Func<TKey, TValue> itemLoader)
+        [CollectionAccess(CollectionAccessType.UpdatedContent)]
+        public Cache([NotNull]Func<TKey, TValue> itemLoader)
             : this(itemLoader, 100, null)
         {
         }
@@ -935,7 +937,8 @@ namespace KGySoft.Libraries.Collections
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="NullLoader"/>
         /// <seealso cref="Behavior"/>
-        public Cache(Func<TKey, TValue> itemLoader, int capacity)
+        [CollectionAccess(CollectionAccessType.UpdatedContent)]
+        public Cache([NotNull]Func<TKey, TValue> itemLoader, int capacity)
             : this(itemLoader, capacity, null)
         {
         }
@@ -1437,6 +1440,7 @@ namespace KGySoft.Libraries.Collections
         /// <see cref="NullLoader"/>
         public TValue this[TKey key]
         {
+            [CollectionAccess(CollectionAccessType.UpdatedContent)]
             get { return GetValue(key); }
             set
             {

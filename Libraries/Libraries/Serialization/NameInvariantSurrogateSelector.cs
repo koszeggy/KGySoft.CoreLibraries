@@ -16,7 +16,7 @@ namespace KGySoft.Libraries.Serialization
 
     /// <summary>
     /// An <see cref="ISurrogateSelector"/> implementation that makes possible to serialize and deserialize objects by
-    /// <see cref="IFormatter"/>s without storing field names. This provides compatibility for obfocuscated and non-obfocuscated versions of an assembly.
+    /// <see cref="IFormatter"/>s without storing field names. This provides compatibility for obfuscated and non-obfuscated versions of an assembly.
     /// </summary>
     /// <remarks>
     /// You can use this surrogate selector for any non-primitive types that does not implement <see cref="ISerializable"/> interface.

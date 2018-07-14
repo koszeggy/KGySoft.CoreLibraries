@@ -17,7 +17,7 @@
 #region Usings
 
 using System;
-
+using KGySoft.Libraries.Annotations;
 using KGySoft.Libraries.Reflection;
 
 #endregion
@@ -265,12 +265,12 @@ namespace KGySoft.Libraries.Resources
 
         #region Internal Methods
 
-        internal static string Get(string id)
+        internal static string Get([NotNull]string id)
         {
             return resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
         }
 
-        internal static string Get(string id, params object[] args)
+        internal static string Get([NotNull]string id, params object[] args)
         {
             string format = Get(id);
             return args == null || args.Length == 0 ? format : SafeFormat(format, args);
