@@ -139,8 +139,8 @@ namespace KGySoft.Libraries.Resources
     /// will append the specific cultures (eg. <c>en-US</c>) if a requested resource is found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
     /// except that the found resource must be in the resource set of a non-specific culture..</item>
     /// </list>
-    /// If the merged resource is requested by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetString">GetString</see>
-    /// methods, then the value of the existing resource will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property, and
+    /// If the merged resource is a <see cref="string"/>, then the value of the existing resource will be prefixed by the
+    /// <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property, and
     /// this prefixed string will be saved in the target resource; otherwise, the original value will be duplicated in the target resource.
     /// <note>"First" and "last" terms above refer the first and last neutral/specific cultures in the order from
     /// most specific to least specific one as in the examples above. See the descriptions of the referred <see cref="AutoAppendOptions"/> options for more details and for examples
@@ -175,8 +175,8 @@ namespace KGySoft.Libraries.Resources
     ///         LanguageSettings.DisplayLanguage = enUS;
     ///
     ///         Console.WriteLine(manager.GetString("TestString")); // already exists in en
-    ///         Console.WriteLine(manager.GetString("TestString2")); // copy to en with prefix
-    ///         Console.WriteLine(manager.GetObject("TestObject")); // copy to en
+    ///         Console.WriteLine(manager.GetString("TestString2")); // copied to en with prefix
+    ///         Console.WriteLine(manager.GetObject("TestObject")); // copied to en
     ///         // Console.WriteLine(manager.GetObject("DontCareObject")); // not copied because not accessed
     ///
     ///         // saving the changes
@@ -718,8 +718,8 @@ namespace KGySoft.Libraries.Resources
         /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible; however, it
-        /// does not affect the return value of this method.</para>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures is possible. If the resource to obtain is a <see cref="string"/>,
+        /// the result will be prefixed by the value of the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
@@ -747,8 +747,8 @@ namespace KGySoft.Libraries.Resources
         /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible; however, it
-        /// does not affect the return value of this method.</para>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures is possible. If the resource to obtain is a <see cref="string"/>,
+        /// the result will be prefixed by the value of the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
         /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
@@ -774,7 +774,7 @@ namespace KGySoft.Libraries.Resources
         /// <remarks>
         /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
-        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible.
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures is possible.
         /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
         /// or <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see>.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
@@ -802,7 +802,7 @@ namespace KGySoft.Libraries.Resources
         /// <remarks>
         /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
-        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the result sets of different cultures is possible.
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures is possible.
         /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
         /// or <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see>.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
@@ -810,7 +810,7 @@ namespace KGySoft.Libraries.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <c>false</c> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
@@ -824,7 +824,7 @@ namespace KGySoft.Libraries.Resources
         /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.</param>
         /// <returns>The resource set for the specified culture.</returns>
         /// <remarks>
-        /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the result sets is possible during this call.
+        /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the resource sets is possible during this call.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
         /// </para>
         /// <para>Appending is applied only if both <paramref name="loadIfExists"/> and <paramref name="tryParents"/> are <c>true</c>, though no new resource set will be created.
@@ -862,7 +862,7 @@ namespace KGySoft.Libraries.Resources
         /// or when <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/> so it cannot return an <see cref="IExpandoResourceSet"/> instance.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the result sets is possible during this call.
+        /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the resource sets is possible during this call.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
         /// </para>
         /// <para>Appending is applied only if <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and <paramref name="tryParents"/> is <c>true</c>.</para>
@@ -1153,7 +1153,7 @@ namespace KGySoft.Libraries.Resources
             if (culture == null)
                 culture = CultureInfo.CurrentUICulture;
 
-            // Logic from ResourceFallbackManager.GetEnumerator()
+            // Logic from ResourceFallbackManager.GetEnumerator() - so reference equality will work for invariant
             if (culture.Name == NeutralResourcesCulture.Name)
                 culture = CultureInfo.InvariantCulture;
         }
@@ -1169,8 +1169,8 @@ namespace KGySoft.Libraries.Resources
             // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
             if (value != null
                 || (seen != null
-                        && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
-                        && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+                    && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
+                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
             {
                 return value;
             }
@@ -1202,7 +1202,7 @@ namespace KGySoft.Libraries.Resources
 
                 // using tryParents only if invariant is requested without appending so the exception can come from the base
                 bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
-                        && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
+                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
                 ResourceSet rs = InternalGetResourceSet(currentCulture, isMergeNeeded ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists, tryParents, isMergeNeeded);
 
                 // Proxies are considered only at TryGetFromCachedResourceSet.
@@ -1225,9 +1225,9 @@ namespace KGySoft.Libraries.Resources
                     else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
                     {
                         SetCache(culture, toCache
-                                ?? (Equals(culture, CultureInfo.InvariantCulture)
-                                        ? rs
-                                        : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
+                            ?? (Equals(culture, CultureInfo.InvariantCulture)
+                                ? rs
+                                : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
                         return null;
                     }
 
@@ -1264,19 +1264,20 @@ namespace KGySoft.Libraries.Resources
                 if (!isString || toMerge.Count == 0)
                 {
                     SetCache(culture, toCache
-                            ?? (Equals(culture, CultureInfo.InvariantCulture)
-                                    ? (ResourceSet)inv
-                                    : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
+                        ?? (Equals(culture, CultureInfo.InvariantCulture)
+                            ? (ResourceSet)inv
+                            : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
                     return value;
                 }
             }
 
             // Phase 3: processing the merge
             // Unlike in EnsureLoadedWithMerge, not merged levels are missing here because we can be sure that the resource does not exist at mid-level.
+            string prefix = LanguageSettings.UntranslatedResourcePrefix;
             foreach (IExpandoResourceSet rsToMerge in toMerge)
             {
-                if (isString)
-                    value = AdjustStringToAppend(value);
+                if (AsString(value) is string strValue)
+                    value = strValue.StartsWith(prefix, StringComparison.Ordinal) ? strValue : prefix + strValue;
                 rsToMerge.SetObject(name, value);
             }
 
@@ -1287,13 +1288,6 @@ namespace KGySoft.Libraries.Resources
             // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
             SetCache(culture, toCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
             return value;
-        }
-
-        private object AdjustStringToAppend(object value)
-        {
-            string strValue = (string)value;
-            string prefix = LanguageSettings.UntranslatedResourcePrefix;
-            return !strValue.StartsWith(prefix, StringComparison.Ordinal) ? prefix + strValue : value;
         }
 
         private void ReviseCanAcceptProxy(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
@@ -1415,7 +1409,7 @@ namespace KGySoft.Libraries.Resources
                 // taking the first element of the stack, which is merged (or is the invariant culture) and doing the merges
                 // tryParents is always true in callers; otherwise, there would be no merge.
                 bool tryParents = ThrowException && ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture)
-                        && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
+                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
                 ResourceSet rs = InternalGetResourceSet(toMerge.Peek().Key, ResourceSetRetrieval.LoadIfExists, tryParents, false);
                 Debug.Assert(rs != null || ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture), "A merged culture is expected to be exist. Only invariant can be missing.");
                 Debug.Assert(rs == null || IsNonProxyLoaded(toMerge.Peek().Key), "The base culture for merge should not be a proxy");
@@ -1434,9 +1428,9 @@ namespace KGySoft.Libraries.Resources
                 {
                     current = toMerge.Pop();
                     ResourceSet rsTarget = InternalGetResourceSet(current.Key,
-                            behavior == ResourceSetRetrieval.CreateIfNotExists && current.Value
-                                ? ResourceSetRetrieval.CreateIfNotExists
-                                : ResourceSetRetrieval.LoadIfExists, false, current.Value);
+                        behavior == ResourceSetRetrieval.CreateIfNotExists && current.Value
+                            ? ResourceSetRetrieval.CreateIfNotExists
+                            : ResourceSetRetrieval.LoadIfExists, false, current.Value);
 
                     // cannot be loaded
                     if (rsTarget == null || IsProxy(rsTarget))
@@ -1496,6 +1490,7 @@ namespace KGySoft.Libraries.Resources
             IDictionaryEnumerator enumerator = source.GetEnumerator();
             while (enumerator.MoveNext())
             {
+                // ReSharper disable once PossibleNullReferenceException
                 string key = enumerator.Key.ToString();
                 target[key] = expandoRs != null ? expandoRs.GetResource(key, false, false, true) : enumerator.Value;
             }
@@ -1504,20 +1499,14 @@ namespace KGySoft.Libraries.Resources
         private void MergeResourceSet(Dictionary<string, object> source, IExpandoResourceSet target, bool rebuildSource)
         {
             string prefix = LanguageSettings.UntranslatedResourcePrefix;
-
             foreach (KeyValuePair<string, object> resource in source)
             {
                 if (target.ContainsResource(resource.Key))
                     continue;
 
-                object newValue;
-                string strValue = AsString(resource.Value);
-                if (strValue == null)
-                    newValue = resource.Value;
-                else
-                    newValue = strValue.StartsWith(prefix, StringComparison.Ordinal)
-                        ? strValue
-                        : prefix + strValue;
+                object newValue = AsString(resource.Value) is string strValue
+                    ? (strValue.StartsWith(prefix, StringComparison.Ordinal) ? strValue : prefix + strValue)
+                    : resource.Value;
 
                 target.SetObject(resource.Key, newValue);
             }
@@ -1529,15 +1518,14 @@ namespace KGySoft.Libraries.Resources
             }
         }
 
-        private string AsString(object value)
+        private object AsString(object value)
         {
             string result = value as string;
             if (result != null)
                 return result;
 
             // even if a fileref contains a string, we cannot add prefix to the referenced file so returning null here
-            ResXDataNode node = value as ResXDataNode;
-            if (node == null || node.FileRef != null)
+            if (!(value is ResXDataNode node) || node.FileRef != null)
                 return null;
 
             // already deserialized: returning the string or null
@@ -1555,9 +1543,7 @@ namespace KGySoft.Libraries.Resources
                 string[] typeParts = node.TypeName.Split(',');
                 string assembly = node.AssemblyAliasValue?.Split(',')[0] ?? (typeParts.Length > 1 ? typeParts[1] : null);
                 if (typeParts[0].Trim() == "System.String" && (assembly == null || assembly.Trim() == "mscorlib"))
-                {
                     return node.ValueData;
-                }
             }
 
             // otherwise: non string (theoretically it could be a serialized string but the writer never creates it so)

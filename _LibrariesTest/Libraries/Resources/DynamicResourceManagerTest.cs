@@ -227,6 +227,10 @@ namespace _LibrariesTest.Libraries.Resources
             var custom = "custom";
             manager.SetObject(key, custom, huRunicHU);
             Assert.AreEqual(custom, manager.GetString(key, huRunicHULowland));
+
+            // The string will be prefixed even if retrieved as an object
+            manager.ReleaseAllResources();
+            Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
 
         [TestMethod]
@@ -274,6 +278,10 @@ namespace _LibrariesTest.Libraries.Resources
             var rshuRunic = manager.GetExpandoResourceSet(huRunic);
             Assert.AreNotSame(rsinv, rshu);
             Assert.AreNotSame(rshu, rshuRunic);
+
+            // The string will be prefixed even if retrieved as an object
+            manager.ReleaseAllResources();
+            Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
 
         [TestMethod]
