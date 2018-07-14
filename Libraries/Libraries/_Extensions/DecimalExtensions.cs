@@ -1,17 +1,43 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: DecimalExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
     /// <summary>
     /// Extensions for the <see cref="decimal"/> type.
     /// </summary>
-    public static class DecimalTools
+    public static class DecimalExtensions
     {
+        #region Constants
+
         /// <summary>
         /// Represents one possible negative zero value of the <see cref="decimal"/> type. This value is constant.
         /// </summary>
         public const decimal NegativeZero = -0.0m;
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Returns a culture-invariant <see cref="string"/> representation of the given <see cref="decimal"/> <paramref name="value"/>,
@@ -34,5 +60,7 @@ namespace KGySoft.Libraries
         {
             return value == 0m && (Decimal.GetBits(value)[3] & 0x80000000) != 0;
         }
+
+        #endregion
     }
 }

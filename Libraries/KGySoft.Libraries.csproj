@@ -87,18 +87,17 @@
     <Compile Include="Libraries\EnumComparer.cs" />
     <Compile Include="Libraries\Collections\CacheBehavior.cs" />
     <Compile Include="Libraries\EnumFormattingOptions.cs" />
-    <Compile Include="Libraries\Extensions\DecimalTools.cs" />
-    <Compile Include="Libraries\Extensions\DoubleTools.cs" />
-    <Compile Include="Libraries\Extensions\EnumerableTools.cs" />
-    <Compile Include="Libraries\Extensions\EnumTools.cs" />
-    <Compile Include="Libraries\Extensions\FloatTools.cs" />
-    <Compile Include="Libraries\Extensions\ObjectTools.cs" />
-    <Compile Include="Libraries\Extensions\ByteArrayTools.cs" />
-    <Compile Include="Libraries\Extensions\StreamTools.cs" />
-    <Compile Include="Libraries\Extensions\StringComparerTools.cs" />
-    <Compile Include="Libraries\Extensions\StringTools.cs" />
-    <Compile Include="Libraries\Extensions\TypeTools.cs" />
-    <Compile Include="Libraries\Extensions\LinqToXmlTools.cs" />
+    <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\DoubleExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\EnumerableExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\EnumExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\FloatExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\ObjectExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\ByteArrayExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\StreamExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\StringComparerExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\StringExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\TypeExtensions.cs" />
     <Compile Include="Libraries\Files.cs">
       <SubType>Code</SubType>
     </Compile>

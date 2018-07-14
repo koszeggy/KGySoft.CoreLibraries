@@ -1,20 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: StringExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
+
+using KGySoft.Libraries.Resources;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// String extension methods
     /// </summary>
-    public static class StringTools
+    public static class StringExtensions
     {
+        #region Methods
+
         /// <summary>
         /// Gets a token value from a string.
         /// </summary>
@@ -93,7 +112,7 @@ namespace KGySoft.Libraries
                 return s;
             string result = s;
             if (result.Length > 1 && ((result[0] == '"' && result[result.Length - 1] == '"') ||
-                result[0] == '\'' && result[result.Length - 1] == '\''))
+                    result[0] == '\'' && result[result.Length - 1] == '\''))
                 result = result.Substring(1, result.Length - 2);
             return result;
         }
@@ -193,5 +212,7 @@ namespace KGySoft.Libraries
 
             return result.ToString();
         }
+
+        #endregion
     }
 }

@@ -1,20 +1,40 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ByteArrayExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+using System.Globalization;
+using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.IO;
+
+using KGySoft.Libraries.Resources;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
-    using System.Globalization;
-    using System.Linq;
-
-    using KGySoft.Libraries.Resources;
 
     /// <summary>
     /// Byte array extension methods.
     /// </summary>
-    public static class ByteArrayTools
+    public static class ByteArrayExtensions
     {
         #region Extension Methods
 
@@ -24,7 +44,7 @@ namespace KGySoft.Libraries
         /// Converts the byte array to string of hexadecimal values.
         /// </summary>
         /// <param name="bytes">The byte array to convert.</param>
-        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/> or empty, the hex stream will be continguous.
+        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/> or empty, the hex stream will be continuous.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
@@ -52,12 +72,12 @@ namespace KGySoft.Libraries
         /// Converts the byte array to string of hexadecimal values.
         /// </summary>
         /// <param name="bytes">The byte array to convert.</param>
-        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/> or empty, the hex stream will be continguous.</param>
+        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/> or empty, the hex stream will be continuous.</param>
         /// <param name="lineLength">Specifies the length of a line in the result not counting the indentation. When 0 or less, the result will not be wrapped to lines.</param>
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
         /// <br/>Default value: <c>0</c></param>
         /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default valuie: <c>false</c>.</param>
+        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default value: <c>false</c>.</param>
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
@@ -129,7 +149,7 @@ namespace KGySoft.Libraries
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
         /// <br/>Default value: <c>0</c></param>
         /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default valuie: <c>false</c>.</param>
+        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default value: <c>false</c>.</param>
         /// <returns>The string representation, in decimal, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> or <paramref name="separator"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> is empty or contains decimal digits</exception>
@@ -158,7 +178,7 @@ namespace KGySoft.Libraries
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
         /// <br/>Default value: <c>0</c></param>
         /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default valuie: <c>false</c>.</param>
+        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default value: <c>false</c>.</param>
         /// <returns>The string representation, in base 64, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         public static string ToBase64String(this byte[] bytes, int lineLength = 0, int indentSize = 0, char indentChar = ' ', bool indentSingleLine = false)
@@ -176,7 +196,7 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Compresses the provided <paramref name="bytes"/> and returns the compressed data.
-        /// Compressed data can be decompressed by <see cref="Decompress"/> method.
+        /// Compressed data can be decompressed by <see cref="Decompress">Decompress</see> method.
         /// </summary>
         /// <param name="bytes">The bytes to compress.</param>
         /// <returns>Compressed data. It is not guaranteed that compressed data is shorter than original one.</returns>
@@ -198,7 +218,7 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
-        /// Decompresses the provided <paramref name="bytes"/> that was compressed by <see cref="Compress"/> method.
+        /// Decompresses the provided <paramref name="bytes"/> that was compressed by <see cref="Compress">Compress</see> method.
         /// </summary>
         /// <param name="bytes">The bytes to decompress.</param>
         /// <returns>Decompressed data. It is not guaranteed that compressed data is shorter than original one.</returns>

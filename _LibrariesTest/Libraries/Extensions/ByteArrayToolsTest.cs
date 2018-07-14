@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using KGySoft.Libraries;
 
 namespace _LibrariesTest.Libraries.Extensions
 {
-    using System.Diagnostics;
-
-    using KGySoft.Libraries;
 
     [TestClass]
-    public class ByteArrayToolsTest : TestBase
+    public class ByteArrayExtensionsTest : TestBase
     {
         [TestMethod]
         public void ToBase64String()

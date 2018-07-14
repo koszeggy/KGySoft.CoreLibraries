@@ -361,6 +361,5 @@ namespace _LibrariesTest
                 Assert.Inconclusive("mscorlib version does not match to .NET 4.x: {0}. Add a global <TargetFrameworkVersion> to csproj and try again", typeof(object).Assembly.GetName().Version);
 #endif
         }
-
     }
 }

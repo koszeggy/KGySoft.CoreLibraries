@@ -1,16 +1,37 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ObjectExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 using KGySoft.Libraries.Serialization;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
     /// <summary>
     /// Extension methods for <see cref="Object"/> class
     /// </summary>
-    public static class ObjectTools
+    public static class ObjectExtensions
     {
+        #region Methods
+
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
         /// </summary>
@@ -59,7 +80,7 @@ namespace KGySoft.Libraries
                 comparer = EnumComparer<T>.Comparer;
             else
                 comparer = EqualityComparer<T>.Default;
-            
+
             for (int i = 0; i < length; i++)
             {
                 if (comparer.Equals(item, set[i]))
@@ -76,12 +97,14 @@ namespace KGySoft.Libraries
         /// <param name="obj">The object to clone.</param>
         /// <returns>The functionally equivalent clone of the object.</returns>
         /// <remarks>This method clones types even without <see cref="SerializableAttribute"/>; however,
-        /// in such case it is not gueranteed that the result is functionally equivalent to the input object.</remarks>
+        /// in such case it is not guaranteed that the result is functionally equivalent to the input object.</remarks>
         public static T DeepClone<T>(this T obj)
         {
             BinarySerializationFormatter formatter = new BinarySerializationFormatter();
             byte[] raw = formatter.Serialize(obj);
             return (T)formatter.Deserialize(raw);
         }
+
+        #endregion
     }
 }

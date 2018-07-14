@@ -1,25 +1,49 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: TypeExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-//using System.Data;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Remoting;
+using System.Text;
 
 using KGySoft.Libraries.Reflection;
+using KGySoft.Libraries.Resources;
+
+#endregion
+
 namespace KGySoft.Libraries
 {
-    using System.Text;
-
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Extension methods for <see cref="Type"/> class.
     /// </summary>
-    public static class TypeTools
+    public static class TypeExtensions
     {
+        #region Fields
+
         private static Type nullableType = typeof(Nullable<>);
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Checks whether a <paramref name="value"/> can be an instance of <paramref name="type"/> when, for example,
@@ -36,7 +60,7 @@ namespace KGySoft.Libraries
 
             if (type.IsNullable())
                 type = Nullable.GetUnderlyingType(type);
-            
+
             // getting the type of the real instance
             Type instanceType = value.GetType();
 
@@ -67,12 +91,66 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
+        /// Gets whether given <paramref name="type"/> is a <see cref="Nullable{T}"/> type.
+        /// </summary>
+        /// <param name="type">The type to check</param>
+        /// <returns><c>true</c>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <c>false</c>.</returns>
+        public static bool IsNullable(this Type type) => type.IsGenericType && type.GetGenericTypeDefinition() == nullableType;
+
+        ///// <summary>
+        ///// Converts the referred <paramref name="enumType"/> to a <see cref="DataTable"/>.
+        ///// </summary>
+        ///// <param name="enumType">The source enum type.</param>
+        ///// <param name="valuesColumnName">This will be the name of the column that stores the enum values.</param>
+        ///// <param name="namesColumnName">This will be name of the column the stores the enum names.</param>
+        ///// <returns>A <see cref="DataTable"/> instance with two columns containing the value-name pairs of the specified enum.</returns>
+        //public static DataTable EnumToDataTable(this Type enumType, string valuesColumnName, string namesColumnName)
+        //{
+        //    if (enumType == null)
+        //        throw new ArgumentNullException("enumType");
+        //    if (!enumType.IsEnum)
+        //        throw new ArgumentException("Specified type must be an enum type", "enumType");
+        //    if (valuesColumnName == null)
+        //        throw new ArgumentNullException("valuesColumnName");
+        //    if (namesColumnName == null)
+        //        throw new ArgumentNullException("namesColumnName");
+
+        //    Type underlyingType = Enum.GetUnderlyingType(enumType);
+        //    DataTable dt = new DataTable();
+        //    dt.Columns.Add(valuesColumnName, underlyingType);
+        //    dt.Columns.Add(namesColumnName, typeof(string));
+
+        //    foreach (object value in Enum.GetValues(enumType))
+        //    {
+        //        object valueMember = Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
+        //        string displayMember = value.ToString();
+
+        //        dt.Rows.Add(valueMember, displayMember);
+        //    }
+
+        //    return dt;
+        //}
+
+        ///// <summary>
+        ///// Converts the referred <paramref name="enumType"/> to a <see cref="DataTable"/> with Value and Name columns containing enum fields.
+        ///// </summary>
+        ///// <param name="enumType">The source enum type.</param>
+        //public static DataTable EnumToDataTable(this Type enumType)
+        //{
+        //    return EnumToDataTable(enumType, "Value", "Name");
+        //}
+
+        #endregion
+
+        #region Internal Methods
+
+        /// <summary>
         /// Gets whether given type is a collection type and is capable to add/remove/clear items
         /// either by generic or non-generic way.
         /// </summary>
         /// <param name="type">The type to test</param>
         /// <returns>True if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/></returns>
-        public static bool IsCollection(this Type type)
+        internal static bool IsCollection(this Type type)
         {
             if (typeof(IList).IsAssignableFrom(type) || typeof(IDictionary).IsAssignableFrom(type))
                 return true;
@@ -91,7 +169,7 @@ namespace KGySoft.Libraries
         /// <param name="type">The type to test</param>
         /// <param name="instance">The object instance to test</param>
         /// <returns><c>true</c> if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/> and <c><paramref name="instance"/>.IsReadOnly</c> returns <c>false</c>.</returns>
-        public static bool IsReadWriteCollection(this Type type, object instance)
+        internal static bool IsReadWriteCollection(this Type type, object instance)
         {
             if (instance == null)
                 return false;
@@ -119,16 +197,6 @@ namespace KGySoft.Libraries
             }
 
             return false;
-        }
-
-        /// <summary>
-        /// Gets whether given <paramref name="type"/> is a <see cref="Nullable{T}"/> type.
-        /// </summary>
-        /// <param name="type">The type to check</param>
-        /// <returns><c>true</c>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <c>false</c>.</returns>
-        public static bool IsNullable(this Type type)
-        {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == nullableType;
         }
 
         /// <summary>
@@ -193,47 +261,8 @@ namespace KGySoft.Libraries
             return sb.ToString();
         }
 
-        ///// <summary>
-        ///// Converts the referred <paramref name="enumType"/> to a <see cref="DataTable"/>.
-        ///// </summary>
-        ///// <param name="enumType">The source enum type.</param>
-        ///// <param name="valuesColumnName">This will be the name of the column that stores the enum values.</param>
-        ///// <param name="namesColumnName">This will be name of the column the stores the enum names.</param>
-        ///// <returns>A <see cref="DataTable"/> instance with two columns containing the value-name pairs of the specified enum.</returns>
-        //public static DataTable EnumToDataTable(this Type enumType, string valuesColumnName, string namesColumnName)
-        //{
-        //    if (enumType == null)
-        //        throw new ArgumentNullException("enumType");
-        //    if (!enumType.IsEnum)
-        //        throw new ArgumentException("Specified type must be an enum type", "enumType");
-        //    if (valuesColumnName == null)
-        //        throw new ArgumentNullException("valuesColumnName");
-        //    if (namesColumnName == null)
-        //        throw new ArgumentNullException("namesColumnName");
+        #endregion
 
-        //    Type underlyingType = Enum.GetUnderlyingType(enumType);
-        //    DataTable dt = new DataTable();
-        //    dt.Columns.Add(valuesColumnName, underlyingType);
-        //    dt.Columns.Add(namesColumnName, typeof(string));
-
-        //    foreach (object value in Enum.GetValues(enumType))
-        //    {
-        //        object valueMember = Convert.ChangeType(value, underlyingType, CultureInfo.InvariantCulture);
-        //        string displayMember = value.ToString();
-
-        //        dt.Rows.Add(valueMember, displayMember);
-        //    }
-
-        //    return dt;
-        //}
-
-        ///// <summary>
-        ///// Converts the referred <paramref name="enumType"/> to a <see cref="DataTable"/> with Value and Name columns containing enum fields.
-        ///// </summary>
-        ///// <param name="enumType">The source enum type.</param>
-        //public static DataTable EnumToDataTable(this Type enumType)
-        //{
-        //    return EnumToDataTable(enumType, "Value", "Name");
-        //}
+        #endregion
     }
 }

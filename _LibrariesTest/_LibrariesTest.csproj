@@ -64,6 +64,12 @@
     <DebugType>pdbonly</DebugType>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework" />
     <Reference Include="sysglobl" />
@@ -76,6 +82,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions.cs" />
     <Compile Include="Libraries\Collections\CacheTest.cs" />
     <Compile Include="Libraries\Collections\CircularListTest.cs" />
     <Compile Include="Libraries\Collections\CircularSortedListTest.cs" />
@@ -112,6 +119,9 @@
     <EmbeddedResource Include="Resources\TestCompiledResource.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <None Include="..\KGySoft.snk">
+      <Link>KGySoft.snk</Link>
+    </None>
     <None Include="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>

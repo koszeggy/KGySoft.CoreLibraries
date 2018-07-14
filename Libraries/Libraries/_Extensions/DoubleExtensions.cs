@@ -1,21 +1,51 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: DoubleExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
 
 using KGySoft.Libraries.Reflection;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
     /// <summary>
     /// Extensions for the <see cref="double"/> type.
     /// </summary>
-    public static class DoubleTools
+    public static class DoubleExtensions
     {
+        #region Constants
+
         /// <summary>
         /// Represents the negative zero value. This value is constant.
         /// </summary>
         public const double NegativeZero = -0d;
 
+        #endregion
+
+        #region Fields
+
         private static long negativeZeroBits = BitConverter.DoubleToInt64Bits(NegativeZero);
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Returns a culture-invariant <see cref="string"/> representation of the given <see cref="double"/> <paramref name="value"/>,
@@ -41,5 +71,7 @@ namespace KGySoft.Libraries
         {
             return BitConverter.DoubleToInt64Bits(value) == negativeZeroBits;
         }
+
+        #endregion
     }
 }

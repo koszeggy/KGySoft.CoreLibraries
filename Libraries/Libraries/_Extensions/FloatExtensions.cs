@@ -1,21 +1,51 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FloatExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
 
 using KGySoft.Libraries.Reflection;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
     /// <summary>
     /// Extensions for the <see cref="float"/> type.
     /// </summary>
-    public static class FloatTools
+    public static class FloatExtensions
     {
+        #region Constants
+
         /// <summary>
         /// Represents the negative zero value. This value is constant.
         /// </summary>
         public const float NegativeZero = -0f;
 
+        #endregion
+
+        #region Fields
+
         private static long negativeZeroBits = BitConverter.DoubleToInt64Bits(NegativeZero);
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Returns a culture-invariant <see cref="string"/> representation of the given <see cref="float"/> <paramref name="value"/>,
@@ -43,5 +73,7 @@ namespace KGySoft.Libraries
         {
             return BitConverter.DoubleToInt64Bits(value) == negativeZeroBits;
         }
+
+        #endregion
     }
 }

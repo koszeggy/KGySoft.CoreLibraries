@@ -1,18 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: StreamExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
+
+using KGySoft.Libraries.Resources;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Stream extension methods
     /// </summary>
-    public static class StreamTools
+    public static class StreamExtensions
     {
+        #region Methods
+
         /// <summary>
         /// Copies the <paramref name="source"/> <see cref="Stream"/> into the <paramref name="destination"/> one.
         /// Copy begins on the current position of source stream. None of the streams are closed or sought after
@@ -58,6 +77,7 @@ namespace KGySoft.Libraries
 #else
 #error .NET version is not set or not supported!
 #endif
+
             CopyTo(source, destination, bufferSize);
         }
 
@@ -91,5 +111,7 @@ namespace KGySoft.Libraries
                 s.Seek(pos, SeekOrigin.Begin);
             return result;
         }
+
+        #endregion
     }
 }

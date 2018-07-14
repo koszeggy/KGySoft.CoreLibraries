@@ -551,7 +551,7 @@ namespace KGySoft.Libraries
 
             // rest: flags enum or ignored case
             if (String.IsNullOrEmpty(separator))
-                separator = EnumTools.DefaultParseSeparator;
+                separator = EnumExtensions.DefaultParseSeparator;
 
             string[] tokens = separator.Length == 1 ? value.Split(separator[0]) : value.Split(new string[] { separator }, StringSplitOptions.None);
             ulong acc = 0UL;
@@ -628,7 +628,7 @@ namespace KGySoft.Libraries
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         public static bool TryParse(string value, bool ignoreCase, out TEnum result)
         {
-            return TryParse(value, EnumTools.DefaultParseSeparator, ignoreCase, out result);
+            return TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result);
         }
 
         /// <summary>
@@ -656,7 +656,7 @@ namespace KGySoft.Libraries
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         public static bool TryParse(string value, out TEnum result)
         {
-            return TryParse(value, EnumTools.DefaultParseSeparator, false, out result);
+            return TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result);
         }
 
         /// <summary>
@@ -688,7 +688,7 @@ namespace KGySoft.Libraries
         public static TEnum Parse(string value, bool ignoreCase)
         {
             TEnum result;
-            if (!TryParse(value, EnumTools.DefaultParseSeparator, ignoreCase, out result))
+            if (!TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result))
                 throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
 
             return result;
@@ -721,7 +721,7 @@ namespace KGySoft.Libraries
         public static TEnum Parse(string value)
         {
             TEnum result;
-            if (!TryParse(value, EnumTools.DefaultParseSeparator, false, out result))
+            if (!TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result))
                 throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
 
             return result;
@@ -780,7 +780,7 @@ namespace KGySoft.Libraries
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
         public static string ToString(TEnum value, EnumFormattingOptions format)
         {
-            return ToString(value, format, EnumTools.DefaultFormatSeparator);
+            return ToString(value, format, EnumExtensions.DefaultFormatSeparator);
         }
 
         /// <summary>
@@ -790,7 +790,7 @@ namespace KGySoft.Libraries
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         public static string ToString(TEnum value)
         {
-            return ToString(value, EnumFormattingOptions.Auto, EnumTools.DefaultFormatSeparator);
+            return ToString(value, EnumFormattingOptions.Auto, EnumExtensions.DefaultFormatSeparator);
         }
 
         /// <summary>
@@ -899,7 +899,7 @@ namespace KGySoft.Libraries
                 return Zero;
 
             if (String.IsNullOrEmpty(separator))
-                separator = EnumTools.DefaultFormatSeparator;
+                separator = EnumExtensions.DefaultFormatSeparator;
             StringBuilder result = new StringBuilder();
             bool first = true;
 
@@ -936,7 +936,7 @@ namespace KGySoft.Libraries
                 return Zero;
 
             if (String.IsNullOrEmpty(separator))
-                separator = EnumTools.DefaultFormatSeparator;
+                separator = EnumExtensions.DefaultFormatSeparator;
             StringBuilder result = new StringBuilder();
             IList<ulong> numValues = NumValueNamePairs.Keys;
             bool first = true;

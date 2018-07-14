@@ -197,8 +197,6 @@ namespace KGySoft.Libraries.Resources
     /// </remarks>
     public sealed class ResXResourceWriter : IResourceWriter
     {
-        #region Nested classes
-
         #region ResXWriter class
 
         /// <summary>
@@ -349,8 +347,6 @@ namespace KGySoft.Libraries.Resources
 
             #endregion
         }
-
-        #endregion
 
         #endregion
 

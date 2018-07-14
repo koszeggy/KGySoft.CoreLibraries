@@ -874,7 +874,7 @@ namespace KGySoft.Libraries.Serialization
                         Type convType = Type.GetType(convAttr.ConverterTypeName);
                         if (convType != null)
                         {
-                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
+                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
                             object[] ctorParams = new object[] { property.PropertyType };
                             if (ctor == null)
                             {
@@ -884,9 +884,9 @@ namespace KGySoft.Libraries.Serialization
                             if (ctor != null)
                             {
                                 TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
+                                if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                                 {
-                                    newElement.Add(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, typeof(string)));
+                                    newElement.Add(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType));
                                     parent.Add(newElement);
                                     continue;
                                 }
@@ -1759,7 +1759,7 @@ namespace KGySoft.Libraries.Serialization
                 DeserializeArray(ref array, null, parent);
                 return;
             }
-            // collection: clearing it before restoring content and retireving element type
+            // collection: clearing it before restoring content and retrieving element type
             Type collectionElementType = null;
             if (objType.IsCollection())
             {
@@ -1873,7 +1873,7 @@ namespace KGySoft.Libraries.Serialization
                             Type convType = Type.GetType(convAttr.ConverterTypeName);
                             if (convType != null)
                             {
-                                ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
+                                ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
                                 object[] ctorParams = new object[] { property.PropertyType };
                                 if (ctor == null)
                                 {
@@ -1883,9 +1883,9 @@ namespace KGySoft.Libraries.Serialization
                                 if (ctor != null)
                                 {
                                     TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                    if (converter != null && converter.CanConvertFrom(typeof(string)))
+                                    if (converter != null && converter.CanConvertFrom(Reflector.StringType))
                                     {
-                                        Reflector.SetProperty(obj, property, converter.ConvertFrom(null, CultureInfo.InvariantCulture, element.GetMultilineValue()));
+                                        Reflector.SetProperty(obj, property, converter.ConvertFrom(null, CultureInfo.InvariantCulture, GetMultilineValue(element)));
                                         continue;
                                     }
                                 }
@@ -1938,6 +1938,30 @@ namespace KGySoft.Libraries.Serialization
             //IDeserializationCallback callbackCapable = obj as IDeserializationCallback;
             //if (callbackCapable != null)
             //    callbackCapable.OnDeserialization(null);
+        }
+
+        // TODO: This is now used only for type converters. Create a test where this is an issue.
+        // Fix 1: Use escaping for type converters, too
+        // Fix 2: ...?
+        /// <summary>
+        /// Gets multiline string from an <see cref="XElement"/> with correct line endings.
+        /// </summary>
+        /// <remarks>
+        /// In .NET 3.5 <see cref="XElement.Value"/> returns incorrect line endings if
+        /// the XML file was read from file (contains only "\n" characters) but is correct
+        /// when built in memory.
+        /// </remarks>
+        private static string GetMultilineValue(XElement element)
+        {
+            if (element.IsEmpty)
+                return null;
+            StringBuilder result = new StringBuilder(element.Value);
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (result[i] == '\n' && (i == 0 || result[i - 1] != '\r'))
+                    result.Insert(i, "\r");
+            }
+            return result.ToString();
         }
 
         /// <summary>
