@@ -89,6 +89,7 @@
     <Compile Include="Libraries\EnumFormattingOptions.cs" />
     <Compile Include="Libraries\Serialization\XElementSerializer.cs" />
     <Compile Include="Libraries\Serialization\XmlReaderWriterSerializer.cs" />
+    <Compile Include="Libraries\Serialization\XmlSerializerBase.cs" />
     <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DoubleExtensions.cs" />
     <Compile Include="Libraries\_Extensions\EnumerableExtensions.cs" />

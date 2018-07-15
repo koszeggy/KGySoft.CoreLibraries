@@ -12,7 +12,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using System.Threading;
-
+using KGySoft.Libraries.Annotations;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 
@@ -53,14 +53,6 @@ namespace KGySoft.Libraries.Serialization
 
         #endregion
 
-        #region Fields
-
-        private static readonly object syncRootSerialize = new object(); // to lock on serObjects for detecting circular references
-        private static volatile int serializationLevel;
-        private static HashSet<object> serObjects;
-
-        #endregion
-
         #region Methods
 
         #region Public Methods
@@ -71,43 +63,16 @@ namespace KGySoft.Libraries.Serialization
         /// Serializes the object passed in <paramref name="obj"/> parameter into a new <see cref="XElement"/> object.
         /// </summary>
         /// <param name="obj">The object to serialize.</param>
-        /// <param name="options">Options for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <returns>An <see cref="XElement"/> instance that contains the serialized object.
         /// Result can be deserialized by <see cref="Deserialize(XElement)"/> method.</returns>
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
-        public static XElement Serialize(object obj, XmlSerializationOptions options)
-        {
-            XElement result = new XElement("object");
-            if (obj == null)
-                return result;
-
-            Type objType = obj.GetType();
-            if (objType.IsCollection())
-            {
-                if (!objType.IsReadWriteCollection(obj))
-                    throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyRoot, objType));
-                SerializeCollection(obj as IEnumerable, true, result, options, DesignerSerializationVisibility.Visible);
-            }
-            else if (!TrySerializeObject(obj, true, result, objType, options, DesignerSerializationVisibility.Visible))
-                throw new SerializationException(Res.Get(Res.XmlCannotSerialize, objType, options));
-            return result;
-        }
-
-        /// <summary>
-        /// Serializes the object passed in <paramref name="obj"/> parameter into a new <see cref="XElement"/> object.
-        /// </summary>
-        /// <param name="obj">The object to serialize.</param>
-        /// <returns>An <see cref="XElement"/> instance that contains the serialized object.</returns>
-        /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
-        public static XElement Serialize(object obj)
-        {
-            return Serialize(obj, DefaultOptions);
-        }
+        public static XElement Serialize(object obj, XmlSerializationOptions options = DefaultOptions)
+            => new XElementSerializer(options).Serialize(obj);
 
         /// <summary>
         /// Serializes the object passed in <paramref name="obj"/> by the provided <see cref="XmlWriter"/> object.
@@ -115,7 +80,8 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
         /// and will not be closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <param name="options">The options to be used for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="writer"/> must not be null.</exception>
         /// <exception cref="InvalidOperationException">The state of <paramref name="writer"/> is wrong or writer is closed.</exception>
         /// <exception cref="EncoderFallbackException">There is a character in the buffer that is a valid XML character but is not valid for the output encoding.
@@ -124,69 +90,21 @@ namespace KGySoft.Libraries.Serialization
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
-        public static void Serialize(XmlWriter writer, object obj, XmlSerializationOptions options)
-        {
-            if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
-
-            writer.WriteStartElement("object");
-            if (obj == null)
-            {
-                writer.WriteEndElement();
-                writer.Flush();
-                return;
-            }
-
-            Type objType = obj.GetType();
-            if (objType.IsCollection())
-            {
-                if (!objType.IsReadWriteCollection(obj))
-                    throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyRoot, objType));
-                SerializeCollection(obj as IEnumerable, true, writer, options, DesignerSerializationVisibility.Visible);
-                writer.WriteFullEndElement();
-                writer.Flush();
-                return;
-            }
-            else if (TrySerializeObject(obj, true, writer, objType, options, DesignerSerializationVisibility.Visible))
-            {
-                writer.WriteFullEndElement();
-                writer.Flush();
-                return;
-            }
-
-            throw new SerializationException(Res.Get(Res.XmlCannotSerialize, objType, options));
-        }
-
-        /// <summary>
-        /// Serializes the object passed in <paramref name="obj"/> by the provided <see cref="XmlWriter"/> object using default options.
-        /// </summary>
-        /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
-        /// and will not be closed after serialization.</param>
-        /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="writer"/> must not be null.</exception>
-        /// <exception cref="InvalidOperationException">The state of <paramref name="writer"/> is wrong or writer is closed.</exception>
-        /// <exception cref="EncoderFallbackException">There is a character in the buffer that is a valid XML character but is not valid for the output encoding.
-        /// For example, if the output encoding is ASCII but public properties of a class contain non-ASCII characters, an <see cref="EncoderFallbackException"/> is thrown.
-        /// Such characters are escaped by character entity references in values when possible.</exception>
-        /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
-        /// Serialization is not supported with default options. Use <see cref="Serialize(XmlWriter,object,XmlSerializationOptions)"/> overload instead.</exception>
-        public static void Serialize(XmlWriter writer, object obj)
-        {
-            Serialize(writer, obj, DefaultOptions);
-        }
+        public static void Serialize(XmlWriter writer, object obj, XmlSerializationOptions options = DefaultOptions)
+            => new XmlReaderWriterSerializer(options).Serialize(writer, obj);
 
         /// <summary>
         /// Serializes the object passed in <paramref name="obj"/> into the specified <paramref name="fileName"/>.
         /// </summary>
         /// <param name="fileName">Name of the file to create for serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <param name="options">The options to be used for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be null.</exception>
         /// <exception cref="IOException">File cannot be created or write error.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        public static void Serialize(string fileName, object obj, XmlSerializationOptions options)
+        public static void Serialize(string fileName, object obj, XmlSerializationOptions options = DefaultOptions)
         {
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
@@ -206,32 +124,18 @@ namespace KGySoft.Libraries.Serialization
         }
         
         /// <summary>
-        /// Serializes the object passed in <paramref name="obj"/> into the specified <paramref name="fileName"/>.
-        /// </summary>
-        /// <param name="fileName">Name of the file to create for serialization.</param>
-        /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be null.</exception>
-        /// <exception cref="InvalidOperationException">The writer is closed.</exception>
-        /// <exception cref="NotSupportedException">Serialization is not supported with default options.
-        /// Use <see cref="Serialize(TextWriter,object,XmlSerializationOptions)"/> overload instead.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        public static void Serialize(string fileName, object obj)
-        {
-            Serialize(fileName, obj, DefaultOptions);
-        }
-
-        /// <summary>
         /// Serializes the object passed in <paramref name="obj"/> by the provided <see cref="TextWriter"/> object.
         /// </summary>
         /// <param name="writer">A <see cref="TextWriter"/> implementation (for example, a <see cref="StringWriter"/>) that will be used for serialization.
         /// The writer will not be closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <param name="options">The options to be used for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="writer"/> must not be null.</exception>
         /// <exception cref="InvalidOperationException">The writer is closed.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options)
+        public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options = DefaultOptions)
         {
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
@@ -241,29 +145,8 @@ namespace KGySoft.Libraries.Serialization
                 Indent = true,
                 NewLineHandling = NewLineHandling.Entitize
             });
-            //XmlTextWriter xmlWriter = new XmlTextWriter(writer)
-            //{
-            //    Formatting = Formatting.Indented,
-            //    Indentation = 2,
-            //};
             Serialize(xmlWriter, obj, options);
             xmlWriter.Flush();
-        }
-
-        /// <summary>
-        /// Serializes the object passed in <paramref name="obj"/> by the provided <see cref="TextWriter"/> object.
-        /// </summary>
-        /// <param name="writer">A <see cref="TextWriter"/> implementation (for example, a <see cref="StringWriter"/>) that will be used for serialization.
-        /// The writer will not be closed after serialization.</param>
-        /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="writer"/> must not be null.</exception>
-        /// <exception cref="InvalidOperationException">The writer is closed.</exception>
-        /// <exception cref="NotSupportedException">Serialization is not supported with default options.
-        /// Use <see cref="Serialize(TextWriter,object,XmlSerializationOptions)"/> overload instead.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        public static void Serialize(TextWriter writer, object obj)
-        {
-            Serialize(writer, obj, DefaultOptions);
         }
 
         /// <summary>
@@ -271,7 +154,8 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         /// <param name="stream">A <see cref="Stream"/> used to write the XML document. The stream will not be closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <param name="options">The options to be used for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be null.</exception>
         /// <exception cref="NotSupportedException"><para>Serialization is not supported with provided <paramref name="options"/></para>
         /// <para>- or -</para>
@@ -279,7 +163,7 @@ namespace KGySoft.Libraries.Serialization
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
         /// <exception cref="IOException">An I/O error occured.</exception>
         /// <exception cref="ObjectDisposedException">The stream is already closed.</exception>
-        public static void Serialize(Stream stream, object obj, XmlSerializationOptions options)
+        public static void Serialize(Stream stream, object obj, XmlSerializationOptions options = DefaultOptions)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream), Res.Get(Res.ArgumentNull));
@@ -293,23 +177,6 @@ namespace KGySoft.Libraries.Serialization
             writer.Flush();
         }
 
-        /// <summary>
-        /// Serializes the object passed in <paramref name="obj"/> into the provided <see cref="Stream"/>.
-        /// </summary>
-        /// <param name="stream">A <see cref="Stream"/> used to write the XML document. The stream will not be closed after serialization.</param>
-        /// <param name="obj">The <see cref="object"/> to serialize.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be null.</exception>
-        /// <exception cref="NotSupportedException"><para>Serialization is not supported with default options. Use <see cref="Serialize(Stream,object,XmlSerializationOptions)"/> overload instead.</para>
-        /// <para>- or -</para>
-        /// <para>The stream does not support writing.</para></exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="IOException">An I/O error occured.</exception>
-        /// <exception cref="ObjectDisposedException">The stream is already closed.</exception>
-        public static void Serialize(Stream stream, object obj)
-        {
-            Serialize(stream, obj, DefaultOptions);
-        }
-
         #endregion
 
         #region Serialization - content
@@ -321,38 +188,18 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
         /// <param name="parent">The parent under that the object will be saved. Its content can be deserialized by <see cref="DeserializeContent(XElement,object)"/> method.</param>
-        /// <param name="options">Options for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
         /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         /// <remarks>
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
-        /// If you want to serialize a primitive type, then  use the overloads of <see cref="Serialize(object)"/> methods.
+        /// If you want to serialize a primitive type, then use the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
         /// </remarks>
-        public static void SerializeContent(XElement parent, object obj, XmlSerializationOptions options)
-        {
-            SerializeComponent(obj, parent, options);
-        }
-
-        /// <summary>
-        /// Saves public properties or collection elements of an object given in <paramref name="obj"/> parameter
-        /// into an already existing <see cref="XElement"/> object given in <paramref name="parent"/> parameter.
-        /// </summary>
-        /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
-        /// <param name="parent">The parent under that the object will be saved. Its content can be deserialized by <see cref="DeserializeContent(XElement,object)"/> method.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="NotSupportedException">Serialization is not supported with default options. Try to use <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> overload.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
-        /// <remarks>
-        /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
-        /// If you want to serialize a primitive type, then  use the overloads of <see cref="Serialize(object)"/> methods.
-        /// </remarks>
-        public static void SerializeContent(XElement parent, object obj)
-        {
-            SerializeContent(parent, obj, DefaultOptions);
-        }
+        public static void SerializeContent(XElement parent, object obj, XmlSerializationOptions options = DefaultOptions)
+            => new XElementSerializer(options).SerializeContent(obj, parent);
 
         /// <summary>
         /// Saves public properties or collection elements of an object given in <paramref name="obj"/> parameter
@@ -362,56 +209,33 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
         /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
         /// and will not be closed after serialization.</param>
-        /// <param name="options">Options for serialization.</param>
+        /// <param name="options">Options for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="writer"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
         /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         /// <remarks>
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
-        /// If you want to serialize a primitive type, then use the overloads of <see cref="Serialize(object)"/> methods.
+        /// If you want to serialize a primitive type, then use the <see cref="Serialize(XmlWriter,object,XmlSerializationOptions)"/> method.
         /// </remarks>
-        public static void SerializeContent(XmlWriter writer, object obj, XmlSerializationOptions options)
-        {
-            SerializeComponent(obj, writer, options);
-        }
-
-        /// <summary>
-        /// Saves public properties or collection elements of an object given in <paramref name="obj"/> parameter
-        /// by an already opened <see cref="XmlWriter"/> object given in <paramref name="writer"/> parameter.
-        /// </summary>
-        /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
-        /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
-        /// and will not be closed after serialization.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="writer"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="NotSupportedException">Serialization is not supported with default options. Try to use <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> overload.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.
-        /// <br/>- or -
-        /// <br/><paramref name="writer"/> is not in the correct state.
-        /// </exception>
-        /// <remarks>
-        /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
-        /// If you want to serialize a primitive type, then use the overloads of <see cref="Serialize(object)"/> methods.
-        /// </remarks>
-        public static void SerializeContent(XmlWriter writer, object obj)
-        {
-            SerializeContent(writer, obj, DefaultOptions);
-        }
+        public static void SerializeContent(XmlWriter writer, object obj, XmlSerializationOptions options = DefaultOptions)
+            => new XmlReaderWriterSerializer(options).SerializeContent(writer, obj);
 
         #endregion
 
         #region Deserialization - whole object
 
+#error TODO: Put deserialization into classes, too (they can be static as no field is required)
         /// <summary>
         /// Deserializes an XML content to an object.
-        /// Works for results of <see cref="Serialize(object)"/> and <see cref="Serialize(object,KGySoft.Libraries.Serialization.XmlSerializationOptions)"/> methods.
+        /// Works for results of <see cref="Serialize(object,XmlSerializationOptions)"/> method.
         /// </summary>
         /// <param name="content">XML content of the object.</param>
         /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
-        /// <exception cref="ArgumentException">XML content is incosistent or corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         public static object Deserialize(XElement content)
         {
             if (content == null)
@@ -625,1091 +449,6 @@ namespace KGySoft.Libraries.Serialization
         #endregion
 
         #region Private Methods
-
-        #region Serialization
-
-        /// <summary>
-        /// Serializes an object or collection of objects.
-        /// </summary>
-        private static void SerializeComponent(object obj, XElement parent, XmlSerializationOptions options)
-        {
-            if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
-            if (parent == null)
-                throw new ArgumentNullException(nameof(parent), Res.Get(Res.ArgumentNull));
-
-            try
-            {
-                RegisterSerializedObject(obj);
-                Type objType = obj.GetType();
-
-                try
-                {
-                    // 1.) IXmlSerializable
-                    if (obj is IXmlSerializable && ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
-                    {
-                        SerializeXmlSerializable((IXmlSerializable)obj, parent);
-                        return;
-                    }
-
-                    // 2.) Collection
-                    if (objType.IsCollection())
-                    {
-                        if (!objType.IsReadWriteCollection(obj))
-                            throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
-                        SerializeCollection(obj as IEnumerable, false, parent, options, DesignerSerializationVisibility.Visible);
-                        return;
-                    }
-
-                    // 3.) Any object
-                    SerializeProperties(obj, parent, options);
-                }
-                finally
-                {
-                    if (parent.IsEmpty)
-                        parent.Add(String.Empty);
-                }
-            }
-            finally
-            {
-                UnregisterSerializedObject(obj);
-            }
-        }
-
-        /// <summary>
-        /// Serializes an object or collection of objects.
-        /// At the start writer is in parent, it should be closed by parent.
-        /// </summary>
-        private static void SerializeComponent(object obj, XmlWriter writer, XmlSerializationOptions options)
-        {
-            if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
-            if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
-            Type objType = obj.GetType();
-            try
-            {
-                RegisterSerializedObject(obj);
-
-                // 1.) IXmlSerializable
-                if (obj is IXmlSerializable && ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
-                {
-                    SerializeXmlSerializable((IXmlSerializable)obj, writer);
-                    return;
-                }
-
-                // 2.) Collection
-                if (objType.IsCollection())
-                {
-                    if (!objType.IsReadWriteCollection(obj))
-                        throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
-                    SerializeCollection(obj as IEnumerable, false, writer, options, DesignerSerializationVisibility.Visible);
-                    return;
-                }
-
-                // 3.) Any object
-                SerializeProperties(obj, writer, options);
-            }
-            finally
-            {
-                UnregisterSerializedObject(obj);
-            }
-        }
-
-        private static void SerializeXmlSerializable(IXmlSerializable obj, XContainer parent)
-        {
-            StringBuilder sb = new StringBuilder();
-            using (XmlWriter xw = XmlWriter.Create(sb, new XmlWriterSettings
-            {
-                ConformanceLevel = ConformanceLevel.Fragment
-            }))
-            {
-                obj.WriteXml(xw);
-                // ReSharper disable PossibleNullReferenceException
-                xw.Flush();
-                // ReSharper restore PossibleNullReferenceException
-            }
-
-            Type objType = obj.GetType();
-            string contentName = null;
-            object[] attrs = objType.GetCustomAttributes(typeof(XmlRootAttribute), true);
-            if (attrs.Length > 0)
-                contentName = ((XmlRootAttribute)attrs[0]).ElementName;
-
-            if (String.IsNullOrEmpty(contentName))
-                contentName = objType.Name;
-
-            using (XmlReader xr = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings
-            {
-                ConformanceLevel = ConformanceLevel.Fragment
-            }))
-            {
-                if (!xr.Read())
-                    return;
-
-                XElement content = new XElement(contentName);
-                while (!xr.EOF)
-                {
-                    content.Add(XNode.ReadFrom(xr));
-                }
-                parent.Add(content);
-            }
-
-            parent.Add(new XAttribute("format", "custom"));
-        }
-
-        /// <summary>
-        /// XmlWriter version. Writer must be in parent element, which should be closed by the parent.
-        /// </summary>
-        private static void SerializeXmlSerializable(IXmlSerializable obj, XmlWriter writer)
-        {
-            writer.WriteAttributeString("format", "custom");
-
-            Type objType = obj.GetType();
-            string contentName = null;
-            object[] attrs = objType.GetCustomAttributes(typeof(XmlRootAttribute), true);
-            if (attrs.Length > 0)
-                contentName = ((XmlRootAttribute)attrs[0]).ElementName;
-
-            if (String.IsNullOrEmpty(contentName))
-                contentName = objType.Name;
-
-            writer.WriteStartElement(contentName);
-            obj.WriteXml(writer);
-            writer.WriteFullEndElement();
-        }
-
-        private static void SerializeProperties(object obj, XContainer parent, XmlSerializationOptions options)
-        {
-            PropertyInfo[] properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            //PropertyDescriptorCollection descriptors = TypeDescriptor.GetProperties(obj);
-
-            // signing that object is not null
-            parent.Add(String.Empty);
-
-            foreach (PropertyInfo property in properties)
-            {
-                // skipping write-only properties, indexers and read-only properties except non read-only collections
-                if (!property.CanRead || property.GetIndexParameters().Length > 0 || (!property.CanWrite && !property.PropertyType.IsCollection()))
-                    continue;
-
-                // skipping non-serializable properties
-                // a.) hidden by DesignerSerializationVisibility
-                object[] attrs = property.GetCustomAttributes(typeof(DesignerSerializationVisibilityAttribute), true);
-                DesignerSerializationVisibility visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : DesignerSerializationVisibilityAttribute.Default.Visibility;
-                if (visibility == DesignerSerializationVisibility.Hidden)
-                    continue;
-
-                // b.) ShouldSerialize<PropertyName> method returns false
-                if ((options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
-                {
-                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod("ShouldSerialize" + property.Name,
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        null, Type.EmptyTypes, null);
-                    if (shouldSerializeProperty != null && shouldSerializeProperty.ReturnType == typeof(bool))
-                    {
-                        if ((bool)Reflector.RunMethod(obj, shouldSerializeProperty) == false)
-                            continue;
-                    }
-                }
-
-                // c.) DefaultValue equals to property value
-                bool hasDefaultValue = false;
-                object defaultValue = null;
-                if ((options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
-                {
-                    attrs = property.GetCustomAttributes(typeof(DefaultValueAttribute), true);
-                    hasDefaultValue = attrs.Length > 0;
-                    if (hasDefaultValue)
-                        defaultValue = ((DefaultValueAttribute)attrs[0]).Value;
-                }
-                if (!hasDefaultValue && (options & XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback) != XmlSerializationOptions.None)
-                {
-                    hasDefaultValue = true;
-                    defaultValue = property.PropertyType.IsValueType ? Reflector.Construct(property.PropertyType) : null;
-                }
-                object propValue = Reflector.GetProperty(obj, property);
-                if (hasDefaultValue && Equals(propValue, defaultValue))
-                    continue;
-
-                // -------------- property is not skipped, serializing
-                XElement newElement = new XElement(property.Name);
-                Type propType = propValue == null ? property.PropertyType : propValue.GetType();
-
-                // 1.) property is IXmlSerializable standard XmlSerialization is not disabled
-                if (propValue != null && propValue is IXmlSerializable && ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
-                {
-                    SerializeXmlSerializable((IXmlSerializable)propValue, newElement);
-                    parent.Add(newElement);
-                }
-                // 2.) property is collection
-                else if (propValue == null && property.CanWrite && propType.IsCollection() || propType.IsReadWriteCollection(propValue))
-                {
-                    SerializeCollection(propValue as IEnumerable, propValue != null && propType != property.PropertyType, newElement, options, visibility);
-                    parent.Add(newElement);
-                }
-                // 3.) non-collection or readonly collection (that maybe still can be serialized as binary):
-                else
-                {
-                    // d.) skipping read-only collections (if read-only in both meaning: has no setter and IsReadonly is true)
-                    if (!property.CanWrite)
-                        continue;
-
-                    // Using explicitly defined type converter if can convert to and from string
-                    attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                    TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                    if (convAttr != null)
-                    {
-                        Type convType = Type.GetType(convAttr.ConverterTypeName);
-                        if (convType != null)
-                        {
-                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                            object[] ctorParams = new object[] { property.PropertyType };
-                            if (ctor == null)
-                            {
-                                ctor = convType.GetConstructor(Type.EmptyTypes);
-                                ctorParams = Reflector.EmptyObjects;
-                            }
-                            if (ctor != null)
-                            {
-                                TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
-                                {
-                                    WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), newElement, options);
-                                    parent.Add(newElement);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-
-                    if (propValue == null || TrySerializeObject(propValue, propType != property.PropertyType, newElement, propType, options, visibility))
-                        parent.Add(newElement);
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, options));
-                }
-
-                //// adding property type if instance is not the same type
-                //if (propValue != null && propType != property.PropertyType)
-                //    newElement.Add(new XAttribute("type", GetTypeString(obj, options)));
-            }
-        }
-
-        private static void SerializeProperties(object obj, XmlWriter writer, XmlSerializationOptions options)
-        {
-            PropertyInfo[] properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-            foreach (PropertyInfo property in properties)
-            {
-                // Skip 1.) write-only properties, indexers and read-only properties except non read-only collections
-                if (!property.CanRead || property.GetIndexParameters().Length > 0 || (!property.CanWrite && !property.PropertyType.IsCollection()))
-                    continue;
-
-                // skipping non-serializable properties
-                // Skip 2.) hidden by DesignerSerializationVisibility
-                object[] attrs = property.GetCustomAttributes(typeof(DesignerSerializationVisibilityAttribute), true);
-                DesignerSerializationVisibility visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : DesignerSerializationVisibilityAttribute.Default.Visibility;
-                if (visibility == DesignerSerializationVisibility.Hidden)
-                    continue;
-
-                // Skip 3.) ShouldSerialize<PropertyName> method returns false
-                if ((options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
-                {
-                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod("ShouldSerialize" + property.Name,
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        null, Type.EmptyTypes, null);
-                    if (shouldSerializeProperty != null && shouldSerializeProperty.ReturnType == typeof(bool))
-                    {
-                        if ((bool)Reflector.RunMethod(obj, shouldSerializeProperty) == false)
-                            continue;
-                    }
-                }
-
-                // Skip 4.) DefaultValue equals to property value
-                bool hasDefaultValue = false;
-                object defaultValue = null;
-                if ((options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
-                {
-                    attrs = property.GetCustomAttributes(typeof(DefaultValueAttribute), true);
-                    hasDefaultValue = attrs.Length > 0;
-                    if (hasDefaultValue)
-                        defaultValue = ((DefaultValueAttribute)attrs[0]).Value;
-                }
-                if (!hasDefaultValue && (options & XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback) != XmlSerializationOptions.None)
-                {
-                    hasDefaultValue = true;
-                    defaultValue = property.PropertyType.IsValueType ? Reflector.Construct(property.PropertyType) : null;
-                }
-                object propValue = Reflector.GetProperty(obj, property);
-                if (hasDefaultValue && Equals(propValue, defaultValue))
-                    continue;
-
-                // -------------- property is not skipped, serializing
-                //XElement newElement = new XElement(property.Name);
-                Type propType = propValue == null ? property.PropertyType : propValue.GetType();
-
-                // a.) property is IXmlSerializable standard XmlSerialization is not disabled
-                if (propValue != null && propValue is IXmlSerializable && ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
-                {
-                    writer.WriteStartElement(property.Name);
-                    SerializeXmlSerializable((IXmlSerializable)propValue, writer);
-                    writer.WriteEndElement();
-                    continue;
-                }
-                // b.) property is collection
-                else if (propValue == null && property.CanWrite && propType.IsCollection() || propType.IsReadWriteCollection(propValue))
-                {
-                    writer.WriteStartElement(property.Name);
-                    SerializeCollection(propValue as IEnumerable, propValue != null && propType != property.PropertyType, writer, options, visibility);
-                    if (propValue != null)
-                        writer.WriteFullEndElement();
-                    else
-                        writer.WriteEndElement();
-                    continue;
-                }
-                // c.) single non-collection property or readonly collection (that maybe still can be serialized as binary):
-                else
-                {
-                    // Skip 5.) skipping read-only collections (if read-only in both meaning: has no setter and IsReadonly is true)
-                    if (!property.CanWrite)
-                        continue;
-
-                    // c/1.) Using explicitly defined type converter if can convert to and from string
-                    attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                    TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                    if (convAttr != null)
-                    {
-                        Type convType = Type.GetType(convAttr.ConverterTypeName);
-                        if (convType != null)
-                        {
-                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
-                            object[] ctorParams = new object[] { property.PropertyType };
-                            if (ctor == null)
-                            {
-                                ctor = convType.GetConstructor(Type.EmptyTypes);
-                                ctorParams = Reflector.EmptyObjects;
-                            }
-                            if (ctor != null)
-                            {
-                                TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(Reflector.StringType))
-                                {
-                                    writer.WriteStartElement(property.Name);
-                                    WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), writer, options);
-                                    writer.WriteEndElement();
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-
-                    // c/2.) Usual ways if possible
-                    writer.WriteStartElement(property.Name);
-                    if (propValue == null)
-                    {
-                        writer.WriteEndElement();
-                    }
-                    else if (TrySerializeObject(propValue, propType != property.PropertyType, writer, propType, options, visibility))
-                    {
-                        writer.WriteFullEndElement();
-                    }
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, options));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Tries to serialize the whole object itself. Returns false when object type is not supported with current options but may throw exceptions on
-        /// invalid data or inconsistent settings.
-        /// XElement version.
-        /// </summary>
-        private static bool TrySerializeObject(object obj, bool typeNeeded, XElement parent, Type type, XmlSerializationOptions options, DesignerSerializationVisibility visibility)
-        {
-            if (obj == null)
-                return true;
-
-            // a.) If type can be natively parsed, simple adding
-            if (Reflector.CanParseNatively(type) && !(obj is Type && ((Type)obj).IsGenericParameter))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-                WriteStringValue(obj, parent, options);
-                return true;
-            }
-
-            // b.) Using type converter of the type if applicable
-            TypeConverter converter = TypeDescriptor.GetConverter(type);
-            if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-                WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, obj, Reflector.StringType), parent, options);
-                return true;
-            }
-
-            // c.) IXmlSerializable
-            if (obj is IXmlSerializable && ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                SerializeXmlSerializable((IXmlSerializable)obj, parent);
-                return true;
-            }
-
-            // d.) simple object
-            if (obj.GetType() == typeof(object))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                parent.Add(String.Empty);
-                return true;
-            }
-
-            // e/1.) Keyvalue 1: DictionaryEntry: can be serialized recursively
-            if (type == typeof(DictionaryEntry))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
-                SerializeProperties(obj, parent, options);
-                return true;
-            }
-
-            // e/2.) Keyvalue 2: KeyValuePair: properties are read-only so special support needed
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                parent.Add(new XAttribute("format", "keyvalue"));
-                object key = Reflector.GetInstancePropertyByName(obj, "Key");
-                object value = Reflector.GetInstancePropertyByName(obj, "Value");
-                XElement xKey = new XElement("Key");
-                XElement xValue = new XElement("Value");
-                parent.Add(xKey, xValue);
-                if (key != null)
-                {
-                    Type elementType = key.GetType();
-                    bool elementTypeNeeded = elementType != type.GetGenericArguments()[0];
-                    if (!TrySerializeObject(key, elementTypeNeeded, xKey, elementType, options, visibility))
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerialize, elementType, options));
-                }
-                if (value != null)
-                {
-                    Type elementType = value.GetType();
-                    bool elementTypeNeeded = elementType != type.GetGenericArguments()[1];
-                    if (!TrySerializeObject(value, elementTypeNeeded, xValue, elementType, options, visibility))
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerialize, elementType, options));
-                }
-                return true;
-            }
-
-            // f.) value type as binary only if enabled
-            if (type.IsValueType && ((options.IsForcedSerializationValueTypesEnabled() && !options.IsBinarySerializationEnabled()) || options.IsCompactSerializationValueTypesEnabled()))
-            {
-                byte[] data;
-                if (BinarySerializer.TrySerializeStruct((ValueType)obj, out data))
-                {
-                    if (typeNeeded)
-                        parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                    parent.Add(new XAttribute("format", "structbase64"));
-                    if ((options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        parent.Add(new XAttribute("CRC", Crc32.CalculateHash(data).ToString("X8")));
-                    parent.Add(Convert.ToBase64String(data));
-                    return true;
-                }
-                else if (!(visibility == DesignerSerializationVisibility.Content || options.IsRecursiveSerializationEnabled() || options.IsBinarySerializationEnabled()))
-                {
-                    if (options.IsForcedSerializationValueTypesEnabled())
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeValueType, obj.GetType(), options));
-                }
-            }
-
-            // g.) if type of value is serializable and option is enabled, then adding binary serialized hexa content to xml
-            if (visibility != DesignerSerializationVisibility.Content && options.IsBinarySerializationEnabled())
-            {
-                try
-                {
-                    SerializeBinary(obj, parent, options);
-                    return true;
-                }
-                catch (Exception e)
-                {
-                    throw new SerializationException(Res.Get(Res.XmlBinarySerializationFailed, obj.GetType(), options, e.Message), e);
-                }
-            }
-
-            // h.) recursive serialization, if enabled
-            if (options.IsRecursiveSerializationEnabled() || visibility == DesignerSerializationVisibility.Content)
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                SerializeComponent(obj, parent, options);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to serialize the whole object itself. Returns false when object type is not supported with current options but may throw exceptions on
-        /// invalid data or inconsistent settings.
-        /// XmlWriter version. Start element must be opened and closed by caller.
-        /// obj.GetType and type can be different (properties)
-        /// </summary>
-        private static bool TrySerializeObject(object obj, bool typeNeeded, XmlWriter writer, Type type, XmlSerializationOptions options, DesignerSerializationVisibility visibility)
-        {
-            if (obj == null)
-                return true;
-
-            // a.) If type can be natively parsed, simple writing
-            if (Reflector.CanParseNatively(type) && !(obj is Type && ((Type)obj).IsGenericParameter))
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                WriteStringValue(obj, writer, options);
-                return true;
-            }
-
-            // b.) Using type converter of the type if applicable
-            TypeConverter converter = TypeDescriptor.GetConverter(type);
-            if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                writer.WriteString((string)converter.ConvertTo(null, CultureInfo.InvariantCulture, obj, typeof(string)));
-                return true;
-            }
-
-            // c.) IXmlSerializable
-            if (obj is IXmlSerializable && ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                SerializeXmlSerializable((IXmlSerializable)obj, writer);
-                return true;
-            }
-
-            // d.) simple object
-            if (obj.GetType() == typeof(object))
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-                writer.WriteString(String.Empty);
-
-                return true;
-            }
-
-            // e/1.) Keyvalue 1: DictionaryEntry: can be serialized recursively
-            if (type == typeof(DictionaryEntry))
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
-                SerializeProperties(obj, writer, options);
-                return true;
-            }
-
-            // e/2.) Keyvalue 2: KeyValuePair: properties are read-only so special support needed
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                writer.WriteAttributeString("format", "keyvalue");
-                object key = Reflector.GetInstancePropertyByName(obj, "Key");
-                object value = Reflector.GetInstancePropertyByName(obj, "Value");
-
-                writer.WriteStartElement("Key");
-                if (key == null)
-                {
-                    writer.WriteEndElement();
-                }
-                else
-                {
-                    Type elementType = key.GetType();
-                    bool elementTypeNeeded = elementType != type.GetGenericArguments()[0];
-                    if (!TrySerializeObject(key, elementTypeNeeded, writer, elementType, options, visibility))
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerialize, elementType, options));
-
-                    writer.WriteFullEndElement();
-                }
-
-                writer.WriteStartElement("Value");
-                if (value == null)
-                {
-                    writer.WriteEndElement();
-                }
-                else
-                {
-                    Type elementType = value.GetType();
-                    bool elementTypeNeeded = elementType != type.GetGenericArguments()[1];
-                    if (!TrySerializeObject(value, elementTypeNeeded, writer, elementType, options, visibility))
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerialize, elementType, options));
-
-                    writer.WriteFullEndElement();
-                }
-
-                return true;
-            }
-
-            // f.) value type as binary only if enabled
-            if (type.IsValueType && ((options.IsForcedSerializationValueTypesEnabled() && !options.IsBinarySerializationEnabled()) || options.IsCompactSerializationValueTypesEnabled()))
-            {
-                byte[] data;
-                if (BinarySerializer.TrySerializeStruct((ValueType)obj, out data))
-                {
-                    if (typeNeeded)
-                        writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                    writer.WriteAttributeString("format", "structbase64");
-                    if ((options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        writer.WriteAttributeString("CRC", Crc32.CalculateHash(data).ToString("X8"));
-                    writer.WriteString(Convert.ToBase64String(data));
-                    return true;
-                }
-                else if (!(visibility == DesignerSerializationVisibility.Content || options.IsRecursiveSerializationEnabled() || options.IsBinarySerializationEnabled()))
-                {
-                    if (options.IsForcedSerializationValueTypesEnabled())
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeValueType, obj.GetType(), options));
-                }
-            }
-
-            // g.) if type of value is serializable and option is enabled, then adding binary serialized hexa content to xml
-            if (visibility != DesignerSerializationVisibility.Content && options.IsBinarySerializationEnabled())
-            {
-                try
-                {
-                    SerializeBinary(obj, writer, options);
-                    return true;
-                }
-                catch (Exception e)
-                {
-                    throw new SerializationException(Res.Get(Res.XmlBinarySerializationFailed, obj.GetType(), options, e.Message), e);
-                }
-            }
-
-            // h.) recursive serialization, if enabled
-            if (options.IsRecursiveSerializationEnabled() || visibility == DesignerSerializationVisibility.Content)
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type, options));
-
-                SerializeComponent(obj, writer, options);
-                return true;
-            }
-
-            return false;
-        }
-
-        private static void WriteStringValue(object obj, XElement parent, XmlSerializationOptions options)
-        {
-            string s = GetStringValue(obj, options, out bool spacePreserved, out bool escaped);
-            if (spacePreserved)
-                parent.Add(new XAttribute(XNamespace.Xml + "space", "preserve"));
-            if (escaped)
-                parent.Add(new XAttribute("escaped", "true"));
-
-            parent.Add(s);
-        }
-
-        private static void WriteStringValue(object obj, XmlWriter writer, XmlSerializationOptions options)
-        {
-            string s = GetStringValue(obj, options, out bool spacePreserved, out bool escaped);
-            if (spacePreserved)
-                writer.WriteAttributeString("xml", "space", null, "preserve");
-            if (escaped)
-                writer.WriteAttributeString("escaped", "true");
-
-            writer.WriteString(s);
-        }
-
-        private static string GetStringValue(object value, XmlSerializationOptions options, out bool spacePreserve, out bool escaped)
-        {
-            spacePreserve = false;
-            escaped = false;
-
-            if (value is bool)
-                return XmlConvert.ToString((bool)value);
-            if (value is double)
-                return ((double)value).ToRoundtripString();
-            if (value is float)
-                return ((float)value).ToRoundtripString();
-            if (value is decimal)
-                return ((decimal)value).ToRoundtripString();
-            if (value is DateTime)
-                return XmlConvert.ToString((DateTime)value, XmlDateTimeSerializationMode.RoundtripKind);
-            if (value is DateTimeOffset)
-                return XmlConvert.ToString((DateTimeOffset)value);
-            Type type = value as Type;
-            if (type != null)
-            {
-                //if (value.GetType() != Reflector.RuntimeType)
-                //    throw new NotSupportedException(Res.Get(Res.XmlNonRuntimeType));
-                //if (type.IsGenericParameter)
-                //    throw new NotSupportedException(Res.Get(Res.XmlGenericTypeParam));
-                return GetTypeString(type, options);
-            }
-
-            string result = value.ToString();
-            if (result.Length == 0)
-                return result;
-
-            //bool prevWhiteSpace = false;
-            bool escapeNewline = (options & XmlSerializationOptions.EscapeNewlineCharacters) != XmlSerializationOptions.None;
-            StringBuilder escapedResult = null;
-            spacePreserve = IsWhiteSpace(result[0], escapeNewline);
-
-            // checking result for escaping
-            for (int i = 0; i < result.Length; i++)
-            {
-                bool isValidSurrogate;
-                if (EscapeNeeded(result, i, escapeNewline, out isValidSurrogate))
-                {
-                    if (escapedResult == null)
-                        escapedResult = new StringBuilder(result.Substring(0, i).Replace(@"\", @"\\"));
-
-                    escapedResult.Append(@"\" + ((ushort)result[i]).ToString("X4"));
-                }
-                else
-                {
-                    if (escapedResult != null)
-                    {
-                        escapedResult.Append(result[i]);
-                        if (result[i] == '\\')
-                            escapedResult.Append('\\');
-                        else if (isValidSurrogate)
-                            escapedResult.Append(result[i + 1]);
-                    }
-
-                    if (isValidSurrogate)
-                        i++;
-                }
-            }
-
-            if (escapedResult != null)
-            {
-                escaped = true;
-                return escapedResult.ToString();
-            }
-
-            return result;
-        }
-
-        private static bool IsWhiteSpace(char c, bool ignoreNewline)
-        {
-            // U+0009 = <control> HORIZONTAL TAB 
-            // U+000a = <control> LINE FEED
-            // U+000b = <control> VERTICAL TAB 
-            // U+000c = <contorl> FORM FEED 
-            // U+000d = <control> CARRIAGE RETURN
-            // U+0085 = <control> NEXT LINE 
-            // U+00a0 = NO-BREAK SPACE
-
-            if (c == ' ' || c == '\t')
-                return true;
-
-            if (ignoreNewline)
-                return false;
-
-            return c == '\r' || c == '\n';
-
-            //if ((c == ' ') || (c >= '\x0009' && c <= '\x000d') || c == '\x00a0' || c == '\x0085')
-            //    return (true);
-        }
-
-        /// <summary>
-        /// Gets whether a character has to be escaped
-        /// </summary>
-        private static bool EscapeNeeded(string s, int index, bool escapeNewlines, out bool isValidSurrogate)
-        {
-            isValidSurrogate = false;
-            int c = s[index];
-            if (c == '\t' // TAB is ok
-                || (c >= 0x20 && c <= 0xD7FF) // space..HighSurrogateStart-1 are ok
-                || (c >= 0xE000 && c <= 0xFFFD) // LowSurrogateEnd+1..replacement character are ok
-                ||(!escapeNewlines && (c == 0xA || c == 0xD))) // \n, \r are ok if new lines are not escaped
-            {
-                return false;
-            }
-
-            // valid surrogate pair
-            if (index < s.Length - 1 && Char.IsSurrogatePair((char)c, s[index + 1]))
-            {
-                isValidSurrogate = true;
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Serializing binary content by LinqToXml
-        /// </summary>
-        private static void SerializeBinary(object obj, XContainer parent, XmlSerializationOptions options)
-        {
-            parent.Add(new XAttribute("format", "base64"));
-            if (obj == null)
-                return;
-            BinarySerializationOptions binSerOptions = options.ToBinarySerializationOptions();
-            byte[] data = BinarySerializer.Serialize(obj, binSerOptions);
-            if ((options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                parent.Add(new XAttribute("CRC", Crc32.CalculateHash(data).ToString("X8")));
-            parent.Add(Convert.ToBase64String(data));
-        }
-
-        /// <summary>
-        /// Serializing binary content by XmlWriter
-        /// </summary>
-        private static void SerializeBinary(object obj, XmlWriter writer, XmlSerializationOptions options)
-        {
-            writer.WriteAttributeString("format", "base64");
-
-            if (obj == null)
-                return;
-
-            BinarySerializationOptions binSerOptions = options.ToBinarySerializationOptions();
-            byte[] data = BinarySerializer.Serialize(obj, binSerOptions);
-
-            if ((options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                writer.WriteAttributeString("CRC", Crc32.CalculateHash(data).ToString("X8"));
-            writer.WriteString(Convert.ToBase64String(data));
-        }
-
-        /// <summary>
-        /// Serializing a collection by LinqToXml
-        /// </summary>
-        private static void SerializeCollection(IEnumerable collection, bool typeNeeded, XContainer parent, XmlSerializationOptions options, DesignerSerializationVisibility visibility)
-        {
-            if (collection == null)
-                return;
-
-            // signing that collection is not null - now it will be at least <Collection></Collection> instead of <Collection />
-            parent.Add(String.Empty);
-
-            // array collection
-            if (collection is Array)
-            {
-                Type elementType = collection.GetType().GetElementType();
-                Array array = (Array)collection;
-
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(collection.GetType(), options)));
-
-                // multidimensional or nonzero-based array
-                if (array.Rank > 1 || array.GetLowerBound(0) != 0)
-                {
-                    StringBuilder dim = new StringBuilder();
-                    for (int i = 0; i < array.Rank; i++)
-                    {
-                        int low;
-                        if ((low = array.GetLowerBound(i)) != 0)
-                        {
-                            dim.Append(low + ".." + (low + array.GetLength(i) - 1));
-                        }
-                        else
-                        {
-                            dim.Append(array.GetLength(i));
-                        }
-
-                        if (i < array.Rank - 1)
-                        {
-                            dim.Append(',');
-                        }
-
-                    }
-
-                    parent.Add(new XAttribute("dim", dim));
-                }
-                else
-                    parent.Add(new XAttribute("length", array.Length.ToString(CultureInfo.InvariantCulture)));
-
-                // array of a primitive type
-                if (elementType.IsPrimitive && (options & XmlSerializationOptions.CompactSerializationOfPrimitiveArrays) != XmlSerializationOptions.None)
-                {
-                    if (array.Length > 0)
-                    {
-                        byte[] data = new byte[Buffer.ByteLength(array)];
-                        Buffer.BlockCopy(array, 0, data, 0, data.Length);
-                        parent.Add(new XAttribute("comp", "base64"));
-                        parent.Add(Convert.ToBase64String(data));
-                        if ((options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                            parent.Add(new XAttribute("CRC", Crc32.CalculateHash(data).ToString("X8")));
-                    }
-                }
-                // non-primitive type array or compact serialization is not enabled
-                else
-                {
-                    bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
-                    foreach (var item in array)
-                    {
-                        XElement child = new XElement("item");
-                        Type itemType = null;
-                        if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), options, visibility))
-                        {
-                            parent.Add(child);
-                        }
-                        else
-                            throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), options));
-                    }
-                }
-            }
-            // non-array collection
-            else
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(collection.GetType(), options)));
-
-                // serializing main properties first
-                SerializeProperties(collection, parent, options);
-
-                // determining element type
-                Type elementType = collection.GetElementType();
-                bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
-
-                // serializing items
-                foreach (var item in collection)
-                {
-                    XElement child = new XElement("item");
-                    Type itemType = null;
-                    if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), options, visibility))
-                    {
-                        parent.Add(child);
-                    }
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), options));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Serializing a collection by XmlWriter
-        /// </summary>
-        private static void SerializeCollection(IEnumerable collection, bool typeNeeded, XmlWriter writer, XmlSerializationOptions options, DesignerSerializationVisibility visibility)
-        {
-            if (collection == null)
-                return;
-
-            // array collection
-            if (collection is Array)
-            {
-                Type elementType = collection.GetType().GetElementType();
-                Array array = (Array)collection;
-
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(collection.GetType(), options));
-
-                // multidimensional or nonzero-based array
-                if (array.Rank > 1 || array.GetLowerBound(0) != 0)
-                {
-                    StringBuilder dim = new StringBuilder();
-                    for (int i = 0; i < array.Rank; i++)
-                    {
-                        int low;
-                        if ((low = array.GetLowerBound(i)) != 0)
-                        {
-                            dim.Append(low + ".." + (low + array.GetLength(i) - 1));
-                        }
-                        else
-                        {
-                            dim.Append(array.GetLength(i));
-                        }
-
-                        if (i < array.Rank - 1)
-                        {
-                            dim.Append(',');
-                        }
-
-                    }
-
-                    writer.WriteAttributeString("dim", dim.ToString());
-                }
-                else
-                    writer.WriteAttributeString("length", array.Length.ToString(CultureInfo.InvariantCulture));
-
-                if (array.Length == 0)
-                {
-                    // signing that collection is not null - now it will be at least <Collection></Collection> instead of <Collection />
-                    writer.WriteString(String.Empty);
-                    return;
-                }
-
-                // array of a primitive type
-                if (elementType.IsPrimitive && (options & XmlSerializationOptions.CompactSerializationOfPrimitiveArrays) != XmlSerializationOptions.None)
-                {
-                    byte[] data = new byte[Buffer.ByteLength(array)];
-                    Buffer.BlockCopy(array, 0, data, 0, data.Length);
-                    writer.WriteAttributeString("comp", "base64");
-                    if ((options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        writer.WriteAttributeString("CRC", Crc32.CalculateHash(data).ToString("X8"));
-                    writer.WriteString(Convert.ToBase64String(data));
-
-                    return;
-                }
-
-                // non-primitive type array or compact serialization is not enabled
-                bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
-                foreach (var item in array)
-                {
-                    writer.WriteStartElement("item");
-                    Type itemType = null;
-                    if (item == null)
-                    {
-                        writer.WriteEndElement();
-                    }
-                    else if (TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), options, visibility))
-                    {
-                        writer.WriteFullEndElement();
-                    }
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), options));
-                }
-
-                return;
-            }
-            // non-array collection
-            else
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(collection.GetType(), options));
-
-                // serializing main properties first
-                SerializeProperties(collection, writer, options);
-
-                // determining element type
-                Type elementType = collection.GetElementType();
-                bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
-
-                // serializing items
-                foreach (var item in collection)
-                {
-                    writer.WriteStartElement("item");
-                    Type itemType = null;
-                    if (item == null)
-                    {
-                        writer.WriteEndElement();
-                    }
-                    else if (TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), options, visibility))
-                    {
-                        writer.WriteFullEndElement();
-                    }
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), options));
-                }
-            }
-        }
-
-        #endregion
 
         #region Deserialization
 
@@ -2936,60 +1675,9 @@ namespace KGySoft.Libraries.Serialization
 
         #endregion
 
-        #region Private Helper Methods
+        #region Internal Extension Methods
 
-        private static string GetTypeString(Type type, XmlSerializationOptions options)
-        {   
-            return type.GetTypeName((options & XmlSerializationOptions.FullyQualifiedNames) != XmlSerializationOptions.None);
-        }
-
-        /// <summary>
-        /// Registers object to detect circular reference.
-        /// Must be called from inside of try-finally to remove lock in finally if neccessary.
-        /// </summary>
-        private static void RegisterSerializedObject(object obj)
-        {
-            if (obj == null || obj.GetType().IsValueType)
-                return;
-
-            // putting lock when serialization of complex instance is started
-            if (serializationLevel == 0)
-            {
-                Monitor.Enter(syncRootSerialize);
-                serObjects = new HashSet<object>(ReferenceEqualityComparer.Comparer);
-            }
-
-            serializationLevel++;
-
-            if (serObjects.Contains(obj))
-            {
-                throw new ReflectionException(Res.Get(Res.XmlCircularReference, obj));
-            }
-
-            serObjects.Add(obj);
-        }
-
-        private static void UnregisterSerializedObject(object obj)
-        {
-            if (obj == null || obj.GetType().IsValueType)
-                return;
-
-            serObjects.Remove(obj);
-            serializationLevel--;
-
-            // removing lock when serialization of the complex root instance is finished
-            if (serializationLevel == 0)
-            {
-                serObjects = null;
-                Monitor.Exit(syncRootSerialize);
-            }
-        }
-
-        #endregion
-
-        #region Private Extension Methods
-
-        private static Type GetElementType(this IEnumerable collection)
+        internal static Type GetElementType([NoEnumeration]this IEnumerable collection)
         {
             foreach (Type i in collection.GetType().GetInterfaces())
             {
@@ -3001,29 +1689,21 @@ namespace KGySoft.Libraries.Serialization
             return typeof(object);
         }
 
-        private static bool IsRecursiveSerializationEnabled(this XmlSerializationOptions options)
-        {
-            return (options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
-        }
+        internal static bool IsRecursiveSerializationEnabled(this XmlSerializationOptions options)
+            => (options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
 
-        private static bool IsForcedSerializationValueTypesEnabled(this XmlSerializationOptions options)
-        {
-#pragma warning disable 618,612 // Disabling warning for obsolete enum member because this must be still handled
-            return (options & XmlSerializationOptions.ForcedSerializationValueTypesAsFallback) != XmlSerializationOptions.None;
-#pragma warning restore 618,612
-        }
+#pragma warning disable 618, 612 // Disabling warning for obsolete enum member because this must be still handled
+        internal static bool IsForcedSerializationValueTypesEnabled(this XmlSerializationOptions options)
+            => (options & XmlSerializationOptions.ForcedSerializationValueTypesAsFallback) != XmlSerializationOptions.None;
+#pragma warning restore 618, 612
 
-        private static bool IsBinarySerializationEnabled(this XmlSerializationOptions options)
-        {
-            return (options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
-        }
+        internal static bool IsBinarySerializationEnabled(this XmlSerializationOptions options) 
+            => (options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
 
-        private static bool IsCompactSerializationValueTypesEnabled(this XmlSerializationOptions options)
-        {
-            return (options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
-        }
+        internal static bool IsCompactSerializationValueTypesEnabled(this XmlSerializationOptions options) 
+            => (options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
 
-        private static BinarySerializationOptions ToBinarySerializationOptions(this XmlSerializationOptions options)
+        internal static BinarySerializationOptions ToBinarySerializationOptions(this XmlSerializationOptions options)
         {
             // compact, recursive: always enabled when binary serializing because they cause no problem
             BinarySerializationOptions result = BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback; // | CompactSerializationOfBoolCollections
