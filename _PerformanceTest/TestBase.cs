@@ -1,4 +1,8 @@
-﻿namespace _PerformanceTest
+﻿using System.Collections;
+using System.Linq;
+using System.Text;
+
+namespace _PerformanceTest
 {
     using System;
     using System.Collections.Generic;
@@ -12,35 +16,252 @@
     [TestClass]
     public abstract class TestBase
     {
-        protected abstract class TestOpBase
+        protected abstract class TestOpBase<TDelegate>
+         // TODO: C# 7.3: where TDelegate : Delegate
         {
             public string TestName { get; set; }
             public string RefOpName { get; set; }
-            public string CheckOpName { get; set; }
-            public int Iterations { get; set; }
-            public int WarmUpTime { get; set; }
-            public bool Collect { get; set; }
-            public int Repeat { get; set; }
+            public string TestOpName { get; set; }
+            public int Iterations { get; set; } = 100;
+            public int WarmUpTime { get; set; } = 2000;
+            public bool Collect { get; set; } = true;
+            public int Repeat { get; set; } = 1;
+            public TDelegate ReferenceOperation { get; set; }
+            public TDelegate TestOperation { get; set; }
+            public bool DumpResult { get; set; } = true;
+
+            protected abstract object InvokeReferenceOperation();
+            protected abstract object InvokeTestOperation();
 
             protected TestOpBase()
             {
-                WarmUpTime = 2000;
-                Collect = true;
-                Iterations = 100;
-                Repeat = 1;
+            }
+
+            public void DoTest()
+            {
+                if (TestOperation == null)
+                    throw new InvalidOperationException($"{nameof(TestOperation)} of the test is null");
+
+                var watch = new Stopwatch();
+                var iterations = Iterations;
+                var times = new TimeSpan[Repeat, 2];
+                bool hasRefOp = ReferenceOperation != null;
+
+                if (TestName != null)
+                    Console.WriteLine($"=========={TestName} (iterations: {Iterations:N0})===========");
+                if (WarmUpTime > 0)
+                {
+                    watch.Start();
+                    do
+                    {
+                        if (hasRefOp)
+                            InvokeReferenceOperation();
+                        InvokeTestOperation();
+                    }
+                    while (watch.ElapsedMilliseconds < WarmUpTime);
+                }
+
+                int timeRefMin = -1;
+                int timeRefMax = -1;
+                object refResult = null;
+                int refLength = -1;
+                if (hasRefOp)
+                {
+                    for (int r = 0; r < Repeat; r++)
+                    {
+                        watch.Reset();
+                        if (Collect)
+                        {
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+                            GC.Collect();
+                        }
+
+                        watch.Start();
+                        for (int i = 0; i < iterations; i++)
+                            refResult = InvokeReferenceOperation();
+                        watch.Stop();
+                        times[r, 0] = watch.Elapsed;
+                    }
+
+                    for (int r = 0; r < Repeat; r++)
+                    {
+                        if (timeRefMin == -1 || times[r, 0] < times[timeRefMin, 0])
+                            timeRefMin = r;
+                        if (timeRefMax == -1 || times[r, 0] > times[timeRefMax, 0])
+                            timeRefMax = r;
+                    }
+
+                    var refOpName = RefOpName ?? "Reference Operation";
+                    if (Repeat == 1)
+                        Console.WriteLine($"{refOpName} time: {times[0, 0].TotalMilliseconds:N2} ms");
+                    else
+                    {
+                        Console.WriteLine("{0} times:", refOpName);
+                        TimeSpan total = TimeSpan.Zero;
+                        for (int r = 0; r < Repeat; r++)
+                        {
+                            Console.Write("{0,10:N2} ms", times[r, 0].TotalMilliseconds);
+                            total += times[r, 0];
+                            if (timeRefMin != timeRefMax
+                                && r.In(timeRefMin, timeRefMax))
+                                Console.Write($"\t<---- {(r == timeRefMin ? "Best" : "Worst")}");
+                            Console.WriteLine();
+                        }
+
+                        Console.WriteLine($"Worst-Best difference: {(times[timeRefMax, 0] - times[timeRefMin, 0]).TotalMilliseconds:N2} ms ({times[timeRefMax, 0].TotalMilliseconds / times[timeRefMin, 0].TotalMilliseconds - 1:P2})");
+                        Console.WriteLine($"Average time: {total.TotalMilliseconds / Repeat:N2} ms");
+                    }
+
+                    if (refResult != null)
+                    {
+                        refLength = GetLength(refResult);
+                        Console.WriteLine($"{refOpName} size: {refLength:N0} {GetUnit(refResult)}");
+                        if (DumpResult)
+                        {
+                            Console.WriteLine();
+                            Dump(refResult);
+                        }
+                    }
+
+                    if (times[0, 0].TotalMilliseconds / iterations < 0.00001)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine($"WARNING: {refOpName} is a too small operation to give trusted results.");
+                        Console.WriteLine();
+                    }
+                    else if (Repeat > 1 || refResult != null && DumpResult)
+                        Console.WriteLine();
+                }
+
+                int timeCheckMin = -1;
+                int timeCheckMax = -1;
+                object testResult = null;
+                int testLength = -1;
+                for (int r = 0; r < Repeat; r++)
+                {
+                    watch.Reset();
+                    if (Collect)
+                    {
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        GC.Collect();
+                    }
+
+                    watch.Start();
+                    for (int i = 0; i < iterations; i++)
+                        testResult = InvokeTestOperation();
+                    watch.Stop();
+                    times[r, 1] = watch.Elapsed;
+                }
+
+                for (int r = 0; r < Repeat; r++)
+                {
+                    if (timeCheckMin == -1 || times[r, 1] < times[timeCheckMin, 1])
+                        timeCheckMin = r;
+                    if (timeCheckMax == -1 || times[r, 1] > times[timeCheckMax, 1])
+                        timeCheckMax = r;
+                }
+
+                var testOpName = TestOpName ?? "Test Operation";
+                if (Repeat == 1)
+                    Console.WriteLine($"{testOpName} time: {times[0, 1].TotalMilliseconds:N2} ms");
+                else
+                {
+                    Console.WriteLine($"{testOpName} times:");
+                    TimeSpan total = TimeSpan.Zero;
+                    for (int r = 0; r < Repeat; r++)
+                    {
+                        Console.Write($"{times[r, 1].TotalMilliseconds,10:N2} ms");
+                        total += times[r, 1];
+                        if (timeCheckMin != timeCheckMax
+                            && r.In(timeCheckMin, timeCheckMax))
+                            Console.Write($"\t <---- {(r == timeCheckMin ? "Best" : "Worst")}");
+                        Console.WriteLine();
+                    }
+
+                    Console.WriteLine($"Worst-Best difference: {(times[timeCheckMax, 1] - times[timeCheckMin, 1]).TotalMilliseconds:N2} ms ({times[timeCheckMax, 1].TotalMilliseconds / times[timeCheckMin, 1].TotalMilliseconds - 1:P2})");
+                    Console.WriteLine($"Average time: {total.TotalMilliseconds / Repeat:N2} ms");
+                }
+
+                if (testResult != null)
+                {
+                    testLength = GetLength(testResult);
+                    Console.WriteLine($"{testOpName} size: {testLength:N0} {GetUnit(testResult)}");
+                    if (DumpResult)
+                    {
+                        Console.WriteLine();
+                        Dump(testResult);
+                    }
+                }
+
+                if (times[0, 1].TotalMilliseconds / iterations < 0.00001)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"WARNING: {testOpName} is a too small operation to give trusted results.");
+                    Console.WriteLine();
+                }
+                else if (Repeat > 1 || testResult != null && DumpResult)
+                    Console.WriteLine();
+
+                if (timeRefMin != -1)
+                {
+                    if (timeRefMin == timeRefMax && timeCheckMin == timeCheckMax)
+                        Console.WriteLine($"Time performance: {times[0, 1].TotalMilliseconds / times[0, 0].TotalMilliseconds:P2}");
+                    else
+                        Console.WriteLine($"Time performance: {times[timeCheckMin, 1].TotalMilliseconds / times[timeRefMax, 0].TotalMilliseconds:P2} - {times[timeCheckMax, 1].TotalMilliseconds / times[timeRefMin, 0].TotalMilliseconds:P2}");
+                }
+
+                if (refLength >= 0 && testLength >= 0)
+                    Console.WriteLine($"Size performance: {(double)testLength / refLength:P2}");
+                Console.WriteLine();
+            }
+
+            private static int GetLength(object result)
+            {
+                if (result is ICollection collection)
+                    return collection.Count;
+                if (result is string s)
+                    return s.Length;
+                if (result is IEnumerable e)
+                    return e.Cast<object>().Count();
+                return -1;
+            }
+
+            private string GetUnit(object result) => (from i in result.GetType().GetInterfaces() where i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>) select i.GetGenericArguments()[0].Name.ToLowerInvariant() + "s").FirstOrDefault();
+
+            private void Dump(object result)
+            {
+                if (result is byte[] bytes)
+                    Console.WriteLine(Encoding.Default.GetString(bytes).Replace('\0', Unicode.square));
+                else if (result is string s)
+                    Console.WriteLine(s.Replace('\0', Unicode.square));
+                else if (result is IEnumerable e)
+                    Console.WriteLine(String.Join(", ", e.Cast<object>()));
+                else
+                    Console.WriteLine(result);
             }
         }
 
-        protected class TestOperation: TestOpBase
+        protected class TestOperation: TestOpBase<Action>
         {
-            public Action RefOp { get; set; }
-            public Action CheckOp { get; set; }
+            protected override object InvokeReferenceOperation()
+            {
+                ReferenceOperation.Invoke();
+                return null;
+            }
+
+            protected override object InvokeTestOperation()
+            {
+                TestOperation.Invoke();
+                return null;
+            }
         }
 
-        protected class TestOperation<TRes>: TestOpBase where TRes : ICollection<TRes>
+        protected class TestOperation<TResult>: TestOpBase<Func<TResult>>
         {
-            public Func<TRes> RefOp { get; set; }
-            public Func<TRes> CheckOp { get; set; }
+            protected override object InvokeReferenceOperation() => ReferenceOperation.Invoke();
+            protected override object InvokeTestOperation() => TestOperation.Invoke();
         }
 
         private IntPtr origAffinity;
@@ -90,222 +311,6 @@
             Process.GetCurrentProcess().ProcessorAffinity = origAffinity;
             Process.GetCurrentProcess().PriorityClass = origPriority;
             Thread.CurrentThread.Priority = origThreadPrio;
-        }
-
-        protected static void DoTest<TRes>(TestOperation<TRes> testOp)
-            where TRes: class, ICollection<TRes>
-        {
-            if (testOp == null)
-                throw new ArgumentNullException("testOp");
-
-            var watch = new Stopwatch();
-            var iterations = testOp.Iterations;
-            var refOp = testOp.RefOp;
-            var checkOp = testOp.CheckOp;
-
-            Console.WriteLine("=========={0} (iterations: {1:N0})===========", testOp.TestName, testOp.Iterations);
-            if (testOp.WarmUpTime > 0)
-            {
-                watch.Start();
-                do
-                {
-                    refOp.Invoke();
-                    checkOp.Invoke();
-                }
-                while (watch.ElapsedMilliseconds < testOp.WarmUpTime);
-
-                watch.Reset();
-            }
-
-            if (testOp.Collect)
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-            }
-
-            TRes resultRef = null;
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-                resultRef = refOp.Invoke();
-            watch.Stop();
-            TimeSpan timeRef = watch.Elapsed;
-
-            watch.Reset();
-            if (testOp.Collect)
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-            }
-
-            TRes resultCheck = null;
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-                resultCheck = checkOp.Invoke();
-            watch.Stop();
-            TimeSpan timeCheck = watch.Elapsed;
-            Console.WriteLine("{0} time: {1:N2} ms", testOp.RefOpName, timeRef.TotalMilliseconds);
-            if (resultRef != null)
-                Console.WriteLine("{0} size: {1:N} {2}s", testOp.RefOpName, resultRef.Count, typeof(TRes).GetGenericArguments()[0].Name.ToLowerInvariant());
-            Console.WriteLine("{0} time: {1:N2} ms", testOp.CheckOpName, timeCheck.TotalMilliseconds);
-            if (resultCheck != null)
-                Console.WriteLine("{0} size: {1:N} {2}s", testOp.RefOpName, resultCheck.Count, typeof(TRes).GetGenericArguments()[0].Name.ToLowerInvariant());
-
-            Console.WriteLine("Time performance: {0:P2}", timeCheck.TotalMilliseconds / timeRef.TotalMilliseconds);
-            if (resultRef != null && resultCheck != null)
-                Console.WriteLine("Size performance: {0:P2}", (double)resultCheck.Count / resultRef.Count);
-            Console.WriteLine();
-        }
-
-        protected static void DoTest(TestOperation testOp)
-        {
-            if (testOp == null)
-                throw new ArgumentNullException("testOp");
-
-            if (testOp.CheckOp == null)
-                throw new ArgumentException("CheckOp of the test is null", "testOp");
-
-            var watch = new Stopwatch();
-            var iterations = testOp.Iterations;
-            var refOp = testOp.RefOp;
-            var checkOp = testOp.CheckOp;
-            var times = new TimeSpan[testOp.Repeat, 2];
-
-            Console.WriteLine("=========={0} (iterations: {1:N0})===========", testOp.TestName, testOp.Iterations);
-            if (testOp.WarmUpTime > 0)
-            {
-                watch.Start();
-                do
-                {
-                    if (refOp != null)
-                        refOp.Invoke();
-                    checkOp.Invoke();
-                }
-                while (watch.ElapsedMilliseconds < testOp.WarmUpTime);
-            }
-
-            int timeRefMin = -1;
-            int timeRefMax = -1;
-            if (refOp != null)
-            {
-                for (int r = 0; r < testOp.Repeat; r++)
-                {
-                    watch.Reset();
-                    if (testOp.Collect)
-                    {
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                        GC.Collect();
-                    }
-
-                    watch.Start();
-                    for (int i = 0; i < iterations; i++)
-                        refOp.Invoke();
-                    watch.Stop();
-                    times[r, 0] = watch.Elapsed;
-                }
-
-                for (int r = 0; r < testOp.Repeat; r++)
-                {
-                    if (timeRefMin == -1 || times[r, 0] < times[timeRefMin, 0])
-                        timeRefMin = r;
-                    if (timeRefMax == -1 || times[r, 0] > times[timeRefMax, 0])
-                        timeRefMax = r;
-                }
-
-                if (testOp.Repeat == 1)
-                    Console.WriteLine("{0} time: {1:N2} ms", testOp.RefOpName, times[0, 0].TotalMilliseconds);
-                else
-                {
-                    Console.WriteLine("{0} times:", testOp.RefOpName);
-                    for (int r = 0; r < testOp.Repeat; r++)
-                    {
-                        Console.Write("{0:N2} ms", times[r, 0].TotalMilliseconds);
-                        if (timeRefMin != timeRefMax
-                            && r.In(timeRefMin, timeRefMax))
-                            Console.Write("\t <---- {0}", r == timeRefMin ? "Best" : "Worst");
-                        Console.WriteLine();
-                    }
-
-                    Console.WriteLine("Worst-Best difference: {0:N2} ms ({1:P2})",
-                        (times[timeRefMax, 0] - times[timeRefMin, 0]).TotalMilliseconds,
-                        times[timeRefMax, 0].TotalMilliseconds / times[timeRefMin, 0].TotalMilliseconds - 1);
-                }
-
-                if (times[0, 0].TotalMilliseconds / iterations < 0.00001)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("WARNING: {0} is a too small operation to give trusted results.", testOp.RefOpName);
-                    Console.WriteLine();
-                }
-                else if (testOp.Repeat > 1)
-                    Console.WriteLine();
-            }
-
-            int timeCheckMin = -1;
-            int timeCheckMax = -1;
-            for (int r = 0; r < testOp.Repeat; r++)
-            {
-                watch.Reset();
-                if (testOp.Collect)
-                {
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    GC.Collect();
-                }
-
-                watch.Start();
-                for (int i = 0; i < iterations; i++)
-                    checkOp.Invoke();
-                watch.Stop();
-                times[r, 1] = watch.Elapsed;
-            }
-
-            for (int r = 0; r < testOp.Repeat; r++)
-            {
-                if (timeCheckMin == -1 || times[r, 1] < times[timeCheckMin, 1])
-                    timeCheckMin = r;
-                if (timeCheckMax == -1 || times[r, 1] > times[timeCheckMax, 1])
-                    timeCheckMax = r;
-            }
-
-            if (testOp.Repeat == 1)
-                Console.WriteLine("{0} time: {1:N2} ms", testOp.CheckOpName, times[0, 1].TotalMilliseconds);
-            else
-            {
-                Console.WriteLine("{0} times:", testOp.CheckOpName);
-                for (int r = 0; r < testOp.Repeat; r++)
-                {
-                    Console.Write("{0:N2} ms", times[r, 1].TotalMilliseconds);
-                    if (timeCheckMin != timeCheckMax
-                        && r.In(timeCheckMin, timeCheckMax))
-                        Console.Write("\t <---- {0}", r == timeCheckMin ? "Best" : "Worst");
-                    Console.WriteLine();
-                }
-
-                Console.WriteLine("Worst-Best difference: {0:N2} ms ({1:P2})",
-                    (times[timeCheckMax, 1] - times[timeCheckMin, 1]).TotalMilliseconds,
-                    times[timeCheckMax, 1].TotalMilliseconds / times[timeCheckMin, 1].TotalMilliseconds - 1);
-            }
-
-            if (times[0, 1].TotalMilliseconds / iterations < 0.00001)
-            {
-                Console.WriteLine();
-                Console.WriteLine("WARNING: {0} is a too small operation to give trusted results.", testOp.CheckOpName);
-            }
-
-            if (timeRefMin != -1)
-            {
-                Console.WriteLine();
-                if (timeRefMin == timeRefMax && timeCheckMin == timeCheckMax)
-                    Console.WriteLine("Time performance: {0:P2}", times[0, 1].TotalMilliseconds / times[0, 0].TotalMilliseconds);
-                else
-                    Console.WriteLine("Time performance: {0:P2} - {1:P2}",
-                        times[timeCheckMin, 1].TotalMilliseconds / times[timeRefMax, 0].TotalMilliseconds,
-                        times[timeCheckMax, 1].TotalMilliseconds / times[timeRefMin, 0].TotalMilliseconds);
-            }
-            Console.WriteLine();
         }
     }
 }

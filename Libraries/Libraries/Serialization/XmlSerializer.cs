@@ -80,18 +80,7 @@ namespace KGySoft.Libraries.Serialization
         /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         public static XElement Serialize(object obj, XmlSerializationOptions options)
         {
-            //StringBuilder sb = new StringBuilder();
-            //using (XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { ConformanceLevel = ConformanceLevel.Fragment }))
-            //{
-            //    Serialize(writer, obj, options);
-            //    writer.Flush();
-            //}
-
-            //return XElement.Parse(sb.ToString());
-
-            // TODO: performance test by the new (above) and old (below) code. Re-enable XElement codes only when they are faster.
             XElement result = new XElement("object");
-
             if (obj == null)
                 return result;
 

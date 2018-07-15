@@ -25,21 +25,21 @@ namespace _PerformanceTest.Libraries.Diagnostics
             var test = new TestOperation
                 {
                     TestName = "DoTest performance without warmup",
-                    CheckOpName = "DoNothing",
-                    CheckOp = () => DoNothing(),
+                    TestOpName = "DoNothing",
+                    TestOperation = () => DoNothing(),
                     WarmUpTime = 0,
                     Iterations = iterations,
                     Repeat = 5
                 };
 
             // 1. DoTest without warmup
-            DoTest(test);
+            test.DoTest();
 
             test.TestName = "DoTest performance with warmup";
             test.WarmUpTime = 1000;
 
             // 2. DoTest with warmup
-            DoTest(test);
+            test.DoTest();
 
             // 3. Direct test
             Console.WriteLine("===========Direct measurement test===============");
@@ -131,21 +131,21 @@ namespace _PerformanceTest.Libraries.Diagnostics
             var test = new TestOperation
             {
                 TestName = "DoTest performance without warmup",
-                CheckOpName = "DoSomething",
-                CheckOp = () => DoSomething(),
+                TestOpName = "DoSomething",
+                TestOperation = () => DoSomething(),
                 WarmUpTime = 0,
                 Iterations = iterations,
                 Repeat = 5
             };
 
             // 1. DoTest without warmup
-            DoTest(test);
+            test.DoTest();
 
             test.TestName = "DoTest performance with warmup";
             test.WarmUpTime = 1000;
 
             // 2. DoTest with warmup
-            DoTest(test);
+            test.DoTest();
 
             // 3. Direct test
             Console.WriteLine("===========Direct measurement test===============");
