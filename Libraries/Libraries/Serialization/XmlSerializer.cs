@@ -886,7 +886,7 @@ namespace KGySoft.Libraries.Serialization
                                 TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
                                 if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                                 {
-                                    newElement.Add(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType));
+                                    WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), newElement, options);
                                     parent.Add(newElement);
                                     continue;
                                 }
@@ -1003,17 +1003,10 @@ namespace KGySoft.Libraries.Serialization
                             if (ctor != null)
                             {
                                 TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
+                                if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(Reflector.StringType))
                                 {
                                     writer.WriteStartElement(property.Name);
-                                    bool spacePreserved;
-                                    bool escaped;
-                                    string value = GetStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, typeof(string)), options, out spacePreserved, out escaped);
-                                    if (spacePreserved)
-                                        writer.WriteAttributeString("xml", "space", null, "preserve");
-                                    if (escaped)
-                                        writer.WriteAttributeString("escaped", "true");
-                                    writer.WriteString(value);
+                                    WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), writer, options);
                                     writer.WriteEndElement();
                                     continue;
                                 }
@@ -1052,27 +1045,17 @@ namespace KGySoft.Libraries.Serialization
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                bool spacePreserved, escaped;
-                string s = GetStringValue(obj, options, out spacePreserved, out escaped);
-
-                if (spacePreserved)
-                    parent.Add(new XAttribute(XNamespace.Xml + "space", "preserve"));
-                if (escaped)
-                    parent.Add(new XAttribute("escaped", "true"));
-
-                parent.Add(s);
+                WriteStringValue(obj, parent, options);
                 return true;
             }
 
             // b.) Using type converter of the type if applicable
             TypeConverter converter = TypeDescriptor.GetConverter(type);
-            if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(typeof(string)))
+            if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute("type", GetTypeString(type, options)));
-
-                parent.Add(converter.ConvertTo(null, CultureInfo.InvariantCulture, obj, typeof(string)));
+                WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, obj, Reflector.StringType), parent, options);
                 return true;
             }
 
@@ -1202,15 +1185,7 @@ namespace KGySoft.Libraries.Serialization
                 if (typeNeeded)
                     writer.WriteAttributeString("type", GetTypeString(type, options));
 
-                bool spacePreserved, escaped;
-                string s = GetStringValue(obj, options, out spacePreserved, out escaped);
-
-                if (spacePreserved)
-                    writer.WriteAttributeString("xml", "space", null, "preserve");
-                if (escaped)
-                    writer.WriteAttributeString("escaped", "true");
-
-                writer.WriteString(s);
+                WriteStringValue(obj, writer, options);
                 return true;
             }
 
@@ -1346,6 +1321,28 @@ namespace KGySoft.Libraries.Serialization
             }
 
             return false;
+        }
+
+        private static void WriteStringValue(object obj, XElement parent, XmlSerializationOptions options)
+        {
+            string s = GetStringValue(obj, options, out bool spacePreserved, out bool escaped);
+            if (spacePreserved)
+                parent.Add(new XAttribute(XNamespace.Xml + "space", "preserve"));
+            if (escaped)
+                parent.Add(new XAttribute("escaped", "true"));
+
+            parent.Add(s);
+        }
+
+        private static void WriteStringValue(object obj, XmlWriter writer, XmlSerializationOptions options)
+        {
+            string s = GetStringValue(obj, options, out bool spacePreserved, out bool escaped);
+            if (spacePreserved)
+                writer.WriteAttributeString("xml", "space", null, "preserve");
+            if (escaped)
+                writer.WriteAttributeString("escaped", "true");
+
+            writer.WriteString(s);
         }
 
         private static string GetStringValue(object value, XmlSerializationOptions options, out bool spacePreserve, out bool escaped)
@@ -1885,7 +1882,7 @@ namespace KGySoft.Libraries.Serialization
                                     TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
                                     if (converter != null && converter.CanConvertFrom(Reflector.StringType))
                                     {
-                                        Reflector.SetProperty(obj, property, converter.ConvertFrom(null, CultureInfo.InvariantCulture, GetMultilineValue(element)));
+                                        Reflector.SetProperty(obj, property, converter.ConvertFrom(null, CultureInfo.InvariantCulture, ReadStringValue(element)));
                                         continue;
                                     }
                                 }
@@ -1938,30 +1935,6 @@ namespace KGySoft.Libraries.Serialization
             //IDeserializationCallback callbackCapable = obj as IDeserializationCallback;
             //if (callbackCapable != null)
             //    callbackCapable.OnDeserialization(null);
-        }
-
-        // TODO: This is now used only for type converters. Create a test where this is an issue.
-        // Fix 1: Use escaping for type converters, too
-        // Fix 2: ...?
-        /// <summary>
-        /// Gets multiline string from an <see cref="XElement"/> with correct line endings.
-        /// </summary>
-        /// <remarks>
-        /// In .NET 3.5 <see cref="XElement.Value"/> returns incorrect line endings if
-        /// the XML file was read from file (contains only "\n" characters) but is correct
-        /// when built in memory.
-        /// </remarks>
-        private static string GetMultilineValue(XElement element)
-        {
-            if (element.IsEmpty)
-                return null;
-            StringBuilder result = new StringBuilder(element.Value);
-            for (int i = 0; i < result.Length; i++)
-            {
-                if (result[i] == '\n' && (i == 0 || result[i - 1] != '\r'))
-                    result.Insert(i, "\r");
-            }
-            return result.ToString();
         }
 
         /// <summary>

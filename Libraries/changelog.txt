@@ -1,0 +1,8 @@
+﻿Legend:
+- Breaking change
++ New Functionality
+! Bugfix
+
+2018 - ez majd verzióra átírni
+• XmlSerializer:
+  + Escaping is possible even if a value is converted by a TypeConverter

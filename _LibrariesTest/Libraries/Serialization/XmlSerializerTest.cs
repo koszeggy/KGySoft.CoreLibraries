@@ -304,6 +304,8 @@ namespace _LibrariesTest.Libraries.Serialization
 
             public XmlSerializableClass InnerXmlSerializable { get; set; }
 
+            public Point Point { get; set; }
+
             public Point[] PointArray { get; set; }
 
             [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
@@ -337,7 +339,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     };
                     InnerXmlSerializable = new XmlSerializableClass(1, 2, 3);
                     IntLinkedList = new LinkedList<int>(new[] { 1, 2 });
-                    //IntQueue = new Queue<int>(new[] { 1, 2 });
+                    Point = new Point(13, 13);
                     PointArray = new Point[] { new Point(1, 2), new Point(3, 4) };
                     InnerArray = new TestInner[] { new TestInner { InnerInt = 1, InnerString = "Egy" }, new TestInner { InnerInt = 2, InnerString = "Kettő" } };
                     Structure = new InnerStructure("InnerStructureString", 13);
@@ -371,6 +373,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 result &= IntLinkedList == null && other.IntLinkedList == null || IntLinkedList != null && other.IntLinkedList != null && IntLinkedList.SequenceEqual(other.IntLinkedList);
                 result &= IntList == null && other.IntList == null || IntList != null && other.IntList != null && IntList.SequenceEqual(other.IntList);
                 result &= IntProp == other.IntProp;
+                result &= Point == other.Point;
                 //result &= IntQueue == null && other.IntQueue == null || IntQueue != null && other.IntQueue != null && IntQueue.SequenceEqual(other.IntQueue);
                 result &= PointArray == null && other.PointArray == null || PointArray != null && other.PointArray != null && PointArray.SequenceEqual(other.PointArray);
                 result &= ReadOnlyIntArray == null && other.ReadOnlyIntArray == null || ReadOnlyIntArray != null && other.ReadOnlyIntArray != null && ReadOnlyIntArray.SequenceEqual(other.ReadOnlyIntArray);
@@ -576,6 +579,28 @@ namespace _LibrariesTest.Libraries.Serialization
         [Serializable]
         private sealed class SystemSerializableSealedClass : SystemSerializableClass
         {
+        }
+
+        private class ExplicitTypeConverterHolder
+        {
+            private class MultilineTypeConverter : TypeConverter
+            {
+                public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) =>
+                    value == null ? null :
+                    $"{value.GetType()}{Environment.NewLine}{(value is IFormattable formattable ? formattable.ToString(null, culture) : value.ToString())}";
+                public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => Reflector.CanParseNatively(sourceType);
+                public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+                {
+                    var parts = ((string)value).Split(new[] {Environment.NewLine}, StringSplitOptions.None);
+                    Type type = Reflector.ResolveType(parts[0]);
+                    return Reflector.Parse(type, parts[1], context, culture);
+                }
+            }
+
+            [TypeConverter(typeof(MultilineTypeConverter))]
+            public object ExplicitTypeConverterProperty { get; set; }
+
+            public override bool Equals(object obj) => obj is ExplicitTypeConverterHolder other && Equals(ExplicitTypeConverterProperty, other.ExplicitTypeConverterProperty);
         }
 
         #endregion
@@ -805,6 +830,17 @@ namespace _LibrariesTest.Libraries.Serialization
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+
+            // Type converter as property
+            referenceObjects = new object[]
+            {
+                new BinarySerializableClass { ObjectProp = new Point(1, 2)}, // Point has self type converter
+                new ExplicitTypeConverterHolder {ExplicitTypeConverterProperty = 13} // converter on property
+            };
+
+            // even escape can be omitted if deserialization is by XmlTextReader, which does not normalize newlines
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters);
         }
 
         [TestMethod]
@@ -1565,28 +1601,28 @@ namespace _LibrariesTest.Libraries.Serialization
             Console.WriteLine("------------------KGySoft XmlSerializer ({0} - options: {1})--------------------", type, options.ToString<XmlSerializationOptions>());
             try
             {
-                // XElement - as component
-                //Console.WriteLine(".....As component.....");
-                XElement xElement = new XElement("test");
-                KGyXmlSerializer.SerializeContent(xElement, obj, options);
-                //Console.WriteLine(xElement);
-                object deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
-                KGyXmlSerializer.DeserializeContent(xElement, deserializedObject);
+                // XElement - as object
+                //Console.WriteLine(".....As object.....");
+                XElement xElement = KGyXmlSerializer.Serialize(obj, options);
+                Console.WriteLine(xElement);
+                object deserializedObject = KGyXmlSerializer.Deserialize(xElement);
                 CompareObjects(obj, deserializedObject);
 
-                // XElement - as object
+                // XElement - as component
                 //Console.WriteLine();
-                //Console.WriteLine(".....As object.....");
-                xElement = KGyXmlSerializer.Serialize(obj, options);
-                Console.WriteLine(xElement);
-                deserializedObject = KGyXmlSerializer.Deserialize(xElement);
+                //Console.WriteLine(".....As component.....");
+                XElement xElementComp = new XElement("test");
+                KGyXmlSerializer.SerializeContent(xElementComp, obj, options);
+                //Console.WriteLine(xElementComp);
+                deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
+                KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
                 CompareObjects(obj, deserializedObject);
 
                 // StringBuilder
                 StringBuilder sb = new StringBuilder();
                 XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true});
                 KGyXmlSerializer.Serialize(writer, obj, options);
-                // deserialize by reader
+                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
                 XmlReader reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true });
                 deserializedObject = KGyXmlSerializer.Deserialize(reader);
                 CompareObjects(obj, deserializedObject);
@@ -1621,6 +1657,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 Console.WriteLine(xElement);
 
                 List<object> deserializedObjects = new List<object>();
+                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
                 XmlReader reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { IgnoreWhitespace = true });
                 try
                 {
