@@ -13,9 +13,9 @@ using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries.Serialization
 {
-    internal class XmlReaderWriterSerializer : XmlSerializerBase
+    internal class XmlWriterSerializer : XmlSerializerBase
     {
-        public XmlReaderWriterSerializer(XmlSerializationOptions options) : base(options)
+        public XmlWriterSerializer(XmlSerializationOptions options) : base(options)
         {
         }
 

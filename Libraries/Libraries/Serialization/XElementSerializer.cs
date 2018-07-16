@@ -63,7 +63,7 @@ namespace KGySoft.Libraries.Serialization
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize"/> method.
         /// </remarks>
-        public void SerializeContent(object obj, XElement parent)
+        public void SerializeContent(XElement parent, object obj)
         {
             if (obj == null)
                 throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
@@ -345,7 +345,7 @@ namespace KGySoft.Libraries.Serialization
                 if (typeNeeded)
                     parent.Add(new XAttribute("type", GetTypeString(type)));
 
-                SerializeContent(obj, parent);
+                SerializeContent(parent, obj);
                 return true;
             }
 

@@ -21,7 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-
+using KGySoft.Libraries.Annotations;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
@@ -237,7 +237,7 @@ namespace KGySoft.Libraries
         /// That is, if <paramref name="source"/> implements either the non-generic <see cref="IList"/> or <see cref="IDictionary"/> interfaces,
         /// or the generic <see cref="ICollection{T}"/> interface.
         /// </summary>
-        internal static void Clear(this IEnumerable source)
+        internal static void Clear([NoEnumeration]this IEnumerable source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));

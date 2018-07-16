@@ -87,8 +87,10 @@
     <Compile Include="Libraries\EnumComparer.cs" />
     <Compile Include="Libraries\Collections\CacheBehavior.cs" />
     <Compile Include="Libraries\EnumFormattingOptions.cs" />
+    <Compile Include="Libraries\Serialization\XElementDeserializer.cs" />
     <Compile Include="Libraries\Serialization\XElementSerializer.cs" />
-    <Compile Include="Libraries\Serialization\XmlReaderWriterSerializer.cs" />
+    <Compile Include="Libraries\Serialization\XmlReaderDeserializer.cs" />
+    <Compile Include="Libraries\Serialization\XmlWriterSerializer.cs" />
     <Compile Include="Libraries\Serialization\XmlSerializerBase.cs" />
     <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DoubleExtensions.cs" />
@@ -190,7 +192,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
