@@ -232,10 +232,11 @@ namespace _PerformanceTest
 
             private void Dump(object result)
             {
+                const char square = '□';
                 if (result is byte[] bytes)
-                    Console.WriteLine(Encoding.Default.GetString(bytes).Replace('\0', Unicode.square));
+                    Console.WriteLine(Encoding.Default.GetString(bytes).Replace('\0', square));
                 else if (result is string s)
-                    Console.WriteLine(s.Replace('\0', Unicode.square));
+                    Console.WriteLine(s.Replace('\0', square));
                 else if (result is IEnumerable e)
                     Console.WriteLine(String.Join(", ", e.Cast<object>()));
                 else
