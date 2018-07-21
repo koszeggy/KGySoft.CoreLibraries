@@ -6,3 +6,8 @@
 2018 - ez majd verzióra átírni
 • XmlSerializer:
   + Escaping is possible even if a value is converted by a TypeConverter
+  + Creates instances internally so no locking when used parallelly
+• Resources:
+  + New KGySoft.Libraries.Resources namespace with new public types:
+    + ResXDataNode: Like System.Resources.ResXDataNode but with more functionality and pure POCO references.
+    + ...
