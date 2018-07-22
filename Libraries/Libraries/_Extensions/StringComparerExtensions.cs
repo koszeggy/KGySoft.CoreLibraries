@@ -25,7 +25,7 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// <see cref="StringComparer"/> extension methods
+    /// Contains extension methods for the <see cref="StringComparer"/> type.
     /// </summary>
     public static class StringComparerExtensions
     {

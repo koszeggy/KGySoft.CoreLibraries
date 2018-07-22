@@ -31,7 +31,7 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Extension methods for <see cref="IEnumerable{T}"/> and <see cref="IEnumerator"/> types.
+    /// Contains extension methods for the <see cref="IEnumerable{T}"/> type.
     /// </summary>
     public static class EnumerableExtensions
     {
@@ -83,10 +83,8 @@ namespace KGySoft.Libraries
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <param name="seed">The seed to use for the shuffling.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
-        {
-            return Shuffle(source, new Random(seed));
-        }
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed) 
+            => new Random(seed).Shuffle(source);
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements).
@@ -95,77 +93,7 @@ namespace KGySoft.Libraries
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
-        {
-            return Shuffle(source, new Random());
-        }
-
-        ///// <summary>
-        ///// Converts an <see cref="IEnumerable{T}"/> source to <see cref="DataTable"/>. All of the readable public properties will be put in the result table.
-        ///// </summary>
-        //public static DataTable ToDataTable<T>(this IEnumerable<T> source)
-        //{
-        //    if (source == null)
-        //        throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
-
-        //    PropertyInfo[] columns = (from p in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public)
-        //                              where p.CanRead && p.GetGetMethod().GetParameters().Length == 0
-        //                              select p).ToArray();
-
-        //    return ToDataTable(source, columns);
-        //}
-
-        ///// <summary>
-        ///// Converts an <see cref="IEnumerable{T}"/> source to <see cref="DataTable"/>. Only defined properties will be put in the result table.
-        ///// </summary>
-        ///// <param name="source">Source collection.</param>
-        ///// <param name="columns">Instance properties of <typeparamref name="T"/> that will be converted to columns in given order.</param>
-        //public static DataTable ToDataTable<T>(this IEnumerable<T> source, params string[] columns)
-        //{
-        //    if (source == null)
-        //        throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
-
-        //    if (columns == null)
-        //        throw new ArgumentNullException("columns", Res.Get(Res.ArgumentNull));
-
-        //    Type type = typeof(T);
-
-        //    PropertyInfo[] props = (from propName in columns
-        //                            select type.GetProperty(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)).ToArray();
-
-        //    return ToDataTable(source, props);
-        //}
-
-        ///// <summary>
-        ///// Converts an <see cref="IEnumerable{T}"/> source to <see cref="DataTable"/>. Only defined properties will be put in the result table.
-        ///// </summary>
-        ///// <param name="source">Source collection.</param>
-        ///// <param name="columns">Properties of <typeparamref name="T"/> will be converted to columns in given order.</param>
-        //private static DataTable ToDataTable<T>(this IEnumerable<T> source, PropertyInfo[] columns)
-        //{
-        //    if (source == null)
-        //        throw new ArgumentNullException("source", Res.Get(Res.ArgumentNull));
-
-        //    if (columns == null)
-        //        throw new ArgumentNullException("columns", Res.Get(Res.ArgumentNull));
-
-        //    DataTable result = new DataTable();
-
-        //    foreach (PropertyInfo prop in columns)
-        //    {
-        //        result.Columns.Add(prop.Name, prop.PropertyType);
-        //    }
-
-        //    foreach (T item in source)
-        //    {
-        //        DataRow row = result.NewRow();
-        //        for (int i = 0; i < columns.Length; i++)
-        //        {
-        //            row[i] = Reflector.GetProperty(item, columns[i]);
-        //        }
-        //        result.Rows.Add(row);
-        //    }
-        //    return result;
-        //}
+            => new Random().Shuffle(source);
 
         #endregion
 
@@ -269,25 +197,6 @@ namespace KGySoft.Libraries
             }
 
             throw new InvalidOperationException(Res.Get(Res.EnumerableCannotClear, source.GetType().FullName));
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private static IEnumerable<T> Shuffle<T>(IEnumerable<T> source, Random rand)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
-
-            //return from indexedItem in
-            //           (from item in source
-            //            select new { Index = rand.Next(), Value = item })
-            //       orderby indexedItem.Index
-            //       select indexedItem.Value;
-            // above is the same as LINQ expression:
-            return source.Select(
-                item => new { Index = rand.Next(), Value = item }).OrderBy(i => i.Index).Select(i => i.Value);
         }
 
         #endregion

@@ -26,7 +26,7 @@ using KGySoft.Libraries.Reflection;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Extensions for the <see cref="double"/> type.
+    /// Contains extension methods for the <see cref="double">double</see> type.
     /// </summary>
     public static class DoubleExtensions
     {

@@ -238,7 +238,11 @@ namespace _PerformanceTest
                 else if (result is string s)
                     Console.WriteLine(s.Replace('\0', square));
                 else if (result is IEnumerable e)
-                    Console.WriteLine(String.Join(", ", e.Cast<object>()));
+                    Console.WriteLine(String.Join(", ", e.Cast<object>()
+#if NET35
+                        .Select(o => o.ToString()).ToArray()
+#endif
+                    ));
                 else
                     Console.WriteLine(result);
             }

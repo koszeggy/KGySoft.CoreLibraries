@@ -30,9 +30,8 @@ using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries
 {
-
     /// <summary>
-    /// Byte array extension methods.
+    /// Contains extension methods for <see cref="byte">byte</see> <see cref="Array">arrays</see>.
     /// </summary>
     public static class ByteArrayExtensions
     {

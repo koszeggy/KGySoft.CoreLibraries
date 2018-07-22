@@ -203,7 +203,7 @@ namespace KGySoft.Libraries
                 throw new InvalidOperationException(Res.Get(Res.TypeParameterIsNotEnum, typeof(TEnum).FullName));
 
             underlyingType = Enum.GetUnderlyingType(enumType);
-            isFlags = enumType.IsDefined(typeof(FlagsAttribute), false);
+            isFlags = enumType.IsFlagsEnum();
             isSigned = underlyingType.In(typeof(sbyte), typeof(short), typeof(int), typeof(long));
             switch (Type.GetTypeCode(underlyingType))
             {

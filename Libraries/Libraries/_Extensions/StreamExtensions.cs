@@ -26,7 +26,7 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Stream extension methods
+    /// Contains extension methods for the <see cref="Stream"/> type.
     /// </summary>
     public static class StreamExtensions
     {
