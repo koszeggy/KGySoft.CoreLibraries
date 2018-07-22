@@ -1,5 +1,5 @@
 ﻿Legend:
-. Contains changes
+* Contains changes
 - Breaking change
 + New
 ! Bugfix
@@ -8,7 +8,13 @@
 
 + KGySoft.Libraries.Resources namespace:
 ========================================
-+ ResXFileRef class: Like System.Resources.ResXFileRef but does not require to reference System.Windows.Forms and contains some improvements
++ ResXDataNode: Like System.Resources.ResXDataNode with more functionality. Makes possible to obtain every information
+  of the raw XML data before serializing.
+  Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
++ ResXFileRef class: Like System.Resources.ResXFileRef with some improvements
+  Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
++ ResXResourceReader: ...
+
 + ... TODO
 
 - KGySoft.Libraries namespace:
@@ -26,10 +32,9 @@
   - GetTokenValue methods are removed
   + ToEnum method
 
-. KGySoft.Libraries.Serialization namespace:
+* KGySoft.Libraries.Serialization namespace:
 ============================================
 
-. XmlSerializer:
+* XmlSerializer:
   + Escaping is possible even if a value is converted by a TypeConverter
-
-
+  + Creates instances internally so no locking when used parallelly
