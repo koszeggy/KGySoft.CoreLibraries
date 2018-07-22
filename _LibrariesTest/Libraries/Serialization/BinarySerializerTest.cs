@@ -1567,45 +1567,45 @@ namespace _LibrariesTest.Libraries.Serialization
         {
             object[] referenceObjects = 
             {
-                //new BinarySerializableSealedClass(3, "cica"), // None: 154
-                //new BinarySerializableClass{ IntProp = 1, StringProp = "alma"}, // None: 148
-                //new BinarySerializableStruct{ IntProp = 2, StringProp = "béka" }, // None: 147
-                //new BinarySerializableStructNoCtor { IntProp = 2, StringProp = "béka" }, // None: 152
-                //new SystemSerializableClass{ IntProp = 3, StringProp = "cica",  Bool = null }, // None: 224
+                new BinarySerializableSealedClass(3, "cica"), // None: 154
+                new BinarySerializableClass{ IntProp = 1, StringProp = "alma"}, // None: 148
+                new BinarySerializableStruct{ IntProp = 2, StringProp = "béka" }, // None: 147
+                new BinarySerializableStructNoCtor { IntProp = 2, StringProp = "béka" }, // None: 152
+                new SystemSerializableClass{ IntProp = 3, StringProp = "cica",  Bool = null }, // None: 224
 
-                //new KeyValuePair<int, object>(1, new object[] {1, "alma", DateTime.Now, null}), // None: 36
+                new KeyValuePair<int, object>(1, new object[] {1, "alma", DateTime.Now, null}), // None: 36
 
-                //new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent, // None: 455
-                //new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 525
-                //new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // IObjectReference - None: 548
-                //DefaultGraphObjRef.Get(), // IObjectReference without ISerializable
+                new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent, // None: 455
+                new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 525
+                new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // IObjectReference - None: 548
+                DefaultGraphObjRef.Get(), // IObjectReference without ISerializable
                 new CustomGraphDefaultObjRef{ Name = "alma" } // obj is ISerializable but IObjectReference is not
             };
 
-            //SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects);
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 1697 -> 1711
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 1697 -> 1711
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // 1628 -> 1642
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // 1628 -> 1642
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
 
-            //referenceObjects = new object[]
-            //{
-            //    new NonSerializableClass{ IntProp = 3, StringProp = "cica" },
-            //    new NonSerializableSealedClass(1, "alma") { IntProp = 1, StringProp = "alma" },
-            //    new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alma" },
-            //};
+            referenceObjects = new object[]
+            {
+                new NonSerializableClass{ IntProp = 3, StringProp = "cica" },
+                new NonSerializableSealedClass(1, "alma") { IntProp = 1, StringProp = "alma" },
+                new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alma" },
+            };
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // 529
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // 529
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures); // 492
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures); // 492
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames); // 423
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames); // 423
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
         [TestMethod]
@@ -2562,7 +2562,7 @@ namespace _LibrariesTest.Libraries.Serialization
 
                 Console.WriteLine("Length: {0}", ms.Length);
                 if (dumpSerContent)
-                    Console.WriteLine(ToUtf8String(ms.ToArray()));
+                    Console.WriteLine(ToRawString(ms.ToArray()));
 
                 ms.Seek(0, SeekOrigin.Begin);
                 object deserializedObject = bf.Deserialize(ms);
@@ -2605,7 +2605,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
                 Console.WriteLine("Full length: {0}", ms.Length);
                 if (dumpSerContent)
-                    Console.WriteLine(ToUtf8String(ms.ToArray()));
+                    Console.WriteLine(ToRawString(ms.ToArray()));
                 if (!safeCompare)
                     CompareCollections(referenceObjects, deserializedObjects.ToArray());
                 else
@@ -2644,7 +2644,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
                 Console.WriteLine("Length: {0}", serObject.Length);
                 if (dumpSerContent)
-                    Console.WriteLine(ToUtf8String(serObject.ToArray()));
+                    Console.WriteLine(ToRawString(serObject.ToArray()));
                 object deserializedObject; // = BinarySerializer.Deserialize(serObject);
                 using (BinaryReader br = new TestReader(new MemoryStream(serObject), dumpDetails))
                 {
@@ -2711,7 +2711,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
                 Console.WriteLine("Full length: {0}", ms.Length);
                 if (dumpSerContent)
-                    Console.WriteLine(ToUtf8String(ms.ToArray()));
+                    Console.WriteLine(ToRawString(ms.ToArray()));
                 return ms.ToArray();
             }
         }
@@ -2740,30 +2740,6 @@ namespace _LibrariesTest.Libraries.Serialization
         }
 
         /// <summary>
-        /// Converts the byte array (deemed as extended 8-bit ASCII characters) to raw Unicode UTF-16 string representation.
-        /// </summary>
-        /// <param name="bytes">The bytes to visualize as a raw UTF-16 data.</param>
-        /// <remarks>
-        /// <note type="caution">
-        /// Please note that the .NET <see cref="string"/> type is always UTF-16 encoded. What this method does is
-        /// not parsing an UTF-16 encoded stream but a special conversion that makes possible to display a byte array as a raw UTF-16 data.
-        /// To convert a byte array to a regular <see cref="string"/> for usual purposes
-        /// use <see cref="Encoding.Convert(System.Text.Encoding,System.Text.Encoding,byte[])"/> method instead.
-        /// </note>
-        /// </remarks>
-        /// <returns>
-        /// A <see cref="string"/> instance that is good for visualizing a raw UTF-16 string.</returns>
-        private static string ToUtf16String(byte[] bytes)
-        {
-            char[] dest = new char[bytes.Length];
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                dest[i] = (char)bytes[i];
-            }
-            return new string(dest);
-        }
-
-        /// <summary>
         /// Converts the byte array (deemed as extended 8-bit ASCII characters) to raw Unicode UTF-8 string representation.
         /// </summary>
         /// <param name="bytes">The bytes to visualize as a raw UTF-8 data.</param>
@@ -2777,10 +2753,7 @@ namespace _LibrariesTest.Libraries.Serialization
         /// </remarks>
         /// <returns>
         /// A <see cref="string"/> instance that is good for visualizing a raw UTF-8 string.</returns>
-        private static string ToUtf8String(byte[] bytes)
-        {
-            return ToUtf16String(Encoding.Convert(Encoding.GetEncoding(437), Encoding.UTF8, bytes));
-        }
+        private static string ToRawString(byte[] bytes) => Encoding.Default.GetString(bytes).Replace('\0', Unicode.square);
 
         #endregion
     }

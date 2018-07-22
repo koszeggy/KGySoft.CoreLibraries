@@ -87,6 +87,11 @@
     <Compile Include="Libraries\EnumComparer.cs" />
     <Compile Include="Libraries\Collections\CacheBehavior.cs" />
     <Compile Include="Libraries\EnumFormattingOptions.cs" />
+    <Compile Include="Libraries\Serialization\XElementDeserializer.cs" />
+    <Compile Include="Libraries\Serialization\XElementSerializer.cs" />
+    <Compile Include="Libraries\Serialization\XmlReaderDeserializer.cs" />
+    <Compile Include="Libraries\Serialization\XmlWriterSerializer.cs" />
+    <Compile Include="Libraries\Serialization\XmlSerializerBase.cs" />
     <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DoubleExtensions.cs" />
     <Compile Include="Libraries\_Extensions\EnumerableExtensions.cs" />

@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Text;
-using KGySoft.Libraries;
 using KGySoft.Libraries.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
@@ -13,88 +14,112 @@ namespace _PerformanceTest.Libraries.Serialization
     /// Summary description for BinarySerializerTest
     /// </summary>
     [TestClass]
-    public class XmlSerializerPerformanceTest
+    public class XmlSerializerPerformanceTest : TestBase
     {
-        public class SimpleClass
+        public class FullExtraComponent
         {
+            public class TestInner
+            {
+                public string InnerString { get; set; }
+
+                public int InnerInt { get; set; }
+
+                public TestInner()
+                {
+                    InnerString = "InnerStringValue";
+                    InnerInt = 15;
+                }
+
+                public override bool Equals(object obj)
+                {
+                    if (obj == null || obj.GetType() != typeof(TestInner))
+                        return base.Equals(obj);
+
+                    TestInner other = (TestInner)obj;
+                    return InnerString == other.InnerString && InnerInt == other.InnerInt;
+                }
+            }
+
+            public struct InnerStructure
+            {
+                public string InnerString { get; set; }
+
+                public int InnerInt { get; set; }
+
+                public InnerStructure(string s, int i)
+                    : this()
+                {
+                    InnerString = s;
+                    InnerInt = i;
+                }
+            }
+
+            [DefaultValue(0)]
             public int IntProp { get; set; }
 
-            public string StringProp { get; set; }
-
-            public object ObjProp { get; set; }
-        }
-
-        private static void DoTestXmlSerialize(object obj, XmlSerializationOptions options)
-        {
-            const int iterations = 10000;
-            Type type = obj.GetType();
-            Console.WriteLine("=========={0} (iterations: {1:N0}, options: {2})===========", obj.GetType(), iterations, Enum<XmlSerializationOptions>.ToString(options));
-
-            StringBuilder sb = new StringBuilder();
-            //XElement resultElement = new XElement("dummy");
-
-            // first out of test:
-            XmlSerializer.Serialize(new StringWriter(sb), obj, options);
-            XmlSerializer.Deserialize(new StringReader(sb.ToString()));
-
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
+            public FullExtraComponent()
             {
-                sb = new StringBuilder();
-                //resultElement = XmlSerializer.Serialize(obj);
-                //object deserializedObject = XmlSerializer.Deserialize(resultElement);
-                XmlSerializer.Serialize(new StringWriter(sb), obj, options);
-                object deserializedObject = XmlSerializer.Deserialize(new StringReader(sb.ToString()));
             }
-            watch.Stop();
-            //sb = new StringBuilder(resultElement.ToString());
-            Console.WriteLine(sb);
 
-            decimal time1 = watch.ElapsedMilliseconds;
-            decimal size1 = sb.Length;
-            Console.WriteLine("KGySoft XmlSerializer time: " + time1);
-            Console.WriteLine("KGySoft XmlSerializer size: " + size1);
+            public int[] IntArray { get; set; }
 
-            SystemXmlSerializer serializer = new SystemXmlSerializer(type);
-
-            // first out of test:
-            sb = new StringBuilder();
-            using (StringWriter sw = new StringWriter(sb))
+            readonly int[] readOnlyIntArray = new int[5];
+            public int[] ReadOnlyIntArray
             {
-                serializer.Serialize(sw, obj);
+                get { return readOnlyIntArray; }
             }
-            serializer.Deserialize(new StringReader(sb.ToString()));
 
-            watch.Reset();
-            watch.Start();
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+            public TestInner Inner { get; set; }
 
-            for (int i = 0; i < iterations; i++)
+            private readonly List<TestInner> innerList = new List<TestInner>();
+
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+            public List<TestInner> InnerList
             {
-                sb = new StringBuilder();
-                try
+                get { return innerList; }
+            }
+
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+            public TestInner[] InnerArray { get; set; }
+
+            public Point Point { get; set; }
+
+            public Point[] PointArray { get; set; }
+
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+            public InnerStructure Structure { get; set; }
+
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+            public InnerStructure[] StructureArray { get; set; }
+
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+            public List<InnerStructure> StructureList { get; set; }
+
+            public string StringValue { get; set; }
+
+            public FullExtraComponent(bool init)
+            {
+                if (init)
                 {
-                    //SystemXmlSerializer serializer = new SystemXmlSerializer(type);
-                    using (StringWriter sw = new StringWriter(sb))
+                    IntProp = 1;
+                    Inner = new TestInner();
+                    IntArray = new int[] { 1, 2, 3, 4, 5 };
+                    readOnlyIntArray = new int[] { 1, 2, 3, 4, 5 };
+                    innerList = new List<TestInner>
                     {
-                        serializer.Serialize(sw, obj);
-                    }
-                    object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
+                        new TestInner {InnerInt = 1, InnerString = "Egy"},
+                        new TestInner {InnerInt = 2, InnerString = "Kettő"},
+                        null
+                    };
+                    Point = new Point(13, 13);
+                    PointArray = new Point[] { new Point(1, 2), new Point(3, 4) };
+                    InnerArray = new TestInner[] { new TestInner { InnerInt = 1, InnerString = "Egy" }, new TestInner { InnerInt = 2, InnerString = "Kettő" } };
+                    Structure = new InnerStructure("InnerStructureString", 13);
+                    StructureArray = new InnerStructure[] { new InnerStructure("Egyeske", 1), new InnerStructure("Ketteske", 2), };
+                    StructureList = new List<InnerStructure> { new InnerStructure("Első", 1), new InnerStructure("Második", 2) };
+                    StringValue = String.Empty;
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine("System serialization failed: {0}", e);
-                    break;
-                }
-            }
-            watch.Stop();
-
-            if (sb.Length != 0)
-            {
-                Console.WriteLine("System XmlSerializer time: " + watch.ElapsedMilliseconds);
-                Console.WriteLine("System XmlSerializer size: " + sb.Length);
-                Console.WriteLine("Time performance: {0:P2}", time1 / watch.ElapsedMilliseconds);
-                Console.WriteLine("Size performance: {0:P2}", size1 / sb.Length);
             }
         }
 
@@ -109,8 +134,26 @@ namespace _PerformanceTest.Libraries.Serialization
             //var x = new HashSet<int[]> { new int[] { 1, 2, 3, 4, 5 }, null };
             //var x = new Collection<int>{ 1, 2, 3, 4, 5 };
             //var x = new DictionaryEntry(new object(), "alma");
-            var x = new SimpleClass { IntProp = 1, StringProp = "alma", ObjProp = " . " };
-            DoTestXmlSerialize(x, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute);
+            var x = new FullExtraComponent(true);
+
+            new TestOperation<string>
+            {
+                TestName = "Complex Object test",
+                RefOpName = "System.XmlSerializer",
+                TestOpName = "KGySoft.XmlSerializer",
+                Iterations = 10000,
+                ReferenceOperation = () =>
+                {
+                    var serializer = new SystemXmlSerializer(x.GetType());
+                    var sb = new StringBuilder();
+                    using (var sw = new StringWriter(sb))
+                        serializer.Serialize(sw, x);
+                    return sb.ToString();
+                },
+                DumpResult = false,
+                TestOperation = () => XmlSerializer.Serialize(x, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute).ToString(),
+                Repeat = 1
+            }.DoTest();
         }
     }
 }

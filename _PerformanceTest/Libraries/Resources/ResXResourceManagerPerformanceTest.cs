@@ -20,20 +20,20 @@ namespace _PerformanceTest.Libraries.Resources
                 {
                     TestName = "GetObject Invariant",
                     RefOpName = "ResourceManager",
-                    CheckOpName = "ResXResourceManager",
+                    TestOpName = "ResXResourceManager",
                     Iterations = 1000000,
-                    RefOp = () => refManager.GetObject("TestString", inv),
-                    CheckOp = () => manager.GetObject("TestString", inv),
+                    ReferenceOperation = () => refManager.GetObject("TestString", inv),
+                    TestOperation = () => manager.GetObject("TestString", inv),
                     Repeat = 5
                 };
 
-            DoTest(test);
+            test.DoTest();
 
             test.TestName = "GetObject fallback to invariant";
-            test.RefOp = () => refManager.GetObject("TestString", hu);
-            test.CheckOp = () => manager.GetObject("TestString", hu);
+            test.ReferenceOperation = () => refManager.GetObject("TestString", hu);
+            test.TestOperation = () => manager.GetObject("TestString", hu);
 
-            DoTest(test);
+            test.DoTest();
 
             // 1. jelenleg a gyári vagy a resx-e a gyorsabb -> inv: 122.83 % - 128.50 %; hu: 127.37 % - 136.73 %
             // 2. a resx-ben mindenképpen overrideolni kell a GetString/Object-et, és beletenni az ortogonalitást. -> inv: 144.92 % - 149.58 %; hu: 151.30 % - 153.41 %
