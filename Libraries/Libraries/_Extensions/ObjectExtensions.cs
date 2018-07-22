@@ -26,7 +26,7 @@ using KGySoft.Libraries.Serialization;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Extension methods for <see cref="Object"/> class
+    /// Contains extension methods for the <see cref="Object"/> type.
     /// </summary>
     public static class ObjectExtensions
     {

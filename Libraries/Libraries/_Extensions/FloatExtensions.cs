@@ -26,7 +26,7 @@ using KGySoft.Libraries.Reflection;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Extensions for the <see cref="float"/> type.
+    /// Contains extension methods for the <see cref="float">float</see> type.
     /// </summary>
     public static class FloatExtensions
     {

@@ -2753,7 +2753,7 @@ namespace _LibrariesTest.Libraries.Serialization
         /// </remarks>
         /// <returns>
         /// A <see cref="string"/> instance that is good for visualizing a raw UTF-8 string.</returns>
-        private static string ToRawString(byte[] bytes) => Encoding.Default.GetString(bytes).Replace('\0', Unicode.square);
+        private static string ToRawString(byte[] bytes) => Encoding.Default.GetString(bytes).Replace('\0', '\u25A1'); // "\0" to "□" in output
 
         #endregion
     }

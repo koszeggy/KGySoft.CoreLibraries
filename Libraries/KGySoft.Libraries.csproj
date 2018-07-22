@@ -17,6 +17,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutputPath>bin\$(Configuration)</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_NET35|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -92,13 +93,16 @@
     <Compile Include="Libraries\Serialization\XmlReaderDeserializer.cs" />
     <Compile Include="Libraries\Serialization\XmlWriterSerializer.cs" />
     <Compile Include="Libraries\Serialization\XmlSerializerBase.cs" />
+    <Compile Include="Libraries\_Extensions\DateTimeExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\DictionaryExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DoubleExtensions.cs" />
     <Compile Include="Libraries\_Extensions\EnumerableExtensions.cs" />
     <Compile Include="Libraries\_Extensions\EnumExtensions.cs" />
     <Compile Include="Libraries\_Extensions\FloatExtensions.cs" />
     <Compile Include="Libraries\_Extensions\ObjectExtensions.cs" />
     <Compile Include="Libraries\_Extensions\ByteArrayExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\RandomExtensions.cs" />
     <Compile Include="Libraries\_Extensions\StreamExtensions.cs" />
     <Compile Include="Libraries\_Extensions\StringComparerExtensions.cs" />
     <Compile Include="Libraries\_Extensions\StringExtensions.cs" />
@@ -171,8 +175,8 @@
     <Compile Include="Libraries\WinApi\Fusion.cs" />
     <Compile Include="Libraries\WinApi\IAssemblyCache.cs" />
     <None Include="LICENSE" />
+    <Compile Include="Libraries\_Extensions\WaitHandleExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Libraries\Unicode.cs" />
     <Compile Include="ComponentModel\EncodingConverter.cs" />
     <Compile Include="ComponentModel\FlagsEnumConverter.cs" />
     <Compile Include="ComponentModel\VersionConverter.cs" />

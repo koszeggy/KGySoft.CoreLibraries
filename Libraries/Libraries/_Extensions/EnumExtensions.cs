@@ -24,7 +24,7 @@ using System.Collections.Generic;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Extensions for <see cref="Enum"/> instances (<see langword="enum"/>s).
+    /// Contains extension methods for the <see cref="Enum"/> type (<see langword="enum"/>s).
     /// </summary>
     public static class EnumExtensions
     {

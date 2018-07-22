@@ -71,7 +71,11 @@
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="sysglobl" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -88,7 +92,8 @@
     <Compile Include="Libraries\Collections\CircularSortedListTest.cs" />
     <Compile Include="Libraries\Diagnostics\DiagnosticToolsTest.cs" />
     <Compile Include="Libraries\EnumTest.cs" />
-    <Compile Include="Libraries\Extensions\ByteArrayToolsTest.cs" />
+    <Compile Include="Libraries\Extensions\ByteArrayExtensionsTest.cs" />
+    <Compile Include="Libraries\Extensions\RandomExtensionsTest.cs" />
     <Compile Include="Libraries\Resources\DynamicResourceManagerTest.cs" />
     <Compile Include="Libraries\Resources\HybridResourceManagerTest.cs" />
     <Compile Include="Libraries\LanguageTest.cs" />

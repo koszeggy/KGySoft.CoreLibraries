@@ -28,78 +28,11 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// String extension methods
+    /// Contains extension methods for the <see cref="string">string</see> type.
     /// </summary>
     public static class StringExtensions
     {
         #region Methods
-
-        /// <summary>
-        /// Gets a token value from a string.
-        /// </summary>
-        /// <param name="s">The string that contains tokens.</param>
-        /// <param name="token">Token key.</param>
-        /// <param name="tokenSeparator">A substring that separates tokens. To escape token separator it can be doubled.</param>
-        /// <param name="nameValueSeparator">A substring that separates the token key and value in a token.</param>
-        /// <param name="ignoreCase">When <c>true</c>, casing is ignored by invariant culture.</param>
-        /// <returns>Value of the token or empty string if token is not found. Returned value
-        /// is trimmed. To avoid trimming, value should be embedded into single or double quotes.</returns>
-        /// <example>
-        /// <code lang="C#">
-        /// string s = "top: 20; left: 30; padding: 5".GetTokenValue("left", ";", ":", false); // s == "30"
-        /// </code>
-        /// </example>
-        public static string GetTokenValue(this string s, string token, string tokenSeparator, string nameValueSeparator, bool ignoreCase)
-        {
-            if (s == null)
-                return null;
-            StringComparison comp = ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
-            if (s.IndexOf(token + nameValueSeparator, comp) < 0)
-                return String.Empty;
-            const string escapedToken = "\"<!TokenEscape!>\"";
-            s = s.Replace(tokenSeparator + tokenSeparator, escapedToken);
-            int tokenPos = 0;
-            while (tokenPos >= 0)
-            {
-                tokenPos = s.IndexOf(token, tokenPos, comp);
-
-                // checking whether the found token is only a substring in another token or a full word
-                if (tokenPos > 0 && (Char.IsLetterOrDigit(s[tokenPos - 1]) || s[tokenPos - 1] == '_'))
-                {
-                    tokenPos++;
-                    continue;
-                }
-
-                if (tokenPos >= 0)
-                {
-                    string result = s.Substring(tokenPos + token.Length + nameValueSeparator.Length,
-                            (s + tokenSeparator).IndexOf(tokenSeparator, tokenPos, comp) - tokenPos - token.Length - nameValueSeparator.Length).Trim()
-                            .Replace(escapedToken, tokenSeparator).RemoveQuotes();
-                    return result;
-                }
-            }
-            return String.Empty;
-        }
-
-        /// <summary>
-        /// Gets a token value from a string.
-        /// </summary>
-        /// <param name="s">The string that contains tokens.</param>
-        /// <param name="token">Token key.</param>
-        /// <param name="tokenSeparator">A substring that separates tokens.
-        /// Doubled token separator is considered as inline content.</param>
-        /// <param name="nameValueSeparator">A substring that separates the token key and value in a token.</param>
-        /// <returns>Value of the token or empty string if token is not found. Returned value
-        /// is trimmed. To avoid trimming, value should be embedded into single or double quotes.</returns>
-        /// <example>
-        /// <code lang="C#">
-        /// string s = "top: 20; left: 30; padding: 5".GetTokenValue("left", ";", ":"); // s == "30"
-        /// </code>
-        /// </example>
-        public static string GetTokenValue(this string s, string token, string tokenSeparator, string nameValueSeparator)
-        {
-            return GetTokenValue(s, token, tokenSeparator, nameValueSeparator, false);
-        }
 
         /// <summary>
         /// Extracts content of a single or double quoted string.
@@ -211,6 +144,26 @@ namespace KGySoft.Libraries
             }
 
             return result.ToString();
+        }
+
+        /// <summary>
+        /// Tries to convert the specified <see cref="string">string</see> to an <see cref="Enum">enum</see> value.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see cref="Enum">enum</see>.</typeparam>
+        /// <param name="s">The <see cref="string">string</see> to convert.</param>
+        /// <param name="definedOnly">If <c>true</c>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
+        /// If <c>false</c>, the result can be a non-defined value, too.</param>
+        /// <returns>A non-<see langword="null"/> value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
+        public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+        {
+            if (s == null)
+                return null;
+
+            if (!Enum<TEnum>.TryParse(s, out TEnum value))
+                return null;
+
+            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
         }
 
         #endregion
