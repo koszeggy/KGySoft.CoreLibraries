@@ -56,9 +56,20 @@ namespace _LibrariesTest.Libraries.Extensions
 
             public void TestDouble(double min, double max)
             {
-                var result = this.NextDouble(min, max);
-                Console.WriteLine($@"Random double {min.ToRoundtripString()}..{max.ToRoundtripString()}: {result.ToRoundtripString()}");
-                Assert.IsTrue(result >= min && result < max);
+                Console.Write($@"Random double {min.ToRoundtripString()}..{max.ToRoundtripString()}: ");
+                double result;
+                try
+                {
+                    result = this.NextDouble(min, max);
+                    Console.WriteLine(result.ToRoundtripString());
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
             }
         }
 
@@ -99,27 +110,40 @@ namespace _LibrariesTest.Libraries.Extensions
         }
 
         [TestMethod]
-        public void NextDoubleBigRangeTest()
+        public void NextDoubleTest()
         {
             var rnd = new TestRandom();
 
-            rnd.WithNextDoubles(0.99999999999999989).WithNextIntegers(63).TestDouble(0, long.MaxValue);
-            //rnd.WithNextDoubles(0.99999999999999989).WithNextIntegers(63).TestDouble(long.MinValue, long.MaxValue);
-            //rnd.WithNextDoubles(0).WithNextIntegers(63).TestDouble(long.MinValue, long.MaxValue);
-            rnd.WithNextDoubles(0).WithNextIntegers(63).TestDouble(long.MinValue, 0);
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, float.MaxValue);
+            // edge cases
+            rnd.TestDouble(double.MinValue, double.MaxValue);
+            rnd.TestDouble(double.NegativeInfinity, double.PositiveInfinity);
+            rnd.TestDouble(0, double.PositiveInfinity);
+            rnd.TestDouble(double.MaxValue, double.PositiveInfinity);
+            rnd.TestDouble(double.NegativeInfinity, double.MinValue);
+            Throws<ArgumentOutOfRangeException>(() => rnd.TestDouble(double.PositiveInfinity, double.PositiveInfinity));
+            Throws<ArgumentOutOfRangeException>(() => rnd.TestDouble(double.NegativeInfinity, double.NegativeInfinity));
+            Throws<ArgumentOutOfRangeException>(() => rnd.TestDouble(0, double.NaN));
 
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, (double)long.MaxValue * 4); // small
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 1000); // small
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 10000); // worst case with effectively small exponent range
+            // big range
+            rnd.WithNextDoubles(0.99999999999999989).WithNextIntegers(63).TestDouble(0, long.MaxValue);
+            rnd.WithNextDoubles(0.99999999999999989).WithNextIntegers(63).TestDouble(long.MinValue, long.MaxValue);
+            rnd.WithNextDoubles(0).WithNextIntegers(63).TestDouble(long.MinValue, long.MaxValue);
+            rnd.WithNextDoubles(0).WithNextIntegers(63).TestDouble(long.MinValue, 0);
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, float.MaxValue);
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(-0.1, ulong.MaxValue); // worst case with very imbalanced positive-negative ranges
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 52, (1L << 54) + 10); // narrow exponent range
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 10000); // worst case with effectively small exponent range
             rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble((double)long.MaxValue * 1024, (double)long.MaxValue * 4100); // worst case with effectively small exponent range
             rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble((double)long.MinValue * 4100, (double)long.MinValue * 1024); // worst case with effectively small exponent range
 
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 52, (1L << 54) + 10); // mid
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 52, 1L << 53); // mid
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 53, (1L << 53) + 4); // mid
+            // small range
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, (double)long.MaxValue * 4); // small
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 1000); // small
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 53, (1L << 53) + 2); // small
 
-            //rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 53, (1L << 53) + 2); // small
+            // mid range
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 52, 1L << 53); // mid
+            rnd.WithNextDoubles(null).WithNextIntegers(null).TestDouble(1L << 53, (1L << 53) + 4); // mid
         }
     }
 }
