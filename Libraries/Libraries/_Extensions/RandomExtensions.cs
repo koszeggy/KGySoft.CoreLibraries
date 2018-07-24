@@ -436,7 +436,7 @@ namespace KGySoft.Libraries
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
         /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both values are beyond the precision of the <see cref="double"/> type.</para>
         /// </remarks>
-        public static double NextDouble(this Random random, double minValue, double maxValue)
+        public static double NextDouble(this Random random, double minValue, double maxValue, RandomScale scale = RandomScale.Auto)
         {
             double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
 
@@ -448,59 +448,56 @@ namespace KGySoft.Libraries
                 || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
                 throw new ArgumentOutOfRangeException(nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
 
+            double range = maxValue - minValue;
+            if (maxValue < minValue || Double.IsNaN(range))
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.ArgumentOutOfRange));
+
+            if (!Enum<RandomScale>.IsDefined(scale))
+                throw new ArgumentOutOfRangeException(nameof(scale), Res.Get(Res.ArgumentOutOfRange));
+
             minValue = AdjustValue(minValue);
             maxValue = AdjustValue(maxValue);
             if (minValue.Equals(maxValue))
                 return minValue;
 
-            double range = maxValue - minValue;
-            if (maxValue < minValue || Double.IsNaN(range))
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.ArgumentOutOfRange));
+            bool posAndNeg = minValue < 0d && maxValue > 0d;
+            double minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
+            double maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
+
+            // if linear scaling is forced...
+            if (scale == RandomScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16 or when the order of magnitude is smaller than 4...
+                || (scale == RandomScale.Auto && !Double.IsInfinity(range) && (maxAbs <= ushort.MaxValue || maxAbs < minAbs * 16))
+                // or order of magnitude is smaller than 2 (even if log scale would be preferred)
+                || (scale == RandomScale.PreferLogarithmic && !posAndNeg && maxAbs < minAbs * 4))
+            {
+                range = AdjustValue(range);
+                return random.NextDouble() * range + minValue;
+            }
+
+            // Possible double exponents are -1022..1023 but we don't generate negative exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
+            int minExponent = posAndNeg || minAbs.Equals(0d) ? 0 : (int)Math.Log(minAbs, 2d);
+            int maxExponent = (int)Math.Ceiling(Math.Log(maxAbs, 2d));
+
+            // We go only below zero exponent for truly small ranges.
+            if (maxExponent < minExponent || (maxExponent < 0 && minExponent > maxExponent - 4))
+                minExponent = maxExponent - 4;
 
             double result;
-            const double maxPrecision = 1L << 53;
-
-            // Mid-range
-            if (range > 2d && range <= maxPrecision)
+            do
             {
-                double minInt = Math.Ceiling(minValue);
-                double maxInt = Math.Floor(maxValue);
-                double fractionRange = (minInt - minValue) + (maxValue - maxInt);
-                result = minValue + random.NextUInt64((ulong)(maxInt - minInt)) + (random.NextDouble() * fractionRange);
-
-                // In case of very large numbers beyond double precision (eg. 1L << 53, (1L << 53) + 4) the result can equal to maxValue
-                return result; // .Equals(maxValue) ? minValue : result;
-            }
-
-            // Big range with wide enough exponent difference
-            if (Double.IsInfinity(range) || (range > maxPrecision && maxValue > minValue * 4))
-            {
-                // Possible exponents are -1022..1023 with double but we don't generate negative
-                // exponents for big ranges because that would cause too many near-to zero results,
-                // which are much smaller than the original NextDouble value. We generate those in small range only.
-                bool posAndNeg = minValue < 0d && maxValue > 0d;
-                double minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
-                int minExponent = posAndNeg || minAbs.Equals(0d) ? 0 : (int)Math.Log(minAbs, 2d);
-                int maxExponent = Double.IsInfinity(range) ? 1023 : (int)Math.Ceiling(Math.Log(range, 2d));
-
                 // worst case: very imbalanced range eg. -0.1 .. ulong.maxvalue
-                do
-                {
-                    double mantissa = random.NextDouble();
-                    if (posAndNeg)
-                        mantissa *= 2d;
-                    if (minValue < 0d)
-                        mantissa -= 1d;
+                double mantissa = random.NextDouble();
+                if (posAndNeg)
+                    mantissa *= 2d;
+                if (minValue < 0d)
+                    mantissa -= 1d;
 
-                    result = mantissa * Math.Pow(2d, random.Next(minExponent, maxExponent + 1));
-                } while (result < minValue || result > maxValue);
+                result = mantissa * Math.Pow(2d, random.Next(minExponent, maxExponent + 1));
+            } while (result < minValue || result > maxValue);
 
-                return result;
-            }
-
-            // Small range (< 2) or very tight exponent difference
-            result = random.NextDouble() * range + minValue;
-            return result; //.Equals(maxValue) ? minValue : result;
+            return result;
         }
 
         #endregion
