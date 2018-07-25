@@ -422,8 +422,17 @@ namespace KGySoft.Libraries
 
         #region Floating-point types
 
-        public static double NextDouble(this Random random, double max)
-            => random.NextDouble(0d, max);
+        /// <summary>
+        /// Returns a random <see cref="double"/> value that is less or equal to the specified maximum.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
+        /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
+        /// If <paramref name="inclusiveUpperBound"/> if <c>false</c>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        public static double NextDouble(this Random random, double maxValue, RandomScale scale = RandomScale.Auto)
+            => random.NextDouble(0d, maxValue);
 
         /// <summary>
         /// Returns a random <see cref="double"/> value that is within a specified range.
@@ -431,6 +440,8 @@ namespace KGySoft.Libraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The lower bound of the random number returned.</param>
         /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
         /// <returns>A double-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
@@ -480,7 +491,7 @@ namespace KGySoft.Libraries
             int minExponent = posAndNeg || minAbs.Equals(0d) ? 0 : (int)Math.Log(minAbs, 2d);
             int maxExponent = (int)Math.Ceiling(Math.Log(maxAbs, 2d));
 
-            // We go only below zero exponent for truly small ranges.
+            // We go only below zero exponent if the given range is already small. Even lower than -1022 is no problem.
             if (maxExponent < minExponent || (maxExponent < 0 && minExponent > maxExponent - 4))
                 minExponent = maxExponent - 4;
 
