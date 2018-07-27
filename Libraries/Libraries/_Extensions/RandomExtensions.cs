@@ -423,14 +423,68 @@ namespace KGySoft.Libraries
         #region Floating-point types
 
         /// <summary>
+        /// Returns a random <see cref="float"/> value that is greater than or equal to 0.0 and less than 1.0.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
+        public static float NextFloat(this Random random)
+            => (float)random.NextDouble();
+
+        /// <summary>
+        /// Returns a random <see cref="float"/> value that is less or equal to the specified maximum.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
+        /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
+        /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// </para>
+        /// </remarks>
+        public static float NextFloat(this Random random, float maxValue, RandomScale scale = RandomScale.Auto)
+            => random.NextFloat(0f, maxValue, scale);
+
+        /// <summary>
+        /// Returns a random <see cref="float"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
+        /// <returns>A single-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
+        /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// </remarks>
+        public static float NextFloat(this Random random, float minValue, float maxValue, RandomScale scale = RandomScale.Auto)
+        {
+            float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
+
+            // both are the same infinity
+            if (Single.IsPositiveInfinity(minValue) && Single.IsPositiveInfinity(maxValue)
+                || Single.IsNegativeInfinity(minValue) && Single.IsNegativeInfinity(maxValue))
+                throw new ArgumentOutOfRangeException(nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
+
+            return (float)random.NextDouble(AdjustValue(minValue), AdjustValue(maxValue), scale);
+        }
+
+        /// <summary>
         /// Returns a random <see cref="double"/> value that is less or equal to the specified maximum.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
         /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
-        /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <c>false</c>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// <returns>A double-precision floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
+        /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// </para>
+        /// </remarks>
         public static double NextDouble(this Random random, double maxValue, RandomScale scale = RandomScale.Auto)
             => random.NextDouble(0d, maxValue);
 
@@ -445,7 +499,8 @@ namespace KGySoft.Libraries
         /// <returns>A double-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
-        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both values are beyond the precision of the <see cref="double"/> type.</para>
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
+        /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </remarks>
         public static double NextDouble(this Random random, double minValue, double maxValue, RandomScale scale = RandomScale.Auto)
         {
@@ -459,7 +514,7 @@ namespace KGySoft.Libraries
                 || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
                 throw new ArgumentOutOfRangeException(nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
 
-            double range = maxValue - minValue;
+            //double range = maxValue - minValue;
             if (maxValue < minValue || Double.IsNaN(range))
                 throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.ArgumentOutOfRange));
 
@@ -477,8 +532,8 @@ namespace KGySoft.Libraries
 
             // if linear scaling is forced...
             if (scale == RandomScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16 or when the order of magnitude is smaller than 4...
-                || (scale == RandomScale.Auto && !Double.IsInfinity(range) && (maxAbs <= ushort.MaxValue || maxAbs < minAbs * 16))
+                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4...
+                || (scale == RandomScale.Auto && !Double.IsInfinity(range) && (maxAbs <= ushort.MaxValue || !posAndNeg && maxAbs < minAbs * 16))
                 // or order of magnitude is smaller than 2 (even if log scale would be preferred)
                 || (scale == RandomScale.PreferLogarithmic && !posAndNeg && maxAbs < minAbs * 4))
             {
@@ -511,6 +566,32 @@ namespace KGySoft.Libraries
             return result;
         }
 
+        /// <summary>
+        /// Returns a random <see cref="decimal"/> value that is greater than or equal to 0.0 and less than 1.0.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A decimal floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
+        public static decimal NextDecimal(this Random random)
+        {
+            decimal result;
+            do
+            {
+                // The high bits of 0.9999999999999999999999999999m are 542101086.
+                result = new decimal(random.NextInt32(), random.NextInt32(), random.Next(542101087), false, 28);
+            } while (result >= 1m);
+
+            return result;
+        }
+
+        public static decimal NextDecimal(this Random random, decimal maxValue)
+            => NextDecimal(random, decimal.Zero, maxValue);
+
+        public static decimal NextDecimal(this Random random, decimal minValue, decimal maxValue)
+        {
+            //var rand = NextDecimal(random);
+            //return (maxValue * rand) + (minValue * (1 - rand));
+        }
+
         #endregion
 
         #region Char/String
@@ -526,61 +607,6 @@ namespace KGySoft.Libraries
             => (char)random.NextUInt64(minValue, maxValue, true);
 
         #endregion
-
-        public static float NextFloat(this Random random)
-            => (float)random.NextDouble();
-
-        public static float NextFloat(this Random random, float max)
-            => random.NextFloat(0f, max);
-
-        public static float NextFloat(this Random random, float min, float max)
-        {
-            if (max < min)
-            {
-                throw new ArgumentOutOfRangeException(nameof(max));
-            }
-
-            float range = max - min;
-            if (float.IsInfinity(range) || range >= float.MaxValue)
-            {
-                float result;
-                do
-                {
-                    byte[] buf = new byte[4];
-                    random.NextBytes(buf);
-                    result = BitConverter.ToSingle(buf, 0);
-                }
-                while (result < min || result > max || float.IsInfinity(result) || float.IsNaN(result));
-                return result;
-            }
-
-            return ((float)random.NextDouble() * range) + min;
-        }
-
-        public static decimal NextDecimal(this Random random)
-        {
-            var result = 1m;
-            while (result >= 1)
-            {
-                var a = random.Next();
-                var b = random.Next();
-
-                // The high bits of 0.9999999999999999999999999999m are 542101086.
-                var c = random.Next(542101087);
-                result = new decimal(a, b, c, false, 28);
-            }
-
-            return result;
-        }
-
-        public static decimal NextDecimal(this Random random, decimal max)
-            => NextDecimal(random, decimal.Zero, max);
-
-        public static decimal NextDecimal(this Random random, decimal min, decimal max)
-        {
-            var rand = NextDecimal(random);
-            return (max * rand) + (min * (1 - rand));
-        }
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="collection"/> (randomizes its elements).
