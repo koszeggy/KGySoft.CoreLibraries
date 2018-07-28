@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Runtime.CompilerServices;
 using KGySoft.Libraries.Resources;
 
 #endregion
@@ -510,13 +510,12 @@ namespace KGySoft.Libraries
                 throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
 
             // both are the same infinity
-            if (Double.IsPositiveInfinity(minValue) && Double.IsPositiveInfinity(maxValue)
-                || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
-                throw new ArgumentOutOfRangeException(nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
-
-            //double range = maxValue - minValue;
-            if (maxValue < minValue || Double.IsNaN(range))
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.ArgumentOutOfRange));
+            if ((Double.IsPositiveInfinity(minValue) && Double.IsPositiveInfinity(maxValue) || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
+                // or any of them is NaN
+                || Double.IsNaN(minValue) || Double.IsNaN(maxValue)
+                // or max < min
+                || maxValue < minValue)
+                throw new ArgumentOutOfRangeException(Double.IsNaN(maxValue) || maxValue < minValue ? nameof(maxValue) : nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
 
             if (!Enum<RandomScale>.IsDefined(scale))
                 throw new ArgumentOutOfRangeException(nameof(scale), Res.Get(Res.ArgumentOutOfRange));
@@ -532,38 +531,59 @@ namespace KGySoft.Libraries
 
             // if linear scaling is forced...
             if (scale == RandomScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4...
-                || (scale == RandomScale.Auto && !Double.IsInfinity(range) && (maxAbs <= ushort.MaxValue || !posAndNeg && maxAbs < minAbs * 16))
-                // or order of magnitude is smaller than 2 (even if log scale would be preferred)
-                || (scale == RandomScale.PreferLogarithmic && !posAndNeg && maxAbs < minAbs * 4))
+                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                || (scale == RandomScale.Auto && (maxAbs <= ushort.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
             {
-                range = AdjustValue(range);
-                return random.NextDouble() * range + minValue;
+                return NextDoubleLinear(random, minValue, maxValue);
+            }
+
+            int sign;
+
+            // positive or negative only
+            if (!posAndNeg)
+                sign = minValue < 0d ? -1 : 1;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                double sample = random.NextDouble();
+                var rate = minAbs / maxAbs;
+                var absMinValue = Math.Abs(minValue);
+                bool isNeg = absMinValue <= maxValue
+                    ? rate / 2d > sample
+                    : rate / 2d < sample;
+                sign = isNeg ? -1 : 1;
+
+                // now adjusting the limits for 0..[selected range]
+                minAbs = 0d;
+                maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
             }
 
             // Possible double exponents are -1022..1023 but we don't generate negative exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
-            int minExponent = posAndNeg || minAbs.Equals(0d) ? 0 : (int)Math.Log(minAbs, 2d);
-            int maxExponent = (int)Math.Ceiling(Math.Log(maxAbs, 2d));
+            double minExponent = minAbs.Equals(0d) ? 0d : Math.Log(minAbs, 2d);
+            double maxExponent = Math.Log(maxAbs, 2d);
+            if (minExponent.Equals(maxExponent))
+                return minValue;
 
-            // We go only below zero exponent if the given range is already small. Even lower than -1022 is no problem.
-            if (maxExponent < minExponent || (maxExponent < 0 && minExponent > maxExponent - 4))
+            // We go only below zero exponent if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
             double result;
             do
             {
-                // worst case: very imbalanced range eg. -0.1 .. ulong.maxvalue
-                double mantissa = random.NextDouble();
-                if (posAndNeg)
-                    mantissa *= 2d;
-                if (minValue < 0d)
-                    mantissa -= 1d;
-
-                result = mantissa * Math.Pow(2d, random.Next(minExponent, maxExponent + 1));
+                result = sign * Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
             } while (result < minValue || result > maxValue);
-
             return result;
+        }
+
+#if !NET35 && !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static double NextDoubleLinear(Random random, double minValue, double maxValue)
+        {
+            double sample = random.NextDouble();
+            return (maxValue * sample) + (minValue * (1d - sample));
         }
 
         /// <summary>
@@ -573,6 +593,9 @@ namespace KGySoft.Libraries
         /// <returns>A decimal floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
         public static decimal NextDecimal(this Random random)
         {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+
             decimal result;
             do
             {
@@ -583,13 +606,79 @@ namespace KGySoft.Libraries
             return result;
         }
 
-        public static decimal NextDecimal(this Random random, decimal maxValue)
-            => NextDecimal(random, decimal.Zero, maxValue);
+        public static decimal NextDecimal(this Random random, decimal maxValue, RandomScale scale = RandomScale.Auto)
+            => NextDecimal(random, 0m, maxValue, scale);
 
-        public static decimal NextDecimal(this Random random, decimal minValue, decimal maxValue)
+        public static decimal NextDecimal(this Random random, decimal minValue, decimal maxValue, RandomScale scale = RandomScale.Auto)
         {
-            //var rand = NextDecimal(random);
-            //return (maxValue * rand) + (minValue * (1 - rand));
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+
+            if (maxValue < minValue)
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.ArgumentOutOfRange));
+
+            if (!Enum<RandomScale>.IsDefined(scale))
+                throw new ArgumentOutOfRangeException(nameof(scale), Res.Get(Res.ArgumentOutOfRange));
+
+            if (minValue == maxValue)
+                return minValue;
+
+            bool posAndNeg = minValue < 0m && maxValue > 0m;
+            decimal minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
+            decimal maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
+
+            // if linear scaling is forced...
+            if (scale == RandomScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                || (scale == RandomScale.Auto && (maxAbs <= ushort.MaxValue || !posAndNeg && maxAbs / 16m < minAbs)))
+            {
+                return NextDecimalLinear(random, minValue, maxValue);
+            }
+
+            int sign;
+
+            // positive or negative only
+            if (!posAndNeg)
+                sign = minValue < 0m ? -1 : 1;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                decimal sample = random.NextDecimal();
+                var rate = minAbs / maxAbs;
+                var absMinValue = Math.Abs(minValue);
+                bool isNeg = absMinValue <= maxValue
+                    ? rate / 2m > sample
+                    : rate / 2m < sample;
+                sign = isNeg ? -1 : 1;
+
+                // now adjusting the limits for 0..[selected range]
+                minAbs = 0m;
+                maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
+            }
+
+            // Possible double exponents are -1022..1023 but we don't generate negative exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
+            decimal minExponent = minAbs == 0m ? 0m : MathDecimal.Log10(minAbs);
+            decimal maxExponent = MathDecimal.Log10(maxAbs);
+            if (minExponent.Equals(maxExponent))
+                return minValue;
+
+            // We go only below zero exponent if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - 4;
+
+            decimal result;
+            do
+            {
+                result = sign * MathDecimal.Pow(10m, NextDecimalLinear(random, minExponent, maxExponent));
+            } while (result < minValue || result > maxValue);
+            return result;
+        }
+
+        private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
+        {
+            decimal sample = random.NextDecimal();
+            return (maxValue * sample) + (minValue * (1m - sample));
         }
 
         #endregion
@@ -606,7 +695,7 @@ namespace KGySoft.Libraries
         public static char NextChar(this Random random, char minValue = Char.MinValue, char maxValue = Char.MaxValue)
             => (char)random.NextUInt64(minValue, maxValue, true);
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="collection"/> (randomizes its elements).
@@ -625,6 +714,6 @@ namespace KGySoft.Libraries
             return collection.Select(item => new { Index = random.Next(), Value = item }).OrderBy(i => i.Index).Select(i => i.Value);
         }
 
-        #endregion
+#endregion
     }
 }

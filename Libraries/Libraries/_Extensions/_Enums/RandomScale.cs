@@ -32,9 +32,8 @@ namespace KGySoft.Libraries
         ForceLinear,
 
         /// <summary>
-        /// Prefers logarithmic scaling when generating random numbers.
-        /// If the order of magnitude between the minimum and maximum value is too narrow may chose linear scaling instead.
+        /// Forces to use logarithmic scaling when generating random numbers.
         /// </summary>
-        PreferLogarithmic
+        ForceLogarithmic
     }
 }

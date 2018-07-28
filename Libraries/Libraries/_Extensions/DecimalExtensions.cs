@@ -28,6 +28,9 @@ namespace KGySoft.Libraries
     /// </summary>
     public static class DecimalExtensions
     {
+        // TODO: https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/master/Math/DecimalMath/DecimalMath.cs
+
+
         #region Constants
 
         /// <summary>
@@ -59,6 +62,116 @@ namespace KGySoft.Libraries
         public static bool IsNegativeZero(this decimal value)
         {
             return value == 0m && (Decimal.GetBits(value)[3] & 0x80000000) != 0;
+        }
+
+        private const decimal e = 2.7182818284590452353602874713526624977572470936999595749m;
+        private const decimal eReciprocal = 0.3678794411714423215955237701614608674458111310317678m;
+
+        /// <summary>
+        /// log(10, e)
+        /// </summary>
+        private const decimal log10E = 0.434294481903251827651128918916605082294397005803666566114m;
+
+        private const int maxTaylorIteration = 100;
+
+        internal static decimal Log10(decimal x) => Log(x) * log10E;
+
+        private static decimal Log(decimal x)
+        {
+            if (x <= 0)
+                throw new ArgumentOutOfRangeException(nameof(x), Res.Get(Res.ArgumentOutOfRange));
+
+            int count = 0;
+            while (x >= 1m)
+            {
+                x *= eReciprocal;
+                count++;
+            }
+
+            while (x <= eReciprocal)
+            {
+                x *= e;
+                count--;
+            }
+
+            x--;
+            if (x == 0m)
+                return count;
+
+            // going on with Taylor series
+            decimal result = 0m;
+            decimal acc = 1m;
+            for (int i = 1; i <= maxTaylorIteration; i++)
+            {
+                decimal prevResult = result;
+                acc *= -x;
+                result += acc / i;
+                if (prevResult == result)
+                    break;
+            }
+
+            return count - result;
+        }
+
+        internal static decimal Pow(decimal x, decimal power) => Exp(power * Log(x));
+
+        private static decimal Exp(decimal x)
+        {
+            int count = 0;
+            while (x > 1m)
+            {
+                x--;
+                count++;
+            }
+
+            while (x < 0m)
+            {
+                x++;
+                count--;
+            }
+
+            decimal result = 1m;
+            decimal acc = 1m;
+            for (int i = 1; ; i++)
+            {
+                decimal prevResult = result;
+                acc *= x / i;
+                result += acc;
+                if (prevResult == result)
+                    break;
+            }
+
+            if (count != 0)
+                result = result * PowerInt(e, count);
+
+            return result;
+        }
+
+        private static decimal PowerInt(decimal x, int power)
+        {
+            if (power == 0)
+                return 1m;
+            if (power < 0)
+            {
+                power = -power;
+                x = 1m / x;
+            }
+
+            int q = power;
+            decimal prod = 1m;
+            decimal current = x;
+            while (q > 0)
+            {
+                if ((q & 1) == 1)
+                {
+                    prod = current * prod;
+                    q--;
+                }
+                current *= current; // value^i -> value^(2*i)
+                q /= 2;
+            }
+
+            return prod;
         }
 
         #endregion
