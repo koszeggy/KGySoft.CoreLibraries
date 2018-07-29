@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using KGySoft.Libraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -97,6 +98,28 @@ namespace _LibrariesTest.Libraries.Extensions
                     Assert.IsTrue(result >= min && result <= max);
                 }
             }
+
+            public void TestDecimal(decimal min, decimal max)
+            {
+                for (RandomScale scale = 0; scale <= RandomScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($@"Random decimal {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
+                    decimal result;
+                    try
+                    {
+                        result = this.NextDecimal(min, max, scale);
+                        Console.WriteLine(result.ToRoundtripString());
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max);
+                }
+            }
+
         }
 
         [TestMethod]
@@ -161,11 +184,11 @@ namespace _LibrariesTest.Libraries.Extensions
             rnd.TestDouble(long.MinValue, long.MaxValue);
             rnd.TestDouble(long.MinValue, 0);
             rnd.TestDouble(long.MaxValue, float.MaxValue);
-            rnd.TestDouble(-0.1, ulong.MaxValue); // worst case with very imbalanced positive-negative ranges
+            rnd.TestDouble(-0.1, ulong.MaxValue); // very imbalanced positive-negative ranges
             rnd.TestDouble(1L << 52, (1L << 54) + 10); // narrow exponent range
-            rnd.TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 10000); // worst case with effectively small exponent range
-            rnd.TestDouble((double)long.MaxValue * 1024, (double)long.MaxValue * 4100); // worst case with effectively small exponent range
-            rnd.TestDouble((double)long.MinValue * 4100, (double)long.MinValue * 1024); // worst case with effectively small exponent range
+            rnd.TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 10000); // small exponent range
+            rnd.TestDouble((double)long.MaxValue * 1024, (double)long.MaxValue * 4100); // small exponent range
+            rnd.TestDouble((double)long.MinValue * 4100, (double)long.MinValue * 1024); // small exponent range
 
             // small range
             rnd.TestDouble(long.MaxValue, (double)long.MaxValue * 4);
@@ -187,19 +210,52 @@ namespace _LibrariesTest.Libraries.Extensions
         }
 
         [TestMethod]
+        public void NextDecimalTest()
+        {
+            var rnd = new TestRandom();
+
+            // edge cases
+            rnd.TestDecimal(decimal.MinValue, decimal.MaxValue);
+            rnd.TestDecimal(0, decimal.MaxValue);
+            rnd.TestDecimal(0, DecimalExtensions.Epsilon);
+            rnd.TestDecimal(DecimalExtensions.Epsilon, DecimalExtensions.Epsilon * 4);
+            rnd.TestDecimal(Decimal.MaxValue / 4, Decimal.MaxValue);
+            rnd.TestDecimal(Decimal.MaxValue / 2, Decimal.MaxValue);
+            rnd.TestDecimal(-DecimalExtensions.Epsilon, DecimalExtensions.Epsilon);
+            rnd.TestDecimal(0.000000001m, 0.0000000011m);
+            rnd.TestDecimal(10000, 11000);
+
+            // big range
+            rnd.TestDecimal(long.MinValue, long.MaxValue);
+            rnd.TestDecimal(long.MinValue, 0);
+            rnd.TestDecimal(-0.1m, ulong.MaxValue); // very imbalanced positive-negative ranges
+            rnd.TestDecimal(1L << 52, (1L << 54) + 10); // narrow exponent range
+            rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4 + 10000); // small exponent range
+            rnd.TestDecimal((decimal)long.MaxValue * 1024, (decimal)long.MaxValue * 4100); // small exponent range
+            rnd.TestDecimal((decimal)long.MinValue * 4100, (decimal)long.MinValue * 1024); // small exponent range
+
+            // small range
+            rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4);
+            rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4 + 1000);
+            rnd.TestDecimal(1L << 53, (1L << 53) + 2);
+            rnd.TestDecimal(1L << 52, 1L << 53);
+        }
+
+        [TestMethod]
         public void ValuesTest()
         {
             var rnd = new Random(0);
+            //Console.WriteLine(Math.Log(Enumerable.Range(0, 10000).Select(_ => rnd.NextDouble()).Min(), 2));
             XElement result = new XElement("root");
             for (int i = 0; i < 10000; i++)
             {
-                result.Add(new XElement("item", rnd.NextDecimal(Decimal.MaxValue)));
+                result.Add(new XElement("item", rnd.NextDouble(int.MaxValue, RandomScale.ForceLogarithmic)));
             }
 
-            //using (var file = File.Create(Files.GetNextFileName($@"D:\temp\rnd\NextDecimal_0-MaxDecimal_Log.xml")))
-            //{
-            //    result.Save(file);
-            //}
+            using (var file = File.Create(Files.GetNextFileName($@"D:\temp\rnd\NextDouble_0-MaxInt32_Log.xml")))
+            {
+                result.Save(file);
+            }
         }
     }
 }

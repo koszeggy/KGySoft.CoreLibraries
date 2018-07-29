@@ -93,6 +93,7 @@
     <Compile Include="Libraries\Diagnostics\DiagnosticToolsTest.cs" />
     <Compile Include="Libraries\EnumTest.cs" />
     <Compile Include="Libraries\Extensions\ByteArrayExtensionsTest.cs" />
+    <Compile Include="Libraries\Extensions\DecimalExtensionsTest.cs" />
     <Compile Include="Libraries\Extensions\RandomExtensionsTest.cs" />
     <Compile Include="Libraries\Resources\DynamicResourceManagerTest.cs" />
     <Compile Include="Libraries\Resources\HybridResourceManagerTest.cs" />

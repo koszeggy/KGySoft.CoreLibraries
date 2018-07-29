@@ -486,7 +486,7 @@ namespace KGySoft.Libraries
         /// </para>
         /// </remarks>
         public static double NextDouble(this Random random, double maxValue, RandomScale scale = RandomScale.Auto)
-            => random.NextDouble(0d, maxValue);
+            => random.NextDouble(0d, maxValue, scale);
 
         /// <summary>
         /// Returns a random <see cref="double"/> value that is within a specified range.
@@ -558,14 +558,14 @@ namespace KGySoft.Libraries
                 maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
             }
 
-            // Possible double exponents are -1022..1023 but we don't generate negative exponents for big ranges because
+            // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
-            double minExponent = minAbs.Equals(0d) ? 0d : Math.Log(minAbs, 2d);
+            double minExponent = minAbs.Equals(0d) ? -16d : Math.Log(minAbs, 2d);
             double maxExponent = Math.Log(maxAbs, 2d);
             if (minExponent.Equals(maxExponent))
                 return minValue;
 
-            // We go only below zero exponent if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
@@ -656,21 +656,21 @@ namespace KGySoft.Libraries
                 maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
             }
 
-            // Possible double exponents are -1022..1023 but we don't generate negative exponents for big ranges because
-            // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
-            decimal minExponent = minAbs == 0m ? 0m : MathDecimal.Log10(minAbs);
-            decimal maxExponent = MathDecimal.Log10(maxAbs);
+            // We don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results
+            decimal minExponent = minAbs == 0m ? -5m : minAbs.Log10();
+            decimal maxExponent = maxAbs.Log10();
             if (minExponent.Equals(maxExponent))
                 return minValue;
 
-            // We go only below zero exponent if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            // We decrease exponents only if the given range is already small.
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
             decimal result;
             do
             {
-                result = sign * MathDecimal.Pow(10m, NextDecimalLinear(random, minExponent, maxExponent));
+                result = sign * 10m.Pow(NextDecimalLinear(random, minExponent, maxExponent));
             } while (result < minValue || result > maxValue);
             return result;
         }
