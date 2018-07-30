@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using KGySoft.Libraries.Resources;
@@ -31,6 +32,22 @@ namespace KGySoft.Libraries
     /// </summary>
     public static class RandomExtensions
     {
+        #region Constants
+
+        private const string digits = "0123456789";
+        private const string lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
+        private const string upperCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        private const string letters = lowerCaseLetters + upperCaseLetters;
+        private const string lettersAndDigits = digits + letters;
+
+        #endregion
+
+        #region Fields
+
+        private static readonly string ascii = new String(Enumerable.Range(32, 95).Select(i => (char)i).ToArray());
+
+        #endregion
+
         #region Methods
 
         #region Boolean
@@ -502,6 +519,7 @@ namespace KGySoft.Libraries
         /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
         /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </remarks>
+        [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
         public static double NextDouble(this Random random, double minValue, double maxValue, RandomScale scale = RandomScale.Auto)
         {
             double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
@@ -522,7 +540,7 @@ namespace KGySoft.Libraries
 
             minValue = AdjustValue(minValue);
             maxValue = AdjustValue(maxValue);
-            if (minValue.Equals(maxValue))
+            if (minValue == maxValue)
                 return minValue;
 
             bool posAndNeg = minValue < 0d && maxValue > 0d;
@@ -538,8 +556,6 @@ namespace KGySoft.Libraries
             }
 
             int sign;
-
-            // positive or negative only
             if (!posAndNeg)
                 sign = minValue < 0d ? -1 : 1;
             else
@@ -560,30 +576,19 @@ namespace KGySoft.Libraries
 
             // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
-            double minExponent = minAbs.Equals(0d) ? -16d : Math.Log(minAbs, 2d);
+            double minExponent = minAbs == 0d ? -16d : Math.Log(minAbs, 2d);
             double maxExponent = Math.Log(maxAbs, 2d);
-            if (minExponent.Equals(maxExponent))
+            if (minExponent == maxExponent)
                 return minValue;
 
             // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
-            double result;
-            do
-            {
-                result = sign * Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
-            } while (result < minValue || result > maxValue);
-            return result;
-        }
+            double result = sign * Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        private static double NextDoubleLinear(Random random, double minValue, double maxValue)
-        {
-            double sample = random.NextDouble();
-            return (maxValue * sample) + (minValue * (1d - sample));
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
         /// <summary>
@@ -599,16 +604,44 @@ namespace KGySoft.Libraries
             decimal result;
             do
             {
-                // The high bits of 0.9999999999999999999999999999m are 542101086.
-                result = new decimal(random.NextInt32(), random.NextInt32(), random.Next(542101087), false, 28);
+                // The hi argument of 0.9999999999999999999999999999m is 542101086.
+                // (MaxInt, MaxInt, 542101086) is actually bigger than 1 but in practice the loop almost never repeats.
+                result = new Decimal(random.NextInt32(), random.NextInt32(), random.Next(542101087), false, 28);
             } while (result >= 1m);
 
             return result;
         }
 
+        /// <summary>
+        /// Returns a random <see cref="decimal"/> value that is less or equal to the specified maximum.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
+        /// <returns>A decimal floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
+        /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// </para>
+        /// </remarks>
         public static decimal NextDecimal(this Random random, decimal maxValue, RandomScale scale = RandomScale.Auto)
             => NextDecimal(random, 0m, maxValue, scale);
 
+        /// <summary>
+        /// Returns a random <see cref="decimal"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="RandomScale.Auto"/>.</param>
+        /// <returns>A single-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/>.</para>
+        /// With <see cref="RandomScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// </remarks>
         public static decimal NextDecimal(this Random random, decimal minValue, decimal maxValue, RandomScale scale = RandomScale.Auto)
         {
             if (random == null)
@@ -636,8 +669,6 @@ namespace KGySoft.Libraries
             }
 
             int sign;
-
-            // positive or negative only
             if (!posAndNeg)
                 sign = minValue < 0m ? -1 : 1;
             else
@@ -675,12 +706,6 @@ namespace KGySoft.Libraries
             return result;
         }
 
-        private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
-        {
-            decimal sample = random.NextDecimal();
-            return (maxValue * sample) + (minValue * (1m - sample));
-        }
-
         #endregion
 
         #region Char/String
@@ -693,9 +718,108 @@ namespace KGySoft.Libraries
         /// <param name="maxValue">The inclusive upper bound of the random character returned. Must be greater or equal to <paramref name="minValue"/>.</param>
         /// <returns>A <see cref="char"/> value that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         public static char NextChar(this Random random, char minValue = Char.MinValue, char maxValue = Char.MaxValue)
-            => (char)random.NextUInt64(minValue, maxValue, true);
+            => minValue == Char.MinValue && maxValue == Char.MaxValue
+                ? (char)random.NextUInt16()
+                : (char)random.NextUInt64(minValue, maxValue, true);
 
-#endregion
+        /// <summary>
+        /// Returns a random <see cref="string"/> that has the length between the specified range and consists of the specified <paramref name="allowedCharacters"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minLength">The inclusive lower bound of the length of the returned string.</param>
+        /// <param name="maxLength">The inclusive upper bound of the length of the returned string. Must be greater or equal to <paramref name="minLength"/>.</param>
+        /// <param name="allowedCharacters">A string containing the allowed characters. Recurrence is not checked.</param>
+        /// <returns>A <see cref="string"/> value that has the length greater than or equal to <paramref name="minLength"/> and less and less or equal to <paramref name="maxLength"/>
+        /// and contains only the specified characters.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="minLength"/> is less than 0 or <paramref name="maxLength"/> is less than <paramref name="minLength"/></exception>
+        /// <exception cref="ArgumentException"><paramref name="allowedCharacters"/> is empty.</exception>
+        public static string NextString(this Random random, int minLength, int maxLength, string allowedCharacters)
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+            if (minLength < 0)
+                throw new ArgumentOutOfRangeException(nameof(minLength), Res.Get(Res.ArgumentOutOfRange));
+            if (maxLength < minLength)
+                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.Get(Res.ArgumentOutOfRange));
+            if (allowedCharacters == null)
+                throw new ArgumentNullException(nameof(allowedCharacters), Res.Get(Res.ArgumentNull));
+            if (allowedCharacters.Length == 0)
+                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(allowedCharacters));
+
+            return GenerateString(random, random.NextInt32(minLength, maxLength, true), allowedCharacters);
+        }
+
+        public static string NextString(this Random random, int minLength = 4, int maxLength = 10, RandomString strategy = RandomString.Ascii)
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+            if (minLength < 0)
+                throw new ArgumentOutOfRangeException(nameof(minLength), Res.Get(Res.ArgumentOutOfRange));
+            if (maxLength < minLength)
+                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.Get(Res.ArgumentOutOfRange));
+            if (!Enum<RandomString>.IsDefined(strategy))
+                throw new ArgumentOutOfRangeException(nameof(strategy), Res.Get(Res.ArgumentOutOfRange));
+
+            int length = random.NextInt32(minLength, maxLength, true);
+            if (length == 0)
+                return String.Empty;
+
+            switch (strategy)
+            {
+                case RandomString.AnyChars:
+                    return GenerateString(random, length, null);
+
+                case RandomString.AnyValidChars:
+                    return GenerateString(random, length, null, true);
+
+                case RandomString.Ascii:
+                    return GenerateString(random, length, ascii);
+
+                case RandomString.Digits:
+                    return GenerateString(random, length, digits);
+
+                case RandomString.DigitsNoLeadingZeros:
+                    return digits[random.Next(1, digits.Length)] + GenerateString(random, length - 1, digits);
+
+                case RandomString.Letters:
+                    return GenerateString(random, length, letters);
+
+                case RandomString.LettersAndDigits:
+                    return GenerateString(random, length, lettersAndDigits);
+
+                case RandomString.UpperCaseLetters:
+                    return GenerateString(random, length, upperCaseLetters);
+
+                case RandomString.LowerCaseLetters:
+                    return GenerateString(random, length, lowerCaseLetters);
+
+                case RandomString.TitleCaseLetters:
+                    return upperCaseLetters[random.Next(0, upperCaseLetters.Length)] + GenerateString(random, length - 1, lowerCaseLetters);
+
+                case RandomString.UpperCaseWord:
+                    return WordGenerator.GenerateWord(random, length).ToUpperInvariant();
+
+                case RandomString.LowerCaseWord:
+                    return WordGenerator.GenerateWord(random, length);
+
+                case RandomString.TitleCaseWord:
+                    string word = WordGenerator.GenerateWord(random, length);
+                    return Char.ToUpperInvariant(word[0]) + word.Substring(1);
+
+                case RandomString.Sentence:
+                    return WordGenerator.GenerateSentence(random, length);
+
+                default:
+                    throw new InvalidOperationException("Unexpected strategy");
+            }
+        }
+
+        #endregion
+
+        // TODO: enum, object
+
+        #region IEnumerable
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="collection"/> (randomizes its elements).
@@ -714,6 +838,44 @@ namespace KGySoft.Libraries
             return collection.Select(item => new { Index = random.Next(), Value = item }).OrderBy(i => i.Index).Select(i => i.Value);
         }
 
-#endregion
+        #endregion
+
+        #region Private Methods
+
+#if !NET35 && !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static double NextDoubleLinear(Random random, double minValue, double maxValue)
+        {
+            double sample = random.NextDouble();
+            return (maxValue * sample) + (minValue * (1d - sample));
+        }
+
+        private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
+        {
+            decimal sample = random.NextDecimal();
+            return (maxValue * sample) + (minValue * (1m - sample));
+        }
+
+        private static string GenerateString(Random random, int length, string allowedCharacters, bool checkInvalid = false)
+        {
+            if (length == 0)
+                return String.Empty;
+
+            var result = new char[length];
+            for (int i = 0; i < length; i++)
+            {
+                do
+                {
+                    result[i] = allowedCharacters?[random.Next(allowedCharacters.Length)] ?? random.NextChar();
+                } while (checkInvalid && Char.IsSurrogate(result[i]));
+            }
+
+            return new String(result);
+        }
+
+        #endregion
+
+        #endregion
     }
 }

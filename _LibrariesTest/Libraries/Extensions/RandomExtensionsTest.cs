@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Xml.Linq;
 using KGySoft.Libraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -219,8 +218,9 @@ namespace _LibrariesTest.Libraries.Extensions
             rnd.TestDecimal(0, decimal.MaxValue);
             rnd.TestDecimal(0, DecimalExtensions.Epsilon);
             rnd.TestDecimal(DecimalExtensions.Epsilon, DecimalExtensions.Epsilon * 4);
-            rnd.TestDecimal(Decimal.MaxValue / 4, Decimal.MaxValue);
             rnd.TestDecimal(Decimal.MaxValue / 2, Decimal.MaxValue);
+            rnd.TestDecimal(Decimal.MaxValue - 1, Decimal.MaxValue);
+            rnd.TestDecimal(Decimal.MaxValue - DecimalExtensions.Epsilon, Decimal.MaxValue);
             rnd.TestDecimal(-DecimalExtensions.Epsilon, DecimalExtensions.Epsilon);
             rnd.TestDecimal(0.000000001m, 0.0000000011m);
             rnd.TestDecimal(10000, 11000);
