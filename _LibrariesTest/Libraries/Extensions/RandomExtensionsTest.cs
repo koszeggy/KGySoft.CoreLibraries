@@ -119,7 +119,25 @@ namespace _LibrariesTest.Libraries.Extensions
                 }
             }
 
+            public void TestDateTimeOffset(DateTimeOffset min, DateTimeOffset max)
+            {
+                Console.Write($@"Random DateTimeOffset {min:O}..{max:O}: ");
+                DateTimeOffset result;
+                try
+                {
+                    result = this.NextDateTimeOffset(min, max);
+                    Console.WriteLine(result.ToString("O"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
+
+                Assert.IsTrue(result >= min && result <= max);
+            }
         }
+
 
         [TestMethod]
         public void NextUInt64Test()
@@ -239,6 +257,21 @@ namespace _LibrariesTest.Libraries.Extensions
             rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4 + 1000);
             rnd.TestDecimal(1L << 53, (1L << 53) + 2);
             rnd.TestDecimal(1L << 52, 1L << 53);
+        }
+
+        [TestMethod]
+        public void NextDateTimeOffsetTest()
+        {
+            var rnd = new TestRandom();
+
+            rnd.TestDateTimeOffset(DateTimeOffset.Now, DateTimeOffset.Now.AddDays(1));
+            rnd.TestDateTimeOffset(DateTimeOffset.MinValue, DateTimeOffset.MaxValue);
+
+            rnd.TestDateTimeOffset(DateTimeOffset.MinValue, DateTimeOffset.MinValue);
+            rnd.TestDateTimeOffset(DateTimeOffset.MinValue, DateTimeOffset.MinValue.AddMinutes(1));
+            rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddMinutes(-1), DateTimeOffset.MaxValue);
+            rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddHours(-1), DateTimeOffset.MaxValue);
+            rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
         }
 
         [TestMethod]

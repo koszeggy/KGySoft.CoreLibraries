@@ -59,6 +59,83 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
+        /// Searches for an element in the <paramref name="source"/> enumeration where the specified <paramref name="predicate"/> returns <c>true</c>.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements in the enumeration..</typeparam>
+        /// <param name="source">The source enumeration to search.</param>
+        /// <param name="predicate">The predicate to use for the search.</param>
+        /// <returns>The index of the found element, or -1 if there was no match.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="predicate"/> is <see langword="null"/>.</exception>
+        public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate), Res.Get(Res.ArgumentNull));
+
+            if (source is IList<TSource> list)
+            {
+                int length = list.Count;
+                for (int i = 0; i < length; i++)
+                {
+                    if (predicate.Invoke(list[i]))
+                        return i;
+                }
+
+                return -1;
+            }
+
+            var index = 0;
+            foreach (var item in source)
+            {
+                if (predicate.Invoke(item))
+                    return index;
+
+                index++;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Searches for an element in the <paramref name="source"/> enumeration.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the elements in the enumeration..</typeparam>
+        /// <param name="source">The source enumeration to search.</param>
+        /// <param name="element">The element to search.</param>
+        /// <returns>The index of the found element, or -1 if <paramref name="element"/> was not found.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
+        public static int IndexOf<TSource>(this IEnumerable<TSource> source, TSource element)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+
+            var comparer = element is Enum ? (IEqualityComparer<TSource>)EnumComparer<TSource>.Comparer : EqualityComparer<TSource>.Default;
+            if (source is IList<TSource> list)
+            {
+                int length = list.Count;
+                for (int i = 0; i < length; i++)
+                {
+                    if (comparer.Equals(list[i], element))
+                        return i;
+                }
+
+                return -1;
+            }
+
+            var index = 0;
+            foreach (TSource item in source)
+            {
+                if (comparer.Equals(item, element))
+                    return index;
+
+                index++;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
         /// Creates a <see cref="CircularList{T}"/> from an <see cref="IEnumerable{T}"/>.
         /// </summary>
         /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>

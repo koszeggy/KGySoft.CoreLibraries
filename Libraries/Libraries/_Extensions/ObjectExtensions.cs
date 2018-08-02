@@ -75,12 +75,7 @@ namespace KGySoft.Libraries
             if (set == null || (length = set.Length) == 0)
                 return false;
 
-            IEqualityComparer<T> comparer;
-            if (item is Enum) //(typeof(T).IsEnum)
-                comparer = EnumComparer<T>.Comparer;
-            else
-                comparer = EqualityComparer<T>.Default;
-
+            var comparer = item is Enum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
             for (int i = 0; i < length; i++)
             {
                 if (comparer.Equals(item, set[i]))
