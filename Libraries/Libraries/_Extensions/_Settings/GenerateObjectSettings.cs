@@ -16,11 +16,10 @@
 
 #region Usings
 
-
-#endregion
-
 using System;
 using System.Collections.Generic;
+
+#endregion
 
 namespace KGySoft.Libraries
 {

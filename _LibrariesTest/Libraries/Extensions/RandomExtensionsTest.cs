@@ -85,7 +85,7 @@ namespace _LibrariesTest.Libraries.Extensions
                     float result;
                     try
                     {
-                        result = this.NextFloat(min, max, scale);
+                        result = this.NextSingle(min, max, scale);
                         Console.WriteLine(result.ToRoundtripString());
                     }
                     catch (Exception e)

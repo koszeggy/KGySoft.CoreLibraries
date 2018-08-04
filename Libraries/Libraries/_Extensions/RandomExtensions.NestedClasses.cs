@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace KGySoft.Libraries
@@ -337,5 +341,121 @@ namespace KGySoft.Libraries
             }
         }
 
+        private static class ObjectGenerator
+        {
+            private static readonly Dictionary<Type, Func<Random, object>> nativeTypes =
+                new Dictionary<Type, Func<Random, object>>
+                {
+                    // primitive types
+                    { typeof(bool), rnd => rnd.NextBoolean() },
+                    { typeof(byte), rnd => rnd.NextByte() },
+                    { typeof(sbyte), rnd => rnd.NextSByte() },
+                    { typeof(char), rnd => rnd.NextChar() },
+                    { typeof(short), rnd => rnd.NextUInt16() },
+                    { typeof(ushort), rnd => rnd.NextInt16() },
+                    { typeof(int), rnd => rnd.NextInt32() },
+                    { typeof(uint), rnd => rnd.NextUInt32() },
+                    { typeof(long), rnd => rnd.NextInt64() },
+                    { typeof(ulong), rnd => rnd.NextUInt64() },
+
+                    // floating points
+                    { typeof(float), rnd => rnd.NextSingle(Single.MinValue, Single.MaxValue) },
+                    { typeof(double), rnd => rnd.NextDouble(Double.MinValue, Double.MaxValue) },
+                    { typeof(decimal), rnd => rnd.NextDecimal(Decimal.MinValue, Decimal.MaxValue) },
+
+                    // strings
+                    { typeof(string), rnd => rnd.NextString() },
+                    { typeof(StringBuilder), rnd => new StringBuilder(rnd.NextString()) },
+                    { typeof(Uri), () => GenerateUri() },
+
+                    // guid
+                    { typeof(Guid), () => GenerateGuid() },
+
+                    // date and time
+                    { typeof(DateTime), () => GenerateDateTime() },
+                    { typeof(DateTimeOffset), () => GenerateDateTimeOffset() },
+                    { typeof(TimeSpan), () => GenerateTimeSpan() },
+                };
+
+            internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
+            {
+                // a.) known type
+                Func<object> generator;
+                if (nativeTypes.TryGetValue(type, out generator)
+                    //// ReSharper disable once AssignNullToNotNullAttribute
+                    || (type.IsNullable() && nativeTypes.TryGetValue(Nullable.GetUnderlyingType(type), out generator)))
+                {
+                    return generator.Invoke();
+                }
+
+                // b.) enum
+                // ReSharper disable once PossibleNullReferenceException
+                if (type.IsEnum || (type.IsNullable() && Nullable.GetUnderlyingType(type).IsEnum))
+                {
+                    return GenerateEnum(type.IsNullable() ? Nullable.GetUnderlyingType(type) : type);
+                }
+
+                // c.) array
+                if (type.IsArray && type.GetArrayRank() == 1)
+                {
+                    return GenerateArray(type.GetElementType(), collectionsLength);
+                }
+
+                // d.) supported collection
+                ConstructorInfo ci;
+                Type elementType;
+                if (IsSupportedCollection(type, out ci, out elementType))
+                {
+                    if (elementType.IsGenericType && elementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                    {
+                        var args = elementType.GetGenericArguments();
+                        IDictionary dict = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(args[0], args[1]));
+                        for (int i = 0; i < collectionsLength; i++)
+                        {
+                            var key = GenerateObject(args[0], collectionsLength);
+                            if (key == null)
+                            {
+                                break;
+                            }
+
+                            var value = GenerateObject(args[1], collectionsLength);
+                            dict[key] = value;
+                        }
+
+                        return type == dict.GetType() ? dict : ci.Invoke(new[] { dict });
+                    }
+
+                    var array = GenerateArray(elementType, collectionsLength);
+                    return ci.Invoke(new[] { array });
+                }
+
+                // e.) key-value pair
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                {
+                    var args = type.GetGenericArguments();
+                    var key = GenerateObject(args[0], collectionsLength);
+                    var value = GenerateObject(args[1], collectionsLength);
+                    return Activator.CreateInstance(type, new[] { key, value });
+                }
+
+                // f.) abstract type or interface: null
+                if (type.IsAbstract || type.IsInterface)
+                {
+                    return null;
+                }
+
+                // g.) struct: returning a default instance
+                if (type.IsValueType)
+                {
+                    return Activator.CreateInstance(type);
+                }
+
+                // h.) any other object: create it with or without default constructor
+                var result = type.GetConstructor(Type.EmptyTypes) == null ? FormatterServices.GetUninitializedObject(type) : Activator.CreateInstance(type);
+                FillProperties(result, collectionsLength);
+                return result;
+            }
+
+        }
     }
 }

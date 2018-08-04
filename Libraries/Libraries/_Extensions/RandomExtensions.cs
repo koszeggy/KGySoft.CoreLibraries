@@ -482,7 +482,7 @@ namespace KGySoft.Libraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
-        public static float NextFloat(this Random random)
+        public static float NextSingle(this Random random)
             => (float)random.NextDouble();
 
         /// <summary>
@@ -502,8 +502,8 @@ namespace KGySoft.Libraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
         /// <br/>-or-.
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="RandomScale"/>.</exception>
-        public static float NextFloat(this Random random, float maxValue, RandomScale scale = RandomScale.Auto)
-            => random.NextFloat(0f, maxValue, scale);
+        public static float NextSingle(this Random random, float maxValue, RandomScale scale = RandomScale.Auto)
+            => random.NextSingle(0f, maxValue, scale);
 
         /// <summary>
         /// Returns a random <see cref="float"/> value that is within a specified range.
@@ -523,7 +523,7 @@ namespace KGySoft.Libraries
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
         /// <br/>-or-
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="RandomScale"/>.</exception>
-        public static float NextFloat(this Random random, float minValue, float maxValue, RandomScale scale = RandomScale.Auto)
+        public static float NextSingle(this Random random, float minValue, float maxValue, RandomScale scale = RandomScale.Auto)
         {
             float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
 
@@ -1035,7 +1035,9 @@ namespace KGySoft.Libraries
 
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
-
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+            return (T)ObjectGenerator.GenerateObject(random, typeof(T), settings ?? new GenerateObjectSettings());
         }
 
         #endregion
