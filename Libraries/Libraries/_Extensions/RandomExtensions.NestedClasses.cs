@@ -343,7 +343,7 @@ namespace KGySoft.Libraries
 
         private static class ObjectGenerator
         {
-            private static readonly Dictionary<Type, Func<Random, object>> nativeTypes =
+            private static readonly Dictionary<Type, Func<Random, object>> knownTypes =
                 new Dictionary<Type, Func<Random, object>>
                 {
                     // primitive types
@@ -365,35 +365,36 @@ namespace KGySoft.Libraries
 
                     // strings
                     { typeof(string), rnd => rnd.NextString() },
-                    { typeof(StringBuilder), rnd => new StringBuilder(rnd.NextString()) },
-                    { typeof(Uri), () => GenerateUri() },
+                    { typeof(StringBuilder), GenerateStringBuilder },
+                    { typeof(Uri), GenerateUri },
 
                     // guid
-                    { typeof(Guid), () => GenerateGuid() },
+                    { typeof(Guid), rnd => rnd.NextGuid() },
 
                     // date and time
-                    { typeof(DateTime), () => GenerateDateTime() },
-                    { typeof(DateTimeOffset), () => GenerateDateTimeOffset() },
-                    { typeof(TimeSpan), () => GenerateTimeSpan() },
+                    { typeof(DateTime), rnd => rnd.NextDateTime() },
+                    { typeof(DateTimeOffset), rnd => rnd.NextDateTimeOffset() },
+                    { typeof(TimeSpan), rnd => rnd.NextTimeSpan() },
                 };
+
+            private static StringBuilder GenerateStringBuilder(Random random) => new StringBuilder(random.NextString());
+
+            private static Uri GenerateUri(Random random) => new Uri($"http://{random.NextString(strategy: RandomString.LowerCaseWord)}.{random.NextString(3, 3, RandomString.LowerCaseWord)}");
 
             internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
             {
+                if (type.IsNullable())
+                    type = Nullable.GetUnderlyingType(type);
+
+                // ReSharper disable once AssignNullToNotNullAttribute
                 // a.) known type
-                Func<object> generator;
-                if (nativeTypes.TryGetValue(type, out generator)
-                    //// ReSharper disable once AssignNullToNotNullAttribute
-                    || (type.IsNullable() && nativeTypes.TryGetValue(Nullable.GetUnderlyingType(type), out generator)))
-                {
-                    return generator.Invoke();
-                }
+                if (knownTypes.TryGetValue(type, out var knownGenerator))
+                    return knownGenerator.Invoke(random);
 
                 // b.) enum
                 // ReSharper disable once PossibleNullReferenceException
-                if (type.IsEnum || (type.IsNullable() && Nullable.GetUnderlyingType(type).IsEnum))
-                {
-                    return GenerateEnum(type.IsNullable() ? Nullable.GetUnderlyingType(type) : type);
-                }
+                if (type.IsEnum)
+                    return CreateEnum(random, type);
 
                 // c.) array
                 if (type.IsArray && type.GetArrayRank() == 1)
@@ -456,6 +457,11 @@ namespace KGySoft.Libraries
                 return result;
             }
 
+            private static object CreateEnum(Random random, Type type)
+            {
+                var values = Enum.GetValues(type);
+                return values.GetValue(random.Next(values.Length));
+            }
         }
     }
 }

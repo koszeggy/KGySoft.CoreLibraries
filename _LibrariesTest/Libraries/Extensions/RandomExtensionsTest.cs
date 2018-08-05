@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Xml.Linq;
 using KGySoft.Libraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -136,8 +137,14 @@ namespace _LibrariesTest.Libraries.Extensions
 
                 Assert.IsTrue(result >= min && result <= max);
             }
+
+            public void TestObject<T>(GenerateObjectSettings settings = null)
+            {
+                Console.WriteLine($"Random {typeof(T).Name}: {this.NextObject<T>(settings)}");
+            }
         }
 
+        private enum EmptyEnum { }
 
         [TestMethod]
         public void NextUInt64Test()
@@ -273,6 +280,45 @@ namespace _LibrariesTest.Libraries.Extensions
             rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddHours(-1), DateTimeOffset.MaxValue);
             rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
         }
+
+        [TestMethod]
+        public void NextObjectTest()
+        {
+            var rnd = new TestRandom();
+
+            // native types
+            rnd.TestObject<bool>();
+            rnd.TestObject<byte>();
+            rnd.TestObject<sbyte>();
+            rnd.TestObject<char>();
+            rnd.TestObject<short>();
+            rnd.TestObject<ushort>();
+            rnd.TestObject<int>();
+            rnd.TestObject<uint>();
+            rnd.TestObject<long>();
+            rnd.TestObject<ulong>();
+            rnd.TestObject<float>();
+            rnd.TestObject<double>();
+            rnd.TestObject<decimal>();
+            rnd.TestObject<string>();
+            rnd.TestObject<StringBuilder>();
+            rnd.TestObject<Uri>();
+            rnd.TestObject<Guid>();
+            rnd.TestObject<DateTime>();
+            rnd.TestObject<DateTimeOffset>();
+            rnd.TestObject<TimeSpan>();
+            rnd.TestObject<byte?>();
+
+            // enums
+            rnd.TestObject<EmptyEnum>();
+            rnd.TestObject<ConsoleColor>();
+
+            // arrays
+            rnd.TestObject<byte[]>();
+            rnd.TestObject<byte?[]>();
+            rnd.TestObject<byte[,]>();
+        }
+
 
         [TestMethod]
         public void ValuesTest()
