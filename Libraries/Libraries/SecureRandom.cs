@@ -26,8 +26,9 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Represents a secure random number generator, which uses the <see cref="RNGCryptoServiceProvider"/> internally
-    /// and is functionally compatible with the <see cref="Random"/> class.
+    /// Represents a secure random number generator, which uses a <see cref="RandomNumberGenerator"/> instance to produce
+    /// cryptographically secure random numbers.
+    /// This class is functionally compatible with the <see cref="Random"/> class.
     /// </summary>
     /// <remarks>
     /// <note>Please note that <see cref="SecureRandom"/> class implements the <see cref="IDisposable"/> interface
@@ -38,11 +39,28 @@ namespace KGySoft.Libraries
     {
         #region Fields
 
-        private readonly RNGCryptoServiceProvider provider = new RNGCryptoServiceProvider();
+        private readonly RandomNumberGenerator provider;
 
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SecureRandom"/> class.
+        /// </summary>
+        /// <param name="rng">A <see cref="RandomNumberGenerator"/> instance to use.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="rng"/> is <see langword="null"/>.</exception>
+        public SecureRandom(RandomNumberGenerator rng) 
+            => provider = rng ?? throw new ArgumentNullException(nameof(rng), Res.Get(Res.ArgumentNull));
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SecureRandom"/> class.
+        /// To generate cryptographically secure random numbers, an <see cref="RNGCryptoServiceProvider"/> will be used internally.
+        /// </summary>
+        public SecureRandom()
+            : this(new RNGCryptoServiceProvider())
+        {
+        }
 
         #region Public Methods
 
