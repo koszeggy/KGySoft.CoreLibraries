@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file here: https://github.com/dotnet/corefx/blob/master/LICENSE.TXT
 
+using System;
+using System.Runtime.CompilerServices;
+
 #if NET35 || NET40 || NET45
 
 // To provide ValueTuple for .NET 3.5 - 4.5.
@@ -442,6 +445,7 @@ namespace System
     /// <typeparam name="T1">The type of the tuple's first component.</typeparam>
     /// <typeparam name="T2">The type of the tuple's second component.</typeparam>
     [StructLayout(LayoutKind.Auto)]
+    [TypeForwardedFrom("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
     public struct ValueTuple<T1, T2>
         : IEquatable<ValueTuple<T1, T2>>, IStructuralEquatable, IStructuralComparable, IComparable, IComparable<ValueTuple<T1, T2>>, ITupleInternal
     {
@@ -2161,3 +2165,5 @@ namespace System.Runtime.CompilerServices
 }
 
 #endif
+
+// TODO: NET47, ahol nincs Tuple, vagy a Range csak NET47-től legyen Tuple kompatibilis
