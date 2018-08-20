@@ -769,7 +769,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 if (typeName.StartsWith("rev_", StringComparison.Ordinal))
                     typeName = new string(typeName.Substring(4).Reverse().ToArray());
 
-                Assembly assembly = assemblyName.Length == 0 ? null : AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
+                Assembly assembly = assemblyName.Length == 0 ? null : Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
                 if (assembly == null && assemblyName.Length > 0)
                     return null;
 

@@ -217,7 +217,7 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
         /// <param name="result">The byte array representation of the <see cref="ValueType"/> object.</param>
-        /// <returns><c>true</c>, if serialization was successful; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.</returns>
         public static bool TrySerializeStruct(ValueType obj, out byte[] result)
         {
             result = null;
@@ -284,7 +284,7 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="array">The array to serialize.</param>
         /// <typeparam name="T">Element type of the array. Must be a <see cref="ValueType"/>.</typeparam>
         /// <param name="result">The byte array representation of the <paramref name="array"/>.</param>
-        /// <returns><c>true</c>, if serialization was successful; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.</returns>
         public static bool TrySerializeStructArray<T>(T[] array, out byte[] result) where T : struct
         {
             result = null;

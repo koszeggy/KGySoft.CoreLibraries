@@ -29,7 +29,7 @@ namespace KGySoft.Libraries.Collections
 
         /// <summary>
         /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
-        /// allocate memory for all cache entries. Default value is <c>true</c>.
+        /// allocate memory for all cache entries. Default value is <see langword="true"/>.
         /// </summary>
         bool EnsureCapacity { get; set; }
 

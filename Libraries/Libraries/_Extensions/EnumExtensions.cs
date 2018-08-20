@@ -106,7 +106,7 @@ namespace KGySoft.Libraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
-        /// <returns><c>true</c> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined<TEnum>(this TEnum value)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
@@ -119,7 +119,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="flags">A flags enum value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined<TEnum>(this TEnum flags)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
@@ -133,8 +133,8 @@ namespace KGySoft.Libraries
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
         /// <param name="flags">An unsigned integer value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
-        /// otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
+        /// otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <note>Always specify the <typeparamref name="TEnum"/> generic argument when use this method; otherwise, in .NET 4.0 and above the less performant <see cref="Enum.HasFlag"/> method will be used.</note>
         /// </remarks>
@@ -148,7 +148,7 @@ namespace KGySoft.Libraries
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">The value to check.</param>
-        /// <returns><c>true</c>, if only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag<TEnum>(TEnum value)
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
@@ -161,7 +161,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="flags">A flags enum value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <param name="onlyDefinedValues">When <c>true</c>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
+        /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
         public static IEnumerable<TEnum> GetFlags<TEnum>(TEnum flags, bool onlyDefinedValues)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer

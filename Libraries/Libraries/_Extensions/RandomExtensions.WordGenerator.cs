@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace KGySoft.Libraries
 {
@@ -111,7 +109,7 @@ namespace KGySoft.Libraries
             private static char GetConsonant(ref GeneratorContext context) => consonants[context.Random.Next(consonants.Length)];
             private static char GetNextLetter(ref GeneratorContext context)
                 => vowels.IndexOf(context.LastLetter) >= 0
-                    ? GetVowelSuccessor(ref context) 
+                    ? GetVowelSuccessor(ref context)
                     : GetConsonantSuccessor(ref context);
 
             private static char GetVowelSuccessor(ref GeneratorContext context)
@@ -244,8 +242,8 @@ namespace KGySoft.Libraries
 
                 context.AddChar(' ');
 
-                // Up to remaining length - 2, max 10. 2 chars must be left to the space and to close the sentence.
-                int wordLength = context.Random.Next(1, Math.Min(context.RemainingSentenceLength - 1, 11));
+                // Up to remaining length - 1, max 10. 1 chars must be left to close the sentence.
+                int wordLength = context.Random.Next(1, Math.Min(context.RemainingSentenceLength, 11));
                 GenerateWord(ref context, wordLength);
 
                 // punctuation
@@ -338,146 +336,6 @@ namespace KGySoft.Libraries
                         context.AddChar('.');
                         return;
                 }
-            }
-        }
-
-        private static class ObjectGenerator
-        {
-            private static readonly Dictionary<Type, Func<Random, GenerateObjectSettings, object>> knownTypes =
-                new Dictionary<Type, Func<Random, GenerateObjectSettings, object>>
-                {
-                    // primitive types
-                    { typeof(bool), (rnd, settings) => rnd.NextBoolean() },
-                    { typeof(byte), (rnd, settings) => rnd.NextByte() },
-                    { typeof(sbyte), (rnd, settings) => rnd.NextSByte() },
-                    { typeof(char), (rnd, settings) => rnd.NextChar() },
-                    { typeof(short), (rnd, settings) => rnd.NextUInt16() },
-                    { typeof(ushort), (rnd, settings) => rnd.NextInt16() },
-                    { typeof(int), (rnd, settings) => rnd.NextInt32() },
-                    { typeof(uint), (rnd, settings) => rnd.NextUInt32() },
-                    { typeof(long), (rnd, settings) => rnd.NextInt64() },
-                    { typeof(ulong), (rnd, settings) => rnd.NextUInt64() },
-
-                    // floating points
-                    { typeof(float), (rnd, settings) => rnd.NextSingle(Single.MinValue, Single.MaxValue) },
-                    { typeof(double), (rnd, settings) => rnd.NextDouble(Double.MinValue, Double.MaxValue) },
-                    { typeof(decimal), (rnd, settings) => rnd.NextDecimal(Decimal.MinValue, Decimal.MaxValue) },
-
-                    // strings
-                    { typeof(string), (rnd, settings) => GenerateString(rnd, null, settings) },
-                    { typeof(StringBuilder), (rnd, settings) => GenerateStringBuilder(rnd, null, settings) },
-                    { typeof(Uri), GenerateUri },
-
-                    // guid
-                    { typeof(Guid), (rnd, settings) => rnd.NextGuid() },
-
-                    // date and time
-                    { typeof(DateTime), (rnd, settings) => rnd.NextDateTime() },
-                    { typeof(DateTimeOffset), (rnd, settings) => rnd.NextDateTimeOffset() },
-                    { typeof(TimeSpan), (rnd, settings) => rnd.NextTimeSpan() },
-                };
-
-            internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
-            {
-                // 0.) null
-                if (settings.ChanceOfNull > 0 && random.NextDouble() > settings.ChanceOfNull)
-                    return null;
-
-                if (type.IsNullable())
-                    type = Nullable.GetUnderlyingType(type);
-
-                // ReSharper disable once AssignNullToNotNullAttribute
-                // 1.) known type
-                if (knownTypes.TryGetValue(type, out var knownGenerator))
-                    return knownGenerator.Invoke(random, settings);
-
-                // 2.) enum
-                // ReSharper disable once PossibleNullReferenceException
-                if (type.IsEnum)
-                    return GenerateEnum(random, type);
-
-                // 3.) array
-                if (type.IsArray)
-                    return GenerateArray(type.GetElementType(), settings);
-
-                // 4.) supported collection
-                ConstructorInfo ci;
-                Type elementType;
-                throw new NotImplementedException();
-                //if (IsSupportedCollection(type, out ci, out elementType))
-                //{
-                //    if (elementType.IsGenericType && elementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
-                //    {
-                //        var args = elementType.GetGenericArguments();
-                //        IDictionary dict = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(args[0], args[1]));
-                //        for (int i = 0; i < collectionsLength; i++)
-                //        {
-                //            var key = GenerateObject(args[0], collectionsLength);
-                //            if (key == null)
-                //            {
-                //                break;
-                //            }
-
-                //            var value = GenerateObject(args[1], collectionsLength);
-                //            dict[key] = value;
-                //        }
-
-                //        return type == dict.GetType() ? dict : ci.Invoke(new[] { dict });
-                //    }
-
-                //    var array = GenerateArray(elementType, collectionsLength);
-                //    return ci.Invoke(new[] { array });
-                //}
-
-                //// 5.) key-value pair
-                //if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
-                //{
-                //    var args = type.GetGenericArguments();
-                //    var key = GenerateObject(args[0], collectionsLength);
-                //    var value = GenerateObject(args[1], collectionsLength);
-                //    return Activator.CreateInstance(type, new[] { key, value });
-                //}
-
-                //// 6.) abstract type or interface: null
-                //if (type.IsAbstract || type.IsInterface)
-                //{
-                //    return null;
-                //}
-
-                //// 7.) struct: returning a default instance
-                //if (type.IsValueType)
-                //{
-                //    return Activator.CreateInstance(type);
-                //}
-
-                //// 8.) any other object: create it with or without default constructor
-                //var result = type.GetConstructor(Type.EmptyTypes) == null ? FormatterServices.GetUninitializedObject(type) : Activator.CreateInstance(type);
-                //FillProperties(result, collectionsLength);
-                //return result;
-            }
-
-            private static string GenerateString(Random random, string memberName, GenerateObjectSettings settings)
-            {
-                // ... else
-                (int minLength, int maxLength) = settings.StringCreationOptions == RandomString.Sentence ? settings.SentencesLength : settings.StringsLength;
-                return random.NextString(minLength, maxLength, settings.StringCreationOptions.GetValueOrDefault(RandomString.Ascii));
-            }
-
-            private static Array GenerateArray(Type getElementType, GenerateObjectSettings settings)
-            {
-                throw new NotImplementedException();
-            }
-
-            private static StringBuilder GenerateStringBuilder(Random random, string memberName, GenerateObjectSettings settings) 
-                => new StringBuilder(GenerateString(random, memberName, settings));
-
-            private static Uri GenerateUri(Random random, GenerateObjectSettings settings) 
-                => new Uri($"http://{random.NextString(strategy: RandomString.LowerCaseWord)}.{random.NextString(3, 3, RandomString.LowerCaseLetters)}");
-
-            private static object GenerateEnum(Random random, Type type)
-            {
-                var values = Enum.GetValues(type);
-                return values.GetValue(random.Next(values.Length));
             }
         }
     }

@@ -95,6 +95,7 @@
     <Compile Include="Libraries\Serialization\XmlWriterSerializer.cs" />
     <Compile Include="Libraries\Serialization\XmlSerializerBase.cs" />
     <Compile Include="Libraries\ThreadSafeRandom.cs" />
+    <Compile Include="Libraries\_Extensions\CharExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DateTimeExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DictionaryExtensions.cs" />
@@ -102,13 +103,13 @@
     <Compile Include="Libraries\_Extensions\EnumerableExtensions.cs" />
     <Compile Include="Libraries\_Extensions\EnumExtensions.cs" />
     <Compile Include="Libraries\_Extensions\FloatExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\RandomExtensions.WordGenerator.cs" />
     <Compile Include="Libraries\_Extensions\_Classes\GenerateObjectSettings.cs" />
     <Compile Include="Libraries\_Extensions\ObjectExtensions.cs" />
     <Compile Include="Libraries\_Extensions\ByteArrayExtensions.cs" />
     <Compile Include="Libraries\_Extensions\RandomExtensions.cs" />
-    <Compile Include="Libraries\_Extensions\RandomExtensions.NestedClasses.cs" />
+    <Compile Include="Libraries\_Extensions\RandomExtensions.ObjectGenerator.cs" />
     <Compile Include="Libraries\_Extensions\StreamExtensions.cs" />
-    <Compile Include="Libraries\_Extensions\StringComparerExtensions.cs" />
     <Compile Include="Libraries\_Extensions\StringExtensions.cs" />
     <Compile Include="Libraries\_Extensions\TypeExtensions.cs" />
     <Compile Include="Libraries\Files.cs">
@@ -178,12 +179,12 @@
     <Compile Include="Libraries\WinApi\ASSEMBLY_INFO.cs" />
     <Compile Include="Libraries\WinApi\Fusion.cs" />
     <Compile Include="Libraries\WinApi\IAssemblyCache.cs" />
-    <Compile Include="System\Tuple.cs" />
-    <Compile Include="System\TupleExtensions.cs" />
+    <Compile Include="_.cs" />
     <None Include="LICENSE" />
     <Compile Include="Libraries\_Extensions\WaitHandleExtensions.cs" />
-    <Compile Include="Libraries\_Extensions\_Enums\RandomScale.cs" />
-    <Compile Include="Libraries\_Extensions\_Enums\RandomString.cs" />
+    <Compile Include="Libraries\_Extensions\_Enums\FloatScale.cs" />
+    <Compile Include="Libraries\_Extensions\_Enums\ObjectInitialization.cs" />
+    <Compile Include="Libraries\_Extensions\_Enums\StringCreation.cs" />
     <Compile Include="Libraries\_Extensions\_Structs\Range.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ComponentModel\EncodingConverter.cs" />
@@ -205,7 +206,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

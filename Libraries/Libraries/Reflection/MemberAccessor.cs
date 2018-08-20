@@ -47,7 +47,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// The cache of the stored accessors. This field is read-only.
         /// </summary>
-        private static readonly Cache<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 1024) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
+        private static readonly Cache<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
 
         /// <summary>
         /// Gets or sets the cache size used for caching compiled accessors. Setting size to 0 disables caching.

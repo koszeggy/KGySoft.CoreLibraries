@@ -51,10 +51,10 @@ namespace KGySoft.Libraries.Resources
     /// <list type="bullet">
     /// <item>The <see cref="GetEnumerator">GetEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the resources.
     /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the resource names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
-    /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <c>true</c>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <c>false</c>.</item>
+    /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <see langword="true"/>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <see langword="false"/>.</item>
     /// <item>The <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the metadata entries.
     /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the metadata names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
-    /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <c>true</c>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <c>false</c>.</item>
+    /// returns either <see cref="ResXDataNode"/> instances, if <see cref="SafeMode"/> property is <see langword="true"/>; or returns deserialized <see cref="object"/> instances if <see cref="SafeMode"/> property is <see langword="false"/>.</item>
     /// <item>The <see cref="GetAliasEnumerator">GetAliasEnumerator</see> method returns an <see cref="IDictionaryEnumerator"/> object, which enumerates the aliases in the .resx file.
     /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the alias names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
     /// returns the corresponding assembly names for the alias names.</item>
@@ -66,7 +66,7 @@ namespace KGySoft.Libraries.Resources
     /// <para>If you want to retrieve named resources from a .resx file rather than enumerating its resources, you can instantiate a <see cref="ResXResourceSet"/> object and call its
     /// <see cref="ResXResourceSet.GetString(string)">GetString</see>/<see cref="ResXResourceSet.GetObject(string)">GetObject</see>, <see cref="ResXResourceSet.GetMetaString">GetMetaString</see>/<see cref="ResXResourceSet.GetMetaObject">GetMetaObject</see> and <see cref="ResXResourceSet.GetAliasValue">GetAliasValue</see> and  methods.
     /// <see cref="ResXResourceSet"/> supports <see cref="ResXResourceSet.SafeMode"/>, too.</para>
-    /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property is a <see cref="ResXDataNode"/>
+    /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property is a <see cref="ResXDataNode"/>
     /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
     /// <example>
     /// The following example shows how to enumerate the resources, metadata and aliases of a .resx file and what is the difference between safe and non-safe mode.
@@ -180,7 +180,7 @@ namespace KGySoft.Libraries.Resources
     /// </example>
     /// <para>
     /// By default, <see cref="ResXResourceReader"/> allows duplicated keys with different values (see <see cref="AllowDuplicatedKeys"/> property). Though such a .resx file is not strictly valid, its
-    /// complete content can be retrieved. When <see cref="AllowDuplicatedKeys"/> is <c>true</c>, <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and
+    /// complete content can be retrieved. When <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and
     /// <see cref="GetAliasEnumerator">GetAliasEnumerator</see> return a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
     /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined values will be returned of a redefined name. This behavior is
     /// similar to the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, which does not allow duplicates.
@@ -265,21 +265,21 @@ namespace KGySoft.Libraries.Resources
     /// <item><a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> often throws <see cref="ArgumentException"/> on getting the enumerator
     /// or on retrieving the value of a <see cref="ResXDataNode"/> instance, which contains invalid data. In contrast, this implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
     /// <item>Though the <see cref="UseResXDataNodes"/> property is still supported, it is obsolete in favor of <see cref="SafeMode"/> property.</item>
-    /// <item>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <c>true</c>,
-    /// the resource and metadata entries are mixed in the returned enumerator, while when it is <c>false</c>, then only the resources are returned. In this implementation the <see cref="GetEnumerator">GetEnumerator</see> always
+    /// <item>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
+    /// the resource and metadata entries are mixed in the returned enumerator, while when it is <see langword="false"/>, then only the resources are returned. In this implementation the <see cref="GetEnumerator">GetEnumerator</see> always
     /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> and <see cref="SafeMode"/> properties.</item>
     /// </list>
     /// </para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>:
     /// <list type="bullet">
     /// <item><term>Lazy processing</term>
-    /// <description>If <see cref="AllowDuplicatedKeys"/> is <c>true</c>, the .resx file is processed on demand, during the actual enumeration. The .resx file is processed immediately if
-    /// <see cref="AllowDuplicatedKeys"/> is <c>false</c>. If <see cref="AllowDuplicatedKeys"/> is <c>true</c> and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
+    /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, the .resx file is processed on demand, during the actual enumeration. The .resx file is processed immediately if
+    /// <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>. If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/> and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
     /// <item><term>Handling duplicates</term>
-    /// <description>If <see cref="AllowDuplicatedKeys"/> is <c>true</c>, every occurrence of a duplicated name is returned by the enumerators. Otherwise, only the last occurrence of
+    /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, every occurrence of a duplicated name is returned by the enumerators. Otherwise, only the last occurrence of
     /// a name is returned.</description></item>
     /// <item><term>Headers</term>
-    /// <description>The .resx header is allowed to be completely missing; however, it is checked when exists and <see cref="CheckHeader"/> property is <c>true</c>. If header tags contain invalid values a <see cref="NotSupportedException"/> may be thrown during the enumeration.
+    /// <description>The .resx header is allowed to be completely missing; however, it is checked when exists and <see cref="CheckHeader"/> property is <see langword="true"/>. If header tags contain invalid values a <see cref="NotSupportedException"/> may be thrown during the enumeration.
     /// You can configure the <see cref="ResXResourceWriter"/> class to omit the header by the <see cref="ResXResourceWriter.OmitHeader">ResXResourceWriter.OmitHeader</see> property.</description></item>
     /// <item><term>Using <see cref="ResXDataNode"/> instances</term>
     /// <description>The <see cref="SafeMode"/> (<see cref="UseResXDataNodes"/>) property can be toggled also after getting an enumerator or even during the enumeration.</description></item>
@@ -289,13 +289,13 @@ namespace KGySoft.Libraries.Resources
     /// This <see cref="ResXResourceReader"/> implementation has separated <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see>
     /// methods, which return always the resources, metadata and aliases, respectively.</description></item>
     /// <item><term>Security</term>
-    /// <description>If <see cref="SafeMode"/> is <c>true</c>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method
+    /// <description>If <see cref="SafeMode"/> is <see langword="true"/>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method
     /// on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
     /// <item><term>Base path</term>
     /// <description>The <see cref="BasePath"/> property, which is used for resolving file references can be set during the enumeration, too.</description></item>
     /// <item><term>New MIME type</term>
     /// <description>A new MIME type <c>text/kgysoft.net/object.binary.base64</c> is supported, indicating that an object is serialized by <see cref="BinarySerializationFormatter"/> instead of <see cref="BinaryFormatter"/>.
-    /// The <see cref="ResXResourceWriter"/> can produce such .resx content if <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> is <c>false</c>.</description></item>
+    /// The <see cref="ResXResourceWriter"/> can produce such .resx content if <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> is <see langword="false"/>.</description></item>
     /// <item><term>Soap formatter support</term>
     /// <description>The Soap formatter support is provided without referencing the <c>System.Runtime.Serialization.Formatters.Soap.dll</c> assembly. If the assembly cannot be loaded from the GAC (platform dependent),
     /// then a <see cref="NotSupportedException"/> will be thrown.</description></item>
@@ -658,7 +658,7 @@ namespace KGySoft.Libraries.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the objects returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods
+        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the objects returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method on the <see cref="ResXDataNode"/> instance.
         /// See the remarks section and the examples at <see cref="ResXResourceReader"/> for more details.</para>
@@ -678,10 +678,10 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets or sets whether "resheader" entries are checked in the .resx file. When <c>true</c>, a <see cref="NotSupportedException"/>
+        /// Gets or sets whether "resheader" entries are checked in the .resx file. When <see langword="true"/>, a <see cref="NotSupportedException"/>
         /// can be thrown during the enumeration when "resheader" entries contain invalid values. When header entries are
         /// missing, no exception is thrown.
-        /// <br/>Default value: <c>false</c>.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the XML resource file has already been accessed and is in use.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
@@ -706,17 +706,17 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether all entries of same name of the .resx file should be returned.
-        /// <br/>Default value: <c>true</c>.
+        /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If an element is defined more than once, and <see cref="AllowDuplicatedKeys"/> is <c>true</c>,
+        /// <para>If an element is defined more than once, and <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>,
         /// then the enumeration returns every occurrence of the entries with identical names.
-        /// If <see cref="AllowDuplicatedKeys"/> is <c>false</c> the enumeration returns always the last occurrence of the entries with identical names.</para>
+        /// If <see cref="AllowDuplicatedKeys"/> is <see langword="false"/> the enumeration returns always the last occurrence of the entries with identical names.</para>
         /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
         /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
         /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>
         /// <note>To be compatible with the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
-        /// class set the value of this property to <c>false</c>.</note>
+        /// class set the value of this property to <see langword="false"/>.</note>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
@@ -844,12 +844,12 @@ namespace KGySoft.Libraries.Resources
         /// in the source XML resource file or stream.
         /// </summary>
         /// <remarks>
-        /// <para>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <c>true</c>,
-        /// the resource and metadata entries are mixed in the returned enumerator, while when it is <c>false</c>, then only the resources are returned. In this <see cref="ResXResourceReader"/> implementation the <see cref="GetEnumerator">GetEnumerator</see> method always
+        /// <para>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
+        /// the resource and metadata entries are mixed in the returned enumerator, while when it is <see langword="false"/>, then only the resources are returned. In this <see cref="ResXResourceReader"/> implementation the <see cref="GetEnumerator">GetEnumerator</see> method always
         /// returns only the resources and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> returns the metadata regardless of the value of the <see cref="UseResXDataNodes"/> or <see cref="SafeMode"/> properties.</para>
-        /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
+        /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
-        /// <para>If <see cref="AllowDuplicatedKeys"/> property is <c>true</c>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
+        /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined name.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
         /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
@@ -870,9 +870,9 @@ namespace KGySoft.Libraries.Resources
         /// in the source XML resource file or stream.
         /// </summary>
         /// <remarks>
-        /// <para>If the <see cref="SafeMode"/> property is <c>true</c>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
+        /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
-        /// <para>If <see cref="AllowDuplicatedKeys"/> property is <c>true</c>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
+        /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined name.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
         /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
@@ -893,7 +893,7 @@ namespace KGySoft.Libraries.Resources
         /// <remarks>
         /// <para>The <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is always a <see cref="string"/> regardless of the value of the <see cref="SafeMode"/> property.</para>
         /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>
-        /// <para>If <see cref="AllowDuplicatedKeys"/> property is <c>true</c>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
+        /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined alias.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
         /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>

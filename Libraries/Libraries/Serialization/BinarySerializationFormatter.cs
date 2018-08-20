@@ -115,7 +115,7 @@ namespace KGySoft.Libraries.Serialization
     /// <note>
     /// <list type="bullet">
     /// <item><description>If a non-derived <see cref="object"/> instance is deserialized the reference will not the same as the original object, thus <see cref="object.Equals(object,object)"/> will return
-    /// <c>false</c> for the two instances. Using the <c>object</c> type has more meaning in case of a generic collection argument type.</description></item>
+    /// <see langword="false"/> for the two instances. Using the <c>object</c> type has more meaning in case of a generic collection argument type.</description></item>
     /// <item><description>Serializing <see cref="Enum"/> types will result a longer raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.</description></item>
     /// </list>
     /// </note>
@@ -667,7 +667,7 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>>
         /// <param name="bw">The writer</param>
         /// <param name="data">The object to serialize</param>
-        /// <param name="isRoot"><c>true</c>, when <paramref name="data"/> is the root level object.</param>
+        /// <param name="isRoot"><see langword="true"/>, when <paramref name="data"/> is the root level object.</param>
         /// <param name="manager">The serialization manager</param>
         private void Write(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
         {
@@ -1499,13 +1499,6 @@ namespace KGySoft.Libraries.Serialization
             return result;
         }
 
-        private static bool GetQualifyAllElements(Type elementType)
-        {
-            bool result = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
-
-            return result;
-        }
-
         private void WriteCollection(BinaryWriter bw, CircularList<DataTypes> collectionTypeDescriptor, object obj,
             SerializationManager manager)
         {
@@ -1770,7 +1763,7 @@ namespace KGySoft.Libraries.Serialization
                         Type elementType = element.GetType();
 
                         // 2. Serialize (1: qualify -> is element type, 2: different type -> store type, 3: serialize)
-                        bool qualifyAllElements = GetQualifyAllElements(collectionElementType);
+                        bool qualifyAllElements = collectionElementType.CanBeDerived();
                         bool typeNeeded = qualifyAllElements && elementType != collectionElementType;
 
                         // is type the same as collection element type
@@ -1788,7 +1781,7 @@ namespace KGySoft.Libraries.Serialization
                         // - Writing array element as a graph - new IList<int>[] { new int[] {1} }
                         // - Writing primitive/enum/other supported element as a graph - new ValueType[] { 1, ConsoleColor.Black }
                         // - Writing compressible struct or IBinarySerializable as a graph - new IAnything[] { new BinarySerializable(), new MyStruct() }
-                        if (GetQualifyAllElements(collectionElementType))
+                        if (collectionElementType.CanBeDerived())
                         {
                             Write(bw, element, false, manager);
                             break;
@@ -2252,7 +2245,7 @@ namespace KGySoft.Libraries.Serialization
         /// Deserializes an object from the stream.
         /// </summary>
         /// <param name="br">The reader</param>
-        /// <param name="isRoot"><c>true</c>, when the object to deserialize is the root-level object</param>
+        /// <param name="isRoot"><see langword="true"/>, when the object to deserialize is the root-level object</param>
         /// <param name="manager">The manager used for deserialization.</param>
         /// <returns>The deserialized object</returns>
         private object Read(BinaryReader br, bool isRoot, DeserializationManager manager)
@@ -2504,12 +2497,12 @@ namespace KGySoft.Libraries.Serialization
         /// Reads a non-collection object from the stream.
         /// </summary>
         /// <param name="br">The reader</param>
-        /// <param name="isRoot"><c>true</c>, when the object to deserialize is the root-level object</param>
-        /// <param name="addToCache">When <c>true</c>, the result must be added to the ID cache. Otherwise, only reference types in a collection might be added to cache.</param>
+        /// <param name="isRoot"><see langword="true"/>, when the object to deserialize is the root-level object</param>
+        /// <param name="addToCache">When <see langword="true"/>, the result must be added to the ID cache. Otherwise, only reference types in a collection might be added to cache.</param>
         /// <param name="dataType">The already read data type of the object.</param>
         /// <param name="collectionDescriptor">When a collection element is deserialized, the collection descriptor.</param>
         /// <param name="manager">The manager used for deserialization.</param>
-        /// <param name="isTValue"><c>true</c>, when element to deserialize is the value in a dictionary collection.</param>
+        /// <param name="isTValue"><see langword="true"/>, when element to deserialize is the value in a dictionary collection.</param>
         /// <returns>The deserialized object.</returns>
         private object ReadObject(BinaryReader br, bool isRoot, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {

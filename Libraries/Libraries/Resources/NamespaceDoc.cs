@@ -21,10 +21,10 @@ namespace KGySoft.Libraries.Resources
     /// <term>Using <see cref="ResXResourceReader"/> is the most low-level option to read the content of a .resx file. It provides enumerators to retrieve the resources, metadata and aliases in a .resx file.
     /// In most cases you can use the more specialized classes, such as <see cref="ResXResourceSet"/> but there are some cases when you need to use <see cref="ResXResourceReader"/>:
     /// <list type="bullet">
-    /// <item>The <see cref="ResXResourceReader"/> is able to read the .resx content in a lazy manner if <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <c>true</c>.
+    /// <item>The <see cref="ResXResourceReader"/> is able to read the .resx content in a lazy manner if <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <see langword="true"/>.
     /// That means the .resx content is read on demand as you enumerate the contents (the contents are cached so if you retrieve an enumerator for the second time it will not process the .resx file again). It can be useful
     /// if you are looking for one specific key, after which you break the enumeration or if you want to process an incomplete or corrupted .resx file up to the point it can be parsed correctly.</item>
-    /// <item>A .resx file may contain a key more than once (though it is somewhat incorrect). If <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <c>true</c>,
+    /// <item>A .resx file may contain a key more than once (though it is somewhat incorrect). If <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <see langword="true"/>,
     /// you can retrieve all of the redefined values.</item>
     /// <item><see cref="ResXResourceReader"/> allows you to handle type names in a customized way (the you map them to a <see cref="Type"/>). To achieve this you can pass an <see cref="ITypeResolutionService"/> instance to one of the constructors.</item>
     /// </list>

@@ -21,7 +21,7 @@ namespace KGySoft.Libraries.Serialization
         /// Gets or sets whether assembly name should be completely omitted on serialization.
         /// </summary>
         /// <value>
-        /// <c>true</c> to omit assembly name on serialize; otherwise, <c>false</c>.
+        /// <see langword="true"/> to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
         /// <note>This property exists only in .NET 4 and above.</note>
@@ -30,14 +30,14 @@ namespace KGySoft.Libraries.Serialization
         /// <para>When using <see cref="BinarySerializationFormatter"/>, <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/>
         /// option can be used as well, which is available in every .NET version. However, with this property assembly names
         /// can be omitted even when using <see cref="BinaryFormatter"/> or other <see cref="IFormatter"/> implementations.</para>
-        /// <para>When the value of this property is <c>true</c>, the serialized stream will be shorter; however,
+        /// <para>When the value of this property is <see langword="true"/>, the serialized stream will be shorter; however,
         /// deserialization might be slower, and type will be searched only in already loaded assemblies. When multiple
         /// assemblies have the same type name, the retrieved type cannot determined.</para>
         /// </remarks>
         public bool OmitAssemblyNameOnSerialize { get; set; }
 
         /// <summary>
-        /// When <see cref="OmitAssemblyNameOnSerialize"/> is <c>true</c>, suppresses the assembly name on serialization.
+        /// When <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, suppresses the assembly name on serialization.
         /// Otherwise, returns <see langword="null"/> for both assembly and type names, indicating, that the original
         /// names should be used.
         /// </summary>

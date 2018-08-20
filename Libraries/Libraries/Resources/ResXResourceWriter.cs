@@ -45,7 +45,7 @@ namespace KGySoft.Libraries.Resources
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
-    /// <para>If <see cref="CompatibleFormat"/> property is <c>true</c>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
+    /// <para>If <see cref="CompatibleFormat"/> property is <see langword="true"/>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
     /// but by the original <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
     /// <example>
     /// The following example shows how to create a resource file by <see cref="ResXResourceWriter"/> and add different kind of resource objects to it. At the end it displays the resulting .resx file content.
@@ -135,14 +135,14 @@ namespace KGySoft.Libraries.Resources
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>:
     /// <list type="bullet">
     /// <item><term>Compatibility</term>
-    /// <description>If <see cref="CompatibleFormat"/> is <c>true</c>, the resulting .resx file can be read by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.</description></item>
+    /// <description>If <see cref="CompatibleFormat"/> is <see langword="true"/>, the resulting .resx file can be read by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.</description></item>
     /// <item><term>Compactness</term>
     /// <description>The more compact output is achieved in multiple ways:
     /// <list type="bullet">
-    /// <item>If <see cref="OmitHeader"/> is <c>true</c>, the header and the schema is not dumped into the resulting .resx file. If <see cref="CompatibleFormat"/> is <c>true</c>, then only
+    /// <item>If <see cref="OmitHeader"/> is <see langword="true"/>, the header and the schema is not dumped into the resulting .resx file. If <see cref="CompatibleFormat"/> is <see langword="true"/>, then only
     /// the header comment can be omitted.</item>
-    /// <item>Whitespace preserving to string values is applied only if it is really necessary (even if <see cref="CompatibleFormat"/> is <c>true</c>).</item>
-    /// <item>If an object can only be binary serialized, then instead of using <see cref="BinaryFormatter"/> it is serialized by <see cref="BinarySerializationFormatter"/>, which produces a much more compact result (only if <see cref="CompatibleFormat"/> is <c>false</c>).
+    /// <item>Whitespace preserving to string values is applied only if it is really necessary (even if <see cref="CompatibleFormat"/> is <see langword="true"/>).</item>
+    /// <item>If an object can only be binary serialized, then instead of using <see cref="BinaryFormatter"/> it is serialized by <see cref="BinarySerializationFormatter"/>, which produces a much more compact result (only if <see cref="CompatibleFormat"/> is <see langword="false"/>).
     /// A new MIME type has been introduced to identify binary data serialized this new way.</item>
     /// </list></description></item>
     /// <item><strong>New overloads:</strong>
@@ -152,8 +152,8 @@ namespace KGySoft.Libraries.Resources
     /// <item>New <see cref="AddMetadata(ResXDataNode)">AddMetadata(ResXDataNode)</see> overload, working similarly to the existing <see cref="AddResource(ResXDataNode)">AddResource(ResXDataNode)</see> method.</item>
     /// </list></item>
     /// <item><term><see cref="AutoGenerateAlias"/> property</term>
-    /// <description>If <c>true</c>, alias names for assemblies will be automatically generated without calling <see cref="AddAlias(string,string,bool)">AddAlias</see> method.
-    /// If <c>false</c>, the assembly qualified names will be used for non-mscorlib types, unless an alias name was defined by <see cref="AddAlias(string,string,bool)">AddAlias</see> method or the <see cref="ResXDataNode"/> to dump already contains an alias name.</description></item>
+    /// <description>If <see langword="true"/>, alias names for assemblies will be automatically generated without calling <see cref="AddAlias(string,string,bool)">AddAlias</see> method.
+    /// If <see langword="false"/>, the assembly qualified names will be used for non-mscorlib types, unless an alias name was defined by <see cref="AddAlias(string,string,bool)">AddAlias</see> method or the <see cref="ResXDataNode"/> to dump already contains an alias name.</description></item>
     /// <item><strong>Better support of several types:</strong>
     /// <list type="table">
     /// <listheader><term>Type</term><term>Improvement</term><term>How it is handled by the System version</term></listheader>
@@ -167,11 +167,11 @@ namespace KGySoft.Libraries.Resources
     /// <item><term><see cref="char"/></term>
     /// <term>Support of unpaired surrogate characters.</term>
     /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize unpaired surrogates, though
-    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <c>true</c>.</term></item>
+    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
     /// <item><term><see cref="string"/> and any type serialized by a <see cref="TypeConverter"/>.</term>
     /// <term>Strings containing unpaired surrogates and invalid Unicode characters can be written without any error.</term>
     /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize such strings, though
-    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <c>true</c>.</term></item>
+    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
     /// <item><term><see cref="DateTime"/> and <see cref="DateTimeOffset"/></term>
     /// <term>Serialized in a different way so even the milliseconds part is preserved.</term>
     /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
@@ -181,15 +181,15 @@ namespace KGySoft.Libraries.Resources
     /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
     /// however, in case of <see cref="float"/> and <see cref="double"/> -0 will always turn to +0.</term></item>
     /// <item><term><see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> instances containing a runtime type (which is not a generic type argument).</term>
-    /// <term>These types are supported natively (without a <c>mimetype</c> attribute). Only if <see cref="CompatibleFormat"/> is <c>false</c>.</term>
+    /// <term>These types are supported natively (without a <c>mimetype</c> attribute). Only if <see cref="CompatibleFormat"/> is <see langword="false"/>.</term>
     /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> can serialize these type only by <see cref="BinaryFormatter"/>.</term></item>
     /// <item><term>Generic types</term>
     /// <term>Generic types with a <see cref="TypeConverter"/> are handled correctly.</term>
     /// <term>Parsing generic type names may fail with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>.
     /// The problem does not occur on binary serialization because in that case the type name is not dumped into the .resx file but is encoded in the binary stream.</term></item>
     /// <item><term>Any non-serializable type</term>
-    /// <term>As long as the <see cref="BinarySerializationFormatter"/> can serialize the non-serializable type, this implementation supports non-serializable types as well. This works even if <see cref="CompatibleFormat"/> is <c>true</c>.</term>
-    /// <term>If <see cref="CompatibleFormat"/> is <c>true</c> during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// <term>As long as the <see cref="BinarySerializationFormatter"/> can serialize the non-serializable type, this implementation supports non-serializable types as well. This works even if <see cref="CompatibleFormat"/> is <see langword="true"/>.</term>
+    /// <term>If <see cref="CompatibleFormat"/> is <see langword="true"/> during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// as long as <c>KGySoft.Libraries</c> assembly can be loaded and <see cref="BinaryFormatter"/> can find the <see cref="AnyObjectSerializerWrapper"/> class.</term></item>
     /// </list></item>
     /// </list>
@@ -288,8 +288,7 @@ namespace KGySoft.Libraries.Resources
                             continue;
                         default:
                             if (c == '\t' // TAB is OK
-                                || (c >= 0x20 && c <= 0xD7FF) // space..HighSurrogateStart-1 are OK
-                                || (c >= 0xE000 && c <= 0xFFFD)) // LowSurrogateEnd+1..ReplacementCharacter are OK
+                                || (c >= 0x20 && c.IsValidCharacter()))
                             {
                                 sb.Append(c);
                                 continue;
@@ -490,7 +489,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceWriter"/> instance should create a System compatible .resx file, which can be used
-        /// by the built-in resource editor of the Visual Studio. Default value is <c>true</c>. See the <strong>Remarks</strong> section for more information.
+        /// by the built-in resource editor of the Visual Studio. Default value is <see langword="true"/>. See the <strong>Remarks</strong> section for more information.
         /// </summary>
         /// <remarks>
         /// The value of the property affects the following differences:
@@ -498,9 +497,9 @@ namespace KGySoft.Libraries.Resources
         /// <item><description>The <c>reader</c> and <c>writer</c> <c>resheader</c> elements.</description></item>
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
         /// <item><description>The placeholder type of <see langword="null"/> references.</description></item>
-        /// <item><description>If <c>CompatibleFormat</c> is <c>false</c>, some additional types are supported natively (without a <c>mimetype</c> attribute): <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> (unless it is a generic type argument).</description></item>
-        /// <item><description>If <c>CompatibleFormat</c> is <c>false</c>, unpaired surrogate <see cref="char"/> values are supported.</description></item>
-        /// <item><description>The <c>mimetype</c> and content of binary serialized elements. If <c>CompatibleFormat</c> is <c>false</c>, these objects are
+        /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute): <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> (unless it is a generic type argument).</description></item>
+        /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, unpaired surrogate <see cref="char"/> values are supported.</description></item>
+        /// <item><description>The <c>mimetype</c> and content of binary serialized elements. If <c>CompatibleFormat</c> is <see langword="false"/>, these objects are
         /// serialized by <see cref="BinarySerializationFormatter"/>, which provides a much more compact result than the default <see cref="BinaryFormatter"/>.</description></item>
         /// </list>
         /// </remarks>
@@ -517,10 +516,10 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// Gets or sets whether the header should be omitted. If both <see cref="CompatibleFormat"/> and <see cref="OmitHeader"/> are <c>true</c>, then
-        /// only the XML comment will be omitted. If <see cref="CompatibleFormat"/> is <c>false</c> and <see cref="OmitHeader"/> is <c>true</c>, then
+        /// Gets or sets whether the header should be omitted. If both <see cref="CompatibleFormat"/> and <see cref="OmitHeader"/> are <see langword="true"/>, then
+        /// only the XML comment will be omitted. If <see cref="CompatibleFormat"/> is <see langword="false"/> and <see cref="OmitHeader"/> is <see langword="true"/>, then
         /// the comment, the .resx schema and the <c>&lt;resheader&gt;</c> elements will be omitted, too.
-        /// <br/>Default value: <c>true</c>.
+        /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the creation of the .resx file content has already been started.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceWriter"/> instance is already disposed.</exception>
@@ -560,13 +559,13 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets or sets whether an alias should be auto-generated for referenced assemblies.
         /// <br/>
-        /// Default value: <c>true</c>.
+        /// Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If <see>AutoGenerateAlias</see> is <c>false</c> the assembly names will be referenced by fully qualified names
+        /// <para>If <see>AutoGenerateAlias</see> is <see langword="false"/> the assembly names will be referenced by fully qualified names
         /// unless the alias names are explicitly added by <see cref="AddAlias(string,string,bool)"/> method, or when a <see cref="ResXDataNode"/>
         /// added by <see cref="AddResource(ResXDataNode)"/> method already contains an alias.</para>
-        /// <para>If <see>AutoGenerateAlias</see> is <c>true</c> the assembly aliases are re-generated, even if a <see cref="ResXDataNode"/>
+        /// <para>If <see>AutoGenerateAlias</see> is <see langword="true"/> the assembly aliases are re-generated, even if a <see cref="ResXDataNode"/>
         /// already contains an alias. To use explicitly defined names instead of auto generated names use the <see cref="AddAlias(string,string,bool)"/> method.</para>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceWriter"/> instance is already disposed.</exception>
@@ -689,7 +688,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="aliasName">The name of the alias.</param>
         /// <param name="assemblyName">The name of the assembly represented by <paramref name="aliasName"/>.</param>
-        /// <param name="forceWriteImmediately"><c>true</c> to write the alias immediately to the .resx file; <c>false</c> just to
+        /// <param name="forceWriteImmediately"><see langword="true"/> to write the alias immediately to the .resx file; <see langword="false"/> just to
         /// add it to the inner mapping and write it only when it is referenced for the first time.</param>
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, AssemblyName assemblyName, bool forceWriteImmediately = false)
@@ -705,7 +704,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="aliasName">The name of the alias.</param>
         /// <param name="assemblyName">The name of the assembly represented by <paramref name="aliasName"/>.</param>
-        /// <param name="forceWriteImmediately"><c>true</c> to write the alias immediately to the .resx file; <c>false</c> just to
+        /// <param name="forceWriteImmediately"><see langword="true"/> to write the alias immediately to the .resx file; <see langword="false"/> just to
         /// add it to the inner mapping and write it only when it is referenced for the first time.</param>
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, string assemblyName, bool forceWriteImmediately = false)

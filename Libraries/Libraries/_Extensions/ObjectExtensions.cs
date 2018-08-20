@@ -37,7 +37,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
-        /// <returns><c>true</c> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// This method works similarly to the "in" operator in SQL and Pascal.
         /// This overload uses <see cref="object.Equals(object,object)"/> to compare the items.
@@ -64,7 +64,7 @@ namespace KGySoft.Libraries
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><c>true</c> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// This method works similarly to the "in" operator in SQL and Pascal.
         /// This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.

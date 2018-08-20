@@ -140,17 +140,16 @@ namespace KGySoft.Libraries.Serialization
         private static bool EscapeNeeded(string s, int index, bool escapeNewlines, out bool isValidSurrogate)
         {
             isValidSurrogate = false;
-            int c = s[index];
+            char c = s[index];
             if (c == '\t' // TAB is ok
-                || (c >= 0x20 && c <= 0xD7FF) // space..HighSurrogateStart-1 are ok
-                || (c >= 0xE000 && c <= 0xFFFD) // LowSurrogateEnd+1..replacement character are ok
+                || (c >= 0x20 && c.IsValidCharacter())
                 || (!escapeNewlines && (c == 0xA || c == 0xD))) // \n, \r are ok if new lines are not escaped
             {
                 return false;
             }
 
             // valid surrogate pair
-            if (index < s.Length - 1 && Char.IsSurrogatePair((char)c, s[index + 1]))
+            if (index < s.Length - 1 && Char.IsSurrogatePair(c, s[index + 1]))
             {
                 isValidSurrogate = true;
                 return false;

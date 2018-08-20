@@ -95,6 +95,7 @@
     <Compile Include="Libraries\Extensions\ByteArrayExtensionsTest.cs" />
     <Compile Include="Libraries\Extensions\DecimalExtensionsTest.cs" />
     <Compile Include="Libraries\Extensions\RandomExtensionsTest.cs" />
+    <Compile Include="Libraries\Extensions\TypeExtensionsTest.cs" />
     <Compile Include="Libraries\Resources\DynamicResourceManagerTest.cs" />
     <Compile Include="Libraries\Resources\HybridResourceManagerTest.cs" />
     <Compile Include="Libraries\LanguageTest.cs" />

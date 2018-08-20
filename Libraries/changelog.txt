@@ -27,10 +27,16 @@
   + GetValueOrDefault methods
 + New WaitHandleExtensions class (only in .NET 4.5 and above)
   + WaitOneAsync methods
-
++ New CharExtensions class
+  + IsNonCharacter method
+  + IsValidCharacter method
+- StringComparerExtensions class: removed (moved to StringExtensions)
 - StringExtensions class:
   - GetTokenValue methods are removed
   + ToEnum method
+  + EqualsAny/IndexOfAny/ContainsAny overloads
++ New RandomExtensions class
+  + ... TODO
 
 * KGySoft.Libraries.Serialization namespace:
 ============================================

@@ -281,7 +281,7 @@ namespace KGySoft.Libraries.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <c>true</c> if the enumerator was successfully advanced to the next element; <c>false</c> if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -863,7 +863,7 @@ namespace KGySoft.Libraries.Collections
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>The <paramref name="capacity"/> of a <see cref="Cache{TKey,TValue}"/> is the maximum number of elements that the <see cref="Cache{TKey,TValue}"/> can hold. When <see cref="EnsureCapacity"/>
-        /// is <c>true</c>, the internal store is allocated when the first element is added to the cache. When <see cref="EnsureCapacity"/> is <c>false</c>, then as elements are added to the
+        /// is <see langword="true"/>, the internal store is allocated when the first element is added to the cache. When <see cref="EnsureCapacity"/> is <see langword="false"/>, then as elements are added to the
         /// <see cref="Cache{TKey,TValue}"/>, the inner storage is automatically increased as required until <see cref="Capacity"/> is reached or exceeded. When <see cref="EnsureCapacity"/> is
         /// turned on while there are elements in the <see cref="Cache{TKey,TValue}"/>, then internal storage will be reallocated to have exactly the same size that <see cref="Capacity"/> defines.
         /// The possible exceeding storage will be trimmed in this case.</para>
@@ -922,7 +922,7 @@ namespace KGySoft.Libraries.Collections
         /// If you want to add items manually, you can use <see cref="NullLoader"/> that will throw a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
         /// <remarks>
         /// <para>The <paramref name="capacity"/> of a <see cref="Cache{TKey,TValue}"/> is the maximum number of elements that the <see cref="Cache{TKey,TValue}"/> can hold. When <see cref="EnsureCapacity"/>
-        /// is <c>true</c>, the internal store is allocated when the first element is added to the cache. When <see cref="EnsureCapacity"/> is <c>false</c>, then as elements are added to the
+        /// is <see langword="true"/>, the internal store is allocated when the first element is added to the cache. When <see cref="EnsureCapacity"/> is <see langword="false"/>, then as elements are added to the
         /// <see cref="Cache{TKey,TValue}"/>, the inner storage is automatically increased as required until <see cref="Capacity"/> is reached or exceeded. When <see cref="EnsureCapacity"/> is
         /// turned on while there are elements in the <see cref="Cache{TKey,TValue}"/>, then internal storage will be reallocated to have exactly the same size that <see cref="Capacity"/> defines.
         /// The possible exceeding storage will be trimmed in this case.</para>
@@ -1067,7 +1067,7 @@ namespace KGySoft.Libraries.Collections
         /// </summary>
         /// <param name="value">The value to locate in the <see cref="Cache{TKey,TValue}"/>.
         /// The value can be <see langword="null"/> for reference types.</param>
-        /// <returns><c>true</c> if the <see cref="Cache{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if the <see cref="Cache{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
@@ -1243,7 +1243,7 @@ namespace KGySoft.Libraries.Collections
         /// <remarks>
         /// <para>If new value is smaller than elements count, then cost of setting this property is O(n), where n is the difference of
         /// <see cref="Count"/> before setting the property and the new capacity to set.</para>
-        /// <para>If new value is larger than elements count, and <see cref="EnsureCapacity"/> returns <c>true</c>, then cost of setting this property is O(n),
+        /// <para>If new value is larger than elements count, and <see cref="EnsureCapacity"/> returns <see langword="true"/>, then cost of setting this property is O(n),
         /// where n is the new capacity.</para>
         /// <para>Otherwise, the cost of setting this property is O(1).</para>
         /// </remarks>
@@ -1307,16 +1307,16 @@ namespace KGySoft.Libraries.Collections
 
         /// <summary>
         /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
-        /// allocate memory for all cache entries. Default value is <c>true</c>.
+        /// allocate memory for all cache entries. Default value is <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If <see cref="Capacity"/> is very large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <c>false</c>.</para>
-        /// <para>When <see cref="EnsureCapacity"/> is <c>true</c>, the full capacity of the inner storage is allocated when the first
+        /// <para>If <see cref="Capacity"/> is very large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>
+        /// <para>When <see cref="EnsureCapacity"/> is <see langword="true"/>, the full capacity of the inner storage is allocated when the first
         /// item is added to the cache. Otherwise, inner storage is allocated dynamically, doubling the currently used inner
         /// storage until the preset <see cref="Capacity"/> is reached.
-        /// <note>When <see cref="EnsureCapacity"/> is <c>false</c> and <see cref="Capacity"/> is power of 2, after the last storage doubling
+        /// <note>When <see cref="EnsureCapacity"/> is <see langword="false"/> and <see cref="Capacity"/> is power of 2, after the last storage doubling
         /// the internally allocated storage can be bigger than <see cref="Capacity"/>. In this case turning on this property trims the internal storage.</note>
-        /// <note>Even if <see cref="EnsureCapacity"/> is <c>true</c> (and thus the internal storage is preallocated), adding elements to the cache
+        /// <note>Even if <see cref="EnsureCapacity"/> is <see langword="true"/> (and thus the internal storage is preallocated), adding elements to the cache
         /// consumes some memory for each added element.</note>
         /// </para>
         /// <para>When cache is not empty and <see cref="EnsureCapacity"/> is just turned on, the cost of setting this property is O(n),
@@ -1429,7 +1429,7 @@ namespace KGySoft.Libraries.Collections
         /// use <see cref="TryGetValue"/> method.</para>
         /// <para>When the <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> equals to <see cref="Capacity"/>) and
         /// a new item is added, an element (depending on <see cref="Behavior"/> property) will be dropped from the cache.</para>
-        /// <para>If <see cref="EnsureCapacity"/> is <c>true</c>, getting or setting this property approaches an O(1) operation. Otherwise,
+        /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/>, getting or setting this property approaches an O(1) operation. Otherwise,
         /// when the capacity of the inner storage must be increased to accommodate a new element, this property becomes an O(n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
@@ -1501,7 +1501,7 @@ namespace KGySoft.Libraries.Collections
         /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
         /// In contrast, using the setter of the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property) replaces the old value with the new one.</para>
         /// <para>If you want to renew an element in the evaluation order, use the <see cref="Touch"/> method.</para>
-        /// <para>If <see cref="EnsureCapacity"/> is <c>true</c> this method approaches an O(1) operation. Otherwise, when the capacity of the inner storage must be increased to accommodate the new element,
+        /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/> this method approaches an O(1) operation. Otherwise, when the capacity of the inner storage must be increased to accommodate the new element,
         /// this method becomes an O(n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -1521,7 +1521,7 @@ namespace KGySoft.Libraries.Collections
         /// Removes the value with the specified <paramref name="key"/> from the <see cref="Cache{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">Key of the item to remove.</param>
-        /// <returns><c>true</c> if the element is successfully removed; otherwise, <c>false</c>. This method also returns <c>false</c> if key was not found in the <see cref="Cache{TKey,TValue}"/>.</returns>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>. This method also returns <see langword="false"/> if key was not found in the <see cref="Cache{TKey,TValue}"/>.</returns>
         /// <remarks><para>If the <see cref="Cache{TKey,TValue}"/> does not contain an element with the specified key, the <see cref="Cache{TKey,TValue}"/> remains unchanged. No exception is thrown.</para>
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
@@ -1546,7 +1546,7 @@ namespace KGySoft.Libraries.Collections
         /// Tries to gets the value associated with the specified <paramref name="key"/> without using the item loader passed to the constructor.
         /// </summary>
         /// <returns>
-        /// <c>true</c>, if cache contains an element with the specified key; otherwise, <c>false</c>.
+        /// <see langword="true"/>, if cache contains an element with the specified key; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified key, if the <paramref name="key"/> is found;
@@ -1558,7 +1558,7 @@ namespace KGySoft.Libraries.Collections
         /// <para>Works exactly the same was as in case of <see cref="Dictionary{TKey,TValue}"/> class. If <paramref name="key"/> is not found, does not use the
         /// item loader passed to the constructor.</para>
         /// <para>If the <paramref name="key"/> is not found, then the <paramref name="value"/> parameter gets the appropriate default value
-        /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <c>false</c> for Boolean types, and <see langword="null"/> for reference types.</para>
+        /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <see langword="false"/> for Boolean types, and <see langword="null"/> for reference types.</para>
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -1595,7 +1595,7 @@ namespace KGySoft.Libraries.Collections
         /// Determines whether the <see cref="Cache{TKey,TValue}"/> contains a specific key.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="Cache{TKey,TValue}"/>.</param>
-        /// <returns><c>true</c> if the <see cref="Cache{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if the <see cref="Cache{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks><para>This method approaches an O(1) operation.</para></remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         public bool ContainsKey(TKey key)
@@ -1720,7 +1720,7 @@ namespace KGySoft.Libraries.Collections
         /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
         /// </summary>
         /// <returns>
-        /// This is always a <c>false</c> value for <see cref="Cache{TKey,TValue}"/>.
+        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
         /// </returns>
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
         {
@@ -1837,7 +1837,7 @@ namespace KGySoft.Libraries.Collections
         /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object has a fixed size.
         /// </summary>
         /// <returns>
-        /// This is always a <c>false</c> value for <see cref="Cache{TKey,TValue}"/>.
+        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
         /// </returns>
         bool IDictionary.IsFixedSize
         {
@@ -1848,7 +1848,7 @@ namespace KGySoft.Libraries.Collections
         /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object is read-only.
         /// </summary>
         /// <returns>
-        /// This is always a <c>false</c> value for <see cref="Cache{TKey,TValue}"/>.
+        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
         /// </returns>
         bool IDictionary.IsReadOnly
         {

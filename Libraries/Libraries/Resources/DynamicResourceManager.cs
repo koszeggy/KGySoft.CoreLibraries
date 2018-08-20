@@ -60,13 +60,13 @@ namespace KGySoft.Libraries.Resources
     /// <br/>The behavior of <see cref="DynamicResourceManager"/> instances can be controlled in two ways, which can be configured by the <see cref="UseLanguageSettings"/> property.
     /// <list type="bullet">
     /// <item><term>Individual control</term>
-    /// <description>If <see cref="UseLanguageSettings"/> is <c>false</c>, which is the default value, then the <see cref="DynamicResourceManager"/> behavior is simply determined by its other properties.
+    /// <description>If <see cref="UseLanguageSettings"/> is <see langword="false"/>, which is the default value, then the <see cref="DynamicResourceManager"/> behavior is simply determined by its other properties.
     /// This can be alright for short-living <see cref="DynamicResourceManager"/> instances (for example, in a <see langword="using"/> block), or when you are sure you don't want let the
     /// consumers of your library to customize the settings of resource managers.</description></item>
     /// <item><term>Centralized control</term>
     /// <description>If you use the <see cref="DynamicResourceManager"/> class as the resource manager of a class library, you might want to let the consumers of your library to control
     /// how <see cref="DynamicResourceManager"/> instances should behave. For example, maybe one consumer wants to allow generating new .resx language files by using custom <see cref="AutoAppendOptions"/>,
-    /// and another one does not want to let generating .resx files at all. If <see cref="UseLanguageSettings"/> is <c>true</c>, then <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/>
+    /// and another one does not want to let generating .resx files at all. If <see cref="UseLanguageSettings"/> is <see langword="true"/>, then <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/>
     /// properties will be taken from the static <see cref="LanguageSettings"/> class (see <see cref="LanguageSettings.DynamicResourceManagersAutoAppend">LanguageSettings.DynamicResourceManagersAutoAppend</see>,
     /// <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see> and <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see>
     /// properties, respectively). This makes possible to control the behavior of <see cref="DynamicResourceManager"/> instances, which enable centralized settings,
@@ -82,12 +82,12 @@ namespace KGySoft.Libraries.Resources
     /// </list></note></para>
     /// <para><strong>Auto Appending</strong>:
     /// <br/>The automatic expansion of the resources can be controlled by the <see cref="AutoAppend"/> property (or by <see cref="LanguageSettings.DynamicResourceManagersAutoAppend">LanguageSettings.DynamicResourceManagersAutoAppend</see>,
-    /// property, if <see cref="UseLanguageSettings"/> is <c>true</c>), and it covers three different strategies, which can be combined:
+    /// property, if <see cref="UseLanguageSettings"/> is <see langword="true"/>), and it covers three different strategies, which can be combined:
     /// <list type="number">
     /// <item><term>Unknown resources</term>
     /// <description>If <see cref="AutoAppendOptions.AddUnknownToInvariantCulture"/> option is enabled and an unknown resource is requested, then the resource set
     /// of the invariant culture will be appended by the newly requested resource. It also means that <see cref="MissingManifestResourceException"/> will never be thrown,
-    /// even if <see cref="HybridResourceManager.ThrowException"/> property is <c>true</c>. If the unknown resource is requested by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetString">GetString</see>
+    /// even if <see cref="HybridResourceManager.ThrowException"/> property is <see langword="true"/>. If the unknown resource is requested by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetString">GetString</see>
     /// methods, then the value of the requested name will be the name itself prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see> property.
     /// On the other hand, if the unknown resource is requested by the <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> methods, then a <see langword="null"/> value will be added.
     /// <code lang="C#"><![CDATA[
@@ -265,7 +265,7 @@ namespace KGySoft.Libraries.Resources
     /// </para>
     /// <para><strong>Auto Saving</strong>:
     /// <br/>By setting the <see cref="AutoSave"/> property (or <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see>,
-    /// if <see cref="UseLanguageSettings"/> is <c>true</c>), the <see cref="DynamicResourceManager"/> is able to save the dynamically created content automatically on specific events:
+    /// if <see cref="UseLanguageSettings"/> is <see langword="true"/>), the <see cref="DynamicResourceManager"/> is able to save the dynamically created content automatically on specific events:
     /// <list type="bullet">
     /// <item><term>Changing the display language</term>
     /// <description>If <see cref="AutoSaveOptions.LanguageChange"/> option is enabled the changes are saved whenever the current UI culture is set via the
@@ -303,7 +303,7 @@ namespace KGySoft.Libraries.Resources
     /// <para>Considering <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method is not explicitly called on auto save, you cannot set its parameters directly.
     /// However, by setting the <see cref="CompatibleFormat"/> property, you can tell whether the result .resx files should be able to be read by a
     /// <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
-    /// and the Visual Studio Resource Editor. If it is <c>false</c> the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+    /// and the Visual Studio Resource Editor. If it is <see langword="false"/> the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
     /// but the result can be read only by the <see cref="ResXResourceReader" /> class.</para>
     /// <para>Normally, if you save the changes by the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method, you can handle the possible exceptions locally.
     /// To handle errors occurred during auto save you can subscribe the <see cref="AutoSaveError"/> event.</para>
@@ -498,7 +498,7 @@ namespace KGySoft.Libraries.Resources
         
         /// <summary>
         /// If <see cref="autoAppend"/> contains <see cref="AutoAppendOptions.AppendOnLoad"/> flag,
-        /// contains the up-to-date cultures. Value is <c>true</c> if that culture is merged so it can be taken as a base for merge.
+        /// contains the up-to-date cultures. Value is <see langword="true"/> if that culture is merged so it can be taken as a base for merge.
         /// </summary>
         private Dictionary<CultureInfo, bool> mergedCultures;
 
@@ -522,7 +522,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets or sets whether values of <see cref="AutoAppend"/>, <see cref="AutoSave"/> and <see cref="Source"/> properties
         /// are taken centrally from the <see cref="LanguageSettings"/> class.
-        /// <br/>Default value: <c>false</c>.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersSource"/>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersAutoAppend"/>
@@ -557,15 +557,15 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// When <see cref="UseLanguageSettings"/> is <c>false</c>,
+        /// When <see cref="UseLanguageSettings"/> is <see langword="false"/>,
         /// gets or sets the auto saving options.
-        /// When <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// When <see cref="UseLanguageSettings"/> is <see langword="true"/>,
         /// auto saving is controlled by <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see> property.
         /// <br/>Default value: <see cref="AutoSaveOptions.None"/>
         /// </summary>
         /// <seealso cref="AutoSaveError"/>
-        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <c>true</c>.</exception>
-        /// <remarks>The default value of this property is <see cref="AutoSaveOptions.None"/>. Though, if <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <see langword="true"/>.</exception>
+        /// <remarks>The default value of this property is <see cref="AutoSaveOptions.None"/>. Though, if <see cref="UseLanguageSettings"/> is <see langword="true"/>,
         /// the <see cref="LanguageSettings.DynamicResourceManagersAutoSave">LanguageSettings.DynamicResourceManagersAutoSave</see> property is used, whose default value is
         /// <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>.
         /// <note>For more details see the <em>Auto Saving</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></remarks>
@@ -593,14 +593,14 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// When <see cref="UseLanguageSettings"/> is <c>false</c>,
+        /// When <see cref="UseLanguageSettings"/> is <see langword="false"/>,
         /// gets or sets the resource auto append options.
-        /// When <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// When <see cref="UseLanguageSettings"/> is <see langword="true"/>,
         /// auto appending of resources is controlled by <see cref="LanguageSettings.DynamicResourceManagersAutoAppend">LanguageSettings.DynamicResourceManagersAutoAppend</see> property.
         /// <br/>
         /// Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
-        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <c>true</c>.</exception>
+        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <see langword="true"/>.</exception>
         /// <remarks>
         /// <para>Auto appending affects the resources only. Metadata are never merged.</para>
         /// <para>Auto appending options are ignored if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/></para>
@@ -631,16 +631,16 @@ namespace KGySoft.Libraries.Resources
         }
 
         /// <summary>
-        /// When <see cref="UseLanguageSettings"/> is <c>false</c>,
+        /// When <see cref="UseLanguageSettings"/> is <see langword="false"/>,
         /// gets or sets the source, from which the resources should be taken.
-        /// When <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// When <see cref="UseLanguageSettings"/> is <see langword="true"/>,
         /// the source is controlled by <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> property.
         /// <br/>Default value: <see cref="ResourceManagerSources.CompiledAndResX"/>
         /// </summary>
         /// <seealso cref="UseLanguageSettings"/>
         /// <seealso cref="LanguageSettings.DynamicResourceManagersSource"/>
-        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <c>true</c>.</exception>
-        /// <remarks>The default value of this property is <see cref="ResourceManagerSources.CompiledAndResX"/>. Though, if <see cref="UseLanguageSettings"/> is <c>true</c>,
+        /// <exception cref="InvalidOperationException">The property is set and <see cref="UseLanguageSettings"/> is <see langword="true"/>.</exception>
+        /// <remarks>The default value of this property is <see cref="ResourceManagerSources.CompiledAndResX"/>. Though, if <see cref="UseLanguageSettings"/> is <see langword="true"/>,
         /// the <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> property is used, whose default value is
         /// <see cref="ResourceManagerSources.CompiledOnly"/>.</remarks>
         public override ResourceManagerSources Source
@@ -657,13 +657,13 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether the .resx files should use a compatible format when the resources are automatically saved.
-        /// <br/>Default value: <c>false</c>
+        /// <br/>Default value: <see langword="false"/>
         /// </summary>
         /// <remarks>
         /// <para>The changes can be always saved by the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method, where compatible format
         /// can be explicitly requested. This property affects the result of auto saving controlled by the <see cref="AutoSave"/> property.</para>
-        /// <para>If <see cref="CompatibleFormat"/> is <c>true</c> the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
-        /// instance and the Visual Studio Resource Editor. If it is <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+        /// <para>If <see cref="CompatibleFormat"/> is <see langword="true"/> the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+        /// instance and the Visual Studio Resource Editor. If it is <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader"/> class.</para>
         /// </remarks>
         public bool CompatibleFormat { get; set; }
@@ -714,7 +714,7 @@ namespace KGySoft.Libraries.Resources
         /// the resource manager uses fallback rules to locate an appropriate resource. If this value is <see langword="null"/>,
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="LanguageSettings.DisplayLanguage" /> property.</param>
         /// <returns>
-        /// If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
+        /// If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
@@ -743,7 +743,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <returns>
-        /// If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
+        /// If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
@@ -767,12 +767,12 @@ namespace KGySoft.Libraries.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <c>false</c> or the current
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>
-        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures is possible.
         /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
@@ -800,7 +800,7 @@ namespace KGySoft.Libraries.Resources
         /// The value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures is possible.
         /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
@@ -810,7 +810,7 @@ namespace KGySoft.Libraries.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <c>false</c> or the current
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
@@ -820,21 +820,21 @@ namespace KGySoft.Libraries.Resources
         /// Retrieves the resource set for a particular culture.
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
-        /// <param name="loadIfExists"><c>true</c> to load the resource set, if it has not been loaded yet and the corresponding resource file exists; otherwise, <c>false</c>.</param>
-        /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.</param>
+        /// <param name="loadIfExists"><see langword="true"/> to load the resource set, if it has not been loaded yet and the corresponding resource file exists; otherwise, <see langword="false"/>.</param>
+        /// <param name="tryParents"><see langword="true"/> to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/> to bypass the resource fallback process.</param>
         /// <returns>The resource set for the specified culture.</returns>
         /// <remarks>
         /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the resource sets is possible during this call.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
         /// </para>
-        /// <para>Appending is applied only if both <paramref name="loadIfExists"/> and <paramref name="tryParents"/> are <c>true</c>, though no new resource set will be created.
+        /// <para>Appending is applied only if both <paramref name="loadIfExists"/> and <paramref name="tryParents"/> are <see langword="true"/>, though no new resource set will be created.
         /// To make possible to create a completely new resource set call the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method with <see cref="ResourceSetRetrieval.CreateIfNotExists"/> behavior instead.</para>
         /// <para>If due to the current parameters no auto appending is performed during the call, then it will not happen later for the retrieved resource set until the <see cref="ReleaseAllResources">ReleaseAllResources</see>
         /// method is called.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <c>true</c> and
+        /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <see langword="true"/> and
         /// the resource of the neutral culture was not found.</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
@@ -855,8 +855,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
         /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
         /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
-        /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.
-        /// <br/>Default value: <c>false</c>.</param>
+        /// <param name="tryParents"><see langword="true"/> to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/> to bypass the resource fallback process.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>
         /// The resource set for the specified culture, or <see langword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,
         /// or when <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/> so it cannot return an <see cref="IExpandoResourceSet"/> instance.
@@ -865,14 +865,14 @@ namespace KGySoft.Libraries.Resources
         /// <para>If <see cref="AutoAppendOptions.AppendOnLoad"/> option is enabled in <see cref="AutoAppend"/> property, then dynamic expansion of the resource sets is possible during this call.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
         /// </para>
-        /// <para>Appending is applied only if <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and <paramref name="tryParents"/> is <c>true</c>.</para>
+        /// <para>Appending is applied only if <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and <paramref name="tryParents"/> is <see langword="true"/>.</para>
         /// <para>If due to the current parameters no auto appending is performed during the call, then it will not happen later for the retrieved resource set until the <see cref="ReleaseAllResources">ReleaseAllResources</see>
         /// method is called.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
-        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <c>true</c>
+        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <see langword="true"/>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
         public override IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
@@ -1036,7 +1036,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)
@@ -1050,15 +1050,15 @@ namespace KGySoft.Libraries.Resources
         /// Provides the implementation for finding a resource set.
         /// </summary>
         /// <param name="culture">The culture object to look for.</param>
-        /// <param name="loadIfExists"><c>true</c> to load the resource set, if it has not been loaded yet; otherwise, <c>false</c>.</param>
-        /// <param name="tryParents"><c>true</c> to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <c>false</c>.</param>
+        /// <param name="loadIfExists"><see langword="true"/> to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
+        /// <param name="tryParents"><see langword="true"/> to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
         /// <returns>
         /// The specified resource set.
         /// </returns>
         /// <remarks>Unlike in case of <see cref="GetResourceSet">GetResourceSet</see> and <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> methods,
         /// no auto appending occurs when this method is called.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
-        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are both <c>true</c>.</exception>
+        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are both <see langword="true"/>.</exception>
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
@@ -1105,7 +1105,7 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Raises the <see cref="AutoSaveError" /> event.
         /// </summary>
-        /// <returns><c>true</c> if the error is handled and should not be re-thrown.</returns>
+        /// <returns><see langword="true"/> if the error is handled and should not be re-thrown.</returns>
         private bool OnAutoSaveError(AutoSaveErrorEventArgs e)
         {
             EventHandler<AutoSaveErrorEventArgs> handler = AutoSaveError;

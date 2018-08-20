@@ -102,7 +102,7 @@ namespace KGySoft.Libraries
         /// Gets or sets whether the <see cref="Elapsed"/> event should be triggered.
         /// </summary>
         /// <value>
-        /// <c>true</c> if enabled; otherwise, <c>false</c>.
+        /// <see langword="true"/> if enabled; otherwise, <see langword="false"/>.
         /// </value>
         public bool Enabled
         {

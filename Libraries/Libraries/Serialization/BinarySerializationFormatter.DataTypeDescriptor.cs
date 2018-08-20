@@ -181,7 +181,7 @@ namespace KGySoft.Libraries.Serialization
                 Type elementType = GetElementType(isTValue);
 
                 // true if element type is interface or not sealed class, false if struct or sealed class
-                return !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
+                return elementType.CanBeDerived();
             }
 
             /// <summary>

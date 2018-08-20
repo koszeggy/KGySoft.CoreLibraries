@@ -200,13 +200,13 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Gets or sets whether changes of system regional settings should be captured.
-        /// When <c>true</c>, <see cref="FormattingLanguage"/> is updated on regional changes, and
+        /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
         /// <see cref="FormattingLanguageChanged"/> and <see cref="FormattingLanguageChangedGlobal"/> events
         /// are triggered.
         /// </summary>
         /// <value>
-        /// <c>true</c> if system regional settings should be captured; otherwise, <c>false</c>.
-        /// Default value is <c>false</c>.
+        /// <see langword="true"/> if system regional settings should be captured; otherwise, <see langword="false"/>.
+        /// Default value is <see langword="false"/>.
         /// </value>
         public static bool CaptureSystemLocaleChange
         {
@@ -227,11 +227,11 @@ namespace KGySoft.Libraries
         /// <summary>
         /// Gets or sets the source, from which the <see cref="DynamicResourceManager"/> instances of the
         /// current application domain should take the resources when their
-        /// <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="ResourceManagerSources.CompiledOnly"/>
         /// </summary>
         /// <remarks>Considering default value is <see cref="ResourceManagerSources.CompiledOnly"/>, all <see cref="DynamicResourceManager"/> instances, which
-        /// use <see cref="DynamicResourceManager.UseLanguageSettings"/> property with <c>true</c> value, will work fully compatible with the <see cref="ResourceManager"/>
+        /// use <see cref="DynamicResourceManager.UseLanguageSettings"/> property with <see langword="true"/> value, will work fully compatible with the <see cref="ResourceManager"/>
         /// class by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
         /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly.</remarks>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
@@ -254,7 +254,7 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Gets or sets the auto saving options for the <see cref="DynamicResourceManager"/> instances
-        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
@@ -278,7 +278,7 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Gets or sets the auto append options for the <see cref="DynamicResourceManager"/> instances
-        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <c>true</c>.
+        /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>

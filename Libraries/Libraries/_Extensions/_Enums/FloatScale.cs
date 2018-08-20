@@ -17,9 +17,9 @@
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Represents the scaling strategy when generating random numbers.
+    /// Represents the scaling strategy when generating random floating-point numbers.
     /// </summary>
-    public enum RandomScale
+    public enum FloatScale
     {
         /// <summary>
         /// The scaling will be chosen automatically based on the provided range.

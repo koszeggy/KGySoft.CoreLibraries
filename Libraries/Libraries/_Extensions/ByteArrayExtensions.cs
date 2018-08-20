@@ -76,7 +76,7 @@ namespace KGySoft.Libraries
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
         /// <br/>Default value: <c>0</c></param>
         /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default value: <c>false</c>.</param>
+        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too.<br/>Default value: <see langword="false"/>.</param>
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
@@ -148,7 +148,7 @@ namespace KGySoft.Libraries
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
         /// <br/>Default value: <c>0</c></param>
         /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default value: <c>false</c>.</param>
+        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too.<br/>Default value: <see langword="false"/>.</param>
         /// <returns>The string representation, in decimal, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> or <paramref name="separator"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> is empty or contains decimal digits</exception>
@@ -177,7 +177,7 @@ namespace KGySoft.Libraries
         /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
         /// <br/>Default value: <c>0</c></param>
         /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <c>true</c>, then a single line result will be indented, too.<br/>Default value: <c>false</c>.</param>
+        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too.<br/>Default value: <see langword="false"/>.</param>
         /// <returns>The string representation, in base 64, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         public static string ToBase64String(this byte[] bytes, int lineLength = 0, int indentSize = 0, char indentChar = ' ', bool indentSingleLine = false)

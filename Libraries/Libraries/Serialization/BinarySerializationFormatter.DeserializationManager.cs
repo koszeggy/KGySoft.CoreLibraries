@@ -298,7 +298,7 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // 1.) Iterating through loaded assemblies
-                result = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.FullName == name);
+                result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
 
                 // 2.) Trying to load assembly
                 if (result == null)

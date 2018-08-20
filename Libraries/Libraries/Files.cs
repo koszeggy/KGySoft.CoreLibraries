@@ -19,8 +19,8 @@ namespace KGySoft.Libraries
         /// Checks whether a file can be created with given name.
         /// </summary>
         /// <param name="fileName">The name of the file to test.</param>
-        /// <param name="canOverwrite">When <c>false</c>, file will not be overwritten if already exists and result will be <c>false</c>.
-        /// When <c>true</c>, already existing file will be overwritten and deleted.</param>
+        /// <param name="canOverwrite">When <see langword="false"/>, file will not be overwritten if already exists and result will be <see langword="false"/>.
+        /// When <see langword="true"/>, already existing file will be overwritten and deleted.</param>
         static public bool CanCreate(string fileName, bool canOverwrite)
         {
             if (fileName == null)
@@ -191,7 +191,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="pattern">The pattern that may contain wildcards (*, ?).</param>
         /// <param name="fileName">The file name to test.</param>
-        /// <returns><c>true</c>, when <paramref name="fileName"/> matches <paramref name="pattern"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, when <paramref name="fileName"/> matches <paramref name="pattern"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="System.ArgumentNullException">
         /// <paramref name="pattern"/> or <paramref name="fileName"/> is <see langword="null"/>.</exception>
         public static bool IsWildcardMatch(string pattern, string fileName)

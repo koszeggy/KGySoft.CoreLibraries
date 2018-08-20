@@ -350,7 +350,7 @@ namespace KGySoft.Libraries.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <c>true</c> if the enumerator was successfully advanced to the next element; <c>false</c> if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -604,7 +604,7 @@ namespace KGySoft.Libraries.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <c>true</c> if the enumerator was successfully advanced to the next element; <c>false</c> if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -999,7 +999,7 @@ namespace KGySoft.Libraries.Collections
         /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains a specific value.
         /// </summary>
         /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>. The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
-        /// <returns><c>true</c> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
@@ -1196,7 +1196,7 @@ namespace KGySoft.Libraries.Collections
         /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>.
         /// </summary>
         /// <returns>
-        /// <c>true</c>, if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the <paramref name="key"/>; otherwise, <c>false</c>.
+        /// <see langword="true"/>, if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the <paramref name="key"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
         /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -1215,7 +1215,7 @@ namespace KGySoft.Libraries.Collections
         /// Removes the element with the specified <paramref name="key"/> from the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
         /// <returns>
-        /// <c>true</c> if the element is successfully removed; otherwise, <c>false</c>.
+        /// <see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key of the element to remove.</param>
         /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -1236,7 +1236,7 @@ namespace KGySoft.Libraries.Collections
         /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
         /// </summary>
         /// <returns>
-        /// <c>true</c> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <c>false</c>.
+        /// <see langword="true"/> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;

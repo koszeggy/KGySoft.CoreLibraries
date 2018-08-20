@@ -1176,8 +1176,8 @@ namespace _LibrariesTest.Libraries.Collections
             // searching in wrapped area, with self helpers
             Assert.AreEqual(reference.BinarySearch(1, 6, "2", null), list.BinarySearch(1, 6, "2", null)); // as IComparable, found
             Assert.AreEqual(reference.BinarySearch(1, 6, "0", null), list.BinarySearch(1, 6, "0", null)); // as IComparable, not found
-            Assert.AreEqual(reference.BinarySearch(1, 6, "2", StringComparer.Ordinal), list.BinarySearch(1, 6, "2", StringComparer.Ordinal)); // width IComparer, found
-            Assert.AreEqual(reference.BinarySearch(1, 6, "0", StringComparer.Ordinal), list.BinarySearch(1, 6, "0", StringComparer.Ordinal)); // width IComparer, not found
+            Assert.AreEqual(reference.BinarySearch(1, 6, "2", StringComparer.Ordinal), list.BinarySearch(1, 6, "2", StringComparer.Ordinal)); // with IComparer, found
+            Assert.AreEqual(reference.BinarySearch(1, 6, "0", StringComparer.Ordinal), list.BinarySearch(1, 6, "0", StringComparer.Ordinal)); // with IComparer, not found
         }
 
         [TestMethod]

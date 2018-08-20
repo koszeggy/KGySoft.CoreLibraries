@@ -741,11 +741,11 @@ namespace _LibrariesTest.Libraries.Serialization
                 "🏯", // paired surrogate
            };
 
-            //SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects);
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             // These strings cannot be (de)serialized with system serializer
             referenceObjects = new string[]
@@ -761,6 +761,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 "\r",
                 "\r\r",
                 "\0",
+                "\xFDD0", // U+FDD0 - <noncharacter-FDD0>
                 "\xffff", // U+FFFF = <noncharacter-FFFF>
                 "🏯"[0].ToString(null), // unpaired surrogate
                 "<>\\'\"&{}{{}}\0\\0000",

@@ -31,26 +31,27 @@ namespace KGySoft.Libraries
         public Range(T lowerBound, T upperBound)
         {
             if (lowerBound.CompareTo(upperBound) > 0)
-                throw new ArgumentOutOfRangeException(nameof(lowerBound), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(upperBound), Res.Get(Res.MaxValueLessThanMinValue));
             LowerBound = lowerBound;
             UpperBound = upperBound;
         }
 
-        /// <summary>
-        /// Deconstructs this <see cref="Range{T}"/> instance.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void Deconstruct(out T lowerBound, out T upperBound)
-        {
-            lowerBound = LowerBound;
-            upperBound = UpperBound;
-        }
+        // TODO: .NET 4.7 and above:
+        ///// <summary>
+        ///// Deconstructs this <see cref="Range{T}"/> instance.
+        ///// </summary>
+        //[EditorBrowsable(EditorBrowsableState.Never)]
+        //public void Deconstruct(out T lowerBound, out T upperBound)
+        //{
+        //    lowerBound = LowerBound;
+        //    upperBound = UpperBound;
+        //}
 
-        public static implicit operator Range<T>(T upperBound) => new Range<T>(upperBound);
+        //public static implicit operator Range<T>(T upperBound) => new Range<T>(upperBound);
 
-        public static implicit operator Range<T>((T LowerBound, T UpperBound) bounds) => new Range<T>(bounds.LowerBound, bounds.UpperBound);
+        //public static implicit operator Range<T>((T LowerBound, T UpperBound) bounds) => new Range<T>(bounds.LowerBound, bounds.UpperBound);
 
-        public static implicit operator (T LowerBound, T UpperBound)(Range<T> range) => (range.LowerBound, range.UpperBound);
+        //public static implicit operator (T LowerBound, T UpperBound)(Range<T> range) => (range.LowerBound, range.UpperBound);
 
         public bool Equals(Range<T> other) => comparer.Equals(other.LowerBound, LowerBound) && comparer.Equals(other.UpperBound, UpperBound);
 

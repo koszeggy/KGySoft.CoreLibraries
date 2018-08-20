@@ -125,7 +125,7 @@ namespace KGySoft.Libraries
         /// Gets whether the specified <paramref name="value"/> is negative zero.
         /// </summary>
         /// <param name="value">The value to check.</param>
-        /// <returns><c>true</c>, if <paramref name="value"/> represents a negative zero value; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="value"/> represents a negative zero value; otherwise, <see langword="false"/>.</returns>
         public static bool IsNegativeZero(this decimal value)
         {
             return value == 0m && (Decimal.GetBits(value)[3] & 0x80000000) != 0;

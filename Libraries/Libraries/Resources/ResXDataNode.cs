@@ -60,13 +60,13 @@ namespace KGySoft.Libraries.Resources
     /// <para>To retrieve an existing <see cref="ResXDataNode"/> object, you can select one of the following options:
     /// <list type="bullet">
     /// <item>Enumerate the <see cref="ResXDataNode"/> objects in an XML (.resx file) by instantiating a <see cref="ResXResourceReader"/> object,
-    /// setting the <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> property to <c>true</c>, and calling the
+    /// setting the <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> property to <see langword="true"/>, and calling the
     /// <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see> or <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> method to get an enumerator.</item>
-    /// <item>Instantiate a new <see cref="ResXResourceSet"/> from a .resx file, set <see cref="ResXResourceSet.SafeMode">ResXResourceSet.SafeMode</see> to <c>true</c>,
+    /// <item>Instantiate a new <see cref="ResXResourceSet"/> from a .resx file, set <see cref="ResXResourceSet.SafeMode">ResXResourceSet.SafeMode</see> to <see langword="true"/>,
     /// and call the <see cref="ResXResourceSet.GetObject(string)">ResXResourceSet.GetObject</see> or <see cref="ResXResourceSet.GetMetaObject">ResXResourceSet.GetMetaObject</see>
     /// methods with a key, which exists in the .resx file. You can use the <see cref="ResXResourceSet.GetEnumerator">ResXResourceSet.GetEnumerator</see> and <see cref="ResXResourceSet.GetMetadataEnumerator">ResXResourceSet.GetMetadataEnumerator</see>
     /// methods in a similar way as in case of the <see cref="ResXResourceReader"/> class.</item>
-    /// <item>Instantiate a new <see cref="ResXResourceManager"/> class, set <see cref="ResXResourceManager.SafeMode">ResXResourceManager.SafeMode</see> to <c>true</c>,
+    /// <item>Instantiate a new <see cref="ResXResourceManager"/> class, set <see cref="ResXResourceManager.SafeMode">ResXResourceManager.SafeMode</see> to <see langword="true"/>,
     /// and call the <see cref="ResXResourceManager.GetObject(string)">ResXResourceManager.GetObject</see> or <see cref="ResXResourceManager.GetMetaObject">ResXResourceManager.GetMetaObject</see>
     /// methods with a key, which exists in the .resx file. See the example below for illustration.</item>
     /// </list>
@@ -251,7 +251,7 @@ namespace KGySoft.Libraries.Resources
     /// </description></item>
     /// <item><term>Performance</term>
     /// <description>As there is no deserialization and assembly/type resolving during parsing a .resx file by the <see cref="ResXResourceReader"/> class, the parsing is
-    /// much more faster. This is true even if <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> is <c>false</c>, because there are always <see cref="ResXDataNode"/>
+    /// much more faster. This is true even if <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> is <see langword="false"/>, because there are always <see cref="ResXDataNode"/>
     /// instances stored internally.</description></item>
     /// <item><term>Support of non-serializable types</term>
     /// <description>When serializing an object, the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> type
@@ -903,8 +903,8 @@ namespace KGySoft.Libraries.Resources
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
         /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="cleanupRawData"><c>true</c> to free the underlying XML data once the value is deserialized; otherwise, <c>false</c>.
-        /// <br/>Default value: <c>false</c>.</param>
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
         /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>

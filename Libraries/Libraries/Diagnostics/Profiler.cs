@@ -62,16 +62,16 @@ namespace KGySoft.Libraries.Diagnostics
 
         /// <summary>
         /// Gets or sets whether profiling is enabled.
-        /// <br/>Default value: <c>true</c>
+        /// <br/>Default value: <see langword="true"/>
         /// </summary>
         public static bool Enabled { get; set; }
 
         /// <summary>
         /// Gets or sets whether results are automatically saved into the directory determined by the <see cref="ProfilerDirectory"/> property.
-        /// <br/>Default value: <c>true</c>
+        /// <br/>Default value: <see langword="true"/>
         /// </summary>
         /// <remarks>
-        /// If the value of this property is <c>true</c>, the profiler results are dumped automatically when the current
+        /// If the value of this property is <see langword="true"/>, the profiler results are dumped automatically when the current
         /// <see cref="AppDomain"/> is unloaded. This happens typically when the application is closed.
         /// </remarks>
         /// <seealso cref="ProfilerDirectory"/>
@@ -82,7 +82,7 @@ namespace KGySoft.Libraries.Diagnostics
         /// sets the <c>Profiler</c> subdirectory of the executing assembly.
         /// </summary>
         /// <remarks>
-        /// <para>Results are dumped only if <see cref="AutoSaveResults"/> property is <c>true</c>.</para>
+        /// <para>Results are dumped only if <see cref="AutoSaveResults"/> property is <see langword="true"/>.</para>
         /// <para>By default, the value of this property is the <c>Profiler</c> subdirectory of the executing assembly.
         /// When <see langword="null"/> or empty value is assigned, this default value is reset.</para>
         /// <para>When the directory does not exist, it will be created automatically. The profiler results are
@@ -102,7 +102,7 @@ namespace KGySoft.Libraries.Diagnostics
         /// Gets the measurement results so far.
         /// </summary>
         /// <remarks>
-        /// <para>If <see cref="AutoSaveResults"/> is <c>true</c>, the measurement results are automatically dumped in
+        /// <para>If <see cref="AutoSaveResults"/> is <see langword="true"/>, the measurement results are automatically dumped in
         /// XML files on application exit, so accessing this property is required only
         /// when measurements are needed to be accessed programatically.
         /// </para>
@@ -118,7 +118,7 @@ namespace KGySoft.Libraries.Diagnostics
         /// Gets the measurement results of the given <paramref name="category"/> so far.
         /// </summary>
         /// <remarks>
-        /// <para>If <see cref="AutoSaveResults"/> is <c>true</c>, the measurement results are automatically dumped in
+        /// <para>If <see cref="AutoSaveResults"/> is <see langword="true"/>, the measurement results are automatically dumped in
         /// XML files on application exit, so accessing this property is required only
         /// when measurements are needed to be accessed programatically.
         /// </para>
@@ -167,13 +167,13 @@ namespace KGySoft.Libraries.Diagnostics
         #region Public Methods
 
         /// <summary>
-        /// If <see cref="Enabled"/> is <c>true</c>, starts a profiling measure. Use in <see langword="using"/> block.
+        /// If <see cref="Enabled"/> is <see langword="true"/>, starts a profiling measure. Use in <see langword="using"/> block.
         /// </summary>
         /// <param name="category">A category that contains the operation. Can be the name of the caller type, for example.
         /// If <see langword="null"/> or empty, the measurement will be uncategorized.</param>
         /// <param name="operation">Name of the operation.</param>
         /// <returns>An <see cref="IDisposable"/> instance that should be enclosed into a <see langword="using"/> block.
-        /// When <see cref="Enabled"/> is <c>false</c>, this method returns <see langword="null"/>.</returns>
+        /// When <see cref="Enabled"/> is <see langword="false"/>, this method returns <see langword="null"/>.</returns>
         // todo: remarks example
         public static IDisposable Measure(string category, string operation)
         {

@@ -158,7 +158,7 @@ namespace KGySoft.Libraries
         /// Determines whether two <typeparamref name="TEnum"/> instances are equal.
         /// </summary>
         /// <returns>
-        /// <c>true</c> if the specified enums are equal; otherwise, <c>false</c>.
+        /// <see langword="true"/> if the specified enums are equal; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="x">The first enum of type <typeparamref name="TEnum"/> to compare.</param>
         /// <param name="y">The second enum of type <typeparamref name="TEnum"/> to compare.</param>

@@ -322,7 +322,7 @@ namespace KGySoft.Libraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
-        /// <returns><c>true</c> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(TEnum value)
         {
             return ValueNamePairs.ContainsKey(value);
@@ -332,7 +332,7 @@ namespace KGySoft.Libraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <see cref="string"/> value representing a field name in the enumeration.</param>
-        /// <returns><c>true</c> if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field whose name equals <paramref name="value"/> (search is case-sensitive); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool IsDefined(string value)
         {
@@ -346,7 +346,7 @@ namespace KGySoft.Libraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/> as a field value.
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
-        /// <returns><c>true</c> if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(long value)
         {
             if (value < min || isSigned && value > (long)max || !isSigned && (ulong)value > max)
@@ -358,7 +358,7 @@ namespace KGySoft.Libraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/> as a field value.
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
-        /// <returns><c>true</c> if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined(ulong value)
         {
             if (value > max)
@@ -372,8 +372,8 @@ namespace KGySoft.Libraries
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
         /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
-        /// otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
+        /// otherwise, <see langword="false"/>.</returns>
         public static bool HasFlag(TEnum value, TEnum flags)
         {
             ulong rawFlags = isSigned ? (ulong)flags.ToInt64(null) & sizeMask : flags.ToUInt64(null);
@@ -387,8 +387,8 @@ namespace KGySoft.Libraries
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
         /// <param name="flags">An integer value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
-        /// otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
+        /// otherwise, <see langword="false"/>.</returns>
         public static bool HasFlag(TEnum value, long flags)
         {
             if (flags < min || isSigned && flags > (long)max || !isSigned && (ulong)flags > max)
@@ -403,8 +403,8 @@ namespace KGySoft.Libraries
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
         /// <param name="flags">An unsigned integer value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
-        /// otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
+        /// otherwise, <see langword="false"/>.</returns>
         public static bool HasFlag(TEnum value, ulong flags)
         {
             if (flags > max)
@@ -417,7 +417,7 @@ namespace KGySoft.Libraries
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">The value to check.</param>
-        /// <returns><c>true</c>, if only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag(TEnum value)
         {
             ulong rawValue = isSigned ? (ulong)value.ToInt64(null) & sizeMask : value.ToUInt64(null);
@@ -428,8 +428,8 @@ namespace KGySoft.Libraries
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">The value to check.</param>
-        /// <returns><c>true</c>, if <paramref name="value"/> falls into the range of <typeparamref name="TEnum"/> range
-        /// and only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="value"/> falls into the range of <typeparamref name="TEnum"/> range
+        /// and only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag(long value)
         {
             if (value == 0L || value < min || isSigned && value > (long)max || !isSigned && (ulong)value > max)
@@ -441,8 +441,8 @@ namespace KGySoft.Libraries
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">The value to check.</param>
-        /// <returns><c>true</c>, if <paramref name="value"/> falls into the range of <typeparamref name="TEnum"/> range
-        /// and only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="value"/> falls into the range of <typeparamref name="TEnum"/> range
+        /// and only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag(ulong value)
         {
             if (value == 0UL || value > max)
@@ -456,7 +456,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="flags">A flags <see langword="enum"/> value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined(TEnum flags)
         {
@@ -470,7 +470,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="flags">An integer value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined(long flags)
         {
@@ -486,7 +486,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="flags">An unsigned integer value, whose bits should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
+        /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined(ulong flags)
         {
@@ -498,13 +498,13 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/> or is empty, then comma (",") separator is used.</param>
-        /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
-        /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
+        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
+        /// <param name="result"><see langword="null"/> if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
         {
@@ -619,12 +619,12 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
-        /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
+        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
+        /// <param name="result"><see langword="null"/> if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         public static bool TryParse(string value, bool ignoreCase, out TEnum result)
         {
@@ -633,12 +633,12 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/> or is empty, then comma-space (", ") separator is used.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
-        /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
+        /// <param name="result"><see langword="null"/> if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">If <paramref name="value"/> is not a simple field or numeric value</exception>
         public static bool TryParse(string value, string separator, out TEnum result)
@@ -648,11 +648,11 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
-        /// In case of success the return value is <c>true</c> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
+        /// In case of success the return value is <see langword="true"/> and parsed <see langword="enum"/> is returned in <paramref name="result"/> parameter.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="result"><see langword="null"/> if return value is <c>false</c>; otherwise, the parsed <see langword="enum"/> value.</param>
-        /// <returns><c>false</c> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <c>true</c>.</returns>
+        /// <param name="result"><see langword="null"/> if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
+        /// <returns><see langword="false"/> if <see cref="string"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         public static bool TryParse(string value, out TEnum result)
         {
@@ -664,7 +664,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
         /// <param name="separator">In case of more values the separator among the values. If <see langword="null"/> or is empty, then comma (",") separator is used.</param>
-        /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
+        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
         /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> and <paramref name="separator"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
@@ -681,7 +681,7 @@ namespace KGySoft.Libraries
         /// Convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
         /// </summary>
         /// <param name="value">The <see cref="string"/> representation of the enumerated value or values to parse.</param>
-        /// <param name="ignoreCase">If <c>true</c>, ignores case; otherwise, regards case.</param>
+        /// <param name="ignoreCase">If <see langword="true"/>, ignores case; otherwise, regards case.</param>
         /// <returns>The parsed <see langword="enum"/> value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
@@ -813,7 +813,7 @@ namespace KGySoft.Libraries
         /// </summary>
         /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <param name="onlyDefinedValues">When <c>true</c>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
+        /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
         public static IEnumerable<TEnum> GetFlags(TEnum flags, bool onlyDefinedValues)
         {

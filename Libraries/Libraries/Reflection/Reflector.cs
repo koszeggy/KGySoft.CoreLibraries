@@ -268,10 +268,9 @@ namespace KGySoft.Libraries.Reflection
 
                 if (type == typeof(bool))
                 {
-                    StringComparer comparer = StringComparer.OrdinalIgnoreCase;
-                    if (comparer.EqualsAny(value, "true", "1"))
+                    if (value.EqualsAny(StringComparison.OrdinalIgnoreCase, "true", "1"))
                         return true;
-                    if (comparer.EqualsAny(value, "false", "0"))
+                    if (value.EqualsAny(StringComparison.OrdinalIgnoreCase, "false", "0"))
                         return false;
                     throw new ArgumentException(Res.Get(Res.NotABool, value), nameof(value));
                 }
@@ -1488,20 +1487,16 @@ namespace KGySoft.Libraries.Reflection
             if (parameters == null)
                 parameters = EmptyObjects;
 
-#if NET35 || NET40 || NET45
             // In case of value types no parameterless constructor would be found - redirecting
             if (type.IsValueType && parameters.Length == 0)
                 return Construct(type, way);
-#else
-#error In .NET 4.6 there can be parameterless struct ctor so move the check above to the end, or make a branch: if no params -> type.GetConstructor(EmptyTypes)
-#endif
 
             Exception lastException = null;
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 ParameterInfo[] ctorParams = ctor.GetParameters();
 
-                // skip when parameter count is not corrent
+                // skip when parameter count is not correct
                 if (ctorParams.Length != parameters.Length)
                     continue;
 
@@ -1547,9 +1542,9 @@ namespace KGySoft.Libraries.Reflection
         /// </summary>
         /// <param name="type">Type of the instance to create.</param>
         /// <param name="way">Preferred invocation mode.
-        /// Auto option uses dynamic delegate mode in case of reference types and system reflection mode in case of value types.
+        /// Auto option uses system reflection mode.
         /// In case of dynamic delegate mode first creation of an object of a method is slow but
-        /// further calls are faster than the system reflection way except if object to create is value type and no constructor is used.
+        /// further calls are somewhat faster but not as fast as the system reflection way for parameterless constructors.
         /// TypeDescriptor way is possible but not preferred and uses no service provider.
         /// </param>
         /// <returns>The created instance.</returns>
@@ -1558,7 +1553,7 @@ namespace KGySoft.Libraries.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
 
-            if (way == ReflectionWays.DynamicDelegate || (way == ReflectionWays.Auto && !type.IsValueType))
+            if (way == ReflectionWays.DynamicDelegate)
             {
                 return ObjectFactory.GetObjectFactory(type).Create();
             }
@@ -1989,14 +1984,14 @@ namespace KGySoft.Libraries.Reflection
         /// Resolves an <paramref name="assemblyName"/> definition by string and gets an <see cref="Assembly"/> instance.
         /// </summary>
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
-        /// <param name="tryToLoad">If <c>false</c>, searches the assembly among the already loaded assemblies. If <c>true</c>, tries to load the assembly when it is not already loaded.</param>
-        /// <param name="matchBySimpleName"><c>true</c> to ignore version, culture and public key token information differences.</param>
+        /// <param name="tryToLoad">If <see langword="false"/>, searches the assembly among the already loaded assemblies. If <see langword="true"/>, tries to load the assembly when it is not already loaded.</param>
+        /// <param name="matchBySimpleName"><see langword="true"/> to ignore version, culture and public key token information differences.</param>
         /// <returns>An <see cref="Assembly"/> instance with the loaded assembly.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty.</exception>
-        /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <c>true</c> and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
-        /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <c>true</c> and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
-        /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <c>true</c> and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
+        /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <see langword="true"/> and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
+        /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <see langword="true"/> and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
+        /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <see langword="true"/> and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
         public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
         {
             if (assemblyName == null)
@@ -2016,7 +2011,7 @@ namespace KGySoft.Libraries.Reflection
             AssemblyName asmName = new AssemblyName(assemblyName);
             string fullName = asmName.FullName;
             string simpleName = asmName.Name;
-            foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (Assembly asm in GetLoadedAssemblies())
             {
                 // Simple match. As asmName is parsed, for fully qualified names this will work for sure.
                 if (asm.FullName == fullName)
@@ -2073,6 +2068,13 @@ namespace KGySoft.Libraries.Reflection
 
             return result;
         }
+
+        /// <summary>
+        /// Gets the already loaded assemblies in a transparent way of any frameworks.
+        /// </summary>
+        internal static Assembly[] GetLoadedAssemblies()
+            // no caching because can change
+            => AppDomain.CurrentDomain.GetAssemblies();
 
         /// <summary>
         /// Loads the the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
@@ -2141,12 +2143,12 @@ namespace KGySoft.Libraries.Reflection
         /// Resolves a type definition given in string. When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
         /// </summary>
         /// <param name="typeName">Type declaration in string representation with or without assembly name.</param>
-        /// <param name="loadPartiallyDefinedAssemblies"><c>true</c> to load assemblies with partially defined names; <c>false</c> to find partially defined names in already loaded assemblies only.</param>
-        /// <param name="matchAssemblyByWeakName"><c>true</c> to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>.</param>
+        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/> to load assemblies with partially defined names; <see langword="false"/> to find partially defined names in already loaded assemblies only.</param>
+        /// <param name="matchAssemblyByWeakName"><see langword="true"/> to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>.</param>
         /// <returns>The resolved type or <see langword="null"/> when <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names. When assmebly name is partially defined,
-        /// the assembly is attempted to be loaded only when <paramref name="loadPartiallyDefinedAssemblies"/> is <c>true</c>.</para>
+        /// the assembly is attempted to be loaded only when <paramref name="loadPartiallyDefinedAssemblies"/> is <see langword="true"/>.</para>
         /// <example>
         /// <code lang="C#"><![CDATA[
         /// // mscorlib types are defined wihtout assembly, System.Uri is defined with fully qualified assembly name - it will be loaded if possible
@@ -2225,7 +2227,7 @@ namespace KGySoft.Libraries.Reflection
             result = ResolveType(callingAssembly, typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
             if (result == null)
             {
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                foreach (Assembly assembly in GetLoadedAssemblies())
                 {
                     if (assembly == callingAssembly)
                         continue;

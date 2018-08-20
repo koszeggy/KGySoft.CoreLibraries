@@ -59,7 +59,7 @@ namespace KGySoft.Libraries
         }
 
         /// <summary>
-        /// Searches for an element in the <paramref name="source"/> enumeration where the specified <paramref name="predicate"/> returns <c>true</c>.
+        /// Searches for an element in the <paramref name="source"/> enumeration where the specified <paramref name="predicate"/> returns <see langword="true"/>.
         /// </summary>
         /// <typeparam name="TSource">The type of the elements in the enumeration..</typeparam>
         /// <param name="source">The source enumeration to search.</param>
@@ -164,11 +164,12 @@ namespace KGySoft.Libraries
             => new Random(seed).Shuffle(source);
 
         /// <summary>
-        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements).
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) by a new <see cref="Random"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        /// <remarks>To use an already created <see cref="Random"/> instance call the <see cref="RandomExtensions.Shuffle{T}">RandomExtensions.Shuffle</see> extension method instead.</remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
             => new Random().Shuffle(source);
 
@@ -181,13 +182,12 @@ namespace KGySoft.Libraries
         /// That is, if <paramref name="source"/> implements either the non-generic <see cref="IList"/> or <see cref="IDictionary"/> interfaces,
         /// or the generic <see cref="ICollection{T}"/> interface.
         /// </summary>
-        internal static void Add(this IEnumerable source, object item)
+        internal static void Add([NoEnumeration]this IEnumerable source, object item)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
 
-            IList list = source as IList;
-            if (list != null
+            if (source is IList list
 #if NET35
                 // IList with null element: skip because generic collections below .NET 4 may not support null elements of nullable types
                 && item != null
@@ -201,10 +201,8 @@ namespace KGySoft.Libraries
                 return;
             }
 
-            IDictionary dictionary = source as IDictionary;
-            if (item is DictionaryEntry && dictionary != null)
+            if (item is DictionaryEntry entry && source is IDictionary dictionary)
             {
-                DictionaryEntry entry = (DictionaryEntry)item;
                 dictionary.Add(entry.Key, entry.Value);
                 return;
             }

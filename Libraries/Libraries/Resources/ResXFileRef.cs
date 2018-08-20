@@ -335,7 +335,7 @@ namespace KGySoft.Libraries.Resources
         /// <param name="s">The string representation of the file reference to convert.</param>
         /// <param name="result">When this method returns, contains a <see cref="ResXFileRef"/> instance that represents the file reference specified in <paramref name="s"/>,
         /// if the conversion succeeded, or <see langword="null"/> if the conversion failed.</param>
-        /// <returns><c>true</c> if <paramref name="s"/> was converted successfully; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if <paramref name="s"/> was converted successfully; otherwise, <see langword="false"/>.</returns>
         public static bool TryParse(string s, out ResXFileRef result)
         {
             string[] fileRefDetails = Converter.ParseResXFileRefString(s);

@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a general indexer for any-dimension array for any bounds
     /// </summary>
-    sealed class ArrayIndexer
+    internal sealed class ArrayIndexer
     {
         readonly int totalLength;
         readonly int lastIndexLength;
@@ -12,7 +12,7 @@
         int current;
         readonly int[] currentZeroBased;
 
-        internal ArrayIndexer(int[] lengths, int[] lowerBounds)
+        internal ArrayIndexer(int[] lengths, int[] lowerBounds = null)
         {
             lastIndexLength = lengths[lengths.Length - 1];
             totalLength = lengths[0];
@@ -21,7 +21,7 @@
                 totalLength *= lengths[i];
             }
             this.lengths = lengths;
-            this.lowerBounds = lowerBounds;
+            this.lowerBounds = lowerBounds ?? new int[lengths.Length];
             currentZeroBased = new int[lengths.Length];
             current = -1;
         }

@@ -3,10 +3,10 @@
     /// <summary>
     /// Represents a strategy for generating random strings.
     /// </summary>
-    public enum RandomString
+    public enum StringCreation
     {
         /// <summary>
-        /// Represents random characters including unpaired surrogates (invalid Unicode characters).
+        /// Represents random characters including invalid ones (unpaired surrogates and non-character UTF-16 code points).
         /// </summary>
         AnyChars,
 

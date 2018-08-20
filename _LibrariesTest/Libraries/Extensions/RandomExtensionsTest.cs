@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Xml.Linq;
@@ -56,95 +59,7 @@ namespace _LibrariesTest.Libraries.Extensions
             public override int Next() => nextIntegers?[nextIntPtr++ % nextIntegers.Length] ?? base.Next();
             public override int Next(int maxValue) => nextIntegers == null ? base.Next(maxValue) : Next();
             public override int Next(int minValue, int maxValue) => nextIntegers == null ? base.Next(minValue, maxValue) : Next();
-
-            public void TestDouble(double min, double max)
-            {
-                for (RandomScale scale = 0; scale <= RandomScale.ForceLogarithmic; scale++)
-                {
-                    Console.Write($@"Random double {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
-                    double result;
-                    try
-                    {
-                        result = this.NextDouble(min, max, scale);
-                        Console.WriteLine(result.ToRoundtripString());
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
-                        throw;
-                    }
-
-                    Assert.IsTrue(result >= min && result <= max);
-                }
-            }
-
-            public void TestFloat(float min, float max)
-            {
-                for (RandomScale scale = 0; scale <= RandomScale.ForceLogarithmic; scale++)
-                {
-                    Console.Write($@"Random float {min.ToRoundtripString()}..{max.ToRoundtripString()} {scale}: ");
-                    float result;
-                    try
-                    {
-                        result = this.NextSingle(min, max, scale);
-                        Console.WriteLine(result.ToRoundtripString());
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
-                        throw;
-                    }
-
-                    Assert.IsTrue(result >= min && result <= max);
-                }
-            }
-
-            public void TestDecimal(decimal min, decimal max)
-            {
-                for (RandomScale scale = 0; scale <= RandomScale.ForceLogarithmic; scale++)
-                {
-                    Console.Write($@"Random decimal {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
-                    decimal result;
-                    try
-                    {
-                        result = this.NextDecimal(min, max, scale);
-                        Console.WriteLine(result.ToRoundtripString());
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
-                        throw;
-                    }
-
-                    Assert.IsTrue(result >= min && result <= max);
-                }
-            }
-
-            public void TestDateTimeOffset(DateTimeOffset min, DateTimeOffset max)
-            {
-                Console.Write($@"Random DateTimeOffset {min:O}..{max:O}: ");
-                DateTimeOffset result;
-                try
-                {
-                    result = this.NextDateTimeOffset(min, max);
-                    Console.WriteLine(result.ToString("O"));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
-                    throw;
-                }
-
-                Assert.IsTrue(result >= min && result <= max);
-            }
-
-            public void TestObject<T>(GenerateObjectSettings settings = null)
-            {
-                Console.WriteLine($"Random {typeof(T).Name}: {this.NextObject<T>(settings)}");
-            }
         }
-
-        private enum EmptyEnum { }
 
         [TestMethod]
         public void NextUInt64Test()
@@ -185,156 +100,249 @@ namespace _LibrariesTest.Libraries.Extensions
         [TestMethod]
         public void NextDoubleTest()
         {
+            void Test(Random random, double min, double max)
+            {
+                for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($@"Random double {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
+                    double result;
+                    try
+                    {
+                        result = random.NextDouble(min, max, scale);
+                        Console.WriteLine(result.ToRoundtripString());
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max);
+                }
+            }
+
             var rnd = new TestRandom();
 
             // edge cases
-            rnd.TestDouble(double.MinValue, double.MaxValue);
-            rnd.TestDouble(double.NegativeInfinity, double.PositiveInfinity);
-            rnd.TestDouble(0, double.PositiveInfinity);
-            rnd.TestDouble(double.MaxValue, double.PositiveInfinity);
-            rnd.TestDouble(double.NegativeInfinity, double.MinValue);
-            Throws<ArgumentOutOfRangeException>(() => rnd.TestDouble(double.PositiveInfinity, double.PositiveInfinity));
-            Throws<ArgumentOutOfRangeException>(() => rnd.TestDouble(double.NegativeInfinity, double.NegativeInfinity));
-            Throws<ArgumentOutOfRangeException>(() => rnd.TestDouble(0, double.NaN));
-            rnd.TestDouble(0, double.Epsilon);
-            rnd.TestDouble(Double.Epsilon, Double.Epsilon * 4);
-            rnd.TestDouble(Double.MaxValue / 4, Double.MaxValue);
-            rnd.TestDouble(Double.MaxValue / 2, Double.MaxValue);
-            rnd.TestDouble(-Double.Epsilon, Double.Epsilon);
-            rnd.TestDouble(0.000000001, 0.0000000011);
-            rnd.TestDouble(10000, 11000);
+            Test(rnd, double.MinValue, double.MaxValue);
+            Test(rnd, double.NegativeInfinity, double.PositiveInfinity);
+            Test(rnd, 0, double.PositiveInfinity);
+            Test(rnd, double.MaxValue, double.PositiveInfinity);
+            Test(rnd, double.NegativeInfinity, double.MinValue);
+            Throws<ArgumentOutOfRangeException>(() => Test(rnd, double.PositiveInfinity, double.PositiveInfinity));
+            Throws<ArgumentOutOfRangeException>(() => Test(rnd, double.NegativeInfinity, double.NegativeInfinity));
+            Throws<ArgumentOutOfRangeException>(() => Test(rnd, 0, double.NaN));
+            Test(rnd, 0, double.Epsilon);
+            Test(rnd, Double.Epsilon, Double.Epsilon * 4);
+            Test(rnd, Double.MaxValue / 4, Double.MaxValue);
+            Test(rnd, Double.MaxValue / 2, Double.MaxValue);
+            Test(rnd, -Double.Epsilon, Double.Epsilon);
+            Test(rnd, 0.000000001, 0.0000000011);
+            Test(rnd, 10000, 11000);
 
             // big range
-            rnd.TestDouble(long.MinValue, long.MaxValue);
-            rnd.TestDouble(long.MinValue, 0);
-            rnd.TestDouble(long.MaxValue, float.MaxValue);
-            rnd.TestDouble(-0.1, ulong.MaxValue); // very imbalanced positive-negative ranges
-            rnd.TestDouble(1L << 52, (1L << 54) + 10); // narrow exponent range
-            rnd.TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 10000); // small exponent range
-            rnd.TestDouble((double)long.MaxValue * 1024, (double)long.MaxValue * 4100); // small exponent range
-            rnd.TestDouble((double)long.MinValue * 4100, (double)long.MinValue * 1024); // small exponent range
+            Test(rnd, long.MinValue, long.MaxValue);
+            Test(rnd, long.MinValue, 0);
+            Test(rnd, long.MaxValue, float.MaxValue);
+            Test(rnd, -0.1, ulong.MaxValue); // very imbalanced positive-negative ranges
+            Test(rnd, 1L << 52, (1L << 54) + 10); // narrow exponent range
+            Test(rnd, long.MaxValue, (double)long.MaxValue * 4 + 10000); // small exponent range
+            Test(rnd, (double)long.MaxValue * 1024, (double)long.MaxValue * 4100); // small exponent range
+            Test(rnd, (double)long.MinValue * 4100, (double)long.MinValue * 1024); // small exponent range
 
             // small range
-            rnd.TestDouble(long.MaxValue, (double)long.MaxValue * 4);
-            rnd.TestDouble(long.MaxValue, (double)long.MaxValue * 4 + 1000);
-            rnd.TestDouble(1L << 53, (1L << 53) + 2);
-            rnd.TestDouble(1L << 52, 1L << 53);
+            Test(rnd, long.MaxValue, (double)long.MaxValue * 4);
+            Test(rnd, long.MaxValue, (double)long.MaxValue * 4 + 1000);
+            Test(rnd, 1L << 53, (1L << 53) + 2);
+            Test(rnd, 1L << 52, 1L << 53);
         }
 
         [TestMethod]
         public void NextFloatTest()
         {
-            var rnd = new TestRandom();
+            void Test(Random random, float min, float max)
+            {
+                for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($@"Random float {min.ToRoundtripString()}..{max.ToRoundtripString()} {scale}: ");
+                    float result;
+                    try
+                    {
+                        result = random.NextSingle(min, max, scale);
+                        Console.WriteLine(result.ToRoundtripString());
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
 
-            rnd.WithNextDoubles(1d).TestFloat(float.MinValue, float.MaxValue);
-            rnd.WithNextDoubles(null).TestFloat(float.MinValue, float.MaxValue);
-            rnd.TestFloat(0, float.Epsilon);
-            rnd.TestFloat(float.MaxValue, float.PositiveInfinity);
-            rnd.TestFloat(float.NegativeInfinity, float.PositiveInfinity);
+                    Assert.IsTrue(result >= min && result <= max);
+                }
+            }
+
+            var rnd = new TestRandom();
+            Test(rnd.WithNextDoubles(1d), float.MinValue, float.MaxValue);
+            Test(rnd.WithNextDoubles(null), float.MinValue, float.MaxValue);
+            Test(rnd, 0, float.Epsilon);
+            Test(rnd, float.MaxValue, float.PositiveInfinity);
+            Test(rnd, float.NegativeInfinity, float.PositiveInfinity);
         }
 
         [TestMethod]
         public void NextDecimalTest()
         {
-            var rnd = new TestRandom();
+            var rnd = new Random();
+            void Test(decimal min, decimal max)
+            {
+                for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($@"Random decimal {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
+                    decimal result;
+                    try
+                    {
+                        result = rnd.NextDecimal(min, max, scale);
+                        Console.WriteLine(result.ToRoundtripString());
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max);
+                }
+            }
 
             // edge cases
-            rnd.TestDecimal(decimal.MinValue, decimal.MaxValue);
-            rnd.TestDecimal(0, decimal.MaxValue);
-            rnd.TestDecimal(0, DecimalExtensions.Epsilon);
-            rnd.TestDecimal(DecimalExtensions.Epsilon, DecimalExtensions.Epsilon * 4);
-            rnd.TestDecimal(Decimal.MaxValue / 2, Decimal.MaxValue);
-            rnd.TestDecimal(Decimal.MaxValue - 1, Decimal.MaxValue);
-            rnd.TestDecimal(Decimal.MaxValue - DecimalExtensions.Epsilon, Decimal.MaxValue);
-            rnd.TestDecimal(-DecimalExtensions.Epsilon, DecimalExtensions.Epsilon);
-            rnd.TestDecimal(0.000000001m, 0.0000000011m);
-            rnd.TestDecimal(10000, 11000);
+            Test(decimal.MinValue, decimal.MaxValue);
+            Test(0, decimal.MaxValue);
+            Test(0, DecimalExtensions.Epsilon);
+            Test(DecimalExtensions.Epsilon, DecimalExtensions.Epsilon * 4);
+            Test(Decimal.MaxValue / 2, Decimal.MaxValue);
+            Test(Decimal.MaxValue - 1, Decimal.MaxValue);
+            Test(Decimal.MaxValue - DecimalExtensions.Epsilon, Decimal.MaxValue);
+            Test(-DecimalExtensions.Epsilon, DecimalExtensions.Epsilon);
+            Test(0.000000001m, 0.0000000011m);
+            Test(10000, 11000);
 
             // big range
-            rnd.TestDecimal(long.MinValue, long.MaxValue);
-            rnd.TestDecimal(long.MinValue, 0);
-            rnd.TestDecimal(-0.1m, ulong.MaxValue); // very imbalanced positive-negative ranges
-            rnd.TestDecimal(1L << 52, (1L << 54) + 10); // narrow exponent range
-            rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4 + 10000); // small exponent range
-            rnd.TestDecimal((decimal)long.MaxValue * 1024, (decimal)long.MaxValue * 4100); // small exponent range
-            rnd.TestDecimal((decimal)long.MinValue * 4100, (decimal)long.MinValue * 1024); // small exponent range
+            Test(long.MinValue, long.MaxValue);
+            Test(long.MinValue, 0);
+            Test(-0.1m, ulong.MaxValue); // very imbalanced positive-negative ranges
+            Test(1L << 52, (1L << 54) + 10); // narrow exponent range
+            Test(long.MaxValue, (decimal)long.MaxValue * 4 + 10000); // small exponent range
+            Test((decimal)long.MaxValue * 1024, (decimal)long.MaxValue * 4100); // small exponent range
+            Test((decimal)long.MinValue * 4100, (decimal)long.MinValue * 1024); // small exponent range
 
             // small range
-            rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4);
-            rnd.TestDecimal(long.MaxValue, (decimal)long.MaxValue * 4 + 1000);
-            rnd.TestDecimal(1L << 53, (1L << 53) + 2);
-            rnd.TestDecimal(1L << 52, 1L << 53);
+            Test(long.MaxValue, (decimal)long.MaxValue * 4);
+            Test(long.MaxValue, (decimal)long.MaxValue * 4 + 1000);
+            Test(1L << 53, (1L << 53) + 2);
+            Test(1L << 52, 1L << 53);
         }
 
         [TestMethod]
         public void NextDateTimeOffsetTest()
         {
-            var rnd = new TestRandom();
+            var rnd = new Random();
+            void Test(DateTimeOffset min, DateTimeOffset max)
+            {
+                Console.Write($@"Random DateTimeOffset {min:O}..{max:O}: ");
+                DateTimeOffset result;
+                try
+                {
+                    result = rnd.NextDateTimeOffset(min, max);
+                    Console.WriteLine(result.ToString("O"));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    throw;
+                }
 
-            rnd.TestDateTimeOffset(DateTimeOffset.Now, DateTimeOffset.Now.AddDays(1));
-            rnd.TestDateTimeOffset(DateTimeOffset.MinValue, DateTimeOffset.MaxValue);
+                Assert.IsTrue(result >= min && result <= max);
+            }
 
-            rnd.TestDateTimeOffset(DateTimeOffset.MinValue, DateTimeOffset.MinValue);
-            rnd.TestDateTimeOffset(DateTimeOffset.MinValue, DateTimeOffset.MinValue.AddMinutes(1));
-            rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddMinutes(-1), DateTimeOffset.MaxValue);
-            rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddHours(-1), DateTimeOffset.MaxValue);
-            rnd.TestDateTimeOffset(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
+            Test(DateTimeOffset.Now, DateTimeOffset.Now.AddDays(1));
+            Test(DateTimeOffset.MinValue, DateTimeOffset.MaxValue);
+
+            Test(DateTimeOffset.MinValue, DateTimeOffset.MinValue);
+            Test(DateTimeOffset.MinValue, DateTimeOffset.MinValue.AddMinutes(1));
+            Test(DateTimeOffset.MaxValue.AddMinutes(-1), DateTimeOffset.MaxValue);
+            Test(DateTimeOffset.MaxValue.AddHours(-1), DateTimeOffset.MaxValue);
+            Test(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
         }
+
+        private enum EmptyEnum { }
 
         [TestMethod]
         public void NextObjectTest()
         {
-            var rnd = new TestRandom();
-
-            // native types
-            rnd.TestObject<bool>();
-            rnd.TestObject<byte>();
-            rnd.TestObject<sbyte>();
-            rnd.TestObject<char>();
-            rnd.TestObject<short>();
-            rnd.TestObject<ushort>();
-            rnd.TestObject<int>();
-            rnd.TestObject<uint>();
-            rnd.TestObject<long>();
-            rnd.TestObject<ulong>();
-            rnd.TestObject<float>();
-            rnd.TestObject<double>();
-            rnd.TestObject<decimal>();
-            rnd.TestObject<string>();
-            rnd.TestObject<StringBuilder>();
-            rnd.TestObject<Uri>();
-            rnd.TestObject<Guid>();
-            rnd.TestObject<DateTime>();
-            rnd.TestObject<DateTimeOffset>();
-            rnd.TestObject<TimeSpan>();
-            rnd.TestObject<byte?>();
-
-            // enums
-            rnd.TestObject<EmptyEnum>();
-            rnd.TestObject<ConsoleColor>();
-
-            // arrays
-            rnd.TestObject<byte[]>();
-            rnd.TestObject<byte?[]>();
-            rnd.TestObject<byte[,]>();
-        }
-
-
-        [TestMethod]
-        public void ValuesTest()
-        {
-            var rnd = new Random(0);
-            //Console.WriteLine(Math.Log(Enumerable.Range(0, 10000).Select(_ => rnd.NextDouble()).Min(), 2));
-            XElement result = new XElement("root");
-            for (int i = 0; i < 10000; i++)
+            var rnd = new Random();
+            void Test<T>(GenerateObjectSettings settings = null)
             {
-                result.Add(new XElement("item", rnd.NextDouble(int.MaxValue, RandomScale.ForceLogarithmic)));
+                Console.WriteLine($"Random {typeof(T).Name}: {rnd.NextObject<T>(settings)}");
             }
 
-            using (var file = File.Create(Files.GetNextFileName($@"D:\temp\rnd\NextDouble_0-MaxInt32_Log.xml")))
-            {
-                result.Save(file);
-            }
+            //// native types
+            //Test<bool>();
+            //Test<byte>();
+            //Test<sbyte>();
+            //Test<char>();
+            //Test<short>();
+            //Test<ushort>();
+            //Test<int>();
+            //Test<uint>();
+            //Test<long>();
+            //Test<ulong>();
+            //Test<float>();
+            //Test<double>();
+            //Test<decimal>();
+            //Test<string>();
+            //Test<StringBuilder>();
+            //Test<Uri>();
+            //Test<Guid>();
+            //Test<DateTime>();
+            //Test<DateTimeOffset>();
+            //Test<TimeSpan>();
+            //Test<byte?>();
+
+            //// enums
+            //Test<EmptyEnum>();
+            //Test<ConsoleColor>();
+
+            //// arrays
+            //Test<byte[]>();
+            //Test<byte?[]>();
+            //Test<byte[,]>();
+
+            //// collections
+            //Test<List<int>>();
+            //Test<Dictionary<int, string>>();
+            //Test<ArrayList>();
+            //Test<Hashtable>();
+            //Test<BitArray>();
+            //Test<ReadOnlyCollection<int>>();
+            //Test<ArraySegment<int>>();
+
+            //// key-value
+            //Test<DictionaryEntry>();
+            //Test<KeyValuePair<int, string>>();
+
+            var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true, SubstituteObjectWithSimpleTypes = false };
+            //Test<EventArgs>(cfg);
+            Test<Delegate>(cfg);
+
+            // select a good type to create if there is no ok ctor
+            // delegate
+            // Exception -- recursive!
+            // EventArgs - SO exception - maybe recursive?
+            // recursive type
+            // pointer member
+            // void
+            // TypedRef
+            // U/IntPtr
         }
     }
 }

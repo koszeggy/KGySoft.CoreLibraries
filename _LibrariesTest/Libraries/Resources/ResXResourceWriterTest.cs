@@ -260,6 +260,7 @@ namespace _LibrariesTest.Libraries.Resources
                 '\r', // U+000d = <control> CARRIAGE RETURN
                 '\x85', // U+0085 = <control> NEXT LINE
                 '\xa0', // U+00a0 = NO-BREAK SPACE
+                '\xFDD0', // U+FDD0 - <noncharacter-FDD0>
                 '\xffff', // U+FFFF = <noncharacter-FFFF>
                 ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿',
             };

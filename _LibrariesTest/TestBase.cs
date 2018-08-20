@@ -73,7 +73,7 @@ namespace _LibrariesTest
         /// Return true for resource tests. This provides a special handling for <see cref="ResXFileRef"/> and <see cref="ResXDataNode"/> compare.
         /// </summary>
         /// <value>
-        /// <c>true</c> if this instance is resource test; otherwise, <c>false</c>.
+        /// <see langword="true"/> if this instance is resource test; otherwise, <see langword="false"/>.
         /// </value>
         protected virtual bool IsResourceTest => false;
 

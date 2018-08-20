@@ -121,7 +121,7 @@ namespace KGySoft.Libraries.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <c>true</c> if the enumerator was successfully advanced to the next element; <c>false</c> if the enumerator has passed the end of the collection.
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -814,7 +814,7 @@ namespace KGySoft.Libraries.Collections
         /// <summary>
         /// Removes the last element of the list. This method has an O(1) cost.
         /// </summary>
-        /// <returns><c>true</c>, if the list was not empty before the removal, otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if the list was not empty before the removal, otherwise, <see langword="false"/>.</returns>
         public bool RemoveLast()
         {
             if (size == 0)
@@ -836,7 +836,7 @@ namespace KGySoft.Libraries.Collections
         /// <summary>
         /// Removes the first element of the list. This method has an O(1) cost.
         /// </summary>
-        /// <returns><c>true</c>, if the list was not empty before the removal, otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/>, if the list was not empty before the removal, otherwise, <see langword="false"/>.</returns>
         public bool RemoveFirst()
         {
             if (size == 0)
@@ -1153,7 +1153,7 @@ isNonIntEnum
         /// Determines whether the list contains elements that match the conditions defined by the specified predicate.
         /// </summary>
         /// <param name="match">The delegate that defines the conditions of the elements to search for.</param>
-        /// <returns><c>true</c> if the list contains one or more elements that match the conditions defined by the specified predicate; otherwise, <c>false</c>.</returns>
+        /// <returns><see langword="true"/> if the list contains one or more elements that match the conditions defined by the specified predicate; otherwise, <see langword="false"/>.</returns>
         public bool Exists(Predicate<T> match)
         {
             return (FindIndex(match) != -1);
@@ -1917,8 +1917,8 @@ isNonIntEnum
         /// Determines whether every element in the list matches the conditions defined by the specified predicate.
         /// </summary>
         /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions to check against the elements.</param>
-        /// <returns><c>true</c> if every element in the list matches the conditions defined by the specified predicate; otherwise, <c>false</c>.
-        /// If the list has no elements, the return value is <c>true</c>.</returns>
+        /// <returns><see langword="true"/> if every element in the list matches the conditions defined by the specified predicate; otherwise, <see langword="false"/>.
+        /// If the list has no elements, the return value is <see langword="true"/>.</returns>
         public bool TrueForAll(Predicate<T> match)
         {
             if (match == null)
@@ -2107,7 +2107,7 @@ isNonIntEnum
         /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the elements to remove.</param>
         /// <returns>The number of elements removed from the list.</returns>
         /// <remarks>
-        /// <para>The <see cref="Predicate{T}"/> is a delegate to a method that returns <c>true</c> if the object passed to it matches the conditions defined in the delegate.
+        /// <para>The <see cref="Predicate{T}"/> is a delegate to a method that returns <see langword="true"/> if the object passed to it matches the conditions defined in the delegate.
         /// The elements of the current <see cref="CircularList{T}"/> are individually passed to the <see cref="Predicate{T}"/> delegate, and the elements that match the conditions
         /// are removed from the list.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation, where n is <see cref="Count"/>.</para>
@@ -2803,7 +2803,7 @@ isNonIntEnum
         /// Determines whether the list contains the specific <paramref name="item"/>.
         /// </summary>
         /// <returns>
-        /// <c>true</c> if <paramref name="item"/> is found in the list; otherwise, <c>false</c>.
+        /// <see langword="true"/> if <paramref name="item"/> is found in the list; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="item">The object to locate in the list.</param>
         public bool Contains(T item)
@@ -2862,7 +2862,7 @@ isNonIntEnum
         /// </summary>
         /// <param name="item">The object to remove from the list.</param>
         /// <returns>
-        /// <c>true</c> if <paramref name="item"/> was successfully removed from the list; otherwise, <c>false</c>. This method also returns false if <paramref name="item"/> is not found in the original list.
+        /// <see langword="true"/> if <paramref name="item"/> was successfully removed from the list; otherwise, <see langword="false"/>. This method also returns false if <paramref name="item"/> is not found in the original list.
         /// </returns>
         public bool Remove(T item)
         {

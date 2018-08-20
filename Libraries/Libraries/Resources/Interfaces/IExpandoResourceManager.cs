@@ -46,13 +46,13 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Gets or sets whether the <see cref="IExpandoResourceManager"/> works in safe mode. In safe mode the retrieved
         /// objects returned from .resx sources are not deserialized automatically. See Remarks section for details.
-        /// <br/>Default value: <c>false</c>.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
-        /// <para>When <c>SafeMode</c> is <c>true</c>, the <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx resource.
         /// For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
@@ -62,7 +62,7 @@ namespace KGySoft.Libraries.Resources
         /// Gets whether this <see cref="IExpandoResourceManager"/> instance is disposed.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+        ///   <see langword="true"/> if this instance is disposed; otherwise, <see langword="false"/>.
         /// </value>
         bool IsDisposed { get; }
 
@@ -76,14 +76,14 @@ namespace KGySoft.Libraries.Resources
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
         /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
         /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
-        /// <param name="tryParents"><c>true</c> to use resource fallback to load an appropriate resource if the resource set cannot be found; <c>false</c> to bypass the resource fallback process.
-        /// <br/>Default value: <c>false</c>.</param>
+        /// <param name="tryParents"><see langword="true"/> to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/> to bypass the resource fallback process.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The resource set for the specified culture, or <see langeword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,
         /// or when this <see cref="IExpandoResourceManager"/> instance is configured so that it cannot return an <see cref="IExpandoResourceSet"/> instance.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
-        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <c>true</c>
+        /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <see langword="true"/>
         /// and <paramref name="behavior"/> is not <see cref="ResourceSetRetrieval.CreateIfNotExists"/>.</exception>
         IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false);
 
@@ -110,12 +110,12 @@ namespace KGySoft.Libraries.Resources
         /// The value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
@@ -129,7 +129,7 @@ namespace KGySoft.Libraries.Resources
         /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
         /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <returns>
-        /// If <see cref="SafeMode"/> is <c>true</c>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
+        /// If <see cref="SafeMode"/> is <see langword="true"/>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
@@ -195,12 +195,12 @@ namespace KGySoft.Libraries.Resources
         /// The value of the metadata of the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <c>true</c> and <paramref name="name"/> is a non-<see langword="string"/> metadata, then
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> metadata, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the metadata.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the metadata is not <see cref="string"/> and <see cref="SafeMode"/> is <c>false</c> or the current
+        /// <exception cref="InvalidOperationException">The type of the metadata is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/> or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
@@ -215,7 +215,7 @@ namespace KGySoft.Libraries.Resources
         /// Unlike in case of <see cref="GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.
         /// </param>
         /// <returns>
-        /// If <see cref="SafeMode"/> is <c>true</c>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
+        /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the metadata localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
@@ -266,14 +266,14 @@ namespace KGySoft.Libraries.Resources
         /// Saves the resource set of a particular <paramref name="culture"/> if it has been already loaded.
         /// </summary>
         /// <param name="culture">The culture of the resource set to save.</param>
-        /// <param name="force"><c>true</c> to save the resource set even if it has not been modified; <c>false</c> to save it only if it has been modified.
-        /// <br/>Default value: <c>false</c>.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx file can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
-        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+        /// <param name="force"><see langword="true"/> to save the resource set even if it has not been modified; <see langword="false"/> to save it only if it has been modified.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
+        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
-        /// <br/>Default value: <c>false</c>.</param>
-        /// <returns><c>true</c> if the resource set of the specified <paramref name="culture"/> has been saved;
-        /// otherwise, <c>false</c>.</returns>
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns><see langword="true"/> if the resource set of the specified <paramref name="culture"/> has been saved;
+        /// otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="IOException">The resource set could not be saved.</exception>
@@ -282,13 +282,13 @@ namespace KGySoft.Libraries.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><c>true</c> to save all of the already loaded resource sets regardless if they have been modified; <c>false</c> to save only the modified resource sets.
-        /// <br/>Default value: <c>false</c>.</param>
-        /// <param name="compatibleFormat">If set to <c>true</c>, the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
-        /// and the Visual Studio Resource Editor. If set to <c>false</c>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
+        /// <param name="force"><see langword="true"/> to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
+        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
-        /// <br/>Default value: <c>false</c>.</param>
-        /// <returns><c>true</c> if at least one resource set has been saved; otherwise, <c>false</c>.</returns>
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns><see langword="true"/> if at least one resource set has been saved; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
         bool SaveAllResources(bool force = false, bool compatibleFormat = false);

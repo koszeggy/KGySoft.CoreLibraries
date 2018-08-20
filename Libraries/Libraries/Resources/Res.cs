@@ -40,6 +40,11 @@ namespace KGySoft.Libraries.Resources
         internal const string ObjectDisposed = nameof(ObjectDisposed);
         internal const string ArgumentEmpty = nameof(ArgumentEmpty);
         internal const string DuplicateKey = nameof(DuplicateKey);
+        internal const string ArgumentContainsNull = nameof(ArgumentContainsNull);
+        internal const string ArgumentMustBeGreaterOrEqualThan = nameof(ArgumentMustBeGreaterOrEqualThan);
+        internal const string ArgumentMustBeBetween = nameof(ArgumentMustBeBetween);
+        internal const string MaxValueLessThanMinValue = nameof(MaxValueLessThanMinValue);
+        internal const string MaxLengthLessThanMinLength = nameof(MaxLengthLessThanMinLength);
 
         internal const string NeutralResourceFileNotFoundResX = nameof(NeutralResourceFileNotFoundResX);
         internal const string NeutralResourceNotFoundCompiled = nameof(NeutralResourceNotFoundCompiled);
@@ -244,7 +249,7 @@ namespace KGySoft.Libraries.Resources
         internal const string InvalidDrmPropertyChange = nameof(InvalidDrmPropertyChange);
 
         #endregion
-        
+
         #region Private Constants
 
         private const string nullReference = "NullReference";

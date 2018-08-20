@@ -120,8 +120,23 @@
   <data name="ArgumentNull" xml:space="preserve">
     <value>Value cannot be null.</value>
   </data>
+  <data name="ArgumentContainsNull" xml:space="preserve">
+    <value>Specified argument contains a null element.</value>
+  </data>
   <data name="ArgumentOutOfRange" xml:space="preserve">
     <value>Specified argument was out of the range of valid values.</value>
+  </data>
+  <data name="ArgumentMustBeGreaterOrEqualThan" xml:space="preserve">
+    <value>Specified argument must be greater or equal than {0}.</value>
+  </data>
+  <data name="ArgumentMustBeBetween" xml:space="preserve">
+    <value>Specified argument must be between {0} and {1}.</value>
+  </data>
+  <data name="MaxValueLessThanMinValue" xml:space="preserve">
+    <value>Maximum value must be greater than or equal to minimum value.</value>
+  </data>
+  <data name="MaxLengthLessThanMinLength" xml:space="preserve">
+    <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
   <data name="ArrayDimension" xml:space="preserve">
     <value>Only single dimensional arrays are supported for the requested action.</value>

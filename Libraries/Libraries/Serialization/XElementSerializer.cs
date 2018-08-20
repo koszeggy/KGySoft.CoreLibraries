@@ -26,7 +26,7 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         /// <param name="obj">The object to serialize.</param>
         /// <returns>An <see cref="XElement"/> instance that contains the serialized object.
-        /// Result can be deserialized by <see cref="Deserialize(XElement)"/> method.</returns>
+        /// Result can be deserialized by <see cref="XElementDeserializer.Deserialize(XElement)"/> method.</returns>
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
@@ -54,7 +54,7 @@ namespace KGySoft.Libraries.Serialization
         /// into an already existing <see cref="XElement"/> object given in <paramref name="parent"/> parameter.
         /// </summary>
         /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
-        /// <param name="parent">The parent under that the object will be saved. Its content can be deserialized by <see cref="DeserializeContent(XElement,object)"/> method.</param>
+        /// <param name="parent">The parent under that the object will be saved. Its content can be deserialized by <see cref="XElementDeserializer.DeserializeContent(XElement,object)"/> method.</param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <see cref="XmlSerializerBase.Options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
@@ -172,7 +172,7 @@ namespace KGySoft.Libraries.Serialization
                 // non-primitive type array or compact serialization is not enabled
                 else
                 {
-                    bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
+                    bool elementTypeNeeded = elementType.CanBeDerived();
                     foreach (var item in array)
                     {
                         XElement child = new XElement("item");
@@ -197,7 +197,7 @@ namespace KGySoft.Libraries.Serialization
 
                 // determining element type
                 Type elementType = collection.GetElementType();
-                bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
+                bool elementTypeNeeded = elementType.CanBeDerived();
 
                 // serializing items
                 foreach (var item in collection)

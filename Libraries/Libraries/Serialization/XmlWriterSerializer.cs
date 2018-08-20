@@ -169,7 +169,7 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // non-primitive type array or compact serialization is not enabled
-                bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
+                bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in array)
                 {
                     writer.WriteStartElement("item");
@@ -199,7 +199,7 @@ namespace KGySoft.Libraries.Serialization
 
                 // determining element type
                 Type elementType = collection.GetElementType();
-                bool elementTypeNeeded = !(elementType.IsValueType || elementType.IsClass && elementType.IsSealed);
+                bool elementTypeNeeded = elementType.CanBeDerived();
 
                 // serializing items
                 foreach (var item in collection)
