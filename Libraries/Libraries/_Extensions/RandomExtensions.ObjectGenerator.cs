@@ -113,7 +113,7 @@ namespace KGySoft.Libraries
                 }
             }
 
-            private static readonly Cache<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric, 1024);
+            private static readonly Cache<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric);
 
             private struct DefaultGenericTypeKey : IEquatable<DefaultGenericTypeKey>
             {
@@ -195,7 +195,7 @@ namespace KGySoft.Libraries
                     argumentsToCreate[i] = arg;
                 }
 
-                // the checks above cannot be perfect so creating the type in try-catch
+                // the checks above cannot be perfect (especially if constraints contain generics) so creating the type in try-catch
                 try
                 {
                     return genericTypeDef.MakeGenericType(argumentsToCreate);
@@ -213,12 +213,12 @@ namespace KGySoft.Libraries
                 {
                     int pos = definitionArguments.IndexOf(arg);
 
-                    // if not found, using a simple type based on the value type constraint
+                    // if not found or contains generic parameters recursively, using a simple type based on the value type constraint
                     Type replacement = pos >= 0 && !constructedArguments[pos].ContainsGenericParameters
                         ? constructedArguments[pos]
                         : (arg.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? typeof(int) : Reflector.ObjectType;
 
-                    // returning null if replacement does not satisfy non-generic constraints
+                    // Generic parameters are never compatible with real types so skipping assertion for them
                     return arg.GetGenericParameterConstraints().All(c => c.ContainsGenericParameters || c.IsAssignableFrom(replacement)) ? replacement : null;
                 }
 
@@ -236,6 +236,7 @@ namespace KGySoft.Libraries
 
                 try
                 {
+                    // This still can throw exception because we skipped constraints with generic parameters
                     return arg.GetGenericTypeDefinition().MakeGenericType(replacedArgs);
                 }
                 catch (ArgumentException)
@@ -243,7 +244,6 @@ namespace KGySoft.Libraries
                     return null;
                 }
             }
-
 
             private struct GeneratorContext
             {
@@ -307,7 +307,7 @@ namespace KGySoft.Libraries
                     { typeof(TimeSpan), GenerateTimeSpan },
 
                     // reflection types - no generation but random selection
-                    { typeof(Assembly), GenerateAssembly },
+                    { typeof(Assembly), PickRandomAssembly },
                     { typeof(Type), PickRandomType },
                 };
 
@@ -418,22 +418,34 @@ namespace KGySoft.Libraries
                 return NextTimeSpan(context.Random, min, max);
             }
 
+            private static Assembly PickRandomAssembly(ref GeneratorContext context)
+            {
+                Assembly[] assemblies = Reflector.GetLoadedAssemblies();
+                return GetRandomElement(context.Random, assemblies);
+            }
+
             private static Type PickRandomType(ref GeneratorContext context)
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
-                Type[] types;
-                do
-                {
-                    Assembly asm = assemblies[context.Random.Next(assemblies.Length)];
-                    types = GetAssemblyTypes(asm);
-                } while (types.Length == 0);
+                Assembly asm = GetRandomElement(context.Random, assemblies);
+                Type[] types = GetAssemblyTypes(asm);
 
-                return types[context.Random.Next(types.Length)];
+                if (types.Length == 0)
+                {
+                    foreach (Assembly candidate in context.Random.Shuffle(assemblies.Except(new[] { asm })))
+                    {
+                        types = GetAssemblyTypes(candidate);
+                        if (types.Length != 0)
+                            break;
+                    }
+                }
+
+                return GetRandomElement(context.Random, types);
             }
 
             private static object PickRandomEnum(Type type, ref GeneratorContext context)
             {
-                var values = Enum.GetValues(type);
+                Array values = Enum.GetValues(type);
                 return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length));
             }
 
@@ -455,7 +467,7 @@ namespace KGySoft.Libraries
 
                 // object substitution
                 if (type == Reflector.ObjectType && context.Settings.SubstituteObjectWithSimpleTypes)
-                    type = simpleTypes[context.Random.Next(simpleTypes.Length)];
+                    type = GetRandomElement(context.Random, simpleTypes);
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 // 1.) known type
@@ -520,7 +532,16 @@ namespace KGySoft.Libraries
                     resolveType = true;
                 }
 
-                Type typeToCreate = resolveType ? TryResolveType(context.Random, type) : type;
+                IList<Type> typeCandidates = null;
+                Type typeToCreate = type;
+                if (resolveType)
+                {
+                    typeCandidates = GetResolvedTypes(type);
+                    typeToCreate = GetRandomElement(context.Random, typeCandidates, true);
+                    if (typeToCreate == null)
+                        return null;
+                }
+
                 object result = GenerateAnyObject(typeToCreate, ref context);
                 if (result != null || !resolveType)
                     return result;
@@ -529,7 +550,7 @@ namespace KGySoft.Libraries
                 // The try above could be in this foreach below but we try to avoid the shuffling if possible
                 if (!type.IsSealed && (context.Settings.TryResolveInterfacesAndAbstractTypes || context.Settings.AllowNegativeValues))
                 {
-                    foreach (Type candidateType in context.Random.Shuffle(GetResolvedTypes(type).Except(new [] { typeToCreate})))
+                    foreach (Type candidateType in context.Random.Shuffle(typeCandidates.Except(new[] { typeToCreate })))
                     {
                         result = GenerateAnyObject(candidateType, ref context);
                         if (result != null)
@@ -537,12 +558,6 @@ namespace KGySoft.Libraries
                     }
                 }
                 return null;
-            }
-
-            private static Type TryResolveType(Random random, Type type)
-            {
-                IList<Type> candidates = GetResolvedTypes(type);
-                return candidates.Count == 0 ? null : candidates[random.Next(candidates.Count)];
             }
 
             private static IList<Type> GetResolvedTypes(Type type)

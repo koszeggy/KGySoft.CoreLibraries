@@ -164,7 +164,7 @@ namespace KGySoft.Libraries
             => new Random(seed).Shuffle(source);
 
         /// <summary>
-        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) by a new <see cref="Random"/> instance.
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a new <see cref="Random"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
@@ -172,6 +172,19 @@ namespace KGySoft.Libraries
         /// <remarks>To use an already created <see cref="Random"/> instance call the <see cref="RandomExtensions.Shuffle{T}">RandomExtensions.Shuffle</see> extension method instead.</remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
             => new Random().Shuffle(source);
+
+        /// <summary>
+        /// Gets a random element from the enumerable using a new <see cref="Random"/> instance.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
+        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A random element from <paramref name="source"/>.</returns>
+        /// <remarks>To use an already created <see cref="Random"/> instance call the <see cref="RandomExtensions.GetRandomElement{T}">RandomExtensions.GetRandomElement</see> extension method instead.</remarks>
+        public static T GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
+            => new Random().GetRandomElement(source, defaultIfEmpty);
 
         #endregion
 

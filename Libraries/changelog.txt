@@ -1,8 +1,8 @@
 ﻿Legend:
-* Contains changes
-- Breaking change
-+ New
-! Bugfix
+! Breaking change
+* Compatible changes inside
+- Bugfix
++ New feature
 
 2018 - ez majd verzióra átírni
 
@@ -17,10 +17,10 @@
 
 + ... TODO
 
-- KGySoft.Libraries namespace:
+! KGySoft.Libraries namespace:
 ==============================
 
-- Unicode class: Removed
+! Unicode class: Removed
 + New DateTimeExtensions class
   + AsUtc method
 + New DictionaryExtensions class
@@ -30,11 +30,13 @@
 + New CharExtensions class
   + IsNonCharacter method
   + IsValidCharacter method
-- StringComparerExtensions class: removed (moved to StringExtensions)
-- StringExtensions class:
-  - GetTokenValue methods are removed
+! StringComparerExtensions class: removed (moved to StringExtensions)
+! StringExtensions class:
+  ! GetTokenValue methods are removed
   + ToEnum method
   + EqualsAny/IndexOfAny/ContainsAny overloads
+* EnumerableExtensions class
+  + New GetRandomElement method
 + New RandomExtensions class
   + ... TODO
 

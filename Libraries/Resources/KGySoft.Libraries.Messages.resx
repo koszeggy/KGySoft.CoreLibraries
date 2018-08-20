@@ -727,6 +727,9 @@ Hit rate: {8:P2}</value>
   <data name="ArgumentEmpty" xml:space="preserve">
     <value>Value cannot be empty.</value>
   </data>
+  <data name="CollectionEmpty" xml:space="preserve">
+    <value>The collection contains no elements.</value>
+  </data>
   <data name="TypeWithAssemblyName" xml:space="preserve">
     <value>The type name should not contain the assembly name.</value>
   </data>

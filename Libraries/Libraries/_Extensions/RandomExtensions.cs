@@ -854,7 +854,7 @@ namespace KGySoft.Libraries
                     return GenerateString(random, length, lowerCaseLetters);
 
                 case StringCreation.TitleCaseLetters:
-                    return upperCaseLetters[random.Next(0, upperCaseLetters.Length)] + GenerateString(random, length - 1, lowerCaseLetters);
+                    return GetRandomElement(random, upperCaseLetters) + GenerateString(random, length - 1, lowerCaseLetters);
 
                 case StringCreation.UpperCaseWord:
                     return WordGenerator.GenerateWord(random, length).ToUpperInvariant();
@@ -1004,8 +1004,7 @@ namespace KGySoft.Libraries
         {
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
-            var values = Enum<TEnum>.GetValues();
-            return values.Length == 0 ? default : values[random.Next(values.Length)];
+            return GetRandomElement(random, Enum<TEnum>.GetValues(), true);
         }
 
         #endregion
@@ -1038,6 +1037,18 @@ namespace KGySoft.Libraries
 
         #region Object
 
+        /// <summary>
+        /// Returns a random object of type <typeparamref name="T"/> value or <see langword="null"/>
+        /// if <typeparamref name="T"/> cannot be instantiated with the provided <paramref name="settings"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to be created. Can be also an interface or abstract type;
+        /// however, if no implementation or usable constructor found, then a <see langword="null"/> value will be returned.</typeparam>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="settings">The settings to use or <see langword="null"/> to use the default settings.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A instance of <typeparamref name="T"/> or <see langword="null"/> if the type cannot be
+        /// instantiated with the provided <paramref name="settings"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
             if (random == null)
@@ -1056,6 +1067,7 @@ namespace KGySoft.Libraries
         /// <param name="collection">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="collection"/> in randomized order.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="collection"/> is <see langword="null"/>.</exception>
         public static IEnumerable<T> Shuffle<T>(this Random random, IEnumerable<T> collection)
         {
             if (random == null)
@@ -1063,7 +1075,48 @@ namespace KGySoft.Libraries
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
 
-            return collection.Select(item => new { Index = random.Next(), Value = item }).OrderBy(i => i.Index).Select(i => i.Value);
+            return collection.Select(item => new { Order = random.Next(), Value = item }).OrderBy(i => i.Order).Select(i => i.Value);
+        }
+
+        /// <summary>
+        /// Gets a random element from the specified <paramref name="collection"/> using the provided <see cref="Random"/> instance.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="collection">The <see cref="IEnumerable{T}"/> to select an element from.</param>
+        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A random element from the <paramref name="collection"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="collection"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="collection"/> contains no elements and <paramref name="defaultIfEmpty"/> is <see langword="false"/>.</exception>
+        public static T GetRandomElement<T>(this Random random, IEnumerable<T> collection, bool defaultIfEmpty = false)
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+
+            if (collection is IList<T> list)
+                return list.Count > 0
+                    ? list[random.Next(list.Count)]
+                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(collection));
+
+#if NET45
+            if (collection is IReadOnlyList<T> readonlyList)
+                return readonlyList.Count > 0
+                    ? readonlyList[random.Next(readonlyList.Count)]
+                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(collection));
+#elif !(NET35 || NET40)
+#error .NET version is not set or not supported!
+#endif
+
+            using (IEnumerator<T> shuffledEnumerator = Shuffle(random, collection).GetEnumerator())
+            {
+                if (!shuffledEnumerator.MoveNext())
+                    return defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(collection));
+                return shuffledEnumerator.Current;
+            }
         }
 
         #endregion
@@ -1079,6 +1132,9 @@ namespace KGySoft.Libraries
             return (maxValue * sample) + (minValue * (1d - sample));
         }
 
+#if !NET35 && !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
         {
             decimal sample = random.NextDecimal();

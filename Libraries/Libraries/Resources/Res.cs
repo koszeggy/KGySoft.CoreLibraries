@@ -45,6 +45,7 @@ namespace KGySoft.Libraries.Resources
         internal const string ArgumentMustBeBetween = nameof(ArgumentMustBeBetween);
         internal const string MaxValueLessThanMinValue = nameof(MaxValueLessThanMinValue);
         internal const string MaxLengthLessThanMinLength = nameof(MaxLengthLessThanMinLength);
+        internal const string CollectionEmpty = nameof(CollectionEmpty);
 
         internal const string NeutralResourceFileNotFoundResX = nameof(NeutralResourceFileNotFoundResX);
         internal const string NeutralResourceNotFoundCompiled = nameof(NeutralResourceNotFoundCompiled);
