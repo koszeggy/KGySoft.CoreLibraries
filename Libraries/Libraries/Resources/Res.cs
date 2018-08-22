@@ -62,7 +62,6 @@ namespace KGySoft.Libraries.Resources
         internal const string ArrayDimension = nameof(ArrayDimension);
         internal const string ArrayTypeInvalid = nameof(ArrayTypeInvalid);
         internal const string CacheNullLoaderInvoke = nameof(CacheNullLoaderInvoke);
-        internal const string CacheNullLoader = nameof(CacheNullLoader);
         internal const string CacheKeyNotFound = nameof(CacheKeyNotFound);
         internal const string CacheMinSize = nameof(CacheMinSize);
         internal const string CacheStatistics = nameof(CacheStatistics);
@@ -232,7 +231,6 @@ namespace KGySoft.Libraries.Resources
         internal const string ResXMimeTypeNotSupported = nameof(ResXMimeTypeNotSupported);
         internal const string ResXReaderNotSupported = nameof(ResXReaderNotSupported);
         internal const string ResXWriterNotSupported = nameof(ResXWriterNotSupported);
-        internal const string InvalidResXFile = nameof(InvalidResXFile);
         internal const string TypeLoadException = nameof(TypeLoadException);
         internal const string TypeLoadExceptionShort = nameof(TypeLoadExceptionShort);
         internal const string TypeWithAssemblyName = nameof(TypeWithAssemblyName);

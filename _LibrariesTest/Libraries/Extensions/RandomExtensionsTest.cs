@@ -328,8 +328,8 @@ namespace _LibrariesTest.Libraries.Extensions
             //Test<BitArray>();
             //Test<ReadOnlyCollection<int>>();
             //Test<ArraySegment<int>>();
+            //Test<Cache<int, int>>();
             Test<Queue>();
-            Test<Cache<int, int>>(new GenerateObjectSettings { AllowCreateObjectWithoutConstructor = true });
             //// key-value
             //Test<DictionaryEntry>();
             //Test<KeyValuePair<int, string>>();

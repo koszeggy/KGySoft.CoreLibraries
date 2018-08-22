@@ -720,7 +720,8 @@ namespace KGySoft.Libraries
                     return GenerateArray(type, ref context);
 
                 // 4.) supported collection
-                if (type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary))
+                if (type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary)
+                    || context.Settings.AllowCreateObjectWithoutConstructor && type.IsCollection())
                 {
                     IEnumerable collection = null;
 
@@ -728,6 +729,8 @@ namespace KGySoft.Libraries
                     // CreateInstance is faster than obtaining object factory by the constructor
                     if (defaultCtor != null || type.IsValueType)
                         collection = (IEnumerable)Activator.CreateInstance(type, true);
+                    else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor)
+                        collection = (IEnumerable)FormatterServices.GetUninitializedObject(type);
 
                     if (collection != null && type.IsReadWriteCollection(collection))
                     {

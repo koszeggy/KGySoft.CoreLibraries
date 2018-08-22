@@ -150,11 +150,8 @@
   <data name="CacheMinSize" xml:space="preserve">
     <value>Minimum cache size is 1.</value>
   </data>
-  <data name="CacheNullLoader" xml:space="preserve">
-    <value>You must define a valid item loader that can be called when an element is not loaded into the cache. If you want to add cache elements explicitly, use Cache&lt;TKey, TValue&gt;.NullLoader</value>
-  </data>
   <data name="CacheNullLoaderInvoke" xml:space="preserve">
-    <value>If NullLoader is used in Cache&lt;TKey, TValue&gt;, then elements must be added explicitly either by Add method or the setter of the indexer.</value>
+    <value>Cache&lt;TKey, TValue&gt; was initialized without an item loader so elements must be added explicitly either by the Add method or by setting the indexer.</value>
   </data>
   <data name="CacheStatistics" xml:space="preserve">
     <value>Cache&lt;{0}, {1}&gt; cache statistics:
@@ -708,9 +705,6 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="ResXMimeTypeNotSupported">
     <value>Unsupported mime type "{0}" at line {1}, position {2}.</value>
-  </data>
-  <data name="InvalidResXFile" xml:space="preserve">
-    <value>ResX file cannot be parsed: {0}</value>
   </data>
   <data name="ResXReaderNotSupported" xml:space="preserve">
     <value>Unsupported ResX reader "{0}" at line {1}, position {2}.</value>

@@ -2131,10 +2131,10 @@ namespace _LibrariesTest.Libraries.Serialization
         {
             object[] referenceObjects =
                 {
-                    new Cache<int, string>(Cache<int, string>.NullLoader) { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new Cache<int[], string[]>(Cache<int[], string[]>.NullLoader) { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
-                    new Cache<string, int>(Cache<string, int>.NullLoader, StringComparer.CurrentCulture) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
-                    new Cache<TestEnumByte, int>(Cache<TestEnumByte, int>.NullLoader) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
+                    new Cache<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
+                    new Cache<int[], string[]> { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
+                    new Cache<string, int>(StringComparer.CurrentCulture) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
+                    new Cache<TestEnumByte, int> { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
                     new Cache<string, string>(s => s.ToUpper()) { {"alma", "ALMA"}},
                 };
 

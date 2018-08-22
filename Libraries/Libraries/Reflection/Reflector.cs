@@ -122,17 +122,17 @@ namespace KGySoft.Libraries.Reflection
 
         private static Cache<string, Type> TypeCacheByString
         {
-            get { return typeCacheByString ?? (typeCacheByString = new Cache<string, Type>(Cache<string, Type>.NullLoader, 64)); }
+            get { return typeCacheByString ?? (typeCacheByString = new Cache<string, Type>(64)); }
         }
 
         private static Cache<Assembly, Cache<string, Type>> TypeCacheByAssembly
         {
-            get { return typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, Cache<string, Type>>(a => new Cache<string, Type>(Cache<string, Type>.NullLoader, 64), 16)); }
+            get { return typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, Cache<string, Type>>(a => new Cache<string, Type>(64), 16)); }
         }
 
         private static Cache<string, Assembly> AssemblyCache
         {
-            get { return assemblyCache ?? (assemblyCache = new Cache<string, Assembly>(Cache<string, Assembly>.NullLoader, 16)); }
+            get { return assemblyCache ?? (assemblyCache = new Cache<string, Assembly>(16)); }
         }
 
         #endregion

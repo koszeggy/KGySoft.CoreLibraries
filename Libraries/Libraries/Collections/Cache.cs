@@ -48,7 +48,7 @@ namespace KGySoft.Libraries.Collections
     /// <para>
     /// Since <see cref="Cache{TKey,TValue}"/> implements <see cref="IDictionary{TKey,TValue}"/> interface, <see cref="Add"/>, <see cref="Remove"/>, <see cref="ContainsKey"/> and
     /// <see cref="TryGetValue"/> are available for it, and these method work exactly the same way as in case the <see cref="Dictionary{TKey,TValue}"/> type. But using these methods
-    /// usually are not necessary, unless we want to manually manage cache content or when cache is initialized with the <see cref="NullLoader"/> field. Normally after cache is instantiated,
+    /// usually are not necessary, unless we want to manually manage cache content or when cache is initialized without an item loader. Normally after cache is instantiated,
     /// it is needed to be accessed only by the getter accessor of its indexer.
     /// </para>
     /// <note type="caution">
@@ -756,11 +756,15 @@ namespace KGySoft.Libraries.Collections
 
         #endregion
 
+        #region Constants
+
+        private const int defaultCapacity = 100;
+
+        #endregion
+
         #region Fields
 
         #region Static Fields
-
-        #region Public Fields
 
         /// <summary>
         /// A loader function that can be used at constructors if you want to manage element additions to the cache manually.
@@ -775,21 +779,16 @@ namespace KGySoft.Libraries.Collections
         /// a new element is added, then an element will be dropped from the cache depending on the current <see cref="Behavior"/>.
         /// </remarks>
         /// </summary>
-        /// <seealso cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2)"/>
+        /// <seealso cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
         /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
         /// <seealso cref="Behavior"/>
-        public static readonly Func<TKey, TValue> NullLoader = key => { throw new KeyNotFoundException(Res.Get(Res.CacheNullLoaderInvoke)); };
+        private static readonly Func<TKey, TValue> nullLoader = key => throw new KeyNotFoundException(Res.Get(Res.CacheNullLoaderInvoke));
 
-        #endregion
-
-        #region Private Fields
-
-        private static bool useEnumKeyComparer;
-        private static bool useEnumValueComparer;
-        private static Type typeKey;
-        private static Type typeValue;
-
-        #endregion
+        // ReSharper disable StaticMemberInGenericType
+        private static readonly bool useEnumKeyComparer;
+        private static readonly bool useEnumValueComparer;
+        private static readonly Type typeKey;
+        private static readonly Type typeValue;
 
         #endregion
 
@@ -853,11 +852,26 @@ namespace KGySoft.Libraries.Collections
         #region Instance Constructors
 
         /// <summary>
-        /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/>, <paramref name="capacity"/> and <paramref name="comparer"/>.
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with default capacity of 100 and no item loader.
+        /// </summary>
+        /// <remarks>
+        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
+        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
+        /// <para>This constructor does not specify an item loader so you have to add elements manually to this <see cref="Cache{TKey,TValue}"/> instance. In this case
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
+        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// </remarks>
+        /// <seealso cref="Capacity"/>
+        /// <seealso cref="EnsureCapacity"/>
+        /// <seealso cref="Behavior"/>
+        public Cache() : this(null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with specified <paramref name="capacity"/> capacity and <paramref name="comparer"/> and no item loader.
         /// </summary>
         /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>)</param>
-        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded.
-        /// If you want to add items manually, you can use <see cref="NullLoader"/> that will throw a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
         /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
         /// <remarks>
@@ -869,7 +883,56 @@ namespace KGySoft.Libraries.Collections
         /// The possible exceeding storage will be trimmed in this case.</para>
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
         /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
-        /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass the <see cref="NullLoader"/> field to <paramref name="itemLoader"/> parameter. In this case
+        /// <para>This constructor does not specify an item loader so you have to add elements manually to this <see cref="Cache{TKey,TValue}"/> instance. In this case
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
+        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// </remarks>
+        /// <seealso cref="Capacity"/>
+        /// <seealso cref="EnsureCapacity"/>
+        /// <seealso cref="Behavior"/>
+        public Cache(int capacity, IEqualityComparer<TKey> comparer = null) : this(null, capacity, comparer)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with the specified <paramref name="comparer"/>, default capacity of 100 and no item loader.
+        /// </summary>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
+        /// <remarks>
+        /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
+        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
+        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
+        /// <para>This constructor does not specify an item loader so you have to add elements manually to this <see cref="Cache{TKey,TValue}"/> instance. In this case
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
+        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// </remarks>
+        /// <seealso cref="Capacity"/>
+        /// <seealso cref="EnsureCapacity"/>
+        /// <seealso cref="Behavior"/>
+        public Cache(IEqualityComparer<TKey> comparer) : this(null, defaultCapacity, comparer)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/>, <paramref name="capacity"/> and <paramref name="comparer"/>.
+        /// </summary>
+        /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>)</param>
+        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by calling the
+        /// <see cref="GetValue">GetValue</see> method or by reading the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)">indexer</see>.
+        /// If <see langword="null"/>, then similarly to a regular <see cref="Dictionary{TKey,TValue}"/>, a <see cref="KeyNotFoundException"/> will be thrown on accessing a non-existing key.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
+        /// <remarks>
+        /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
+        /// <para>The <paramref name="capacity"/> of a <see cref="Cache{TKey,TValue}"/> is the maximum number of elements that the <see cref="Cache{TKey,TValue}"/> can hold. When <see cref="EnsureCapacity"/>
+        /// is <see langword="true"/>, the internal store is allocated when the first element is added to the cache. When <see cref="EnsureCapacity"/> is <see langword="false"/>, then as elements are added to the
+        /// <see cref="Cache{TKey,TValue}"/>, the inner storage is automatically increased as required until <see cref="Capacity"/> is reached or exceeded. When <see cref="EnsureCapacity"/> is
+        /// turned on while there are elements in the <see cref="Cache{TKey,TValue}"/>, then internal storage will be reallocated to have exactly the same size that <see cref="Capacity"/> defines.
+        /// The possible exceeding storage will be trimmed in this case.</para>
+        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
+        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
+        /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass <see langword="null"/> to the <paramref name="itemLoader"/> parameter. In this case
         /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
         /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
@@ -878,94 +941,14 @@ namespace KGySoft.Libraries.Collections
         /// <overloads><see cref="Cache{TKey,TValue}"/> type has four different public constructors for initializing the item loader delegate, capacity and key comparer.</overloads>
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
-        /// <seealso cref="NullLoader"/>
         /// <seealso cref="Behavior"/>
         [CollectionAccess(CollectionAccessType.UpdatedContent)]
-        public Cache([NotNull]Func<TKey, TValue> itemLoader, int capacity, IEqualityComparer<TKey> comparer)
+        public Cache(Func<TKey, TValue> itemLoader, int capacity = defaultCapacity, IEqualityComparer<TKey> comparer = null)
         {
-            if (itemLoader == null)
-                throw new ArgumentNullException(nameof(itemLoader), Res.Get(Res.CacheNullLoader));
-            this.itemLoader = itemLoader;
+            this.itemLoader = itemLoader ?? nullLoader;
             Capacity = capacity;
             this.comparer = comparer ?? (useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default);
             isDefaultComparer = useEnumKeyComparer ? this.comparer.Equals(EnumComparer<TKey>.Comparer) : this.comparer.Equals(EqualityComparer<TKey>.Default);
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/> and sets cache <see cref="Capacity"/> to 100.
-        /// </summary>
-        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded.
-        /// If you want to add items manually, you can use <see cref="NullLoader"/> that will throw a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
-        /// <remarks>
-        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
-        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
-        /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass the <see cref="NullLoader"/> field to <paramref name="itemLoader"/> parameter. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="itemLoader"/> is <see langword="null"/>.</exception>
-        /// <seealso cref="Capacity"/>
-        /// <seealso cref="EnsureCapacity"/>
-        /// <seealso cref="NullLoader"/>
-        /// <seealso cref="Behavior"/>
-        [CollectionAccess(CollectionAccessType.UpdatedContent)]
-        public Cache([NotNull]Func<TKey, TValue> itemLoader)
-            : this(itemLoader, 100, null)
-        {
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/> and <paramref name="capacity"/>.
-        /// </summary>
-        /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/>, (possible maximum value of <see cref="Count"/>)</param>
-        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded.
-        /// If you want to add items manually, you can use <see cref="NullLoader"/> that will throw a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
-        /// <remarks>
-        /// <para>The <paramref name="capacity"/> of a <see cref="Cache{TKey,TValue}"/> is the maximum number of elements that the <see cref="Cache{TKey,TValue}"/> can hold. When <see cref="EnsureCapacity"/>
-        /// is <see langword="true"/>, the internal store is allocated when the first element is added to the cache. When <see cref="EnsureCapacity"/> is <see langword="false"/>, then as elements are added to the
-        /// <see cref="Cache{TKey,TValue}"/>, the inner storage is automatically increased as required until <see cref="Capacity"/> is reached or exceeded. When <see cref="EnsureCapacity"/> is
-        /// turned on while there are elements in the <see cref="Cache{TKey,TValue}"/>, then internal storage will be reallocated to have exactly the same size that <see cref="Capacity"/> defines.
-        /// The possible exceeding storage will be trimmed in this case.</para>
-        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
-        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
-        /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass the <see cref="NullLoader"/> field to <paramref name="itemLoader"/> parameter. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="itemLoader"/> is <see langword="null"/>.</exception>
-        /// <seealso cref="Capacity"/>
-        /// <seealso cref="EnsureCapacity"/>
-        /// <seealso cref="NullLoader"/>
-        /// <seealso cref="Behavior"/>
-        [CollectionAccess(CollectionAccessType.UpdatedContent)]
-        public Cache([NotNull]Func<TKey, TValue> itemLoader, int capacity)
-            : this(itemLoader, capacity, null)
-        {
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/> and <paramref name="comparer"/> and sets cache capacity to 100.
-        /// </summary>
-        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded.
-        /// If you want to add items manually, you can use <see cref="NullLoader"/> that will throw a <see cref="KeyNotFoundException"/> on accessing a non-existing key.</param>
-        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
-        /// <remarks>
-        /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified <paramref name="comparer"/>.</para>
-        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
-        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
-        /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass the <see cref="NullLoader"/> field to <paramref name="itemLoader"/> parameter. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="itemLoader"/> is <see langword="null"/>.</exception>
-        /// <seealso cref="Capacity"/>
-        /// <seealso cref="EnsureCapacity"/>
-        /// <seealso cref="NullLoader"/>
-        /// <seealso cref="Behavior"/>
-        public Cache(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey> comparer)
-            : this(itemLoader, 100, comparer)
-        {
         }
 
         #endregion
@@ -1013,12 +996,12 @@ namespace KGySoft.Libraries.Collections
         /// <param name="key">The key of the item to refresh.</param>
         /// <remarks>
         /// <para>The loaded value will be stored in the <see cref="Cache{TKey,TValue}"/>. If a value already existed in the cache for the given <paramref name="key"/>, then the value will be replaced.</para>
-        /// <para>Do not use this method when the <see cref="Cache{TKey,TValue}"/> was initialized by the <see cref="NullLoader"/>.</para>
+        /// <para><note type="caution">Do not use this method when the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader.</note></para>
         /// <para>To get the refreshed value as well, use <see cref="GetValueUncached"/> method instead.</para>
         /// <para>The cost of this method depends on the cost of the item loader function that was passed to the constructor. Refreshing the already loaded value approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized by the <see cref="NullLoader"/>.</exception>
+        /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader.</exception>
         public void RefreshValue(TKey key)
         {
             GetValueUncached(key);
@@ -1034,11 +1017,11 @@ namespace KGySoft.Libraries.Collections
         /// <para>To get a value from the <see cref="Cache{TKey,TValue}"/>, and using the item loader only when <paramref name="key"/> does not exist in the cache,
         /// read the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property.</para>
         /// <para>The loaded value will be stored in the <see cref="Cache{TKey,TValue}"/>. If a value already existed in the cache for the given <paramref name="key"/>, then the value will be replaced.</para>
-        /// <para>Do not use this method when the <see cref="Cache{TKey,TValue}"/> was initialized by the <see cref="NullLoader"/>.</para>
+        /// <para><note type="caution">Do not use this method when the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader.</note></para>
         /// <para>The cost of this method depends on the cost of the item loader function that was passed to the constructor. Handling the already loaded value approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized by the <see cref="NullLoader"/>.</exception>
+        /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader.</exception>
         /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
         public TValue GetValueUncached(TKey key)
         {
@@ -1420,10 +1403,10 @@ namespace KGySoft.Libraries.Collections
         /// The element with the specified <paramref name="key"/>.
         /// </returns>
         /// <remarks>
-        /// <para>Getter retrieves the needed element, while setter adds a new item (or overwrites an already existing item).
-        /// Normally only the get accessor should be used because that will load elements into the cache by the item loader that
-        /// was passed to one of the the constructors. When the cache was initialized by <see cref="NullLoader"/> field, then
-        /// getting a non-existing key will throw a <see cref="KeyNotFoundException"/>.</para>
+        /// <para>Getting this property retrieves the needed element, while setting adds a new item (or overwrites an already existing item).
+        /// If this instance was initialized by a non-<see langword="null"/> item loader only the get accessor should be used because that will
+        /// load elements into the cache by the delegate instance that was passed to the <see cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.
+        /// When the cache was initialized without an item loader, then getting a non-existing key will throw a <see cref="KeyNotFoundException"/>.</para>
         /// <para>By using the getter of this property, it is transparent whether the returned value was in the cache before retrieving it.
         /// To test whether a key exists in the cache, use <see cref="ContainsKey"/> method. To retrieve a key only when it already exists in the cache,
         /// use <see cref="TryGetValue"/> method.</para>
@@ -1433,11 +1416,10 @@ namespace KGySoft.Libraries.Collections
         /// when the capacity of the inner storage must be increased to accommodate a new element, this property becomes an O(n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
-        /// <exception cref="KeyNotFoundException">The property is retrieved, the <see cref="Cache{TKey,TValue}"/> has been initialized by the <see cref="NullLoader"/>
+        /// <exception cref="KeyNotFoundException">The property is retrieved, the <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader
         /// and <paramref name="key"/> does not exist in the cache.</exception>
-        /// <seealso cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2)"/>
+        /// <seealso cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
         /// <seealso cref="Behavior"/>
-        /// <see cref="NullLoader"/>
         public TValue this[TKey key]
         {
             [CollectionAccess(CollectionAccessType.UpdatedContent)]
@@ -1495,7 +1477,7 @@ namespace KGySoft.Libraries.Collections
         /// <param name="key">The key of the element to add.</param>
         /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
         /// <remarks>
-        /// <para>Normally you need to call this method only when you have constructed the <see cref="Cache{TKey,TValue}"/> with the <see cref="NullLoader"/> item loader.
+        /// <para>You need to call this method only when this <see cref="Cache{TKey,TValue}"/> instance was initialized without using an item loader.
         /// Otherwise, you need only to read the get accessor of the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property),
         /// which automatically invokes the item loader to add new items.</para>
         /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
@@ -1552,10 +1534,11 @@ namespace KGySoft.Libraries.Collections
         /// <param name="value">When this method returns, the value associated with the specified key, if the <paramref name="key"/> is found;
         /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
         /// <remarks>
-        /// <para>Use the TryGetValue method if the <see cref="Cache{TKey,TValue}"/> was initialized by <see cref="NullLoader"/>, or when you want to determine if a
+        /// <para>Use this method if the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader, or when you want to determine if a
         /// <paramref name="key"/> exists in the <see cref="Cache{TKey,TValue}"/> and if so, you want to get the value as well.
-        /// Reading the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property would transparently load a non-existing element.</para>
-        /// <para>Works exactly the same was as in case of <see cref="Dictionary{TKey,TValue}"/> class. If <paramref name="key"/> is not found, does not use the
+        /// Reading the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property would transparently load a non-existing element by
+        /// calling the item loader delegate that was passed to the <see cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.</para>
+        /// <para>Works exactly the same way as in case of <see cref="Dictionary{TKey,TValue}"/> class. If <paramref name="key"/> is not found, does not use the
         /// item loader passed to the constructor.</para>
         /// <para>If the <paramref name="key"/> is not found, then the <paramref name="value"/> parameter gets the appropriate default value
         /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <see langword="false"/> for Boolean types, and <see langword="null"/> for reference types.</para>
@@ -1563,7 +1546,6 @@ namespace KGySoft.Libraries.Collections
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
-        /// <seealso cref="NullLoader"/>
         public bool TryGetValue(TKey key, out TValue value)
         {
             if (key == null)
@@ -2014,7 +1996,7 @@ namespace KGySoft.Libraries.Collections
             info.AddValue("comparer", isDefaultComparer ? null : comparer);
 
             // loader
-            info.AddValue("loader", itemLoader.Equals(NullLoader) ? null : itemLoader);
+            info.AddValue("loader", itemLoader.Equals(nullLoader) ? null : itemLoader);
 
             // elements
             int count = Count;
@@ -2057,7 +2039,7 @@ namespace KGySoft.Libraries.Collections
                 comparer = useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default;
 
             // loader
-            itemLoader = (Func<TKey, TValue>)info.GetValue("loader", typeof(Func<TKey, TValue>)) ?? NullLoader;
+            itemLoader = (Func<TKey, TValue>)info.GetValue("loader", typeof(Func<TKey, TValue>)) ?? nullLoader;
 
             // elements
             TKey[] keys = (TKey[])info.GetValue("keys", typeof(TKey[]));

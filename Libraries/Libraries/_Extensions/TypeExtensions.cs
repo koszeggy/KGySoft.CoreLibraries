@@ -207,6 +207,12 @@ namespace KGySoft.Libraries
                                 return true;
                             }
                         }
+                        else if (paramType != Reflector.StringType && CanAcceptArrayOrList(paramType, Reflector.ObjectType))
+                        {
+                            elementType = Reflector.ObjectType;
+                            collectionCtor = ctor;
+                            return true;
+                        }
 
                         continue;
                     }
