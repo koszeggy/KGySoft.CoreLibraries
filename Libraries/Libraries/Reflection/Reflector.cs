@@ -55,12 +55,17 @@ namespace KGySoft.Libraries.Reflection
         internal static readonly Type ObjectType = typeof(object);
         internal static readonly Type StringType = typeof(string);
         internal static readonly Type EnumType = typeof(Enum);
+        internal static readonly Type ByteArrayType = typeof(byte[]);
+        // TODO: elements of parseableType types
+
         internal static readonly Type Type = typeof(Type);
         // ReSharper disable PossibleMistakenCallToGetType.2
         internal static readonly Type RuntimeType = Type.GetType();
         // ReSharper restore PossibleMistakenCallToGetType.2
-        // TODO: elements of parseableType types, ByteArrayType
-        internal static readonly Type ByteArrayType = typeof(byte[]);
+#if !NET35 && !NET40
+        internal static readonly Type TypeInfo = typeof(TypeInfo);
+#endif
+
 
         internal static readonly Assembly mscorlibAssembly = ObjectType.Assembly;
         internal static readonly Assembly SystemAssembly = typeof(Queue<>).Assembly;
@@ -274,7 +279,11 @@ namespace KGySoft.Libraries.Reflection
                         return false;
                     throw new ArgumentException(Res.Get(Res.NotABool, value), nameof(value));
                 }
-                if (type.In(Type, RuntimeType))
+                if (type.In(Type, RuntimeType
+#if !NET35 && !NET40
+                    , TypeInfo
+#endif
+                ))
                 {
                     object result = ResolveType(value);
                     if (result == null)
@@ -368,7 +377,11 @@ namespace KGySoft.Libraries.Reflection
 
         internal static bool CanParseNatively(Type type)
         {
-            return type.IsEnum || parseableTypes.Contains(type) || type == RuntimeType;
+            return type.IsEnum || parseableTypes.Contains(type) || type == RuntimeType
+#if !NET35 && !NET40
+                || type == TypeInfo
+#endif
+                ;
         }
 
         #endregion

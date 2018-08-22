@@ -454,7 +454,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceManager"/> works in safe mode. In safe mode the retrieved
-        /// objects are not deserialized automatically. See Remarks section for details.
+        /// objects are not deserialized automatically. See the <strong>Remarks</strong> section for details.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
@@ -566,7 +566,7 @@ namespace KGySoft.Libraries.Resources
         /// </summary>
         /// <param name="baseName">A base name that is the prefix of the resource files.
         /// For example, the prefix for the resource file named <c>Resource1.en-US.resx</c> is <c>Resource1</c>.</param>
-        /// <param name="assembly">The assembly, from which the language of the neutral resources is tried to be auto detected. See the <c>Remarks</c> section for details.</param>
+        /// <param name="assembly">The assembly, from which the language of the neutral resources is tried to be auto detected. See the <strong>Remarks</strong> section for details.</param>
         /// <remarks>
         /// <para>The <see cref="ResXResourceManager"/> looks up resources in <c>baseName.cultureName.resx</c> files, where <c>baseName.resx</c> contains the resource set of the
         /// ultimate fallback culture (also known as default or invariant or neutral resources culture).</para>

@@ -3,9 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Xml.Linq;
 using KGySoft.Libraries;
+using KGySoft.Libraries.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Extensions
@@ -311,6 +313,7 @@ namespace _LibrariesTest.Libraries.Extensions
             //// enums
             //Test<EmptyEnum>();
             //Test<ConsoleColor>();
+            //Test<Enum>();
 
             //// arrays
             //Test<byte[]>();
@@ -325,14 +328,19 @@ namespace _LibrariesTest.Libraries.Extensions
             //Test<BitArray>();
             //Test<ReadOnlyCollection<int>>();
             //Test<ArraySegment<int>>();
-
+            Test<Queue>();
+            Test<Cache<int, int>>(new GenerateObjectSettings { AllowCreateObjectWithoutConstructor = true });
             //// key-value
             //Test<DictionaryEntry>();
             //Test<KeyValuePair<int, string>>();
 
-            var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true, SubstituteObjectWithSimpleTypes = false };
+            //Test<MethodBase>();
+
             //Test<EventArgs>(cfg);
-            Test<Delegate>(cfg);
+
+
+            //var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true, SubstituteObjectWithSimpleTypes = false };
+            //Test<Delegate>(cfg);
 
             // select a good type to create if there is no ok ctor
             // delegate
@@ -343,6 +351,7 @@ namespace _LibrariesTest.Libraries.Extensions
             // void
             // TypedRef
             // U/IntPtr
+            // TODO: XmlSerializerben is IsSupportedCollectionForReflection
         }
     }
 }

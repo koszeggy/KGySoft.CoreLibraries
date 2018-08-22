@@ -1,45 +1,238 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: RandomExtensions.ObjectGenerator.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using System.Text;
+
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
     public static partial class RandomExtensions
     {
+        #region ObjectGenerator class
+
         private static class ObjectGenerator
         {
-            private static readonly Type[] simpleTypes =
+            #region Nested types
+
+            #region Delegates
+
+            private delegate object GenerateKnownType(ref GeneratorContext context);
+
+            #endregion
+
+            #region Nested structs
+
+            #region DefaultGenericTypeKey struct
+
+            /// <summary>
+            /// Cache key for a generic type with its suggested arguments, with Equals/GetHashCode by array elements.
+            /// </summary>
+            private struct DefaultGenericTypeKey : IEquatable<DefaultGenericTypeKey>
             {
-                typeof(object),
-                typeof(bool),
-                typeof(byte),
-                typeof(sbyte),
-                typeof(char),
-                typeof(short),
-                typeof(ushort),
-                typeof(int),
-                typeof(uint),
-                typeof(long),
-                typeof(ulong),
-                typeof(float),
-                typeof(double),
-                typeof(decimal),
-                typeof(string),
-                typeof(DateTime),
-                typeof(DateTimeOffset),
-                typeof(TimeSpan),
-                typeof(Guid),
-            };
+                #region Fields
+
+                private readonly Type[] types;
+
+                #endregion
+
+                #region Properties
+
+                internal Type GenericType => types[0];
+                internal IList<Type> SuggestedArguments => new ArraySegment<Type>(types, 1, types.Length - 1);
+
+                #endregion
+
+                #region Constructors
+
+                public DefaultGenericTypeKey(Type genericType, Type[] suggestedArguments)
+                {
+                    types = new Type[1 + suggestedArguments.Length];
+                    types[0] = genericType;
+                    suggestedArguments.CopyTo(types, 1);
+                }
+
+                #endregion
+
+                #region Methods
+
+                public override bool Equals(object obj) => obj is DefaultGenericTypeKey key && Equals(key);
+                public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
+                public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
+
+                #endregion
+            }
+
+            #endregion
+
+            #region GeneratorContext struct
+
+            private struct GeneratorContext
+            {
+                #region Fields
+
+                #region Internal Fields
+
+                internal readonly Random Random;
+                internal readonly GenerateObjectSettings Settings;
+
+                #endregion
+
+                #region Private Fields
+
+                private readonly Stack<string> memberNameStack;
+                private readonly HashSet<Type> typesBeingGenerated;
+
+                #endregion
+
+                #endregion
+
+                #region Properties
+
+                public string MemberName => memberNameStack.Count == 0 ? null : memberNameStack.Peek();
+
+                #endregion
+
+                #region Constructors
+
+                public GeneratorContext(Random random, GenerateObjectSettings settings)
+                {
+                    Random = random;
+                    Settings = settings;
+                    memberNameStack = new Stack<string>();
+                    typesBeingGenerated = new HashSet<Type>();
+                }
+
+                #endregion
+
+                #region Methods
+
+                internal void PushMember(string memberName) => memberNameStack.Push(memberName);
+                internal void PopMember() => memberNameStack.Pop();
+                internal bool IsGenerating(Type type) => typesBeingGenerated.Contains(type);
+                internal void PushType(Type type) => typesBeingGenerated.Add(type);
+                internal void PopType(Type type) => typesBeingGenerated.Remove(type);
+
+                #endregion
+            }
+
+            #endregion
+
+            #endregion
+
+            #endregion
+
+            #region Fields
 
             private static readonly Cache<Assembly, Type[]> assemblyTypesCache = new Cache<Assembly, Type[]>(LoadAssemblyTypes);
+            private static readonly Cache<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors);
+            private static readonly Cache<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric);
+            private static readonly Cache<Type, Delegate> delegatesCache = new Cache<Type, Delegate>(CreateDelegate);
+
+            /// <summary>
+            /// Must be a separate instance because dynamic method references will never freed.
+            /// Other problem if the original Random is a disposable secure random: invoking the delegate would throw an exception.
+            /// </summary>
+            private static readonly Random randomForDelegates = new Random();
+
+            private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates);
+            private static readonly MethodInfo nextObjectMethod = ((MethodInfo)typeof(RandomExtensions).GetMethod(nameof(NextObject)));
+
+            private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
+                    new Dictionary<Type, GenerateKnownType>
+                {
+                    // primitive types
+                    { typeof(bool), GenerateBoolean },
+                    { typeof(byte), GenerateByte },
+                    { typeof(sbyte), GenerateSbyte },
+                    { typeof(char), GenerateChar },
+                    { typeof(short), GenerateInt16 },
+                    { typeof(ushort), GenerateUInt16 },
+                    { typeof(int), GenerateInt32 },
+                    { typeof(uint), GenerateUInt32 },
+                    { typeof(long), GenerateInt64 },
+                    { typeof(ulong), GenerateUInt64 },
+
+                    // floating points
+                    { typeof(float), GenerateSingle },
+                    { typeof(double), GenerateDouble },
+                    { typeof(decimal), GenerateDecimal },
+
+                    // strings
+                    { typeof(string), GenerateString },
+                    { typeof(StringBuilder), GenerateStringBuilder },
+                    { typeof(Uri), GenerateUri },
+
+                    // guid
+                    { typeof(Guid), GenerateGuid },
+
+                    // date and time
+                    { typeof(DateTime), GenerateDateTime },
+                    { typeof(DateTimeOffset), GenerateDateTimeOffset },
+                    { typeof(TimeSpan), GenerateTimeSpan },
+
+                    // reflection types - no generation but random selection
+                    { typeof(Assembly), PickRandomAssembly },
+                    { typeof(Type), PickRandomType },
+                };
+
+            private static readonly Type memberInfoType = typeof(MemberInfo);
+            private static readonly Type fieldInfoType = typeof(FieldInfo);
+            private static readonly Type rtFieldInfoType = Reflector.MemberOf(() => String.Empty).GetType();
+            private static readonly Type mdFieldInfoType = typeof(int).GetField(nameof(Int32.MaxValue)).GetType(); // MemberOf does not work for constants
+            private static readonly Type runtimeFieldInfoType = rtFieldInfoType.BaseType;
+            private static readonly Type propertyInfoType = typeof(PropertyInfo);
+            private static readonly Type runtimePropertyInfoType = Reflector.MemberOf(() => ((string)null).Length).GetType();
+            private static readonly Type methodBaseType = typeof(MethodBase);
+            private static readonly Type methodInfoType = typeof(MethodInfo);
+            private static readonly Type runtimeMethodInfoType = Reflector.MemberOf(() => ((object)null).ToString()).GetType();
+            private static readonly Type ctorInfoType = typeof(ConstructorInfo);
+            private static readonly Type runtimeCtorInfoType = Reflector.MemberOf(() => new object()).GetType();
+            private static readonly Type eventInfoType = typeof(EventInfo);
+            private static readonly Type runtimeEventInfoType = typeof(Console).GetEvent(nameof(Console.CancelKeyPress)).GetType();
+
+            #endregion
+
+            #region Methods
+
+            #region Internal Methods
+
+            internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
+            {
+                var context = new GeneratorContext(random, settings);
+                return GenerateObject(type, ref context);
+            }
+
+            #endregion
+
+            #region Private Methods
 
             private static Type[] LoadAssemblyTypes(Assembly asm)
             {
@@ -52,8 +245,6 @@ namespace KGySoft.Libraries
                     return e.Types.Where(t => t != null).ToArray();
                 }
             }
-
-            private static readonly Cache<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors);
 
             private static Type[] SearchForImplementors(Type type)
             {
@@ -111,29 +302,6 @@ namespace KGySoft.Libraries
                 {
                     return defaultConstructedGenerics[new DefaultGenericTypeKey(typeDef, suggestedArguments)];
                 }
-            }
-
-            private static readonly Cache<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric);
-
-            private struct DefaultGenericTypeKey : IEquatable<DefaultGenericTypeKey>
-            {
-                private readonly Type[] types;
-
-                internal Type GenericType => types[0];
-                internal IList<Type> SuggestedArguments => new ArraySegment<Type>(types, 1, types.Length - 1);
-
-                public DefaultGenericTypeKey(Type genericType, Type[] suggestedArguments)
-                {
-                    types = new Type[1 + suggestedArguments.Length];
-                    types[0] = genericType;
-                    suggestedArguments.CopyTo(types, 1);
-                }
-
-                public override bool Equals(object obj) => obj is DefaultGenericTypeKey key && Equals(key);
-
-                public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
-
-                public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
             }
 
             private static Type TryCreateDefaultGeneric(DefaultGenericTypeKey key)
@@ -215,8 +383,8 @@ namespace KGySoft.Libraries
 
                     // if not found or contains generic parameters recursively, using a simple type based on the value type constraint
                     Type replacement = pos >= 0 && !constructedArguments[pos].ContainsGenericParameters
-                        ? constructedArguments[pos]
-                        : (arg.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? typeof(int) : Reflector.ObjectType;
+                            ? constructedArguments[pos]
+                            : (arg.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? typeof(int) : Reflector.ObjectType;
 
                     // Generic parameters are never compatible with real types so skipping assertion for them
                     return arg.GetGenericParameterConstraints().All(c => c.ContainsGenericParameters || c.IsAssignableFrom(replacement)) ? replacement : null;
@@ -245,71 +413,47 @@ namespace KGySoft.Libraries
                 }
             }
 
-            private struct GeneratorContext
+            private static Delegate CreateDelegate(Type type)
             {
-                internal readonly Random Random;
-                internal readonly GenerateObjectSettings Settings;
+                MethodInfo mi = type.GetMethod(nameof(Action.Invoke));
+                Type returnType = mi.ReturnType;
+                var parameters = mi.GetParameters();
 
-                private readonly Stack<string> memberNameStack;
-                private readonly HashSet<Type> typesBeingGenerated;
+                // ReSharper disable once PossibleNullReferenceException
+                var dm = new DynamicMethod($"dm_{type.Name}", returnType, mi.GetParameters().Select(p => p.ParameterType).ToArray(), true);
+                ILGenerator il = dm.GetILGenerator();
 
-                public string MemberName => memberNameStack.Count == 0 ? null : memberNameStack.Peek();
-
-                public GeneratorContext(Random random, GenerateObjectSettings settings)
+                // calling NextObject<T> for out parameters
+                for (int i = 0; i < parameters.Length; i++)
                 {
-                    Random = random;
-                    Settings = settings;
-                    memberNameStack = new Stack<string>();
-                    typesBeingGenerated = new HashSet<Type>();
+                    if (!parameters[i].IsOut)
+                        continue;
+
+                    Type parameterType = parameters[i].ParameterType.GetElementType();
+
+                    il.Emit(OpCodes.Ldarg, i);
+                    il.Emit(OpCodes.Ldsfld, randomField);
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Call, nextObjectMethod.MakeGenericMethod(parameterType));
+
+                    // ReSharper disable once PossibleNullReferenceException
+                    if (parameterType.IsValueType)
+                        il.Emit(OpCodes.Stobj, parameterType);
+                    else
+                        il.Emit(OpCodes.Stind_Ref);
                 }
 
-                internal void PushMember(string memberName) => memberNameStack.Push(memberName);
-                internal void PopMember() => memberNameStack.Pop();
-
-                internal bool IsGenerating(Type type) => typesBeingGenerated.Contains(type);
-                internal void PushType(Type type) => typesBeingGenerated.Add(type);
-                internal void PopType(Type type) => typesBeingGenerated.Remove(type);
-            }
-
-            private delegate object GenerateKnownType(ref GeneratorContext context);
-
-            private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
-                new Dictionary<Type, GenerateKnownType>
+                // calling NextObject<T> for return value
+                if (mi.ReturnType != typeof(void))
                 {
-                    // primitive types
-                    { typeof(bool), GenerateBoolean },
-                    { typeof(byte), GenerateByte },
-                    { typeof(sbyte), GenerateSbyte },
-                    { typeof(char), GenerateChar },
-                    { typeof(short), GenerateInt16 },
-                    { typeof(ushort), GenerateUInt16 },
-                    { typeof(int), GenerateInt32 },
-                    { typeof(uint), GenerateUInt32 },
-                    { typeof(long), GenerateInt64 },
-                    { typeof(ulong), GenerateUInt64 },
+                    il.Emit(OpCodes.Ldsfld, randomField);
+                    il.Emit(OpCodes.Ldnull);
+                    il.Emit(OpCodes.Call, nextObjectMethod.MakeGenericMethod(returnType));
+                }
 
-                    // floating points
-                    { typeof(float), GenerateSingle },
-                    { typeof(double), GenerateDouble },
-                    { typeof(decimal), GenerateDecimal },
-
-                    // strings
-                    { typeof(string), GenerateString },
-                    { typeof(StringBuilder), GenerateStringBuilder },
-                    { typeof(Uri), GenerateUri },
-
-                    // guid
-                    { typeof(Guid), GenerateGuid },
-
-                    // date and time
-                    { typeof(DateTime), GenerateDateTime },
-                    { typeof(DateTimeOffset), GenerateDateTimeOffset },
-                    { typeof(TimeSpan), GenerateTimeSpan },
-
-                    // reflection types - no generation but random selection
-                    { typeof(Assembly), PickRandomAssembly },
-                    { typeof(Type), PickRandomType },
-                };
+                il.Emit(OpCodes.Ret);
+                return dm.CreateDelegate(type);
+            }
 
             private static object GenerateBoolean(ref GeneratorContext context) => context.Random.NextBoolean();
             private static object GenerateByte(ref GeneratorContext context) => context.Random.NextByte();
@@ -385,11 +529,11 @@ namespace KGySoft.Libraries
                 }
 
                 DateTime minDate = pastOnly != false
-                    ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(-100) : DateTime.MinValue)
-                    : DateTime.Today.AddDays(1);
+                        ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(-100) : DateTime.MinValue)
+                        : DateTime.Today.AddDays(1);
                 DateTime maxDate = pastOnly != true
-                    ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(100) : DateTime.MaxValue)
-                    : DateTime.Today.AddDays(-1);
+                        ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(100) : DateTime.MaxValue)
+                        : DateTime.Today.AddDays(-1);
 
                 return memberName?.Contains("date", StringComparison.OrdinalIgnoreCase) == true && !memberName.Contains("time", StringComparison.OrdinalIgnoreCase)
                     ? NextDate(context.Random, minDate, maxDate)
@@ -399,11 +543,11 @@ namespace KGySoft.Libraries
             private static object GenerateDateTimeOffset(ref GeneratorContext context)
             {
                 DateTimeOffset minDate = context.Settings.PastDateTimes != false
-                    ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(-100) : DateTimeOffset.MinValue)
-                    : DateTime.Today.AddDays(1);
+                        ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(-100) : DateTimeOffset.MinValue)
+                        : DateTime.Today.AddDays(1);
                 DateTimeOffset maxDate = context.Settings.PastDateTimes != true
-                    ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(100) : DateTimeOffset.MaxValue)
-                    : DateTime.Today.AddDays(-1);
+                        ? (context.Settings.CloseDateTimes ? DateTime.UtcNow.AddYears(100) : DateTimeOffset.MaxValue)
+                        : DateTime.Today.AddDays(-1);
 
                 return NextDateTimeOffset(context.Random, minDate, maxDate);
             }
@@ -411,8 +555,8 @@ namespace KGySoft.Libraries
             private static object GenerateTimeSpan(ref GeneratorContext context)
             {
                 TimeSpan min = context.Settings.AllowNegativeValues
-                    ? (context.Settings.CloseDateTimes ? TimeSpan.FromDays(-100) : TimeSpan.MinValue)
-                    : TimeSpan.Zero;
+                        ? (context.Settings.CloseDateTimes ? TimeSpan.FromDays(-100) : TimeSpan.MinValue)
+                        : TimeSpan.Zero;
                 TimeSpan max = context.Settings.CloseDateTimes ? TimeSpan.FromDays(100) : TimeSpan.MaxValue;
 
                 return NextTimeSpan(context.Random, min, max);
@@ -421,18 +565,18 @@ namespace KGySoft.Libraries
             private static Assembly PickRandomAssembly(ref GeneratorContext context)
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
-                return GetRandomElement(context.Random, assemblies);
+                return assemblies.GetRandomElement(context.Random);
             }
 
             private static Type PickRandomType(ref GeneratorContext context)
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
-                Assembly asm = GetRandomElement(context.Random, assemblies);
+                Assembly asm = assemblies.GetRandomElement(context.Random);
                 Type[] types = GetAssemblyTypes(asm);
 
                 if (types.Length == 0)
                 {
-                    foreach (Assembly candidate in context.Random.Shuffle(assemblies.Except(new[] { asm })))
+                    foreach (Assembly candidate in assemblies.Except(new[] { asm }).Shuffle(context.Random))
                     {
                         types = GetAssemblyTypes(candidate);
                         if (types.Length != 0)
@@ -440,19 +584,112 @@ namespace KGySoft.Libraries
                     }
                 }
 
-                return GetRandomElement(context.Random, types);
+                return types.GetRandomElement(context.Random);
+            }
+
+            private static MemberInfo PickRandomMemberInfo(Type type, ref GeneratorContext context)
+            {
+                // type
+                if (type.In(Reflector.Type, Reflector.RuntimeType
+#if !NET35 && !NET40
+                        , Reflector.TypeInfo
+#endif
+                ))
+                {
+                    return PickRandomType(ref context);
+                }
+
+                MemberTypes memberTypes;
+                bool? constants = null;
+                if (type.In(fieldInfoType, runtimeFieldInfoType, mdFieldInfoType, rtFieldInfoType))
+                {
+                    memberTypes = MemberTypes.Field;
+                    constants = type == mdFieldInfoType ? true : type == rtFieldInfoType ? false : (bool?)null;
+                }
+                else if (type.In(propertyInfoType, runtimePropertyInfoType))
+                    memberTypes = MemberTypes.Property;
+                else if (type.In(methodInfoType, runtimeMethodInfoType))
+                    memberTypes = MemberTypes.Method;
+                else if (type.In(methodInfoType, runtimeMethodInfoType))
+                    memberTypes = MemberTypes.Method;
+                else if (type.In(ctorInfoType, runtimeCtorInfoType))
+                    memberTypes = MemberTypes.Constructor;
+                else if (type.In(ctorInfoType, runtimeCtorInfoType))
+                    memberTypes = MemberTypes.Constructor;
+                else if (type.In(eventInfoType, runtimeEventInfoType))
+                    memberTypes = MemberTypes.Event;
+                else if (type == methodBaseType)
+                    memberTypes = MemberTypes.Constructor | MemberTypes.Method;
+                else if (type == memberInfoType)
+                    memberTypes = MemberTypes.All;
+                else
+                    // others (such as builders, etc): returning null to falling back default object creation
+                    return null;
+
+                Assembly[] assemblies = Reflector.GetLoadedAssemblies();
+                Assembly asm = assemblies.GetRandomElement(context.Random);
+                MemberInfo result = TryPickMemberInfo(GetAssemblyTypes(asm).GetRandomElement(context.Random, true), memberTypes, ref context, constants);
+
+                if (result != null)
+                    return result;
+
+                // low performance fallback: shuffling
+                foreach (Assembly assembly in assemblies.Except(new[] { asm }).Shuffle(context.Random))
+                {
+                    foreach (Type t in GetAssemblyTypes(assembly).Shuffle(context.Random))
+                    {
+                        result = TryPickMemberInfo(t, memberTypes, ref context, constants);
+                        if (result != null)
+                            return result;
+
+                    }
+                }
+
+                return null;
+            }
+
+            private static MemberInfo TryPickMemberInfo(Type type, MemberTypes memberTypes, ref GeneratorContext context, bool? constants)
+            {
+                if (type == null)
+                    return null;
+
+                MemberInfo[] members;
+                try
+                {
+                    members = type.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+                }
+                catch (FileNotFoundException)
+                {
+                    // a dependent assembly cannot be loaded
+                    return null;
+                }
+
+                // If MemberInfo is requested, the Type itself is ok, too
+                if (members.Length == 0 && memberTypes == MemberTypes.All)
+                    return type;
+
+                if (memberTypes == MemberTypes.All)
+                    return members.GetRandomElement(context.Random);
+
+                foreach (MemberInfo member in members.Where(m => (m.MemberType & memberTypes) != 0).Shuffle(context.Random))
+                {
+                    if (constants == null)
+                        return member;
+
+                    if (!(member is FieldInfo field))
+                        continue;
+
+                    if (constants == true && field.IsLiteral || constants == false && !field.IsLiteral)
+                        return member;
+                }
+
+                return null;
             }
 
             private static object PickRandomEnum(Type type, ref GeneratorContext context)
             {
                 Array values = Enum.GetValues(type);
                 return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length));
-            }
-
-            internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
-            {
-                var context = new GeneratorContext(random, settings);
-                return GenerateObject(type, ref context);
             }
 
             private static object GenerateObject(Type type, ref GeneratorContext context)
@@ -466,8 +703,8 @@ namespace KGySoft.Libraries
                     type = Nullable.GetUnderlyingType(type);
 
                 // object substitution
-                if (type == Reflector.ObjectType && context.Settings.SubstituteObjectWithSimpleTypes)
-                    type = GetRandomElement(context.Random, simpleTypes);
+                if (type == Reflector.ObjectType && context.Settings.SubstitutionForObjectType != null)
+                    type = context.Settings.SubstitutionForObjectType;
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 // 1.) known type
@@ -475,7 +712,6 @@ namespace KGySoft.Libraries
                     return knownGenerator.Invoke(ref context);
 
                 // 2.) enum
-                // ReSharper disable once PossibleNullReferenceException
                 if (type.IsEnum)
                     return PickRandomEnum(type, ref context);
 
@@ -517,7 +753,13 @@ namespace KGySoft.Libraries
                     return Reflector.Construct(type, key, value);
                 }
 
-                // 6.) any object
+                object result;
+
+                // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
+                if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
+                    return result;
+
+                // 7.) any object
                 bool resolveType = false;
                 if (type.IsAbstract || type.IsInterface)
                 {
@@ -525,24 +767,20 @@ namespace KGySoft.Libraries
                         return null;
                     resolveType = true;
                 }
-                // SubstituteObjectWithSimpleTypes is checked because object can be generated, too, and if so, no derived types should be searched
-                else if (!type.IsSealed && context.Settings.AllowDerivedTypesForNonSealedClasses
-                    && !(context.Settings.SubstituteObjectWithSimpleTypes && type == Reflector.ObjectType))
-                {
+                else if (!type.IsSealed && context.Settings.AllowDerivedTypesForNonSealedClasses)
                     resolveType = true;
-                }
 
                 IList<Type> typeCandidates = null;
                 Type typeToCreate = type;
                 if (resolveType)
                 {
                     typeCandidates = GetResolvedTypes(type);
-                    typeToCreate = GetRandomElement(context.Random, typeCandidates, true);
+                    typeToCreate = typeCandidates.GetRandomElement(context.Random, true);
                     if (typeToCreate == null)
                         return null;
                 }
 
-                object result = GenerateAnyObject(typeToCreate, ref context);
+                result = GenerateAnyObject(typeToCreate, ref context);
                 if (result != null || !resolveType)
                     return result;
 
@@ -550,7 +788,7 @@ namespace KGySoft.Libraries
                 // The try above could be in this foreach below but we try to avoid the shuffling if possible
                 if (!type.IsSealed && (context.Settings.TryResolveInterfacesAndAbstractTypes || context.Settings.AllowNegativeValues))
                 {
-                    foreach (Type candidateType in context.Random.Shuffle(typeCandidates.Except(new[] { typeToCreate })))
+                    foreach (Type candidateType in typeCandidates.Except(new[] { typeToCreate }).Shuffle(context.Random))
                     {
                         result = GenerateAnyObject(candidateType, ref context);
                         if (result != null)
@@ -598,7 +836,7 @@ namespace KGySoft.Libraries
             private static void PopulateCollection(IEnumerable collection, Type elementType, bool isDictionary, ref GeneratorContext context)
             {
                 int count = context.Random.NextInt32(context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true);
-                
+
                 // though this could populate dictionaries, too; duplicates and null keys are not checked
                 if (!isDictionary)
                 {
@@ -657,6 +895,18 @@ namespace KGySoft.Libraries
 
             private static object GenerateAnyObject(Type type, ref GeneratorContext context)
             {
+                // Special case 1: Enum by System.Enum type or an interface. Handling separately to avoid non-existing elements.
+                if (type.IsEnum)
+                    return PickRandomEnum(type, ref context);
+
+                // Special case 2: Known type by interface.
+                if (knownTypes.TryGetValue(type, out var knownGenerator))
+                    return knownGenerator.Invoke(ref context);
+
+                // Special case 3: Delegate
+                if (type.IsDelegate())
+                    return GetDelegate(type, ref context);
+
                 if (context.IsGenerating(type))
                     return null;
 
@@ -687,6 +937,14 @@ namespace KGySoft.Libraries
                 finally
                 {
                     context.PopType(type);
+                }
+            }
+
+            private static Delegate GetDelegate(Type type, ref GeneratorContext context)
+            {
+                lock (delegatesCache)
+                {
+                    return delegatesCache[type];
                 }
             }
 
@@ -753,6 +1011,12 @@ namespace KGySoft.Libraries
 
             private static Type[] GetKeyValueTypes(Type elementType)
                 => elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { typeof(object), typeof(object) };
+
+            #endregion
+
+            #endregion
         }
+
+        #endregion
     }
 }

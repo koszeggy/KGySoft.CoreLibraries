@@ -161,7 +161,7 @@ namespace KGySoft.Libraries
         /// <param name="seed">The seed to use for the shuffling.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed) 
-            => new Random(seed).Shuffle(source);
+            => Shuffle(source, new Random(seed));
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a new <see cref="Random"/> instance.
@@ -169,12 +169,29 @@ namespace KGySoft.Libraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
-        /// <remarks>To use an already created <see cref="Random"/> instance call the <see cref="RandomExtensions.Shuffle{T}">RandomExtensions.Shuffle</see> extension method instead.</remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
-            => new Random().Shuffle(source);
+            => Shuffle(source, new Random());
 
         /// <summary>
-        /// Gets a random element from the enumerable using a new <see cref="Random"/> instance.
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using a specified <see cref="Random"/> instance.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random random)
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+            if (source == null)
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+
+            return source.Select(item => new { Order = random.Next(), Value = item }).OrderBy(i => i.Order).Select(i => i.Value);
+        }
+
+        /// <summary>
+        /// Gets a random element from the enumerable <paramref name="source"/> using a new <see cref="Random"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
@@ -182,9 +199,49 @@ namespace KGySoft.Libraries
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from <paramref name="source"/>.</returns>
-        /// <remarks>To use an already created <see cref="Random"/> instance call the <see cref="RandomExtensions.GetRandomElement{T}">RandomExtensions.GetRandomElement</see> extension method instead.</remarks>
         public static T GetRandomElement<T>(this IEnumerable<T> source, bool defaultIfEmpty = false)
-            => new Random().GetRandomElement(source, defaultIfEmpty);
+            => GetRandomElement(source, new Random(), defaultIfEmpty);
+
+        /// <summary>
+        /// Gets a random element from the enumerable <paramref name="source"/> using a specified <see cref="Random"/> instance.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
+        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A random element from the <paramref name="source"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="source"/> contains no elements and <paramref name="defaultIfEmpty"/> is <see langword="false"/>.</exception>
+        public static T GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+            if (source == null)
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+
+            if (source is IList<T> list)
+                return list.Count > 0
+                    ? list[random.Next(list.Count)]
+                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
+
+#if NET45
+            if (source is IReadOnlyList<T> readonlyList)
+                return readonlyList.Count > 0
+                    ? readonlyList[random.Next(readonlyList.Count)]
+                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
+#elif !(NET35 || NET40)
+#error .NET version is not set or not supported!
+#endif
+
+            using (IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator())
+            {
+                if (!shuffledEnumerator.MoveNext())
+                    return defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
+                return shuffledEnumerator.Current;
+            }
+        }
 
         #endregion
 

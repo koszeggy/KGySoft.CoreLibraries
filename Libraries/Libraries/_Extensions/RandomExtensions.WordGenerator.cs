@@ -1,35 +1,75 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: RandomExtensions.WordGenerator.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
+#endregion
 
 namespace KGySoft.Libraries
 {
     public static partial class RandomExtensions
     {
+        #region WordGenerator class
+
         private static class WordGenerator
         {
+            #region GeneratorContext struct
+
             private struct GeneratorContext
             {
-                private readonly StringBuilder result;
+                #region Fields
+
+                #region Internal Fields
+
                 internal readonly Random Random;
 
+                #endregion
+
+                #region Private Fields
+
+                private readonly StringBuilder result;
+
+                #endregion
+
+                #endregion
+
+                #region Properties and Indexers
+
+                #region Properties
+
                 internal int CurrentWordStartPosition { get; private set; }
+
                 internal int RemainingWordLength { get; private set; }
+
                 internal int RemainingSentenceLength { get; private set; }
 
                 internal char CurrentWordFirstLetter => result.Length == 0 ? default : result[CurrentWordStartPosition];
+
                 internal char LastLetter => result.Length == 0 ? default : result[result.Length - 1];
-                internal char GetLetterFromEnd(int index) => result[result.Length - index - 1];
+
                 internal int CurrentWordLength => result.Length - CurrentWordStartPosition;
 
-                internal GeneratorContext(Random random) : this()
-                {
-                    Random = random;
-                    result = new StringBuilder();
-                }
+                #endregion
+
+                #region Indexers
 
                 public char this[int index]
                 {
@@ -37,22 +77,23 @@ namespace KGySoft.Libraries
                     set => result[index] = value;
                 }
 
-                internal void StartNewWord(int length)
+                #endregion
+
+                #endregion
+
+                #region Constructors
+
+                internal GeneratorContext(Random random) : this()
                 {
-                    CurrentWordStartPosition = result.Length;
-                    RemainingWordLength = length;
+                    Random = random;
+                    result = new StringBuilder();
                 }
 
-                internal void StartNewSentence(int length) => RemainingSentenceLength = length;
+                #endregion
 
-                internal void AddChar(char c)
-                {
-                    result.Append(c);
+                #region Methods
 
-                    // if currently out of word or sentence, these can go below zero
-                    RemainingWordLength--;
-                    RemainingSentenceLength--;
-                }
+                #region Public Methods
 
                 public override string ToString() => result.ToString();
 
@@ -77,7 +118,38 @@ namespace KGySoft.Libraries
                     else
                         RemainingWordLength -= s.Length;
                 }
+
+                #endregion
+
+                #region Internal Methods
+
+                internal char GetLetterFromEnd(int index) => result[result.Length - index - 1];
+
+                internal void StartNewWord(int length)
+                {
+                    CurrentWordStartPosition = result.Length;
+                    RemainingWordLength = length;
+                }
+
+                internal void StartNewSentence(int length) => RemainingSentenceLength = length;
+
+                internal void AddChar(char c)
+                {
+                    result.Append(c);
+
+                    // if currently out of word or sentence, these can go below zero
+                    RemainingWordLength--;
+                    RemainingSentenceLength--;
+                }
+
+                #endregion
+
+                #endregion
             }
+
+            #endregion
+
+            #region Fields
 
             private static string vowels = "aeiou";
             private static string consonants = "bcdfghjklmnpqrstvwxyz";
@@ -85,12 +157,40 @@ namespace KGySoft.Libraries
             private static string consonantsNotDoubled = "qwxy";
             private static readonly string[] consonantsNotCombined = { "bcdgkpt", "fv", "jy" };
 
+            #endregion
+
+            #region Methods
+
+            #region Internal Methods
+
             internal static string GenerateWord(Random random, int length)
             {
                 var context = new GeneratorContext(random);
                 GenerateWord(ref context, length);
                 return context.ToString();
             }
+
+            internal static string GenerateSentence(Random random, int length)
+            {
+                if (length == 0)
+                    return String.Empty;
+
+                if (length == 1)
+                    return GenerateWord(random, 1).ToUpperInvariant();
+
+                var context = new GeneratorContext(random);
+                context.StartNewSentence(length);
+                GenerateFirstWord(ref context);
+                while (context.RemainingSentenceLength > 1)
+                    GenerateNextWord(ref context);
+                GenerateSentenceEnd(ref context);
+                Debug.Assert(context.RemainingSentenceLength == 0);
+                return context.ToString();
+            }
+
+            #endregion
+
+            #region Private Methods
 
             private static void GenerateWord(ref GeneratorContext context, int length)
             {
@@ -102,15 +202,17 @@ namespace KGySoft.Libraries
 
             private static char GetFirstLetter(ref GeneratorContext context)
                 => context.Random.NextDouble() < (context.RemainingWordLength == 1 ? 0.9 : 0.5)
-                    ? GetVowel(ref context)
-                    : GetConsonant(ref context);
+                ? GetVowel(ref context)
+                : GetConsonant(ref context);
 
             private static char GetVowel(ref GeneratorContext context) => vowels[context.Random.Next(vowels.Length)];
+
             private static char GetConsonant(ref GeneratorContext context) => consonants[context.Random.Next(consonants.Length)];
+
             private static char GetNextLetter(ref GeneratorContext context)
                 => vowels.IndexOf(context.LastLetter) >= 0
-                    ? GetVowelSuccessor(ref context)
-                    : GetConsonantSuccessor(ref context);
+                ? GetVowelSuccessor(ref context)
+                : GetConsonantSuccessor(ref context);
 
             private static char GetVowelSuccessor(ref GeneratorContext context)
             {
@@ -160,7 +262,8 @@ namespace KGySoft.Libraries
                 return vowels.IndexOf(context.GetLetterFromEnd(1)) < 0;
             }
 
-            private static bool CanAddVowel(ref GeneratorContext context, char c) => c != context.LastLetter; // doubled vowel is not allowed
+            private static bool CanAddVowel(ref GeneratorContext context, char c)
+                => c != context.LastLetter; // doubled vowel is not allowed
 
             private static bool CanAddAnyConsonant(ref GeneratorContext context)
             {
@@ -200,24 +303,6 @@ namespace KGySoft.Libraries
 
                 // some consonants cannot be combined
                 return consonantsNotCombined.All(group => !(group.IndexOf(c) >= 0 && group.IndexOf(last) >= 0));
-            }
-
-            public static string GenerateSentence(Random random, int length)
-            {
-                if (length == 0)
-                    return String.Empty;
-
-                if (length == 1)
-                    return GenerateWord(random, 1).ToUpperInvariant();
-
-                var context = new GeneratorContext(random);
-                context.StartNewSentence(length);
-                GenerateFirstWord(ref context);
-                while (context.RemainingSentenceLength > 1)
-                    GenerateNextWord(ref context);
-                GenerateSentenceEnd(ref context);
-                Debug.Assert(context.RemainingSentenceLength == 0);
-                return context.ToString();
             }
 
             private static void GenerateFirstWord(ref GeneratorContext context)
@@ -337,6 +422,12 @@ namespace KGySoft.Libraries
                         return;
                 }
             }
+
+            #endregion
+
+            #endregion
         }
+
+        #endregion
     }
 }

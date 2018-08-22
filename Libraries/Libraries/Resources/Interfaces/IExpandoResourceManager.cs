@@ -45,7 +45,7 @@ namespace KGySoft.Libraries.Resources
 
         /// <summary>
         /// Gets or sets whether the <see cref="IExpandoResourceManager"/> works in safe mode. In safe mode the retrieved
-        /// objects returned from .resx sources are not deserialized automatically. See Remarks section for details.
+        /// objects returned from .resx sources are not deserialized automatically. See the <strong>Remarks</strong> section for details.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
