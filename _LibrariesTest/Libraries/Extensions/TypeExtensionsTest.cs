@@ -47,7 +47,7 @@ namespace _LibrariesTest.Libraries.Extensions
             Test<ArrayList>(true, true, typeof(ICollection), typeof(object), false);
             Test<Hashtable>(true, true, typeof(IDictionary), typeof(DictionaryEntry), true);
             Test<Queue<int>>(true, false, typeof(IEnumerable<int>), typeof(int), false);
-            Test<Queue>(false, false, null, null, false);
+            Test<Queue>(true, false, typeof(ICollection), typeof(object), false);
             //Test<BitArray>(true, false, typeof(byte[]), typeof(byte), false);
             Test<StringDictionary>(false, false, null, null, false);
             Test<HybridDictionary>(true, true, null, typeof(DictionaryEntry), true);
@@ -57,7 +57,7 @@ namespace _LibrariesTest.Libraries.Extensions
             Test<ReadOnlyCollection<int>>(true, false, typeof(IList<int>), typeof(int), false);
             Test<HashSet<int>>(true, true, typeof(IEnumerable<int>), typeof(int), false);
             Test<SortedList<int, string>>(true, true, typeof(IDictionary<int, string>), typeof(KeyValuePair<int, string>), true);
-            Test<Cache<int, string>>(false, false, null, typeof(KeyValuePair<int, string>), true);
+            Test<Cache<int, string>>(true, true, null, typeof(KeyValuePair<int, string>), true);
             Test<ConcurrentDictionary<int, string>>(true, true, typeof(IEnumerable<KeyValuePair<int, string>>), typeof(KeyValuePair<int, string>), true);
             Test<ConcurrentQueue<int>>(true, false, typeof(IEnumerable<int>), typeof(int), false);
             Test<ArraySegment<int>>(true, false, typeof(int[]), typeof(int), false);

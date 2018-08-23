@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -277,6 +278,12 @@ namespace _LibrariesTest.Libraries.Extensions
         }
 
         private enum EmptyEnum { }
+        private delegate void OutDelegate(out string s);
+
+        private class Recursive
+        {
+            public Recursive Child { get; set; }
+        }
 
         [TestMethod]
         public void NextObjectTest()
@@ -287,71 +294,80 @@ namespace _LibrariesTest.Libraries.Extensions
                 Console.WriteLine($"Random {typeof(T).Name}: {rnd.NextObject<T>(settings)}");
             }
 
-            //// native types
-            //Test<bool>();
-            //Test<byte>();
-            //Test<sbyte>();
-            //Test<char>();
-            //Test<short>();
-            //Test<ushort>();
-            //Test<int>();
-            //Test<uint>();
-            //Test<long>();
-            //Test<ulong>();
-            //Test<float>();
-            //Test<double>();
-            //Test<decimal>();
-            //Test<string>();
-            //Test<StringBuilder>();
-            //Test<Uri>();
-            //Test<Guid>();
-            //Test<DateTime>();
-            //Test<DateTimeOffset>();
-            //Test<TimeSpan>();
-            //Test<byte?>();
+            // native types
+            Test<bool>();
+            Test<byte>();
+            Test<sbyte>();
+            Test<char>();
+            Test<short>();
+            Test<ushort>();
+            Test<int>();
+            Test<uint>();
+            Test<long>();
+            Test<ulong>();
+            Test<float>();
+            Test<double>();
+            Test<decimal>();
+            Test<string>();
+            Test<StringBuilder>();
+            Test<Uri>();
+            Test<Guid>();
+            Test<DateTime>();
+            Test<DateTimeOffset>();
+            Test<TimeSpan>();
+            Test<IntPtr>();
+            Test<UIntPtr>();
+            Test<byte?>();
 
-            //// enums
-            //Test<EmptyEnum>();
-            //Test<ConsoleColor>();
-            //Test<Enum>();
+            // enums
+            Test<EmptyEnum>();
+            Test<ConsoleColor>();
+            Test<Enum>();
 
-            //// arrays
-            //Test<byte[]>();
-            //Test<byte?[]>();
-            //Test<byte[,]>();
+            // arrays
+            Test<byte[]>();
+            Test<byte?[]>();
+            Test<byte[,]>();
 
-            //// collections
-            //Test<List<int>>();
-            //Test<Dictionary<int, string>>();
-            //Test<ArrayList>();
-            //Test<Hashtable>();
-            //Test<BitArray>();
-            //Test<ReadOnlyCollection<int>>();
-            //Test<ArraySegment<int>>();
-            //Test<Cache<int, int>>();
-            Test<Queue>();
-            //// key-value
-            //Test<DictionaryEntry>();
-            //Test<KeyValuePair<int, string>>();
+            // collections
+            Test<List<int>>(); // populate
+            Test<Dictionary<int, string>>(); // populate
+            Test<ArrayList>(); // populate
+            Test<Hashtable>(); // populate
+            Test<BitArray>(); // array ctor
+            Test<ReadOnlyCollection<int>>(); // IList<T> ctor
+            Test<ArraySegment<int>>(); // array ctor
+            Test<Cache<int, int>>(); // populate
+            Test<Queue>(); // ICollection ctor
+            Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object
 
-            //Test<MethodBase>();
+            // key-value
+            Test<DictionaryEntry>();
+            Test<KeyValuePair<int, string>>();
 
-            //Test<EventArgs>(cfg);
+            // reflection types
+            Test<Assembly>();
+            Test<Type>();
+            Test<MethodBase>();
+            Test<MemberInfo>();
 
+            // base types
+            var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true };
+            Test<EventArgs>(cfg);
+            Test<Exception>(cfg);
 
-            //var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true, SubstituteObjectWithSimpleTypes = false };
-            //Test<Delegate>(cfg);
+            // abstract types/interfaces
+            Test<Enum>();
+            Test<IConvertible>();
 
-            // select a good type to create if there is no ok ctor
-            // delegate
-            // Exception -- recursive!
-            // EventArgs - SO exception - maybe recursive?
+            // delegates
+            Test<Delegate>();
+            Test<MulticastDelegate>();
+            Test<Func<int>>();
+            Test<OutDelegate>();
+
             // recursive type
-            // pointer member
-            // void
-            // TypedRef
-            // U/IntPtr
-            // TODO: XmlSerializerben is IsSupportedCollectionForReflection
+            Test<Recursive>();
         }
     }
 }

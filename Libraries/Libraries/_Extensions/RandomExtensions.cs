@@ -1064,6 +1064,8 @@ namespace KGySoft.Libraries
         /// <list type="bullet">
         /// <item><term><see cref="StringBuilder"/></term><description>The same behavior as for strings.</description></item>
         /// <item><term><see cref="Uri"/></term><description>The result will match the following pattern: <c>http://&lt;lowercase word-like string of length between 4 and 10&gt;.&lt;3 lower case letters&gt;</c></description></item>
+        /// <item><term><see cref="IntPtr"/></term><description>The same behavior as for 32 or 64 bit signed integers, based on the used platform.</description></item>
+        /// <item><term><see cref="UIntPtr"/></term><description>The same behavior as for 32 or 64 bit unsigned integers, based on the used platform.</description></item>
         /// <item><term><see cref="KeyValuePair{TKey,TValue}"/></term><description>Using its parameterized constructor to create an instance.</description></item>
         /// <item><term><see cref="Assembly"/></term><description>A random loaded assembly will be picked.</description></item>
         /// <item><term><see cref="Type"/></term><description>A random type will be picked from one of the loaded assemblies.</description></item>

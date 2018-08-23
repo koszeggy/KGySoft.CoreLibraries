@@ -179,6 +179,8 @@ namespace KGySoft.Libraries
                     { typeof(uint), GenerateUInt32 },
                     { typeof(long), GenerateInt64 },
                     { typeof(ulong), GenerateUInt64 },
+                    { typeof(IntPtr), GenerateIntPtr },
+                    { typeof(UIntPtr), GenerateUIntPtr },
 
                     // floating points
                     { typeof(float), GenerateSingle },
@@ -465,6 +467,8 @@ namespace KGySoft.Libraries
             private static object GenerateUInt32(ref GeneratorContext context) => context.Random.NextUInt32();
             private static object GenerateInt64(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.NextInt64() : context.Random.NextInt64(Int64.MaxValue, true);
             private static object GenerateUInt64(ref GeneratorContext context) => context.Random.NextUInt64();
+            private static object GenerateIntPtr(ref GeneratorContext context) => (IntPtr)(IntPtr.Size == 4 ? (int)GenerateInt32(ref context) : (long)GenerateInt64(ref context));
+            private static object GenerateUIntPtr(ref GeneratorContext context) => (UIntPtr)(UIntPtr.Size == 4 ? (uint)GenerateUInt32(ref context) : (ulong)GenerateUInt64(ref context));
 
             private static object GenerateSingle(ref GeneratorContext context)
                 => context.Settings.AllowNegativeValues ? context.Random.NextSingle(Single.MinValue, Single.MaxValue, context.Settings.FloatScale) : context.Random.NextSingle(Single.MaxValue, context.Settings.FloatScale);
