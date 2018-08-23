@@ -33,9 +33,10 @@ namespace KGySoft.Libraries.Serialization
             }
 
             Type objType = obj.GetType();
-            if (objType.IsCollection())
+            if (objType.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out var _, out var _))
             {
-                if (!objType.IsReadWriteCollection(obj))
+                // if has only default constructor but the collection is read-only
+                if (collectionCtor == null && !objType.IsReadWriteCollection(obj))
                     throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyRoot, objType));
                 SerializeCollection(obj as IEnumerable, true, writer, DesignerSerializationVisibility.Visible);
                 writer.WriteFullEndElement();
@@ -86,9 +87,10 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // 2.) Collection
-                if (objType.IsCollection())
+                if (objType.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out var _, out var _))
                 {
-                    if (!objType.IsReadWriteCollection(obj))
+                    // if has only default constructor but the collection is read-only
+                    if (collectionCtor == null && !objType.IsReadWriteCollection(obj))
                         throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
                     SerializeCollection(obj as IEnumerable, false, writer, DesignerSerializationVisibility.Visible);
                     return;
@@ -381,7 +383,7 @@ namespace KGySoft.Libraries.Serialization
 
             foreach (PropertyInfo property in properties)
             {
-                // Skip 1.) write-only properties, indexers and read-only properties except non read-only collections
+                // Skip 1.) write-only properties, indexers and read-only properties except populable collections
                 if (!property.CanRead || property.GetIndexParameters().Length > 0 || (!property.CanWrite && !property.PropertyType.IsCollection()))
                     continue;
 
@@ -428,7 +430,7 @@ namespace KGySoft.Libraries.Serialization
                 //XElement newElement = new XElement(property.Name);
                 Type propType = propValue == null ? property.PropertyType : propValue.GetType();
 
-                // a.) property is IXmlSerializable standard XmlSerialization is not disabled
+                // 1.) property is IXmlSerializable standard XmlSerialization is not disabled
                 if (propValue != null && propValue is IXmlSerializable && ((Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
                 {
                     writer.WriteStartElement(property.Name);
@@ -436,8 +438,9 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteEndElement();
                     continue;
                 }
-                // b.) property is collection
-                else if (propValue == null && property.CanWrite && propType.IsCollection() || propType.IsReadWriteCollection(propValue))
+
+                // 2.) property is collection
+                if (propType.IsSupportedCollectionForReflection(out var _, out var _, out var _, out var _) && (property.CanWrite || propValue != null && propType.IsReadWriteCollection(propValue)))
                 {
                     writer.WriteStartElement(property.Name);
                     SerializeCollection(propValue as IEnumerable, propValue != null && propType != property.PropertyType, writer, visibility);
@@ -447,55 +450,53 @@ namespace KGySoft.Libraries.Serialization
                         writer.WriteEndElement();
                     continue;
                 }
-                // c.) single non-collection property or readonly collection (that maybe still can be serialized as binary):
-                else
-                {
-                    // Skip 5.) skipping read-only collections (if read-only in both meaning: has no setter and IsReadonly is true)
-                    if (!property.CanWrite)
-                        continue;
 
-                    // c/1.) Using explicitly defined type converter if can convert to and from string
-                    attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                    TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                    if (convAttr != null)
+                // 3.) non-collection or readonly collection (that maybe still can be serialized as binary):
+                // Skip 5.) skipping read-only collections (if read-only in both meaning: has no setter and IsReadonly is true)
+                if (!property.CanWrite)
+                    continue;
+
+                // Using explicitly defined type converter if can convert to and from string
+                attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
+                TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
+                if (convAttr != null)
+                {
+                    Type convType = Type.GetType(convAttr.ConverterTypeName);
+                    if (convType != null)
                     {
-                        Type convType = Type.GetType(convAttr.ConverterTypeName);
-                        if (convType != null)
+                        ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
+                        object[] ctorParams = new object[] { property.PropertyType };
+                        if (ctor == null)
                         {
-                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
-                            object[] ctorParams = new object[] { property.PropertyType };
-                            if (ctor == null)
+                            ctor = convType.GetConstructor(Type.EmptyTypes);
+                            ctorParams = Reflector.EmptyObjects;
+                        }
+                        if (ctor != null)
+                        {
+                            TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
+                            if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(Reflector.StringType))
                             {
-                                ctor = convType.GetConstructor(Type.EmptyTypes);
-                                ctorParams = Reflector.EmptyObjects;
-                            }
-                            if (ctor != null)
-                            {
-                                TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                if (converter != null && converter.CanConvertTo(typeof(string)) && converter.CanConvertFrom(Reflector.StringType))
-                                {
-                                    writer.WriteStartElement(property.Name);
-                                    WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), writer);
-                                    writer.WriteEndElement();
-                                    continue;
-                                }
+                                writer.WriteStartElement(property.Name);
+                                WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), writer);
+                                writer.WriteEndElement();
+                                continue;
                             }
                         }
                     }
-
-                    // c/2.) Usual ways if possible
-                    writer.WriteStartElement(property.Name);
-                    if (propValue == null)
-                    {
-                        writer.WriteEndElement();
-                    }
-                    else if (TrySerializeObject(propValue, propType != property.PropertyType, writer, propType, visibility))
-                    {
-                        writer.WriteFullEndElement();
-                    }
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));
                 }
+
+                // Usual ways if possible
+                writer.WriteStartElement(property.Name);
+                if (propValue == null)
+                {
+                    writer.WriteEndElement();
+                }
+                else if (TrySerializeObject(propValue, propType != property.PropertyType, writer, propType, visibility))
+                {
+                    writer.WriteFullEndElement();
+                }
+                else
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));
             }
         }
 

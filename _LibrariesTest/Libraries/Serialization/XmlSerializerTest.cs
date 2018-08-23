@@ -1326,61 +1326,69 @@ namespace _LibrariesTest.Libraries.Serialization
                     new HashSet<int[]> { new int[]{1, 2, 3}, null },
                 };
 
-            //SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
+            ////SystemSerializeObject(referenceObjects);
+            //SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[] elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections in elements
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[] elements
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections in elements
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // object[] elements
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // nested collections in elements
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // object[] elements
+            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // nested collections in elements
+            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // object[] elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections in elements
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // object[] elements
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections in elements
 
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
                 {
-                    new LinkedList<int>(new[]{ 1, 2, 3}),
-                    new LinkedList<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
+                    //new LinkedList<int>(new[]{ 1, 2, 3}),
+                    //new LinkedList<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
 
-                    new Dictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new Dictionary<int[], string[]> { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
-                    new Dictionary<object, object> { {1, "alma"}, {"béka", DateTime.Now}, {new object(), new object()}, {4, new object[] {1, "alma", DateTime.Now, null}}, {5, null}},
+                    //new Dictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
+                    //new Dictionary<int[], string[]> { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
+                    //new Dictionary<object, object> { {1, "alma"}, {"béka", DateTime.Now}, {new object(), new object()}, {4, new object[] {1, "alma", DateTime.Now, null}}, {5, null}},
 
-                    new SortedList<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new SortedList<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
+                    //new SortedList<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
+                    //new SortedList<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
 
-                    new SortedDictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new SortedDictionary<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
-                };
+                    //new SortedDictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
+                    //new SortedDictionary<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[] elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections in elements
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // object[] elements
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // nested collections in elements
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // object[] elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections in elements
-
-            // these collections are not supported recursively because they implement neither ICollection<T> nor IList
-            referenceObjects = new IEnumerable[]
-                {
                     new Queue<int>(new[]{ 1, 2, 3}),
                     new Queue<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
                     new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3}) },
 
                     new Stack<int>(new[]{ 1, 2, 3}),
                     new Stack<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
+
                 };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[] elements
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections in elements
+
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // object[] elements
+            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // nested collections in elements
+            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // object[] elements
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections in elements
+
+            //// these collections are not supported recursively because they implement neither ICollection<T> nor IList
+            //referenceObjects = new IEnumerable[]
+            //    {
+            //        new Queue<int>(new[]{ 1, 2, 3}),
+            //        new Queue<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
+            //        new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3}) },
+
+            //        new Stack<int>(new[]{ 1, 2, 3}),
+            //        new Stack<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
+            //    };
+
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
 
         /// <summary>

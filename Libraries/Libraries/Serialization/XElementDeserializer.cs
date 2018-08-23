@@ -83,7 +83,8 @@ namespace KGySoft.Libraries.Serialization
                 DeserializeArray(ref array, null, parent);
                 return;
             }
-            // collection: clearing it before restoring content and retrieving element type
+            // Collection: clearing it before restoring content and retrieving element type
+            // Here the collection is
             Type collectionElementType = null;
             if (objType.IsCollection())
             {
@@ -405,7 +406,22 @@ namespace KGySoft.Libraries.Serialization
                     return true;
                 }
 
+                bool isCollection = type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
+                if (isCollection && defaultCtor == null && !type.IsValueType)
+                {
+                    // TODO:
+                    // DeserializeCtorInitCollection(type, element, collectionCtor, elementType, isDictionary);
+                    // ennek belsejében array/list/dictionary inicializálás, majd
+                    // a majd ténylegesen létrehozandó collection propertyjeinek összegyűjtése egy string-obj dictionary-be
+                    // valódi collection létehozás a ctorral
+                    // begyűjtött propertyk inicializálása
+                }
+
                 object child = Reflector.Construct(type);
+
+                // itt is TODO: ha isCollection, de nem readwritecollection, akkor
+                // - ha van collectionCtor, akkor mégis DeserializeCtorInitCollection
+                // - egyébként exception, hogy readonly a collection
 
                 // can be null if type is nullable
                 DeserializeContent(element, child);

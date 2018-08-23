@@ -17,6 +17,9 @@ namespace KGySoft.Libraries.Serialization
 {
     internal class XElementSerializer : XmlSerializerBase
     {
+#error TODO:
+        // - Keresni a TODO-kat a fileban
+        // - Ugyanezek az XmlWriteres verzióra is
         public XElementSerializer(XmlSerializationOptions options) : base(options)
         {
         }
@@ -38,9 +41,11 @@ namespace KGySoft.Libraries.Serialization
                 return result;
 
             Type objType = obj.GetType();
-            if (objType.IsCollection())
+            // TODO: inkább kiemelni isCollection-be az alábbi if return value-ját: bool isCollection = objType.IsSupportedCollectionForReflection(...)
+            if (objType.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out var _, out var _))
             {
-                if (!objType.IsReadWriteCollection(obj))
+                // if has only default constructor but the collection is read-only - TODO: binárisan ettől még jók lehetünk, lásd a feljebbi kommentet is
+                if (collectionCtor == null && !objType.IsReadWriteCollection(obj))
                     throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyRoot, objType));
                 SerializeCollection(obj as IEnumerable, true, result, DesignerSerializationVisibility.Visible);
             }
@@ -85,9 +90,13 @@ namespace KGySoft.Libraries.Serialization
                     }
 
                     // 2.) Collection
-                    if (objType.IsCollection())
+                    // TODO: így jó-e. Elvileg IsSupportedCollectionForReflection nem is kéne, csak IsCollection, mert a collCtor nem segít, ha content serialize van, de segít detektálni a reménytelen eseteket, pl. Queue
+                    // Nem lesz baj a beágyazott esetekkel, collection-re SerializeContent nem lesz rekurzívan hívva, csak a nem collection propertykre, írható propertyk esetén meg már jó a collection ctor is
+                    if (objType.IsSupportedCollectionForReflection(out var _, out var _, out var _, out var _))
                     {
+                        // if has only default constructor but the collection is read-only
                         if (!objType.IsReadWriteCollection(obj))
+                    // TODO: Ellentétben a sima Serialize-zal, itt már binárisan sem lehetünk jók, az csak az elemeken és propertyken segíthet. Az Exception ennek megfelelően legyen valami XmlSerializeReadOnlyCollectionContent
                             throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
                         SerializeCollection(obj as IEnumerable, false, parent, DesignerSerializationVisibility.Visible);
                         return;
@@ -362,18 +371,18 @@ namespace KGySoft.Libraries.Serialization
 
             foreach (PropertyInfo property in properties)
             {
-                // skipping write-only properties, indexers and read-only properties except non read-only collections
+                // Skip 1.) write-only properties, indexers and read-only properties except populable collections
                 if (!property.CanRead || property.GetIndexParameters().Length > 0 || (!property.CanWrite && !property.PropertyType.IsCollection()))
                     continue;
 
                 // skipping non-serializable properties
-                // a.) hidden by DesignerSerializationVisibility
+                // Skip 2.) hidden by DesignerSerializationVisibility
                 object[] attrs = property.GetCustomAttributes(typeof(DesignerSerializationVisibilityAttribute), true);
                 DesignerSerializationVisibility visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : DesignerSerializationVisibilityAttribute.Default.Visibility;
                 if (visibility == DesignerSerializationVisibility.Hidden)
                     continue;
 
-                // b.) ShouldSerialize<PropertyName> method returns false
+                // Skip 3.) ShouldSerialize<PropertyName> method returns false
                 if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
                 {
                     MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod("ShouldSerialize" + property.Name,
@@ -386,7 +395,7 @@ namespace KGySoft.Libraries.Serialization
                     }
                 }
 
-                // c.) DefaultValue equals to property value
+                // Skip 4.) DefaultValue equals to property value
                 bool hasDefaultValue = false;
                 object defaultValue = null;
                 if ((Options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
@@ -414,57 +423,54 @@ namespace KGySoft.Libraries.Serialization
                 {
                     SerializeXmlSerializable((IXmlSerializable)propValue, newElement);
                     parent.Add(newElement);
+                    continue;
                 }
+
                 // 2.) property is collection
-                else if (propValue == null && property.CanWrite && propType.IsCollection() || propType.IsReadWriteCollection(propValue))
+                if (propType.IsSupportedCollectionForReflection(out var _, out var _, out var _, out var _) && (property.CanWrite || propValue != null && propType.IsReadWriteCollection(propValue)))
                 {
                     SerializeCollection(propValue as IEnumerable, propValue != null && propType != property.PropertyType, newElement, visibility);
                     parent.Add(newElement);
+                    continue;
                 }
-                // 3.) non-collection or readonly collection (that maybe still can be serialized as binary):
-                else
-                {
-                    // d.) skipping read-only collections (if read-only in both meaning: has no setter and IsReadonly is true)
-                    if (!property.CanWrite)
-                        continue;
 
-                    // Using explicitly defined type converter if can convert to and from string
-                    attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                    TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                    if (convAttr != null)
+                // 3.) non-collection or readonly collection (that maybe still can be serialized as binary):
+                // Skip 5.) skipping read-only collections (if read-only in both meaning: has no setter and IsReadonly is true)
+                if (!property.CanWrite)
+                    continue;
+
+                // Using explicitly defined type converter if can convert to and from string
+                attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
+                TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
+                if (convAttr != null)
+                {
+                    Type convType = Type.GetType(convAttr.ConverterTypeName);
+                    if (convType != null)
                     {
-                        Type convType = Type.GetType(convAttr.ConverterTypeName);
-                        if (convType != null)
+                        ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
+                        object[] ctorParams = new object[] { property.PropertyType };
+                        if (ctor == null)
                         {
-                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                            object[] ctorParams = new object[] { property.PropertyType };
-                            if (ctor == null)
+                            ctor = convType.GetConstructor(Type.EmptyTypes);
+                            ctorParams = Reflector.EmptyObjects;
+                        }
+                        if (ctor != null)
+                        {
+                            TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
+                            if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                             {
-                                ctor = convType.GetConstructor(Type.EmptyTypes);
-                                ctorParams = Reflector.EmptyObjects;
-                            }
-                            if (ctor != null)
-                            {
-                                TypeConverter converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                                if (converter != null && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
-                                {
-                                    WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), newElement);
-                                    parent.Add(newElement);
-                                    continue;
-                                }
+                                WriteStringValue(converter.ConvertTo(null, CultureInfo.InvariantCulture, propValue, Reflector.StringType), newElement);
+                                parent.Add(newElement);
+                                continue;
                             }
                         }
                     }
-
-                    if (propValue == null || TrySerializeObject(propValue, propType != property.PropertyType, newElement, propType, visibility))
-                        parent.Add(newElement);
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));
                 }
 
-                //// adding property type if instance is not the same type
-                //if (propValue != null && propType != property.PropertyType)
-                //    newElement.Add(new XAttribute("type", GetTypeString(obj, options)));
+                if (propValue == null || TrySerializeObject(propValue, propType != property.PropertyType, newElement, propType, visibility))
+                    parent.Add(newElement);
+                else
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));
             }
         }
 

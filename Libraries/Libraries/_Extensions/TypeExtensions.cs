@@ -130,11 +130,11 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Gets whether <paramref name="type"/> is supported collection to populate by reflection.
-        /// If <see langword="true"/> is returned one of the constructors are not <see langword="null"/> or <paramref name="type"/> is a value type.
+        /// If <see langword="true"/> is returned one of the constructors are not <see langword="null"/> or <paramref name="type"/> is an array or a value type.
         /// If default constructor is used the collection still can be read-only or fixed size.
         /// </summary>
         /// <param name="type">The type to check.</param>
-        /// <param name="defaultCtor">The default constructor or <see langword="null"/>.</param>
+        /// <param name="defaultCtor">The default constructor or <see langword="null"/>. Non-null is returned only the collection can be populated as an IList or generic Collection.</param>
         /// <param name="collectionCtor">The constructor to be initialized by collection or <see langword="null"/>.</param>
         /// <param name="elementType">The element type. For non-generic collections it is <see cref="object"/>.</param>
         /// <param name="isDictionary"><see langword="true"/> <paramref name="type"/> is a dictionary.</param>
@@ -158,6 +158,13 @@ namespace KGySoft.Libraries
             elementType = null;
             isDictionary = false;
 
+            // Array
+            if (type.IsArray)
+            {
+                elementType = type.GetElementType();
+                return true;
+            }
+
             // is IEnumeratble
             if (!enumerableType.IsAssignableFrom(type))
                 return false;
@@ -178,11 +185,13 @@ namespace KGySoft.Libraries
                     elementType = isDictionary ? typeof(DictionaryEntry) : Reflector.ObjectType;
                 }
             }
-            // else : IEnumerable but cannot populate the collection. Maybe it has a proper constructor.
+            // else : IEnumerable but cannot populate the collection. Maybe it has a collection initializer constructor.
 
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 ParameterInfo[] args = ctor.GetParameters();
+
+                // default constructor is ignored for non-populable collections
                 if (args.Length == 0 && elementType != null)
                 {
                     defaultCtor = ctor;
@@ -269,9 +278,6 @@ namespace KGySoft.Libraries
                 {
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
                     return !(bool)PropertyAccessor.GetPropertyAccessor(pi).Get(instance);
-                    //InterfaceMapping imap = type.GetInterfaceMap(i);
-                    //MethodInfo getIsReadOnly = imap.TargetMethods.First(mi => mi.Name.EndsWith("get_IsReadOnly"));
-                    //return !(bool)Reflector.RunMethod(instance, getIsReadOnly);
                 }
             }
 

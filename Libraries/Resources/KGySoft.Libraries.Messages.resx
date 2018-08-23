@@ -542,10 +542,10 @@ Hit rate: {8:P2}</value>
     <value>Type of the root element is not specified.</value>
   </data>
   <data name="XmlSerializeReadOnlyCollection" xml:space="preserve">
-    <value>Serializing a read-only collection is not supported as root element or collection item: "{0}".</value>
+    <value>Serializing a read-only collection without a collection initialization constructor is not supported as root element or collection item: "{0}".</value>
   </data>
   <data name="XmlSerializeReadOnlyRoot" xml:space="preserve">
-    <value>Serializing a read-only collection is not supported as root element: {0}.</value>
+    <value>Serializing a read-only collection without a collection initialization constructor is not supported as root element: {0}.</value>
   </data>
   <data name="XmlUnexpectedElement" xml:space="preserve">
     <value>Unexpected element: "{0}" at line {1}, position {2}.</value>
