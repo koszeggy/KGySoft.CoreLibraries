@@ -7,7 +7,7 @@ using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries.Serialization
 {
-    internal class XmlSerializerBase
+    internal class XmlSerializerBase : XmlSerializationBase
     {
         private HashSet<object> serObjects;
 
@@ -16,6 +16,29 @@ namespace KGySoft.Libraries.Serialization
         private HashSet<object> SerObjects => serObjects ?? (serObjects = new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
         public XmlSerializerBase(XmlSerializationOptions options) => Options = options;
+
+        protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
+
+#pragma warning disable 618, 612 // Disabling warning for obsolete enum member because this must be still handled
+        protected bool IsForcedSerializationValueTypesEnabled => (Options & XmlSerializationOptions.ForcedSerializationValueTypesAsFallback) != XmlSerializationOptions.None;
+#pragma warning restore 618, 612
+
+        protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
+
+        protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+
+        protected BinarySerializationOptions GetBinarySerializationOptions()
+        {
+            // compact, recursive: always enabled when binary serializing because they cause no problem
+            BinarySerializationOptions result = BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback; // | CompactSerializationOfBoolCollections
+
+            // no fully qualified names -> omitting even in binary serializer
+            if ((Options & XmlSerializationOptions.FullyQualifiedNames) == XmlSerializationOptions.None)
+            {
+                result |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
+            }
+            return result;
+        }
 
         /// <summary>
         /// Registers object to detect circular reference.

@@ -278,10 +278,9 @@ namespace KGySoft.Libraries
             }
 
             Type sourceType = source.GetType();
-            Type collectionType = typeof(ICollection<>);
             foreach (Type i in sourceType.GetInterfaces())
             {
-                if (i.IsGenericType && i.GetGenericTypeDefinition() == collectionType)
+                if (i.IsGenericTypeOf(typeof(ICollection<>)))
                 {
                     MethodInfo mi = i.GetMethod("Add");
                     if (mi.GetParameters()[0].ParameterType.CanAcceptValue(item))
@@ -330,10 +329,9 @@ namespace KGySoft.Libraries
             }
 
             Type sourceType = source.GetType();
-            Type collectionType = typeof(ICollection<>);
             foreach (Type i in sourceType.GetInterfaces())
             {
-                if (i.IsGenericType && i.GetGenericTypeDefinition() == collectionType)
+                if (i.IsGenericTypeOf(typeof(ICollection<>)))
                 {
                     MethodInfo mi = i.GetMethod("Clear");
                     MethodInvoker.GetMethodInvoker(mi).Invoke(source);

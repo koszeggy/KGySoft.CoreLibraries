@@ -451,6 +451,12 @@ Hit rate: {8:P2}</value>
   <data name="NotAnIXmlSerializable" xml:space="preserve">
     <value>Type "{0}" does not implement IXmlSerializable.</value>
   </data>
+  <data name="NotAnIXmlSerializable" xml:space="preserve">
+    <value>Type "{0}" does not implement IXmlSerializable.</value>
+  </data>
+  <data name="XmlSerializableNoDefaultCtor" xml:space="preserve">
+    <value>IXmlSerializable type "{0}" does not have a parameterless constructor so it can be (de-)serialized only as a root element by SerializeContent and DeserializeContent.</value>
+  </data>
   <data name="XmlArrayDimensionSizeMismatch" xml:space="preserve">
     <value>Cannot restore array "{0}" because length of the {1}. dimension does not match.</value>
   </data>
@@ -463,6 +469,9 @@ Hit rate: {8:P2}</value>
   <data name="XmlArrayPropertyHasNoSetterNull" xml:space="preserve">
     <value>Cannot set null value to array "{0}" at property "{1}.{2}" because it has no setter.</value>
   </data>
+  <data name="XmlPropertyTypeMismatch" xml:space="preserve">
+    <value>Property value of "{0}.{1}" is expected to be a type of "{2}" but was "{3}".</value>
+  </data>
   <data name="XmlArrayRankMismatch" xml:space="preserve">
     <value>Cannot restore array "{0}" because rank does not match. Expected rank: "{1}".</value>
   </data>
@@ -473,7 +482,13 @@ Hit rate: {8:P2}</value>
     <value>Binary serialization of type "{0}" failed with options "{1}": {2}</value>
   </data>
   <data name="XmlCannotCreateCollection" xml:space="preserve">
-    <value>Counstruction of type "{0}" has been failed. Missing default constructor?</value>
+    <value>Construction of type "{0}" has been failed. Missing default constructor?</value>
+  </data>
+  <data name="XmlDeserializeReadOnlyCollection" xml:space="preserve">
+    <value>Collection "{0}" is read-only so its content cannot be restored.</value>
+  </data>
+  <data name="XmlDeserializeReadOnlyProperty" xml:space="preserve">
+    <value>Property "{0}.{1}" cannot be deserialized because it is read-only and has type of "{2}" instead of a collection.</value>
   </data>
   <data name="XmlCannotDetermineElementType" xml:space="preserve">
     <value>Could not determine type of element in collection "{0}".</value>
@@ -542,10 +557,12 @@ Hit rate: {8:P2}</value>
     <value>Type of the root element is not specified.</value>
   </data>
   <data name="XmlSerializeReadOnlyCollection" xml:space="preserve">
-    <value>Serializing a read-only collection without a collection initialization constructor is not supported as root element or collection item: "{0}".</value>
+    <value>Content serialization of read-only collection type "{0}" is not supported because populating will not work at deserialization.
+It has a collection initializer constructor though, so using XmlSerializer.Serialize methods instead of SerializeContent can work.</value>
   </data>
-  <data name="XmlSerializeReadOnlyRoot" xml:space="preserve">
-    <value>Serializing a read-only collection without a collection initialization constructor is not supported as root element: {0}.</value>
+  <data name="XmlSerializeNonPopulatableCollection" xml:space="preserve">
+    <value>Content serialization of collection type "{0}" is not supported because it cannot be populated by standard interfaces.
+It has a collection initializer constructor though, so using XmlSerializer.Serialize methods instead of SerializeContent can work.</value>
   </data>
   <data name="XmlUnexpectedElement" xml:space="preserve">
     <value>Unexpected element: "{0}" at line {1}, position {2}.</value>

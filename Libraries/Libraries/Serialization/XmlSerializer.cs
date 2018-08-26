@@ -55,8 +55,6 @@ namespace KGySoft.Libraries.Serialization
 
         #region Methods
 
-        #region Public Methods
-
         #region Serialization - whole object
 
         /// <summary>
@@ -78,7 +76,7 @@ namespace KGySoft.Libraries.Serialization
         /// Serializes the object passed in <paramref name="obj"/> by the provided <see cref="XmlWriter"/> object.
         /// </summary>
         /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
-        /// and will not be closed after serialization.</param>
+        /// and will just be flushed but not closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
         /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
@@ -208,7 +206,7 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
         /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
-        /// and will not be closed after serialization.</param>
+        /// and will not be closed or flushed after serialization.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
         /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="writer"/> must not be <see langword="null"/>.</exception>
@@ -366,86 +364,6 @@ namespace KGySoft.Libraries.Serialization
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         public static void DeserializeContent(XmlReader reader, object obj) => XmlReaderDeserializer.DeserializeContent(reader, obj);
-
-        #endregion
-
-        #endregion
-
-        #region Internal Extension Methods
-
-        internal static string Unescape(this string s)
-        {
-            StringBuilder result = new StringBuilder(s);
-
-            for (int i = 0; i < result.Length; i++)
-            {
-                if (result[i] == '\\')
-                {
-                    if (i + 1 == result.Length)
-                        throw new ArgumentException(Res.Get(Res.XmlInvalidEscapedContent, s));
-
-                    // escaped backslash
-                    if (result[i + 1] == '\\')
-                    {
-                        result.Remove(i, 1);
-                    }
-                    // escaped character
-                    else
-                    {
-                        if (i + 4 >= result.Length)
-                            throw new ArgumentException(Res.Get(Res.XmlInvalidEscapedContent, s));
-
-                        string escapedChar = result.ToString(i + 1, 4);
-                        ushort charValue;
-                        if (!UInt16.TryParse(escapedChar, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out charValue))
-                            throw new ArgumentException(Res.Get(Res.XmlInvalidEscapedContent, s));
-
-                        result.Replace("\\" + escapedChar, ((char)charValue).ToString(null), i, 5);
-                    }
-                }
-            }
-
-            return result.ToString();
-        }
-
-        internal static Type GetElementType([NoEnumeration]this IEnumerable collection)
-        {
-            foreach (Type i in collection.GetType().GetInterfaces())
-            {
-                if (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICollection<>))
-                    return i.GetGenericArguments()[0];
-            }
-            if (collection is IDictionary)
-                return typeof(DictionaryEntry);
-            return typeof(object);
-        }
-
-        internal static bool IsRecursiveSerializationEnabled(this XmlSerializationOptions options)
-            => (options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
-
-#pragma warning disable 618, 612 // Disabling warning for obsolete enum member because this must be still handled
-        internal static bool IsForcedSerializationValueTypesEnabled(this XmlSerializationOptions options)
-            => (options & XmlSerializationOptions.ForcedSerializationValueTypesAsFallback) != XmlSerializationOptions.None;
-#pragma warning restore 618, 612
-
-        internal static bool IsBinarySerializationEnabled(this XmlSerializationOptions options) 
-            => (options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
-
-        internal static bool IsCompactSerializationValueTypesEnabled(this XmlSerializationOptions options) 
-            => (options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
-
-        internal static BinarySerializationOptions ToBinarySerializationOptions(this XmlSerializationOptions options)
-        {
-            // compact, recursive: always enabled when binary serializing because they cause no problem
-            BinarySerializationOptions result = BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback; // | CompactSerializationOfBoolCollections
-
-            // no fully qualified names -> omitting even in binary serializer
-            if ((options & XmlSerializationOptions.FullyQualifiedNames) == XmlSerializationOptions.None)
-            {
-                result |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
-            }
-            return result;
-        }
 
         #endregion
 

@@ -228,7 +228,7 @@ namespace _PerformanceTest
                 return -1;
             }
 
-            private string GetUnit(object result) => (from i in result.GetType().GetInterfaces() where i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>) select i.GetGenericArguments()[0].Name.ToLowerInvariant() + "s").FirstOrDefault();
+            private string GetUnit(object result) => (from i in result.GetType().GetInterfaces() where i.IsGenericTypeOf(typeof(IEnumerable<>)) select i.GetGenericArguments()[0].Name.ToLowerInvariant() + "s").FirstOrDefault();
 
             private void Dump(object result)
             {

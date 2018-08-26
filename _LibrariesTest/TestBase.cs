@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -79,28 +80,34 @@ namespace _LibrariesTest
 
         protected void CompareCollections(IEnumerable referenceObjects, IEnumerable targetObjects)
         {
+            if (referenceObjects.GetType().IsGenericTypeOf(typeof(ConcurrentBag<>)))
+            {
+                referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i).ToList();
+                targetObjects = targetObjects.Cast<object>().OrderBy(i => i).ToList();
+            }
+
             IEnumerator enumRef = referenceObjects.GetEnumerator();
             IEnumerator enumChk = targetObjects.GetEnumerator();
             while (enumRef.MoveNext())
             {
-                Assert.IsTrue(enumChk.MoveNext(), "Reference contains more objects. {0} <-> {1}", referenceObjects, targetObjects);
+                Assert.IsTrue(enumChk.MoveNext(), $"Reference contains more objects. {referenceObjects} <-> {targetObjects}");
 
                 CompareObjects(enumRef.Current, enumChk.Current);
             }
 
-            Assert.IsFalse(enumChk.MoveNext(), "Target collection contains more objects. {0} <-> {1}", referenceObjects, targetObjects);
+            Assert.IsFalse(enumChk.MoveNext(), $"Target collection contains more objects. {referenceObjects} <-> {targetObjects}");
         }
 
         protected void CompareCollections(IEnumerator enumRef, IEnumerator enumChk)
         {
             while (enumRef.MoveNext())
             {
-                Assert.IsTrue(enumChk.MoveNext(), "Reference contains more objects. {0} <-> {1}", enumRef, enumChk);
+                Assert.IsTrue(enumChk.MoveNext(), $"Reference contains more objects. {enumRef} <-> {enumChk}");
 
                 CompareObjects(enumRef.Current, enumChk.Current);
             }
 
-            Assert.IsFalse(enumChk.MoveNext(), "Target collection contains more objects. {0} <-> {1}", enumRef, enumChk);
+            Assert.IsFalse(enumChk.MoveNext(), $"Target collection contains more objects. {enumRef} <-> {enumChk}");
         }
 
         protected void CompareObjects(object reference, object check)
@@ -124,13 +131,13 @@ namespace _LibrariesTest
             {
                 if (typeRef == typeof(SystemFileRef))
                 {
-                    Assert.AreSame(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, "File reference type error. Expected type: {0}", typeChk);
+                    Assert.AreSame(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, $"File reference type error. Expected type: {typeChk}");
                     return;
                 }
 
                 if (typeRef == typeof(ResXFileRef))
                 {
-                    Assert.AreSame(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk, "File reference type error. Expected type: {0}", typeChk);
+                    Assert.AreSame(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk, $"File reference type error. Expected type: {typeChk}");
                     return;
                 }
 
@@ -147,7 +154,7 @@ namespace _LibrariesTest
                 }
             }
 
-            Assert.AreSame(typeRef, typeChk, "Types are different. {0} <-> {1}", typeRef.ToString(), typeChk.ToString());
+            Assert.AreSame(typeRef, typeChk, $"Types are different. {typeRef} <-> {typeChk}");
 
             if (typeRef == typeof(object))
                 return;
@@ -158,24 +165,24 @@ namespace _LibrariesTest
                 return;
             }
 
-            if (reference is float)
+            if (reference is float floatRef && check is float floatCheck)
             {
-                Assert.IsTrue(BitConverter.ToInt32(BitConverter.GetBytes((float)reference), 0) == BitConverter.ToInt32(BitConverter.GetBytes((float)check), 0),
-                    "Float equality failed: {0} <-> {1}. Binary representation: 0x{2} <-> 0x{3}", reference, check, BitConverter.GetBytes((float)reference).ToHexValuesString(), BitConverter.GetBytes((float)check).ToHexValuesString());
+                Assert.IsTrue(BitConverter.ToInt32(BitConverter.GetBytes(floatRef), 0) == BitConverter.ToInt32(BitConverter.GetBytes((float)check), 0),
+                    $"Float equality failed: {floatRef.ToRoundtripString()} <-> {floatCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(floatRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(floatCheck).ToHexValuesString()}");
                 return;
             }
 
-            if (reference is double)
+            if (reference is double doubleRef && check is double doubleCheck)
             {
-                Assert.IsTrue(BitConverter.DoubleToInt64Bits((double)reference) == BitConverter.DoubleToInt64Bits((double)check),
-                    "Double equality failed: {0} <-> {1}. Binary representation: 0x{2} <-> 0x{3}", reference, check, BitConverter.GetBytes((double)reference).ToHexValuesString(), BitConverter.GetBytes((double)check).ToHexValuesString());
+                Assert.IsTrue(BitConverter.DoubleToInt64Bits(doubleRef) == BitConverter.DoubleToInt64Bits(doubleCheck),
+                    $"Double equality failed: {doubleRef.ToRoundtripString()} <-> {doubleCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(doubleRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(doubleCheck).ToHexValuesString()}");
                 return;
             }
 
-            if (reference is decimal)
+            if (reference is decimal decimalRef && check is decimal decimalCheck)
             {
-                Assert.IsTrue(BinarySerializer.SerializeStruct((decimal)reference).SequenceEqual(BinarySerializer.SerializeStruct((decimal)check)),
-                    "Decimal equality failed: {0} <-> {1}. Binary representation: 0x{2} <-> 0x{3}", reference, check, BinarySerializer.SerializeStruct((decimal)reference).ToHexValuesString(), BinarySerializer.SerializeStruct((decimal)check).ToHexValuesString());
+                Assert.IsTrue(BinarySerializer.SerializeStruct(decimalRef).SequenceEqual(BinarySerializer.SerializeStruct(decimalCheck)),
+                    $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeStruct(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeStruct(decimalCheck).ToHexValuesString()}");
                 return;
             }
 
@@ -195,7 +202,7 @@ namespace _LibrariesTest
                 return;
             }
 
-            if (typeRef.IsGenericType && typeRef.GetGenericTypeDefinition() == typeof(KeyValuePair<,>)
+            if (typeRef.IsGenericTypeOf(typeof(KeyValuePair<,>))
                 || typeRef == typeof(DictionaryEntry))
             {
                 object keyRef = Reflector.GetInstancePropertyByName(reference, "Key");
@@ -241,12 +248,12 @@ namespace _LibrariesTest
                 return;
             }
 
-            Assert.AreEqual(reference, check, "Equality check failed at type {0}", reference.GetType().FullName);
+            Assert.AreEqual(reference, check, $"Equality check failed at type {reference.GetType().FullName}");
         }
 
         private static void CompareStreams(Stream reference, Stream check)
         {
-            Assert.AreEqual(reference.Length, check.Length, "Length of the streams are different: {0} <-> {1}", reference.Length, check.Length);
+            Assert.AreEqual(reference.Length, check.Length, $"Length of the streams are different: {reference.Length} <-> {check.Length}");
             if (reference.Length == 0L)
                 return;
 
@@ -268,7 +275,7 @@ namespace _LibrariesTest
             for (long i = 0; i < reference.Length; i++)
             {
                 int r, c;
-                Assert.AreEqual(r = reference.ReadByte(), c = check.ReadByte(), "Streams are different at position {0}: {1} <-> {2}", i, r, c);
+                Assert.AreEqual(r = reference.ReadByte(), c = check.ReadByte(), $"Streams are different at position {i}: {r} <-> {c}");
             }
 
             if (reference.CanSeek)
@@ -281,7 +288,7 @@ namespace _LibrariesTest
         {
             // using the not so fast GetPixel compare. This works also for different pixel formats and raw formats.
             // There is a 2% brightness tolerance for icons
-            Assert.AreEqual(reference.Size, check.Size, String.Format("Images have different size: {0} <-> {1}", reference.Size, check.Size));
+            Assert.AreEqual(reference.Size, check.Size, $"Images have different size: {reference.Size} <-> {check.Size}");
             bool isIcon = reference.RawFormat.Guid == ImageFormat.Icon.Guid;
 
             for (int y = 0; y < reference.Height; y++)
@@ -291,7 +298,7 @@ namespace _LibrariesTest
                     Color c1, c2;
                     Assert.IsTrue((c1 = reference.GetPixel(x, y)) == (c2 = check.GetPixel(x, y))
                         || (isIcon && Math.Abs(c1.GetBrightness() - c2.GetBrightness()) < 0.02f),
-                        "Pixels at {0};{1} are different: {2}<->{3}", x, y, c1, c2);
+                        $"Pixels at {x};{y} are different: {c1}<->{c2}");
                 }
             }
         }
@@ -355,10 +362,10 @@ namespace _LibrariesTest
         {
 #if NET35
             if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
-                Assert.Inconclusive("mscorlib version does not match to .NET 3.5: {0}. Add a global <TargetFrameworkVersion>v3.5</TargetFrameworkVersion> to csproj and try again", typeof(object).Assembly.GetName().Version);
+                Assert.Inconclusive("mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion>v3.5</TargetFrameworkVersion> to csproj and try again");
 #elif NET40 || NET45
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
-                Assert.Inconclusive("mscorlib version does not match to .NET 4.x: {0}. Add a global <TargetFrameworkVersion> to csproj and try again", typeof(object).Assembly.GetName().Version);
+                Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion> to csproj and try again");
 #endif
         }
     }

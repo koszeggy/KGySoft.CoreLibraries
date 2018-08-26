@@ -748,7 +748,7 @@ namespace KGySoft.Libraries
                 }
 
                 // 5.) key-value pair (because its properties are read-only)
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
                 {
                     var args = type.GetGenericArguments();
                     context.PushMember(nameof(KeyValuePair<_, _>.Key));
@@ -921,7 +921,7 @@ namespace KGySoft.Libraries
                 try
                 {
                     object result = null;
-                    if (type.IsValueType || type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null) != null)
+                    if (type.IsValueType || type.GetDefaultConstructor() != null)
                     {
                         try
                         {

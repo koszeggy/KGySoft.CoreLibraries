@@ -145,7 +145,6 @@ namespace KGySoft.Libraries.Resources
         internal const string MissingFieldSurrogate = nameof(MissingFieldSurrogate);
         internal const string UnexpectedFieldType = nameof(UnexpectedFieldType);
         internal const string Undefined = nameof(Undefined);
-        internal const string XmlSerializeReadOnlyRoot = nameof(XmlSerializeReadOnlyRoot);
         internal const string XmlCannotSerialize = nameof(XmlCannotSerialize);
         internal const string XmlRootExpected = nameof(XmlRootExpected);
         internal const string XmlCannotResolveType = nameof(XmlCannotResolveType);
@@ -158,11 +157,16 @@ namespace KGySoft.Libraries.Resources
         internal const string XmlCannotSerializeArrayElement = nameof(XmlCannotSerializeArrayElement);
         internal const string XmlCannotSerializeCollectionElement = nameof(XmlCannotSerializeCollectionElement);
         internal const string NotAnIXmlSerializable = nameof(NotAnIXmlSerializable);
+        internal const string XmlSerializableNoDefaultCtor = nameof(XmlSerializableNoDefaultCtor);
         internal const string XmlArrayPropertyHasNoSetter = nameof(XmlArrayPropertyHasNoSetter);
         internal const string XmlArrayPropertyHasNoSetterNull = nameof(XmlArrayPropertyHasNoSetterNull);
+        internal const string XmlPropertyTypeMismatch = nameof(XmlPropertyTypeMismatch);
         internal const string XmlCollectionPropertyHasNoSetterNull = nameof(XmlCollectionPropertyHasNoSetterNull);
         internal const string XmlCollectionPropertyHasNoSetter = nameof(XmlCollectionPropertyHasNoSetter);
         internal const string XmlCannotCreateCollection = nameof(XmlCannotCreateCollection);
+        internal const string XmlDeserializeReadOnlyCollection = nameof(XmlDeserializeReadOnlyCollection);
+        internal const string XmlSerializeNonPopulatableCollection = nameof(XmlSerializeNonPopulatableCollection);
+        internal const string XmlDeserializeReadOnlyProperty = nameof(XmlDeserializeReadOnlyProperty);
         internal const string XmlPropertyHasNoSetter = nameof(XmlPropertyHasNoSetter);
         internal const string XmlItemExpected = nameof(XmlItemExpected);
         internal const string XmlCannotDetermineElementType = nameof(XmlCannotDetermineElementType);

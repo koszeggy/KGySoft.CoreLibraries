@@ -40,10 +40,20 @@
   + New GetRandomElement methods
 + New RandomExtensions class
   + ... TODO
++ TypeExtensions class
+  + IsDelegate method
+  + IsGenericTypeOf method
+  + IsImplementationOfGenericType method
 
 * KGySoft.Libraries.Serialization namespace:
 ============================================
 
-* XmlSerializer:
+! XmlSerializer:
+  ! XmlSerializationOptions change: BinarySerializationAsFallback is applied also for root-level collections unless
+    if RecursiveSerializationAsFallback is enabled at the same time. If both are enabled collections are serialized
+    recursively while non-natively supported objects are serialized by using binary serialization. Now collections
+    and are serialized recursively at any level with None options. Non-collection objects with public read-write
+    properties only are serialized recursively with None optione.
   + Escaping is possible even if a value is converted by a TypeConverter
-  + Creates instances internally so no locking when used parallelly
+  + Creates instances internally so there is no locking when used parallelly
+  + Supporting read-only collections with initializer constructor

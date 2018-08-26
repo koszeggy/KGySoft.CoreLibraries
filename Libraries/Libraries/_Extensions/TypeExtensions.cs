@@ -104,7 +104,7 @@ namespace KGySoft.Libraries
         /// <param name="type">The type to check</param>
         /// <returns><see langword="true"/>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullable(this Type type)
-            => (type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull))).IsGenericType && type.GetGenericTypeDefinition() == nullableType;
+            => (type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull))).IsGenericTypeOf(nullableType);
 
         /// <summary>
         /// Determines whether the specified <paramref name="type"/> is an <see cref="Enum">enum</see> and <see cref="FlagsAttribute"/> is defined on it.
@@ -123,6 +123,48 @@ namespace KGySoft.Libraries
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsDelegate(this Type type)
             => typeof(Delegate).IsAssignableFrom(type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull)));
+
+        /// <summary>
+        /// Gets whether the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <param name="genericTypeDefinition">The generic type definition.</param>
+        /// <returns><see langword="true"/> if the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
+        public static bool IsGenericTypeOf(this Type type, Type genericTypeDefinition)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+            if (genericTypeDefinition == null)
+                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.Get(Res.ArgumentNull));
+            return type.IsGenericType && type.GetGenericTypeDefinition() == genericTypeDefinition;
+        }
+
+        /// <summary>
+        /// Gets whether the given <paramref name="type"/>, its base classes or interfaces implement the specified <paramref name="genericTypeDefinition"/>.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <param name="genericTypeDefinition">The generic type definition.</param>
+        /// <returns><see langword="true"/> if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
+        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+            if (genericTypeDefinition == null)
+                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.Get(Res.ArgumentNull));
+
+            if (genericTypeDefinition.IsInterface)
+                return type.GetInterfaces().Any(i => i.IsGenericTypeOf(genericTypeDefinition));
+
+            for (Type t = type; type != Reflector.ObjectType; type = type.BaseType)
+            {
+                if (t.IsGenericTypeOf(genericTypeDefinition))
+                    return true;
+            }
+
+            return false;
+        }
 
         #endregion
 
@@ -144,9 +186,7 @@ namespace KGySoft.Libraries
             #region Local Functions
 
             Type AsGenericIEnumerable(Type t)
-                => t.IsGenericType && t.GetGenericTypeDefinition() == enumerableGenType
-                    ? t
-                    : t.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == enumerableGenType);
+                => t.IsGenericTypeOf(enumerableGenType) ? t : t.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(enumerableGenType));
 
             bool CanAcceptArrayOrList(Type t, Type element) 
                 => t.IsAssignableFrom(element.MakeArrayType()) || t.IsAssignableFrom(typeof(List<>).MakeGenericType(element));
@@ -169,30 +209,26 @@ namespace KGySoft.Libraries
             if (!enumerableType.IsAssignableFrom(type))
                 return false;
 
-            // determining elementType and isDictionry
-            if (type.IsCollection())
+            bool isPopulatableCollection = type.IsCollection();
+            Type genericEnumerableType = AsGenericIEnumerable(type);
+            if (genericEnumerableType != null)
             {
-                Type genericEnumerableType = AsGenericIEnumerable(type);
-                if (genericEnumerableType != null)
-                {
-                    elementType = genericEnumerableType.GetGenericArguments()[0];
-                    isDictionary = elementType.IsGenericType && elementType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>)
-                        && dictionaryGenType.MakeGenericType(elementType.GetGenericArguments()).IsAssignableFrom(type);
-                }
-                else
-                {
-                    isDictionary = dictionaryType.IsAssignableFrom(type);
-                    elementType = isDictionary ? typeof(DictionaryEntry) : Reflector.ObjectType;
-                }
+                elementType = genericEnumerableType.GetGenericArguments()[0];
+                isDictionary = elementType.IsGenericTypeOf(typeof(KeyValuePair<,>))
+                    && dictionaryGenType.MakeGenericType(elementType.GetGenericArguments()).IsAssignableFrom(type);
             }
-            // else : IEnumerable but cannot populate the collection. Maybe it has a collection initializer constructor.
+            else
+            {
+                isDictionary = dictionaryType.IsAssignableFrom(type);
+                elementType = isDictionary ? typeof(DictionaryEntry) : type == typeof(BitArray) ? typeof(bool) : Reflector.ObjectType;
+            }
 
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 ParameterInfo[] args = ctor.GetParameters();
 
-                // default constructor is ignored for non-populable collections
-                if (args.Length == 0 && elementType != null)
+                // default constructor is ignored for non-populatable collections
+                if (args.Length == 0 && isPopulatableCollection)
                 {
                     defaultCtor = ctor;
                     if (collectionCtor != null)
@@ -202,29 +238,9 @@ namespace KGySoft.Libraries
                 {
                     Type paramType = args[0].ParameterType;
 
-                    // Special case: Non-populable collection so only generic IEnumerable constructors can be accepted. Excluding string as it is also IEnumerable<char>.
-                    if (elementType == null)
-                    {
-                        Type genericEnumerableType = AsGenericIEnumerable(paramType);
-                        if (genericEnumerableType != null && paramType != Reflector.StringType)
-                        {
-                            Type paramElementType = genericEnumerableType.GetGenericArguments()[0];
-                            if (CanAcceptArrayOrList(paramType, paramElementType))
-                            {
-                                elementType = paramElementType;
-                                collectionCtor = ctor;
-                                return true;
-                            }
-                        }
-                        else if (paramType != Reflector.StringType && CanAcceptArrayOrList(paramType, Reflector.ObjectType))
-                        {
-                            elementType = Reflector.ObjectType;
-                            collectionCtor = ctor;
-                            return true;
-                        }
-
+                    // Excluding string as it is also IEnumerable<char>.
+                    if (paramType == Reflector.StringType)
                         continue;
-                    }
 
                     if (!isDictionary && CanAcceptArrayOrList(paramType, elementType)
                         || isDictionary && paramType.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(elementType.IsGenericType ? elementType.GenericTypeArguments : new[] { typeof(object), typeof(object) })))
@@ -249,7 +265,7 @@ namespace KGySoft.Libraries
         {
             // type.GetInterface(collectionGenType.Name) != null - this would throw an exception if it has more implementations
             return typeof(IList).IsAssignableFrom(type) || dictionaryType.IsAssignableFrom(type)
-                || type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == collectionGenType);
+                || type.GetInterfaces().Any(i => i.IsGenericTypeOf(collectionGenType));
         }
 
         /// <summary>
@@ -274,7 +290,7 @@ namespace KGySoft.Libraries
 
             foreach (Type i in type.GetInterfaces())
             {
-                if (i.IsGenericType && i.GetGenericTypeDefinition() == collectionGenType)
+                if (i.IsGenericTypeOf(collectionGenType))
                 {
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
                     return !(bool)PropertyAccessor.GetPropertyAccessor(pi).Get(instance);
@@ -354,6 +370,9 @@ namespace KGySoft.Libraries
 
         internal static bool CanBeDerived(this Type type)
             => !(type.IsValueType || type.IsClass && type.IsSealed);
+
+        internal static ConstructorInfo GetDefaultConstructor(this Type type)
+            => type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
         #endregion
 

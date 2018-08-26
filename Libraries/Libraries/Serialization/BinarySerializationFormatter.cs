@@ -2831,7 +2831,7 @@ namespace KGySoft.Libraries.Serialization
             else
             {
                 // Looking for parameterless constructor
-                ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+                ctor = type.GetDefaultConstructor();
                 if (ctor != null)
                 {
                     Reflector.InvokeCtor(result, ctor);

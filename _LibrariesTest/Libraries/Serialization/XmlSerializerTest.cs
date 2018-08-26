@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -16,6 +17,7 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using KGySoft.ComponentModel;
 using KGySoft.Libraries;
+using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -30,9 +32,11 @@ namespace _LibrariesTest.Libraries.Serialization
     [TestClass]
     public class XmlSerializerTest: TestBase
     {
+        // ReSharper disable CoVariantArrayConversion
+
         #region Types used in tests
 
-        private class EmptyType
+        public class EmptyType
         {
             // overridden for test
             public override bool Equals(object obj)
@@ -634,7 +638,7 @@ namespace _LibrariesTest.Libraries.Serialization
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
             // These types cannot be serialized with system serializer
             referenceObjects = new object[]
@@ -650,7 +654,7 @@ namespace _LibrariesTest.Libraries.Serialization
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
         [TestMethod]
@@ -686,7 +690,7 @@ namespace _LibrariesTest.Libraries.Serialization
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
         [TestMethod]
@@ -721,7 +725,7 @@ namespace _LibrariesTest.Libraries.Serialization
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
         }
 
         [TestMethod]
@@ -745,7 +749,7 @@ namespace _LibrariesTest.Libraries.Serialization
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
             // These strings cannot be (de)serialized with system serializer
             referenceObjects = new string[]
@@ -770,7 +774,7 @@ namespace _LibrariesTest.Libraries.Serialization
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
         }
 
         [TestMethod]
@@ -785,7 +789,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 typeof(List<EmptyType>),                    // mixed
                 typeof(IntList),                            // custom
                 typeof(CustomGenericCollection<int>),       // mixed
-                typeof(CustomGenericCollection<EmptyType>), // custom
+                typeof(CustomGenericCollection<EmptyType>), // custom - EmptyType is stored differently when fully qualified
                 typeof(List<>),                             // mscorlib, generic template
                 typeof(int[]),                              // 1D zero based array
                 typeof(int[,]),                             // multi-dim array
@@ -794,11 +798,11 @@ namespace _LibrariesTest.Libraries.Serialization
                 typeof(List<>).GetGenericArguments()[0]     // this can be only binary serialized
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            // binary for generic argument, recursive for chose recursion for the array
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
         [TestMethod]
@@ -813,11 +817,11 @@ namespace _LibrariesTest.Libraries.Serialization
                 new Point(13, 13),
             };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type System.Drawing.Point was not expected.
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
             // These objects cannot be (de)serialized with system serializer
             referenceObjects = new object[]
@@ -830,7 +834,7 @@ namespace _LibrariesTest.Libraries.Serialization
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
             // Type converter as property
             referenceObjects = new object[]
@@ -866,11 +870,11 @@ namespace _LibrariesTest.Libraries.Serialization
                 BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.Libraries enum, multiple flags
             };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum may not be used in this context.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames); // DataAccessMethod.Random: 10.0.0.0 <-> 10.1.0.0 if executed from ReSharper test
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames); // DataAccessMethod.Random: 10.0.0.0 <-> 10.1.0.0 if executed from ReSharper test
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames); // FullyQualifiedNames: DataAccessMethod.Random: 10.0.0.0 <-> 10.1.0.0 if executed from ReSharper test
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false); // FullyQualifiedNames: DataAccessMethod.Random: 10.0.0.0 <-> 10.1.0.0 if executed from ReSharper test
 
             // These values cannot be serialized with system serializer
             referenceObjects = new Enum[]
@@ -880,7 +884,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
         [TestMethod]
@@ -893,7 +897,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     new DictionaryEntry(new object(), "alma"),
                 };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - NotSupportedException: System.ValueType is an unsupported type.
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -911,7 +915,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
         [TestMethod]
@@ -926,33 +930,27 @@ namespace _LibrariesTest.Libraries.Serialization
                     new NonSerializableStruct {Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alma"},
                 };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+EmptyType was not expected.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but BinarySerializableStruct.Point
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but BinarySerializableStruct.Point
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but BinarySerializableStruct.Point
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but BinarySerializableStruct.Point
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but BinarySerializableStruct.Point
-                | XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but BinarySerializableStruct.Point
-                | XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but BinarySerializableStruct.Point
-                | XmlSerializationOptions.ForcedSerializationValueTypesAsFallback); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but BinarySerializableStruct.Point
-                | XmlSerializationOptions.ForcedSerializationValueTypesAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationValueTypesAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationValueTypesAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
             CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute); // everything
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute); // every element
         }
 
         [TestMethod]
@@ -965,22 +963,18 @@ namespace _LibrariesTest.Libraries.Serialization
                 new byte[][] { new byte[] {11, 12, 13}, new byte[] {21, 22, 23, 24, 25}, null }, // jagged byte array
             };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // jagged arrays
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // jagged arrays
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // jagged arrays
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple array, inner array of jagged array
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // jagged arrays
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple array, inner array of jagged array
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple array, inner array of jagged array
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple array, inner array of jagged array
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // jagged arrays
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // simple array, inner array of jagged array
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // simple array, inner array of jagged array
                 | XmlSerializationOptions.OmitCrcAttribute); // compact parts
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // jagged arrays
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // simple array, inner array of jagged array
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // simple array, inner array of jagged array
                 | XmlSerializationOptions.OmitCrcAttribute); // compact parts
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
@@ -992,19 +986,19 @@ namespace _LibrariesTest.Libraries.Serialization
             // These arrays cannot be serialized with system serializer
             referenceObjects = new IList[]
             {
-                new byte[,] { {11, 12, 13}, {21, 22, 23} }, // multidimensional byte array
-                new byte[][,] { new byte[,] {{11, 12, 13}, {21, 22, 23}}, new byte[,] {{11, 12, 13, 14}, {21, 22, 23, 24}, {31, 32, 33, 34}} }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
-                new byte[,][] { {new byte[] {11, 12, 13}, new byte[] { 21, 22, 23}}, { new byte[] {11, 12, 13, 14}, new byte[] {21, 22, 23, 24}} }, // crazy jagged byte array 2 (1D array of 2D matrices)
-                new byte[][,,] { new byte[,,] { { {11, 12, 13}, {21, 21, 23} } }, null }, // crazy jagged byte array containing null reference
-                Array.CreateInstance(typeof(byte), new int[] {3}, new int[]{-1}), // array with -1..1 index interval
-                Array.CreateInstance(typeof(byte), new int[] {3, 3}, new int[]{-1, 1}) // array with [-1..1 and 1..3] index interval
+                new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, // multidimensional byte array
+                new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
+                new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // crazy jagged byte array 2 (1D array of 2D matrices)
+                new byte[][,,] { new byte[,,] { { { 11, 12, 13 }, { 21, 21, 23 } } }, null }, // crazy jagged byte array containing null reference
+                Array.CreateInstance(typeof(byte), new[] { 3 }, new[] { -1 }), // array with -1..1 index interval
+                Array.CreateInstance(typeof(byte), new[] { 3, 3 }, new[] { -1, 1 }) // array with [-1..1 and 1..3] index interval
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // jagged arrays
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
@@ -1025,11 +1019,11 @@ namespace _LibrariesTest.Libraries.Serialization
                 new string[][] { new string[] {"Egy", "Kettő", "Három"}, new string[] {"One", "Two", null}, null }, // jagged string array with null values (first null as string, second null as array)
             };
 
-            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
@@ -1040,8 +1034,8 @@ namespace _LibrariesTest.Libraries.Serialization
                 Array.CreateInstance(typeof(string), new int[] {3}, new int[]{-1}) // array with -1..1 index interval
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
@@ -1073,17 +1067,17 @@ namespace _LibrariesTest.Libraries.Serialization
                     new DateTime[] {DateTime.UtcNow, DateTime.Now},
                 };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);  // arrays in object[]
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // arrays in object[]
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // arrays in object[]
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // every element
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // every element
 
             // these types cannot be serialized by system serializer
             referenceObjects = new IList[]
@@ -1093,14 +1087,13 @@ namespace _LibrariesTest.Libraries.Serialization
                     new Version[] {new Version(1, 2, 3, 4), null},
                 };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);  // arrays in object[]
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // arrays in object[]
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // simple arrays
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // arrays in object[]
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);  // every element
         }
 
         /// <summary>
@@ -1109,19 +1102,19 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeEnumArrays()
         {
-            IList[] referenceObjects = 
+            object[] referenceObjects = 
             {
                 new TestEnum[] { TestEnum.One, TestEnum.Two }, // single enum array
                 new TestEnum[][] { new TestEnum[] {TestEnum.One}, new TestEnum[] {TestEnum.Two} }, // jagged enum array
             };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum[] may not be used in this context.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[], jagged array
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // jagged array
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            referenceObjects = new IList[] 
+            referenceObjects = new object[] 
             {
                 new TestEnum[,] { {TestEnum.One}, {TestEnum.Two} }, // multidimensional enum array
                 new object[] { TestEnum.One, null },
@@ -1130,9 +1123,8 @@ namespace _LibrariesTest.Libraries.Serialization
                 new ValueType[] { TestEnum.One, null },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[], jagged array
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // jagged array
-
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
         }
 
         [TestMethod]
@@ -1165,23 +1157,28 @@ namespace _LibrariesTest.Libraries.Serialization
                 new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alma"}, null },
             };
 
-            //SystemSerializeObject(referenceObjects);
+            // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // custom structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // all
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // custom structs
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // as content, custom structs; otherwise, all
 
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            referenceObjects = new IList[]
+            {
+                new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, null },
+                new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, null },
+                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alma"}, null },
+            };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, SystemSerializableStruct; otherwise, all
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
 
             // these types cannot be serialized by system serializer
             referenceObjects = new IList[]
@@ -1195,7 +1192,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?,int?>(1, 2), new KeyValuePair<int?,int?>(2, null), null},
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             // these types cannot be serialized recursively and without a typeconverter are not supported natively
@@ -1208,8 +1205,7 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // nested arrays
-                | XmlSerializationOptions.CompactSerializationOfStructures); // non-null array elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // non-null array elements
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // non-null array elements
         }
 
@@ -1223,7 +1219,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     new XmlSerializableStruct(1, 2, 3),
                 };
 
-            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Xml.Serialization.IXmlSerializable cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -1239,10 +1235,10 @@ namespace _LibrariesTest.Libraries.Serialization
                     new List<XmlSerializableClass> { new XmlSerializableClass(1, 2, 3) }
                 };
 
-            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.Generic.IList`1[[_LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass, _LibrariesTest, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b45eba277439ddfe]].
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
         }
 
@@ -1261,22 +1257,20 @@ namespace _LibrariesTest.Libraries.Serialization
                     new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
                 };
 
-            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
             CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
 
             // These collections cannot be serialized with system serializer
             referenceObjects = new IList[]
@@ -1285,26 +1279,24 @@ namespace _LibrariesTest.Libraries.Serialization
                     new IBinarySerializable[] {new BinarySerializableStruct {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass {IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // IBinarySerializable array
                     new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object
                     new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object, with an IBinarySerializable element
-                    new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array - 161/92
+                    new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array
                     new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
 
-                    new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1}, // - 378/309 -> 312/243
-                    new IConvertible[] { null, 1 }, // - 49
-                    new IConvertible[][] { null, new IConvertible[]{ null, 1},  }, // - 56 -> 41
+                    new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
+                    new IConvertible[] { null, 1 },
+                    new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
                 };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // non-structs
-                | XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
         }
 
         /// <summary>
@@ -1313,6 +1305,7 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeSimpleGenericCollections()
         {
+#error A Queue<int> minden eleméhez elmenti az elem típusát
             IEnumerable[] referenceObjects =
                 {
                     new List<int> { 1, 2, 3 },
@@ -1326,69 +1319,80 @@ namespace _LibrariesTest.Libraries.Serialization
                     new HashSet<int[]> { new int[]{1, 2, 3}, null },
                 };
 
-            ////SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
+            SystemSerializeObjects(referenceObjects);
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[] elements
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections in elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // object[] elements
-            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // nested collections in elements
-            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // object[] elements
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections in elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
 
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
-                {
-                    //new LinkedList<int>(new[]{ 1, 2, 3}),
-                    //new LinkedList<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
+            {
+                new LinkedList<int>(new[] { 1, 2, 3 }),
+                new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
 
-                    //new Dictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    //new Dictionary<int[], string[]> { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
-                    //new Dictionary<object, object> { {1, "alma"}, {"béka", DateTime.Now}, {new object(), new object()}, {4, new object[] {1, "alma", DateTime.Now, null}}, {5, null}},
+                new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alma" } }, { new int[] { 2 }, null } },
+                new Dictionary<object, object> { { 1, "alma" }, { "béka", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alma", DateTime.Now, null } }, { 5, null } },
 
-                    //new SortedList<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    //new SortedList<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
+                new SortedList<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new SortedList<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
-                    //new SortedDictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    //new SortedDictionary<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
+                new SortedDictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new SortedDictionary<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
-                    new Queue<int>(new[]{ 1, 2, 3}),
-                    new Queue<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
-                    new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3}) },
+                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } }),
 
-                    new Stack<int>(new[]{ 1, 2, 3}),
-                    new Stack<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
+                new Cache<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+            };
 
-                };
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // object[] elements
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections in elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // object[] elements
-            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // nested collections in elements
-            //    | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            // these collections are not supported content recursively because they implement neither ICollection<T> nor IList
+            referenceObjects = new IEnumerable[]
+            {
+                // non-populatable
+                new Queue<int>(new[] { 1, 2, 3 }),
+                new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
+                new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
+                new ConcurrentBag<int> { 1, 2, 3 },
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // object[] elements
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections in elements
+                // non-populatable, reverse
+                new Stack<int>(new[] { 1, 2, 3 }),
+                new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new ConcurrentStack<int>(new[] { 1, 2, 3 }),
 
-            //// these collections are not supported recursively because they implement neither ICollection<T> nor IList
-            //referenceObjects = new IEnumerable[]
-            //    {
-            //        new Queue<int>(new[]{ 1, 2, 3}),
-            //        new Queue<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
-            //        new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3}) },
+                // read-only
+                new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
+                new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
+            };
 
-            //        new Stack<int>(new[]{ 1, 2, 3}),
-            //        new Stack<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
-            //    };
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            // these collections are not supported recursively at all because they have no initializer constructor of array or list
+            referenceObjects = new IEnumerable[]
+            {
+                new BlockingCollection<int> { 1, 2, 3 }, 
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+
+        }
+
+        [TestMethod]
+        public void SerializeNonPopulatableCollectionsWithProperties()
+        {
+            throw new NotImplementedException("TODO: Read-Only collections with read-write, read-only array and read-only collection parameters.");
         }
 
         /// <summary>
@@ -1398,46 +1402,49 @@ namespace _LibrariesTest.Libraries.Serialization
         public void SerializeSimpleNonGenericCollections()
         {
             IEnumerable[] referenceObjects =
-                {
-                    new ArrayList { 1, "alma", DateTime.Now },
-                    new StringCollection { "alma", "béka", "cica" },
-                };
+            {
+                new ArrayList { 1, "alma", DateTime.Now },
+                new StringCollection { "alma", "béka", "cica" },
+            };
 
-            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // array elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // array elements
 
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
-                {
-                    new Hashtable { {1, "alma"}, { (byte)2, "béka"}, {3m, "cica"} },
-                    new SortedList{ {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new ListDictionary{ {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new HybridDictionary(false) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
-                    new OrderedDictionary { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
-                };
+            {
+                new Hashtable { { 1, "alma" }, { (byte)2, "béka" }, { 3m, "cica" } },
+                new SortedList { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new ListDictionary { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new HybridDictionary(false) { { "alma", 1 }, { "Alma", 2 }, { "ALMA", 3 } },
+                new OrderedDictionary { { "alma", 1 }, { "Alma", 2 }, { "ALMA", 3 } },
+            };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // array elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // none, elements are serialized as collections
 
             // these collections are not supported recursively
             referenceObjects = new IEnumerable[]
-                {
-                    new Queue(new object[]{ 1, (byte)2, 3m, new string[]{"alma", "béka", "cica"} }),
-                    new Stack(new object[]{ 1, (byte)2, 3m, new string[]{"alma", "béka", "cica"} }),
-                    new StringDictionary { {"a", "alma"}, {"b", "béka"}, {"c", "cica"}, {"x", null} },
-                    new BitArray(new[] {true, false, true})
-                };
+            {
+                new Queue(new object[] { 1, (byte)2, 3m, new string[] { "alma", "béka", "cica" } }),
+                new Stack(new object[] { 1, (byte)2, 3m, new string[] { "alma", "béka", "cica" } }),
+                new BitArray(new[] { true, false, true })
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+
+            // these collections are not supported at all, binary fallback needed
+            referenceObjects = new IEnumerable[]
+            {
+                new StringDictionary { { "a", "alma" }, { "b", "béka" }, { "c", "cica" }, { "x", null } },
+            };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
         /// <summary>
@@ -1586,12 +1593,14 @@ namespace _LibrariesTest.Libraries.Serialization
                         deserializedObjects.Add(null);
                         continue;
                     }
+
                     SystemXmlSerializer serializer = new SystemXmlSerializer(item.GetType());
                     StringBuilder sb = new StringBuilder();
                     using (StringWriter sw = new StringWriter(sb))
                     {
                         serializer.Serialize(sw, item);
                     }
+
                     Console.WriteLine(sb);
                     Console.WriteLine();
                     deserializedObjects.Add(serializer.Deserialize(new StringReader(sb.ToString())));
@@ -1617,26 +1626,53 @@ namespace _LibrariesTest.Libraries.Serialization
                 object deserializedObject = KGyXmlSerializer.Deserialize(xElement);
                 CompareObjects(obj, deserializedObject);
 
+                // XmlReader/Writer - as object
+                StringBuilder sb = new StringBuilder();
+                using (XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
+                {
+                    KGyXmlSerializer.Serialize(writer, obj, options);
+                }
+
+                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
+                using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true }))
+                {
+                    deserializedObject = KGyXmlSerializer.Deserialize(reader);
+                }
+
+                CompareObjects(obj, deserializedObject);
+                Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
+
                 // XElement - as component
                 //Console.WriteLine();
                 //Console.WriteLine(".....As component.....");
-                XElement xElementComp = new XElement("test");
+                var xElementComp = new XElement("test");
                 KGyXmlSerializer.SerializeContent(xElementComp, obj, options);
                 //Console.WriteLine(xElementComp);
                 deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
                 KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
                 CompareObjects(obj, deserializedObject);
 
-                // StringBuilder
-                StringBuilder sb = new StringBuilder();
-                XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true});
-                KGyXmlSerializer.Serialize(writer, obj, options);
-                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
-                XmlReader reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true });
-                deserializedObject = KGyXmlSerializer.Deserialize(reader);
-                CompareObjects(obj, deserializedObject);
+                // XmlReader/Writer - as component
+                sb = new StringBuilder();
+                using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
+                {
+                    writer.WriteStartElement("test");
+                    KGyXmlSerializer.SerializeContent(writer, obj, options);
+                    writer.WriteFullEndElement();
+                    writer.Flush();
+                }
 
-                Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter serializers are not compatible");
+                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
+                using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true }))
+                {
+                    deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
+                    reader.Read(); // to node "test"
+                    KGyXmlSerializer.DeserializeContent(reader, deserializedObject);
+                    reader.ReadEndElement();
+                }
+
+                CompareObjects(obj, deserializedObject);
+                Assert.AreEqual(xElementComp.ToString(), sb.ToString(), "XElement and XmlWriter SerializeContent are not compatible");
             }
             catch (Exception e)
             {
@@ -1645,45 +1681,88 @@ namespace _LibrariesTest.Libraries.Serialization
             }
         }
 
-        private void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options)
+        private void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options, bool alsoContent = true)
         {
             Console.WriteLine("------------------KGySoft XmlSerializer (Items Count: {0}; options: {1})--------------------", referenceObjects.Length, options.ToString<XmlSerializationOptions>());
             try
             {
                 XElement xElement = new XElement("test");
                 StringBuilder sb = new StringBuilder();
-                XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true });
-                writer.WriteStartElement("test");
-
-                foreach (var item in referenceObjects)
+                using (XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true }))
                 {
-                    xElement.Add(KGyXmlSerializer.Serialize(item, options));
-                    KGyXmlSerializer.Serialize(writer, item, options);
+                    writer.WriteStartElement("test");
+
+                    foreach (var item in referenceObjects)
+                    {
+                        xElement.Add(KGyXmlSerializer.Serialize(item, options));
+                        KGyXmlSerializer.Serialize(writer, item, options);
+
+                        if (!alsoContent)
+                            continue;
+
+                        // content serialization test for element
+                        if (item == null)
+                        {
+                            Console.WriteLine("Skipping null");
+                            continue;
+                        }
+
+                        XElement xItem = new XElement("itemContent");
+                        StringBuilder sbItem = new StringBuilder();
+                        using (XmlWriter itemWriter = XmlWriter.Create(sbItem, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true }))
+                        {
+                            KGyXmlSerializer.SerializeContent(xItem, item, options);
+                            Console.WriteLine(xItem);
+                            Console.WriteLine();
+                            itemWriter.WriteStartElement("itemContent");
+                            KGyXmlSerializer.SerializeContent(itemWriter, item, options);
+                            itemWriter.WriteFullEndElement();
+                        }
+
+                        object deserXElement;
+                        object deserReader;
+                        using (XmlReader itemReader = XmlReader.Create(new StringReader(sbItem.ToString()), new XmlReaderSettings { IgnoreWhitespace = true }))
+                        {
+                            var itemType = item.GetType();
+                            deserXElement = itemType.IsArray ? item.DeepClone() : Reflector.Construct(itemType);
+                            KGyXmlSerializer.DeserializeContent(xItem, deserXElement);
+                            deserReader = itemType.IsArray ? item.DeepClone() : Reflector.Construct(itemType);
+                            itemReader.Read(); // to node "itemContent"
+                            KGyXmlSerializer.DeserializeContent(itemReader, deserReader);
+                            itemReader.ReadEndElement();
+                        }
+
+                        CompareObjects(item, deserXElement);
+                        CompareObjects(item, deserReader);
+                        Assert.AreEqual(xItem.ToString(), sbItem.ToString(), "XElement and XmlWriter serializers are not compatible");
+                    }
+                    writer.WriteEndDocument();
+                    writer.Flush();
                 }
-                writer.WriteEndDocument();
-                writer.Flush();
 
                 Console.WriteLine(xElement);
 
                 List<object> deserializedObjects = new List<object>();
                 // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
-                XmlReader reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { IgnoreWhitespace = true });
-                try
+                using (XmlReader reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { IgnoreWhitespace = true }))
                 {
-                    reader.Read(); // test
-                    foreach (XElement element in xElement.Elements())
+                    try
                     {
-                        object deserXElement = KGyXmlSerializer.Deserialize(element);
-                        object deserReader = KGyXmlSerializer.Deserialize(reader);
-                        CompareObjects(deserXElement, deserReader);
+                        reader.Read(); // test
+                        foreach (XElement element in xElement.Elements())
+                        {
+                            object deserXElement = KGyXmlSerializer.Deserialize(element);
+                            object deserReader = KGyXmlSerializer.Deserialize(reader);
+                            CompareObjects(deserXElement, deserReader);
 
-                        deserializedObjects.Add(deserXElement);
+                            deserializedObjects.Add(deserXElement);
+                        }
+
                     }
-
-                }
-                finally
-                {
-                    reader.Close();
+                    finally
+                    {
+                        reader.Close();
+                    }
                 }
 
                 CompareCollections(referenceObjects, deserializedObjects.ToArray());

@@ -33,6 +33,10 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// If a type cannot be parsed natively and has no <see cref="TypeConverter"/> with <see cref="string"/> support, then
         /// enabling this option makes possible to store its content in binary format within the XML.
+        /// <para>Though collections and objects with only public read-write properties can be serialized with <see cref="None"/> options
+        /// as well, using this option will cause to serialize them in a binary format, too. In order to serialize them recursively while
+        /// also serializing more complex object by binary serialization enable both <see cref="BinarySerializationAsFallback"/>
+        /// and <see cref="RecursiveSerializationAsFallback"/> options as well.</para>
         /// <para>
         /// Default at serialization methods: Enabled
         /// </para>
@@ -45,7 +49,7 @@ namespace KGySoft.Libraries.Serialization
         /// If a property or collection element cannot be serialized, then a <see cref="NotSupportedException"/> will be thrown.
         /// <note>
         /// Properties can be marked by <see cref="DesignerSerializationVisibilityAttribute"/> with <see cref="DesignerSerializationVisibility.Content"/> value to
-        /// indicate that they sould be serialized recursively without using this fallback option.
+        /// indicate that they should be serialized recursively without using this fallback option.
         /// </note>
         /// <note type="caution">
         /// Note: Enabling this option will not guarantee that deserialization of the object will work. Use this option only when serialized types can be restored by
@@ -54,7 +58,7 @@ namespace KGySoft.Libraries.Serialization
         /// </note>
         /// <note>
         /// Note: If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
-        /// is stronger, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.
+        /// is stronger, except for collections, and for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.
         /// </note>
         /// <note>
         /// <c>Key</c> and <c>Value</c> properties of <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances are always serialized recursively because these are natively supported types.
@@ -69,7 +73,7 @@ namespace KGySoft.Libraries.Serialization
         /// This option makes possible to serialize <see cref="ValueType"/>s (<see langword="struct"/>) that have no <see cref="TypeConverter"/>.
         /// <note type="caution">
         /// Never use this flag on a <see cref="ValueType"/> that has reference (non-value type) fields. Deserializing such value would result an invalid
-        /// object with indetermined object references. Only string and array reference fields can be serialized safely if they are decorated by <see cref="MarshalAsAttribute"/> using
+        /// object with undetermined object references. Only string and array reference fields can be serialized safely if they are decorated by <see cref="MarshalAsAttribute"/> using
         /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.
         /// </note>
         /// <para>
