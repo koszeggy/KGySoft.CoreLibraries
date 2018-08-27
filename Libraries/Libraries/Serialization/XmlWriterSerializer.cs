@@ -74,7 +74,7 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // 2.) Collection - as content, collectionCtor version cannot be accepted because the empty collection will already be precreated.
-                if (objType.IsSupportedCollectionForReflection(out var _, out var _, out var _, out var _))
+                if (objType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _))
                 {
                     // if has only default constructor but the collection is read-only
                     if (!objType.IsCollection())
@@ -82,7 +82,7 @@ namespace KGySoft.Libraries.Serialization
                     if (!objType.IsReadWriteCollection(obj))
                         throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
 
-                    SerializeCollection(obj as IEnumerable, false, writer, DesignerSerializationVisibility.Visible);
+                    SerializeCollection((IEnumerable)obj, elementType, false, writer, DesignerSerializationVisibility.Visible);
                     return;
                 }
 
@@ -98,17 +98,14 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// Serializing a collection by XmlWriter
         /// </summary>
-        private void SerializeCollection(IEnumerable collection, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
+        private void SerializeCollection(IEnumerable collection, Type elementType, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
         {
             if (collection == null)
                 return;
 
             // array collection
-            if (collection is Array)
+            if (collection is Array array)
             {
-                Type elementType = collection.GetType().GetElementType();
-                Array array = (Array)collection;
-
                 if (typeNeeded)
                     writer.WriteAttributeString("type", GetTypeString(collection.GetType()));
 
@@ -189,23 +186,16 @@ namespace KGySoft.Libraries.Serialization
                 // serializing main properties first
                 SerializeProperties(collection, writer);
 
-                // determining element type
-                Type elementType = GetElementType(collection);
-                bool elementTypeNeeded = elementType.CanBeDerived();
-
                 // serializing items
+                bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in collection)
                 {
                     writer.WriteStartElement("item");
                     Type itemType = null;
                     if (item == null)
-                    {
                         writer.WriteEndElement();
-                    }
                     else if (TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), visibility))
-                    {
                         writer.WriteFullEndElement();
-                    }
                     else
                         throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), Options));
                 }
@@ -342,19 +332,8 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // g.) collection
-            if (type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out var _, out var _)
-                // with collection parameter constructor or populating capability
-                && (collectionCtor != null || type.IsReadWriteCollection(obj))
-                // if binary is not requested or recursive is requested
-                && (!IsBinarySerializationEnabled || visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled))
-            {
-                SerializeCollection(obj as IEnumerable, true, writer, visibility);
-                return true;
-            }
-
-            // h.) if type of value is serializable and option is enabled, then adding binary serialized hexa content to xml
-            if (visibility != DesignerSerializationVisibility.Content && IsBinarySerializationEnabled)
+            // g.) binary serialization: base64 format to XML
+            if (IsBinarySerializationEnabled && visibility != DesignerSerializationVisibility.Content)
             {
                 try
                 {
@@ -367,11 +346,34 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // i.) recursive serialization, if enabled
-            if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
-                // or when all of the instance properties are read-write and both accessors are public
-                || type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
+            // h.) collection: if can be trusted in all circumstances
+            Type elementType = null;
+            if (IsTrustedCollection(type)
+                // or recursive is requested 
+                || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                    // and can populate collection by general ways or by an initializer constructor
+                    && type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out elementType, out var _)
+                    && (collectionCtor != null || type.IsReadWriteCollection(obj))))
             {
+                SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
+                return true;
+            }
+
+            // i.) recursive serialization of any object, if requested
+            bool hasDefaultCtor = type.CanBeCreatedWithoutParameters();
+            if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled
+                // or when is simple object with public fields and/or properties
+                || hasDefaultCtor && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
+            {
+#error
+                // TODO: az auto serialize feltételhez még: a fieldjei mind publikusak vagy compiler által generáltak, egyik sem readonly, és nincs eventje - ősbe kiemelni (típusellenőrzés nem kell, a rekurzió során majd kibukik, ha egy instance nem jó)
+                // TODO: if (!hasDefaultCtor) exception - így ugye Content vagy fallback esetén jövünk be
+                // TODO: XElement verzióba is ugyanez
+                // TODO: publikus fieldek serializálása
+                // TODO: Options leírásba: recursive None esetben akkor pontosan mikor + public property mellett field is
+                // TODO: Changelog
+                // TODO: tesztek
+
                 if (typeNeeded)
                     writer.WriteAttributeString("type", GetTypeString(type));
 
@@ -441,7 +443,7 @@ namespace KGySoft.Libraries.Serialization
                 if (!property.CanWrite && propValue != null && propType.IsReadWriteCollection(propValue))
                 {
                     writer.WriteStartElement(property.Name);
-                    SerializeCollection(propValue as IEnumerable, propValue != null && propType != property.PropertyType, writer, visibility);
+                    SerializeCollection((IEnumerable)propValue, propType.GetCollectionElementType(), propType != property.PropertyType, writer, visibility);
                     if (propValue != null)
                         writer.WriteFullEndElement();
                     else

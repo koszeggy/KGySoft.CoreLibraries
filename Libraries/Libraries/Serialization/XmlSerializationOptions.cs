@@ -33,10 +33,12 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// If a type cannot be parsed natively and has no <see cref="TypeConverter"/> with <see cref="string"/> support, then
         /// enabling this option makes possible to store its content in binary format within the XML.
-        /// <para>Though collections and objects with only public read-write properties can be serialized with <see cref="None"/> options
-        /// as well, using this option will cause to serialize them in a binary format, too. In order to serialize them recursively while
-        /// also serializing more complex object by binary serialization enable both <see cref="BinarySerializationAsFallback"/>
-        /// and <see cref="RecursiveSerializationAsFallback"/> options as well.</para>
+        /// <para>Though trusted collections and objects with only public read-write properties can be serialized with <see cref="None"/> options
+        /// as well, using this option will cause to serialize them in binary format, too.</para>
+        /// <note>
+        /// Note: If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
+        /// is stronger, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.
+        /// </note>
         /// <para>
         /// Default at serialization methods: Enabled
         /// </para>
@@ -44,21 +46,22 @@ namespace KGySoft.Libraries.Serialization
         BinarySerializationAsFallback = 1 << 1,
 
         /// <summary>
-        /// If a property or an item in a collection cannot be parsed natively, has no <see cref="TypeConverter"/> with <see cref="string"/> support
-        /// or binary serialization is disabled, then enabling this option makes possible to serialize the object by serializing its properties recursively.
+        /// If a property or a collection cannot be parsed natively, has no <see cref="TypeConverter"/> with <see cref="string"/> support
+        /// or binary serialization is disabled, then enabling this option makes possible to serialize the object by serializing its properties and collection items recursively.
         /// If a property or collection element cannot be serialized, then a <see cref="NotSupportedException"/> will be thrown.
         /// <note>
         /// Properties can be marked by <see cref="DesignerSerializationVisibilityAttribute"/> with <see cref="DesignerSerializationVisibility.Content"/> value to
         /// indicate that they should be serialized recursively without using this fallback option.
         /// </note>
         /// <note type="caution">
-        /// Note: Enabling this option will not guarantee that deserialization of the object will work. Use this option only when serialized types can be restored by
-        /// setting public properties and the type has a default constructor. To avoid circular references use <see cref="DesignerSerializationVisibilityAttribute"/>
+        /// Note: Enabling this option will not guarantee that deserialization of the object will be the same as the original property. 
+        /// Use this option only when serialized types can be restored by setting public properties and the type has a default constructor.
+        /// To avoid circular references use <see cref="DesignerSerializationVisibilityAttribute"/>
         /// with <see cref="DesignerSerializationVisibility.Hidden"/> value on back-referencing properties.
         /// </note>
         /// <note>
         /// Note: If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
-        /// is stronger, except for collections, and for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.
+        /// is stronger, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.
         /// </note>
         /// <note>
         /// <c>Key</c> and <c>Value</c> properties of <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances are always serialized recursively because these are natively supported types.

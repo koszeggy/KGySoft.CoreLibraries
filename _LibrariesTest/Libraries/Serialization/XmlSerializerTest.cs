@@ -1305,7 +1305,6 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeSimpleGenericCollections()
         {
-#error A Queue<int> minden eleméhez elmenti az elem típusát
             IEnumerable[] referenceObjects =
                 {
                     new List<int> { 1, 2, 3 },
@@ -1364,6 +1363,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
                 new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
                 new ConcurrentBag<int> { 1, 2, 3 },
+                new ArraySegment<int>(new[] { 1, 2, 3 }),
 
                 // non-populatable, reverse
                 new Stack<int>(new[] { 1, 2, 3 }),
@@ -1381,12 +1381,11 @@ namespace _LibrariesTest.Libraries.Serialization
             // these collections are not supported recursively at all because they have no initializer constructor of array or list
             referenceObjects = new IEnumerable[]
             {
-                new BlockingCollection<int> { 1, 2, 3 }, 
+                new BlockingCollection<int> { 1, 2, 3 },
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
-
         }
 
         [TestMethod]
@@ -1485,20 +1484,15 @@ namespace _LibrariesTest.Libraries.Serialization
                     new List<IList<int>> { new int[]{1, 2, 3}, new List<int>{1, 2, 3} } 
                 };
 
-            //SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects); // almost all of these collections are unsupported by system serializer
+            //SystemSerializeObject(referenceObjects); - InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
+            //SystemSerializeObjects(referenceObjects); - NullReferenceException
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // array elements
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // nested collections
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None); // array elements
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None); // nested collections
 
             CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // as content, nested collections and non-simple types; otherwise every element
         }
 
         /// <summary>

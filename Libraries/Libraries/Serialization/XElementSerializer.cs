@@ -80,7 +80,7 @@ namespace KGySoft.Libraries.Serialization
                     }
 
                     // 2.) Collection - as content, collectionCtor version cannot be accepted because the empty collection will already be precreated.
-                    if (objType.IsSupportedCollectionForReflection(out var _, out var _, out var _, out var _))
+                    if (objType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _))
                     {
                         // if has only default constructor but the collection is read-only
                         if (!objType.IsCollection())
@@ -88,7 +88,7 @@ namespace KGySoft.Libraries.Serialization
                         if (!objType.IsReadWriteCollection(obj))
                             throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
 
-                        SerializeCollection(obj as IEnumerable, false, parent, DesignerSerializationVisibility.Visible);
+                        SerializeCollection((IEnumerable)obj, elementType, false, parent, DesignerSerializationVisibility.Visible);
                         return;
                     }
 
@@ -110,7 +110,7 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// Serializing a collection by LinqToXml
         /// </summary>
-        private void SerializeCollection(IEnumerable collection, bool typeNeeded, XContainer parent, DesignerSerializationVisibility visibility)
+        private void SerializeCollection(IEnumerable collection, Type elementType, bool typeNeeded, XContainer parent, DesignerSerializationVisibility visibility)
         {
             if (collection == null)
                 return;
@@ -119,11 +119,8 @@ namespace KGySoft.Libraries.Serialization
             parent.Add(String.Empty);
 
             // array collection
-            if (collection is Array)
+            if (collection is Array array)
             {
-                Type elementType = collection.GetType().GetElementType();
-                Array array = (Array)collection;
-
                 if (typeNeeded)
                     parent.Add(new XAttribute("type", GetTypeString(collection.GetType())));
 
@@ -194,19 +191,14 @@ namespace KGySoft.Libraries.Serialization
                 // serializing main properties first
                 SerializeProperties(collection, parent);
 
-                // determining element type
-                Type elementType = GetElementType(collection);
-                bool elementTypeNeeded = elementType.CanBeDerived();
-
                 // serializing items
+                bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in collection)
                 {
                     XElement child = new XElement("item");
                     Type itemType = null;
                     if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
-                    {
                         parent.Add(child);
-                    }
                     else
                         throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), Options));
                 }
@@ -325,19 +317,8 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // g.) collection
-            if (type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out var _, out var _)
-                // with collection parameter constructor or populating capability
-                && (collectionCtor != null || type.IsReadWriteCollection(obj))
-                // if binary is not requested or recursive is requested
-                && (!IsBinarySerializationEnabled || visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled))
-            {
-                SerializeCollection(obj as IEnumerable, true, parent, visibility);
-                return true;
-            }
-
-            // h.) if type of value is serializable and option is enabled, then adding binary serialized hexa content to xml
-            if (visibility != DesignerSerializationVisibility.Content && IsBinarySerializationEnabled)
+            // g.) binary serialization: base64 format to XML
+            if (IsBinarySerializationEnabled && visibility != DesignerSerializationVisibility.Content)
             {
                 try
                 {
@@ -350,10 +331,23 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
+            // h.) collection: if can be trusted in all circumstances
+            Type elementType = null;
+            if (IsTrustedCollection(type)
+                // or recursive is requested 
+                || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                    // and can populate collection by general ways or by an initializer constructor
+                    && type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out elementType, out var _)
+                    && (collectionCtor != null || type.IsReadWriteCollection(obj))))
+            {
+                SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, parent, visibility);
+                return true;
+            }
+
             // i.) recursive serialization, if enabled
             if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
                 // or when all of the instance properties are read-write and both accessors are public
-                || type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
+                || type.CanBeCreatedWithoutParameters() && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute("type", GetTypeString(type)));
@@ -426,7 +420,7 @@ namespace KGySoft.Libraries.Serialization
                 // a.) Property is read-only but is a populatable collection
                 if (!property.CanWrite && propValue != null && propType.IsReadWriteCollection(propValue))
                 {
-                    SerializeCollection(propValue as IEnumerable, propValue != null && propType != property.PropertyType, newElement, visibility);
+                    SerializeCollection((IEnumerable)propValue, propType.GetCollectionElementType(), propType != property.PropertyType, newElement, visibility);
                     parent.Add(newElement);
                     continue;
                 }

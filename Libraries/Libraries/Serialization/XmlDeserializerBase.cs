@@ -12,7 +12,7 @@ using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries.Serialization
 {
-    internal abstract class XmlDeserializerBase : XmlSerializationBase
+    internal abstract class XmlDeserializerBase
     {
         protected static void CheckArray(Array array, int length, int[] lengths, int[] lowerBounds)
         {

@@ -170,6 +170,27 @@ namespace KGySoft.Libraries
 
         #region Internal Methods
 
+        internal static Type GetCollectionElementType(this Type type)
+        {
+            // Array
+            if (type.IsArray)
+                return type.GetElementType();
+
+            // not IEnumeratble
+            if (!enumerableType.IsAssignableFrom(type))
+                return null;
+
+            Type genericEnumerableType = type.IsGenericTypeOf(enumerableGenType) ? type : type.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(enumerableGenType));
+            return genericEnumerableType != null 
+                ? genericEnumerableType.GetGenericArguments()[0] 
+                : (dictionaryType.IsAssignableFrom(type) 
+                    ? typeof(DictionaryEntry) 
+                    : type == typeof(BitArray) 
+                        ? typeof(bool) 
+                        : Reflector.ObjectType);
+        }
+
+
         /// <summary>
         /// Gets whether <paramref name="type"/> is supported collection to populate by reflection.
         /// If <see langword="true"/> is returned one of the constructors are not <see langword="null"/> or <paramref name="type"/> is an array or a value type.
@@ -183,46 +204,23 @@ namespace KGySoft.Libraries
         /// <returns><see langword="true"/> if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
         internal static bool IsSupportedCollectionForReflection(this Type type, out ConstructorInfo defaultCtor, out ConstructorInfo collectionCtor, out Type elementType, out bool isDictionary)
         {
-            #region Local Functions
-
-            Type AsGenericIEnumerable(Type t)
-                => t.IsGenericTypeOf(enumerableGenType) ? t : t.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(enumerableGenType));
-
-            bool CanAcceptArrayOrList(Type t, Type element) 
-                => t.IsAssignableFrom(element.MakeArrayType()) || t.IsAssignableFrom(typeof(List<>).MakeGenericType(element));
-
-            #endregion
-
             defaultCtor = null;
             collectionCtor = null;
             elementType = null;
             isDictionary = false;
 
-            // Array
-            if (type.IsArray)
-            {
-                elementType = type.GetElementType();
-                return true;
-            }
-
-            // is IEnumeratble
+            // is IEnumerable
             if (!enumerableType.IsAssignableFrom(type))
                 return false;
 
-            bool isPopulatableCollection = type.IsCollection();
-            Type genericEnumerableType = AsGenericIEnumerable(type);
-            if (genericEnumerableType != null)
-            {
-                elementType = genericEnumerableType.GetGenericArguments()[0];
-                isDictionary = elementType.IsGenericTypeOf(typeof(KeyValuePair<,>))
-                    && dictionaryGenType.MakeGenericType(elementType.GetGenericArguments()).IsAssignableFrom(type);
-            }
-            else
-            {
-                isDictionary = dictionaryType.IsAssignableFrom(type);
-                elementType = isDictionary ? typeof(DictionaryEntry) : type == typeof(BitArray) ? typeof(bool) : Reflector.ObjectType;
-            }
+            elementType = type.GetCollectionElementType();
+            isDictionary = dictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(dictionaryGenType);
 
+            // Array
+            if (type.IsArray)
+                return true;
+
+            bool isPopulatableCollection = type.IsCollection();
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 ParameterInfo[] args = ctor.GetParameters();
@@ -242,7 +240,8 @@ namespace KGySoft.Libraries
                     if (paramType == Reflector.StringType)
                         continue;
 
-                    if (!isDictionary && CanAcceptArrayOrList(paramType, elementType)
+                    // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
+                    if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(typeof(List<>).MakeGenericType(elementType)))
                         || isDictionary && paramType.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(elementType.IsGenericType ? elementType.GenericTypeArguments : new[] { typeof(object), typeof(object) })))
                     {
                         collectionCtor = ctor;
@@ -373,6 +372,9 @@ namespace KGySoft.Libraries
 
         internal static ConstructorInfo GetDefaultConstructor(this Type type)
             => type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+
+        internal static bool CanBeCreatedWithoutParameters(this Type type)
+            => type.IsValueType || type.GetDefaultConstructor() != null;
 
         #endregion
 

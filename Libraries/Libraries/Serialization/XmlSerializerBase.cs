@@ -1,14 +1,34 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
+using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries.Serialization
 {
-    internal class XmlSerializerBase : XmlSerializationBase
+    internal class XmlSerializerBase
     {
+        private static readonly HashSet<Type> trustedCollections = new HashSet<Type>
+        {
+            typeof(List<>),
+            typeof(LinkedList<>),
+            typeof(Queue),
+            typeof(Queue<>),
+            typeof(Stack),
+            typeof(Stack<>),
+            typeof(BitArray),
+            typeof(ArrayList),
+            typeof(CircularList<>),
+
+            typeof(ConcurrentBag<>),
+            typeof(ConcurrentQueue<>),
+            typeof(ConcurrentStack<>),
+        };
+
         private HashSet<object> serObjects;
 
         protected XmlSerializationOptions Options { get; }
@@ -39,6 +59,9 @@ namespace KGySoft.Libraries.Serialization
             }
             return result;
         }
+
+        protected static bool IsTrustedCollection(Type type)
+            => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
 
         /// <summary>
         /// Registers object to detect circular reference.
