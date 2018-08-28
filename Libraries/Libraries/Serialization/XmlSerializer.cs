@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -7,41 +8,90 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using System.Threading;
 using KGySoft.Libraries.Annotations;
+using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries.Serialization
 {
-    using System.Runtime.Serialization;
-
     /// <summary>
-    /// <see cref="XmlSerializer"/> makes possible serializing and deserializing object instances into/from XML content. The class class contans various overloads to support serializing directly into file or by
+    /// <see cref="XmlSerializer"/> makes possible serializing and deserializing object instances into/from XML content. The class contains various overloads to support serializing directly into file or by
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
+    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class.
     /// </summary>
     /// <remarks>
-    /// <see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their properties (if <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> is enabled 
-    /// properties can be complex nested types),  arrays and any nested non-readonly collection (if collection implements either the non-generic <see cref="IList"/> or the generic <see cref="Collection{T}"/> interface).
-    /// By default, it processes <see cref="IXmlSerializable"/> implementations, and as a fallback, it can serialize anything by binary serialization (if <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> is enabled).
-    /// Unlike <see cref="System.Xml.Serialization.XmlSerializer"/>, <see cref="XmlSerializer"/> supports non-public types, read-only properties of variable collections, too.
-    /// <para>
-    /// Problems with the original <see cref="System.Xml.Serialization.XmlSerializer"/>:
+    /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as some collections.
+    /// <note>Unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
+    /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Instead, this class is
+    /// designed to support XML serialization of any type as long as they have a default constructor and their state can be fully restored by their public fields and properties.</note>
+    /// </para>
+    /// <para>Several <a href="https://msdn.microsoft.com/en-us/library/System.ComponentModel.aspx" target="_blank">System.ComponentModel</a> techniques are supported,
+    /// which also makes possible to use the <see cref="XmlSerializer"/> for types that can be edited in a property grid, such as components, configurations or any types in a custom designer.
+    /// The supported component model attributes and techniques:
     /// <list type="bullet">
-    /// <item><term>Code generation</term><description><see cref="System.Xml.Serialization.XmlSerializer"/> analyzes the objects, generates C# files and compiles them,
-    /// which requires special access rights. In case of an error a standard C# compiler error may be thrown. In case of some collections generated code is syntactically wrong.</description></item>
-    /// <item><term>Control</term><description>Controlling the serialization can be achieved via using a lot of attributes (or by implementing <see cref="IXmlSerializable"/> interface, which is supported also by <see cref="XmlSerializer"/>).
-    /// If the source code of the class is not available serialization can be impossible by system <see cref="System.Xml.Serialization.XmlSerializer"/>.</description></item>
-    /// <item><term>Design</term><description>In some cases classes must have read-write properties even for collections, otherwise serialization would fail.
-    /// <see cref="XmlSerializer"/> does not require setter accessor for a collection property if the property is not <see langword="null"/> after initialization.</description></item>
+    /// <item><term><see cref="DesignerSerializationVisibilityAttribute"/></term><description>Use value <see cref="DesignerSerializationVisibility.Hidden"/> for public field or property to prevent its serialization
+    /// and use <see cref="DesignerSerializationVisibility.Content"/> value to explicitly express that the property value can be serialized recursively (see also <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>) option.</description></item>
+    /// <item><term><see cref="DefaultValueAttribute"/></term><description>If the value of a public property or field equals to the value specified by this attribute, then its value will not be serialized
+    /// (see also <see cref="XmlSerializationOptions.IgnoreDefaultValueAttribute"/> and <see cref="XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback"/> options).</description></item>
+    /// <item><term><c>ShouldSerialize...</c> methods</term><description>If the type being serialized has an instance method with no parameters and of <see cref="bool"/> return type (can be private as well) named <c>ShouldSerializePropertyName</c> where <c>PropertyName</c> is the name of a property or field,
+    /// then its return value determines whether the member should be serialized. This is the same technique used in some designers and is supported by the <a href="https://msdn.microsoft.com/en-us/library/System.Windows.Forms.PropertyGrid.aspx" target="_blank">System.Windows.Forms.PropertyGrid</a> control
+    /// as well (see also <see cref="XmlSerializationOptions.IgnoreShouldSerialize"/> option).</description></item>
+    /// <item><term><see cref="TypeConverterAttribute"/></term><description>This attribute is supported both for types and property/field members. If a <see cref="TypeConverter"/> supports serialization to and from <see cref="string"/> type,
+    /// then it will be used for serializing its value (see also <see cref="Reflector.RegisterTypeConverter{T,TC}">Reflector.RegisterTypeConverter</see> method).</description></item>
+    /// </list>
+    /// </para>
+    /// <para>Basically types with default constructor are supported. However, collections of read-only properties can be deserialized, if they implement <see cref="ICollection{T}"/> or <see cref="IList"/> interfaces
+    /// and the property value is not <see langword="null"/> after creating the instance.
+    /// <note>Objects without a default constructor can be serialized at root level by the <see cref="O:KGySoft.Libraries.Serialization.SerializeContent">SerializeContent</see> methods into an already existing
+    /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the method. When deserializing, the result object should be created by the caller, and the content can be deserialized
+    /// by the <see cref="O:KGySoft.Libraries.Serialization.DeserializeContent">DeserializeContent</see> methods.</note>
+    /// </para>
+    /// <para><strong>Options:</strong>
+    /// By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Libraries.Serialization.Serialize">Serialize</see> and <see cref="O:KGySoft.Libraries.Serialization.SerializeContent">SerializeContent</see>
+    /// methods you can control the default behavior of serialization. The default options ensure that only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
+    /// <list type="bullet">
+    /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> version and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
+    /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is not a standalone generic parameter.</description></item>
+    /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
+    /// <item><term>Simple objects</term><description>All of their instance fields and properties are public (for properties: both accessors) and non read-only.</description></item>
+    /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="ArrayList"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Queue"/>, <see cref="Stack{T}"/>, <see cref="Stack"/>,
+    /// <see cref="BitArray"/>, <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by default options. To support other collections
+    /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
+    /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
+    /// which cannot be retrieved by the public members when the collection is being serialized. On deserialization always the default constructor is used (unless the collection is returned by a read-only property, in which case the already
+    /// existing instance is used) so the collection is always instantiated by the default settings.</note>
+    /// </description></item>
+    /// </list>
+    /// </para>
+    /// <para>If a type cannot be serialized with the currently used options a <see cref="SerializationException"/> will be thrown.</para>
+    /// <para>You can use <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option to enable recursive serialization of every type of objects and collections. A collection type can be serialized if
+    /// it implements the <see cref="ICollection{T}"/> or <see cref="IList"/> interface, is not read-only and has a default constructor; or if it has an initializer constructor with a single parameter that can accept an <see cref="Array"/>
+    /// or <see cref="List{T}"/> instance (non-dictionaries) or a <see cref="Dictionary{TKey,TValue}"/> instance (dictionary collections). Non-collection types must have a parameterless constructor to be able to be deserialized.
+    /// <note type="caution">Enabling the <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option does not guarantee that the deserialized instances will be the same as the original ones.</note>
+    /// </para>
+    /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
+    /// will be stored in the result XML. Though this provides the best compatibility of any type, it hides the whole inner structure of the serialized object. If a root level object without native support is serialized by the
+    /// <see cref="O:KGySoft.Libraries.Serialization.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
+    /// <note>To use binary serialization only for some types or properties you can use specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property or type
+    /// (or you can use the <see cref="Reflector.RegisterTypeConverter{T,TC}">Reflector.RegisterTypeConverter</see> method for types).</note>
+    /// </para>
+    /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
+    /// <list type="bullet">
+    /// <item>Strings<term></term><description>If a string contains only white spaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly. <see cref="string"/> instances containing
+    /// invalid UTF-16 code points are also cannot be serialized.</description></item>
     /// <item><term>Collections with base element type</term><description>If the element type of a collection is a base type or an interface, then the system serializer throws an exception for derived element types
     /// suggesting that <see cref="XmlIncludeAttribute"/> should be defined for all possible derived types. Unfortunately this attribute is applicable only for possible types of properties/fields
-    /// but not for collection elements. And many times possible derived types simply cannot be predefined (for example <see cref="List{T}"/> with <see cref="object"/> type paramerer).</description></item>
-    /// <item>Strings<term></term><description>If a string contains only whitespaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly.</description></item>
+    /// but not for collection elements. And in many cases it simply cannot be predefined in advance what derived types will be used at run-time.</description></item>
+    /// <item><term>Collections with read-only properties</term><description>Usually collection properties can be read-only. But to be able to use the system serializer we need to define a setter for such properties; otherwise, serialization may fail.
+    /// <see cref="XmlSerializer"/> does not require setter accessor for a collection property if the property is not <see langword="null"/> after initialization and can be populated by using the usual collection interfaces.</description></item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -49,7 +99,7 @@ namespace KGySoft.Libraries.Serialization
     {
         #region Constants
 
-        private const XmlSerializationOptions DefaultOptions = XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays | XmlSerializationOptions.EscapeNewlineCharacters;
+        private const XmlSerializationOptions defaultOptions = XmlSerializationOptions.CompactSerializationOfPrimitiveArrays | XmlSerializationOptions.EscapeNewlineCharacters;
 
         #endregion
 
@@ -62,14 +112,14 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         /// <param name="obj">The object to serialize.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <returns>An <see cref="XElement"/> instance that contains the serialized object.
         /// Result can be deserialized by <see cref="Deserialize(XElement)"/> method.</returns>
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
-        public static XElement Serialize(object obj, XmlSerializationOptions options = DefaultOptions)
+        public static XElement Serialize(object obj, XmlSerializationOptions options = defaultOptions)
             => new XElementSerializer(options).Serialize(obj);
 
         /// <summary>
@@ -79,7 +129,7 @@ namespace KGySoft.Libraries.Serialization
         /// and will just be flushed but not closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="writer"/> must not be null.</exception>
         /// <exception cref="InvalidOperationException">The state of <paramref name="writer"/> is wrong or writer is closed.</exception>
         /// <exception cref="EncoderFallbackException">There is a character in the buffer that is a valid XML character but is not valid for the output encoding.
@@ -88,7 +138,7 @@ namespace KGySoft.Libraries.Serialization
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
-        public static void Serialize(XmlWriter writer, object obj, XmlSerializationOptions options = DefaultOptions)
+        public static void Serialize(XmlWriter writer, object obj, XmlSerializationOptions options = defaultOptions)
             => new XmlWriterSerializer(options).Serialize(writer, obj);
 
         /// <summary>
@@ -97,12 +147,12 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="fileName">Name of the file to create for serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be null.</exception>
         /// <exception cref="IOException">File cannot be created or write error.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        public static void Serialize(string fileName, object obj, XmlSerializationOptions options = DefaultOptions)
+        public static void Serialize(string fileName, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
@@ -128,12 +178,12 @@ namespace KGySoft.Libraries.Serialization
         /// The writer will not be closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="writer"/> must not be null.</exception>
         /// <exception cref="InvalidOperationException">The writer is closed.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options = DefaultOptions)
+        public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
@@ -153,7 +203,7 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="stream">A <see cref="Stream"/> used to write the XML document. The stream will not be closed after serialization.</param>
         /// <param name="obj">The <see cref="object"/> to serialize.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be null.</exception>
         /// <exception cref="NotSupportedException"><para>Serialization is not supported with provided <paramref name="options"/></para>
         /// <para>- or -</para>
@@ -161,7 +211,7 @@ namespace KGySoft.Libraries.Serialization
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
         /// <exception cref="IOException">An I/O error occurred.</exception>
         /// <exception cref="ObjectDisposedException">The stream is already closed.</exception>
-        public static void Serialize(Stream stream, object obj, XmlSerializationOptions options = DefaultOptions)
+        public static void Serialize(Stream stream, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream), Res.Get(Res.ArgumentNull));
@@ -187,7 +237,7 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
         /// <param name="parent">The parent under that the object will be saved. Its content can be deserialized by <see cref="DeserializeContent(XElement,object)"/> method.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
@@ -196,7 +246,7 @@ namespace KGySoft.Libraries.Serialization
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
         /// </remarks>
-        public static void SerializeContent(XElement parent, object obj, XmlSerializationOptions options = DefaultOptions)
+        public static void SerializeContent(XElement parent, object obj, XmlSerializationOptions options = defaultOptions)
             => new XElementSerializer(options).SerializeContent(parent, obj);
 
         /// <summary>
@@ -208,7 +258,7 @@ namespace KGySoft.Libraries.Serialization
         /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
         /// and will not be closed or flushed after serialization.</param>
         /// <param name="options">Options for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
+        /// <br/>Default value: <see cref="XmlSerializationOptions.CompactSerializationOfPrimitiveArrays"/>, <see cref="XmlSerializationOptions.EscapeNewlineCharacters"/></param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="writer"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
@@ -217,7 +267,7 @@ namespace KGySoft.Libraries.Serialization
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize(XmlWriter,object,XmlSerializationOptions)"/> method.
         /// </remarks>
-        public static void SerializeContent(XmlWriter writer, object obj, XmlSerializationOptions options = DefaultOptions)
+        public static void SerializeContent(XmlWriter writer, object obj, XmlSerializationOptions options = defaultOptions)
             => new XmlWriterSerializer(options).SerializeContent(writer, obj);
 
         #endregion

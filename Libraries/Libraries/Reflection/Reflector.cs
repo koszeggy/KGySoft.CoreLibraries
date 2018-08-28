@@ -167,12 +167,13 @@ namespace KGySoft.Libraries.Reflection
         /// <item><description><see cref="double"/></description></item>
         /// <item><description><see cref="decimal"/></description></item>
         /// <item><description><see cref="bool"/></description></item>
+        /// <item><description><see cref="IntPtr"/></description></item>
+        /// <item><description><see cref="UIntPtr"/></description></item>
         /// <item><description><see cref="Type"/></description></item>
         /// <item><description><see cref="DateTime"/></description></item>
         /// <item><description><see cref="DateTimeOffset"/></description></item>
         /// <item><description><see cref="TimeSpan"/></description></item>
         /// <item><description><see cref="DBNull"/> (if <paramref name="value"/> is <see langword="null"/>, returns null; otherwise, <paramref name="value"/> is ignored)</description></item>
-        /// <item><description><see cref="object"/> (<paramref name="value"/> treated as string but value <c>null</c> returns <see langword="null"/> reference and empty value returns a new <see cref="object"/> instance)</description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <c>null</c> or empty value returns <see langword="null"/>; oherwise, <paramref name="value"/> is parsed as the underlying type</description></item>
         /// <item><description>Any types that can convert their value from <see cref="string"/> by a <see cref="TypeConverter"/> class.</description></item>
         /// </list>
@@ -300,22 +301,10 @@ namespace KGySoft.Libraries.Reflection
                     DateTimeStyles style = value.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
                     return DateTimeOffset.Parse(value, culture, style);
                 }
-                if (type == ObjectType)
-                {
-                    if (value.Length == 0)
-                        return new object();
-                    return value;
-                }
                 if (type == typeof(DBNull))
                 {
                     return DBNull.Value;
                 }
-                //if (type == typeof(void))
-                //{
-                //    if (value == "null" || value.Length == 0)
-                //        return null;
-                //    throw new ArgumentException("Void type can only hold null value", "value");
-                //}
 
                 // Using type converter as a fallback
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
@@ -364,8 +353,6 @@ namespace KGySoft.Libraries.Reflection
         /// <item><description><see cref="bool"/></description></item>
         /// <item><description><see cref="DateTime"/></description></item>
         /// <item><description><see cref="Type"/></description></item>
-        /// <item><description><see cref="Void"/> (only "null" or empty value is accepted)</description></item>
-        /// <item><description><see cref="object"/> (value treated as string but value "null" returns <see langword="null"/> and empty string returns a new <see cref="object"/> instance)</description></item>
         /// <item><description><see cref="DBNull"/> (only "null", "DBNull" or empty value is accepted)</description></item>
         /// <item><description>Any types that can convert their value from System.String via type converters</description></item>
         /// </list>

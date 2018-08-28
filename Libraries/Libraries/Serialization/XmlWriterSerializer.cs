@@ -365,15 +365,6 @@ namespace KGySoft.Libraries.Serialization
                 // or when is simple object with public fields and/or properties
                 || hasDefaultCtor && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
             {
-#error
-                // TODO: az auto serialize feltételhez még: a fieldjei mind publikusak vagy compiler által generáltak, egyik sem readonly, és nincs eventje - ősbe kiemelni (típusellenőrzés nem kell, a rekurzió során majd kibukik, ha egy instance nem jó)
-                // TODO: if (!hasDefaultCtor) exception - így ugye Content vagy fallback esetén jövünk be
-                // TODO: XElement verzióba is ugyanez
-                // TODO: publikus fieldek serializálása
-                // TODO: Options leírásba: recursive None esetben akkor pontosan mikor + public property mellett field is
-                // TODO: Changelog
-                // TODO: tesztek
-
                 if (typeNeeded)
                     writer.WriteAttributeString("type", GetTypeString(type));
 
