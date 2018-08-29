@@ -983,7 +983,7 @@ namespace KGySoft.Libraries.Resources
                 writer.WriteAttributeString(ResXCommon.MimeTypeStr, mimeType);
 
             if (value != null && mimeType == null && (typeWithAlias == null || !typeWithAlias.StartsWith("System.Byte[]", StringComparison.Ordinal)) && PreserveSpaces(value))
-                writer.WriteAttributeString("xml", "space", null, "preserve");
+                writer.WriteAttributeString(ResXCommon.XmlStr, ResXCommon.SpaceStr, null, ResXCommon.PreserveStr);
 
             writer.WriteStartElement(ResXCommon.ValueStr);
             if (!string.IsNullOrEmpty(value))

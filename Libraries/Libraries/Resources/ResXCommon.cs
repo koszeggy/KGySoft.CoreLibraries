@@ -47,6 +47,10 @@ namespace KGySoft.Libraries.Resources
         internal const string AssemblyStr = "assembly";
         internal const string AliasStr = "alias";
 
+        internal const string XmlStr = "xml";
+        internal const string SpaceStr = "space";
+        internal const string PreserveStr = "preserve";
+
         internal const string ResXNullRefNameWinForms = "System.Resources.ResXNullRef, System.Windows.Forms";
         internal const string ResXFileRefNameWinForms = "System.Resources.ResXFileRef, System.Windows.Forms";
         internal const string ResXDataNodeNameWinForms = "System.Resources.ResXDataNode, System.Windows.Forms";

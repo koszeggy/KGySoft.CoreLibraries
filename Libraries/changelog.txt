@@ -49,11 +49,10 @@
 ============================================
 
 ! XmlSerializer:
-  ! XmlSerializationOptions change: BinarySerializationAsFallback is applied also for root-level collections unless
-    if RecursiveSerializationAsFallback is enabled at the same time. If both are enabled collections are serialized
-    recursively while non-natively supported objects are serialized by using binary serialization. Now collections
-    and are serialized recursively at any level with None options. Non-collection objects with public read-write
-    properties only are serialized recursively with None optione.
+  ! XmlSerializationOptions change: 
+    ! Obsolete flag ForcedSerializationValueTypesAsFallback removed.
+    ! BinarySerializationAsFallback is applied also for root-level collections
+    * None option allows to serialize some trusted collection types and object with only public properties and fields.
   + Escaping is possible even if a value is converted by a TypeConverter
   + Creates instances internally so there is no locking when used parallelly
   + Supporting read-only collections with initializer constructor

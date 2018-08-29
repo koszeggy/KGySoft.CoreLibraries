@@ -29,13 +29,13 @@ namespace KGySoft.Libraries.Serialization
                 throw new ArgumentNullException(nameof(reader), Res.Get(Res.ArgumentNull));
 
             ReadToNodeType(reader, XmlNodeType.Element);
-            if (reader.Name != "object")
+            if (reader.Name != XmlSerializer.ElementObject)
                 throw new ArgumentException(Res.Get(Res.XmlRootExpected, reader.Name), nameof(reader));
 
             if (reader.IsEmptyElement)
                 return null;
 
-            string attrType = reader["type"];
+            string attrType = reader[XmlSerializer.AttributeType];
             Type objType = null;
             if (attrType != null)
             {
@@ -66,8 +66,8 @@ namespace KGySoft.Libraries.Serialization
             Type objType = obj.GetType();
 
             // deserialize IXmlSerializable content
-            string attrFormat = reader["format"];
-            if (attrFormat == "custom")
+            string attrFormat = reader[XmlSerializer.AttributeFormat];
+            if (attrFormat == XmlSerializer.AttributeValueCustom)
             {
                 if (!(obj is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, objType));
@@ -206,7 +206,7 @@ namespace KGySoft.Libraries.Serialization
                 {
                     case XmlNodeType.Element:
                         PropertyInfo property = objRealType.GetProperty(reader.Name);
-                        string attrType = reader["type"];
+                        string attrType = reader[XmlSerializer.AttributeType];
                         Type itemType = null;
                         if (attrType != null)
                         {
@@ -308,13 +308,13 @@ namespace KGySoft.Libraries.Serialization
 
                         if (collectionElementType == null)
                         {
-                            if (reader.Name == "item")
+                            if (reader.Name == XmlSerializer.ElementItem)
                                 throw new SerializationException(Res.Get(Res.XmlNotACollection, objRealType));
                             throw new ReflectionException(Res.Get(Res.XmlHasNoProperty, objRealType, reader.Name));
                         }
 
                         // 2.) collection element
-                        if (reader.Name != "item")
+                        if (reader.Name != XmlSerializer.ElementItem)
                             throw new ArgumentException(Res.Get(Res.XmlItemExpected, reader.Name));
 
                         IEnumerable collection = (IEnumerable)obj;
@@ -365,8 +365,8 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // b.) Deserialize IXmlSerializable
-            string attrFormat = reader["format"];
-            if (type != null && attrFormat != null && attrFormat == "custom")
+            string format = reader[XmlSerializer.AttributeFormat];
+            if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 if (!(Reflector.Construct(type) is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, type));
@@ -403,12 +403,12 @@ namespace KGySoft.Libraries.Serialization
                         case XmlNodeType.Element:
                             switch (reader.Name)
                             {
-                                case "Key":
+                                case nameof(DictionaryEntry.Key):
                                     if (keyRead)
                                         throw new ArgumentException(Res.Get(Res.XmlMultipleKeys));
 
                                     keyRead = true;
-                                    string attrType = reader["type"];
+                                    string attrType = reader[XmlSerializer.AttributeType];
                                     if (attrType != null)
                                         keyType = Reflector.ResolveType(attrType);
                                     else
@@ -425,12 +425,12 @@ namespace KGySoft.Libraries.Serialization
                                     }
                                     break;
 
-                                case "Value":
+                                case nameof(DictionaryEntry.Value):
                                     if (valueRead)
                                         throw new ArgumentException(Res.Get(Res.XmlMultipleValues));
 
                                     valueRead = true;
-                                    attrType = reader["type"];
+                                    attrType = reader[XmlSerializer.AttributeType];
                                     if (attrType != null)
                                         valueType = Reflector.ResolveType(attrType);
                                     else
@@ -467,16 +467,16 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // e.) ValueType as binary
-            if (type != null && attrFormat != null && attrFormat.In("structbase64", "structbinary") && type.IsValueType)
+            if (type != null && format == XmlSerializer.AttributeValueStructBinary && type.IsValueType)
             {
-                string attrCrc = reader["CRC"];
+                string attrCrc = reader[XmlSerializer.AttributeCrc];
                 ReadToNodeType(reader, XmlNodeType.Text, XmlNodeType.EndElement);
                 byte[] data = reader.NodeType == XmlNodeType.Text
-                    ? (attrFormat == "structbase64" ? Convert.FromBase64String(reader.Value) : reader.Value.ParseHexBytes())
+                    ? Convert.FromBase64String(reader.Value)
                     : new byte[0];
                 if (attrCrc != null)
                 {
-                    if (Crc32.CalculateHash(data).ToString("X8") != attrCrc)
+                    if ($"{Crc32.CalculateHash(data):X8}" != attrCrc)
                         throw new ArgumentException(Res.Get(Res.XmlCrcError));
                 }
 
@@ -487,18 +487,18 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // f.) Binary
-            if (attrFormat.In("base64", "binary"))
+            if (format == XmlSerializer.AttributeValueBinary)
             {
                 if (reader.IsEmptyElement)
                     result = null;
                 else
                 {
-                    string attrCrc = reader["CRC"];
+                    string attrCrc = reader[XmlSerializer.AttributeCrc];
                     ReadToNodeType(reader, XmlNodeType.Text);
-                    byte[] data = attrFormat == "base64" ? Convert.FromBase64String(reader.Value) : reader.Value.ParseHexBytes();
+                    byte[] data = Convert.FromBase64String(reader.Value);
                     if (attrCrc != null)
                     {
-                        if (Crc32.CalculateHash(data).ToString("X8") != attrCrc)
+                        if ($"{Crc32.CalculateHash(data):X8}" != attrCrc)
                             throw new ArgumentException(Res.Get(Res.XmlCrcError));
                     }
 
@@ -561,8 +561,8 @@ namespace KGySoft.Libraries.Serialization
             int length = 0;
             int[] lengths = null;
             int[] lowerBounds = null;
-            string attrLength = reader["length"];
-            string attrDim = reader["dim"];
+            string attrLength = reader[XmlSerializer.AttributeLength];
+            string attrDim = reader[XmlSerializer.AttributeDim];
 
             if (attrLength != null)
             {
@@ -598,7 +598,7 @@ namespace KGySoft.Libraries.Serialization
             else
                 CheckArray(array, length, lengths, lowerBounds);
 
-            string attrCrc = reader["CRC"];
+            string attrCrc = reader[XmlSerializer.AttributeCrc];
             uint? origCrc = null, actualCrc = null;
             if (attrCrc != null)
             {
@@ -608,7 +608,6 @@ namespace KGySoft.Libraries.Serialization
                 origCrc = crc;
             }
 
-            string attrComp = reader["comp"];
             int deserializedItemsCount = 0;
             ArrayIndexer arrayIndexer = lengths == null ? null : new ArrayIndexer(lengths, lowerBounds);
             bool oldWay = false;
@@ -623,7 +622,7 @@ namespace KGySoft.Libraries.Serialization
                             throw new ArgumentException(Res.Get(Res.XmlMixedArrayFormats));
 
                         // primitive array (can be restored by BlockCopy)
-                        byte[] data = attrComp != null && attrComp == "base64" ? Convert.FromBase64String(reader.Value) : reader.Value.ParseHexBytes();
+                        byte[] data = Convert.FromBase64String(reader.Value);
 
                         // non-old way: crc can be missing and in such case crc is not calculated
                         if (origCrc != null || oldWay)
@@ -647,10 +646,10 @@ namespace KGySoft.Libraries.Serialization
 
                     case XmlNodeType.Element:
                         // complex array: recursive deserialization needed
-                        if (reader.Name == "item")
+                        if (reader.Name == XmlSerializer.ElementItem)
                         {
                             Type itemType = null;
-                            string attrType = reader["type"];
+                            string attrType = reader[XmlSerializer.AttributeType];
                             if (attrType != null)
                                 itemType = Reflector.ResolveType(attrType);
                             if (itemType == null)
@@ -676,9 +675,6 @@ namespace KGySoft.Libraries.Serialization
                         throw new ArgumentException(Res.Get(Res.XmlUnexpectedElement, reader.Name));
 
                     case XmlNodeType.EndElement:
-                        if (reader.Name.In("Data", "CRC"))
-                            continue;
-
                         // in end element of parent: checking items count
                         if (deserializedItemsCount != array.Length)
                             throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, deserializedItemsCount));
@@ -711,7 +707,7 @@ namespace KGySoft.Libraries.Serialization
             if (reader.IsEmptyElement)
                 return null;
 
-            bool escaped = reader["escaped"] == "true";
+            bool escaped = reader[XmlSerializer.AttributeEscaped] == XmlSerializer.AttributeValueTrue;
 
             // non-empty: reading to en element and returning content
             StringBuilder result = new StringBuilder();

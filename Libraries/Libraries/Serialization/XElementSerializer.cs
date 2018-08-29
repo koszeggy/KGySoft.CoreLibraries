@@ -30,11 +30,11 @@ namespace KGySoft.Libraries.Serialization
         /// Result can be deserialized by <see cref="XElementDeserializer.Deserialize(XElement)"/> method.</returns>
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
-        /// Serialization is not supported with provided <paramref name="options"/></exception>
+        /// Serialization is not supported with provided options.</exception>
         /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         public XElement Serialize(object obj)
         {
-            XElement result = new XElement("object");
+            XElement result = new XElement(XmlSerializer.ElementObject);
             if (obj == null)
                 return result;
 
@@ -122,7 +122,7 @@ namespace KGySoft.Libraries.Serialization
             if (collection is Array array)
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(collection.GetType())));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(collection.GetType())));
 
                 // multidimensional or nonzero-based array
                 if (array.Rank > 1 || array.GetLowerBound(0) != 0)
@@ -132,25 +132,18 @@ namespace KGySoft.Libraries.Serialization
                     {
                         int low;
                         if ((low = array.GetLowerBound(i)) != 0)
-                        {
-                            dim.Append(low + ".." + (low + array.GetLength(i) - 1));
-                        }
+                            dim.Append($"{low.ToString(CultureInfo.InvariantCulture)}..{(low + array.GetLength(i) - 1).ToString(CultureInfo.InvariantCulture)}");
                         else
-                        {
-                            dim.Append(array.GetLength(i));
-                        }
+                            dim.Append(array.GetLength(i).ToString(CultureInfo.InvariantCulture));
 
                         if (i < array.Rank - 1)
-                        {
                             dim.Append(',');
-                        }
-
                     }
 
-                    parent.Add(new XAttribute("dim", dim));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeDim, dim));
                 }
                 else
-                    parent.Add(new XAttribute("length", array.Length.ToString(CultureInfo.InvariantCulture)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeLength, array.Length.ToString(CultureInfo.InvariantCulture)));
 
                 // array of a primitive type
                 if (elementType.IsPrimitive && (Options & XmlSerializationOptions.CompactSerializationOfPrimitiveArrays) != XmlSerializationOptions.None)
@@ -159,10 +152,9 @@ namespace KGySoft.Libraries.Serialization
                     {
                         byte[] data = new byte[Buffer.ByteLength(array)];
                         Buffer.BlockCopy(array, 0, data, 0, data.Length);
-                        parent.Add(new XAttribute("comp", "base64"));
                         parent.Add(Convert.ToBase64String(data));
                         if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                            parent.Add(new XAttribute("CRC", Crc32.CalculateHash(data).ToString("X8")));
+                            parent.Add(new XAttribute(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}"));
                     }
                 }
                 // non-primitive type array or compact serialization is not enabled
@@ -171,7 +163,7 @@ namespace KGySoft.Libraries.Serialization
                     bool elementTypeNeeded = elementType.CanBeDerived();
                     foreach (var item in array)
                     {
-                        XElement child = new XElement("item");
+                        XElement child = new XElement(XmlSerializer.ElementItem);
                         Type itemType = null;
                         if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
                         {
@@ -186,7 +178,7 @@ namespace KGySoft.Libraries.Serialization
             else
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(collection.GetType())));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(collection.GetType())));
 
                 // serializing main properties first
                 SerializeProperties(collection, parent);
@@ -195,7 +187,7 @@ namespace KGySoft.Libraries.Serialization
                 bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in collection)
                 {
-                    XElement child = new XElement("item");
+                    XElement child = new XElement(XmlSerializer.ElementItem);
                     Type itemType = null;
                     if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
                         parent.Add(child);
@@ -219,7 +211,7 @@ namespace KGySoft.Libraries.Serialization
             if (Reflector.CanParseNatively(type) && !(obj is Type && ((Type)obj).IsGenericParameter))
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
                 WriteStringValue(obj, parent);
                 return true;
             }
@@ -230,7 +222,7 @@ namespace KGySoft.Libraries.Serialization
                 if (!type.IsValueType && type.GetDefaultConstructor() == null)
                     throw new SerializationException(Res.Get(Res.XmlSerializableNoDefaultCtor, type));
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
                 SerializeXmlSerializable(xmlSerializable, parent);
                 return true;
@@ -241,7 +233,7 @@ namespace KGySoft.Libraries.Serialization
             if (converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
                 WriteStringValue(converter.ConvertToInvariantString(obj), parent);
                 return true;
             }
@@ -250,7 +242,7 @@ namespace KGySoft.Libraries.Serialization
             if (type == Reflector.ObjectType)
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
                 parent.Add(String.Empty);
                 return true;
@@ -260,7 +252,7 @@ namespace KGySoft.Libraries.Serialization
             if (type == typeof(DictionaryEntry))
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
                 // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
                 SerializeProperties(obj, parent);
@@ -271,12 +263,12 @@ namespace KGySoft.Libraries.Serialization
             if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
-                object key = Reflector.GetInstancePropertyByName(obj, "Key");
-                object value = Reflector.GetInstancePropertyByName(obj, "Value");
-                XElement xKey = new XElement("Key");
-                XElement xValue = new XElement("Value");
+                object key = Reflector.GetInstancePropertyByName(obj, nameof(KeyValuePair<_,_>.Key));
+                object value = Reflector.GetInstancePropertyByName(obj, nameof(KeyValuePair<_,_>.Value));
+                XElement xKey = new XElement(nameof(KeyValuePair<_,_>.Key));
+                XElement xValue = new XElement(nameof(KeyValuePair<_,_>.Value));
                 parent.Add(xKey, xValue);
                 if (key != null)
                 {
@@ -296,25 +288,16 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // f.) value type as binary only if enabled
-            if (type.IsValueType && ((IsForcedSerializationValueTypesEnabled && !IsBinarySerializationEnabled) || IsCompactSerializationValueTypesEnabled))
+            if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeStruct((ValueType)obj, out byte[] data))
             {
-                byte[] data;
-                if (BinarySerializer.TrySerializeStruct((ValueType)obj, out data))
-                {
-                    if (typeNeeded)
-                        parent.Add(new XAttribute("type", GetTypeString(type)));
+                if (typeNeeded)
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
-                    parent.Add(new XAttribute("format", "structbase64"));
-                    if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        parent.Add(new XAttribute("CRC", Crc32.CalculateHash(data).ToString("X8")));
-                    parent.Add(Convert.ToBase64String(data));
-                    return true;
-                }
-                else if (!(visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled || IsBinarySerializationEnabled))
-                {
-                    if (IsForcedSerializationValueTypesEnabled)
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeValueType, obj.GetType(), Options));
-                }
+                parent.Add(new XAttribute(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueStructBinary));
+                if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
+                    parent.Add(new XAttribute(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}"));
+                parent.Add(Convert.ToBase64String(data));
+                return true;
             }
 
             // g.) binary serialization: base64 format to XML
@@ -350,7 +333,7 @@ namespace KGySoft.Libraries.Serialization
                 || type.CanBeCreatedWithoutParameters() && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
             {
                 if (typeNeeded)
-                    parent.Add(new XAttribute("type", GetTypeString(type)));
+                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
                 SerializeContent(parent, obj);
                 return true;
@@ -382,7 +365,7 @@ namespace KGySoft.Libraries.Serialization
                 // Skip 3.) ShouldSerialize<PropertyName> method returns false
                 if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
                 {
-                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod("ShouldSerialize" + property.Name,
+                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod(XmlSerializer.MethodShouldSerialize + property.Name,
                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         null, Type.EmptyTypes, null);
                     if (shouldSerializeProperty != null && shouldSerializeProperty.ReturnType == typeof(bool))
@@ -496,7 +479,7 @@ namespace KGySoft.Libraries.Serialization
                 parent.Add(content);
             }
 
-            parent.Add(new XAttribute("format", "custom"));
+            parent.Add(new XAttribute(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueCustom));
         }
 
         /// <summary>
@@ -504,13 +487,13 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         private void SerializeBinary(object obj, XContainer parent)
         {
-            parent.Add(new XAttribute("format", "base64"));
+            parent.Add(new XAttribute(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueBinary));
             if (obj == null)
                 return;
             BinarySerializationOptions binSerOptions = GetBinarySerializationOptions();
             byte[] data = BinarySerializer.Serialize(obj, binSerOptions);
             if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                parent.Add(new XAttribute("CRC", Crc32.CalculateHash(data).ToString("X8")));
+                parent.Add(new XAttribute(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}"));
             parent.Add(Convert.ToBase64String(data));
         }
 
@@ -518,9 +501,9 @@ namespace KGySoft.Libraries.Serialization
         {
             string s = GetStringValue(obj, out bool spacePreserved, out bool escaped);
             if (spacePreserved)
-                parent.Add(new XAttribute(XNamespace.Xml + "space", "preserve"));
+                parent.Add(new XAttribute(XNamespace.Xml + XmlSerializer.AttributeSpace, XmlSerializer.AttributeValuePreserve));
             if (escaped)
-                parent.Add(new XAttribute("escaped", "true"));
+                parent.Add(new XAttribute(XmlSerializer.AttributeEscaped, XmlSerializer.AttributeValueTrue));
 
             parent.Add(s);
         }

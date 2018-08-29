@@ -99,7 +99,36 @@ namespace KGySoft.Libraries.Serialization
     {
         #region Constants
 
+        #region Private Constants
+
         private const XmlSerializationOptions defaultOptions = XmlSerializationOptions.CompactSerializationOfPrimitiveArrays | XmlSerializationOptions.EscapeNewlineCharacters;
+
+        #endregion
+
+        #region Internal Constants
+
+        internal const string NamespaceXml = "xml";
+
+        internal const string AttributeSpace = "space";
+        internal const string AttributeCrc = "crc";
+        internal const string AttributeEscaped = "escaped";
+        internal const string AttributeFormat = "format";
+        internal const string AttributeType = "type";
+        internal const string AttributeLength = "length";
+        internal const string AttributeDim = "dim";
+
+        internal const string AttributeValuePreserve = "preserve";
+        internal const string AttributeValueTrue = "true";
+        internal const string AttributeValueCustom = "custom";
+        internal const string AttributeValueStructBinary = "structBinary";
+        internal const string AttributeValueBinary = "binary";
+
+        internal const string ElementObject = "object";
+        internal const string ElementItem = "item";
+
+        internal const string MethodShouldSerialize = "ShouldSerialize";
+
+        #endregion
 
         #endregion
 

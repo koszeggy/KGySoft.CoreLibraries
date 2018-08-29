@@ -942,9 +942,6 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationValueTypesAsFallback); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationValueTypesAsFallback); // BinarySerializableStruct, NonSerializableStruct
-
             CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element

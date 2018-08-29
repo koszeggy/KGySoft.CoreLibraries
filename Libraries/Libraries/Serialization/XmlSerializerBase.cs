@@ -39,10 +39,6 @@ namespace KGySoft.Libraries.Serialization
 
         protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
 
-#pragma warning disable 618, 612 // Disabling warning for obsolete enum member because this must be still handled
-        protected bool IsForcedSerializationValueTypesEnabled => (Options & XmlSerializationOptions.ForcedSerializationValueTypesAsFallback) != XmlSerializationOptions.None;
-#pragma warning restore 618, 612
-
         protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
 
         protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;

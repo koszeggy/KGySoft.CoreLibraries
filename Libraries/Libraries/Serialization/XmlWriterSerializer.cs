@@ -25,7 +25,7 @@ namespace KGySoft.Libraries.Serialization
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
 
-            writer.WriteStartElement("object");
+            writer.WriteStartElement(XmlSerializer.ElementObject);
             if (obj == null)
             {
                 writer.WriteEndElement();
@@ -107,7 +107,7 @@ namespace KGySoft.Libraries.Serialization
             if (collection is Array array)
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(collection.GetType()));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
 
                 // multidimensional or nonzero-based array
                 if (array.Rank > 1 || array.GetLowerBound(0) != 0)
@@ -132,10 +132,10 @@ namespace KGySoft.Libraries.Serialization
 
                     }
 
-                    writer.WriteAttributeString("dim", dim.ToString());
+                    writer.WriteAttributeString(XmlSerializer.AttributeDim, dim.ToString());
                 }
                 else
-                    writer.WriteAttributeString("length", array.Length.ToString(CultureInfo.InvariantCulture));
+                    writer.WriteAttributeString(XmlSerializer.AttributeLength, array.Length.ToString(CultureInfo.InvariantCulture));
 
                 if (array.Length == 0)
                 {
@@ -149,9 +149,8 @@ namespace KGySoft.Libraries.Serialization
                 {
                     byte[] data = new byte[Buffer.ByteLength(array)];
                     Buffer.BlockCopy(array, 0, data, 0, data.Length);
-                    writer.WriteAttributeString("comp", "base64");
                     if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        writer.WriteAttributeString("CRC", Crc32.CalculateHash(data).ToString("X8"));
+                        writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
                     writer.WriteString(Convert.ToBase64String(data));
 
                     return;
@@ -161,7 +160,7 @@ namespace KGySoft.Libraries.Serialization
                 bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in array)
                 {
-                    writer.WriteStartElement("item");
+                    writer.WriteStartElement(XmlSerializer.ElementItem);
                     Type itemType = null;
                     if (item == null)
                     {
@@ -181,7 +180,7 @@ namespace KGySoft.Libraries.Serialization
             else
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(collection.GetType()));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
 
                 // serializing main properties first
                 SerializeProperties(collection, writer);
@@ -190,7 +189,7 @@ namespace KGySoft.Libraries.Serialization
                 bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in collection)
                 {
-                    writer.WriteStartElement("item");
+                    writer.WriteStartElement(XmlSerializer.ElementItem);
                     Type itemType = null;
                     if (item == null)
                         writer.WriteEndElement();
@@ -217,7 +216,7 @@ namespace KGySoft.Libraries.Serialization
             if (Reflector.CanParseNatively(type) && !(obj is Type && ((Type)obj).IsGenericParameter))
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 WriteStringValue(obj, writer);
                 return true;
@@ -229,7 +228,7 @@ namespace KGySoft.Libraries.Serialization
                 if (!type.IsValueType && type.GetDefaultConstructor() == null)
                     throw new SerializationException(Res.Get(Res.XmlSerializableNoDefaultCtor, type));
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 SerializeXmlSerializable(xmlSerializable, writer);
                 return true;
@@ -240,7 +239,7 @@ namespace KGySoft.Libraries.Serialization
             if (converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 writer.WriteString(converter.ConvertToInvariantString(obj));
@@ -251,7 +250,7 @@ namespace KGySoft.Libraries.Serialization
             if (obj.GetType() == Reflector.ObjectType)
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
                 writer.WriteString(String.Empty);
 
                 return true;
@@ -261,7 +260,7 @@ namespace KGySoft.Libraries.Serialization
             if (type == typeof(DictionaryEntry))
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
                 SerializeProperties(obj, writer);
@@ -272,12 +271,12 @@ namespace KGySoft.Libraries.Serialization
             if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
-                object key = Reflector.GetInstancePropertyByName(obj, "Key");
-                object value = Reflector.GetInstancePropertyByName(obj, "Value");
+                object key = Reflector.GetInstancePropertyByName(obj, nameof(KeyValuePair<_,_>.Key));
+                object value = Reflector.GetInstancePropertyByName(obj, nameof(KeyValuePair<_,_>.Value));
 
-                writer.WriteStartElement("Key");
+                writer.WriteStartElement(nameof(KeyValuePair<_,_>.Key));
                 if (key == null)
                 {
                     writer.WriteEndElement();
@@ -292,7 +291,7 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteFullEndElement();
                 }
 
-                writer.WriteStartElement("Value");
+                writer.WriteStartElement(nameof(KeyValuePair<_,_>.Value));
                 if (value == null)
                 {
                     writer.WriteEndElement();
@@ -311,25 +310,16 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // f.) value type as binary only if enabled
-            if (type.IsValueType && ((IsForcedSerializationValueTypesEnabled && IsBinarySerializationEnabled) || IsCompactSerializationValueTypesEnabled))
+            if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeStruct((ValueType)obj, out byte[] data))
             {
-                byte[] data;
-                if (BinarySerializer.TrySerializeStruct((ValueType)obj, out data))
-                {
-                    if (typeNeeded)
-                        writer.WriteAttributeString("type", GetTypeString(type));
+                if (typeNeeded)
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
-                    writer.WriteAttributeString("format", "structbase64");
-                    if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        writer.WriteAttributeString("CRC", Crc32.CalculateHash(data).ToString("X8"));
-                    writer.WriteString(Convert.ToBase64String(data));
-                    return true;
-                }
-                else if (!(visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled || IsBinarySerializationEnabled))
-                {
-                    if (IsForcedSerializationValueTypesEnabled)
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeValueType, obj.GetType(), Options));
-                }
+                writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueStructBinary);
+                if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
+                    writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
+                writer.WriteString(Convert.ToBase64String(data));
+                return true;
             }
 
             // g.) binary serialization: base64 format to XML
@@ -366,7 +356,7 @@ namespace KGySoft.Libraries.Serialization
                 || hasDefaultCtor && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
             {
                 if (typeNeeded)
-                    writer.WriteAttributeString("type", GetTypeString(type));
+                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 SerializeContent(writer, obj);
                 return true;
@@ -395,7 +385,7 @@ namespace KGySoft.Libraries.Serialization
                 // Skip 3.) ShouldSerialize<PropertyName> method returns false
                 if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
                 {
-                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod("ShouldSerialize" + property.Name,
+                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod(XmlSerializer.MethodShouldSerialize + property.Name,
                         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                         null, Type.EmptyTypes, null);
                     if (shouldSerializeProperty != null && shouldSerializeProperty.ReturnType == typeof(bool))
@@ -491,7 +481,7 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         private void SerializeXmlSerializable(IXmlSerializable obj, XmlWriter writer)
         {
-            writer.WriteAttributeString("format", "custom");
+            writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueCustom);
 
             Type objType = obj.GetType();
             string contentName = null;
@@ -512,7 +502,7 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         private void SerializeBinary(object obj, XmlWriter writer)
         {
-            writer.WriteAttributeString("format", "base64");
+            writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueBinary);
 
             if (obj == null)
                 return;
@@ -521,7 +511,7 @@ namespace KGySoft.Libraries.Serialization
             byte[] data = BinarySerializer.Serialize(obj, binSerOptions);
 
             if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                writer.WriteAttributeString("CRC", Crc32.CalculateHash(data).ToString("X8"));
+                writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
             writer.WriteString(Convert.ToBase64String(data));
         }
 
@@ -529,9 +519,9 @@ namespace KGySoft.Libraries.Serialization
         {
             string s = GetStringValue(obj, out bool spacePreserved, out bool escaped);
             if (spacePreserved)
-                writer.WriteAttributeString("xml", "space", null, "preserve");
+                writer.WriteAttributeString(XmlSerializer.NamespaceXml, XmlSerializer.AttributeSpace, null, XmlSerializer.AttributeValuePreserve);
             if (escaped)
-                writer.WriteAttributeString("escaped", "true");
+                writer.WriteAttributeString(XmlSerializer.AttributeEscaped, XmlSerializer.AttributeValueTrue);
 
             writer.WriteString(s);
         }

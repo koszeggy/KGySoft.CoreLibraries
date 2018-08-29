@@ -29,13 +29,13 @@ namespace KGySoft.Libraries.Serialization
             if (content == null)
                 throw new ArgumentNullException(nameof(content), Res.Get(Res.ArgumentNull));
 
-            if (content.Name.LocalName != "object")
+            if (content.Name.LocalName != XmlSerializer.ElementObject)
                 throw new ArgumentException(Res.Get(Res.XmlRootExpected, content.Name.LocalName), nameof(content));
 
             if (content.IsEmpty)
                 return null;
 
-            XAttribute attrType = content.Attribute("type");
+            XAttribute attrType = content.Attribute(XmlSerializer.AttributeType);
 
             Type objType = null;
             if (attrType != null)
@@ -65,8 +65,8 @@ namespace KGySoft.Libraries.Serialization
             Type objType = obj.GetType();
 
             // deserialize IXmlSerializable content
-            XAttribute attrFormat = parent.Attribute("format");
-            if (attrFormat != null && attrFormat.Value == "custom")
+            XAttribute attrFormat = parent.Attribute(XmlSerializer.AttributeFormat);
+            if (attrFormat != null && attrFormat.Value == XmlSerializer.AttributeValueCustom)
             {
                 if (!(obj is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, objType));
@@ -200,7 +200,7 @@ namespace KGySoft.Libraries.Serialization
             foreach (XElement propertyOrItem in parent.Elements())
             {
                 PropertyInfo property = objRealType.GetProperty(propertyOrItem.Name.LocalName);
-                XAttribute attrType = propertyOrItem.Attribute("type");
+                XAttribute attrType = propertyOrItem.Attribute(XmlSerializer.AttributeType);
                 Type itemType = null;
                 if (attrType != null)
                 {
@@ -302,13 +302,13 @@ namespace KGySoft.Libraries.Serialization
 
                 if (collectionElementType == null)
                 {
-                    if (propertyOrItem.Name.LocalName == "item")
+                    if (propertyOrItem.Name.LocalName == XmlSerializer.ElementItem)
                         throw new SerializationException(Res.Get(Res.XmlNotACollection, objRealType));
                     throw new ReflectionException(Res.Get(Res.XmlHasNoProperty, objRealType, propertyOrItem.Name.LocalName));
                 }
 
                 // 2.) collection element
-                if (propertyOrItem.Name.LocalName != "item")
+                if (propertyOrItem.Name.LocalName != XmlSerializer.ElementItem)
                     throw new ArgumentException(Res.Get(Res.XmlItemExpected, propertyOrItem.Name.LocalName));
 
                 IEnumerable collection = (IEnumerable)obj;
@@ -354,8 +354,8 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // b.) Deserialize IXmlSerializable
-            XAttribute attrFormat = element.Attribute("format");
-            if (type != null && attrFormat != null && attrFormat.Value == "custom")
+            string format = element.Attribute(XmlSerializer.AttributeFormat)?.Value;
+            if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 if (!(Reflector.Construct(type) is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, type));
@@ -382,10 +382,10 @@ namespace KGySoft.Libraries.Serialization
                 object value;
 
                 // key
-                XElement xItem = element.Element("Key");
+                XElement xItem = element.Element(nameof(DictionaryEntry.Key));
                 if (xItem == null)
                     throw new ArgumentException(Res.Get(Res.XmlKeyValueMissingKey));
-                XAttribute xType = xItem.Attribute("type");
+                XAttribute xType = xItem.Attribute(XmlSerializer.AttributeType);
                 Type keyType, valueType;
                 if (xType != null)
                     keyType = Reflector.ResolveType(xType.Value);
@@ -403,10 +403,10 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // value
-                xItem = element.Element("Value");
+                xItem = element.Element(nameof(DictionaryEntry.Value));
                 if (xItem == null)
                     throw new ArgumentException(Res.Get(Res.XmlKeyValueMissingValue));
-                xType = xItem.Attribute("type");
+                xType = xItem.Attribute(XmlSerializer.AttributeType);
                 if (xType != null)
                     valueType = Reflector.ResolveType(xType.Value);
                 else
@@ -428,13 +428,13 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // e.) ValueType as binary
-            if (type != null && attrFormat != null && attrFormat.Value.In("structbase64", "structbinary") && type.IsValueType)
+            if (type != null && format == XmlSerializer.AttributeValueStructBinary && type.IsValueType)
             {
-                byte[] data = attrFormat.Value == "structbase64" ? Convert.FromBase64String(element.Value) : element.Value.ParseHexBytes();
-                XAttribute attrCrc = element.Attribute("CRC");
+                byte[] data = Convert.FromBase64String(element.Value);
+                XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
                 if (attrCrc != null)
                 {
-                    if (Crc32.CalculateHash(data).ToString("X8") != attrCrc.Value)
+                    if ($"{Crc32.CalculateHash(data):X8}" != attrCrc.Value)
                         throw new ArgumentException(Res.Get(Res.XmlCrcError));
                 }
 
@@ -443,17 +443,17 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // f.) Binary
-            if (attrFormat != null && attrFormat.Value.In("base64", "binary"))
+            if (format == XmlSerializer.AttributeValueBinary)
             {
                 if (element.IsEmpty)
                     result = null;
                 else
                 {
-                    byte[] data = attrFormat.Value == "base64" ? Convert.FromBase64String(element.Value) : element.Value.ParseHexBytes();
-                    XAttribute attrCrc = element.Attribute("CRC");
+                    byte[] data = Convert.FromBase64String(element.Value);
+                    XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
                     if (attrCrc != null)
                     {
-                        if (Crc32.CalculateHash(data).ToString("X8") != attrCrc.Value)
+                        if ($"{Crc32.CalculateHash(data):X8}" != attrCrc.Value)
                             throw new ArgumentException(Res.Get(Res.XmlCrcError));
                     }
 
@@ -513,8 +513,8 @@ namespace KGySoft.Libraries.Serialization
             int length = 0;
             int[] lengths = null;
             int[] lowerBounds = null;
-            XAttribute attrLength = element.Attribute("length");
-            XAttribute attrDim = element.Attribute("dim");
+            XAttribute attrLength = element.Attribute(XmlSerializer.AttributeLength);
+            XAttribute attrDim = element.Attribute(XmlSerializer.AttributeDim);
 
             if (attrLength != null)
             {
@@ -550,29 +550,17 @@ namespace KGySoft.Libraries.Serialization
             else
                 CheckArray(array, length, lengths, lowerBounds);
 
-            XElement elementData = element.Element("Data");
-            // has Data element or has no elements: primitive array (can be restored by BlockCopy)
-            if (elementData != null || (length > 0 && !element.HasElements))
+            // has no elements: primitive array (can be restored by BlockCopy)
+            if (length > 0 && !element.HasElements)
             {
-                string value = elementData != null ? elementData.Value : element.Value;
-                XAttribute attrComp = element.Attribute("comp");
-
-                byte[] data = attrComp != null && attrComp.Value == "base64" ? Convert.FromBase64String(value) : value.ParseHexBytes();
-
-                string crc = null;
-                XAttribute attrCrc = element.Attribute("CRC");
-                if (attrCrc != null)
-                    crc = attrCrc.Value;
-                else
-                {
-                    XElement elementCrc = element.Element("CRC");
-                    if (elementCrc != null)
-                        crc = elementCrc.Value;
-                }
+                string value = element.Value;
+                byte[] data = Convert.FromBase64String(value);
+                XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
+                string crc = attrCrc?.Value;
 
                 if (crc != null)
                 {
-                    if (Crc32.CalculateHash(data).ToString("X8") != crc)
+                    if ($"{Crc32.CalculateHash(data):X8}" != crc)
                         throw new ArgumentException(Res.Get(Res.XmlCrcError));
                 }
 
@@ -581,7 +569,7 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // complex array: recursive deserialization needed
-            Queue<XElement> items = new Queue<XElement>(element.Elements("item"));
+            Queue<XElement> items = new Queue<XElement>(element.Elements(XmlSerializer.ElementItem));
             if (items.Count != array.Length)
                 throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, items.Count));
 
@@ -590,7 +578,7 @@ namespace KGySoft.Libraries.Serialization
             {
                 XElement item = items.Dequeue();
                 Type itemType = null;
-                XAttribute attrType = item.Attribute("type");
+                XAttribute attrType = item.Attribute(XmlSerializer.AttributeType);
                 if (attrType != null)
                     itemType = Reflector.ResolveType(attrType.Value);
                 if (itemType == null)
@@ -628,8 +616,8 @@ namespace KGySoft.Libraries.Serialization
             if (element.IsEmpty)
                 return null;
 
-            XAttribute attrEscaped = element.Attribute("escaped");
-            if (attrEscaped == null || attrEscaped.Value != "true")
+            XAttribute attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped);
+            if (attrEscaped == null || attrEscaped.Value != XmlSerializer.AttributeValueTrue)
                 return element.Value;
 
             return Unescape(element.Value);
