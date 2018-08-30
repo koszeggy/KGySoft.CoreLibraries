@@ -1388,14 +1388,17 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeNonPopulatableCollectionsWithProperties()
         {
-            // TODO: az auto serialize feltételhez még: a fieldjei mind publikusak vagy compiler által generáltak, egyik sem readonly, és nincs eventje - ősbe kiemelni (típusellenőrzés nem kell, a rekurzió során majd kibukik, ha egy instance nem jó)
+#error
+            // TODO: publikus fieldek serializálása
+            //  - SerializeProperties: XElement elvileg kész
+            //  - TrySerializeObjects: az auto serialize feltételhez még: a fieldjei mind publikusak vagy compiler által generáltak, egyik sem readonly, és nincs eventje - ősbe kiemelni (típusellenőrzés nem kell, a rekurzió során majd kibukik, ha egy instance nem jó)
             // TODO: if (!hasDefaultCtor) exception - így ugye Content vagy fallback esetén jövünk be
             // TODO: XElement verzióba is ugyanez
             // TODO: BinaryTypeConverter - leírásban már ott van
-            // TODO: CRC attribútumban kisbetű
-            // TODO: publikus fieldek serializálása
-            // TODO: Options leírásba: recursive None esetben akkor pontosan mikor + public property mellett field is
-            //       - Populatable collection readonly propertyvel None esetén is serializálható legyen, frissíteni a leírásban ("Such types are" lista), és a Recursive opciónál is
+            // TODO: Options
+            //  - ForceSerializeReadOnlyMembers - propertynél a deserializálás csak akkor fog működni, ha az instance nem null - ekkor csak IXmlSerializable és deserialize content működik (csak ha nem primitív/type converter/customon kívól más format)
+            //  - leírásba: recursive None esetben akkor pontosan mikor + public property mellett field is
+            //  - Populatable collection readonly propertyvel None esetén is serializálható legyen, frissíteni a leírásban ("Such types are" lista), és a Recursive opciónál is
             // TODO: Changelog
             // TODO: tesztek
             throw new NotImplementedException("TODO: Read-Only collections with read-write, read-only array and read-only collection parameters.");
