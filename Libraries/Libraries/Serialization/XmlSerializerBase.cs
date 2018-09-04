@@ -2,6 +2,9 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using KGySoft.Libraries.Collections;
@@ -29,6 +32,18 @@ namespace KGySoft.Libraries.Serialization
             typeof(ConcurrentStack<>),
         };
 
+        private static readonly Cache<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted);
+
+        private static bool IsTypeTrusted(Type type) =>
+            // has default constructor
+            type.CanBeCreatedWithoutParameters()
+            // has only public get/set non-delegate properties, or read-only properties of trusted collections
+            && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.GetGetMethod() != null && !p.PropertyType.IsDelegate() && (p.GetSetMethod() != null || IsTrustedCollection(p.PropertyType)))
+            // and all fields are writable (or read-only of trusted collections) and public (or generated) and non-delegates
+            && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f => (!f.IsInitOnly || IsTrustedCollection(f.FieldType)) && !f.FieldType.IsDelegate() && (f.IsPublic || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null))
+            // and the type has no instance events
+            && type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length == 0;
+
         private HashSet<object> serObjects;
 
         protected XmlSerializationOptions Options { get; }
@@ -42,6 +57,10 @@ namespace KGySoft.Libraries.Serialization
         protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
 
         protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+
+        protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
+
+        protected bool ForceReadonlyMembers => (Options & XmlSerializationOptions.ForceSerializeReadOnlyMembers) != XmlSerializationOptions.None;
 
         protected BinarySerializationOptions GetBinarySerializationOptions()
         {
@@ -58,6 +77,14 @@ namespace KGySoft.Libraries.Serialization
 
         protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
+
+        protected bool IsTrustedType(Type type)
+        {
+            lock (trustedTypesCache)
+            {
+                return trustedTypesCache[type];
+            }
+        }
 
         /// <summary>
         /// Registers object to detect circular reference.

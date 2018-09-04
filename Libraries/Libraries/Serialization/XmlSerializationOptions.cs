@@ -112,5 +112,9 @@ namespace KGySoft.Libraries.Serialization
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         OmitCrcAttribute = 1 << 10,
+
+        ExcludeFields = 1 << 11,
+
+        ForceSerializeReadOnlyMembers = 1 << 12
     }
 }

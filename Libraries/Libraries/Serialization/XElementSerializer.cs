@@ -329,8 +329,8 @@ namespace KGySoft.Libraries.Serialization
 
             // i.) recursive serialization, if enabled
             if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
-                // or when all of the instance properties are read-write and both accessors are public
-                || type.CanBeCreatedWithoutParameters() && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
+                // or when it has public properties/fields only
+                || IsTrustedType(type))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
@@ -345,8 +345,10 @@ namespace KGySoft.Libraries.Serialization
         private void SerializeProperties(object obj, XContainer parent)
         {
             // getting read-write non-indexer instance properties, and read-only ones with populatable collections, same for fields
-            IEnumerable<MemberInfo> properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.GetIndexParameters().Length == 0 && (p.CanWrite || p.PropertyType.IsCollection()));
-            IEnumerable<MemberInfo> fields = obj.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance).Where(f => !f.IsInitOnly || f.FieldType.IsCollection());
+            IEnumerable<MemberInfo> properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0 && p.CanRead && (p.CanWrite || ForceReadonlyMembers || p.PropertyType.IsCollection()));
+            IEnumerable<MemberInfo> fields = ExcludeFields
+                ? (IEnumerable<MemberInfo>)new MemberInfo[0]
+                : obj.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance).Where(f => !f.IsInitOnly || ForceReadonlyMembers || f.FieldType.IsCollection());
 
             // signing that object is not null
             parent.Add(String.Empty);
