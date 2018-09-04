@@ -921,7 +921,7 @@ namespace KGySoft.Libraries
                 try
                 {
                     object result = null;
-                    if (type.IsValueType || type.GetDefaultConstructor() != null)
+                    if (type.CanBeCreatedWithoutParameters())
                     {
                         try
                         {
