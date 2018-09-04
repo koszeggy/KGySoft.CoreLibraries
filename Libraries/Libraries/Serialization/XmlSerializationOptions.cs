@@ -112,5 +112,23 @@ namespace KGySoft.Libraries.Serialization
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         OmitCrcAttribute = 1 << 10,
+
+        /// <summary>
+        /// <para>By default <see cref="XmlSerializer"/> includes public fields in serialization, similarly to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a>.
+        /// By enabling this option, only public properties will be serialized.</para>
+        /// <para>Default at serialization methods: <strong>Disabled</strong></para>
+        /// </summary>
+        ExcludeFields = 1 << 11,
+
+        /// <summary>
+        /// <para>By default read-only properties and fields are serialized only if they are collections that can be populated. This options forces to serialize
+        /// read-only fields and properties as well.
+        /// <note>Public properties with private setter accessor are serializable even without this option.</note>
+        /// <note type="caution">Enabling this option can make it highly possible that properties without setter accessor will not be able to deserialized.
+        /// Deserialization will fail if the read-only property returns a <see langword="null"/> value or its content cannot be restored (eg. it has a simple type).</note>
+        /// </para>
+        /// <para>Default at serialization methods: <strong>Disabled</strong></para>
+        /// </summary>
+        SerializeReadOnlyMembers = 1 << 12
     }
 }
