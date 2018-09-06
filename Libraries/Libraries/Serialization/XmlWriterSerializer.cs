@@ -67,9 +67,9 @@ namespace KGySoft.Libraries.Serialization
                 RegisterSerializedObject(obj);
 
                 // 1.) IXmlSerializable
-                if (obj is IXmlSerializable && ((Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
+                if (obj is IXmlSerializable xmlSerializable && ProcessXmlSerializable)
                 {
-                    SerializeXmlSerializable((IXmlSerializable)obj, writer);
+                    SerializeXmlSerializable(xmlSerializable, writer);
                     return;
                 }
 
@@ -87,7 +87,7 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // 3.) Any object
-                SerializeProperties(obj, writer);
+                SerializeMembers(obj, writer);
             }
             finally
             {
@@ -183,7 +183,7 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
 
                 // serializing main properties first
-                SerializeProperties(collection, writer);
+                SerializeMembers(collection, writer);
 
                 // serializing items
                 bool elementTypeNeeded = elementType.CanBeDerived();
@@ -223,9 +223,9 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // b.) IXmlSerializable
-            if (obj is IXmlSerializable xmlSerializable && ((Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
+            if (obj is IXmlSerializable xmlSerializable && ProcessXmlSerializable)
             {
-                if (!type.IsValueType && type.GetDefaultConstructor() == null)
+                if (!type.CanBeCreatedWithoutParameters())
                     throw new SerializationException(Res.Get(Res.XmlSerializableNoDefaultCtor, type));
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
@@ -263,7 +263,7 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
-                SerializeProperties(obj, writer);
+                SerializeMembers(obj, writer);
                 return true;
             }
 
@@ -351,9 +351,9 @@ namespace KGySoft.Libraries.Serialization
 
             // i.) recursive serialization of any object, if requested
             bool hasDefaultCtor = type.CanBeCreatedWithoutParameters();
-            if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled
-                // or when is simple object with public fields and/or properties
-                || hasDefaultCtor && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.CanRead && p.CanWrite && p.GetGetMethod() != null && p.GetSetMethod() != null))
+            if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
+                // or when it has public properties/fields only
+                || IsTrustedType(type))
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
@@ -365,111 +365,108 @@ namespace KGySoft.Libraries.Serialization
             return false;
         }
 
-        private void SerializeProperties(object obj, XmlWriter writer)
+        private void SerializeMembers(object obj, XmlWriter writer)
         {
-            PropertyInfo[] properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            // getting read-write non-indexer instance properties, and read-only ones with populatable collections, same for fields
+            IEnumerable<MemberInfo> properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0 && p.CanRead && (p.CanWrite || ForceReadonlyMembers || p.PropertyType.IsCollection()));
+            IEnumerable<MemberInfo> fields = ExcludeFields
+                ? (IEnumerable<MemberInfo>)new MemberInfo[0]
+                : obj.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance).Where(f => !f.IsInitOnly || ForceReadonlyMembers || f.FieldType.IsCollection());
 
-            foreach (PropertyInfo property in properties)
+            foreach (MemberInfo member in fields.Concat(properties))
             {
-                // Skip 1.) write-only properties, indexers and read-only properties except populatable collections
-                if (!property.CanRead || property.GetIndexParameters().Length > 0 || (!property.CanWrite && !property.PropertyType.IsCollection()))
-                    continue;
-
-                // skipping non-serializable properties
-                // Skip 2.) hidden by DesignerSerializationVisibility
-                object[] attrs = property.GetCustomAttributes(typeof(DesignerSerializationVisibilityAttribute), true);
+                // skipping non-serializable members
+                // Skip 1.) hidden by DesignerSerializationVisibility
+                Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(DesignerSerializationVisibilityAttribute), true);
                 DesignerSerializationVisibility visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : DesignerSerializationVisibilityAttribute.Default.Visibility;
                 if (visibility == DesignerSerializationVisibility.Hidden)
                     continue;
 
-                // Skip 3.) ShouldSerialize<PropertyName> method returns false
+                // Skip 2.) ShouldSerialize<MemberName> method returns false
                 if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
                 {
-                    MethodInfo shouldSerializeProperty = property.DeclaringType.GetMethod(XmlSerializer.MethodShouldSerialize + property.Name,
-                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                        null, Type.EmptyTypes, null);
-                    if (shouldSerializeProperty != null && shouldSerializeProperty.ReturnType == typeof(bool))
-                    {
-                        if ((bool)Reflector.RunMethod(obj, shouldSerializeProperty) == false)
-                            continue;
-                    }
+                    MethodInfo shouldSerializeMethod = member.DeclaringType.GetMethod(XmlSerializer.MethodShouldSerialize + member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+                    if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == typeof(bool) && !(bool)Reflector.RunMethod(obj, shouldSerializeMethod))
+                        continue;
                 }
 
-                // Skip 4.) DefaultValue equals to property value
+                // Skip 3.) DefaultValue equals to property value
                 bool hasDefaultValue = false;
                 object defaultValue = null;
                 if ((Options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
                 {
-                    attrs = property.GetCustomAttributes(typeof(DefaultValueAttribute), true);
+                    attrs = Attribute.GetCustomAttributes(member, typeof(DefaultValueAttribute), true);
                     hasDefaultValue = attrs.Length > 0;
                     if (hasDefaultValue)
                         defaultValue = ((DefaultValueAttribute)attrs[0]).Value;
                 }
 
+                PropertyInfo property = member as PropertyInfo;
+                FieldInfo field = property == null ? member as FieldInfo : null;
+                Type memberType = property != null ? property.PropertyType : field.FieldType;
                 if (!hasDefaultValue && (Options & XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback) != XmlSerializationOptions.None)
                 {
                     hasDefaultValue = true;
-                    defaultValue = property.PropertyType.IsValueType ? Reflector.Construct(property.PropertyType) : null;
+                    defaultValue = memberType.IsValueType ? Reflector.Construct(memberType) : null;
                 }
 
-                object propValue = Reflector.GetProperty(obj, property);
-                if (hasDefaultValue && Equals(propValue, defaultValue))
+                object value = property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
+                if (hasDefaultValue && Equals(value, defaultValue))
                     continue;
 
-                // -------------- property is not skipped, serializing
-                //XElement newElement = new XElement(property.Name);
-                Type propType = propValue?.GetType() ?? property.PropertyType;
+                // -------------- not skipped, serializing
+                Type actualType = value?.GetType() ?? memberType;
 
-                // a.) Property is read-only but is a populatable collection
-                if (!property.CanWrite && propValue != null && propType.IsReadWriteCollection(propValue))
+                // a.) Read-only property
+                if (property?.CanWrite == false)
                 {
-                    writer.WriteStartElement(property.Name);
-                    SerializeCollection((IEnumerable)propValue, propType.GetCollectionElementType(), propType != property.PropertyType, writer, visibility);
-                    if (propValue != null)
+                    // populatable collection
+                    if (actualType.IsReadWriteCollection(value))
+                    {
+                        writer.WriteStartElement(property.Name);
+                        SerializeCollection((IEnumerable)value, actualType.GetCollectionElementType(), memberType != property.PropertyType, writer, visibility);
                         writer.WriteFullEndElement();
-                    else
-                        writer.WriteEndElement();
+                    }
+                    // XmlSerializable
+                    else if (ProcessXmlSerializable && value is IXmlSerializable xmlSerializable)
+                    {
+                        writer.WriteStartElement(property.Name);
+                        SerializeXmlSerializable(xmlSerializable, writer);
+                        writer.WriteFullEndElement();
+                    }
+
                     continue;
                 }
-
-                // Skip 5.) otherwise, skipping read-only properties
-                if (!property.CanWrite)
-                    continue;
 
                 // b.) Using explicitly defined type converter if can convert to and from string
-                attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                if (convAttr != null)
+                attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+                if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
-                    Type convType = Type.GetType(convAttr.ConverterTypeName);
-                    if (convType != null)
+                    ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
+                    object[] ctorParams = { memberType };
+                    if (ctor == null)
                     {
-                        ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
-                        object[] ctorParams = new object[] { property.PropertyType };
-                        if (ctor == null)
-                        {
-                            ctor = convType.GetDefaultConstructor();
-                            ctorParams = Reflector.EmptyObjects;
-                        }
+                        ctor = convType.GetDefaultConstructor();
+                        ctorParams = Reflector.EmptyObjects;
+                    }
 
-                        if (ctor != null)
+                    if (ctor != null)
+                    {
+                        if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                         {
-                            if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
-                            {
-                                writer.WriteStartElement(property.Name);
-                                WriteStringValue(converter.ConvertToInvariantString(propValue), writer);
-                                writer.WriteEndElement();
-                                continue;
-                            }
+                            writer.WriteStartElement(property.Name);
+                            WriteStringValue(converter.ConvertToInvariantString(value), writer);
+                            writer.WriteEndElement();
+                            continue;
                         }
                     }
                 }
 
                 // c.) any object
                 writer.WriteStartElement(property.Name);
-                if (propValue == null)
+                if (value == null)
                     writer.WriteEndElement();
-                else if (TrySerializeObject(propValue, propType != property.PropertyType, writer, propType, visibility))
+                else if (TrySerializeObject(value, memberType != actualType, writer, actualType, visibility))
                     writer.WriteFullEndElement();
                 else
                     throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
+using System.Xml.Serialization;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
@@ -38,9 +39,13 @@ namespace KGySoft.Libraries.Serialization
             // has default constructor
             type.CanBeCreatedWithoutParameters()
             // has only public get/set non-delegate properties, or read-only properties of trusted collections
-            && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.GetGetMethod() != null && !p.PropertyType.IsDelegate() && (p.GetSetMethod() != null || IsTrustedCollection(p.PropertyType)))
+            && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.GetGetMethod() != null
+                && !p.PropertyType.IsDelegate() 
+                && (p.GetSetMethod() != null || typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType) || IsTrustedCollection(p.PropertyType)))
             // and all fields are writable (or read-only of trusted collections) and public (or generated) and non-delegates
-            && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f => (!f.IsInitOnly || IsTrustedCollection(f.FieldType)) && !f.FieldType.IsDelegate() && (f.IsPublic || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null))
+            && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f => (!f.IsInitOnly || IsTrustedCollection(f.FieldType))
+                && !f.FieldType.IsDelegate()
+                && (f.IsPublic || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null))
             // and the type has no instance events
             && type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length == 0;
 
@@ -57,6 +62,8 @@ namespace KGySoft.Libraries.Serialization
         protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
 
         protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+
+        protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
 
         protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
 

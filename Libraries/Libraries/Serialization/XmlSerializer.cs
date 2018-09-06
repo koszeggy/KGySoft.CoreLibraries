@@ -54,22 +54,9 @@ namespace KGySoft.Libraries.Serialization
     /// by the <see cref="O:KGySoft.Libraries.Serialization.DeserializeContent">DeserializeContent</see> methods.</note>
     /// </para>
     /// <para><strong>Options:</strong>
-    /// By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Libraries.Serialization.Serialize">Serialize</see> and <see cref="O:KGySoft.Libraries.Serialization.SerializeContent">SerializeContent</see>
-    /// methods you can control the default behavior of serialization. The default options ensure that only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
-    /// <list type="bullet">
-    /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> version and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
-    /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is not a standalone generic parameter.</description></item>
-    /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
-    /// <item><term>Simple objects</term><description>All of their instance fields and properties are public (for properties: both accessors) and non read-only.</description></item>
-    /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="ArrayList"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Queue"/>, <see cref="Stack{T}"/>, <see cref="Stack"/>,
-    /// <see cref="BitArray"/>, <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by default options. To support other collections
-    /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
-    /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
-    /// which cannot be retrieved by the public members when the collection is being serialized. On deserialization always the default constructor is used (unless the collection is returned by a read-only property, in which case the already
-    /// existing instance is used) so the collection is always instantiated by the default settings.</note>
-    /// </description></item>
-    /// </list>
-    /// </para>
+    /// <br/>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Libraries.Serialization.Serialize">Serialize</see> and <see cref="O:KGySoft.Libraries.Serialization.SerializeContent">SerializeContent</see>
+    /// methods you can control the default behavior of serialization. The default options and the <see cref="XmlSerializationOptions.None"/> option ensure that only those types are serialized, which are guaranteed to be able to deserialized perfectly.
+    /// For details see the description of the <see cref="XmlSerializationOptions.None"/> option.</para>
     /// <para>If a type cannot be serialized with the currently used options a <see cref="SerializationException"/> will be thrown.</para>
     /// <para>You can use <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option to enable recursive serialization of every type of objects and collections. A collection type can be serialized if
     /// it implements the <see cref="ICollection{T}"/> or <see cref="IList"/> interface, is not read-only and has a default constructor; or if it has an initializer constructor with a single parameter that can accept an <see cref="Array"/>

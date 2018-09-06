@@ -73,9 +73,9 @@ namespace KGySoft.Libraries.Serialization
                 try
                 {
                     // 1.) IXmlSerializable
-                    if (obj is IXmlSerializable && ((Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
+                    if (obj is IXmlSerializable xmlSerializable && ProcessXmlSerializable)
                     {
-                        SerializeXmlSerializable((IXmlSerializable)obj, parent);
+                        SerializeXmlSerializable(xmlSerializable, parent);
                         return;
                     }
 
@@ -93,7 +93,7 @@ namespace KGySoft.Libraries.Serialization
                     }
 
                     // 3.) Any object
-                    SerializeProperties(obj, parent);
+                    SerializeMembers(obj, parent);
                 }
                 finally
                 {
@@ -166,9 +166,7 @@ namespace KGySoft.Libraries.Serialization
                         XElement child = new XElement(XmlSerializer.ElementItem);
                         Type itemType = null;
                         if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
-                        {
                             parent.Add(child);
-                        }
                         else
                             throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), Options));
                     }
@@ -181,7 +179,7 @@ namespace KGySoft.Libraries.Serialization
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(collection.GetType())));
 
                 // serializing main properties first
-                SerializeProperties(collection, parent);
+                SerializeMembers(collection, parent);
 
                 // serializing items
                 bool elementTypeNeeded = elementType.CanBeDerived();
@@ -202,7 +200,7 @@ namespace KGySoft.Libraries.Serialization
         /// invalid data or inconsistent settings.
         /// XElement version.
         /// </summary>
-        private bool TrySerializeObject(object obj, bool typeNeeded, XElement parent, Type type, DesignerSerializationVisibility visibility)
+        private bool TrySerializeObject(object obj, bool typeNeeded, XElement parent, Type type, DesignerSerializationVisibility visibility, bool isPropertyOrField)
         {
             if (obj == null)
                 return true;
@@ -217,9 +215,9 @@ namespace KGySoft.Libraries.Serialization
             }
 
             // b.) IXmlSerializable
-            if (obj is IXmlSerializable xmlSerializable && ((Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None))
+            if (obj is IXmlSerializable xmlSerializable && ProcessXmlSerializable)
             {
-                if (!type.IsValueType && type.GetDefaultConstructor() == null)
+                if (!isPropertyOrField && !type.CanBeCreatedWithoutParameters())
                     throw new SerializationException(Res.Get(Res.XmlSerializableNoDefaultCtor, type));
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
@@ -255,7 +253,7 @@ namespace KGySoft.Libraries.Serialization
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
                 // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
-                SerializeProperties(obj, parent);
+                SerializeMembers(obj, parent);
                 return true;
             }
 
@@ -320,8 +318,9 @@ namespace KGySoft.Libraries.Serialization
                 // or recursive is requested 
                 || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
                     // and can populate collection by general ways or by an initializer constructor
-                    && type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out elementType, out var _)
-                    && (collectionCtor != null || type.IsReadWriteCollection(obj))))
+                    && ((!isPropertyOrField && type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out elementType, out var _) && (collectionCtor != null || type.IsReadWriteCollection(obj)))
+                        // or if member value, an existing instance can be populated without using any constructor
+                        || (isPropertyOrField && type.IsReadWriteCollection(obj)))))
             {
                 SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, parent, visibility);
                 return true;
@@ -342,10 +341,10 @@ namespace KGySoft.Libraries.Serialization
             return false;
         }
 
-        private void SerializeProperties(object obj, XContainer parent)
+        private void SerializeMembers(object obj, XContainer parent)
         {
             // getting read-write non-indexer instance properties, and read-only ones with populatable collections, same for fields
-            IEnumerable<MemberInfo> properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0 && p.CanRead && (p.CanWrite || ForceReadonlyMembers || p.PropertyType.IsCollection()));
+            IEnumerable<MemberInfo> properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0 && p.CanRead && (p.CanWrite || ForceReadonlyMembers || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType)) || p.PropertyType.IsCollection()));
             IEnumerable<MemberInfo> fields = ExcludeFields
                 ? (IEnumerable<MemberInfo>)new MemberInfo[0]
                 : obj.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance).Where(f => !f.IsInitOnly || ForceReadonlyMembers || f.FieldType.IsCollection());
@@ -398,20 +397,7 @@ namespace KGySoft.Libraries.Serialization
                 XElement newElement = new XElement(member.Name);
                 Type actualType = value?.GetType() ?? memberType;
 
-                // a.) Read-only property or field
-                if (property?.CanWrite == false || field?.IsInitOnly == true)
-                {
-                    // populatable collection
-                    if (actualType.IsReadWriteCollection(value))
-                    {
-                        SerializeCollection((IEnumerable)value, actualType.GetCollectionElementType(), memberType != actualType, newElement, visibility);
-                        parent.Add(newElement);
-                    }
-
-                    continue;
-                }
-
-                // b.) Using explicitly defined type converter if can convert to and from string
+                // a.) Using explicitly defined type converter if can convert to and from string
                 attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
@@ -434,8 +420,8 @@ namespace KGySoft.Libraries.Serialization
                     }
                 }
 
-                // c.) any object
-                if (value == null || TrySerializeObject(value, memberType != actualType, newElement, actualType, visibility))
+                // b.) any object
+                if (value == null || TrySerializeObject(value, memberType != actualType, newElement, actualType, visibility, true))
                     parent.Add(newElement);
                 else
                     throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));

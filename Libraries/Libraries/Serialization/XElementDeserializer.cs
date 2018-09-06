@@ -192,14 +192,16 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// Deserializes the properties and elements of <paramref name="objRealType"/>.
         /// Type of <paramref name="obj"/> can be different of <paramref name="objRealType"/> if a proxy collection object is populated for initialization.
-        /// In this case properties have to be stored for later initialization into <paramref name="properties"/> and <paramref name="obj"/> is a populatable collection for sure.
+        /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/> only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private static void DeserializePropertiesAndElements(XElement parent, object obj, Type objRealType, Type collectionElementType, Dictionary<PropertyInfo, object> properties)
+        private static void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type collectionElementType, Dictionary<MemberInfo, object> members)
         {
             foreach (XElement propertyOrItem in parent.Elements())
             {
                 PropertyInfo property = objRealType.GetProperty(propertyOrItem.Name.LocalName);
+                FieldInfo field = property != null ? null : objRealType.GetField(propertyOrItem.Name.LocalName);
+                MemberInfo member = (MemberInfo)property ?? field;
                 XAttribute attrType = propertyOrItem.Attribute(XmlSerializer.AttributeType);
                 Type itemType = null;
                 if (attrType != null)
@@ -208,14 +210,15 @@ namespace KGySoft.Libraries.Serialization
                     if (itemType == null)
                         throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType.Value));
                 }
-                if (itemType == null && property != null)
-                    itemType = property.PropertyType;
 
-                // 1.) real property
-                if (property != null)
+                if (itemType == null && member != null)
+                    itemType = property?.PropertyType ?? field?.FieldType;
+
+                // 1.) real member
+                if (member != null)
                 {
                     // 1.a.) read-only property and it must be initialized (not a cached property for late initialization)
-                    if (properties == null && !property.CanWrite)
+                    if (members == null && property?.CanWrite == false)
                     {
                         object propertyValue = Reflector.GetProperty(obj, property);
                         if (propertyValue != null && propertyOrItem.IsEmpty)
@@ -279,8 +282,8 @@ namespace KGySoft.Libraries.Serialization
                                 if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertFrom(Reflector.StringType))
                                 {
                                     result = converter.ConvertFromInvariantString(ReadStringValue(propertyOrItem));
-                                    if (properties != null)
-                                        properties[property] = result;
+                                    if (members != null)
+                                        members[property] = result;
                                     else
                                         Reflector.SetProperty(obj, property, result);
                                     continue;
@@ -293,8 +296,8 @@ namespace KGySoft.Libraries.Serialization
                     if (!TryDeserializeObject(itemType, propertyOrItem, out result))
                         throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, objRealType));
 
-                    if (properties != null)
-                        properties[property] = result;
+                    if (members != null)
+                        members[property] = result;
                     else
                         Reflector.SetProperty(obj, property, result);
                     continue;

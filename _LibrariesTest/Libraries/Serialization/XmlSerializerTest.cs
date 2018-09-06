@@ -1389,17 +1389,19 @@ namespace _LibrariesTest.Libraries.Serialization
         public void SerializeNonPopulatableCollectionsWithProperties()
         {
             // TODO: publikus fieldek serializálása
-            //  + SerializeProperties: XElement elvileg kész
-            //  + TrySerializeObjects: az auto serialize feltételhez még: a fieldjei mind publikusak vagy compiler által generáltak, egyik sem readonly, és nincs eventje - ősbe kiemelni (típusellenőrzés nem kell, a rekurzió során majd kibukik, ha egy instance nem jó)
-            // TODO: if (!hasDefaultCtor) exception - így ugye Content vagy fallback esetén jövünk be
+            //  - TrySerializeObjects: hiányzó kontextus megadása
+            //  - Deserializálásnál readonly property (és field?) esetén elsősorban létező instance deserializálás, és itt a spéci format (kivéve IXmlSerializable), illetve "nincs element csak Text" esetet felismerve Exception, ha content nem deserializálható.
+            //    - Field: csak azért macera, mert ha nem rekurzív content van, akkor property esetén exception lenne, de Field végül is settelhető read-only esetben is, viszont read-onlynál azért itt is jó lenne a létező instance-ot preferálni (IXmlSerializable, Collection, content)
+            //  - Apply to XmlReader version
+            //  - Leírás: Readonly propertyknél (és field?) megemlíteni, hogy elsősorban már létező instance-ot próbál meg.
             // TODO: XElement verzióba is ugyanez
             // TODO: BinaryTypeConverter - leírásban már ott van
-            // TODO: Options
-            //  - ForceSerializeReadOnlyMembers - propertynél a deserializálás csak akkor fog működni, ha az instance nem null - ekkor csak IXmlSerializable és deserialize content működik (csak ha nem primitív/type converter/customon kívól más format)
-            //  - leírásba: recursive None esetben akkor pontosan mikor + public property mellett field is
-            //  - Populatable collection readonly propertyvel None esetén is serializálható legyen, frissíteni a leírásban ("Such types are" lista), és a Recursive opciónál is
             // TODO: Changelog
             // TODO: tesztek
+            // - Read-Only collections with read-write, read-only array and read-only collection parameters.
+            // - None options with every allowed cases
+            //   - IXmlSerializable readonly property without default ctor
+            // - populatable collections without any good ctor and/or read-only properties
             throw new NotImplementedException("TODO: Read-Only collections with read-write, read-only array and read-only collection parameters.");
         }
 

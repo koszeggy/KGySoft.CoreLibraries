@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Xml;
-using System.Xml.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
+using KGySoft.Libraries.Collections;
 
 namespace KGySoft.Libraries.Serialization
 {
@@ -18,6 +19,32 @@ namespace KGySoft.Libraries.Serialization
     {
         /// <summary>
         /// <para>Represents no enabled options.</para>
+        /// <para>
+        /// With every options disabled only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
+        /// <list type="bullet">
+        /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> version and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
+        /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is not a standalone generic parameter.</description></item>
+        /// <item><term><see cref="IXmlSerializable"/> instances</term><description>Types that implement the <see cref="IXmlSerializable"/> interface can be serialized.</description></item>
+        /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
+        /// <item><term>Simple objects</term><description>A type can be serialized with the default options if it meets the following criteria:
+        /// <list type="bullet">
+        /// <item>The type has parameterless constructor, or is a value type</item>
+        /// <item>It has only public instance fields and properties. For properties, both accessors are public. Static members are ignored.
+        /// <note>Compiler-generated backing fields are ignored so types with public auto properties are considered simple.</note></item>
+        /// <item>All fields and properties can be set, or, all read-only fields and properties are either <see cref="IXmlSerializable"/> implementations or collections of the types enlisted at next main bullet point.</item>
+        /// <item>None of the fields and properties are delegates.</item>
+        /// <item>The type has no instance events.</item>
+        /// </list>
+        /// <note>A type can be serialized only if these criteria are true for the serialized properties recursively.</note></description></item>
+        /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="ArrayList"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Queue"/>, <see cref="Stack{T}"/>, <see cref="Stack"/>,
+        /// <see cref="BitArray"/>, <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
+        /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
+        /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
+        /// which cannot be retrieved by the public members when the collection is being serialized. On deserialization always the default constructor is used (unless the collection is returned by a read-only property, in which case the already
+        /// existing instance is used) so the collection is always instantiated by the default settings.</note>
+        /// </description></item>
+        /// </list>
+        /// </para>
         /// </summary>
         None,
 
