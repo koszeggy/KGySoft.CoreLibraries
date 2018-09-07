@@ -454,8 +454,8 @@ Hit rate: {8:P2}</value>
   <data name="NotAnIXmlSerializable" xml:space="preserve">
     <value>Type "{0}" does not implement IXmlSerializable.</value>
   </data>
-  <data name="XmlSerializableNoDefaultCtor" xml:space="preserve">
-    <value>IXmlSerializable type "{0}" does not have a parameterless constructor so it can be (de-)serialized only as a root element by SerializeContent and DeserializeContent.</value>
+  <data name="XmlNoDefaultCtor" xml:space="preserve">
+    <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in another object if it is not null after creating the parent object.</value>
   </data>
   <data name="XmlArrayDimensionSizeMismatch" xml:space="preserve">
     <value>Cannot restore array "{0}" because length of the {1}. dimension does not match.</value>
@@ -515,7 +515,10 @@ Hit rate: {8:P2}</value>
     <value>Cannot restore collection "{0}" at property "{1}.{2}" because it has no setter. Make sure that value of this property is not null after construction so it can be deserialized without a setter.</value>
   </data>
   <data name="XmlCollectionPropertyHasNoSetterNull" xml:space="preserve">
-    <value>Cannot assign null to collection "{0}" at property "{1}.{2}" because it has no setter. Make sure that value of this property is not null after construction so it can be deserialized without a setter.</value>
+    <value>Cannot assign null to collection "{0}" at property "{1}.{2}" because it has no setter.</value>
+  </data>
+  <data name="XmlPropertyHasNoSetterNull" xml:space="preserve">
+    <value>Cannot assign null to type "{0}" at property "{1}.{2}" because it has no setter.</value>
   </data>
   <data name="XmlCrcError" xml:space="preserve">
     <value>Corrupt array data: Bad CRC.</value>
@@ -549,6 +552,12 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="XmlPropertyHasNoSetter" xml:space="preserve">
     <value>Cannot restore property "{0}" in type "{1}" because it has no setter.</value>
+  </data>
+  <data name="XmlPropertyHasNoSetterCantSetNull" xml:space="preserve">
+    <value>Cannot set null to non-null property "{0}" in type "{1}" because it has no setter.</value>
+  </data>
+  <data name="XmlPropertyHasNoSetterGetsNull" xml:space="preserve">
+    <value>Cannot restore property "{0}" in type "{1}" because it has no setter and it returned null.</value>
   </data>
   <data name="XmlRootExpected" xml:space="preserve">
     <value>Root object expected but "{0}" found.</value>

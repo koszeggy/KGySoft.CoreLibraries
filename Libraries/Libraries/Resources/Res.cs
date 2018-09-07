@@ -157,7 +157,7 @@ namespace KGySoft.Libraries.Resources
         internal const string XmlCannotSerializeArrayElement = nameof(XmlCannotSerializeArrayElement);
         internal const string XmlCannotSerializeCollectionElement = nameof(XmlCannotSerializeCollectionElement);
         internal const string NotAnIXmlSerializable = nameof(NotAnIXmlSerializable);
-        internal const string XmlSerializableNoDefaultCtor = nameof(XmlSerializableNoDefaultCtor);
+        internal const string XmlNoDefaultCtor = nameof(XmlNoDefaultCtor);
         internal const string XmlArrayPropertyHasNoSetter = nameof(XmlArrayPropertyHasNoSetter);
         internal const string XmlArrayPropertyHasNoSetterNull = nameof(XmlArrayPropertyHasNoSetterNull);
         internal const string XmlPropertyTypeMismatch = nameof(XmlPropertyTypeMismatch);
@@ -168,6 +168,8 @@ namespace KGySoft.Libraries.Resources
         internal const string XmlSerializeNonPopulatableCollection = nameof(XmlSerializeNonPopulatableCollection);
         internal const string XmlDeserializeReadOnlyProperty = nameof(XmlDeserializeReadOnlyProperty);
         internal const string XmlPropertyHasNoSetter = nameof(XmlPropertyHasNoSetter);
+        internal const string XmlPropertyHasNoSetterCantSetNull = nameof(XmlPropertyHasNoSetterCantSetNull);
+        internal const string XmlPropertyHasNoSetterGetsNull = nameof(XmlPropertyHasNoSetterGetsNull);
         internal const string XmlItemExpected = nameof(XmlItemExpected);
         internal const string XmlCannotDetermineElementType = nameof(XmlCannotDetermineElementType);
         internal const string XmlNotACollection = nameof(XmlNotACollection);

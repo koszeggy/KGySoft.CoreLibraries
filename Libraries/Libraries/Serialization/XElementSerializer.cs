@@ -39,7 +39,7 @@ namespace KGySoft.Libraries.Serialization
                 return result;
 
             Type objType = obj.GetType();
-            if (!TrySerializeObject(obj, true, result, objType, DesignerSerializationVisibility.Visible))
+            if (!TrySerializeObject(obj, true, result, objType, DesignerSerializationVisibility.Visible, false))
                 throw new SerializationException(Res.Get(Res.XmlCannotSerialize, objType, Options));
             return result;
         }
@@ -165,7 +165,7 @@ namespace KGySoft.Libraries.Serialization
                     {
                         XElement child = new XElement(XmlSerializer.ElementItem);
                         Type itemType = null;
-                        if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
+                        if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility, false))
                             parent.Add(child);
                         else
                             throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), Options));
@@ -187,7 +187,7 @@ namespace KGySoft.Libraries.Serialization
                 {
                     XElement child = new XElement(XmlSerializer.ElementItem);
                     Type itemType = null;
-                    if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
+                    if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility, false))
                         parent.Add(child);
                     else
                         throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), Options));
@@ -272,14 +272,14 @@ namespace KGySoft.Libraries.Serialization
                 {
                     Type keyType = key.GetType();
                     bool elementTypeNeeded = keyType != type.GetGenericArguments()[0];
-                    if (!TrySerializeObject(key, elementTypeNeeded, xKey, keyType, visibility))
+                    if (!TrySerializeObject(key, elementTypeNeeded, xKey, keyType, visibility, false))
                         throw new SerializationException(Res.Get(Res.XmlCannotSerialize, keyType, Options));
                 }
                 if (value != null)
                 {
                     Type valueType = value.GetType();
                     bool elementTypeNeeded = valueType != type.GetGenericArguments()[1];
-                    if (!TrySerializeObject(value, elementTypeNeeded, xValue, valueType, visibility))
+                    if (!TrySerializeObject(value, elementTypeNeeded, xValue, valueType, visibility, false))
                         throw new SerializationException(Res.Get(Res.XmlCannotSerialize, valueType, Options));
                 }
                 return true;

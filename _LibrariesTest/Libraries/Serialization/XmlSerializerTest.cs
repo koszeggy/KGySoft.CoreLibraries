@@ -1389,11 +1389,14 @@ namespace _LibrariesTest.Libraries.Serialization
         public void SerializeNonPopulatableCollectionsWithProperties()
         {
             // TODO: publikus fieldek serializálása
-            //  - TrySerializeObjects: hiányzó kontextus megadása
-            //  - Deserializálásnál readonly property (és field?) esetén elsősorban létező instance deserializálás, és itt a spéci format (kivéve IXmlSerializable), illetve "nincs element csak Text" esetet felismerve Exception, ha content nem deserializálható.
-            //    - Field: csak azért macera, mert ha nem rekurzív content van, akkor property esetén exception lenne, de Field végül is settelhető read-only esetben is, viszont read-onlynál azért itt is jó lenne a létező instance-ot preferálni (IXmlSerializable, Collection, content)
+            //  + Deserializálásnál readonly property (és field?) esetén elsősorban létező instance deserializálás
+            //    - DeserializeMembers:
+            //      - ha result és az eredeti instance megegyezik, valuetype esetén akkor is visszasettelni, különben elvész
+            //      - ha a result és az eredeti instance különbözik, kell setter, különben exception
             //  - Apply to XmlReader version
-            //  - Leírás: Readonly propertyknél (és field?) megemlíteni, hogy elsősorban már létező instance-ot próbál meg.
+            //  - Leírás: Memberek: Elsősorban már létező instance-ot próbál meg tartalom alapján deserializálni, ha a field/property eleve nem null. Így akár spéci ctoros collection is deserializálható.
+            //            - Note: Spéci ctoros collection saját property-jeire ez csak módjával igaz, azoknak settelhetőknek vagy array/populatable collection-nek kell lenniük, de ez utóbbiak propertijei már nem lesznek visszasettelve
+            //            System verzió összehasonlítás: Ha a propertyk/fieldek nem nullok a létehozás után, elsősorban tartalom deserializálás, így működik a dolog setter nélkül is (nemcsak collectionre), illetve default ctor nélkül is.
             // TODO: XElement verzióba is ugyanez
             // TODO: BinaryTypeConverter - leírásban már ott van
             // TODO: Changelog
