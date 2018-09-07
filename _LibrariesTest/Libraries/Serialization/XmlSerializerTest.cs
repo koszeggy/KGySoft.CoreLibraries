@@ -1388,6 +1388,7 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeNonPopulatableCollectionsWithProperties()
         {
+#error tart: xmlbase.RestoreReadOnlyPropertyValue
             // TODO: publikus fieldek serializálása
             //  + Deserializálásnál readonly property (és field?) esetén elsősorban létező instance deserializálás
             //    - DeserializeMembers:
