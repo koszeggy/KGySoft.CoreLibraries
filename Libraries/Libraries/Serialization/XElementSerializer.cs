@@ -250,7 +250,7 @@ namespace KGySoft.Libraries.Serialization
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
-                // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
+                x// SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
                 SerializeMembers(obj, parent);
                 return true;
             }

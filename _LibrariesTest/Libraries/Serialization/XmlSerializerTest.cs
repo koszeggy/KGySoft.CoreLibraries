@@ -1388,7 +1388,6 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeNonPopulatableCollectionsWithProperties()
         {
-#error tart: xmlbase.RestoreReadOnlyPropertyValue
             // TODO: Changelog
             // TODO: tesztek
             // - Read-Only collections with read-write, read-only array and read-only collection and read-only non-collection properties.
