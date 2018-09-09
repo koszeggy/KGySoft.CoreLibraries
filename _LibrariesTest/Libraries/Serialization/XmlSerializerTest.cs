@@ -1389,12 +1389,11 @@ namespace _LibrariesTest.Libraries.Serialization
         public void SerializeNonPopulatableCollectionsWithProperties()
         {
 #error tart: xmlbase.RestoreReadOnlyPropertyValue
-            // TODO: publikus fieldek serializálása
-            //  - Apply to XmlReader version
+            // TODO: Nem használt Res elemek törlése
             //  - Leírás: None option esetén ReadOnly property csak akkor, ha IList/IDictionary/ICollection<Т>/IXmlSerializable, de ekkor az kell, hogy deserializáláskor a property ne nullt adjon vissza.
+            //            Ahol a Dictionary meg trusted type van: Property/fieldhez tartozó Dictionary is deserializálható pontosan, ha a member nem null a szülő inicializálása után.
             //            Memberek: Elsősorban már létező instance-ot próbál meg tartalom alapján deserializálni, ha a field/property eleve nem null (nemcsak a fenti esetre, hanem minden objektumnál). Így akár custom ctoros collection is deserializálható, illetve Forced readonly esetén bármilyen readonly property.
             //            System verzió összehasonlítás: Ha a propertyk/fieldek nem nullok a létehozás után, elsősorban tartalom deserializálás, így működik a dolog setter nélkül is (nemcsak collectionre), illetve default ctor nélkül is.
-            // TODO: XElement verzióba is ugyanez
             // TODO: BinaryTypeConverter - leírásban már ott van
             // TODO: Changelog
             // TODO: tesztek

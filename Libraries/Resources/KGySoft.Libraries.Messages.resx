@@ -505,8 +505,8 @@ Hit rate: {8:P2}</value>
   <data name="XmlCannotSerializeCollectionElement" xml:space="preserve">
     <value>Cannot serialize "{0}" as collection element with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</value>
   </data>
-  <data name="XmlCannotSerializeProperty" xml:space="preserve">
-    <value>Cannot serialize property "{0}.{1}" with following options: "{2}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on property.</value>
+  <data name="XmlCannotSerializeMember" xml:space="preserve">
+    <value>Cannot serialize member "{0}.{1}" with following options: "{2}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content for the member.</value>
   </data>
   <data name="XmlCannotSerializeValueType" xml:space="preserve">
     <value>Serializing value type "{0}" is not supported with following options: "{1}". You may either use RecursiveSerializationAsFallback or BinarySerializationAsFallback options, or provide a type converter for this type.</value>

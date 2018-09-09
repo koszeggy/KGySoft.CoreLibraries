@@ -110,7 +110,7 @@ namespace KGySoft.Libraries.Serialization
         }
 
         /// <summary>
-        /// Deserializes the properties and elements of <paramref name="objRealType"/>.
+        /// Deserializes the members and elements of <paramref name="objRealType"/>.
         /// Type of <paramref name="obj"/> can be different of <paramref name="objRealType"/> if a proxy collection object is populated for initialization.
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/> only if <paramref name="objRealType"/> is not a supported collection.
@@ -137,26 +137,7 @@ namespace KGySoft.Libraries.Serialization
                 // 1.) real member
                 if (member != null)
                 {
-                    TypeConverter converter = null;
-
-                    // Explicitly defined type converter if can convert from string
-                    Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
-                    if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
-                        && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
-                    {
-                        ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                        object[] ctorParams = { itemType };
-                        if (ctor == null)
-                        {
-                            ctor = convType.GetDefaultConstructor();
-                            ctorParams = Reflector.EmptyObjects;
-                        }
-
-                        if (ctor != null)
-                            converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
-                    }
-
-                    // The deserialization itself
+                    TypeConverter converter = GetTypeConverter(member, itemType);
                     object existingValue = members != null ? null : property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
                     object result;
                     if (converter?.CanConvertFrom(Reflector.StringType) == true)
@@ -164,7 +145,7 @@ namespace KGySoft.Libraries.Serialization
                     else if (!TryDeserializeObject(itemType, propertyOrItem, existingValue, out result))
                         throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
 
-                    // 1/a.) Cache for later
+                    // 1/a.) Cache for later (obj type <> objRealType)
                     if (members != null)
                     {
                         members[member] = result;
@@ -175,36 +156,9 @@ namespace KGySoft.Libraries.Serialization
                     if (ReferenceEquals(existingValue, result))
                         continue;
 
-                    // 1/c.) Read-only property
-                    if (property?.CanWrite == false)
-                    {
-                        if (property.PropertyType.IsValueType)
-                        {
-                            if (Equals(existingValue, result))
-                                continue;
-                            throw new SerializationException(Res.Get(Res.XmlPropertyHasNoSetter, property.Name, objRealType));
-                        }
-
-                        if (existingValue == null)
-                            throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterGetsNull, property.Name, objRealType));
-                        if (result == null)
-                            throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterCantSetNull, property.Name, objRealType));
-                        if (existingValue.GetType() != result.GetType())
-                            throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, objRealType, property.Name, result.GetType(), existingValue.GetType()));
-
-                        CopyFrom(existingValue, result);
-                        continue;
-                    }
-
-                    // 1/d.) Read-write property
-                    if (property != null)
-                    {
-                        Reflector.SetProperty(obj, property, result);
-                        continue;
-                    }
-
-                    // 1./e.) Field
-                    Reflector.SetField(obj, field, result);
+                    // 1.c.) Processing result
+                    HandleDeserializedMember(obj, member, result, existingValue);
+                    continue;
                 }
 
                 if (collectionElementType == null)
@@ -239,7 +193,7 @@ namespace KGySoft.Libraries.Serialization
 
         /// <summary>
         /// Deserialize object - XElement version.
-        /// If <paramref name="existingInstance"/> is not <see langword="null"/>, then it is preferred to deserialize its content instead of returning a new instance in <paramref name="result"/> (read-only property, collection or no parameterless constructor).
+        /// If <paramref name="existingInstance"/> is not <see langword="null"/>, then it is preferred to deserialize its content instead of returning a new instance in <paramref name="result"/>.
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
@@ -267,13 +221,9 @@ namespace KGySoft.Libraries.Serialization
             string format = element.Attribute(XmlSerializer.AttributeFormat)?.Value;
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
-                object instance = existingInstance;
-                if (instance == null)
-                {
-                    if (!type.CanBeCreatedWithoutParameters())
-                        throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type));
-                    instance = Reflector.Construct(type);
-                }
+                object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters() 
+                    ? Reflector.Construct(type) 
+                    : throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, type));
                 DeserializeXmlSerializable(xmlSerializable, element);
@@ -400,19 +350,15 @@ namespace KGySoft.Libraries.Serialization
                 bool isCollection = type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
 
                 // g/3.) New collection by collectionCtor (only if there is no defaultCtor)
-                if (isCollection && !(type.IsValueType || defaultCtor != null))
+                if (isCollection && defaultCtor == null && !type.IsValueType)
                 {
                     result = DeserializeContentByInitializerCollection(element, collectionCtor, elementType, isDictionary);
                     return true;
                 }
 
-                result = existingInstance;
-                if (result == null)
-                {
-                    if (!type.CanBeCreatedWithoutParameters())
-                        throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type));
-                    result = Reflector.Construct(type);
-                }
+                result = existingInstance ?? (type.CanBeCreatedWithoutParameters()
+                    ? Reflector.Construct(type)
+                    : throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type)));
 
                 // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !type.IsReadWriteCollection(result))

@@ -44,7 +44,7 @@ namespace KGySoft.Libraries.Serialization
                     throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType));
             }
 
-            if (TryDeserializeObject(objType, reader, out var result))
+            if (TryDeserializeObject(objType, reader, null, out var result))
                 return result;
 
             if (attrType == null)
@@ -79,7 +79,7 @@ namespace KGySoft.Libraries.Serialization
             if (objType.IsArray)
             {
                 Array array = (Array)obj;
-                DeserializeArray(array, null, reader);
+                DeserializeArray(array, null, reader, false);
                 return;
             }
 
@@ -95,108 +95,28 @@ namespace KGySoft.Libraries.Serialization
                 collection.Clear();
             }
 
-            DeserializePropertiesAndElements(reader, obj, objType, collectionElementType, null);
+            DeserializeMembersAndElements(reader, obj, objType, collectionElementType, null);
         }
 
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
         /// </summary>
-        private static object DeserializeContentByInitializerCollection(Type collectionRealType, XmlReader reader, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
+        private static object DeserializeContentByInitializerCollection(XmlReader reader, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
         {
-            object initializerCollection = isDictionary
-                ? (collectionElementType.IsGenericType ? Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(collectionElementType.GetGenericArguments())) : new Dictionary<object, object>())
-                : Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType));
+            var initializerCollection = CreateInitializerCollection(collectionElementType, isDictionary);
 
-            var properties = new Dictionary<PropertyInfo, object>();
-            DeserializePropertiesAndElements(reader, initializerCollection, collectionRealType, collectionElementType, properties);
-            AdjustInitializerCollection(ref initializerCollection, collectionRealType, collectionCtor);
-
-            object result = Reflector.Construct(collectionCtor, initializerCollection);
-            foreach (var property in properties)
-            {
-                // read-only property
-                if (!property.Key.CanWrite)
-                {
-                    object existingValue = Reflector.GetProperty(result, property.Key);
-                    Type createdType = property.Value?.GetType();
-                    Type propertyType = property.Key.PropertyType;
-                    if (existingValue != null && property.Value == null)
-                    {
-                        if (propertyType.IsArray)
-                            throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetterNull, propertyType, collectionRealType, property.Key.Name));
-                        if (propertyType.IsCollection())
-                            throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetterNull, propertyType, collectionRealType, property.Key.Name));
-                    }
-                    else if (existingValue == null && property.Value != null)
-                    {
-                        if (propertyType.IsArray)
-                            throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetter, propertyType, collectionRealType, property.Key.Name));
-                        if (propertyType.IsCollection())
-                            throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetter, propertyType, collectionRealType, property.Key.Name));
-                    }
-                    else
-                    {
-                        if (existingValue == null && property.Value == null)
-                            continue;
-                        if (propertyType != createdType)
-                            throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, collectionRealType, property.Key.Name, createdType, propertyType));
-
-                        // copy from existing array
-                        if (existingValue is Array existingArray && property.Value is Array arrayToSet)
-                        {
-                            int[] lengths = new int[arrayToSet.Rank];
-                            int[] lowerBounds = new int[arrayToSet.Rank];
-                            for (int i = 0; i < arrayToSet.Rank; i++)
-                            {
-                                lengths[i] = arrayToSet.GetLength(i);
-                                lowerBounds[i] = arrayToSet.GetLowerBound(i);
-                            }
-
-                            CheckArray(existingArray, arrayToSet.Length, lengths, lowerBounds);
-                            if (collectionElementType.IsPrimitive)
-                                Buffer.BlockCopy(arrayToSet, 0, existingArray, 0, Buffer.ByteLength(arrayToSet));
-                            else
-                            {
-                                var indices = new ArrayIndexer(lengths, lowerBounds);
-                                while (indices.MoveNext())
-                                    existingArray.SetValue(existingArray.GetValue(indices.Current), indices.Current);
-                            }
-
-                            continue;
-                        }
-
-                        // copy from existing collection
-                        if (propertyType.IsCollection())
-                        {
-                            if (!propertyType.IsReadWriteCollection(existingValue))
-                                throw new SerializationException(Res.Get(Res.XmlDeserializeReadOnlyCollection, propertyType));
-
-                            IEnumerable collection = (IEnumerable)existingValue;
-                            collection.Clear();
-                            foreach (var item in (IEnumerable)property.Value)
-                                collection.Add(item);
-
-                            continue;
-                        }
-
-                        throw new ArgumentException(Res.Get(Res.XmlDeserializeReadOnlyProperty, collectionRealType, property.Key.Name, propertyType));
-                    }
-                }
-
-                // read-write property
-                Reflector.SetProperty(result, property.Key, property.Value);
-            }
-
-            return result;
+            var members = new Dictionary<MemberInfo, object>();
+            DeserializeMembersAndElements(reader, initializerCollection, collectionCtor.DeclaringType, collectionElementType, members);
+            return CreateCollectionByInitializerCollection(collectionCtor, initializerCollection, members);
         }
 
         /// <summary>
-        /// Deserializes the properties and elements of <paramref name="objRealType"/>.
+        /// Deserializes the members and elements of <paramref name="objRealType"/>.
         /// Type of <paramref name="obj"/> can be different of <paramref name="objRealType"/> if a proxy collection object is populated for initialization.
-        /// In this case properties have to be stored for later initialization into <paramref name="properties"/> and <paramref name="obj"/> is a populatable collection for sure.
+        /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/> only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private static void DeserializePropertiesAndElements(XmlReader reader, object obj, Type objRealType, Type collectionElementType, Dictionary<PropertyInfo, object> properties)
+        private static void DeserializeMembersAndElements(XmlReader reader, object obj, Type objRealType, Type collectionElementType, Dictionary<MemberInfo, object> members)
         {
             while (true)
             {
@@ -206,6 +126,8 @@ namespace KGySoft.Libraries.Serialization
                 {
                     case XmlNodeType.Element:
                         PropertyInfo property = objRealType.GetProperty(reader.Name);
+                        FieldInfo field = property != null ? null : objRealType.GetField(reader.Name);
+                        MemberInfo member = (MemberInfo)property ?? field;
                         string attrType = reader[XmlSerializer.AttributeType];
                         Type itemType = null;
                         if (attrType != null)
@@ -214,95 +136,34 @@ namespace KGySoft.Libraries.Serialization
                             if (itemType == null)
                                 throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType));
                         }
-                        if (itemType == null && property != null)
-                            itemType = property.PropertyType;
 
-                        // 1.) real property
-                        if (property != null)
+                        if (itemType == null && member != null)
+                            itemType = property?.PropertyType ?? field.FieldType;
+
+                        // 1.) real member
+                        if (member != null)
                         {
-                            // 1.a.) read-only property and it must be initialized (not a cached property for late initialization)
-                            if (properties == null && !property.CanWrite)
-                            {
-                                object propertyValue = Reflector.GetProperty(obj, property);
-                                if (propertyValue != null && reader.IsEmptyElement)
-                                {
-                                    if (itemType.IsArray)
-                                        throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetterNull, itemType, objRealType, property.Name));
-                                    if (itemType.IsCollection())
-                                        throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetterNull, itemType, objRealType, property.Name));
-                                }
-                                else if (propertyValue == null && !reader.IsEmptyElement)
-                                {
-                                    if (itemType.IsArray)
-                                        throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetter, itemType, objRealType, property.Name));
-                                    if (itemType.IsCollection())
-                                        throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetter, itemType, objRealType, property.Name));
-                                }
-                                else
-                                {
-                                    if (propertyValue == null && reader.IsEmptyElement)
-                                        continue;
-                                    if (itemType != propertyValue.GetType())
-                                        throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, objRealType, property.Name, itemType, propertyValue.GetType()));
-
-                                    if (itemType.IsArray)
-                                    {
-                                        DeserializeArray((Array)propertyValue, null, reader);
-                                        continue;
-                                    }
-
-                                    if (itemType.IsCollection())
-                                    {
-                                        // both read-write check and Clear are in DeserializeContent
-                                        DeserializeContent(reader, propertyValue);
-                                        continue;
-                                    }
-
-                                    throw new ArgumentException(Res.Get(Res.XmlDeserializeReadOnlyProperty, objRealType, property.Name, itemType));
-                                }
-                            }
-
-                            // 1.b.) read-write property or property value is to be cached
+                            TypeConverter converter = GetTypeConverter(member, itemType);
+                            object existingValue = members != null ? null : property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
                             object result;
+                            if (converter?.CanConvertFrom(Reflector.StringType) == true)
+                                result = converter.ConvertFromInvariantString(ReadStringValue(reader));
+                            else if (!TryDeserializeObject(itemType, reader, existingValue, out result))
+                                throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
 
-                            // 1.b.i.) Using explicitly defined type converter if can convert from string
-                            object[] attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                            TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                            if (convAttr != null)
+                            // 1/a.) Cache for later
+                            if (members != null)
                             {
-                                Type convType = Type.GetType(convAttr.ConverterTypeName);
-                                if (convType != null)
-                                {
-                                    ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                                    object[] ctorParams = { property.PropertyType };
-                                    if (ctor == null)
-                                    {
-                                        ctor = convType.GetDefaultConstructor();
-                                        ctorParams = Reflector.EmptyObjects;
-                                    }
-                                    if (ctor != null)
-                                    {
-                                        if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertFrom(Reflector.StringType))
-                                        {
-                                            result = converter.ConvertFromInvariantString(ReadStringValue(reader));
-                                            if (properties != null)
-                                                properties[property] = result;
-                                            else
-                                                Reflector.SetProperty(obj, property, result);
-                                            continue;
-                                        }
-                                    }
-                                }
+                                members[member] = result;
+                                continue;
                             }
 
-                            // 1.b.ii.) Any object
-                            if (!TryDeserializeObject(itemType, reader, out result))
-                                throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, objRealType));
+                            // 1/b.) Successfully deserialized into the existing instance (or both are null)
+                            if (ReferenceEquals(existingValue, result))
+                                continue;
 
-                            if (properties != null)
-                                properties[property] = result;
-                            else
-                                Reflector.SetProperty(obj, property, result);
+                            // 1.c.) Processing result
+                            HandleDeserializedMember(obj, member, result, existingValue);
                             continue;
                         }
 
@@ -324,7 +185,7 @@ namespace KGySoft.Libraries.Serialization
                             continue;
                         }
 
-                        if (TryDeserializeObject(itemType ?? collectionElementType, reader, out var item))
+                        if (TryDeserializeObject(itemType ?? collectionElementType, reader, null, out var item))
                         {
                             collection.Add(item);
                             continue;
@@ -343,8 +204,11 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// Deserialize object - XmlReader version.
         /// Reader is at open element at start and is at end element at the end.
+        /// If <paramref name="existingInstance"/> is not <see langword="null"/>, then it is preferred to deserialize its content instead of returning a new instance in <paramref name="result"/>.
+        /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
+        /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
-        private static bool TryDeserializeObject(Type type, XmlReader reader, out object result)
+        private static bool TryDeserializeObject(Type type, XmlReader reader, object existingInstance, out object result)
         {
             // null value
             if (reader.IsEmptyElement && (type == null || !type.IsValueType || type.IsNullable()))
@@ -368,7 +232,10 @@ namespace KGySoft.Libraries.Serialization
             string format = reader[XmlSerializer.AttributeFormat];
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
-                if (!(Reflector.Construct(type) is IXmlSerializable xmlSerializable))
+                object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
+                    ? Reflector.Construct(type)
+                    : throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type)));
+                if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, type));
                 DeserializeXmlSerializable(xmlSerializable, reader);
                 result = xmlSerializable;
@@ -379,9 +246,9 @@ namespace KGySoft.Libraries.Serialization
             if (type != null)
             {
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
-                if (converter != null && converter.CanConvertFrom(typeof(string)))
+                if (converter.CanConvertFrom(Reflector.StringType))
                 {
-                    result = converter.ConvertFrom(null, CultureInfo.InvariantCulture, ReadStringValue(reader));
+                    result = converter.ConvertFromInvariantString(ReadStringValue(reader));
                     return true;
                 }
             }
@@ -417,7 +284,7 @@ namespace KGySoft.Libraries.Serialization
                                         if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
                                             keyType = type.GetGenericArguments()[0];
                                     }
-                                    if (!TryDeserializeObject(keyType, reader, out key))
+                                    if (!TryDeserializeObject(keyType, reader, null, out key))
                                     {
                                         if (attrType != null && keyType == null)
                                             throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType));
@@ -439,7 +306,7 @@ namespace KGySoft.Libraries.Serialization
                                         if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
                                             valueType = type.GetGenericArguments()[1];
                                     }
-                                    if (!TryDeserializeObject(valueType, reader, out value))
+                                    if (!TryDeserializeObject(valueType, reader, null, out value))
                                     {
                                         if (attrType != null && valueType == null)
                                             throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType));
@@ -511,35 +378,47 @@ namespace KGySoft.Libraries.Serialization
             // g.) recursive deserialization (including collections)
             if (type != null && !reader.IsEmptyElement)
             {
+                // g/1.) array (both existing and new)
                 if (type.IsArray)
                 {
-                    result = DeserializeArray(null, type.GetElementType(), reader);
+                    result = DeserializeArray(existingInstance as Array, type.GetElementType(), reader, true);
+                    return true;
+                }
+
+                // g/2.) existing read-write collection
+                if (type.IsReadWriteCollection(existingInstance))
+                {
+                    DeserializeContent(reader, existingInstance);
+                    result = existingInstance;
                     return true;
                 }
 
                 bool isCollection = type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
 
-                // deserialize by collectionCtor only if there is no default one
+                // g/3.) New collection by collectionCtor (only if there is no defaultCtor)
                 if (isCollection && defaultCtor == null && !type.IsValueType)
                 {
-                    result = DeserializeContentByInitializerCollection(type, reader, collectionCtor, elementType, isDictionary);
+                    result = DeserializeContentByInitializerCollection(reader, collectionCtor, elementType, isDictionary);
                     return true;
                 }
 
-                result = Reflector.Construct(type);
+                result = existingInstance ?? (type.CanBeCreatedWithoutParameters() 
+                    ? Reflector.Construct(type) 
+                    : throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type)));
 
-                // populating will not work: try to fallback to collectionCtor if possible
+                // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !type.IsReadWriteCollection(result))
                 {
                     if (collectionCtor != null)
                     {
-                        result = DeserializeContentByInitializerCollection(type, reader, collectionCtor, elementType, isDictionary);
+                        result = DeserializeContentByInitializerCollection(reader, collectionCtor, elementType, isDictionary);
                         return true;
                     }
 
                     throw new SerializationException(Res.Get(Res.XmlDeserializeReadOnlyCollection, type));
                 }
 
+                // g/5.) Newly created collection or any other object (both existing and new)
                 DeserializeContent(reader, result);
                 return true;
             }
@@ -553,7 +432,7 @@ namespace KGySoft.Libraries.Serialization
         /// XmlReader version. Position is before content (on parent start element). On exit position is on parent close element.
         /// Parent is not empty here.
         /// </summary>
-        private static Array DeserializeArray(Array array, Type elementType, XmlReader reader)
+        private static Array DeserializeArray(Array array, Type elementType, XmlReader reader, bool canRecreateArray)
         {
             if (array == null && elementType == null)
                 throw new ArgumentNullException(nameof(elementType), Res.Get(Res.ArgumentNull));
@@ -592,29 +471,24 @@ namespace KGySoft.Libraries.Serialization
                 length = lengths.Aggregate(1, (acc, len) => acc * len);
             }
 
-            // creating a new array
-            if (array == null)
+            // checking existing array or creating a new array
+            if (array == null || !CheckArray(array, length, lengths, lowerBounds, !canRecreateArray))
                 array = lengths != null ? Array.CreateInstance(elementType, lengths, lowerBounds) : Array.CreateInstance(elementType, length);
-            else
-                CheckArray(array, length, lengths, lowerBounds);
 
             string attrCrc = reader[XmlSerializer.AttributeCrc];
-            uint? origCrc = null, actualCrc = null;
+            uint? crc = null;
             if (attrCrc != null)
             {
-                uint crc;
-                if (!UInt32.TryParse(attrCrc, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out crc))
+                if (!UInt32.TryParse(attrCrc, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var result))
                     throw new ArgumentException(Res.Get(Res.XmlCrcFormat, attrCrc));
-                origCrc = crc;
+                crc = result;
             }
 
             int deserializedItemsCount = 0;
             ArrayIndexer arrayIndexer = lengths == null ? null : new ArrayIndexer(lengths, lowerBounds);
-            bool oldWay = false;
             do
             {
                 ReadToNodeType(reader, XmlNodeType.Element, XmlNodeType.Text, XmlNodeType.EndElement);
-
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Text:
@@ -623,21 +497,10 @@ namespace KGySoft.Libraries.Serialization
 
                         // primitive array (can be restored by BlockCopy)
                         byte[] data = Convert.FromBase64String(reader.Value);
-
-                        // non-old way: crc can be missing and in such case crc is not calculated
-                        if (origCrc != null || oldWay)
+                        if (crc.HasValue)
                         {
-                            uint crc = Crc32.CalculateHash(data);
-                            if (origCrc != null)
-                            {
-                                if (crc != origCrc.Value)
-                                    throw new ArgumentException(Res.Get(Res.XmlCrcError));
-                            }
-                            else
-                            {
-                                // crc will be checked later in CRC element
-                                actualCrc = crc;
-                            }
+                            if (Crc32.CalculateHash(data) != crc.Value)
+                                throw new ArgumentException(Res.Get(Res.XmlCrcError));
                         }
 
                         Buffer.BlockCopy(data, 0, array, 0, data.Length);
@@ -655,7 +518,7 @@ namespace KGySoft.Libraries.Serialization
                             if (itemType == null)
                                 itemType = array.GetType().GetElementType();
 
-                            if (TryDeserializeObject(itemType, reader, out var item))
+                            if (TryDeserializeObject(itemType, reader, null, out var item))
                             {
                                 if (arrayIndexer == null)
                                     array.SetValue(item, deserializedItemsCount);

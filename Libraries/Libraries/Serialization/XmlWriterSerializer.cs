@@ -117,19 +117,12 @@ namespace KGySoft.Libraries.Serialization
                     {
                         int low;
                         if ((low = array.GetLowerBound(i)) != 0)
-                        {
                             dim.Append(low + ".." + (low + array.GetLength(i) - 1));
-                        }
                         else
-                        {
                             dim.Append(array.GetLength(i));
-                        }
 
                         if (i < array.Rank - 1)
-                        {
                             dim.Append(',');
-                        }
-
                     }
 
                     writer.WriteAttributeString(XmlSerializer.AttributeDim, dim.ToString());
@@ -163,13 +156,9 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteStartElement(XmlSerializer.ElementItem);
                     Type itemType = null;
                     if (item == null)
-                    {
                         writer.WriteEndElement();
-                    }
                     else if (TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), visibility))
-                    {
                         writer.WriteFullEndElement();
-                    }
                     else
                         throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), Options));
                 }
@@ -225,8 +214,6 @@ namespace KGySoft.Libraries.Serialization
             // b.) IXmlSerializable
             if (obj is IXmlSerializable xmlSerializable && ProcessXmlSerializable)
             {
-                if (!type.CanBeCreatedWithoutParameters())
-                    throw new SerializationException(Res.Get(Res.XmlSerializableNoDefaultCtor, type));
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
@@ -256,7 +243,7 @@ namespace KGySoft.Libraries.Serialization
                 return true;
             }
 
-            // e/1.) Keyvalue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
+            // e/1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
             if (type == typeof(DictionaryEntry))
             {
                 if (typeNeeded)
@@ -267,7 +254,7 @@ namespace KGySoft.Libraries.Serialization
                 return true;
             }
 
-            // e/2.) Keyvalue 2: KeyValuePair: properties are read-only so special support needed
+            // e/2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
             if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
             {
                 if (typeNeeded)
@@ -278,9 +265,7 @@ namespace KGySoft.Libraries.Serialization
 
                 writer.WriteStartElement(nameof(KeyValuePair<_,_>.Key));
                 if (key == null)
-                {
                     writer.WriteEndElement();
-                }
                 else
                 {
                     Type keyType = key.GetType();
@@ -293,9 +278,7 @@ namespace KGySoft.Libraries.Serialization
 
                 writer.WriteStartElement(nameof(KeyValuePair<_,_>.Value));
                 if (value == null)
-                {
                     writer.WriteEndElement();
-                }
                 else
                 {
                     Type valueType = value.GetType();
@@ -341,9 +324,8 @@ namespace KGySoft.Libraries.Serialization
             if (IsTrustedCollection(type)
                 // or recursive is requested 
                 || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                    // and can populate collection by general ways or by an initializer constructor
-                    && type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out elementType, out var _)
-                    && (collectionCtor != null || type.IsReadWriteCollection(obj))))
+                    // and is a supported collection
+                    && type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _)))
             {
                 SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
                 return true;
@@ -367,79 +349,20 @@ namespace KGySoft.Libraries.Serialization
 
         private void SerializeMembers(object obj, XmlWriter writer)
         {
-            // getting read-write non-indexer instance properties, and read-only ones with populatable collections, same for fields
-            IEnumerable<MemberInfo> properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0 && p.CanRead && (p.CanWrite || ForceReadonlyMembers || p.PropertyType.IsCollection()));
-            IEnumerable<MemberInfo> fields = ExcludeFields
-                ? (IEnumerable<MemberInfo>)new MemberInfo[0]
-                : obj.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance).Where(f => !f.IsInitOnly || ForceReadonlyMembers || f.FieldType.IsCollection());
-
-            foreach (MemberInfo member in fields.Concat(properties))
+            Type type = obj.GetType();
+            foreach (MemberInfo member in GetMembersToSerialize(type))
             {
-                // skipping non-serializable members
-                // Skip 1.) hidden by DesignerSerializationVisibility
-                Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(DesignerSerializationVisibilityAttribute), true);
-                DesignerSerializationVisibility visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : DesignerSerializationVisibilityAttribute.Default.Visibility;
-                if (visibility == DesignerSerializationVisibility.Hidden)
+                if (SkipMember(obj, member, out object value, out DesignerSerializationVisibility visibility))
                     continue;
-
-                // Skip 2.) ShouldSerialize<MemberName> method returns false
-                if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
-                {
-                    MethodInfo shouldSerializeMethod = member.DeclaringType.GetMethod(XmlSerializer.MethodShouldSerialize + member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-                    if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == typeof(bool) && !(bool)Reflector.RunMethod(obj, shouldSerializeMethod))
-                        continue;
-                }
-
-                // Skip 3.) DefaultValue equals to property value
-                bool hasDefaultValue = false;
-                object defaultValue = null;
-                if ((Options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
-                {
-                    attrs = Attribute.GetCustomAttributes(member, typeof(DefaultValueAttribute), true);
-                    hasDefaultValue = attrs.Length > 0;
-                    if (hasDefaultValue)
-                        defaultValue = ((DefaultValueAttribute)attrs[0]).Value;
-                }
 
                 PropertyInfo property = member as PropertyInfo;
-                FieldInfo field = property == null ? member as FieldInfo : null;
+                FieldInfo field = property == null ? (FieldInfo)member : null;
                 Type memberType = property != null ? property.PropertyType : field.FieldType;
-                if (!hasDefaultValue && (Options & XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback) != XmlSerializationOptions.None)
-                {
-                    hasDefaultValue = true;
-                    defaultValue = memberType.IsValueType ? Reflector.Construct(memberType) : null;
-                }
 
-                object value = property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
-                if (hasDefaultValue && Equals(value, defaultValue))
-                    continue;
-
-                // -------------- not skipped, serializing
                 Type actualType = value?.GetType() ?? memberType;
 
-                // a.) Read-only property
-                if (property?.CanWrite == false)
-                {
-                    // populatable collection
-                    if (actualType.IsReadWriteCollection(value))
-                    {
-                        writer.WriteStartElement(property.Name);
-                        SerializeCollection((IEnumerable)value, actualType.GetCollectionElementType(), memberType != property.PropertyType, writer, visibility);
-                        writer.WriteFullEndElement();
-                    }
-                    // XmlSerializable
-                    else if (ProcessXmlSerializable && value is IXmlSerializable xmlSerializable)
-                    {
-                        writer.WriteStartElement(property.Name);
-                        SerializeXmlSerializable(xmlSerializable, writer);
-                        writer.WriteFullEndElement();
-                    }
-
-                    continue;
-                }
-
-                // b.) Using explicitly defined type converter if can convert to and from string
-                attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+                // a.) Using explicitly defined type converter if can convert to and from string
+                Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
                     ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
@@ -454,7 +377,8 @@ namespace KGySoft.Libraries.Serialization
                     {
                         if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                         {
-                            writer.WriteStartElement(property.Name);
+                            writer.WriteStartElement(member.Name);
+                            // ReSharper disable once AssignNullToNotNullAttribute - false alarm: it CAN be null
                             WriteStringValue(converter.ConvertToInvariantString(value), writer);
                             writer.WriteEndElement();
                             continue;
@@ -462,14 +386,14 @@ namespace KGySoft.Libraries.Serialization
                     }
                 }
 
-                // c.) any object
-                writer.WriteStartElement(property.Name);
+                // b.) any object
+                writer.WriteStartElement(member.Name);
                 if (value == null)
                     writer.WriteEndElement();
                 else if (TrySerializeObject(value, memberType != actualType, writer, actualType, visibility))
                     writer.WriteFullEndElement();
                 else
-                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeMember, type, member.Name, Options));
             }
         }
 

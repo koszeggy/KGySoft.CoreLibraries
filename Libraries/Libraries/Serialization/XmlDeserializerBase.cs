@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -131,6 +132,65 @@ namespace KGySoft.Libraries.Serialization
                     Reflector.SetField(target, field, Reflector.GetField(source, field));
             }
         }
+
+        protected static TypeConverter GetTypeConverter(MemberInfo member, Type type)
+        {
+            // Explicitly defined type converter if can convert from string
+            Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+            if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
+                && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
+            {
+                ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
+                object[] ctorParams = { type };
+                if (ctor == null)
+                {
+                    ctor = convType.GetDefaultConstructor();
+                    ctorParams = Reflector.EmptyObjects;
+                }
+
+                if (ctor != null)
+                    return Reflector.Construct(ctor, ctorParams) as TypeConverter;
+            }
+
+            return null;
+        }
+
+        protected static void HandleDeserializedMember(object obj, MemberInfo member, object deserializedValue, object existingValue)
+        {
+            // Field
+            if (member is FieldInfo field)
+            {
+                Reflector.SetField(obj, field, deserializedValue);
+                return;
+            }
+
+            var property = (PropertyInfo)member;
+
+            // Read-only property
+            if (!property.CanWrite)
+            {
+                if (property.PropertyType.IsValueType)
+                {
+                    if (Equals(existingValue, deserializedValue))
+                        return;
+                    throw new SerializationException(Res.Get(Res.XmlPropertyHasNoSetter, property.Name, obj.GetType()));
+                }
+
+                if (existingValue == null)
+                    throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterGetsNull, property.Name, obj.GetType()));
+                if (deserializedValue == null)
+                    throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterCantSetNull, property.Name, obj.GetType()));
+                if (existingValue.GetType() != deserializedValue.GetType())
+                    throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
+
+                CopyFrom(existingValue, deserializedValue);
+                return;
+            }
+
+            // Read-write property
+            Reflector.SetProperty(obj, property, deserializedValue);
+        }
+
 
         private static void AdjustInitializerCollection(ref object initializerCollection, ConstructorInfo collectionCtor)
         {

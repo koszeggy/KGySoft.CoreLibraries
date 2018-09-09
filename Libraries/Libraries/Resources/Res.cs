@@ -151,7 +151,7 @@ namespace KGySoft.Libraries.Resources
         internal const string XmlRootTypeMissing = nameof(XmlRootTypeMissing);
         internal const string XmlDeserializeNotSupported = nameof(XmlDeserializeNotSupported);
         internal const string XmlSerializeReadOnlyCollection = nameof(XmlSerializeReadOnlyCollection);
-        internal const string XmlCannotSerializeProperty = nameof(XmlCannotSerializeProperty);
+        internal const string XmlCannotSerializeMember = nameof(XmlCannotSerializeMember);
         internal const string XmlCannotSerializeValueType = nameof(XmlCannotSerializeValueType);
         internal const string XmlBinarySerializationFailed = nameof(XmlBinarySerializationFailed);
         internal const string XmlCannotSerializeArrayElement = nameof(XmlCannotSerializeArrayElement);
