@@ -39,7 +39,7 @@ namespace KGySoft.Libraries.Serialization
                 return result;
 
             Type objType = obj.GetType();
-            if (!TrySerializeObject(obj, true, result, objType, DesignerSerializationVisibility.Visible, false))
+            if (!TrySerializeObject(obj, true, result, objType, DesignerSerializationVisibility.Visible))
                 throw new SerializationException(Res.Get(Res.XmlCannotSerialize, objType, Options));
             return result;
         }
@@ -165,7 +165,7 @@ namespace KGySoft.Libraries.Serialization
                     {
                         XElement child = new XElement(XmlSerializer.ElementItem);
                         Type itemType = null;
-                        if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility, false))
+                        if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
                             parent.Add(child);
                         else
                             throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), Options));
@@ -187,7 +187,7 @@ namespace KGySoft.Libraries.Serialization
                 {
                     XElement child = new XElement(XmlSerializer.ElementItem);
                     Type itemType = null;
-                    if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility, false))
+                    if (item == null || TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility))
                         parent.Add(child);
                     else
                         throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), Options));
@@ -200,7 +200,7 @@ namespace KGySoft.Libraries.Serialization
         /// invalid data or inconsistent settings.
         /// XElement version.
         /// </summary>
-        private bool TrySerializeObject(object obj, bool typeNeeded, XElement parent, Type type, DesignerSerializationVisibility visibility, bool isPropertyOrField)
+        private bool TrySerializeObject(object obj, bool typeNeeded, XElement parent, Type type, DesignerSerializationVisibility visibility)
         {
             if (obj == null)
                 return true;
@@ -217,8 +217,6 @@ namespace KGySoft.Libraries.Serialization
             // b.) IXmlSerializable
             if (obj is IXmlSerializable xmlSerializable && ProcessXmlSerializable)
             {
-                if (!isPropertyOrField && !type.CanBeCreatedWithoutParameters())
-                    throw new SerializationException(Res.Get(Res.XmlSerializableNoDefaultCtor, type));
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
@@ -272,14 +270,14 @@ namespace KGySoft.Libraries.Serialization
                 {
                     Type keyType = key.GetType();
                     bool elementTypeNeeded = keyType != type.GetGenericArguments()[0];
-                    if (!TrySerializeObject(key, elementTypeNeeded, xKey, keyType, visibility, false))
+                    if (!TrySerializeObject(key, elementTypeNeeded, xKey, keyType, visibility))
                         throw new SerializationException(Res.Get(Res.XmlCannotSerialize, keyType, Options));
                 }
                 if (value != null)
                 {
                     Type valueType = value.GetType();
                     bool elementTypeNeeded = valueType != type.GetGenericArguments()[1];
-                    if (!TrySerializeObject(value, elementTypeNeeded, xValue, valueType, visibility, false))
+                    if (!TrySerializeObject(value, elementTypeNeeded, xValue, valueType, visibility))
                         throw new SerializationException(Res.Get(Res.XmlCannotSerialize, valueType, Options));
                 }
                 return true;
@@ -317,10 +315,8 @@ namespace KGySoft.Libraries.Serialization
             if (IsTrustedCollection(type)
                 // or recursive is requested 
                 || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                    // and can populate collection by general ways or by an initializer constructor
-                    && ((!isPropertyOrField && type.IsSupportedCollectionForReflection(out var _, out var collectionCtor, out elementType, out var _) && (collectionCtor != null || type.IsReadWriteCollection(obj)))
-                        // or if member value, an existing instance can be populated without using any constructor
-                        || (isPropertyOrField && type.IsReadWriteCollection(obj)))))
+                    // and is a supported collection
+                    && type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _)))
             {
                 SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, parent, visibility);
                 return true;
@@ -421,7 +417,7 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // b.) any object
-                if (value == null || TrySerializeObject(value, memberType != actualType, newElement, actualType, visibility, true))
+                if (TrySerializeObject(value, memberType != actualType, newElement, actualType, visibility))
                     parent.Add(newElement);
                 else
                     throw new SerializationException(Res.Get(Res.XmlCannotSerializeProperty, obj.GetType(), property.Name, Options));

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -47,6 +48,8 @@ namespace KGySoft.Libraries.Serialization
         {
             AdjustInitializerCollection(ref initializerCollection, collectionCtor);
             object result = Reflector.Construct(collectionCtor, initializerCollection);
+
+            // restoring fields and properties of the final collection
             foreach (KeyValuePair<MemberInfo, object> member in members)
             {
                 var property = member.Key as PropertyInfo;
@@ -55,10 +58,14 @@ namespace KGySoft.Libraries.Serialization
                 // read-only property
                 if (!property?.CanWrite == false)
                 {
-                    if (property.PropertyType.IsValueType)
-                        throw new SerializationException(Res.Get(Res.XmlPropertyHasNoSetter, property.Name, collectionCtor.DeclaringType));
-
                     object existingValue = Reflector.GetProperty(result, property);
+                    if (property.PropertyType.IsValueType)
+                    {
+                        if (Equals(existingValue, member.Value))
+                            continue;
+                        throw new SerializationException(Res.Get(Res.XmlPropertyHasNoSetter, property.Name, collectionCtor.DeclaringType));
+                    }
+
                     if (existingValue == null && member.Value == null)
                         continue;
                     if (member.Value == null)
@@ -68,7 +75,7 @@ namespace KGySoft.Libraries.Serialization
                     if (existingValue.GetType() != member.Value.GetType())
                         throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, collectionCtor.DeclaringType, property.Name, member.Value.GetType(), existingValue.GetType()));
 
-                    RestoreReadOnlyPropertyValue(existingValue, member.Value);
+                    CopyFrom(existingValue, member.Value);
                     continue;
                 }
 
@@ -84,6 +91,45 @@ namespace KGySoft.Libraries.Serialization
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
+        /// </summary>
+        protected static void CopyFrom(object target, object source)
+        {
+            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFrom)}.");
+
+            // 1.) Array
+            if (target is Array targetArray && source is Array sourceArray)
+            {
+                int[] lengths = new int[sourceArray.Rank];
+                int[] lowerBounds = new int[sourceArray.Rank];
+                for (int i = 0; i < sourceArray.Rank; i++)
+                {
+                    lengths[i] = sourceArray.GetLength(i);
+                    lowerBounds[i] = sourceArray.GetLowerBound(i);
+                }
+
+                CheckArray(targetArray, sourceArray.Length, lengths, lowerBounds, true);
+                if (lengths.Length == 1 && lowerBounds[0] == 0 && targetArray.GetType().GetElementType()?.IsPrimitive == true)
+                    Buffer.BlockCopy(sourceArray, 0, targetArray, 0, Buffer.ByteLength(sourceArray));
+                else
+                {
+                    var indices = new ArrayIndexer(lengths, lowerBounds);
+                    while (indices.MoveNext())
+                        targetArray.SetValue(sourceArray.GetValue(indices.Current), indices.Current);
+                }
+
+                return;
+            }
+
+            // 2.) non-array: every fields (here we don't know how was the instance serialized but we have a deserialized source)
+            for (Type t = target.GetType(); t != null; t = t.BaseType)
+            {
+                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                    Reflector.SetField(target, field, Reflector.GetField(source, field));
+            }
         }
 
         private static void AdjustInitializerCollection(ref object initializerCollection, ConstructorInfo collectionCtor)
@@ -111,75 +157,6 @@ namespace KGySoft.Libraries.Serialization
             // ToArray for array ctor parameter
             if (collectionCtor.GetParameters()[0].ParameterType.IsArray)
                 initializerCollection = Reflector.RunMethod(initializerCollection, initializerCollection.GetType().GetMethod(nameof(List<_>.ToArray)));
-        }
-
-        private static void RestoreReadOnlyPropertyValue(object target, object source)
-        {
-            // TODO: also properties and fields (also for populatable collections!)
-            // none of them are null, types are the same
-            Type createdType = property.Value?.GetType();
-            Type propertyType = property.Key.PropertyType;
-            if (target != null && property.Value == null)
-            {
-                if (propertyType.IsArray)
-                    throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetterNull, propertyType, collectionRealType, property.Key.Name));
-                if (propertyType.IsCollection())
-                    throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetterNull, propertyType, collectionRealType, property.Key.Name));
-            }
-            else if (target == null && property.Value != null)
-            {
-                if (propertyType.IsArray)
-                    throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetter, propertyType, collectionRealType, property.Key.Name));
-                if (propertyType.IsCollection())
-                    throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetter, propertyType, collectionRealType, property.Key.Name));
-            }
-            else
-            {
-                if (target == null && property.Value == null)
-                    continue;
-                if (propertyType != createdType)
-                    throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, collectionRealType, property.Key.Name, createdType, propertyType));
-
-                // copy from existing array
-                if (target is Array existingArray && property.Value is Array arrayToSet)
-                {
-                    int[] lengths = new int[arrayToSet.Rank];
-                    int[] lowerBounds = new int[arrayToSet.Rank];
-                    for (int i = 0; i < arrayToSet.Rank; i++)
-                    {
-                        lengths[i] = arrayToSet.GetLength(i);
-                        lowerBounds[i] = arrayToSet.GetLowerBound(i);
-                    }
-
-                    CheckArray(existingArray, arrayToSet.Length, lengths, lowerBounds);
-                    if (collectionElementType.IsPrimitive)
-                        Buffer.BlockCopy(arrayToSet, 0, existingArray, 0, Buffer.ByteLength(arrayToSet));
-                    else
-                    {
-                        var indices = new ArrayIndexer(lengths, lowerBounds);
-                        while (indices.MoveNext())
-                            existingArray.SetValue(existingArray.GetValue(indices.Current), indices.Current);
-                    }
-
-                    continue;
-                }
-
-                // copy from existing collection
-                if (propertyType.IsCollection())
-                {
-                    if (!propertyType.IsReadWriteCollection(target))
-                        throw new SerializationException(Res.Get(Res.XmlDeserializeReadOnlyCollection, propertyType));
-
-                    IEnumerable collection = (IEnumerable)target;
-                    collection.Clear();
-                    foreach (var item in (IEnumerable)property.Value)
-                        collection.Add(item);
-
-                    continue;
-                }
-
-                throw new ArgumentException(Res.Get(Res.XmlDeserializeReadOnlyProperty, collectionRealType, property.Key.Name, propertyType));
-            }
         }
 
         protected static string Unescape(string s)
@@ -216,6 +193,5 @@ namespace KGySoft.Libraries.Serialization
 
             return result.ToString();
         }
-
     }
 }

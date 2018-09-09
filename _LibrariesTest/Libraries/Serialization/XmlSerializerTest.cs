@@ -1390,23 +1390,32 @@ namespace _LibrariesTest.Libraries.Serialization
         {
 #error tart: xmlbase.RestoreReadOnlyPropertyValue
             // TODO: publikus fieldek serializálása
-            //  + Deserializálásnál readonly property (és field?) esetén elsősorban létező instance deserializálás
-            //    - DeserializeMembers:
-            //      - ha result és az eredeti instance megegyezik, valuetype esetén akkor is visszasettelni, különben elvész
-            //      - ha a result és az eredeti instance különbözik, kell setter, különben exception
             //  - Apply to XmlReader version
-            //  - Leírás: Memberek: Elsősorban már létező instance-ot próbál meg tartalom alapján deserializálni, ha a field/property eleve nem null. Így akár spéci ctoros collection is deserializálható.
-            //            - Note: Spéci ctoros collection saját property-jeire ez csak módjával igaz, azoknak settelhetőknek vagy array/populatable collection-nek kell lenniük, de ez utóbbiak propertijei már nem lesznek visszasettelve
+            //  - Leírás: None option esetén ReadOnly property csak akkor, ha IList/IDictionary/ICollection<Т>/IXmlSerializable, de ekkor az kell, hogy deserializáláskor a property ne nullt adjon vissza.
+            //            Memberek: Elsősorban már létező instance-ot próbál meg tartalom alapján deserializálni, ha a field/property eleve nem null (nemcsak a fenti esetre, hanem minden objektumnál). Így akár custom ctoros collection is deserializálható, illetve Forced readonly esetén bármilyen readonly property.
             //            System verzió összehasonlítás: Ha a propertyk/fieldek nem nullok a létehozás után, elsősorban tartalom deserializálás, így működik a dolog setter nélkül is (nemcsak collectionre), illetve default ctor nélkül is.
             // TODO: XElement verzióba is ugyanez
             // TODO: BinaryTypeConverter - leírásban már ott van
             // TODO: Changelog
             // TODO: tesztek
-            // - Read-Only collections with read-write, read-only array and read-only collection parameters.
+            // - Read-Only collections with read-write, read-only array and read-only collection and read-only non-collection properties.
+            //   - A CopyFrom lefusson minden esetre (array, collection, object)
             // - None options with every allowed cases
             //   - IXmlSerializable readonly property without default ctor
             // - populatable collections without any good ctor and/or read-only properties
+            // TODO: member névütközés: - megoldás: declaringType attribútum
+            // - item nevű field/property collection-ben - a collection item-en nincs declaringType, a memberen igen
+            // - azonos nevű fieldek/propertyk az ősben (+akár item néven) - mindegyiken van declaringType, kivéve a collection item-eken
             throw new NotImplementedException("TODO: Read-Only collections with read-write, read-only array and read-only collection parameters.");
+        }
+
+        [TestMethod]
+        public void SerializeObjectsWithMemberNameCollision()
+        {
+            // TODO: member névütközés: - megoldás: declaringType attribútum
+            // - item nevű field/property collection-ben - a collection item-en nincs declaringType, a memberen igen
+            // - azonos nevű fieldek/propertyk az ősben (+akár item néven) - mindegyiken van declaringType, kivéve a collection item-eken
+            throw new NotImplementedException("TODO: Member name collision.");
         }
 
         /// <summary>

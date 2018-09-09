@@ -137,91 +137,74 @@ namespace KGySoft.Libraries.Serialization
                 // 1.) real member
                 if (member != null)
                 {
-                    // 1.a.) not a cached member for late initialization, and property is read-only or value does not have parameterless constructor: deserialize from existing content
-                    if (members == null && (property?.CanWrite == false || !itemType.CanBeCreatedWithoutParameters()))
+                    TypeConverter converter = null;
+
+                    // Explicitly defined type converter if can convert from string
+                    Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+                    if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
+                        && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                     {
-                        object propertyValue = Reflector.GetProperty(obj, property);
-                        if (propertyValue != null && propertyOrItem.IsEmpty)
+                        ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
+                        object[] ctorParams = { itemType };
+                        if (ctor == null)
                         {
-                            if (itemType.IsArray)
-                                throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetterNull, itemType, objRealType, member.Name));
-                            if (itemType.IsCollection())
-                                throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetterNull, itemType, objRealType, member.Name));
-                            throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterNull, itemType, objRealType, member.Name));
+                            ctor = convType.GetDefaultConstructor();
+                            ctorParams = Reflector.EmptyObjects;
                         }
-                        else if (propertyValue == null && !propertyOrItem.IsEmpty)
-                        {
-                            if (itemType.IsArray)
-                                throw new ReflectionException(Res.Get(Res.XmlArrayPropertyHasNoSetter, itemType, objRealType, member.Name));
-                            if (itemType.IsCollection())
-                                throw new ReflectionException(Res.Get(Res.XmlCollectionPropertyHasNoSetter, itemType, objRealType, member.Name));
-                        }
-                        else 
-                        {
-                            if (propertyValue == null && propertyOrItem.IsEmpty)
-                                continue;
-                            if (itemType != propertyValue.GetType())
-                                throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, objRealType, property.Name, itemType, propertyValue.GetType()));
 
-                            if (itemType.IsArray)
-                            {
-                                DeserializeArray((Array)propertyValue, null, propertyOrItem);
-                                continue;
-                            }
-
-                            if (itemType.IsCollection())
-                            {
-                                // both read-write check and Clear are in DeserializeContent
-                                DeserializeContent(propertyOrItem, propertyValue);
-                                continue;
-                            }
-
-                            throw new ArgumentException(Res.Get(Res.XmlDeserializeReadOnlyProperty, objRealType, property.Name, itemType));
-                        }
+                        if (ctor != null)
+                            converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
                     }
 
-                    // 1.b.) read-write property or property value is to be cached
+                    // The deserialization itself
+                    object existingValue = members != null ? null : property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
                     object result;
+                    if (converter?.CanConvertFrom(Reflector.StringType) == true)
+                        result = converter.ConvertFromInvariantString(ReadStringValue(propertyOrItem));
+                    else if (!TryDeserializeObject(itemType, propertyOrItem, existingValue, out result))
+                        throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
 
-                    // 1.b.i.) Using explicitly defined type converter if can convert from string
-                    object[] attrs = property.GetCustomAttributes(typeof(TypeConverterAttribute), true);
-                    TypeConverterAttribute convAttr = attrs.Length > 0 ? attrs[0] as TypeConverterAttribute : null;
-                    if (convAttr != null)
+                    // 1/a.) Cache for later
+                    if (members != null)
                     {
-                        Type convType = Type.GetType(convAttr.ConverterTypeName);
-                        if (convType != null)
-                        {
-                            ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                            object[] ctorParams = { property.PropertyType };
-                            if (ctor == null)
-                            {
-                                ctor = convType.GetDefaultConstructor();
-                                ctorParams = Reflector.EmptyObjects;
-                            }
-                            if (ctor != null)
-                            {
-                                if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertFrom(Reflector.StringType))
-                                {
-                                    result = converter.ConvertFromInvariantString(ReadStringValue(propertyOrItem));
-                                    if (members != null)
-                                        members[property] = result;
-                                    else
-                                        Reflector.SetProperty(obj, property, result);
-                                    continue;
-                                }
-                            }
-                        }
+                        members[member] = result;
+                        continue;
                     }
 
-                    // 1.b.ii.) Any object
-                    if (!TryDeserializeObject(itemType, propertyOrItem, out result))
-                        throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, objRealType));
+                    // 1/b.) Successfully deserialized into the existing instance (or both are null)
+                    if (ReferenceEquals(existingValue, result))
+                        continue;
 
-                    if (members != null)
-                        members[property] = result;
-                    else
+                    // 1/c.) Read-only property
+                    if (property?.CanWrite == false)
+                    {
+                        if (property.PropertyType.IsValueType)
+                        {
+                            if (Equals(existingValue, result))
+                                continue;
+                            throw new SerializationException(Res.Get(Res.XmlPropertyHasNoSetter, property.Name, objRealType));
+                        }
+
+                        if (existingValue == null)
+                            throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterGetsNull, property.Name, objRealType));
+                        if (result == null)
+                            throw new ReflectionException(Res.Get(Res.XmlPropertyHasNoSetterCantSetNull, property.Name, objRealType));
+                        if (existingValue.GetType() != result.GetType())
+                            throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, objRealType, property.Name, result.GetType(), existingValue.GetType()));
+
+                        CopyFrom(existingValue, result);
+                        continue;
+                    }
+
+                    // 1/d.) Read-write property
+                    if (property != null)
+                    {
                         Reflector.SetProperty(obj, property, result);
-                    continue;
+                        continue;
+                    }
+
+                    // 1./e.) Field
+                    Reflector.SetField(obj, field, result);
                 }
 
                 if (collectionElementType == null)
@@ -242,7 +225,7 @@ namespace KGySoft.Libraries.Serialization
                     continue;
                 }
 
-                if (TryDeserializeObject(itemType ?? collectionElementType, propertyOrItem, out var item))
+                if (TryDeserializeObject(itemType ?? collectionElementType, propertyOrItem, null, out var item))
                 {
                     collection.Add(item);
                     continue;
