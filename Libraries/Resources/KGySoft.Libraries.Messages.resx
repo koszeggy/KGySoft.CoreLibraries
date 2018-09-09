@@ -463,12 +463,6 @@ Hit rate: {8:P2}</value>
   <data name="XmlArrayLowerBoundMismatch" xml:space="preserve">
     <value>Cannot restore array "{0}" because lower bound of the {1}. dimension does not match.</value>
   </data>
-  <data name="XmlArrayPropertyHasNoSetter" xml:space="preserve">
-    <value>Cannot restore array "{0}" at property "{1}.{2}" because it has no setter and its getter returns null.</value>
-  </data>
-  <data name="XmlArrayPropertyHasNoSetterNull" xml:space="preserve">
-    <value>Cannot set null value to array "{0}" at property "{1}.{2}" because it has no setter.</value>
-  </data>
   <data name="XmlPropertyTypeMismatch" xml:space="preserve">
     <value>Property value of "{0}.{1}" is expected to be a type of "{2}" but was "{3}".</value>
   </data>
@@ -481,14 +475,8 @@ Hit rate: {8:P2}</value>
   <data name="XmlBinarySerializationFailed" xml:space="preserve">
     <value>Binary serialization of type "{0}" failed with options "{1}": {2}</value>
   </data>
-  <data name="XmlCannotCreateCollection" xml:space="preserve">
-    <value>Construction of type "{0}" has been failed. Missing default constructor?</value>
-  </data>
   <data name="XmlDeserializeReadOnlyCollection" xml:space="preserve">
     <value>Collection "{0}" is read-only so its content cannot be restored.</value>
-  </data>
-  <data name="XmlDeserializeReadOnlyProperty" xml:space="preserve">
-    <value>Property "{0}.{1}" cannot be deserialized because it is read-only and has type of "{2}" instead of a collection.</value>
   </data>
   <data name="XmlCannotDetermineElementType" xml:space="preserve">
     <value>Could not determine type of element in collection "{0}".</value>
@@ -507,15 +495,6 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="XmlCannotSerializeMember" xml:space="preserve">
     <value>Cannot serialize member "{0}.{1}" with following options: "{2}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content for the member.</value>
-  </data>
-  <data name="XmlCannotSerializeValueType" xml:space="preserve">
-    <value>Serializing value type "{0}" is not supported with following options: "{1}". You may either use RecursiveSerializationAsFallback or BinarySerializationAsFallback options, or provide a type converter for this type.</value>
-  </data>
-  <data name="XmlCollectionPropertyHasNoSetter" xml:space="preserve">
-    <value>Cannot restore collection "{0}" at property "{1}.{2}" because it has no setter. Make sure that value of this property is not null after construction so it can be deserialized without a setter.</value>
-  </data>
-  <data name="XmlCollectionPropertyHasNoSetterNull" xml:space="preserve">
-    <value>Cannot assign null to collection "{0}" at property "{1}.{2}" because it has no setter.</value>
   </data>
   <data name="XmlPropertyHasNoSetterNull" xml:space="preserve">
     <value>Cannot assign null to type "{0}" at property "{1}.{2}" because it has no setter.</value>
@@ -647,9 +626,6 @@ It has a collection initializer constructor though, so using XmlSerializer.Seria
   </data>
   <data name="XmlInvalidEscapedContent" xml:space="preserve">
     <value>Invalid escaped string content: "{0}".</value>
-  </data>
-  <data name="XmlKeyValueTypeMissing" xml:space="preserve">
-    <value>Can not deserialize a key-value element: type information is missing.</value>
   </data>
   <data name="XmlKeyValueMissingKey" xml:space="preserve">
     <value>Key element not found in key/value pair element.</value>

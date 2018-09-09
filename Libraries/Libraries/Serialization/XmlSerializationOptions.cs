@@ -40,8 +40,8 @@ namespace KGySoft.Libraries.Serialization
         /// <see cref="BitArray"/>, <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
         /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
         /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
-        /// which cannot be retrieved by the public members when the collection is being serialized. On deserialization always the default constructor is used (unless the collection is returned by a read-only property, in which case the already
-        /// existing instance is used) so the collection is always instantiated by the default settings.</note>
+        /// which cannot be retrieved by the public members when the collection is being serialized. However, if a property or field returns a non-<see langword="null"/> instance after the container object is created, then the returned instance is tried to be used on deserialization.
+        /// This makes possible to deserialize even custom-initialized dictionaries and other objects.</note>
         /// </description></item>
         /// </list>
         /// </para>
@@ -148,10 +148,10 @@ namespace KGySoft.Libraries.Serialization
         ExcludeFields = 1 << 11,
 
         /// <summary>
-        /// <para>By default read-only properties and fields are serialized only if they are collections that can be populated. This options forces to serialize
-        /// read-only fields and properties as well.
+        /// <para>By default read-only properties and fields are serialized only if they <see cref="IXmlSerializable"/> implementations or collections that can be populated.
+        /// This options forces to serialize read-only fields and properties as well.
         /// <note>Public properties with private setter accessor are serializable even without this option.</note>
-        /// <note type="caution">Enabling this option can make it highly possible that properties without setter accessor will not be able to deserialized.
+        /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
         /// Deserialization will fail if the read-only property returns a <see langword="null"/> value or its content cannot be restored (eg. it has a simple type).</note>
         /// </para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
