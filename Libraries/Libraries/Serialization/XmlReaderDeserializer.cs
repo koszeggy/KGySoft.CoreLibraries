@@ -253,8 +253,8 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // d.) key/value pair
-            if (type == typeof(DictionaryEntry) || type?.IsGenericTypeOf(typeof(KeyValuePair<,>)) == true)
+            // d.) KeyValuePair (DictionaryEntry is deserialized recursively because its properties are settable)
+            if (type?.IsGenericTypeOf(typeof(KeyValuePair<,>)) == true)
             {
                 bool keyRead = false;
                 bool valueRead = false;
@@ -270,20 +270,13 @@ namespace KGySoft.Libraries.Serialization
                         case XmlNodeType.Element:
                             switch (reader.Name)
                             {
-                                case nameof(DictionaryEntry.Key):
+                                case nameof(KeyValuePair<_,_>.Key):
                                     if (keyRead)
                                         throw new ArgumentException(Res.Get(Res.XmlMultipleKeys));
 
                                     keyRead = true;
                                     string attrType = reader[XmlSerializer.AttributeType];
-                                    if (attrType != null)
-                                        keyType = Reflector.ResolveType(attrType);
-                                    else
-                                    {
-                                        keyType = typeof(object);
-                                        if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
-                                            keyType = type.GetGenericArguments()[0];
-                                    }
+                                    keyType = attrType != null ? Reflector.ResolveType(attrType) : type.GetGenericArguments()[0];
                                     if (!TryDeserializeObject(keyType, reader, null, out key))
                                     {
                                         if (attrType != null && keyType == null)
@@ -292,20 +285,13 @@ namespace KGySoft.Libraries.Serialization
                                     }
                                     break;
 
-                                case nameof(DictionaryEntry.Value):
+                                case nameof(KeyValuePair<_,_>.Value):
                                     if (valueRead)
                                         throw new ArgumentException(Res.Get(Res.XmlMultipleValues));
 
                                     valueRead = true;
                                     attrType = reader[XmlSerializer.AttributeType];
-                                    if (attrType != null)
-                                        valueType = Reflector.ResolveType(attrType);
-                                    else
-                                    {
-                                        valueType = Reflector.ObjectType;
-                                        if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
-                                            valueType = type.GetGenericArguments()[1];
-                                    }
+                                    valueType = attrType != null ? Reflector.ResolveType(attrType) : type.GetGenericArguments()[1];
                                     if (!TryDeserializeObject(valueType, reader, null, out value))
                                     {
                                         if (attrType != null && valueType == null)
@@ -320,7 +306,7 @@ namespace KGySoft.Libraries.Serialization
                             break;
 
                         case XmlNodeType.EndElement:
-                            // end of keyvalue: checking whether both key and value have been read
+                            // end of KeyValue: checking whether both key and value have been read
                             if (!keyRead)
                                 throw new ArgumentException(Res.Get(Res.XmlKeyValueMissingKey));
                             if (!valueRead)

@@ -249,7 +249,6 @@ namespace KGySoft.Libraries.Serialization
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
-                // SerializeComponent can be avoided because DE is neither IXmlSerializable nor collection and no need to register because it is a value type
                 SerializeMembers(obj, writer);
                 return true;
             }

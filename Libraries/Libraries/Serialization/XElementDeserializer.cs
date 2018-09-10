@@ -242,27 +242,16 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // d.) key/value pair
-            if (type == typeof(DictionaryEntry) || type?.IsGenericTypeOf(typeof(KeyValuePair<,>)) == true)
+            // d.) KeyValuePair (DictionaryEntry is deserialized recursively because its properties are settable)
+            if (type?.IsGenericTypeOf(typeof(KeyValuePair<,>)) == true)
             {
-                object key;
-                object value;
-
                 // key
-                XElement xItem = element.Element(nameof(DictionaryEntry.Key));
+                XElement xItem = element.Element(nameof(KeyValuePair<_,_>.Key));
                 if (xItem == null)
                     throw new ArgumentException(Res.Get(Res.XmlKeyValueMissingKey));
                 XAttribute xType = xItem.Attribute(XmlSerializer.AttributeType);
-                Type keyType, valueType;
-                if (xType != null)
-                    keyType = Reflector.ResolveType(xType.Value);
-                else
-                {
-                    keyType = Reflector.ObjectType;
-                    if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
-                        keyType = type.GetGenericArguments()[0];
-                }
-                if (!TryDeserializeObject(keyType, xItem, null, out key))
+                Type keyType = xType != null ? Reflector.ResolveType(xType.Value) : type.GetGenericArguments()[0];
+                if (!TryDeserializeObject(keyType, xItem, null, out object key))
                 {
                     if (xType != null && keyType == null)
                         throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, xType.Value));
@@ -270,19 +259,12 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // value
-                xItem = element.Element(nameof(DictionaryEntry.Value));
+                xItem = element.Element(nameof(KeyValuePair<_,_>.Value));
                 if (xItem == null)
                     throw new ArgumentException(Res.Get(Res.XmlKeyValueMissingValue));
                 xType = xItem.Attribute(XmlSerializer.AttributeType);
-                if (xType != null)
-                    valueType = Reflector.ResolveType(xType.Value);
-                else
-                {
-                    valueType = Reflector.ObjectType;
-                    if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
-                        valueType = type.GetGenericArguments()[1];
-                }
-                if (!TryDeserializeObject(valueType, xItem, null, out value))
+                Type valueType = xType != null ? Reflector.ResolveType(xType.Value) : type.GetGenericArguments()[1];
+                if (!TryDeserializeObject(valueType, xItem, null, out object value))
                 {
                     if (xType != null && valueType == null)
                         throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, xType.Value));
