@@ -101,11 +101,6 @@ namespace _LibrariesTest.Libraries.Resources
             }
         }
 
-        protected override bool IsResourceTest
-        {
-            get { return true; }
-        }
-
         [TestMethod]
         public void ReadWriteRead()
         {
@@ -592,7 +587,7 @@ namespace _LibrariesTest.Libraries.Resources
             }
 
             // compare 1: check is from ResXDataNodes objects with original DataNodeInfos and without generated values
-            CompareCollections(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
+            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
 
             // -----------------
 
@@ -613,7 +608,7 @@ namespace _LibrariesTest.Libraries.Resources
             }
 
             // compare 2: check is from objects so DataNodeInfos are generated, every object is embedded
-            CompareCollections(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
+            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
 
             // -----------------
 
@@ -634,7 +629,7 @@ namespace _LibrariesTest.Libraries.Resources
             }
 
             // compare 3: check is from ResXDataNodes objects with re-generated DataNodeInfos from values
-            CompareCollections(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
+            AssertItemsEqual(reference.Select(de => new DictionaryEntry(de.Key, ((ResXDataNode)de.Value).GetValue())), check);
         }
 
         private void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
@@ -671,7 +666,7 @@ namespace _LibrariesTest.Libraries.Resources
                     }
                 }
 
-                CompareCollections(referenceObjects, deserializedObjects.ToArray());
+                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
             }
             catch (Exception e)
             {
@@ -702,7 +697,7 @@ namespace _LibrariesTest.Libraries.Resources
                 }
             }
 
-            CompareCollections(referenceObjects, deserializedObjects.ToArray());
+            AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
 
             if (compatibilityMode)
             {
@@ -716,7 +711,7 @@ namespace _LibrariesTest.Libraries.Resources
                 }
 
                 if (checkCompatibleEquality)
-                    CompareCollections(referenceObjects, deserializedObjects.ToArray());
+                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
             }
         }
     }

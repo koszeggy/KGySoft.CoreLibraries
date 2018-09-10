@@ -38,41 +38,14 @@ namespace _LibrariesTest.Libraries.Serialization
 
         public class EmptyType
         {
-            // overridden for test
-            public override bool Equals(object obj)
-            {
-                if (obj.GetType() == typeof(EmptyType))
-                    return true;
-                return base.Equals(obj);
-            }
-
-            public override int GetHashCode()
-            {
-                return true.GetHashCode();
-            }
+            public override bool Equals(object obj) => true;
+            public override int GetHashCode() => 0;
         }
 
         public class IntList : List<int>, ICollection<int>
         {
-            public bool IsReadOnly
-            {
-                get
-                {
-                    return false;
-                }
-            }
-
-            #region ICollection<int> Members
-
-            bool ICollection<int>.IsReadOnly
-            {
-                get
-                {
-                    return (this as ICollection<int>).IsReadOnly;
-                }
-            }
-
-            #endregion
+            public bool IsReadOnly => false;
+            bool ICollection<int>.IsReadOnly => (this as ICollection<int>).IsReadOnly;
         }
 
         [Serializable]
@@ -120,10 +93,7 @@ namespace _LibrariesTest.Libraries.Serialization
             public int SemiReadOnlyProperty { get; private set; }
 
             private int backingFieldOfRealReadOnlyProperty;
-            public int RealReadOnlyProperty
-            {
-                get { return backingFieldOfRealReadOnlyProperty; }
-            }
+            public int RealReadOnlyProperty => backingFieldOfRealReadOnlyProperty;
 
             #region IXmlSerializable Members
 
@@ -166,20 +136,9 @@ namespace _LibrariesTest.Libraries.Serialization
                 backingFieldOfRealReadOnlyProperty = realReadOnlyProp;
             }
 
-            public override bool Equals(object obj)
-            {
-                if (obj.GetType() == typeof(XmlSerializableClass))
-                {
-                    XmlSerializableClass other = (XmlSerializableClass)obj;
-                    return other.backingFieldOfRealReadOnlyProperty == backingFieldOfRealReadOnlyProperty && other.ReadWriteProperty == ReadWriteProperty && other.SemiReadOnlyProperty == SemiReadOnlyProperty;
-                }
-                return base.Equals(obj);
-            }
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
 
-            public override int GetHashCode()
-            {
-                return backingFieldOfRealReadOnlyProperty.GetHashCode() ^ ReadWriteProperty.GetHashCode() ^ SemiReadOnlyProperty.GetHashCode();
-            }
+            public override int GetHashCode() => backingFieldOfRealReadOnlyProperty.GetHashCode() ^ ReadWriteProperty.GetHashCode() ^ SemiReadOnlyProperty.GetHashCode();
         }
 
         public struct XmlSerializableStruct : IXmlSerializable
@@ -189,10 +148,7 @@ namespace _LibrariesTest.Libraries.Serialization
             public int SemiReadOnlyProperty { get; private set; }
 
             private int backingFieldOfRealReadOnlyProperty;
-            public int RealReadOnlyProperty
-            {
-                get { return backingFieldOfRealReadOnlyProperty; }
-            }
+            public int RealReadOnlyProperty => backingFieldOfRealReadOnlyProperty;
 
             #region IXmlSerializable Members
 
@@ -247,14 +203,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     InnerInt = 15;
                 }
 
-                public override bool Equals(object obj)
-                {
-                    if (obj == null || obj.GetType() != typeof(TestInner))
-                        return base.Equals(obj);
-
-                    TestInner other = (TestInner)obj;
-                    return InnerString == other.InnerString && InnerInt == other.InnerInt;
-                }
+                public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
             }
 
             public struct InnerStructure
@@ -363,31 +312,31 @@ namespace _LibrariesTest.Libraries.Serialization
             }
 
             // overridden for test
-            public override bool Equals(object obj)
-            {
-                if (obj == null || obj.GetType() != typeof(FullExtraComponent))
-                    return base.Equals(obj);
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            //{
+            //    if (obj == null || obj.GetType() != typeof(FullExtraComponent))
+            //        return base.Equals(obj);
 
-                FullExtraComponent other = (FullExtraComponent)obj;
-                bool result = Equals(Inner, other.Inner);
-                result &= InnerArray == null && other.InnerArray == null || InnerArray != null && other.InnerArray != null && InnerArray.SequenceEqual(other.InnerArray);
-                result &= InnerList == null && other.InnerList == null || InnerList != null && other.InnerList != null && InnerList.SequenceEqual(other.InnerList);
-                result &= Equals(InnerXmlSerializable, other.InnerXmlSerializable);
-                result &= IntArray == null && other.IntArray == null || IntArray != null && other.IntArray != null && IntArray.SequenceEqual(other.IntArray);
-                result &= IntLinkedList == null && other.IntLinkedList == null || IntLinkedList != null && other.IntLinkedList != null && IntLinkedList.SequenceEqual(other.IntLinkedList);
-                result &= IntList == null && other.IntList == null || IntList != null && other.IntList != null && IntList.SequenceEqual(other.IntList);
-                result &= IntProp == other.IntProp;
-                result &= Point == other.Point;
-                //result &= IntQueue == null && other.IntQueue == null || IntQueue != null && other.IntQueue != null && IntQueue.SequenceEqual(other.IntQueue);
-                result &= PointArray == null && other.PointArray == null || PointArray != null && other.PointArray != null && PointArray.SequenceEqual(other.PointArray);
-                result &= ReadOnlyIntArray == null && other.ReadOnlyIntArray == null || ReadOnlyIntArray != null && other.ReadOnlyIntArray != null && ReadOnlyIntArray.SequenceEqual(other.ReadOnlyIntArray);
-                result &= StringValue == other.StringValue;
-                result &= StrObjDictionary == null && other.StrObjDictionary == null || StrObjDictionary != null && other.StrObjDictionary != null && StrObjDictionary.SequenceEqual(other.StrObjDictionary);
-                result &= Structure.Equals(other.Structure);
-                result &= StructureArray == null && other.StructureArray == null || StructureArray != null && other.StructureArray != null && StructureArray.SequenceEqual(other.StructureArray);
-                result &= StructureList == null && other.StructureList == null || StructureList != null && other.StructureList != null && StructureList.SequenceEqual(other.StructureList);
-                return result;
-            }
+            //    FullExtraComponent other = (FullExtraComponent)obj;
+            //    bool result = Equals(Inner, other.Inner);
+            //    result &= InnerArray == null && other.InnerArray == null || InnerArray != null && other.InnerArray != null && InnerArray.SequenceEqual(other.InnerArray);
+            //    result &= InnerList == null && other.InnerList == null || InnerList != null && other.InnerList != null && InnerList.SequenceEqual(other.InnerList);
+            //    result &= Equals(InnerXmlSerializable, other.InnerXmlSerializable);
+            //    result &= IntArray == null && other.IntArray == null || IntArray != null && other.IntArray != null && IntArray.SequenceEqual(other.IntArray);
+            //    result &= IntLinkedList == null && other.IntLinkedList == null || IntLinkedList != null && other.IntLinkedList != null && IntLinkedList.SequenceEqual(other.IntLinkedList);
+            //    result &= IntList == null && other.IntList == null || IntList != null && other.IntList != null && IntList.SequenceEqual(other.IntList);
+            //    result &= IntProp == other.IntProp;
+            //    result &= Point == other.Point;
+            //    //result &= IntQueue == null && other.IntQueue == null || IntQueue != null && other.IntQueue != null && IntQueue.SequenceEqual(other.IntQueue);
+            //    result &= PointArray == null && other.PointArray == null || PointArray != null && other.PointArray != null && PointArray.SequenceEqual(other.PointArray);
+            //    result &= ReadOnlyIntArray == null && other.ReadOnlyIntArray == null || ReadOnlyIntArray != null && other.ReadOnlyIntArray != null && ReadOnlyIntArray.SequenceEqual(other.ReadOnlyIntArray);
+            //    result &= StringValue == other.StringValue;
+            //    result &= StrObjDictionary == null && other.StrObjDictionary == null || StrObjDictionary != null && other.StrObjDictionary != null && StrObjDictionary.SequenceEqual(other.StrObjDictionary);
+            //    result &= Structure.Equals(other.Structure);
+            //    result &= StructureArray == null && other.StructureArray == null || StructureArray != null && other.StructureArray != null && StructureArray.SequenceEqual(other.StructureArray);
+            //    result &= StructureList == null && other.StructureList == null || StructureList != null && other.StructureList != null && StructureList.SequenceEqual(other.StructureList);
+            //    return result;
+            //}
         }
 
         public enum TestEnum
@@ -420,14 +369,7 @@ namespace _LibrariesTest.Libraries.Serialization
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj)
-            {
-                if (!(obj is NonSerializableStruct))
-                    return base.Equals(obj);
-                NonSerializableStruct other = (NonSerializableStruct)obj;
-                return str10 == other.str10 && IntProp == other.IntProp
-                    && bytes3[0] == other.bytes3[0] && bytes3[1] == other.bytes3[1] && bytes3[2] == other.bytes3[2];
-            }
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
         }
 
         [Serializable]
@@ -469,13 +411,7 @@ namespace _LibrariesTest.Libraries.Serialization
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj)
-            {
-                if (!(obj is BinarySerializableClass))
-                    return base.Equals(obj);
-                BinarySerializableClass other = (BinarySerializableClass)obj;
-                return StringProp == other.StringProp && IntProp == other.IntProp && Equals(ObjectProp, other.ObjectProp);
-            }
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
         }
 
         [Serializable]
@@ -571,13 +507,7 @@ namespace _LibrariesTest.Libraries.Serialization
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj)
-            {
-                if (!(obj is SystemSerializableClass))
-                    return base.Equals(obj);
-                SystemSerializableClass other = (SystemSerializableClass)obj;
-                return StringProp == other.StringProp && IntProp == other.IntProp;
-            }
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
         }
 
         [Serializable]
@@ -604,7 +534,7 @@ namespace _LibrariesTest.Libraries.Serialization
             [TypeConverter(typeof(MultilineTypeConverter))]
             public object ExplicitTypeConverterProperty { get; set; }
 
-            public override bool Equals(object obj) => obj is ExplicitTypeConverterHolder other && Equals(ExplicitTypeConverterProperty, other.ExplicitTypeConverterProperty);
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
         }
 
         #endregion
@@ -933,8 +863,8 @@ namespace _LibrariesTest.Libraries.Serialization
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+EmptyType was not expected.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
@@ -1157,8 +1087,8 @@ namespace _LibrariesTest.Libraries.Serialization
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, SystemSerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, SystemSerializableStruct, NonSerializableStruct
 
             CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // all
@@ -1174,8 +1104,10 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, SystemSerializableStruct; otherwise, all
                 | XmlSerializationOptions.CompactSerializationOfStructures); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
 
             // these types cannot be serialized by system serializer
             referenceObjects = new IList[]
@@ -1558,7 +1490,7 @@ namespace _LibrariesTest.Libraries.Serialization
             KGyXmlSerializer.SerializeContent(element, referenceObjects[0], XmlSerializationOptions.None); // should work due to Content visibility on properties
             FullExtraComponent deserializedObject = new FullExtraComponent();
             KGyXmlSerializer.DeserializeContent(element, deserializedObject);
-            CompareObjects(referenceObjects[0], deserializedObject);
+            AssertEquals(referenceObjects[0], deserializedObject);
 
             KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback); // test element when serialized as whole object
 
@@ -1588,7 +1520,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
                 Console.WriteLine(sb);
                 object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
-                CompareObjects(obj, deserializedObject);
+                AssertEquals(obj, deserializedObject);
             }
             catch (Exception e)
             {
@@ -1622,7 +1554,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     Console.WriteLine();
                     deserializedObjects.Add(serializer.Deserialize(new StringReader(sb.ToString())));
                 }
-                CompareCollections(referenceObjects, deserializedObjects.ToArray());
+                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
             }
             catch (Exception e)
             {
@@ -1641,7 +1573,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 XElement xElement = KGyXmlSerializer.Serialize(obj, options);
                 Console.WriteLine(xElement);
                 object deserializedObject = KGyXmlSerializer.Deserialize(xElement);
-                CompareObjects(obj, deserializedObject);
+                AssertEquals(obj, deserializedObject);
 
                 // XmlReader/Writer - as object
                 StringBuilder sb = new StringBuilder();
@@ -1656,7 +1588,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     deserializedObject = KGyXmlSerializer.Deserialize(reader);
                 }
 
-                CompareObjects(obj, deserializedObject);
+                AssertEquals(obj, deserializedObject);
                 Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
 
                 // XElement - as component
@@ -1667,7 +1599,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 //Console.WriteLine(xElementComp);
                 deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
                 KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
-                CompareObjects(obj, deserializedObject);
+                AssertEquals(obj, deserializedObject);
 
                 // XmlReader/Writer - as component
                 sb = new StringBuilder();
@@ -1688,7 +1620,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     reader.ReadEndElement();
                 }
 
-                CompareObjects(obj, deserializedObject);
+                AssertEquals(obj, deserializedObject);
                 Assert.AreEqual(xElementComp.ToString(), sb.ToString(), "XElement and XmlWriter SerializeContent are not compatible");
             }
             catch (Exception e)
@@ -1749,8 +1681,8 @@ namespace _LibrariesTest.Libraries.Serialization
                             itemReader.ReadEndElement();
                         }
 
-                        CompareObjects(item, deserXElement);
-                        CompareObjects(item, deserReader);
+                        AssertEquals(item, deserXElement);
+                        AssertEquals(item, deserReader);
                         Assert.AreEqual(xItem.ToString(), sbItem.ToString(), "XElement and XmlWriter serializers are not compatible");
                     }
                     writer.WriteEndDocument();
@@ -1770,7 +1702,7 @@ namespace _LibrariesTest.Libraries.Serialization
                         {
                             object deserXElement = KGyXmlSerializer.Deserialize(element);
                             object deserReader = KGyXmlSerializer.Deserialize(reader);
-                            CompareObjects(deserXElement, deserReader);
+                            AssertEquals(deserXElement, deserReader);
 
                             deserializedObjects.Add(deserXElement);
                         }
@@ -1782,7 +1714,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     }
                 }
 
-                CompareCollections(referenceObjects, deserializedObjects.ToArray());
+                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
 
                 Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter serializers are not compatible");
             }

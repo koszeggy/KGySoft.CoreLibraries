@@ -208,10 +208,10 @@ namespace _LibrariesTest.Libraries
             Assert.AreEqual(3, Enum<TestIntEnum>.GetFlags(unchecked((TestIntEnum)(int)UInt32.MaxValue), true).Count());
             Assert.AreEqual(32, Enum<TestIntEnum>.GetFlags(unchecked((TestIntEnum)(int)UInt32.MaxValue), false).Count());
 
-            CompareCollections(new[] { TestEnum.Alma, TestEnum.Béka, TestEnum.Cica, TestEnum.Kecske, TestEnum.Mínusz }.OrderBy(e => e), Enum<TestEnum>.GetFlags().OrderBy(e => e));
-            CompareCollections(new TestUlongEnum[0], Enum<TestUlongEnum>.GetFlags());
-            CompareCollections(new[] { TestIntEnum.Simple, TestIntEnum.Normal, TestIntEnum.Risky }.OrderBy(e => e), Enum<TestIntEnum>.GetFlags().OrderBy(e => e));
-            CompareCollections(new EmptyEnum[0], Enum<EmptyEnum>.GetFlags());
+            AssertItemsEqual(new[] { TestEnum.Alma, TestEnum.Béka, TestEnum.Cica, TestEnum.Kecske, TestEnum.Mínusz }.OrderBy(e => e), Enum<TestEnum>.GetFlags().OrderBy(e => e));
+            AssertItemsEqual(new TestUlongEnum[0], Enum<TestUlongEnum>.GetFlags());
+            AssertItemsEqual(new[] { TestIntEnum.Simple, TestIntEnum.Normal, TestIntEnum.Risky }.OrderBy(e => e), Enum<TestIntEnum>.GetFlags().OrderBy(e => e));
+            AssertItemsEqual(new EmptyEnum[0], Enum<EmptyEnum>.GetFlags());
         }
 
         [TestMethod]

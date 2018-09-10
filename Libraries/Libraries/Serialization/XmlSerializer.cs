@@ -29,7 +29,8 @@ namespace KGySoft.Libraries.Serialization
     /// <remarks>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
     /// <note>Unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
-    /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Instead, this class is
+    /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
+    /// are supported (except <see cref="XmlRootAttribute"/> for the root element of <see cref="IXmlSerializable"/> implementations). Instead, this class is
     /// designed to support XML serialization of any type as long as they have a default constructor and their state can be fully restored by their public fields and properties.</note>
     /// </para>
     /// <para>Several <a href="https://msdn.microsoft.com/en-us/library/System.ComponentModel.aspx" target="_blank">System.ComponentModel</a> techniques are supported,

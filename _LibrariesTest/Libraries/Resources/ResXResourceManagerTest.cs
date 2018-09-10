@@ -259,7 +259,7 @@ namespace _LibrariesTest.Libraries.Resources
             var reference = refManager.GetObject("TestIcon");
             var check = manager.GetObject("TestIcon");
             Assert.IsInstanceOfType(reference, typeof(Icon));
-            CompareCollections(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
+            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // icon bmp by reference: system manager retrieves it as a png, while resx manager preserves its icon raw format
             reference = refManager.GetObject("TestIconBitmap");
@@ -268,13 +268,13 @@ namespace _LibrariesTest.Libraries.Resources
             Assert.IsInstanceOfType(check, typeof(Bitmap));
             Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
             Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid);
-            CompareImages((Bitmap)reference, (Bitmap)check);
+            AssertEquals((Bitmap)reference, (Bitmap)check);
 
             // multi-res icon by reference
             reference = refManager.GetObject("TestIconMulti");
             check = manager.GetObject("TestIconMulti");
             Assert.IsInstanceOfType(reference, typeof(Icon));
-            CompareCollections(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
+            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // multi-res icon bmp by reference
             reference = refManager.GetObject("TestIconMultiBitmap"); // single 32*32 png
@@ -288,13 +288,13 @@ namespace _LibrariesTest.Libraries.Resources
             reference = refManager.GetObject("TestBinFile");
             check = manager.GetObject("TestBinFile");
             Assert.IsInstanceOfType(reference, typeof(byte[]));
-            CompareObjects(reference, check);
+            AssertEquals(reference, check);
 
             // stream by reference
             reference = refManager.GetObject("TestSound");
             check = manager.GetObject("TestSound");
             Assert.IsInstanceOfType(reference, typeof(MemoryStream));
-            CompareCollections(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
+            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 
             // point embedded by type converter
             reference = refManager.GetObject("TestPoint");
@@ -306,7 +306,7 @@ namespace _LibrariesTest.Libraries.Resources
             reference = refManager.GetObject("TestImageEmbedded");
             check = manager.GetObject("TestImageEmbedded");
             Assert.IsInstanceOfType(reference, typeof(Bitmap));
-            CompareImages((Bitmap)reference, (Bitmap)check);
+            AssertEquals((Bitmap)reference, (Bitmap)check);
 
             // any object embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestObjectEmbedded");
@@ -316,20 +316,20 @@ namespace _LibrariesTest.Libraries.Resources
             var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
             for (int i = 0; i < il1.Images.Count; i++)
             {
-                CompareImages(il1.Images[i] as Bitmap, il2.Images[i] as Bitmap);
+                AssertEquals(il1.Images[i] as Bitmap, il2.Images[i] as Bitmap);
             }
 
             // icon embedded as bytearray.base64 (created by a ctor from stream)
             reference = refManager.GetObject("TestIconEmbedded");
             check = manager.GetObject("TestIconEmbedded");
             Assert.IsInstanceOfType(reference, typeof(Icon));
-            CompareCollections(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
+            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // stream embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestSoundEmbedded");
             check = manager.GetObject("TestSoundEmbedded");
             Assert.IsInstanceOfType(reference, typeof(MemoryStream));
-            CompareCollections(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
+            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 
             // color embedded by type converter without <value> element
             reference = refManager.GetObject("TestColorWithoutValue");

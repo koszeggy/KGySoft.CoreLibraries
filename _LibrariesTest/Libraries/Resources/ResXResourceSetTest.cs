@@ -22,13 +22,7 @@ namespace _LibrariesTest.Libraries.Resources
         private class NonSerializableClass
         {
             public int Prop { get; set; }
-            public override bool Equals(object obj)
-            {
-                NonSerializableClass other = obj as NonSerializableClass;
-                if (other == null)
-                    return base.Equals(obj);
-                return Prop == other.Prop;
-            }
+            public override bool Equals(object obj) => CheckEquals(this, obj, true);
         }
 
         /// <summary>
@@ -178,7 +172,7 @@ namespace _LibrariesTest.Libraries.Resources
             StringBuilder sb = new StringBuilder();
             rs.Save(new StringWriter(sb));
             var rsReloaded = new ResXResourceSet(new StringReader(sb.ToString()), Path.GetDirectoryName(path));
-            CompareCollections(rs, rsReloaded);
+            AssertItemsEqual(rs, rsReloaded);
         }
 
         [TestMethod]

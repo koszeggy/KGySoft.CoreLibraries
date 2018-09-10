@@ -2179,14 +2179,14 @@ namespace _LibrariesTest.Libraries.Serialization
                 byte[] raw = SerializeObjects(referenceObjects, bf); // 1097
                 bf.SurrogateSelector = null;
                 object[] result = DeserializeObjects(raw, bf);
-                CompareCollections(referenceObjects, result);
+                AssertItemsEqual(referenceObjects, result);
 
                 Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
                 bsf.SurrogateSelector = surrogate;
                 raw = SerializeObjects(referenceObjects, bsf); // 1017
                 bsf.SurrogateSelector = null;
                 result = DeserializeObjects(raw, bsf);
-                CompareCollections(referenceObjects, result);
+                AssertItemsEqual(referenceObjects, result);
             }
             finally
             {
@@ -2224,12 +2224,12 @@ namespace _LibrariesTest.Libraries.Serialization
             Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
             byte[] raw = SerializeObjects(referenceObjects, bf);
             object[] result = DeserializeObjects(raw, bf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
 #if NET40 || NET45
             Console.WriteLine("-------Serialization and deserialization with WeakAssemblySerializationBinder, OmitAssemblyNameOnSerialize enabled-------------");
@@ -2239,18 +2239,18 @@ namespace _LibrariesTest.Libraries.Serialization
             bsf.Binder = binder;
             raw = SerializeObjects(referenceObjects, bf);
             result = DeserializeObjects(raw, bf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             // with TestSerializationBinder
             Console.WriteLine("--------------------------------Serialization and deserialization with TestSerializationBinder---------------------------------------");
@@ -2263,18 +2263,18 @@ namespace _LibrariesTest.Libraries.Serialization
             Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
             raw = SerializeObjects(referenceObjects, bf);
             result = DeserializeObjects(raw, bf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
@@ -2385,7 +2385,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 raw = SerializeObjects(referenceObjects, bf);
                 // system deserialization fails: Cannot deserialize an abstract class
                 result = DeserializeObjects(raw, bf);
-                CompareCollections(referenceObjects, result);
+                AssertItemsEqual(referenceObjects, result);
             }
             catch (Exception e)
             {
@@ -2395,13 +2395,13 @@ namespace _LibrariesTest.Libraries.Serialization
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
             Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
             Console.WriteLine("================================Serialization only with TestSurrogateSelector=======================================");
             selector = new TestSurrogateSelector();
             bf.SurrogateSelector = selector;
@@ -2414,7 +2414,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 // system deserialization fails: IBinarySerializable is not serializable
                 bf.SurrogateSelector = null;
                 result = DeserializeObjects(raw, bf);
-                CompareCollections(referenceObjects, result);
+                AssertItemsEqual(referenceObjects, result);
             }
             catch (Exception e)
             {
@@ -2426,7 +2426,7 @@ namespace _LibrariesTest.Libraries.Serialization
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = null;
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
             bsf.SurrogateSelector = selector;
@@ -2434,7 +2434,7 @@ namespace _LibrariesTest.Libraries.Serialization
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = null;
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             Console.WriteLine("================================Deserialization only with TestSurrogateSelector=======================================");
             bf.SurrogateSelector = null;
@@ -2447,7 +2447,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 // system deserialization fails: Cannot deserialize field: baseclass+backingfield (this is because of the surrogate) - TODO: solve this in TestSurrogate
                 bf.SurrogateSelector = selector;
                 result = DeserializeObjects(raw, bf);
-                CompareCollections(referenceObjects, result);
+                AssertItemsEqual(referenceObjects, result);
             }
             catch (Exception e)
             {
@@ -2459,7 +2459,7 @@ namespace _LibrariesTest.Libraries.Serialization
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = selector;
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
             bsf.SurrogateSelector = null;
@@ -2467,7 +2467,7 @@ namespace _LibrariesTest.Libraries.Serialization
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = selector;
             result = DeserializeObjects(raw, bsf);
-            CompareCollections(referenceObjects, result);
+            AssertItemsEqual(referenceObjects, result);
         }
 
         [TestMethod]
@@ -2567,12 +2567,12 @@ namespace _LibrariesTest.Libraries.Serialization
                 ms.Seek(0, SeekOrigin.Begin);
                 object deserializedObject = bf.Deserialize(ms);
                 if (!safeCompare)
-                    CompareObjects(obj, deserializedObject);
+                    AssertEquals(obj, deserializedObject);
                 else
                 {
                     MemoryStream ms2 = new MemoryStream();
                     bf.Serialize(ms2, deserializedObject);
-                    CompareObjects(ms.ToArray(), ms2.ToArray());
+                    AssertEquals(ms.ToArray(), ms2.ToArray());
                 }
             }
             catch (Exception e)
@@ -2607,7 +2607,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 if (dumpSerContent)
                     Console.WriteLine(ToRawString(ms.ToArray()));
                 if (!safeCompare)
-                    CompareCollections(referenceObjects, deserializedObjects.ToArray());
+                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
                 else
                 {
                     MemoryStream ms2 = new MemoryStream();
@@ -2617,7 +2617,7 @@ namespace _LibrariesTest.Libraries.Serialization
                             continue;
                         bf.Serialize(ms2, item);
                     }
-                    CompareObjects(ms.ToArray(), ms2.ToArray());
+                    AssertEquals(ms.ToArray(), ms2.ToArray());
                 }
             }
             catch (Exception e)
@@ -2652,12 +2652,12 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
 
                 if (!safeCompare)
-                    CompareObjects(obj, deserializedObject);
+                    AssertEquals(obj, deserializedObject);
                 else
                 {
                     MemoryStream ms2 = new MemoryStream();
                     BinarySerializer.SerializeToStream(ms2, deserializedObject, options);
-                    CompareObjects(serObject, ms2.ToArray());
+                    AssertEquals(serObject, ms2.ToArray());
                 }
             }
             catch (Exception e)
@@ -2676,9 +2676,9 @@ namespace _LibrariesTest.Libraries.Serialization
                 byte[] serData = SerializeObjects(referenceObjects, bsf);
                 object[] deserializedObjects = DeserializeObjects(serData, bsf);
                 if (!safeCompare)
-                    CompareCollections(referenceObjects, deserializedObjects);
+                    AssertItemsEqual(referenceObjects, deserializedObjects);
                 else
-                    CompareCollections(serData, SerializeObjects(deserializedObjects, bsf));
+                    AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bsf));
             }
             catch (Exception e)
             {
