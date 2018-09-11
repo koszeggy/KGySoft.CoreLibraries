@@ -189,6 +189,20 @@ namespace _LibrariesTest.Libraries.Serialization
             }
         }
 
+        public class ReadOnlyProperties
+        {
+            public XmlSerializableClass XmlSerializable { get; } = new XmlSerializableClass();
+
+            public static ReadOnlyProperties Create(XmlSerializableClass xmlSerializableClass = null)
+            {
+                var result = new ReadOnlyProperties();
+                CopyFrom(result.XmlSerializable, xmlSerializableClass);
+                return result;
+            }
+
+            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+        }
+
         public class FullExtraComponent
         {
             public class TestInner
@@ -1142,17 +1156,25 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void IXmlSerializableTest()
         {
-            IXmlSerializable[] referenceObjects =
+            object[] referenceObjects =
                 {
                     new XmlSerializableClass(1, 2, 3),
                     new XmlSerializableStruct(1, 2, 3),
                 };
 
-            //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Xml.Serialization.IXmlSerializable cannot be serialized because it does not have a parameterless constructor.
+            //SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass may not be used in this context. To use _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass as a parameter, return type, or member of a class or struct, the parameter, return type, or member must be declared as type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass (it cannot be object). Objects of type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+XmlSerializableClass may not be used in un-typed collections, such as ArrayLists.
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+
+            referenceObjects = new[]
+            {
+                ReadOnlyProperties.Create(xmlSerializableClass: new XmlSerializableClass(3, 2, 1))
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
         }
 
         [TestMethod]
@@ -1177,55 +1199,56 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeComplexArrays()
         {
+#error itt
             IList[] referenceObjects =
                 {
-                    new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, new BinarySerializableStruct{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable struct
-                    new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass{IntProp = 2, StringProp = "béka", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
-                    new BinarySerializableSealedClass[] { new BinarySerializableSealedClass{IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // array of a BinarySerializable sealed class
-                    new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object - will be serialized by BinaryFormatter
+                    //new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, new BinarySerializableStruct{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable struct
+                    //new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass{IntProp = 2, StringProp = "béka", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
+                    //new BinarySerializableSealedClass[] { new BinarySerializableSealedClass{IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // array of a BinarySerializable sealed class
+                    //new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object - will be serialized by BinaryFormatter
                     new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
                 };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None); // Recursive: BinarySerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
-            CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+            //CheckTestingFramework(); // late ctor invoke
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
+            //    | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
+            //    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
 
-            // These collections cannot be serialized with system serializer
-            referenceObjects = new IList[]
-                {
-                    new BinarySerializableClass[] {new BinarySerializableSealedClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable non sealed class with derived elements
-                    new IBinarySerializable[] {new BinarySerializableStruct {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass {IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // IBinarySerializable array
-                    new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object
-                    new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object, with an IBinarySerializable element
-                    new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array
-                    new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
+            //// These collections cannot be serialized with system serializer
+            //referenceObjects = new IList[]
+            //    {
+            //        new BinarySerializableClass[] {new BinarySerializableSealedClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable non sealed class with derived elements
+            //        new IBinarySerializable[] {new BinarySerializableStruct {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass {IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // IBinarySerializable array
+            //        new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object
+            //        new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object, with an IBinarySerializable element
+            //        new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array
+            //        new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
 
-                    new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
-                    new IConvertible[] { null, 1 },
-                    new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
-                };
+            //        new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
+            //        new IConvertible[] { null, 1 },
+            //        new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
+            //    };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
+            //    | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
+            //    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
         }
 
         /// <summary>

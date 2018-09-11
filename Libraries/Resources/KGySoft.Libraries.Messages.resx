@@ -455,7 +455,7 @@ Hit rate: {8:P2}</value>
     <value>Type "{0}" does not implement IXmlSerializable.</value>
   </data>
   <data name="XmlNoDefaultCtor" xml:space="preserve">
-    <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in another object if it is not null after creating the parent object.</value>
+    <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the property or is not null after creating the parent object.</value>
   </data>
   <data name="XmlArrayDimensionSizeMismatch" xml:space="preserve">
     <value>Cannot restore array "{0}" because length of the {1}. dimension does not match.</value>

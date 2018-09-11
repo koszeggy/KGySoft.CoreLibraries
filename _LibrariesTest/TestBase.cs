@@ -403,5 +403,17 @@ namespace _LibrariesTest
                 Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion> to csproj and try again");
 #endif
         }
+
+        protected static void CopyFrom(object target, object source)
+        {
+            if (target == null || source == null)
+                return;
+
+            for (Type t = target.GetType(); t != null; t = t.BaseType)
+            {
+                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                    Reflector.SetField(target, field, Reflector.GetField(source, field));
+            }
+        }
     }
 }

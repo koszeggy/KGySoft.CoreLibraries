@@ -97,7 +97,7 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
         /// </summary>
-        protected static void CopyFrom(object target, object source)
+        private static void CopyFrom(object target, object source)
         {
             Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFrom)}.");
 
