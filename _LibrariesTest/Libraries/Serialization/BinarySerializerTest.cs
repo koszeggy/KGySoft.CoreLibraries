@@ -2567,12 +2567,12 @@ namespace _LibrariesTest.Libraries.Serialization
                 ms.Seek(0, SeekOrigin.Begin);
                 object deserializedObject = bf.Deserialize(ms);
                 if (!safeCompare)
-                    AssertEquals(obj, deserializedObject);
+                    AssertDeepEquals(obj, deserializedObject);
                 else
                 {
                     MemoryStream ms2 = new MemoryStream();
                     bf.Serialize(ms2, deserializedObject);
-                    AssertEquals(ms.ToArray(), ms2.ToArray());
+                    AssertDeepEquals(ms.ToArray(), ms2.ToArray());
                 }
             }
             catch (Exception e)
@@ -2617,7 +2617,7 @@ namespace _LibrariesTest.Libraries.Serialization
                             continue;
                         bf.Serialize(ms2, item);
                     }
-                    AssertEquals(ms.ToArray(), ms2.ToArray());
+                    AssertDeepEquals(ms.ToArray(), ms2.ToArray());
                 }
             }
             catch (Exception e)
@@ -2652,12 +2652,12 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
 
                 if (!safeCompare)
-                    AssertEquals(obj, deserializedObject);
+                    AssertDeepEquals(obj, deserializedObject);
                 else
                 {
                     MemoryStream ms2 = new MemoryStream();
                     BinarySerializer.SerializeToStream(ms2, deserializedObject, options);
-                    AssertEquals(serObject, ms2.ToArray());
+                    AssertDeepEquals(serObject, ms2.ToArray());
                 }
             }
             catch (Exception e)

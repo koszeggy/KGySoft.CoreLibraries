@@ -22,7 +22,7 @@ namespace _LibrariesTest.Libraries.Resources
         private class NonSerializableClass
         {
             public int Prop { get; set; }
-            public override bool Equals(object obj) => CheckEquals(this, obj, true);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         /// <summary>

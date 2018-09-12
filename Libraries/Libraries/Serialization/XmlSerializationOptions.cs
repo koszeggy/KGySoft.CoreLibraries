@@ -156,6 +156,8 @@ namespace KGySoft.Libraries.Serialization
         /// </para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
-        SerializeReadOnlyMembers = 1 << 12
+        SerializeReadOnlyMembers = 1 << 12,
+
+
     }
 }

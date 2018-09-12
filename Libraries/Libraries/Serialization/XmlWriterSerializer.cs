@@ -348,8 +348,7 @@ namespace KGySoft.Libraries.Serialization
 
         private void SerializeMembers(object obj, XmlWriter writer)
         {
-            Type type = obj.GetType();
-            foreach (MemberInfo member in GetMembersToSerialize(type))
+            foreach (MemberInfo member in GetMembersToSerialize(obj))
             {
                 if (SkipMember(obj, member, out object value, out DesignerSerializationVisibility visibility))
                     continue;
@@ -392,7 +391,7 @@ namespace KGySoft.Libraries.Serialization
                 else if (TrySerializeObject(value, memberType != actualType, writer, actualType, visibility))
                     writer.WriteFullEndElement();
                 else
-                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeMember, type, member.Name, Options));
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeMember, obj.GetType(), member.Name, Options));
             }
         }
 

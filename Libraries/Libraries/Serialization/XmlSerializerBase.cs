@@ -94,14 +94,26 @@ namespace KGySoft.Libraries.Serialization
             }
         }
 
-        protected IEnumerable<MemberInfo> GetMembersToSerialize(Type type)
+        protected IEnumerable<MemberInfo> GetMembersToSerialize(object obj)
         {
-            // getting read-write non-indexer instance properties, and read-only ones with populatable collections, same for fields
-            IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0 && p.CanRead && (p.CanWrite || ForceReadonlyMembers || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType)) || p.PropertyType.IsCollection()));
+            Type type = obj.GetType();
+
+            // getting read-write non-indexer instance properties, and read-only ones with populatable collections
+            IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.GetIndexParameters().Length == 0 
+                    && p.CanRead 
+                    && (p.CanWrite 
+                        || ForceReadonlyMembers 
+                        || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType)) 
+                        || p.PropertyType.IsReadWriteCollection(obj)));
             if (ExcludeFields)
                 return properties;
 
-            IEnumerable<MemberInfo> fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance).Where(f => !f.IsInitOnly || ForceReadonlyMembers || f.FieldType.IsCollection());
+            // small difference for fields: non read-write collections (collectionsCtor) are also accepted
+            IEnumerable<MemberInfo> fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                .Where(f => !f.IsInitOnly 
+                    || ForceReadonlyMembers 
+                    || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType.IsReadWriteCollection(obj));
             return fields.Concat(properties);
         }
 

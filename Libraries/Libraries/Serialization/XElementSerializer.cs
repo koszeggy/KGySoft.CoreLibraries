@@ -309,16 +309,22 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // h.) collection: if can be trusted in all circumstances
+            // h.) collection
             Type elementType = null;
-            if (IsTrustedCollection(type)
-                // or recursive is requested 
-                || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                    // and is a supported collection
-                    && type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _)))
+            if (obj is IEnumerable enumerable)
             {
-                SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, parent, visibility);
-                return true;
+                // if can be trusted in all circumstances
+                if (IsTrustedCollection(type)
+                    // or recursive is requested 
+                    || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+#error itt
+                        // and is a supported collection or TODO - new flag
+                        && (type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _) || ForceReadonlyMembers)))
+                {
+                    SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), true, parent, visibility);
+                    return true;
+                }
+
             }
 
             // i.) recursive serialization, if enabled
@@ -341,8 +347,7 @@ namespace KGySoft.Libraries.Serialization
             // signing that object is not null
             parent.Add(String.Empty);
 
-            Type type = obj.GetType();
-            foreach (MemberInfo member in GetMembersToSerialize(type))
+            foreach (MemberInfo member in GetMembersToSerialize(obj))
             {
                 if (SkipMember(obj, member, out object value, out DesignerSerializationVisibility visibility))
                     continue;
@@ -382,7 +387,7 @@ namespace KGySoft.Libraries.Serialization
                 if (TrySerializeObject(value, memberType != actualType, newElement, actualType, visibility))
                     parent.Add(newElement);
                 else
-                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeMember, type, member.Name, Options));
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeMember, obj.GetType(), member.Name, Options));
             }
         }
 

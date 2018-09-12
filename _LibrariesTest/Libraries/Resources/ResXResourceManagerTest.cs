@@ -268,7 +268,7 @@ namespace _LibrariesTest.Libraries.Resources
             Assert.IsInstanceOfType(check, typeof(Bitmap));
             Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
             Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid);
-            AssertEquals((Bitmap)reference, (Bitmap)check);
+            AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
             // multi-res icon by reference
             reference = refManager.GetObject("TestIconMulti");
@@ -288,7 +288,7 @@ namespace _LibrariesTest.Libraries.Resources
             reference = refManager.GetObject("TestBinFile");
             check = manager.GetObject("TestBinFile");
             Assert.IsInstanceOfType(reference, typeof(byte[]));
-            AssertEquals(reference, check);
+            AssertDeepEquals(reference, check);
 
             // stream by reference
             reference = refManager.GetObject("TestSound");
@@ -306,7 +306,7 @@ namespace _LibrariesTest.Libraries.Resources
             reference = refManager.GetObject("TestImageEmbedded");
             check = manager.GetObject("TestImageEmbedded");
             Assert.IsInstanceOfType(reference, typeof(Bitmap));
-            AssertEquals((Bitmap)reference, (Bitmap)check);
+            AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
             // any object embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestObjectEmbedded");
@@ -316,7 +316,7 @@ namespace _LibrariesTest.Libraries.Resources
             var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
             for (int i = 0; i < il1.Images.Count; i++)
             {
-                AssertEquals(il1.Images[i] as Bitmap, il2.Images[i] as Bitmap);
+                AssertDeepEquals(il1.Images[i] as Bitmap, il2.Images[i] as Bitmap);
             }
 
             // icon embedded as bytearray.base64 (created by a ctor from stream)

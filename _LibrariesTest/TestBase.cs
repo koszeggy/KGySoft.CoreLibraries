@@ -70,25 +70,140 @@ namespace _LibrariesTest
             #endregion
         }
 
-        protected static void AssertItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceStructuralEquality = false)
+        protected static void AssertDeepEquals(object reference, object check, bool forceEqualityByMembers = false)
         {
             var errors = new List<string>();
-            AssertResult(CheckItemsEqual(referenceObjects, targetObjects, forceStructuralEquality, errors), errors);
+            AssertResult(CheckDeepEquals(reference, check, forceEqualityByMembers, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
-        protected static void AssertEquals(object reference, object check, bool forceStructuralEquality = false)
+        protected static void AssertItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers = false)
         {
             var errors = new List<string>();
-            AssertResult(CheckEquals(reference, check, forceStructuralEquality, errors), errors);
+            AssertResult(CheckItemsEqual(referenceObjects, targetObjects, forceEqualityByMembers, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
-        protected static void AssertEqualsByMembers(object reference, object check)
+        protected static void AssertMembersAndItemsEqual(object reference, object check)
         {
             var errors = new List<string>();
-            AssertResult(CheckEqualsByMembers(reference, check, errors), errors);
+            AssertResult(CheckMembersAndItemsEqual(reference, check, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
-        protected static bool CheckItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceStructuralEquality = false, List<string> errors = null)
+        protected static bool DeepEquals(object reference, object check, bool forceEqualityByMembers = false)
+            => CheckDeepEquals(reference, check, forceEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
+
+        protected static bool ItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers = false)
+            => CheckItemsEqual(referenceObjects, targetObjects, forceEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
+
+        protected static bool MembersAndItemsEqual(object reference, object check) 
+            => CheckMembersAndItemsEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
+
+        private static bool CheckDeepEquals(object reference, object check, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
+        {
+            if (reference == null && check == null)
+                return true;
+
+            Type typeRef = reference?.GetType();
+            Type typeChk = check?.GetType();
+
+            if (!Check(typeRef != null && typeChk != null, $"{typeRef?.ToString() ?? "null"} compared to {typeChk?.ToString() ?? "null"}", errors))
+                return false;
+
+            if (typeRef == typeof(AnyObjectSerializerWrapper))
+                return CheckDeepEquals(Reflector.GetInstanceFieldByName(reference, "obj"), check, forceEqualityByMembers, errors, checkedObjects);
+
+            if (typeRef == typeof(SystemFileRef))
+                return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
+
+            if (typeRef == typeof(ResXFileRef))
+                return Check(CheckDeepEquals(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
+
+            if (typeRef == typeof(SystemDataNode))
+                return CheckDeepEquals(((SystemDataNode)reference).GetValue((ITypeResolutionService)null), check, forceEqualityByMembers, errors, checkedObjects);
+
+            if (typeRef == typeof(ResXDataNode))
+                return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
+
+            if (!Check(typeRef == typeChk, $"Types are different. {typeRef} <-> {typeChk}", errors))
+                return false;
+
+            if (typeRef == typeof(object))
+                return true;
+
+            // checking circular reference
+            if (checkedObjects.Contains(reference))
+                return true;
+            checkedObjects.Add(reference);
+            try
+            {
+                if (!(reference is string) && reference is IEnumerable)
+                    return forceEqualityByMembers
+                        ? CheckMembersAndItemsEqual(reference, check, errors, checkedObjects)
+                        : CheckItemsEqual((IEnumerable)reference, (IEnumerable)check, false, errors, checkedObjects);
+
+                if (reference is float floatRef && check is float floatCheck)
+                    return Check(BitConverter.ToInt32(BitConverter.GetBytes(floatRef), 0) == BitConverter.ToInt32(BitConverter.GetBytes((float)check), 0), $"Float equality failed: {floatRef.ToRoundtripString()} <-> {floatCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(floatRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(floatCheck).ToHexValuesString()}", errors);
+
+                if (reference is double doubleRef && check is double doubleCheck)
+                    return Check(BitConverter.DoubleToInt64Bits(doubleRef) == BitConverter.DoubleToInt64Bits(doubleCheck), $"Double equality failed: {doubleRef.ToRoundtripString()} <-> {doubleCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(doubleRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(doubleCheck).ToHexValuesString()}", errors);
+
+                if (reference is decimal decimalRef && check is decimal decimalCheck)
+                    return Check(BinarySerializer.SerializeStruct(decimalRef).SequenceEqual(BinarySerializer.SerializeStruct(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeStruct(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeStruct(decimalCheck).ToHexValuesString()}", errors);
+
+                if (typeRef == typeof(StringBuilder))
+                {
+                    StringBuilder sbRef = (StringBuilder)reference;
+                    StringBuilder sbCheck = (StringBuilder)check;
+                    bool result = Check(sbRef.Capacity == sbCheck.Capacity, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Capacity)} {sbRef.Capacity} <-> {sbCheck.Capacity}", errors);
+                    result &= Check(sbRef.Length == sbCheck.Length, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Length)} {sbRef.Length} <-> {sbCheck.Length}", errors);
+                    result &= Check(sbRef.ToString() == sbCheck.ToString(), $"{nameof(StringBuilder)}: {sbRef} <-> {sbCheck}", errors);
+                    return result;
+                }
+
+                if (reference is Stream stream)
+                    return CheckStreams(stream, (Stream)check, errors);
+
+                if (typeRef.IsGenericTypeOf(typeof(KeyValuePair<,>))
+                    || typeRef == typeof(DictionaryEntry))
+                {
+                    string propName = nameof(DictionaryEntry.Key);
+                    bool result = CheckMemberDeepEquals($"{typeRef}.{propName}", Reflector.GetInstancePropertyByName(reference, propName), Reflector.GetInstancePropertyByName(check, propName), forceEqualityByMembers, errors, checkedObjects);
+                    propName = nameof(DictionaryEntry.Value);
+                    result &= CheckMemberDeepEquals($"{typeRef}.{propName}", Reflector.GetInstancePropertyByName(reference, propName), Reflector.GetInstancePropertyByName(check, propName), forceEqualityByMembers, errors, checkedObjects);
+
+                    return result;
+                }
+
+                if (typeRef == typeof(Bitmap))
+                    return CheckImages((Bitmap)reference, (Bitmap)check, errors);
+
+                if (typeRef == typeof(Metafile))
+                    return CheckImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
+
+                if (typeRef == typeof(Icon))
+                    return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
+
+                if (typeRef == typeof(ImageListStreamer))
+                {
+                    var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };
+                    var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
+                    return CheckItemsEqual(il1.Images, il2.Images, forceEqualityByMembers, errors, checkedObjects);
+                }
+
+                // Structural equality if forced for non-primitive types or when Equals is not overridden
+                if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
+                    || !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
+                    return CheckMembersAndItemsEqual(reference, check, errors, checkedObjects);
+
+                // Equals as fallback
+                return Check(Equals(reference, check), $"Equality check failed at type {typeRef}: {reference} <-> {check}", errors);
+            }
+            finally
+            {
+                checkedObjects.Remove(reference);
+            }
+        }
+
+        private static bool CheckItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             Type type = referenceObjects.GetType();
             if (type.IsGenericTypeOf(typeof(ConcurrentBag<>)))
@@ -108,7 +223,7 @@ namespace _LibrariesTest
                     return false;
 
                 var subErrors = new List<string>();
-                result &= CheckEquals(enumRef.Current, enumChk.Current, forceStructuralEquality, subErrors);
+                result &= CheckDeepEquals(enumRef.Current, enumChk.Current, forceEqualityByMembers, subErrors, checkedObjects);
                 if (subErrors.Count > 0)
                     errors?.Add($"{type}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
 
@@ -119,111 +234,16 @@ namespace _LibrariesTest
             return result;
         }
 
-        protected static bool CheckEquals(object reference, object check, bool forceStructuralEquality = false, List<string> errors = null)
-        {
-            if (reference == null && check == null)
-                return true;
-
-            Type typeRef = reference?.GetType();
-            Type typeChk = check?.GetType();
-
-            if (!Check(typeRef != null && typeChk != null, $"{typeRef?.ToString() ?? "null"} compared to {typeChk?.ToString() ?? "null"}", errors))
-                return false;
-
-            if (typeRef == typeof(AnyObjectSerializerWrapper))
-                return CheckEquals(Reflector.GetInstanceFieldByName(reference, "obj"), check, forceStructuralEquality, errors);
-
-            if (typeRef == typeof(SystemFileRef))
-                return Check(CheckEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk), $"File reference type error. Expected type: {typeChk}", errors);
-
-            if (typeRef == typeof(ResXFileRef))
-                return Check(CheckEquals(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk), $"File reference type error. Expected type: {typeChk}", errors);
-
-            if (typeRef == typeof(SystemDataNode))
-                return CheckEquals(((SystemDataNode)reference).GetValue((ITypeResolutionService)null), check, forceStructuralEquality, errors);
-
-            if (typeRef == typeof(ResXDataNode))
-                return CheckEquals(((ResXDataNode)reference).GetValue(), check, forceStructuralEquality, errors);
-
-            if (!Check(typeRef == typeChk, $"Types are different. {typeRef} <-> {typeChk}", errors))
-                return false;
-
-            if (typeRef == typeof(object))
-                return true;
-
-            if (!(reference is string) && reference is IEnumerable)
-                return forceStructuralEquality
-                    ? CheckEqualsByMembers(reference, check, errors) 
-                    : CheckItemsEqual((IEnumerable)reference, (IEnumerable)check, false, errors);
-
-            if (reference is float floatRef && check is float floatCheck)
-                return Check(BitConverter.ToInt32(BitConverter.GetBytes(floatRef), 0) == BitConverter.ToInt32(BitConverter.GetBytes((float)check), 0), $"Float equality failed: {floatRef.ToRoundtripString()} <-> {floatCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(floatRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(floatCheck).ToHexValuesString()}", errors);
-
-            if (reference is double doubleRef && check is double doubleCheck)
-                return Check(BitConverter.DoubleToInt64Bits(doubleRef) == BitConverter.DoubleToInt64Bits(doubleCheck), $"Double equality failed: {doubleRef.ToRoundtripString()} <-> {doubleCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(doubleRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(doubleCheck).ToHexValuesString()}", errors);
-
-            if (reference is decimal decimalRef && check is decimal decimalCheck)
-                return Check(BinarySerializer.SerializeStruct(decimalRef).SequenceEqual(BinarySerializer.SerializeStruct(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeStruct(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeStruct(decimalCheck).ToHexValuesString()}", errors);
-
-            if (typeRef == typeof(StringBuilder))
-            {
-                StringBuilder sbRef = (StringBuilder)reference;
-                StringBuilder sbCheck = (StringBuilder)check;
-                bool result = Check(sbRef.Capacity == sbCheck.Capacity, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Capacity)} {sbRef.Capacity} <-> {sbCheck.Capacity}", errors);
-                result &= Check(sbRef.Length == sbCheck.Length, $"{nameof(StringBuilder)}.{nameof(StringBuilder.Length)} {sbRef.Length} <-> {sbCheck.Length}", errors);
-                result &= Check(sbRef.ToString() == sbCheck.ToString(), $"{nameof(StringBuilder)}: {sbRef} <-> {sbCheck}", errors);
-                return result;
-            }
-
-            if (reference is Stream stream)
-                return CompareStreams(stream, (Stream)check, errors);
-
-            if (typeRef.IsGenericTypeOf(typeof(KeyValuePair<,>))
-                || typeRef == typeof(DictionaryEntry))
-            {
-                string propName = nameof(DictionaryEntry.Key);
-                bool result = CheckMembersEqual($"{typeRef}.{propName}", Reflector.GetInstancePropertyByName(reference, propName), Reflector.GetInstancePropertyByName(check, propName), forceStructuralEquality, errors);
-                propName = nameof(DictionaryEntry.Value);
-                result &= CheckMembersEqual($"{typeRef}.{propName}", Reflector.GetInstancePropertyByName(reference, propName), Reflector.GetInstancePropertyByName(check, propName), forceStructuralEquality, errors);
-
-                return result;
-            }
-
-            if (typeRef == typeof(Bitmap))
-                return CompareImages((Bitmap)reference, (Bitmap)check, errors);
-
-            if (typeRef == typeof(Metafile))
-                return CompareImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
-
-            if (typeRef == typeof(Icon))
-                return CompareImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
-
-            if (typeRef == typeof(ImageListStreamer))
-            {
-                var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };
-                var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
-                return CheckItemsEqual(il1.Images, il2.Images, forceStructuralEquality, errors);
-            }
-
-            // Structural equality if forced for non-primitive types or when Equals is not overridden
-            if (forceStructuralEquality && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
-                || !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
-            return CheckEqualsByMembers(reference, check, errors);
-
-            // Equals as fallback
-            return Check(Equals(reference, check), $"Equality check failed at type {typeRef}: {reference} <-> {check}", errors);
-        }
-
-        private static bool CheckMembersEqual(string name, object reference, object check, bool forceStructuralEquality, List<string> errors)
+        private static bool CheckMemberDeepEquals(string name, object reference, object check, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             var subErrors = new List<string>();
-            bool result = CheckEquals(reference, check, forceStructuralEquality, subErrors);
+            bool result = CheckDeepEquals(reference, check, forceEqualityByMembers, subErrors, checkedObjects);
             if (subErrors.Count > 0)
                 errors?.Add($"{name}:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
             return result;
         }
 
-        protected static bool CheckEqualsByMembers(object reference, object check, List<string> errors = null)
+        private static bool CheckMembersAndItemsEqual(object reference, object check, List<string> errors, HashSet<object> checkedObjects)
         {
             if (reference == null && check == null)
                 return true;
@@ -240,21 +260,21 @@ namespace _LibrariesTest
 
             // public fields
             foreach (FieldInfo field in typeRef.GetFields(BindingFlags.Instance | BindingFlags.Public))
-                result &= CheckMembersEqual($"{typeRef}.{field.Name}", Reflector.GetField(reference, field), Reflector.GetField(check, field), true, errors);
+                result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", Reflector.GetField(reference, field), Reflector.GetField(check, field), true, errors, checkedObjects);
 
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
-                result &= CheckMembersEqual($"{typeRef}.{property.Name}", Reflector.GetProperty(reference, property), Reflector.GetProperty(check, property), true, errors);
+                result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", Reflector.GetProperty(reference, property), Reflector.GetProperty(check, property), true, errors, checkedObjects);
 
             // collection elements
             var collSrc = reference as IEnumerable;
             var collTarget = check as IEnumerable;
             if (collSrc != null && collTarget != null && !(reference is string || check is string))
-                result &= CheckItemsEqual(collSrc, collTarget, true, errors);
+                result &= CheckItemsEqual(collSrc, collTarget, true, errors, checkedObjects);
             return result;
         }
 
-        private static bool CompareStreams(Stream reference, Stream check, List<string> errors)
+        private static bool CheckStreams(Stream reference, Stream check, List<string> errors)
         {
             if (!Check(reference.Length == check.Length, $"Length of the streams are different: {reference.Length} <-> {check.Length}", errors))
                 return false;
@@ -299,7 +319,7 @@ namespace _LibrariesTest
             return true;
         }
 
-        protected static bool CompareImages(Bitmap reference, Bitmap check, List<string> errors)
+        private static bool CheckImages(Bitmap reference, Bitmap check, List<string> errors)
         {
             // using the not so fast GetPixel compare. This works also for different pixel formats and raw formats.
             // There is a 2% brightness tolerance for icons

@@ -136,7 +136,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 backingFieldOfRealReadOnlyProperty = realReadOnlyProp;
             }
 
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
 
             public override int GetHashCode() => backingFieldOfRealReadOnlyProperty.GetHashCode() ^ ReadWriteProperty.GetHashCode() ^ SemiReadOnlyProperty.GetHashCode();
         }
@@ -200,7 +200,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 return result;
             }
 
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         public class FullExtraComponent
@@ -217,7 +217,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     InnerInt = 15;
                 }
 
-                public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+                public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
             }
 
             public struct InnerStructure
@@ -326,31 +326,7 @@ namespace _LibrariesTest.Libraries.Serialization
             }
 
             // overridden for test
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
-            //{
-            //    if (obj == null || obj.GetType() != typeof(FullExtraComponent))
-            //        return base.Equals(obj);
-
-            //    FullExtraComponent other = (FullExtraComponent)obj;
-            //    bool result = Equals(Inner, other.Inner);
-            //    result &= InnerArray == null && other.InnerArray == null || InnerArray != null && other.InnerArray != null && InnerArray.SequenceEqual(other.InnerArray);
-            //    result &= InnerList == null && other.InnerList == null || InnerList != null && other.InnerList != null && InnerList.SequenceEqual(other.InnerList);
-            //    result &= Equals(InnerXmlSerializable, other.InnerXmlSerializable);
-            //    result &= IntArray == null && other.IntArray == null || IntArray != null && other.IntArray != null && IntArray.SequenceEqual(other.IntArray);
-            //    result &= IntLinkedList == null && other.IntLinkedList == null || IntLinkedList != null && other.IntLinkedList != null && IntLinkedList.SequenceEqual(other.IntLinkedList);
-            //    result &= IntList == null && other.IntList == null || IntList != null && other.IntList != null && IntList.SequenceEqual(other.IntList);
-            //    result &= IntProp == other.IntProp;
-            //    result &= Point == other.Point;
-            //    //result &= IntQueue == null && other.IntQueue == null || IntQueue != null && other.IntQueue != null && IntQueue.SequenceEqual(other.IntQueue);
-            //    result &= PointArray == null && other.PointArray == null || PointArray != null && other.PointArray != null && PointArray.SequenceEqual(other.PointArray);
-            //    result &= ReadOnlyIntArray == null && other.ReadOnlyIntArray == null || ReadOnlyIntArray != null && other.ReadOnlyIntArray != null && ReadOnlyIntArray.SequenceEqual(other.ReadOnlyIntArray);
-            //    result &= StringValue == other.StringValue;
-            //    result &= StrObjDictionary == null && other.StrObjDictionary == null || StrObjDictionary != null && other.StrObjDictionary != null && StrObjDictionary.SequenceEqual(other.StrObjDictionary);
-            //    result &= Structure.Equals(other.Structure);
-            //    result &= StructureArray == null && other.StructureArray == null || StructureArray != null && other.StructureArray != null && StructureArray.SequenceEqual(other.StructureArray);
-            //    result &= StructureList == null && other.StructureList == null || StructureList != null && other.StructureList != null && StructureList.SequenceEqual(other.StructureList);
-            //    return result;
-            //}
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         public enum TestEnum
@@ -383,7 +359,7 @@ namespace _LibrariesTest.Libraries.Serialization
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         [Serializable]
@@ -425,7 +401,7 @@ namespace _LibrariesTest.Libraries.Serialization
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         [Serializable]
@@ -521,7 +497,7 @@ namespace _LibrariesTest.Libraries.Serialization
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         [Serializable]
@@ -548,7 +524,7 @@ namespace _LibrariesTest.Libraries.Serialization
             [TypeConverter(typeof(MultilineTypeConverter))]
             public object ExplicitTypeConverterProperty { get; set; }
 
-            public override bool Equals(object obj) => CheckEqualsByMembers(this, obj);
+            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         #endregion
@@ -1199,56 +1175,55 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeComplexArrays()
         {
-#error itt
             IList[] referenceObjects =
                 {
-                    //new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, new BinarySerializableStruct{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable struct
-                    //new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass{IntProp = 2, StringProp = "béka", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
-                    //new BinarySerializableSealedClass[] { new BinarySerializableSealedClass{IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // array of a BinarySerializable sealed class
-                    //new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object - will be serialized by BinaryFormatter
+                    new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, new BinarySerializableStruct{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable struct
+                    new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass{IntProp = 2, StringProp = "béka", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
+                    new BinarySerializableSealedClass[] { new BinarySerializableSealedClass{IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // array of a BinarySerializable sealed class
+                    new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object - will be serialized by BinaryFormatter
                     new NonSerializableStruct[] { new NonSerializableStruct{IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
                 };
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None); // Recursive: BinarySerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
-            //CheckTestingFramework(); // late ctor invoke
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-            //    | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-            //    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+            CheckTestingFramework(); // late ctor invoke
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
 
-            //// These collections cannot be serialized with system serializer
-            //referenceObjects = new IList[]
-            //    {
-            //        new BinarySerializableClass[] {new BinarySerializableSealedClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable non sealed class with derived elements
-            //        new IBinarySerializable[] {new BinarySerializableStruct {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass {IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // IBinarySerializable array
-            //        new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object
-            //        new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object, with an IBinarySerializable element
-            //        new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array
-            //        new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
+            // These collections cannot be serialized with system serializer
+            referenceObjects = new IList[]
+                {
+                    new BinarySerializableClass[] {new BinarySerializableSealedClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable non sealed class with derived elements
+                    new IBinarySerializable[] {new BinarySerializableStruct {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass {IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass{IntProp = 3, StringProp = "cica"} }, // IBinarySerializable array
+                    new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object
+                    new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object, with an IBinarySerializable element
+                    new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array
+                    new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
 
-            //        new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
-            //        new IConvertible[] { null, 1 },
-            //        new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
-            //    };
+                    //new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
+                    new IConvertible[] { null, 1 },
+                    new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
+                };
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-            //    | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-            //    | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
+                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
         }
 
         /// <summary>
@@ -1270,74 +1245,74 @@ namespace _LibrariesTest.Libraries.Serialization
                     new HashSet<int[]> { new int[]{1, 2, 3}, null },
                 };
 
-            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
-            SystemSerializeObjects(referenceObjects);
+            ////SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
+            //SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
+            //    | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
+            //    | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
 
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
             {
-                new LinkedList<int>(new[] { 1, 2, 3 }),
-                new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                //new LinkedList<int>(new[] { 1, 2, 3 }),
+                //new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
 
                 new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
-                new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alma" } }, { new int[] { 2 }, null } },
-                new Dictionary<object, object> { { 1, "alma" }, { "béka", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alma", DateTime.Now, null } }, { 5, null } },
+                //new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alma" } }, { new int[] { 2 }, null } },
+                //new Dictionary<object, object> { { 1, "alma" }, { "béka", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alma", DateTime.Now, null } }, { 5, null } },
 
-                new SortedList<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
-                new SortedList<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
+                //new SortedList<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                //new SortedList<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
-                new SortedDictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
-                new SortedDictionary<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
+                //new SortedDictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                //new SortedDictionary<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
-                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } }),
+                //new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } }),
 
-                new Cache<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                //new Cache<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.SerializeReadOnlyMembers); // everything but LinkedList
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // nested int[]
+            //// these collections are not supported content recursively because they implement neither ICollection<T> nor IList
+            //referenceObjects = new IEnumerable[]
+            //{
+            //    // non-populatable
+            //    new Queue<int>(new[] { 1, 2, 3 }),
+            //    new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+            //    new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
+            //    new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
+            //    new ConcurrentBag<int> { 1, 2, 3 },
+            //    new ArraySegment<int>(new[] { 1, 2, 3 }),
 
-            // these collections are not supported content recursively because they implement neither ICollection<T> nor IList
-            referenceObjects = new IEnumerable[]
-            {
-                // non-populatable
-                new Queue<int>(new[] { 1, 2, 3 }),
-                new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
-                new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
-                new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
-                new ConcurrentBag<int> { 1, 2, 3 },
-                new ArraySegment<int>(new[] { 1, 2, 3 }),
+            //    // non-populatable, reverse
+            //    new Stack<int>(new[] { 1, 2, 3 }),
+            //    new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+            //    new ConcurrentStack<int>(new[] { 1, 2, 3 }),
 
-                // non-populatable, reverse
-                new Stack<int>(new[] { 1, 2, 3 }),
-                new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
-                new ConcurrentStack<int>(new[] { 1, 2, 3 }),
+            //    // read-only
+            //    new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
+            //    new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
+            //};
 
-                // read-only
-                new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
-                new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
-            };
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            //// these collections are not supported recursively at all because they have no initializer constructor of array or list
+            //referenceObjects = new IEnumerable[]
+            //{
+            //    new BlockingCollection<int> { 1, 2, 3 },
+            //};
 
-            // these collections are not supported recursively at all because they have no initializer constructor of array or list
-            referenceObjects = new IEnumerable[]
-            {
-                new BlockingCollection<int> { 1, 2, 3 },
-            };
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
         [TestMethod]
@@ -1513,7 +1488,7 @@ namespace _LibrariesTest.Libraries.Serialization
             KGyXmlSerializer.SerializeContent(element, referenceObjects[0], XmlSerializationOptions.None); // should work due to Content visibility on properties
             FullExtraComponent deserializedObject = new FullExtraComponent();
             KGyXmlSerializer.DeserializeContent(element, deserializedObject);
-            AssertEquals(referenceObjects[0], deserializedObject);
+            AssertDeepEquals(referenceObjects[0], deserializedObject);
 
             KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback); // test element when serialized as whole object
 
@@ -1543,7 +1518,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 }
                 Console.WriteLine(sb);
                 object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
-                AssertEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject);
             }
             catch (Exception e)
             {
@@ -1596,7 +1571,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 XElement xElement = KGyXmlSerializer.Serialize(obj, options);
                 Console.WriteLine(xElement);
                 object deserializedObject = KGyXmlSerializer.Deserialize(xElement);
-                AssertEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject);
 
                 // XmlReader/Writer - as object
                 StringBuilder sb = new StringBuilder();
@@ -1611,7 +1586,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     deserializedObject = KGyXmlSerializer.Deserialize(reader);
                 }
 
-                AssertEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject);
                 Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
 
                 // XElement - as component
@@ -1622,7 +1597,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 //Console.WriteLine(xElementComp);
                 deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
                 KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
-                AssertEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject);
 
                 // XmlReader/Writer - as component
                 sb = new StringBuilder();
@@ -1643,7 +1618,7 @@ namespace _LibrariesTest.Libraries.Serialization
                     reader.ReadEndElement();
                 }
 
-                AssertEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject);
                 Assert.AreEqual(xElementComp.ToString(), sb.ToString(), "XElement and XmlWriter SerializeContent are not compatible");
             }
             catch (Exception e)
@@ -1704,8 +1679,8 @@ namespace _LibrariesTest.Libraries.Serialization
                             itemReader.ReadEndElement();
                         }
 
-                        AssertEquals(item, deserXElement);
-                        AssertEquals(item, deserReader);
+                        AssertDeepEquals(item, deserXElement);
+                        AssertDeepEquals(item, deserReader);
                         Assert.AreEqual(xItem.ToString(), sbItem.ToString(), "XElement and XmlWriter serializers are not compatible");
                     }
                     writer.WriteEndDocument();
@@ -1725,7 +1700,7 @@ namespace _LibrariesTest.Libraries.Serialization
                         {
                             object deserXElement = KGyXmlSerializer.Deserialize(element);
                             object deserReader = KGyXmlSerializer.Deserialize(reader);
-                            AssertEquals(deserXElement, deserReader);
+                            AssertDeepEquals(deserXElement, deserReader);
 
                             deserializedObjects.Add(deserXElement);
                         }
