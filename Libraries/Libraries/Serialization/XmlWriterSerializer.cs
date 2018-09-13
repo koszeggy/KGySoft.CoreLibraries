@@ -34,8 +34,7 @@ namespace KGySoft.Libraries.Serialization
             }
 
             Type objType = obj.GetType();
-            if (!TrySerializeObject(obj, true, writer, objType, DesignerSerializationVisibility.Visible))
-                throw new SerializationException(Res.Get(Res.XmlCannotSerialize, objType, Options));
+            SerializeObject(obj, true, writer, objType, DesignerSerializationVisibility.Visible);
             writer.WriteFullEndElement();
             writer.Flush();
         }
@@ -150,56 +149,53 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // non-primitive type array or compact serialization is not enabled
-                bool elementTypeNeeded = elementType.CanBeDerived();
                 foreach (var item in array)
                 {
                     writer.WriteStartElement(XmlSerializer.ElementItem);
                     Type itemType = null;
                     if (item == null)
                         writer.WriteEndElement();
-                    else if (TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), visibility))
-                        writer.WriteFullEndElement();
                     else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeArrayElement, item.GetType(), Options));
+                    {
+                        SerializeObject(item, elementType.CanBeDerived() && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), visibility);
+                        writer.WriteFullEndElement();
+                    }
                 }
 
                 return;
             }
+
             // non-array collection
-            else
+            if (typeNeeded)
+                writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
+
+            // serializing main properties first
+            SerializeMembers(collection, writer);
+
+            // serializing items
+            foreach (var item in collection)
             {
-                if (typeNeeded)
-                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
-
-                // serializing main properties first
-                SerializeMembers(collection, writer);
-
-                // serializing items
-                bool elementTypeNeeded = elementType.CanBeDerived();
-                foreach (var item in collection)
+                writer.WriteStartElement(XmlSerializer.ElementItem);
+                Type itemType = null;
+                if (item == null)
+                    writer.WriteEndElement();
+                else
                 {
-                    writer.WriteStartElement(XmlSerializer.ElementItem);
-                    Type itemType = null;
-                    if (item == null)
-                        writer.WriteEndElement();
-                    else if (TrySerializeObject(item, elementTypeNeeded && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), visibility))
-                        writer.WriteFullEndElement();
-                    else
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollectionElement, item.GetType(), Options));
+                    SerializeObject(item, elementType.CanBeDerived() && (itemType = item.GetType()) != elementType, writer, itemType ?? item.GetType(), visibility);
+                    writer.WriteFullEndElement();
                 }
             }
         }
 
         /// <summary>
-        /// Tries to serialize the whole object itself. Returns false when object type is not supported with current options but may throw exceptions on
-        /// invalid data or inconsistent settings.
+        /// Serializes a whole object. May throw exceptions on invalid or inappropriate options.
         /// XmlWriter version. Start element must be opened and closed by caller.
         /// obj.GetType and type can be different (properties)
         /// </summary>
-        private bool TrySerializeObject(object obj, bool typeNeeded, XmlWriter writer, Type type, DesignerSerializationVisibility visibility)
+        private void SerializeObject(object obj, bool typeNeeded, XmlWriter writer, Type type, DesignerSerializationVisibility visibility)
         {
             if (obj == null)
-                return true;
+                return;
 
             // a.) If type can be natively parsed, simple writing
             if (Reflector.CanParseNatively(type) && !(obj is Type && ((Type)obj).IsGenericParameter))
@@ -208,7 +204,7 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 WriteStringValue(obj, writer);
-                return true;
+                return;
             }
 
             // b.) IXmlSerializable
@@ -218,7 +214,7 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 SerializeXmlSerializable(xmlSerializable, writer);
-                return true;
+                return;
             }
 
             // c.) Using type converter of the type if applicable
@@ -230,30 +226,20 @@ namespace KGySoft.Libraries.Serialization
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 writer.WriteString(converter.ConvertToInvariantString(obj));
-                return true;
+                return;
             }
 
-            // d.) simple object
-            if (obj.GetType() == Reflector.ObjectType)
-            {
-                if (typeNeeded)
-                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
-                writer.WriteString(String.Empty);
-
-                return true;
-            }
-
-            // e/1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
+            // d/1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
             if (type == typeof(DictionaryEntry))
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 SerializeMembers(obj, writer);
-                return true;
+                return;
             }
 
-            // e/2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
+            // d/2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
             if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
             {
                 if (typeNeeded)
@@ -268,10 +254,7 @@ namespace KGySoft.Libraries.Serialization
                 else
                 {
                     Type keyType = key.GetType();
-                    bool elementTypeNeeded = keyType != type.GetGenericArguments()[0];
-                    if (!TrySerializeObject(key, elementTypeNeeded, writer, keyType, visibility))
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerialize, keyType, Options));
-
+                    SerializeObject(key, keyType != type.GetGenericArguments()[0], writer, keyType, visibility);
                     writer.WriteFullEndElement();
                 }
 
@@ -281,17 +264,14 @@ namespace KGySoft.Libraries.Serialization
                 else
                 {
                     Type valueType = value.GetType();
-                    bool elementTypeNeeded = valueType != type.GetGenericArguments()[1];
-                    if (!TrySerializeObject(value, elementTypeNeeded, writer, valueType, visibility))
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerialize, valueType, Options));
-
+                    SerializeObject(value, valueType != type.GetGenericArguments()[1], writer, valueType, visibility);
                     writer.WriteFullEndElement();
                 }
 
-                return true;
+                return;
             }
 
-            // f.) value type as binary only if enabled
+            // e.) value type as binary only if enabled
             if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeStruct((ValueType)obj, out byte[] data))
             {
                 if (typeNeeded)
@@ -301,16 +281,16 @@ namespace KGySoft.Libraries.Serialization
                 if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
                     writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
                 writer.WriteString(Convert.ToBase64String(data));
-                return true;
+                return;
             }
 
-            // g.) binary serialization: base64 format to XML
+            // f.) binary serialization: base64 format to XML
             if (IsBinarySerializationEnabled && visibility != DesignerSerializationVisibility.Content)
             {
                 try
                 {
                     SerializeBinary(obj, writer);
-                    return true;
+                    return;
                 }
                 catch (Exception e)
                 {
@@ -318,19 +298,28 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // h.) collection: if can be trusted in all circumstances
-            Type elementType = null;
-            if (IsTrustedCollection(type)
-                // or recursive is requested 
-                || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                    // and is a supported collection
-                    && type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _)))
+            // g.) collection: if can be trusted in all circumstances
+            if (obj is IEnumerable enumerable)
             {
-                SerializeCollection((IEnumerable)obj, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
-                return true;
+                Type elementType = null;
+
+                // if can be trusted in all circumstances
+                if (IsTrustedCollection(type)
+                    // or recursive is requested 
+                    || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                        // and is a supported collection or serialization is forced
+                        && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
+                {
+                    SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
+                    return;
+                }
+
+                if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeUnsupportedCollection, type, Options));
+                throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollection, type, Options));
             }
 
-            // i.) recursive serialization of any object, if requested
+            // h.) recursive serialization of any object, if requested
             bool hasDefaultCtor = type.CanBeCreatedWithoutParameters();
             if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
                 // or when it has public properties/fields only
@@ -340,10 +329,10 @@ namespace KGySoft.Libraries.Serialization
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
                 SerializeContent(writer, obj);
-                return true;
+                return;
             }
 
-            return false;
+            throw new SerializationException(Res.Get(Res.XmlCannotSerialize, type, Options));
         }
 
         private void SerializeMembers(object obj, XmlWriter writer)
@@ -388,10 +377,11 @@ namespace KGySoft.Libraries.Serialization
                 writer.WriteStartElement(member.Name);
                 if (value == null)
                     writer.WriteEndElement();
-                else if (TrySerializeObject(value, memberType != actualType, writer, actualType, visibility))
-                    writer.WriteFullEndElement();
                 else
-                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeMember, obj.GetType(), member.Name, Options));
+                {
+                    SerializeObject(value, memberType != actualType, writer, actualType, visibility);
+                    writer.WriteFullEndElement();
+                }
             }
         }
 

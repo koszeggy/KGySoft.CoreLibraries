@@ -487,14 +487,12 @@ Hit rate: {8:P2}</value>
   <data name="XmlCannotSerialize" xml:space="preserve">
     <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
   </data>
-  <data name="XmlCannotSerializeArrayElement" xml:space="preserve">
-    <value>Cannot serialize "{0}" as array element with following options: "{1}". You may either use fallback options or provide a type converter for container collection. If the container collection is a property in an object you may apply DesignerSerializationVisibilityAttribute with value Content on the property.</value>
+  <data name="XmlCannotSerializeCollection" xml:space="preserve">
+    <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</value>
   </data>
-  <data name="XmlCannotSerializeCollectionElement" xml:space="preserve">
-    <value>Cannot serialize "{0}" as collection element with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</value>
-  </data>
-  <data name="XmlCannotSerializeMember" xml:space="preserve">
-    <value>Cannot serialize member "{0}.{1}" with following options: "{2}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content for the member.</value>
+  <data name="XmlCannotSerializeUnsupportedCollection" xml:space="preserve">
+    <value>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.
+To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</value>
   </data>
   <data name="XmlPropertyHasNoSetterNull" xml:space="preserve">
     <value>Cannot assign null to type "{0}" at property "{1}.{2}" because it has no setter.</value>

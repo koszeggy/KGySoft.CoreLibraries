@@ -57,7 +57,7 @@ namespace KGySoft.Libraries.Serialization
                 var field = property != null ? null : member.Key as FieldInfo;
 
                 // read-only property
-                if (!property?.CanWrite == false)
+                if (property?.CanWrite == false)
                 {
                     object existingValue = Reflector.GetProperty(result, property);
                     if (property.PropertyType.IsValueType)

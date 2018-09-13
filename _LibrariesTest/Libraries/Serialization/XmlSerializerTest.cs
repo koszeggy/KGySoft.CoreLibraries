@@ -1245,74 +1245,75 @@ namespace _LibrariesTest.Libraries.Serialization
                     new HashSet<int[]> { new int[]{1, 2, 3}, null },
                 };
 
-            ////SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
-            //SystemSerializeObjects(referenceObjects);
+            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
+            SystemSerializeObjects(referenceObjects);
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
-            //    | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
-            //    | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
+                | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
+                | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
 
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
             {
-                //new LinkedList<int>(new[] { 1, 2, 3 }),
-                //new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new LinkedList<int>(new[] { 1, 2, 3 }),
+                new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
 
                 new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
-                //new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alma" } }, { new int[] { 2 }, null } },
-                //new Dictionary<object, object> { { 1, "alma" }, { "béka", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alma", DateTime.Now, null } }, { 5, null } },
+                new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alma" } }, { new int[] { 2 }, null } },
+                new Dictionary<object, object> { { 1, "alma" }, { "béka", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alma", DateTime.Now, null } }, { 5, null } },
 
-                //new SortedList<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
-                //new SortedList<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
+                new SortedList<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new SortedList<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
-                //new SortedDictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
-                //new SortedDictionary<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
+                new SortedDictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new SortedDictionary<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
-                //new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } }),
+                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } }),
 
-                //new Cache<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
+                new Cache<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
             };
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.SerializeReadOnlyMembers); // everything but LinkedList
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
 
-            //// these collections are not supported content recursively because they implement neither ICollection<T> nor IList
-            //referenceObjects = new IEnumerable[]
-            //{
-            //    // non-populatable
-            //    new Queue<int>(new[] { 1, 2, 3 }),
-            //    new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
-            //    new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
-            //    new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
-            //    new ConcurrentBag<int> { 1, 2, 3 },
-            //    new ArraySegment<int>(new[] { 1, 2, 3 }),
+            // these collections are not supported content recursively because they implement neither ICollection<T> nor IList
+            referenceObjects = new IEnumerable[]
+            {
+                // non-populatable
+                new Queue<int>(new[] { 1, 2, 3 }),
+                new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
+                new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
+                new ConcurrentBag<int> { 1, 2, 3 },
+                new ArraySegment<int>(new[] { 1, 2, 3 }),
 
-            //    // non-populatable, reverse
-            //    new Stack<int>(new[] { 1, 2, 3 }),
-            //    new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
-            //    new ConcurrentStack<int>(new[] { 1, 2, 3 }),
+                // non-populatable, reverse
+                new Stack<int>(new[] { 1, 2, 3 }),
+                new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new ConcurrentStack<int>(new[] { 1, 2, 3 }),
 
-            //    // read-only
-            //    new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
-            //    new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
-            //};
+                // read-only
+                new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
+                new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
+            };
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
 
-            //// these collections are not supported recursively at all because they have no initializer constructor of array or list
-            //referenceObjects = new IEnumerable[]
-            //{
-            //    new BlockingCollection<int> { 1, 2, 3 },
-            //};
+            // these collections are not supported recursively at all
+            referenceObjects = new IEnumerable[]
+            {
+                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
+                new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
+            };
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
         [TestMethod]

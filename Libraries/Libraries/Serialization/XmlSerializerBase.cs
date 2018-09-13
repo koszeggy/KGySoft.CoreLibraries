@@ -68,7 +68,7 @@ namespace KGySoft.Libraries.Serialization
 
         protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
 
-        protected bool ForceReadonlyMembers => (Options & XmlSerializationOptions.SerializeReadOnlyMembers) != XmlSerializationOptions.None;
+        protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
 
         protected BinarySerializationOptions GetBinarySerializationOptions()
         {
@@ -98,22 +98,27 @@ namespace KGySoft.Libraries.Serialization
         {
             Type type = obj.GetType();
 
-            // getting read-write non-indexer instance properties, and read-only ones with populatable collections
+            // getting read-write non-indexer readable instance properties
             IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.GetIndexParameters().Length == 0 
                     && p.CanRead 
-                    && (p.CanWrite 
-                        || ForceReadonlyMembers 
-                        || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType)) 
-                        || p.PropertyType.IsReadWriteCollection(obj)));
+                    && (p.CanWrite
+                        // read-only are accepted only if forced
+                        || ForceReadonlyMembersAndCollections
+                        // or is XmlSerializable
+                        || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
+                        // or the collection is not read-only (regardless of constructors)
+                        || p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))));
             if (ExcludeFields)
                 return properties;
 
-            // small difference for fields: non read-write collections (collectionsCtor) are also accepted
+            // getting non read-only instance fields
             IEnumerable<MemberInfo> fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-                .Where(f => !f.IsInitOnly 
-                    || ForceReadonlyMembers 
-                    || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType.IsReadWriteCollection(obj));
+                .Where(f => !f.IsInitOnly
+                    // read-only fields are serialized only if forced
+                    || ForceReadonlyMembersAndCollections
+                    // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
+                    || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)));
             return fields.Concat(properties);
         }
 

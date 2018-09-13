@@ -399,11 +399,11 @@ namespace KGySoft.Libraries.Reflection
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull));
 
+            if (!property.CanWrite)
+                throw new InvalidOperationException(Res.Get(Res.PropertyHasNoSetter, property.DeclaringType, property.Name));
             bool isStatic = property.GetSetMethod(true).IsStatic;
             if (instance == null && !isStatic)
                 throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
-            if (!property.CanWrite)
-                throw new InvalidOperationException(Res.Get(Res.PropertyHasNoSetter, property.DeclaringType, property.Name));
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
@@ -747,10 +747,10 @@ namespace KGySoft.Libraries.Reflection
         {
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull));
-            if (instance == null && !property.GetGetMethod(true).IsStatic)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
             if (!property.CanRead)
                 throw new InvalidOperationException(Res.Get(Res.PropertyHasNoGetter, property.DeclaringType, property.Name));
+            if (instance == null && !property.GetGetMethod(true).IsStatic)
+                throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
