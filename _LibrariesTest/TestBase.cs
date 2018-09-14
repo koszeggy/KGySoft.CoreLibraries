@@ -429,6 +429,13 @@ namespace _LibrariesTest
             if (target == null || source == null)
                 return;
 
+            if (target is Array arrayTarget)
+            {
+                var arraySource = (Array)source;
+                Array.Copy(arraySource, arrayTarget, arrayTarget.Length);
+                return;
+            }
+
             for (Type t = target.GetType(); t != null; t = t.BaseType)
             {
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))

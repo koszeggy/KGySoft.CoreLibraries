@@ -192,11 +192,17 @@ namespace _LibrariesTest.Libraries.Serialization
         public class ReadOnlyProperties
         {
             public XmlSerializableClass XmlSerializable { get; } = new XmlSerializableClass();
+            public object[] Array3 { get; } = new object[3];
+            public Cache<int, string> Cache { get; } = new Cache<int, string>(i => i.ToString());
+            public ReadOnlyCollection<object> ReadOnlyCollection { get; private set; }
 
-            public static ReadOnlyProperties Create(XmlSerializableClass xmlSerializableClass = null)
+            public static ReadOnlyProperties Create(XmlSerializableClass xmlSerializableClass = null, object[] array = null, int[] toCache = null, ReadOnlyCollection<object> readOnlyCollection = null)
             {
                 var result = new ReadOnlyProperties();
                 CopyFrom(result.XmlSerializable, xmlSerializableClass);
+                CopyFrom(result.Array3, array);
+                toCache?.ForEach(i => { var dummy = result.Cache[i]; });
+                result.ReadOnlyCollection = readOnlyCollection;
                 return result;
             }
 
@@ -1209,16 +1215,18 @@ namespace _LibrariesTest.Libraries.Serialization
                     new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array
                     new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array of any struct
 
-                    //new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
+                    new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1},
                     new IConvertible[] { null, 1 },
                     new IConvertible[][] { null, new IConvertible[]{ null, 1},  },
                 };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
                 | XmlSerializationOptions.CompactSerializationOfStructures); // nothing

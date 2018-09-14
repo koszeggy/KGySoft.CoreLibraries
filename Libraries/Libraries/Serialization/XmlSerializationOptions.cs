@@ -158,7 +158,5 @@ namespace KGySoft.Libraries.Serialization
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         ForcedSerializationOfReadOnlyMembersAndCollections = 1 << 12,
-
-
     }
 }
