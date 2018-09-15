@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Linq;
@@ -371,46 +372,14 @@ namespace KGySoft.Libraries.Serialization
             if (array == null && elementType == null)
                 throw new ArgumentNullException(nameof(elementType), Res.Get(Res.ArgumentNull));
 
-            int length = 0;
-            int[] lengths = null;
-            int[] lowerBounds = null;
-            XAttribute attrLength = element.Attribute(XmlSerializer.AttributeLength);
-            XAttribute attrDim = element.Attribute(XmlSerializer.AttributeDim);
-
-            if (attrLength != null)
-            {
-                if (!Int32.TryParse(attrLength.Value, out length))
-                    throw new ArgumentException(Res.Get(Res.XmlLengthInvalidType, attrLength));
-            }
-            else if (attrDim != null)
-            {
-                string[] dims = attrDim.Value.Split(',');
-                lengths = new int[dims.Length];
-                lowerBounds = new int[dims.Length];
-                for (int i = 0; i < dims.Length; i++)
-                {
-                    int boundSep = dims[i].IndexOf("..", StringComparison.InvariantCulture);
-                    if (boundSep == -1)
-                    {
-                        lowerBounds[i] = 0;
-                        lengths[i] = Int32.Parse(dims[i]);
-                    }
-                    else
-                    {
-                        lowerBounds[i] = Int32.Parse(dims[i].Substring(0, boundSep));
-                        lengths[i] = Int32.Parse(dims[i].Substring(boundSep + 2)) - lowerBounds[i] + 1;
-                    }
-                }
-
-                length = lengths.Aggregate(1, (acc, len) => acc * len);
-            }
+            ParseArrayDimensions(element.Attribute(XmlSerializer.AttributeLength)?.Value, element.Attribute(XmlSerializer.AttributeDim)?.Value, out int[] lengths, out int[] lowerBounds);
 
             // checking existing array or creating a new array
-            if (array == null || !CheckArray(array, length, lengths, lowerBounds, !canRecreateArray))
-                array = lengths != null ? Array.CreateInstance(elementType, lengths, lowerBounds) : Array.CreateInstance(elementType, length);
+            if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
+                array = Array.CreateInstance(elementType, lengths, lowerBounds);
 
             // has no elements: primitive array (can be restored by BlockCopy)
-            if (length > 0 && !element.HasElements)
+            if (lengths.Length == 1 && lengths[0] > 0 && !element.HasElements)
             {
                 string value = element.Value;
                 byte[] data = Convert.FromBase64String(value);
@@ -423,6 +392,9 @@ namespace KGySoft.Libraries.Serialization
                         throw new ArgumentException(Res.Get(Res.XmlCrcError));
                 }
 
+                int count = data.Length / Marshal.SizeOf(elementType);
+                if (data.Length != count)
+                    throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, count));
                 Buffer.BlockCopy(data, 0, array, 0, data.Length);
                 return array;
             }
@@ -432,8 +404,9 @@ namespace KGySoft.Libraries.Serialization
             if (items.Count != array.Length)
                 throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, items.Count));
 
-            ArrayIndexer arrayIndexer = new ArrayIndexer(lengths ?? new int[] { length }, lowerBounds ?? new int[] { 0 });
-            while (arrayIndexer.MoveNext())
+            ArrayIndexer arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
+            int deserializedItemsCount = 0;
+            while (items.Count > 1)
             {
                 XElement item = items.Dequeue();
                 Type itemType = null;
@@ -444,9 +417,20 @@ namespace KGySoft.Libraries.Serialization
                     itemType = array.GetType().GetElementType();
 
                 if (TryDeserializeObject(itemType, item, null, out var value))
-                    array.SetValue(value, arrayIndexer.Current);
-                else
-                    throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
+                {
+                    if (arrayIndexer == null)
+                        array.SetValue(value, deserializedItemsCount + lowerBounds[0]);
+                    else
+                    {
+                        arrayIndexer.MoveNext();
+                        array.SetValue(value, arrayIndexer.Current);
+                    }
+
+                    deserializedItemsCount++;
+                    continue;
+                }
+
+                throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
             }
 
             return array;

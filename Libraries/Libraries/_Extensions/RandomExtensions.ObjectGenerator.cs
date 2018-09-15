@@ -833,9 +833,18 @@ namespace KGySoft.Libraries
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 var result = Array.CreateInstance(elementType, lengths);
-                var indexer = new ArrayIndexer(lengths);
-                while (indexer.MoveNext())
-                    result.SetValue(GenerateObject(context.Random, elementType, context.Settings), indexer.Current);
+                if (lengths.Length == 1)
+                {
+                    int length = lengths[0];
+                    for (int i = 0; i < length; i++)
+                        result.SetValue(GenerateObject(context.Random, elementType, context.Settings), i);
+                }
+                else
+                {
+                    var indexer = new ArrayIndexer(lengths);
+                    while (indexer.MoveNext())
+                        result.SetValue(GenerateObject(context.Random, elementType, context.Settings), indexer.Current);
+                }
 
                 return result;
             }

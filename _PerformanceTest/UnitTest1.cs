@@ -24,12 +24,17 @@ namespace _PerformanceTest
             //    Repeat = 5
             //}.DoTest();
 
+            //Array array = Array.CreateInstance(typeof(int), new[] { 10 }, new[] { 1 });
+            //for (int i = 1; i <= 10; i++)
+            //    array.SetValue(i, i);
+            //var dest = new int[10];
+
             //new TestOperation
             //{
-            //    RefOpName = "Without name cache",
-            //    TestOpName = "With name cache",
-            //    ReferenceOperation = () => typeof(IList<int>).IsImplementationOfGenericType(typeof(List<>)),
-            //    TestOperation = () => typeof(IList<int>).IsImplementationOfGenericType2(typeof(List<>)),
+            //    RefOpName = "Primitive copy",
+            //    TestOpName = "Regular copy",
+            //    ReferenceOperation = () => Buffer.BlockCopy(array, 0, dest, 0, 40),
+            //    TestOperation = () => Array.Copy(array, 1, dest, 0, 10),
             //    Iterations = 100000,
             //    Repeat = 5
             //}.DoTest();

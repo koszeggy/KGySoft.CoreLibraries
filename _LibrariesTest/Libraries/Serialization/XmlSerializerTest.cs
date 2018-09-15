@@ -199,8 +199,8 @@ namespace _LibrariesTest.Libraries.Serialization
 
             public ReadOnlyProperties Init(XmlSerializableClass xmlSerializableClass = null, object[] array = null, int[] toCache = null, ReadOnlyCollection<object> readOnlyCollection = null)
             {
-                CopyFrom(XmlSerializable, xmlSerializableClass);
-                CopyFrom(Array3, array);
+                CopyContent(XmlSerializable, xmlSerializableClass);
+                CopyContent(Array3, array);
                 toCache?.ForEach(i => { var dummy = Cache[i]; });
                 ReadOnlyCollection = readOnlyCollection;
                 return this;
@@ -1473,10 +1473,6 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
-
-#error itt
-        // TODO: CopyFrom: Array.Copy, átnevezés CopyContent-re
-        // TODO: Deserializer.TryDeserialize helyett void
 
         /// <summary>
         /// Complex generic collections

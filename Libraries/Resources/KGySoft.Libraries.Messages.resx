@@ -518,6 +518,9 @@ To force the recursive serialization of the collection enable both RecursiveSeri
   <data name="XmlLengthInvalidType" xml:space="preserve">
     <value>Length attribute should be an integer but "{0}" found.</value>
   </data>
+  <data name="XmlArrayNoLength" xml:space="preserve">
+    <value>Array length or dimensions are not specified.</value>
+  </data>
   <data name="XmlMixedArrayFormats" xml:space="preserve">
     <value>Mixed compact and non-compact array content found.</value>
   </data>

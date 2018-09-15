@@ -2323,17 +2323,18 @@ namespace KGySoft.Libraries.Serialization
                 Buffer.BlockCopy(br.ReadBytes(length), 0, result, 0, length);
             }
 
-            // normal 1D array
-            else if (lengths.Length == 1 && lowerBounds[0] == 0)
+            // 1D array
+            else if (lengths.Length == 1)
             {
+                int offset = lowerBounds[0];
                 for (int i = 0; i < result.Length; i++)
                 {
                     object value = ReadElement(br, descriptor, manager, false);
-                    result.SetValue(value, i);
+                    result.SetValue(value, i + offset);
                 }
             }
 
-            // multidimensional or non-zero based array
+            // multidimensional array
             else
             {
                 ArrayIndexer arrayIndexer = new ArrayIndexer(lengths, lowerBounds);

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -423,43 +424,11 @@ namespace KGySoft.Libraries.Serialization
             if (array == null && elementType == null)
                 throw new ArgumentNullException(nameof(elementType), Res.Get(Res.ArgumentNull));
 
-            int length = 0;
-            int[] lengths = null;
-            int[] lowerBounds = null;
-            string attrLength = reader[XmlSerializer.AttributeLength];
-            string attrDim = reader[XmlSerializer.AttributeDim];
-
-            if (attrLength != null)
-            {
-                if (!Int32.TryParse(attrLength, out length))
-                    throw new ArgumentException(Res.Get(Res.XmlLengthInvalidType, attrLength));
-            }
-            else if (attrDim != null)
-            {
-                string[] dims = attrDim.Split(',');
-                lengths = new int[dims.Length];
-                lowerBounds = new int[dims.Length];
-                for (int i = 0; i < dims.Length; i++)
-                {
-                    int boundSep = dims[i].IndexOf("..", StringComparison.InvariantCulture);
-                    if (boundSep == -1)
-                    {
-                        lowerBounds[i] = 0;
-                        lengths[i] = Int32.Parse(dims[i]);
-                    }
-                    else
-                    {
-                        lowerBounds[i] = Int32.Parse(dims[i].Substring(0, boundSep));
-                        lengths[i] = Int32.Parse(dims[i].Substring(boundSep + 2)) - lowerBounds[i] + 1;
-                    }
-                }
-
-                length = lengths.Aggregate(1, (acc, len) => acc * len);
-            }
+            ParseArrayDimensions(reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], out int[] lengths, out int[] lowerBounds);
 
             // checking existing array or creating a new array
-            if (array == null || !CheckArray(array, length, lengths, lowerBounds, !canRecreateArray))
-                array = lengths != null ? Array.CreateInstance(elementType, lengths, lowerBounds) : Array.CreateInstance(elementType, length);
+            if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
+                array = Array.CreateInstance(elementType, lengths, lowerBounds);
 
             string attrCrc = reader[XmlSerializer.AttributeCrc];
             uint? crc = null;
@@ -471,7 +440,7 @@ namespace KGySoft.Libraries.Serialization
             }
 
             int deserializedItemsCount = 0;
-            ArrayIndexer arrayIndexer = lengths == null ? null : new ArrayIndexer(lengths, lowerBounds);
+            ArrayIndexer arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
             do
             {
                 ReadToNodeType(reader, XmlNodeType.Element, XmlNodeType.Text, XmlNodeType.EndElement);
@@ -489,8 +458,10 @@ namespace KGySoft.Libraries.Serialization
                                 throw new ArgumentException(Res.Get(Res.XmlCrcError));
                         }
 
+                        deserializedItemsCount = data.Length / Marshal.SizeOf(elementType);
+                        if (data.Length != deserializedItemsCount)
+                            throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, deserializedItemsCount));
                         Buffer.BlockCopy(data, 0, array, 0, data.Length);
-                        deserializedItemsCount = length;
                         break;
 
                     case XmlNodeType.Element:
@@ -504,14 +475,14 @@ namespace KGySoft.Libraries.Serialization
                             if (itemType == null)
                                 itemType = array.GetType().GetElementType();
 
-                            if (TryDeserializeObject(itemType, reader, null, out var item))
+                            if (TryDeserializeObject(itemType, reader, null, out var value))
                             {
                                 if (arrayIndexer == null)
-                                    array.SetValue(item, deserializedItemsCount);
+                                    array.SetValue(value, deserializedItemsCount + lowerBounds[0]);
                                 else
                                 {
                                     arrayIndexer.MoveNext();
-                                    array.SetValue(item, arrayIndexer.Current);
+                                    array.SetValue(value, arrayIndexer.Current);
                                 }
 
                                 deserializedItemsCount++;

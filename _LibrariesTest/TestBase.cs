@@ -425,7 +425,7 @@ namespace _LibrariesTest
 #endif
         }
 
-        protected static void CopyFrom(object target, object source)
+        protected static void CopyContent(object target, object source)
         {
             if (target == null || source == null)
                 return;

@@ -168,6 +168,7 @@ namespace KGySoft.Libraries.Resources
         internal const string XmlHasNoProperty = nameof(XmlHasNoProperty);
         internal const string XmlNoContent = nameof(XmlNoContent);
         internal const string XmlLengthInvalidType = nameof(XmlLengthInvalidType);
+        internal const string XmlArrayNoLength = nameof(XmlArrayNoLength);
         internal const string XmlArraySizeMismatch = nameof(XmlArraySizeMismatch);
         internal const string XmlArrayRankMismatch = nameof(XmlArrayRankMismatch);
         internal const string XmlArrayDimensionSizeMismatch = nameof(XmlArrayDimensionSizeMismatch);

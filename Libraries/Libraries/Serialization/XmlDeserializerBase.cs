@@ -17,24 +17,57 @@ namespace KGySoft.Libraries.Serialization
 {
     internal abstract class XmlDeserializerBase
     {
-        protected static bool CheckArray(Array array, int length, int[] lengths, int[] lowerBounds, bool throwError)
+        protected static void ParseArrayDimensions(string attrLength, string attrDim, out int[] lengths, out int[] lowerBounds)
         {
-            if (length != array.Length)
-                return throwError ? throw new ArgumentException(Res.Get(Res.XmlArraySizeMismatch, array.GetType(), length)) : false;
+            if (attrLength == null && attrDim == null)
+                throw new ArgumentException(Res.Get(Res.XmlArrayNoLength));
 
-            if (lengths != null)
+            if (attrLength != null)
             {
-                if (lengths.Length != array.Rank)
-                    return throwError ? throw new ArgumentException(Res.Get(Res.XmlArrayRankMismatch, array.GetType(), lengths.Length)) : false;
+                lengths = new int[1];
+                lowerBounds = new int[1];
+                if (!Int32.TryParse(attrLength, out lengths[0]))
+                    throw new ArgumentException(Res.Get(Res.XmlLengthInvalidType, attrLength));
+                return;
+            }
 
-                for (int i = 0; i < lengths.Length; i++)
+            string[] dims = attrDim.Split(',');
+            lengths = new int[dims.Length];
+            lowerBounds = new int[dims.Length];
+            for (int i = 0; i < dims.Length; i++)
+            {
+                int boundSep = dims[i].IndexOf("..", StringComparison.InvariantCulture);
+                if (boundSep == -1)
                 {
-                    if (lengths[i] != array.GetLength(i))
-                        return throwError ? throw new ArgumentException(Res.Get(Res.XmlArrayDimensionSizeMismatch, array.GetType(), i)) : false;
-
-                    if (lowerBounds[i] != array.GetLowerBound(i))
-                        return throwError ? throw new ArgumentException(Res.Get(Res.XmlArrayLowerBoundMismatch, array.GetType(), i)) : false;
+                    lowerBounds[i] = 0;
+                    lengths[i] = Int32.Parse(dims[i]);
                 }
+                else
+                {
+                    lowerBounds[i] = Int32.Parse(dims[i].Substring(0, boundSep));
+                    lengths[i] = Int32.Parse(dims[i].Substring(boundSep + 2)) - lowerBounds[i] + 1;
+                }
+            }
+        }
+
+        protected static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
+        {
+            if (lengths.Length != array.Rank)
+                return throwError ? throw new ArgumentException(Res.Get(Res.XmlArrayRankMismatch, array.GetType(), lengths.Length)) : false;
+
+            for (int i = 0; i < lengths.Length; i++)
+            {
+                if (lengths[i] != array.GetLength(i))
+                {
+                    if (!throwError)
+                        return false;
+                    if (lengths[0] == 1)
+                        throw new ArgumentException(Res.Get(Res.XmlArraySizeMismatch, array.GetType(), lengths[0]));
+                    throw new ArgumentException(Res.Get(Res.XmlArrayDimensionSizeMismatch, array.GetType(), i));
+                }
+
+                if (lowerBounds[i] != array.GetLowerBound(i))
+                    return throwError ? throw new ArgumentException(Res.Get(Res.XmlArrayLowerBoundMismatch, array.GetType(), i)) : false;
             }
 
             return true;
@@ -76,7 +109,7 @@ namespace KGySoft.Libraries.Serialization
                     if (existingValue.GetType() != member.Value.GetType())
                         throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, collectionCtor.DeclaringType, property.Name, member.Value.GetType(), existingValue.GetType()));
 
-                    CopyFrom(existingValue, member.Value);
+                    CopyContent(existingValue, member.Value);
                     continue;
                 }
 
@@ -97,9 +130,9 @@ namespace KGySoft.Libraries.Serialization
         /// <summary>
         /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
         /// </summary>
-        private static void CopyFrom(object target, object source)
+        private static void CopyContent(object target, object source)
         {
-            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFrom)}.");
+            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyContent)}.");
 
             // 1.) Array
             if (target is Array targetArray && source is Array sourceArray)
@@ -112,9 +145,11 @@ namespace KGySoft.Libraries.Serialization
                     lowerBounds[i] = sourceArray.GetLowerBound(i);
                 }
 
-                CheckArray(targetArray, sourceArray.Length, lengths, lowerBounds, true);
-                if (lengths.Length == 1 && lowerBounds[0] == 0 && targetArray.GetType().GetElementType()?.IsPrimitive == true)
+                CheckArray(targetArray, lengths, lowerBounds, true);
+                if (targetArray.GetType().GetElementType()?.IsPrimitive == true)
                     Buffer.BlockCopy(sourceArray, 0, targetArray, 0, Buffer.ByteLength(sourceArray));
+                else if (lengths.Length == 1)
+                    Array.Copy(sourceArray, targetArray, sourceArray.Length);
                 else
                 {
                     var indices = new ArrayIndexer(lengths, lowerBounds);
@@ -183,7 +218,7 @@ namespace KGySoft.Libraries.Serialization
                 if (existingValue.GetType() != deserializedValue.GetType())
                     throw new ArgumentException(Res.Get(Res.XmlPropertyTypeMismatch, obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
 
-                CopyFrom(existingValue, deserializedValue);
+                CopyContent(existingValue, deserializedValue);
                 return;
             }
 

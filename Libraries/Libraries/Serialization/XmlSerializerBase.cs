@@ -112,7 +112,7 @@ namespace KGySoft.Libraries.Serialization
                         // or is XmlSerializable
                         || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
                         // or the collection is not read-only (regardless of constructors)
-                        || p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))));
+                        || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))));
             if (ExcludeFields)
                 return properties;
 
@@ -122,7 +122,7 @@ namespace KGySoft.Libraries.Serialization
                     // read-only fields are serialized only if forced
                     || ForceReadonlyMembersAndCollections
                     // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
-                    || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)));
+                    || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)));
             return fields.Concat(properties);
         }
 
