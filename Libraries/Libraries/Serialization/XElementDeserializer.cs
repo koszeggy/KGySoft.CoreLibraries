@@ -377,9 +377,11 @@ namespace KGySoft.Libraries.Serialization
             // checking existing array or creating a new array
             if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
                 array = Array.CreateInstance(elementType, lengths, lowerBounds);
+            if (elementType == null)
+                elementType = array.GetType().GetElementType();
 
             // has no elements: primitive array (can be restored by BlockCopy)
-            if (lengths.Length == 1 && lengths[0] > 0 && !element.HasElements)
+            if (elementType.IsPrimitive && !element.HasElements)
             {
                 string value = element.Value;
                 byte[] data = Convert.FromBase64String(value);
@@ -392,8 +394,8 @@ namespace KGySoft.Libraries.Serialization
                         throw new ArgumentException(Res.Get(Res.XmlCrcError));
                 }
 
-                int count = data.Length / Marshal.SizeOf(elementType);
-                if (data.Length != count)
+                int count = data.Length / elementType.SizeOf();
+                if (array.Length != count)
                     throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, count));
                 Buffer.BlockCopy(data, 0, array, 0, data.Length);
                 return array;
@@ -406,7 +408,7 @@ namespace KGySoft.Libraries.Serialization
 
             ArrayIndexer arrayIndexer = lengths.Length > 1 ? new ArrayIndexer(lengths, lowerBounds) : null;
             int deserializedItemsCount = 0;
-            while (items.Count > 1)
+            while (items.Count > 0)
             {
                 XElement item = items.Dequeue();
                 Type itemType = null;
@@ -414,7 +416,7 @@ namespace KGySoft.Libraries.Serialization
                 if (attrType != null)
                     itemType = Reflector.ResolveType(attrType.Value);
                 if (itemType == null)
-                    itemType = array.GetType().GetElementType();
+                    itemType = elementType;
 
                 if (TryDeserializeObject(itemType, item, null, out var value))
                 {

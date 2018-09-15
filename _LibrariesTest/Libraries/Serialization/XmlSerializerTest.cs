@@ -1402,7 +1402,7 @@ namespace _LibrariesTest.Libraries.Serialization
 
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"_LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
         [TestMethod]
@@ -1415,7 +1415,7 @@ namespace _LibrariesTest.Libraries.Serialization
         }
 
         [TestMethod]
-        public void SerializeBinaryTpeConverterProperties()
+        public void SerializeBinaryTypeConverterProperties()
         {
             // TODO: BinaryTypeConverter - leírásban már ott van
             throw new NotImplementedException("TODO: BinaryTypeConverter.");

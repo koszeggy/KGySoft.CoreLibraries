@@ -429,6 +429,8 @@ namespace KGySoft.Libraries.Serialization
             // checking existing array or creating a new array
             if (array == null || !CheckArray(array, lengths, lowerBounds, !canRecreateArray))
                 array = Array.CreateInstance(elementType, lengths, lowerBounds);
+            if (elementType == null)
+                elementType = array.GetType().GetElementType();
 
             string attrCrc = reader[XmlSerializer.AttributeCrc];
             uint? crc = null;
@@ -458,8 +460,8 @@ namespace KGySoft.Libraries.Serialization
                                 throw new ArgumentException(Res.Get(Res.XmlCrcError));
                         }
 
-                        deserializedItemsCount = data.Length / Marshal.SizeOf(elementType);
-                        if (data.Length != deserializedItemsCount)
+                        deserializedItemsCount = data.Length / elementType.SizeOf();
+                        if (array.Length != deserializedItemsCount)
                             throw new ArgumentException(Res.Get(Res.XmlInconsistentArrayLength, array.Length, deserializedItemsCount));
                         Buffer.BlockCopy(data, 0, array, 0, data.Length);
                         break;
@@ -473,7 +475,7 @@ namespace KGySoft.Libraries.Serialization
                             if (attrType != null)
                                 itemType = Reflector.ResolveType(attrType);
                             if (itemType == null)
-                                itemType = array.GetType().GetElementType();
+                                itemType = elementType;
 
                             if (TryDeserializeObject(itemType, reader, null, out var value))
                             {

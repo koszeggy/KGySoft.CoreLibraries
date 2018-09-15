@@ -22,8 +22,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
-
+using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 
@@ -45,6 +46,8 @@ namespace KGySoft.Libraries
         private static readonly Type dictionaryGenType = typeof(IDictionary<,>);
         private static readonly Type collectionGenType = typeof(ICollection<>);
         private static readonly string collectionGenTypeName = collectionGenType.Name;
+
+        private static readonly Cache<Type, int> sizeOfCache = new Cache<Type, int>(DoGetSizeOf, 1024) { EnsureCapacity = false };
 
         #endregion
 
@@ -381,6 +384,28 @@ namespace KGySoft.Libraries
 
         internal static bool CanBeCreatedWithoutParameters(this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
+
+        internal static int SizeOf(this Type type)
+        {
+            lock (sizeOfCache)
+            {
+                return sizeOfCache[type];
+            }
+        }
+
+        #endregion
+
+        #region
+
+        private static int DoGetSizeOf(Type type)
+        {
+            var dm = new DynamicMethod(nameof(DoGetSizeOf), typeof(uint), Type.EmptyTypes, typeof(TypeExtensions), true);
+            ILGenerator gen = dm.GetILGenerator();
+            gen.Emit(OpCodes.Sizeof, type);
+            gen.Emit(OpCodes.Ret);
+            var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
+            return checked((int)method.Invoke());
+        }
 
         #endregion
 
