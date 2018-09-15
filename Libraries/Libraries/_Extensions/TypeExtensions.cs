@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -43,6 +44,7 @@ namespace KGySoft.Libraries
         private static readonly Type dictionaryType = typeof(IDictionary);
         private static readonly Type dictionaryGenType = typeof(IDictionary<,>);
         private static readonly Type collectionGenType = typeof(ICollection<>);
+        private static readonly string collectionGenTypeName = collectionGenType.Name;
 
         #endregion
 
@@ -154,12 +156,13 @@ namespace KGySoft.Libraries
             if (genericTypeDefinition == null)
                 throw new ArgumentNullException(nameof(genericTypeDefinition), Res.Get(Res.ArgumentNull));
 
+            string rootName = genericTypeDefinition.Name;
             if (genericTypeDefinition.IsInterface)
-                return type.GetInterfaces().Any(i => i.IsGenericTypeOf(genericTypeDefinition));
+                return type.GetInterfaces().Any(i => i.Name == rootName && i.IsGenericTypeOf(genericTypeDefinition));
 
-            for (Type t = type; type != Reflector.ObjectType; type = type.BaseType)
+            for (Type t = type; type != null; type = type.BaseType)
             {
-                if (t.IsGenericTypeOf(genericTypeDefinition))
+                if (t.Name == rootName && t.IsGenericTypeOf(genericTypeDefinition))
                     return true;
             }
 
@@ -181,15 +184,16 @@ namespace KGySoft.Libraries
                 return null;
 
             Type genericEnumerableType = type.IsGenericTypeOf(enumerableGenType) ? type : type.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(enumerableGenType));
-            return genericEnumerableType != null 
-                ? genericEnumerableType.GetGenericArguments()[0] 
-                : (dictionaryType.IsAssignableFrom(type) 
-                    ? typeof(DictionaryEntry) 
-                    : type == typeof(BitArray) 
-                        ? typeof(bool) 
-                        : Reflector.ObjectType);
+            return genericEnumerableType != null
+                ? genericEnumerableType.GetGenericArguments()[0]
+                : (dictionaryType.IsAssignableFrom(type)
+                    ? typeof(DictionaryEntry)
+                    : type == typeof(BitArray)
+                        ? typeof(bool)
+                        : type == typeof(StringCollection)
+                            ? Reflector.StringType
+                            : Reflector.ObjectType);
         }
-
 
         /// <summary>
         /// Gets whether <paramref name="type"/> is supported collection to populate by reflection.
@@ -262,9 +266,8 @@ namespace KGySoft.Libraries
         /// <returns>True if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/></returns>
         internal static bool IsCollection(this Type type)
         {
-            // type.GetInterface(collectionGenType.Name) != null - this would throw an exception if it has more implementations
             return typeof(IList).IsAssignableFrom(type) || dictionaryType.IsAssignableFrom(type)
-                || type.GetInterfaces().Any(i => i.IsGenericTypeOf(collectionGenType));
+                || type.GetInterfaces().Any(i => i.Name == collectionGenTypeName && i.IsGenericTypeOf(collectionGenType));
         }
 
         /// <summary>
@@ -282,13 +285,16 @@ namespace KGySoft.Libraries
             if (!type.IsInstanceOfType(instance))
                 throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType, type), nameof(instance));
 
-            if (instance is IList list)
-                return !list.IsReadOnly;
-            if (instance is IDictionary dictionary)
-                return !dictionary.IsReadOnly;
+            // not instance is IList test because then type could be even object
+            if (typeof(IList).IsAssignableFrom(type))
+                return !((IList)instance).IsReadOnly;
+            if (dictionaryType.IsAssignableFrom(type))
+                return !((IDictionary)instance).IsReadOnly;
 
             foreach (Type i in type.GetInterfaces())
             {
+                if (i.Name != collectionGenTypeName)
+                    continue;
                 if (i.IsGenericTypeOf(collectionGenType))
                 {
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));

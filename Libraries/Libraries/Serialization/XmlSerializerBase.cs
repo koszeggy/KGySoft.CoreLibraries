@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -21,12 +22,15 @@ namespace KGySoft.Libraries.Serialization
         {
             typeof(List<>),
             typeof(LinkedList<>),
-            typeof(Queue),
             typeof(Queue<>),
-            typeof(Stack),
             typeof(Stack<>),
-            typeof(BitArray),
+
             typeof(ArrayList),
+            typeof(Queue),
+            typeof(Stack),
+            typeof(BitArray),
+            typeof(StringCollection),
+
             typeof(CircularList<>),
 
             typeof(ConcurrentBag<>),

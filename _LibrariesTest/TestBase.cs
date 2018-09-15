@@ -263,7 +263,7 @@ namespace _LibrariesTest
                 result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", Reflector.GetField(reference, field), Reflector.GetField(check, field), true, errors, checkedObjects);
 
             // public properties
-            foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
                 result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", Reflector.GetProperty(reference, property), Reflector.GetProperty(check, property), true, errors, checkedObjects);
 
             // collection elements
@@ -397,7 +397,7 @@ namespace _LibrariesTest
             return tiffImage;
         }
 
-        protected static void Throws<T>(Action action)
+        protected static void Throws<T>(Action action, string expectedMessageContent = null)
             where T : Exception
         {
             try
@@ -407,6 +407,7 @@ namespace _LibrariesTest
             catch (Exception e)
             {
                 Assert.IsInstanceOfType(e, typeof(T));
+                Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
                 return;
             }
 

@@ -53,7 +53,10 @@
     ! Obsolete flag ForcedSerializationValueTypesAsFallback removed.
     ! BinarySerializationAsFallback is applied also for root-level collections
     * None option allows to serialize some trusted collection types and object with only public properties and fields.
-    + New flag: ExcludeFields
+    + New flag: ExcludeFields - to serialize public properties only.
+    + New flag: ForcedSerializationOfReadOnlyMembersAndCollections - to serialize read-only properties and fields even if they are not
+      mutable collections or IXmlSerializable instances. Enabling this flag can be used for one-way serialization only (eg. for logs),
+      because it is high likely that the object will not be able to be deserialized.
   + Escaping is possible even if a value is converted by a TypeConverter
   + Creates instances internally so there is no locking when used parallelly
   + Supporting read-only collections with initializer constructor

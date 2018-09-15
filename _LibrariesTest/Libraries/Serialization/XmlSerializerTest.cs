@@ -194,19 +194,56 @@ namespace _LibrariesTest.Libraries.Serialization
             public XmlSerializableClass XmlSerializable { get; } = new XmlSerializableClass();
             public object[] Array3 { get; } = new object[3];
             public Cache<int, string> Cache { get; } = new Cache<int, string>(i => i.ToString());
-            public ReadOnlyCollection<object> ReadOnlyCollection { get; private set; }
+            public ReadOnlyCollection<object> ReadOnlyCollection { get; set; }
+            public ReadOnlyCollection<object> ConstReadOnlyCollection { get; } = new ReadOnlyCollection<object>(new object[] { 42, 'x' });
 
-            public static ReadOnlyProperties Create(XmlSerializableClass xmlSerializableClass = null, object[] array = null, int[] toCache = null, ReadOnlyCollection<object> readOnlyCollection = null)
+            public ReadOnlyProperties Init(XmlSerializableClass xmlSerializableClass = null, object[] array = null, int[] toCache = null, ReadOnlyCollection<object> readOnlyCollection = null)
             {
-                var result = new ReadOnlyProperties();
-                CopyFrom(result.XmlSerializable, xmlSerializableClass);
-                CopyFrom(result.Array3, array);
-                toCache?.ForEach(i => { var dummy = result.Cache[i]; });
-                result.ReadOnlyCollection = readOnlyCollection;
-                return result;
+                CopyFrom(XmlSerializable, xmlSerializableClass);
+                CopyFrom(Array3, array);
+                toCache?.ForEach(i => { var dummy = Cache[i]; });
+                ReadOnlyCollection = readOnlyCollection;
+                return this;
             }
 
             public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+        }
+
+        public class PopulatableCollectionWithReadOnlyProperties : ReadOnlyProperties, ICollection<string>
+        {
+            private readonly List<string> list = new List<string>();
+
+            public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
+            public void Add(string item) => list.Add(item);
+            public void Clear() => list.Clear();
+            public bool Contains(string item) => throw new NotImplementedException();
+            public void CopyTo(string[] array, int arrayIndex) => throw new NotImplementedException();
+            public bool Remove(string item) => throw new NotImplementedException();
+            public int Count => list.Count;
+            public bool IsReadOnly => false;
+        }
+
+        public class ReadOnlyCollectionWithInitCtorAndReadOnlyProperties : ReadOnlyProperties, IReadOnlyCollection<string>
+        {
+            private readonly List<string> list;
+
+            public ReadOnlyCollectionWithInitCtorAndReadOnlyProperties(IEnumerable<string> collection) => list = new List<string>(collection);
+
+            public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
+            public int Count => list.Count;
+        }
+
+        public class ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties : ReadOnlyProperties, IReadOnlyCollection<string>
+        {
+            private readonly List<string> list;
+
+            public ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties() => list = new List<string> { "1", "2" };
+
+            public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
+            public int Count => list.Count;
         }
 
         public class FullExtraComponent
@@ -1152,7 +1189,7 @@ namespace _LibrariesTest.Libraries.Serialization
 
             referenceObjects = new[]
             {
-                ReadOnlyProperties.Create(xmlSerializableClass: new XmlSerializableClass(3, 2, 1))
+                new ReadOnlyProperties().Init(xmlSerializableClass: new XmlSerializableClass(3, 2, 1))
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
@@ -1325,19 +1362,47 @@ namespace _LibrariesTest.Libraries.Serialization
         }
 
         [TestMethod]
-        public void SerializeNonPopulatableCollectionsWithProperties()
+        public void SerializeObjectsWithReadonlyProperties()
         {
-            // TODO: Changelog
-            // TODO: tesztek
-            // - Read-Only collections with read-write, read-only array and read-only collection and read-only non-collection properties.
-            //   - A CopyFrom lefusson minden esetre (array, collection, object)
-            // - None options with every allowed cases
-            //   - IXmlSerializable readonly property without default ctor
-            // - populatable collections without any good ctor and/or read-only properties
-            // TODO: member névütközés: - megoldás: declaringType attribútum
-            // - item nevű field/property collection-ben - a collection item-en nincs declaringType, a memberen igen
-            // - azonos nevű fieldek/propertyk az ősben (+akár item néven) - mindegyiken van declaringType, kivéve a collection item-eken
-            throw new NotImplementedException("TODO: Read-Only collections with read-write, read-only array and read-only collection parameters.");
+            object[] referenceObjects =
+            {
+                new ReadOnlyProperties().Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[]{1, "string", DateTime.Now},
+                    toCache: new []{1, 2, 3},
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} )
+                    ),
+                new PopulatableCollectionWithReadOnlyProperties{"one", "two"}.Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[]{1, "string", DateTime.Now},
+                    toCache: new []{1, 2, 3},
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} )
+                ),
+                new ReadOnlyCollectionWithInitCtorAndReadOnlyProperties(new[]{"one", "two"}).Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[]{1, "string", DateTime.Now},
+                    toCache: new []{1, 2, 3},
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} )),
+            };
+
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
+            //SystemSerializeObjects(referenceObjects); // InvalidOperationException: There was an error reflecting type '_LibrariesTest.Libraries.Serialization.XmlSerializerTest.ReadOnlyProperties'. ---> System.NotSupportedException: Cannot serialize member _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties.Cache of type KGySoft.Libraries.Collections.Cache`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], because it implements IDictionary.
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // false for ReadOnlyCollectionWithReadOnlyProperties
+
+            referenceObjects = new[]
+            {
+                new ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties().Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[]{1, "string", DateTime.Now},
+                    toCache: new []{1, 2, 3},
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} ))
+            };
+
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"_LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
 
         [TestMethod]
@@ -1384,10 +1449,10 @@ namespace _LibrariesTest.Libraries.Serialization
                 new OrderedDictionary { { "alma", 1 }, { "Alma", 2 }, { "ALMA", 3 } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
 
-            // these collections are not supported recursively
+            // these collections cannot be populated but they have supported initializer constructor
             referenceObjects = new IEnumerable[]
             {
                 new Queue(new object[] { 1, (byte)2, 3m, new string[] { "alma", "béka", "cica" } }),
@@ -1404,9 +1469,14 @@ namespace _LibrariesTest.Libraries.Serialization
                 new StringDictionary { { "a", "alma" }, { "b", "béka" }, { "c", "cica" }, { "x", null } },
             };
 
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"System.Collections.Specialized.StringDictionary\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
+
+#error itt
+        // TODO: CopyFrom: Array.Copy, átnevezés CopyContent-re
+        // TODO: Deserializer.TryDeserialize helyett void
 
         /// <summary>
         /// Complex generic collections

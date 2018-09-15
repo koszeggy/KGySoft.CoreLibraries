@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
+using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -22,27 +24,15 @@ namespace _PerformanceTest
             //    Repeat = 5
             //}.DoTest();
 
-            new TestOperation
-            {
-                TestOpName = "Create by Activator",
-                TestOperation = () => Activator.CreateInstance(typeof(MyType)),
-                Iterations = 100000,
-                Repeat = 5
-            }.DoTest();
             //new TestOperation
             //{
-            //    TestOpName = "Create by FormatterServices",
-            //    TestOperation = () => FormatterServices.GetUninitializedObject(typeof(MyType)),
+            //    RefOpName = "Without name cache",
+            //    TestOpName = "With name cache",
+            //    ReferenceOperation = () => typeof(IList<int>).IsImplementationOfGenericType(typeof(List<>)),
+            //    TestOperation = () => typeof(IList<int>).IsImplementationOfGenericType2(typeof(List<>)),
             //    Iterations = 100000,
             //    Repeat = 5
             //}.DoTest();
-            new TestOperation
-            {
-                TestOpName = "Create by Reflector.Construct",
-                TestOperation = () => Reflector.Construct(typeof(MyType)),
-                Iterations = 100000,
-                Repeat = 5
-            }.DoTest();
 
         }
 

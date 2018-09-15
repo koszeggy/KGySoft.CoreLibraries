@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Xml;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Specialized;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using KGySoft.Libraries.Collections;
@@ -36,8 +37,9 @@ namespace KGySoft.Libraries.Serialization
         /// <item>The type has no instance events.</item>
         /// </list>
         /// <note>A type can be serialized only if these criteria are true for the serialized properties recursively.</note></description></item>
-        /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="ArrayList"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Queue"/>, <see cref="Stack{T}"/>, <see cref="Stack"/>,
-        /// <see cref="BitArray"/>, <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
+        /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Stack{T}"/>,
+        /// <see cref="ArrayList"/>, <see cref="Queue"/>,  <see cref="Stack"/>, <see cref="BitArray"/>, <see cref="StringCollection"/>,
+        /// <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
         /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
         /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
         /// which cannot be retrieved by the public members when the collection is being serialized. However, if a property or field returns a non-<see langword="null"/> instance after the container object is created, then the returned instance is tried to be used on deserialization.
@@ -153,7 +155,8 @@ namespace KGySoft.Libraries.Serialization
         /// <note>Public properties with private setter accessor are serializable even without this option.</note>
         /// <note>Read-only collections witch recognizable collection initializer constructor are serializable even without this option.</note>
         /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
-        /// Deserialization will fail if the read-only property returns a <see langword="null"/> value or its content cannot be restored (eg. it has a simple type or is a read-only collection).</note>
+        /// Deserialization will fail if the read-only property returns a <see langword="null"/> value or its content cannot be restored (eg. it has a simple type or is a read-only collection).
+        /// Use this option only if object is serialized only for information (eg. in logs) and deserialization is not necessary.</note>
         /// </para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>

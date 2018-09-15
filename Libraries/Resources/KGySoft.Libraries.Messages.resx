@@ -544,11 +544,11 @@ To force the recursive serialization of the collection enable both RecursiveSeri
   </data>
   <data name="XmlSerializeReadOnlyCollection" xml:space="preserve">
     <value>Content serialization of read-only collection type "{0}" is not supported because populating will not work at deserialization.
-It has a collection initializer constructor though, so using XmlSerializer.Serialize methods instead of SerializeContent can work.</value>
+If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</value>
   </data>
   <data name="XmlSerializeNonPopulatableCollection" xml:space="preserve">
     <value>Content serialization of collection type "{0}" is not supported because it cannot be populated by standard interfaces.
-It has a collection initializer constructor though, so using XmlSerializer.Serialize methods instead of SerializeContent can work.</value>
+If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</value>
   </data>
   <data name="XmlUnexpectedElement" xml:space="preserve">
     <value>Unexpected element: "{0}" at line {1}, position {2}.</value>
@@ -620,7 +620,7 @@ It has a collection initializer constructor though, so using XmlSerializer.Seria
     <value>Win32 native error code: {0}</value>
   </data>
   <data name="XmlCircularReference" xml:space="preserve">
-    <value>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular refence use DesignerSerializationVisibilityAttribute with Hidden value on properties that lead to circular reference.</value>
+    <value>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</value>
   </data>
   <data name="XmlInvalidEscapedContent" xml:space="preserve">
     <value>Invalid escaped string content: "{0}".</value>

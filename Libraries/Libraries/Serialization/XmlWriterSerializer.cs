@@ -72,16 +72,15 @@ namespace KGySoft.Libraries.Serialization
                     return;
                 }
 
-                // 2.) Collection - as content, collectionCtor version cannot be accepted because the empty collection will already be precreated.
-                if (objType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _))
+                // 2.) Collection
+                if (obj is IEnumerable enumerable)
                 {
-                    // if has only default constructor but the collection is read-only
                     if (!objType.IsCollection())
                         throw new NotSupportedException(Res.Get(Res.XmlSerializeNonPopulatableCollection, obj.GetType()));
                     if (!objType.IsReadWriteCollection(obj))
                         throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
 
-                    SerializeCollection((IEnumerable)obj, elementType, false, writer, DesignerSerializationVisibility.Visible);
+                    SerializeCollection(enumerable, objType.GetCollectionElementType(), false, writer, DesignerSerializationVisibility.Visible);
                     return;
                 }
 
@@ -298,38 +297,46 @@ namespace KGySoft.Libraries.Serialization
                 }
             }
 
-            // g.) collection: if can be trusted in all circumstances
-            if (obj is IEnumerable enumerable)
+            RegisterSerializedObject(obj);
+            try
             {
-                Type elementType = null;
-
-                // if can be trusted in all circumstances
-                if (IsTrustedCollection(type)
-                    // or recursive is requested 
-                    || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                        // and is a supported collection or serialization is forced
-                        && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
+                // g.) collection: if can be trusted in all circumstances
+                if (obj is IEnumerable enumerable)
                 {
-                    SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
-                    return;
+                    Type elementType = null;
+
+                    // if can be trusted in all circumstances
+                    if (IsTrustedCollection(type)
+                        // or recursive is requested 
+                        || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                            // and is a supported collection or serialization is forced
+                            && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
+                    {
+                        SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
+                        return;
+                    }
+
+                    if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeUnsupportedCollection, type, Options));
+                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollection, type, Options));
                 }
 
-                if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeUnsupportedCollection, type, Options));
-                throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollection, type, Options));
+                // h.) recursive serialization of any object, if requested
+                bool hasDefaultCtor = type.CanBeCreatedWithoutParameters();
+                if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
+                    // or when it has public properties/fields only
+                    || IsTrustedType(type))
+                {
+                    if (typeNeeded)
+                        writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
+
+                    SerializeMembers(obj, writer);
+                    return;
+                }
             }
-
-            // h.) recursive serialization of any object, if requested
-            bool hasDefaultCtor = type.CanBeCreatedWithoutParameters();
-            if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
-                // or when it has public properties/fields only
-                || IsTrustedType(type))
+            finally
             {
-                if (typeNeeded)
-                    writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
-
-                SerializeContent(writer, obj);
-                return;
+                UnregisterSerializedObject(obj);
             }
 
             throw new SerializationException(Res.Get(Res.XmlCannotSerialize, type, Options));
