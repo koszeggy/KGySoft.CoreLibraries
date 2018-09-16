@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -281,6 +282,7 @@ namespace _LibrariesTest.Libraries.Serialization
             public int IntProp { get; set; }
 
             [DefaultValue(null)]
+            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
             public IntList IntList { get; set; }
 
             public FullExtraComponent()
@@ -367,9 +369,6 @@ namespace _LibrariesTest.Libraries.Serialization
                     };
                 }
             }
-
-            // overridden for test
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
         }
 
         public enum TestEnum
@@ -1421,6 +1420,23 @@ namespace _LibrariesTest.Libraries.Serialization
             throw new NotImplementedException("TODO: BinaryTypeConverter.");
         }
 
+        [TestMethod]
+        public void SerializeFields()
+        {
+            object[] referenceObjects =
+            {
+                new StrongBox<int>(13)
+            };
+
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type System.Runtime.CompilerServices.StrongBox`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+
+            Throws<AssertFailedException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type System.Int32: 13 <-> 0");
+        }
+
         /// <summary>
         /// Simple non-generic collections
         /// </summary>
@@ -1515,8 +1531,8 @@ namespace _LibrariesTest.Libraries.Serialization
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
             //SystemSerializeObjects(referenceObjects); - NullReferenceException
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None); // array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None); // nested collections
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // All but list and arrays
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // All but list and arrays
 
             CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
@@ -1537,14 +1553,11 @@ namespace _LibrariesTest.Libraries.Serialization
                     new CustomNonGenericDictionary { { "hu", new Dictionary<int, string>{ {1, "alma"}, {2, "béka"}, {3, "cica"}}}, {"en", new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
                 };
 
-            //SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects); // these collections are unsupported by system serializer
+            // SystemSerializeObject(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
+            // SystemSerializeObjects(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+CustomGenericCollection`1[[System.Collections.Generic.KeyValuePair`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] is inaccessible due to its protection level. Only public types can be processed.
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // nested collections
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // nested collections
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
         }
 
         [TestMethod]
@@ -1556,22 +1569,16 @@ namespace _LibrariesTest.Libraries.Serialization
                      new FullExtraComponent(false),
                 };
 
-            //SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects); // this object is unsupported by system serializer
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.Generic.LinkedList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] because it inherits from ICollection.
+            //SystemSerializeObjects(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.Generic.LinkedList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] because it inherits from ICollection.
 
-            XElement element = new XElement("root");
-            KGyXmlSerializer.SerializeContent(element, referenceObjects[0], XmlSerializationOptions.None); // should work due to Content visibility on properties
-            FullExtraComponent deserializedObject = new FullExtraComponent();
-            KGyXmlSerializer.DeserializeContent(element, deserializedObject);
-            AssertDeepEquals(referenceObjects[0], deserializedObject);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback); // test element when serialized as whole object
-
-            KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback  // test element when serialized as whole object
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // every non-trusted type
                     | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
                     | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
-
-            KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback  // test element when serialized as whole object
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback  // every non-trusted type
                     | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
                     | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
 

@@ -2598,7 +2598,7 @@ namespace KGySoft.Libraries.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="expression"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="expression"/> does not access an action method.</exception>
         /// <seealso cref="MemberOf{T}"/>
-        public static MethodInfo MemberOf(Expression<Action> expression)
+        internal static MethodInfo MemberOf(Expression<Action> expression)
         {
             if (expression == null)
                 throw new ArgumentNullException(nameof(expression), Res.Get(Res.ArgumentNull));
@@ -2610,6 +2610,45 @@ namespace KGySoft.Libraries.Reflection
 
             throw new ArgumentException(Res.Get(Res.NotAMethod), nameof(expression));
         }
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="method"/> is an explicit interface implementation.
+        /// </summary>
+        /// <param name="method">The method to check.</param>
+        /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        internal static bool IsExplicitInterfaceImplementation(MethodInfo method)
+        {
+            if (method == null)
+                throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull));
+            Type declaringType = method.DeclaringType;
+            if (declaringType == null)
+                return false;
+
+            string methodName = method.Name;
+            foreach (Type iface in declaringType.GetInterfaces())
+            {
+                InterfaceMapping map = declaringType.GetInterfaceMap(iface);
+                for (int i = 0; i < map.TargetMethods.Length; i++)
+                {
+                    if (map.TargetMethods[i] != method)
+                        continue;
+
+                    // Now method is an interface implementation for sure.
+                    // Explicit, if name does not match. Note: can also be null if type is abstract an implementation is in a derived class.
+                    return map.InterfaceMethods[i]?.Name != methodName;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="property"/> is an explicit interface implementation.
+        /// </summary>
+        /// <param name="property">The property to check.</param>
+        /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        public static bool IsExplicitInterfaceImplementation(PropertyInfo property) 
+            => IsExplicitInterfaceImplementation(property.GetMethod != null ? property.GetMethod : property.SetMethod);
 
         private static string GetDefaultMember(Type type)
         {

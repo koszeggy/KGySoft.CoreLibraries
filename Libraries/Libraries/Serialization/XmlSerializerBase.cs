@@ -43,14 +43,26 @@ namespace KGySoft.Libraries.Serialization
         private static bool IsTypeTrusted(Type type) =>
             // has default constructor
             type.CanBeCreatedWithoutParameters()
-            // has only public get/set non-delegate properties, or read-only properties of trusted collections
-            && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p => p.GetGetMethod() != null
-                && !p.PropertyType.IsDelegate() 
-                && (p.GetSetMethod() != null || typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType) || IsTrustedCollection(p.PropertyType)))
-            // and all fields are writable (or read-only of trusted collections) and public (or generated) and non-delegates
-            && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f => (!f.IsInitOnly || IsTrustedCollection(f.FieldType))
-                && !f.FieldType.IsDelegate()
-                && (f.IsPublic || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null))
+            // properties:
+            && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p =>
+                // have public getter                
+                    (p.GetGetMethod() != null
+                        // of a non-delegate type
+                        && !p.PropertyType.IsDelegate()
+                        // and must have public setter, unless if type is IXmlSerializable or a trusted collection
+                        && (p.GetSetMethod() != null || typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType) || IsTrustedCollection(p.PropertyType)))
+                    // or, if it is an explicit interface implementation, we just ignore it
+                    || Reflector.IsExplicitInterfaceImplementation(p))
+            // fields:
+            && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f =>
+                // must be public
+                    (f.IsPublic
+                        // of a non delegate type
+                        && !f.FieldType.IsDelegate()
+                        // and must be non read-only unless is type is a trusted collection
+                        && (!f.IsInitOnly || IsTrustedCollection(f.FieldType)))
+                    // or, if it is a compiler-generated field, we just ignore it
+                    || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null)
             // and the type has no instance events
             && type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length == 0;
 

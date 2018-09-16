@@ -154,7 +154,7 @@ namespace KGySoft.Libraries.Serialization
                     }
 
                     // 1/b.) Successfully deserialized into the existing instance (or both are null)
-                    if (ReferenceEquals(existingValue, result))
+                    if (!itemType.IsValueType && ReferenceEquals(existingValue, result))
                         continue;
 
                     // 1.c.) Processing result
