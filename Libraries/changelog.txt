@@ -61,5 +61,6 @@
   + Creates instances internally so there is no locking when used parallelly
   + Supporting read-only collections with initializer constructor
   + Supporting public fields (can be disabled by ExcludeFields option)
-  + Supporting objects without default constructor, if they are fields or properties, which are not null after
-    creating the container object.
+  + Supporting objects without default constructor, if they are fields or properties of a parent object,
+    which are not null after creating the parent.
+  + Supporting types with conflicting member names (non-virtual redefined members in derived classes).

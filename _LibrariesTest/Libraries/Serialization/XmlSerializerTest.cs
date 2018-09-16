@@ -260,8 +260,6 @@ namespace _LibrariesTest.Libraries.Serialization
                     InnerString = "InnerStringValue";
                     InnerInt = 15;
                 }
-
-                public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
             }
 
             public struct InnerStructure
@@ -567,6 +565,51 @@ namespace _LibrariesTest.Libraries.Serialization
             public object ExplicitTypeConverterProperty { get; set; }
 
             public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+        }
+
+        private class ConflictNameBase
+        {
+            public int item;
+            public string ConflictingField;
+            public string ConflictingProperty { get; set; }
+
+            public ConflictNameBase SetBase(int item, string field, string prop)
+            {
+                this.item = item;
+                ConflictingField = field;
+                ConflictingProperty = prop;
+                return this;
+            }
+        }
+
+        private class ConflictNameChild : ConflictNameBase
+        {
+            public object item;
+            public int ConflictingField;
+            public string ConflictingProperty { get; set; }
+
+            public ConflictNameChild SetChild(object item, int field, string prop)
+            {
+                this.item = item;
+                ConflictingField = field;
+                ConflictingProperty = prop;
+                return this;
+            }
+        }
+
+        class ConflictingCollection<T> : ConflictNameChild, ICollection<T>
+        {
+            private List<T> list = new List<T>();
+            public T item { get; set; }
+            public IEnumerator<T> GetEnumerator() => list.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
+            public void Add(T item) => list.Add(item);
+            public void Clear() => list.Clear();
+            public bool Contains(T item) => throw new NotImplementedException();
+            public void CopyTo(T[] array, int arrayIndex) => throw new NotImplementedException();
+            public bool Remove(T item) => throw new NotImplementedException();
+            public int Count => list.Count;
+            public bool IsReadOnly => false;
         }
 
         #endregion
@@ -1407,10 +1450,29 @@ namespace _LibrariesTest.Libraries.Serialization
         [TestMethod]
         public void SerializeObjectsWithMemberNameCollision()
         {
-            // TODO: member névütközés: - megoldás: declaringType attribútum
-            // - item nevű field/property collection-ben - a collection item-en nincs declaringType, a memberen igen
-            // - azonos nevű fieldek/propertyk az ősben (+akár item néven) - mindegyiken van declaringType, kivéve a collection item-eken
-            throw new NotImplementedException("TODO: Member name collision.");
+            ConflictNameBase[] referenceObjects =
+            {
+                new ConflictNameBase { item = 13 },
+                new ConflictNameChild { ConflictingField = 42, ConflictingProperty = "ChildProp", item = DateTime.Now }.SetBase(-13, "BaseField", "BaseProp"),
+                new ConflictingCollection<string>{"item", "item2"}.SetChild("ChildItem", 123, "ChildProp").SetBase(-5, "BaseFieldFromCollection", "CollectionBaseProp") 
+            };
+
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ConflictNameBase is inaccessible due to its protection level. Only public types can be processed.
+            //SystemSerializeObjects(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ConflictNameBase is inaccessible due to its protection level. Only public types can be processed.
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ConflictingCollection
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ConflictingCollection
+
+#error itt
+            //referenceObjects = new[]
+            //{
+            //    new ConflictNameBase { ConflictingProperty = "PropValue" },
+            //    new ConflictNameChild { ConflictingProperty = "ChildProp" }.SetBase(0, null, "BaseProp"),
+            //    new ConflictingCollection<string> { "item", "item2" }.SetChild(null, 0, "ChildProp").SetBase(0, null, "CollectionBaseProp")
+            //};
+
+            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
+            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
         }
 
         [TestMethod]

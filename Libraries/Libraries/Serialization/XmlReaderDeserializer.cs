@@ -126,59 +126,23 @@ namespace KGySoft.Libraries.Serialization
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        PropertyInfo property = objRealType.GetProperty(reader.Name);
-                        FieldInfo field = property != null ? null : objRealType.GetField(reader.Name);
+                        ResolveMember(objRealType, reader.Name, reader[XmlSerializer.AttributeDeclaringType], reader[XmlSerializer.AttributeType], out PropertyInfo property, out FieldInfo field, out Type itemType);
                         MemberInfo member = (MemberInfo)property ?? field;
-                        string attrType = reader[XmlSerializer.AttributeType];
-                        Type itemType = null;
-                        if (attrType != null)
-                        {
-                            itemType = Reflector.ResolveType(attrType);
-                            if (itemType == null)
-                                throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType));
-                        }
-
-                        if (itemType == null && member != null)
-                            itemType = property?.PropertyType ?? field.FieldType;
 
                         // 1.) real member
                         if (member != null)
                         {
-                            TypeConverter converter = GetTypeConverter(member, itemType);
                             object existingValue = members != null ? null : property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
-                            object result;
-                            if (converter?.CanConvertFrom(Reflector.StringType) == true)
-                                result = converter.ConvertFromInvariantString(ReadStringValue(reader));
-                            else if (!TryDeserializeObject(itemType, reader, existingValue, out result))
+                            if (!TryDeserializeByConverter(member, itemType, () => ReadStringValue(reader), out var result) && !TryDeserializeObject(itemType, reader, existingValue, out result))
                                 throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
 
-                            // 1/a.) Cache for later
-                            if (members != null)
-                            {
-                                members[member] = result;
-                                continue;
-                            }
-
-                            // 1/b.) Successfully deserialized into the existing instance (or both are null)
-                            if (!itemType.IsValueType && ReferenceEquals(existingValue, result))
-                                continue;
-
                             // 1.c.) Processing result
-                            HandleDeserializedMember(obj, member, result, existingValue);
+                            HandleDeserializedMember(obj, member, result, existingValue, members);
                             continue;
                         }
 
-                        if (collectionElementType == null)
-                        {
-                            if (reader.Name == XmlSerializer.ElementItem)
-                                throw new SerializationException(Res.Get(Res.XmlNotACollection, objRealType));
-                            throw new ReflectionException(Res.Get(Res.XmlHasNoProperty, objRealType, reader.Name));
-                        }
-
                         // 2.) collection element
-                        if (reader.Name != XmlSerializer.ElementItem)
-                            throw new ArgumentException(Res.Get(Res.XmlItemExpected, reader.Name));
-
+                        AssertCollectionItem(objRealType, collectionElementType, reader.Name);
                         IEnumerable collection = (IEnumerable)obj;
                         if (reader.IsEmptyElement)
                         {

@@ -344,19 +344,19 @@ namespace KGySoft.Libraries.Serialization
 
         private void SerializeMembers(object obj, XmlWriter writer)
         {
-            foreach (MemberInfo member in GetMembersToSerialize(obj))
+            foreach (Member member in GetMembersToSerialize(obj))
             {
-                if (SkipMember(obj, member, out object value, out DesignerSerializationVisibility visibility))
+                if (SkipMember(obj, member.MemberInfo, out object value, out DesignerSerializationVisibility visibility))
                     continue;
 
-                PropertyInfo property = member as PropertyInfo;
-                FieldInfo field = property == null ? (FieldInfo)member : null;
+                PropertyInfo property = member.Property;
+                FieldInfo field = member.Field;
                 Type memberType = property != null ? property.PropertyType : field.FieldType;
 
                 Type actualType = value?.GetType() ?? memberType;
 
                 // a.) Using explicitly defined type converter if can convert to and from string
-                Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+                Attribute[] attrs = Attribute.GetCustomAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
                     ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
@@ -371,7 +371,10 @@ namespace KGySoft.Libraries.Serialization
                     {
                         if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                         {
-                            writer.WriteStartElement(member.Name);
+                            writer.WriteStartElement(member.MemberInfo.Name);
+                            if (member.SpecifyDeclaringType)
+                                writer.WriteAttributeString(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType));
+
                             // ReSharper disable once AssignNullToNotNullAttribute - false alarm: it CAN be null
                             WriteStringValue(converter.ConvertToInvariantString(value), writer);
                             writer.WriteEndElement();
@@ -381,7 +384,10 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 // b.) any object
-                writer.WriteStartElement(member.Name);
+                writer.WriteStartElement(member.MemberInfo.Name);
+                if (member.SpecifyDeclaringType)
+                    writer.WriteAttributeString(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType));
+
                 if (value == null)
                     writer.WriteEndElement();
                 else

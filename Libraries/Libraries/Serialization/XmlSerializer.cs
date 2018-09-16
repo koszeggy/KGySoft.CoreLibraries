@@ -106,6 +106,7 @@ namespace KGySoft.Libraries.Serialization
         internal const string AttributeType = "type";
         internal const string AttributeLength = "length";
         internal const string AttributeDim = "dim";
+        internal const string AttributeDeclaringType = "declaringType";
 
         internal const string AttributeValuePreserve = "preserve";
         internal const string AttributeValueTrue = "true";

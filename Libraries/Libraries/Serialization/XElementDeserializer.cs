@@ -118,69 +118,33 @@ namespace KGySoft.Libraries.Serialization
         /// </summary>
         private static void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type collectionElementType, Dictionary<MemberInfo, object> members)
         {
-            foreach (XElement propertyOrItem in parent.Elements())
+            foreach (XElement memberOrItem in parent.Elements())
             {
-                PropertyInfo property = objRealType.GetProperty(propertyOrItem.Name.LocalName);
-                FieldInfo field = property != null ? null : objRealType.GetField(propertyOrItem.Name.LocalName);
+                string name = memberOrItem.Name.LocalName;
+                ResolveMember(objRealType, name, memberOrItem.Attribute(XmlSerializer.AttributeDeclaringType)?.Value, memberOrItem.Attribute(XmlSerializer.AttributeType)?.Value, out PropertyInfo property, out FieldInfo field, out Type itemType);
                 MemberInfo member = (MemberInfo)property ?? field;
-                XAttribute attrType = propertyOrItem.Attribute(XmlSerializer.AttributeType);
-                Type itemType = null;
-                if (attrType != null)
-                {
-                    itemType = Reflector.ResolveType(attrType.Value);
-                    if (itemType == null)
-                        throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, attrType.Value));
-                }
-
-                if (itemType == null && member != null)
-                    itemType = property?.PropertyType ?? field.FieldType;
 
                 // 1.) real member
                 if (member != null)
                 {
-                    TypeConverter converter = GetTypeConverter(member, itemType);
                     object existingValue = members != null ? null : property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
-                    object result;
-                    if (converter?.CanConvertFrom(Reflector.StringType) == true)
-                        result = converter.ConvertFromInvariantString(ReadStringValue(propertyOrItem));
-                    else if (!TryDeserializeObject(itemType, propertyOrItem, existingValue, out result))
+                    if (!TryDeserializeByConverter(member, itemType, () => ReadStringValue(memberOrItem), out var result) && !TryDeserializeObject(itemType, memberOrItem, existingValue, out result))
                         throw new NotSupportedException(Res.Get(Res.XmlDeserializeNotSupported, itemType));
 
-                    // 1/a.) Cache for later (obj type <> objRealType)
-                    if (members != null)
-                    {
-                        members[member] = result;
-                        continue;
-                    }
-
-                    // 1/b.) Successfully deserialized into the existing instance (or both are null)
-                    if (!itemType.IsValueType && ReferenceEquals(existingValue, result))
-                        continue;
-
-                    // 1.c.) Processing result
-                    HandleDeserializedMember(obj, member, result, existingValue);
+                    HandleDeserializedMember(obj, member, result, existingValue, members);
                     continue;
                 }
 
-                if (collectionElementType == null)
-                {
-                    if (propertyOrItem.Name.LocalName == XmlSerializer.ElementItem)
-                        throw new SerializationException(Res.Get(Res.XmlNotACollection, objRealType));
-                    throw new ReflectionException(Res.Get(Res.XmlHasNoProperty, objRealType, propertyOrItem.Name.LocalName));
-                }
-
                 // 2.) collection element
-                if (propertyOrItem.Name.LocalName != XmlSerializer.ElementItem)
-                    throw new ArgumentException(Res.Get(Res.XmlItemExpected, propertyOrItem.Name.LocalName));
-
+                AssertCollectionItem(objRealType, collectionElementType, name);
                 IEnumerable collection = (IEnumerable)obj;
-                if (propertyOrItem.IsEmpty)
+                if (memberOrItem.IsEmpty)
                 {
                     collection.Add(null);
                     continue;
                 }
 
-                if (TryDeserializeObject(itemType ?? collectionElementType, propertyOrItem, null, out var item))
+                if (TryDeserializeObject(itemType ?? collectionElementType, memberOrItem, null, out var item))
                 {
                     collection.Add(item);
                     continue;

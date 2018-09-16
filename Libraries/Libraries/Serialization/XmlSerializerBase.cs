@@ -18,6 +18,21 @@ namespace KGySoft.Libraries.Serialization
 {
     internal abstract class XmlSerializerBase
     {
+        protected struct Member
+        {
+            private readonly Dictionary<string, int> memberNamesCounts;
+            internal readonly MemberInfo MemberInfo;
+            internal PropertyInfo Property => MemberInfo as PropertyInfo;
+            internal FieldInfo Field => MemberInfo as FieldInfo;
+            internal bool SpecifyDeclaringType => memberNamesCounts[MemberInfo.Name] > 1 || MemberInfo.Name == XmlSerializer.ElementItem && typeof(IEnumerable).IsAssignableFrom(Property?.PropertyType ?? Field.FieldType);
+
+            public Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
+            {
+                MemberInfo = memberInfo;
+                this.memberNamesCounts = memberNamesCounts;
+            }
+        }
+
         private static readonly HashSet<Type> trustedCollections = new HashSet<Type>
         {
             typeof(List<>),
@@ -110,12 +125,12 @@ namespace KGySoft.Libraries.Serialization
             }
         }
 
-        protected IEnumerable<MemberInfo> GetMembersToSerialize(object obj)
+        protected IEnumerable<Member> GetMembersToSerialize(object obj)
         {
             Type type = obj.GetType();
 
             // getting read-write non-indexer readable instance properties
-            IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            IEnumerable<MemberInfo> properties = type.GetTypeInfo().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.GetIndexParameters().Length == 0 
                     && p.CanRead 
                     && (p.CanWrite
@@ -125,17 +140,26 @@ namespace KGySoft.Libraries.Serialization
                         || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
                         // or the collection is not read-only (regardless of constructors)
                         || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))));
-            if (ExcludeFields)
-                return properties;
+                // getting non read-only instance fields
+                IEnumerable<MemberInfo> fields = ExcludeFields ? (IEnumerable<MemberInfo>)new MemberInfo[0] : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(f => !f.IsInitOnly
+                        // read-only fields are serialized only if forced
+                        || ForceReadonlyMembersAndCollections
+                        // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
+                        || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)));
 
-            // getting non read-only instance fields
-            IEnumerable<MemberInfo> fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-                .Where(f => !f.IsInitOnly
-                    // read-only fields are serialized only if forced
-                    || ForceReadonlyMembersAndCollections
-                    // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
-                    || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)));
-            return fields.Concat(properties);
+            var result = new List<Member>();
+            var memberNameCounts = new Dictionary<string, int>();
+            foreach (MemberInfo mi in fields.Concat(properties))
+            {
+                if (!memberNameCounts.TryGetValue(mi.Name, out int count))
+                    memberNameCounts[mi.Name] = 1;
+                else
+                    memberNameCounts[mi.Name] = count + 1;
+                result.Add(new Member(mi, memberNameCounts));
+            }
+
+            return result;
         }
 
         protected bool SkipMember(object obj, MemberInfo member, out object value, out DesignerSerializationVisibility visibility)

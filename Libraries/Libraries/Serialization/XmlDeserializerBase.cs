@@ -168,15 +168,52 @@ namespace KGySoft.Libraries.Serialization
             }
         }
 
-        protected static TypeConverter GetTypeConverter(MemberInfo member, Type type)
+        protected static void ResolveMember(Type type, string memberOrItemName, string strDeclaringType, string strItemType, out PropertyInfo property, out FieldInfo field, out Type itemType)
         {
+            property = null;
+            field = null;
+
+            // declaring type of member is defined to avoid ambiguity
+            if (strDeclaringType != null)
+            {
+                Type declaringType = Reflector.ResolveType(strDeclaringType);
+                if (declaringType == null)
+                    throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, strDeclaringType));
+                property = declaringType.GetProperty(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                if (property == null)
+                    field = declaringType.GetField(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            }
+            // no declaringType so "item" in a collection means an item, in any other case we have a member
+            else if (!(typeof(IEnumerable).IsAssignableFrom(type)) || memberOrItemName != XmlSerializer.ElementItem)
+            {
+                property = type.GetProperty(memberOrItemName);
+                if (property == null)
+                    field = type.GetField(memberOrItemName);
+            }
+
+            itemType = null;
+            if (strItemType != null)
+            {
+                itemType = Reflector.ResolveType(strItemType);
+                if (itemType == null)
+                    throw new ReflectionException(Res.Get(Res.XmlCannotResolveType, strItemType));
+            }
+
+            if (itemType == null)
+                itemType = property?.PropertyType ?? field?.FieldType;
+        }
+
+        protected static bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string> readStringValue, out object result)
+        {
+            TypeConverter converter = null;
+
             // Explicitly defined type converter if can convert from string
             Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
             if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
                 && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
             {
                 ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                object[] ctorParams = { type };
+                object[] ctorParams = { memberType };
                 if (ctor == null)
                 {
                     ctor = convType.GetDefaultConstructor();
@@ -184,14 +221,33 @@ namespace KGySoft.Libraries.Serialization
                 }
 
                 if (ctor != null)
-                    return Reflector.Construct(ctor, ctorParams) as TypeConverter;
+                    converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
             }
 
-            return null;
+            if (converter?.CanConvertFrom(Reflector.StringType) != true)
+            {
+                result = null;
+                return false;
+            }
+
+            result = converter.ConvertFromInvariantString(readStringValue.Invoke());
+            return true;
         }
 
-        protected static void HandleDeserializedMember(object obj, MemberInfo member, object deserializedValue, object existingValue)
+        protected static void HandleDeserializedMember(object obj, MemberInfo member, object deserializedValue, object existingValue, Dictionary<MemberInfo, object> members)
         {
+            // 1/a.) Cache for later (obj is an initializer collection)
+            if (members != null)
+            {
+                members[member] = deserializedValue;
+                return;
+            }
+
+            // 1/b.) Successfully deserialized into the existing instance (or both are null)
+            if (!(deserializedValue is ValueType) && ReferenceEquals(existingValue, deserializedValue))
+                return;
+
+            // 1.c.) Processing result
             // Field
             if (member is FieldInfo field)
             {
@@ -226,6 +282,18 @@ namespace KGySoft.Libraries.Serialization
             Reflector.SetProperty(obj, property, deserializedValue);
         }
 
+        protected static void AssertCollectionItem(Type objRealType, Type collectionElementType, string name)
+        {
+            if (collectionElementType == null)
+            {
+                if (name == XmlSerializer.ElementItem)
+                    throw new SerializationException(Res.Get(Res.XmlNotACollection, objRealType));
+                throw new ReflectionException(Res.Get(Res.XmlHasNoProperty, objRealType, name));
+            }
+
+            if (name != XmlSerializer.ElementItem)
+                throw new ArgumentException(Res.Get(Res.XmlItemExpected, name));
+        }
 
         private static void AdjustInitializerCollection(ref object initializerCollection, ConstructorInfo collectionCtor)
         {

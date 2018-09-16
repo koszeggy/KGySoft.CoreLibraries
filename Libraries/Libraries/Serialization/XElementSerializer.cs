@@ -339,20 +339,22 @@ namespace KGySoft.Libraries.Serialization
             // signing that object is not null
             parent.Add(String.Empty);
 
-            foreach (MemberInfo member in GetMembersToSerialize(obj))
+            foreach (Member member in GetMembersToSerialize(obj))
             {
-                if (SkipMember(obj, member, out object value, out DesignerSerializationVisibility visibility))
+                if (SkipMember(obj, member.MemberInfo, out object value, out DesignerSerializationVisibility visibility))
                     continue;
 
-                PropertyInfo property = member as PropertyInfo;
-                FieldInfo field = property == null ? (FieldInfo)member : null;
+                PropertyInfo property = member.Property;
+                FieldInfo field = member.Field;
                 Type memberType = property != null ? property.PropertyType : field.FieldType;
 
-                XElement newElement = new XElement(member.Name);
+                XElement memberElement = new XElement(member.MemberInfo.Name);
+                if (member.SpecifyDeclaringType)
+                    memberElement.Add(new XAttribute(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType)));
                 Type actualType = value?.GetType() ?? memberType;
 
                 // a.) Using explicitly defined type converter if can convert to and from string
-                Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+                Attribute[] attrs = Attribute.GetCustomAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
                     ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
@@ -368,16 +370,16 @@ namespace KGySoft.Libraries.Serialization
                         if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                         {
                             // ReSharper disable once AssignNullToNotNullAttribute - false alarm: it CAN be null
-                            WriteStringValue(converter.ConvertToInvariantString(value), newElement);
-                            parent.Add(newElement);
+                            WriteStringValue(converter.ConvertToInvariantString(value), memberElement);
+                            parent.Add(memberElement);
                             continue;
                         }
                     }
                 }
 
                 // b.) any object
-                SerializeObject(value, memberType != actualType, newElement, actualType, visibility);
-                parent.Add(newElement);
+                SerializeObject(value, memberType != actualType, memberElement, actualType, visibility);
+                parent.Add(memberElement);
             }
         }
 
