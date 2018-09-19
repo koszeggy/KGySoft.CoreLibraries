@@ -13,6 +13,10 @@ namespace _PerformanceTest
         [TestMethod]
         public void TestMethod1()
         {
+            var dict = new Dictionary<object, int?>{"1", 1};
+
+            dict.GetValueOrDefault("1");
+
             CheckTestingFramework();
             //new TestOperation
             //{

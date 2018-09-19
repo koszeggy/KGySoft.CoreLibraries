@@ -219,7 +219,7 @@ namespace _LibrariesTest
             bool result = true;
             while (enumRef.MoveNext())
             {
-                if (!Check(enumChk.MoveNext(), $"{type}: Reference collection contains more objects. >{index} <-> {index}", errors))
+                if (!Check(enumChk.MoveNext(), $"{type}: Reference collection contains more than {index} objects.", errors))
                     return false;
 
                 var subErrors = new List<string>();
@@ -230,7 +230,7 @@ namespace _LibrariesTest
                 index++;
             }
 
-            result &= Check(!enumChk.MoveNext(), $"{type}: Target collection contains more objects. {index} <-> >{index}", errors);
+            result &= Check(!enumChk.MoveNext(), $"{type}: Target collection contains more than {index} objects.", errors);
             return result;
         }
 

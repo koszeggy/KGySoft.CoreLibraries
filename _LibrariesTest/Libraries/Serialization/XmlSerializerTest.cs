@@ -569,11 +569,11 @@ namespace _LibrariesTest.Libraries.Serialization
 
         private class ConflictNameBase
         {
-            public int item;
-            public string ConflictingField;
-            public string ConflictingProperty { get; set; }
+            public object item;
+            public object ConflictingField;
+            public object ConflictingProperty { get; set; }
 
-            public ConflictNameBase SetBase(int item, string field, string prop)
+            public ConflictNameBase SetBase(object item, object field, object prop)
             {
                 this.item = item;
                 ConflictingField = field;
@@ -584,11 +584,11 @@ namespace _LibrariesTest.Libraries.Serialization
 
         private class ConflictNameChild : ConflictNameBase
         {
-            public object item;
-            public int ConflictingField;
+            public string item;
+            public string ConflictingField;
             public string ConflictingProperty { get; set; }
 
-            public ConflictNameChild SetChild(object item, int field, string prop)
+            public ConflictNameChild SetChild(string item, string field, string prop)
             {
                 this.item = item;
                 ConflictingField = field;
@@ -612,7 +612,24 @@ namespace _LibrariesTest.Libraries.Serialization
             public bool IsReadOnly => false;
         }
 
+        class BinaryMembers
+        {
+            [TypeConverter(typeof(BinaryTypeConverter))]
+            public object BinProp { get; set; }
+
+            [TypeConverter(typeof(BinaryTypeConverter))]
+            public Queue<string> BinPropReadOnly { get; } = new Queue<string>();
+
+            public BinaryMembers()
+            {
+            }
+
+            public BinaryMembers(params string[] elements) => BinPropReadOnly = new Queue<string>(elements);
+        }
+
         #endregion
+
+        #region Test Methods
 
         [TestMethod]
         public void SerializeNativelySupportedTypes()
@@ -1453,8 +1470,8 @@ namespace _LibrariesTest.Libraries.Serialization
             ConflictNameBase[] referenceObjects =
             {
                 new ConflictNameBase { item = 13 },
-                new ConflictNameChild { ConflictingField = 42, ConflictingProperty = "ChildProp", item = DateTime.Now }.SetBase(-13, "BaseField", "BaseProp"),
-                new ConflictingCollection<string>{"item", "item2"}.SetChild("ChildItem", 123, "ChildProp").SetBase(-5, "BaseFieldFromCollection", "CollectionBaseProp") 
+                new ConflictNameChild { ConflictingField = "ChildField", ConflictingProperty = "ChildProp", item = "itemChild" }.SetBase(-13, "BaseField", "BaseProp"),
+                new ConflictingCollection<string>{"item", "item2"}.SetChild("ChildItem", "ChildField", "ChildProp").SetBase(-5, "BaseFieldFromCollection", "CollectionBaseProp") 
             };
 
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ConflictNameBase is inaccessible due to its protection level. Only public types can be processed.
@@ -1463,23 +1480,27 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ConflictingCollection
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ConflictingCollection
 
-#error itt
-            //referenceObjects = new[]
-            //{
-            //    new ConflictNameBase { ConflictingProperty = "PropValue" },
-            //    new ConflictNameChild { ConflictingProperty = "ChildProp" }.SetBase(0, null, "BaseProp"),
-            //    new ConflictingCollection<string> { "item", "item2" }.SetChild(null, 0, "ChildProp").SetBase(0, null, "CollectionBaseProp")
-            //};
+            referenceObjects = new[]
+            {
+                new ConflictNameBase { ConflictingProperty = "PropValue" },
+                new ConflictNameChild { ConflictingProperty = "ChildProp" }.SetBase(null, null, "BaseProp"),
+                new ConflictingCollection<string> { "item", "item2" }.SetChild(null, null, "ChildProp").SetBase(null, null, "CollectionBaseProp")
+            };
 
-            //KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
-            //KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
         }
 
         [TestMethod]
         public void SerializeBinaryTypeConverterProperties()
         {
-            // TODO: BinaryTypeConverter - leírásban már ott van
-            throw new NotImplementedException("TODO: BinaryTypeConverter.");
+            object[] referenceObjects =
+            {
+                new BinaryMembers("One", "Two") { BinProp = DateTime.Now }
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
         }
 
         [TestMethod]
@@ -1647,6 +1668,10 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
+
+        #endregion
+
+        #region Private methods
 
         private void SystemSerializeObject(object obj)
         {
@@ -1866,5 +1891,7 @@ namespace _LibrariesTest.Libraries.Serialization
                 throw;
             }
         }
+
+        #endregion
     }
 }

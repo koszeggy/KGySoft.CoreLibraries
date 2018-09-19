@@ -14,6 +14,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using System.Threading;
+using KGySoft.ComponentModel;
 using KGySoft.Libraries.Annotations;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
@@ -85,6 +86,9 @@ namespace KGySoft.Libraries.Serialization
     /// </list>
     /// </para>
     /// </remarks>
+    /// <seealso cref="XmlSerializationOptions"/>
+    /// <seealso cref="BinarySerializer"/>
+    /// <seealso cref="BinaryTypeConverter"/>
     public static class XmlSerializer
     {
         #region Constants

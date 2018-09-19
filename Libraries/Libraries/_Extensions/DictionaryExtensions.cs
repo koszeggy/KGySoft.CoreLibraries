@@ -32,32 +32,33 @@ namespace KGySoft.Libraries
         #region Methods
 
         /// <summary>
-        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/> dictionary for the given key.
+        /// Tries to get a value from a <see cref="Dictionary{TKey,TValue}"/> for the given key.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
-        /// <param name="key">The dictionary key.</param>
-        /// <param name="defaultValue">The default value to return if <paramref name="key"/> not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
-        /// <typeparam name="TActualValue">The actual type of the stored value.</typeparam>
-        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> not found or its type is wrong.</returns>
-        public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
+        /// <param name="key">The key whose value to get.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> not found in the <paramref name="dictionary"/>.</returns>
+        public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
 
-            return dictionary.TryGetValue(key, out var objValue) && objValue is TActualValue value ? value : defaultValue;
+            return dictionary.TryGetValue(key, out var value) ? value : default;
         }
 
         /// <summary>
         /// Tries to get the typed value from a dictionary for the given key.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
-        /// <param name="key">The dictionary key.</param>
+        /// <param name="key">The key whose value to get.</param>
         /// <param name="defaultValue">The default value to return if <paramref name="key"/> not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
-        /// <typeparam name="TKey">The type of value</typeparam>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
-        /// <typeparam name="TActualValue">The actual type of the stored value.</typeparam>
-        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> not found or its type is wrong.</returns>
-        public static TActualValue GetValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TActualValue defaultValue = default)
+        /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        public static TActualValue GetValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TActualValue defaultValue)
+            where TActualValue : TValue
         {
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
