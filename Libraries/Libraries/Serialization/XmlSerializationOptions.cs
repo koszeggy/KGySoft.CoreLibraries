@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Xml;
 using System;
+#if NET40 || NET45
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
@@ -18,6 +20,9 @@ namespace KGySoft.Libraries.Serialization
     [Flags]
     public enum XmlSerializationOptions
     {
+#if NET35
+#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
+#endif
         /// <summary>
         /// <para>Represents no enabled options.</para>
         /// <para>
@@ -49,6 +54,9 @@ namespace KGySoft.Libraries.Serialization
         /// </para>
         /// </summary>
         None,
+#if NET35
+#pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
+#endif
 
         /// <summary>
         /// <para>If enabled, collection elements and non binary-serialized complex objects will be identified by the assembly qualified type name, otherwise, only by full type name.

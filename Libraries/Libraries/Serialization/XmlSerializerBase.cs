@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -48,9 +50,11 @@ namespace KGySoft.Libraries.Serialization
 
             typeof(CircularList<>),
 
+#if !NET35
             typeof(ConcurrentBag<>),
             typeof(ConcurrentQueue<>),
             typeof(ConcurrentStack<>),
+#endif
         };
 
         private static readonly Cache<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted);
@@ -130,23 +134,31 @@ namespace KGySoft.Libraries.Serialization
             Type type = obj.GetType();
 
             // getting read-write non-indexer readable instance properties
-            IEnumerable<MemberInfo> properties = type.GetTypeInfo().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.GetIndexParameters().Length == 0 
-                    && p.CanRead 
+            IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.GetIndexParameters().Length == 0
+                    && p.CanRead
                     && (p.CanWrite
                         // read-only are accepted only if forced
                         || ForceReadonlyMembersAndCollections
                         // or is XmlSerializable
                         || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
                         // or the collection is not read-only (regardless of constructors)
-                        || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))));
+                        || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))))
+#if NET35
+                .Cast<MemberInfo>()
+#endif
+                        ;
                 // getting non read-only instance fields
                 IEnumerable<MemberInfo> fields = ExcludeFields ? (IEnumerable<MemberInfo>)new MemberInfo[0] : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
                     .Where(f => !f.IsInitOnly
                         // read-only fields are serialized only if forced
                         || ForceReadonlyMembersAndCollections
                         // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
-                        || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)));
+                        || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)))
+#if NET35
+                .Cast<MemberInfo>()
+#endif
+                        ;
 
             var result = new List<Member>();
             var memberNameCounts = new Dictionary<string, int>();

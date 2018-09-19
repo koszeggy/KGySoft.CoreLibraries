@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -225,7 +227,7 @@ namespace _LibrariesTest.Libraries.Serialization
             public bool IsReadOnly => false;
         }
 
-        public class ReadOnlyCollectionWithInitCtorAndReadOnlyProperties : ReadOnlyProperties, IReadOnlyCollection<string>
+        public class ReadOnlyCollectionWithInitCtorAndReadOnlyProperties : ReadOnlyProperties, IEnumerable<string>
         {
             private readonly List<string> list;
 
@@ -233,10 +235,9 @@ namespace _LibrariesTest.Libraries.Serialization
 
             public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-            public int Count => list.Count;
         }
 
-        public class ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties : ReadOnlyProperties, IReadOnlyCollection<string>
+        public class ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties : ReadOnlyProperties, IEnumerable<string>
         {
             private readonly List<string> list;
 
@@ -244,7 +245,6 @@ namespace _LibrariesTest.Libraries.Serialization
 
             public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-            public int Count => list.Count;
         }
 
         public class FullExtraComponent
@@ -1376,7 +1376,9 @@ namespace _LibrariesTest.Libraries.Serialization
                 new SortedDictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
                 new SortedDictionary<int, string[]> { { 1, new string[] { "alma" } }, { 2, null } },
 
+#if !NET35
                 new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } }),
+#endif
 
                 new Cache<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } },
             };
@@ -1392,32 +1394,44 @@ namespace _LibrariesTest.Libraries.Serialization
                 new Queue<int>(new[] { 1, 2, 3 }),
                 new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
                 new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
+#if !NET35
                 new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
                 new ConcurrentBag<int> { 1, 2, 3 },
+#if !NET40
                 new ArraySegment<int>(new[] { 1, 2, 3 }),
+#endif
+#endif
 
                 // non-populatable, reverse
                 new Stack<int>(new[] { 1, 2, 3 }),
                 new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+#if !NET35
                 new ConcurrentStack<int>(new[] { 1, 2, 3 }),
-
+#endif
                 // read-only
                 new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
+
+#if !(NET35 || NET40)
                 new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
+#endif
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
 
+#if !NET35
             // these collections are not supported recursively at all
             referenceObjects = new IEnumerable[]
             {
+#if !NET40
                 new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
+#endif
                 new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+#endif
         }
 
         [TestMethod]
@@ -1669,9 +1683,9 @@ namespace _LibrariesTest.Libraries.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
 
-        #endregion
+#endregion
 
-        #region Private methods
+#region Private methods
 
         private void SystemSerializeObject(object obj)
         {
@@ -1892,6 +1906,6 @@ namespace _LibrariesTest.Libraries.Serialization
             }
         }
 
-        #endregion
+#endregion
     }
 }

@@ -66,11 +66,17 @@ namespace KGySoft.Libraries
                 #region Properties
 
                 internal Type GenericType => types[0];
-                internal IList<Type> SuggestedArguments => new ArraySegment<Type>(types, 1, types.Length - 1);
+                internal
+#if NET35 || NET40
+                    ArraySegment<Type> 
+#else
+                    IList<Type>
+#endif
+                        SuggestedArguments => new ArraySegment<Type>(types, 1, types.Length - 1);
 
-                #endregion
+#endregion
 
-                #region Constructors
+#region Constructors
 
                 public DefaultGenericTypeKey(Type genericType, Type[] suggestedArguments)
                 {
@@ -79,48 +85,48 @@ namespace KGySoft.Libraries
                     suggestedArguments.CopyTo(types, 1);
                 }
 
-                #endregion
+#endregion
 
-                #region Methods
+#region Methods
 
                 public override bool Equals(object obj) => obj is DefaultGenericTypeKey key && Equals(key);
                 public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
                 public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
 
-                #endregion
+#endregion
             }
 
-            #endregion
+#endregion
 
-            #region GeneratorContext struct
+#region GeneratorContext struct
 
             private struct GeneratorContext
             {
-                #region Fields
+#region Fields
 
-                #region Internal Fields
+#region Internal Fields
 
                 internal readonly Random Random;
                 internal readonly GenerateObjectSettings Settings;
 
-                #endregion
+#endregion
 
-                #region Private Fields
+#region Private Fields
 
                 private readonly Stack<string> memberNameStack;
                 private readonly HashSet<Type> typesBeingGenerated;
 
-                #endregion
+#endregion
 
-                #endregion
+#endregion
 
-                #region Properties
+#region Properties
 
                 public string MemberName => memberNameStack.Count == 0 ? null : memberNameStack.Peek();
 
-                #endregion
+#endregion
 
-                #region Constructors
+#region Constructors
 
                 public GeneratorContext(Random random, GenerateObjectSettings settings)
                 {
@@ -130,9 +136,9 @@ namespace KGySoft.Libraries
                     typesBeingGenerated = new HashSet<Type>();
                 }
 
-                #endregion
+#endregion
 
-                #region Methods
+#region Methods
 
                 internal void PushMember(string memberName) => memberNameStack.Push(memberName);
                 internal void PopMember() => memberNameStack.Pop();
@@ -140,16 +146,16 @@ namespace KGySoft.Libraries
                 internal void PushType(Type type) => typesBeingGenerated.Add(type);
                 internal void PopType(Type type) => typesBeingGenerated.Remove(type);
 
-                #endregion
+#endregion
             }
 
-            #endregion
+#endregion
 
-            #endregion
+#endregion
 
-            #endregion
+#endregion
 
-            #region Fields
+#region Fields
 
             private static readonly Cache<Assembly, Type[]> assemblyTypesCache = new Cache<Assembly, Type[]>(LoadAssemblyTypes);
             private static readonly Cache<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors);
@@ -220,11 +226,11 @@ namespace KGySoft.Libraries
             private static readonly Type eventInfoType = typeof(EventInfo);
             private static readonly Type runtimeEventInfoType = typeof(Console).GetEvent(nameof(Console.CancelKeyPress)).GetType();
 
-            #endregion
+#endregion
 
-            #region Methods
+#region Methods
 
-            #region Internal Methods
+#region Internal Methods
 
             internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
             {
@@ -232,9 +238,9 @@ namespace KGySoft.Libraries
                 return GenerateObject(type, ref context);
             }
 
-            #endregion
+#endregion
 
-            #region Private Methods
+#region Private Methods
 
             private static Type[] LoadAssemblyTypes(Assembly asm)
             {
@@ -309,7 +315,7 @@ namespace KGySoft.Libraries
             private static Type TryCreateDefaultGeneric(DefaultGenericTypeKey key)
             {
                 Type genericTypeDef = key.GenericType;
-                IList<Type> suggestedArguments = key.SuggestedArguments;
+                var suggestedArguments = key.SuggestedArguments; // var is ArraySegment<Type> in .NET 3.4/4.0 and IList<Type> above
                 Type[] genericParams = genericTypeDef.GetGenericArguments();
                 Type[] argumentsToCreate = new Type[genericParams.Length];
                 Type[][] constraints = new Type[genericParams.Length][];
@@ -320,7 +326,14 @@ namespace KGySoft.Libraries
                     bool valueTypeConstraint = (attr & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
                     constraints[i] = argDef.GetGenericParameterConstraints();
 
-                    Type arg = suggestedArguments.Count == argumentsToCreate.Length ? suggestedArguments[i] : null;
+                    Type arg = suggestedArguments.Count == argumentsToCreate.Length
+#if (NET35 || NET40)
+                        // ReSharper disable once PossibleNullReferenceException
+                        ? suggestedArguments.Array[suggestedArguments.Offset + i]
+#else
+                        ? suggestedArguments[i] 
+#endif
+                        : null;
 
                     // If we could not get the argument from provided type or it is not compatible with first constraint we put either first constraint or int/object
                     if (arg == null || constraints.Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
@@ -1028,11 +1041,11 @@ namespace KGySoft.Libraries
             private static Type[] GetKeyValueTypes(Type elementType)
                 => elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { typeof(object), typeof(object) };
 
-            #endregion
+#endregion
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
     }
 }

@@ -249,7 +249,7 @@ namespace KGySoft.Libraries
 
                     // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
                     if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(typeof(List<>).MakeGenericType(elementType)))
-                        || isDictionary && paramType.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(elementType.IsGenericType ? elementType.GenericTypeArguments : new[] { typeof(object), typeof(object) })))
+                        || isDictionary && paramType.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { typeof(object), typeof(object) })))
                     {
                         collectionCtor = ctor;
                         if (defaultCtor != null)

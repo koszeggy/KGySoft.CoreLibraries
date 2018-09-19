@@ -257,14 +257,15 @@ namespace KGySoft.Libraries
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
 
-            if (source is IList list
+            // ReSharper disable once UsePatternMatching - must be "as" cast due to .NET 3.5 part
+            IList list = source as IList;
+            if (list != null
 #if NET35
                 // IList with null element: skip because generic collections below .NET 4 may not support null elements of nullable types
                 && item != null
 #elif !(NET40 || NET45)
 #error .NET version is not set or not supported!
 #endif
-
                 )
             {
                 list.Add(item);
@@ -300,7 +301,6 @@ namespace KGySoft.Libraries
 #elif !(NET40 || NET45)
 #error .NET version is not set or not supported!
 #endif
-
             throw new NotSupportedException(Res.Get(Res.EnumerableCannotAdd, item ?? "null", source.GetType()));
         }
 

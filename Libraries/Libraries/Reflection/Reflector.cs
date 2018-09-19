@@ -2648,7 +2648,7 @@ namespace KGySoft.Libraries.Reflection
         /// <param name="property">The property to check.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
         public static bool IsExplicitInterfaceImplementation(PropertyInfo property) 
-            => IsExplicitInterfaceImplementation(property.GetMethod != null ? property.GetMethod : property.SetMethod);
+            => IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true) : property.GetSetMethod(true));
 
         private static string GetDefaultMember(Type type)
         {

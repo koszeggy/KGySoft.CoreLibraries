@@ -173,8 +173,10 @@ namespace KGySoft.Libraries
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
+#if !NET35
             if (disposing)
                 provider.Dispose();
+#endif
         }
 
         #endregion

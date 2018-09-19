@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -206,11 +208,13 @@ namespace _LibrariesTest
         private static bool CheckItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             Type type = referenceObjects.GetType();
+#if !NET35
             if (type.IsGenericTypeOf(typeof(ConcurrentBag<>)))
             {
                 referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i).ToList();
                 targetObjects = targetObjects.Cast<object>().OrderBy(i => i).ToList();
             }
+#endif
 
             IEnumerator enumRef = referenceObjects.GetEnumerator();
             IEnumerator enumChk = targetObjects.GetEnumerator();
@@ -225,7 +229,11 @@ namespace _LibrariesTest
                 var subErrors = new List<string>();
                 result &= CheckDeepEquals(enumRef.Current, enumChk.Current, forceEqualityByMembers, subErrors, checkedObjects);
                 if (subErrors.Count > 0)
+#if NET35
+                    errors?.Add($"{type}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors.ToArray())}");
+#else
                     errors?.Add($"{type}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
+#endif
 
                 index++;
             }
@@ -239,7 +247,11 @@ namespace _LibrariesTest
             var subErrors = new List<string>();
             bool result = CheckDeepEquals(reference, check, forceEqualityByMembers, subErrors, checkedObjects);
             if (subErrors.Count > 0)
+#if NET35
+                errors?.Add($"{name}:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors.ToArray())}");
+#else
                 errors?.Add($"{name}:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
+#endif
             return result;
         }
 
@@ -344,9 +356,17 @@ namespace _LibrariesTest
         private static void AssertResult(bool result, List<string> errors)
         {
             if (!result)
-                Assert.Fail(String.Join(Environment.NewLine, errors));
+                Assert.Fail(String.Join(Environment.NewLine, errors
+#if NET35
+                    .ToArray()
+#endif
+                    ));
             else if (errors.Count > 0)
-                Assert.Inconclusive(String.Join(Environment.NewLine, errors));
+                Assert.Inconclusive(String.Join(Environment.NewLine, errors
+#if NET35
+                    .ToArray()
+#endif
+                    ));
         }
 
         private static bool Check(bool condition, string message, List<string> errors)

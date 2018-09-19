@@ -38,6 +38,8 @@ namespace KGySoft.Libraries
 
         #region Methods
 
+        #region Generic methods
+
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
         /// </summary>
@@ -170,5 +172,41 @@ namespace KGySoft.Libraries
         }
 
         #endregion
+
+#region Non-generic Methods
+
+#if NET35
+
+#endif
+
+        /// <summary>
+        /// Gets whether every single bit value in <paramref name="flags"/> are defined in the type of the <see langword="enum"/>,
+        /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the type of the <see langword="enum"/>.
+        /// </summary>
+        /// <param name="flags">The <see langword="enum"/> value.</param>
+        /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
+        /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
+        /// <remarks><note>For better performance use the generic overload (<see cref="AllFlagsDefined{TEnum}">AllFlagsDefined&lt;TEnum&gt;(TEnum)</see>) whenever it is possible.</note></remarks>
+        public static bool AllFlagsDefined(this Enum flags)
+        {
+            var enumText = flags?.ToString("F") ?? "0";
+            return !(char.IsDigit(enumText[0]) || enumText[0] == '-');
+        }
+
+        /// <summary>
+        /// Gets whether only a single bit is set in <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The value to check.</param>
+        /// <returns><c>true</c>, if only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
+        /// <remarks><note>For better performance use the generic overload (<see cref="IsSingleFlag{TEnum}">IsSingleFlag&lt;TEnum&gt;(TEnum)</see>) whenever it is possible.</note></remarks>
+        public static bool IsSingleFlag(this Enum value)
+        {
+            var rawValue = Convert.ToInt64(value);
+            return (rawValue & (rawValue - 1)) == 0L;
+        }
+
+#endregion
+
+#endregion
     }
 }
