@@ -1,19 +1,35 @@
-﻿using System;
+﻿//---------------------------------------------------------------------------------------------------------------------
+// <copyright file="EncodingConverter.cs" company="QVA Development">
+//   Copyright © QVA Development 2018. All rights reserved. Confidential.
+// </copyright>
+//---------------------------------------------------------------------------------------------------------------------
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 
+#endregion
+
 namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Supports conversion from string to <see cref="Encoding"/> type.
     /// </summary>
-    public sealed class EncodingConverter: TypeConverter
+    public sealed class EncodingConverter : TypeConverter
     {
+        #region Fields
+
         private static Dictionary<string, Encoding> encodingByName;
         private static Encoding[] encodings;
+
+        #endregion
+
+        #region Properties
 
         private static Encoding[] Encodings
         {
@@ -42,12 +58,16 @@ namespace KGySoft.ComponentModel
                     encodingByName = new Dictionary<string, Encoding>();
                     foreach (Encoding e in Encodings)
                     {
-                        encodingByName.Add(String.Format("{0} | {1}", e.CodePage, e.EncodingName), e);
+                        encodingByName.Add($"{e.CodePage} | {e.EncodingName}", e);
                     }
                 }
                 return encodingByName;
             }
         }
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Returns whether this converter can convert the object to the specified type, using the specified context.
@@ -55,8 +75,8 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// true if this converter can perform the conversion; otherwise, false.
         /// </returns>
-        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context. 
-        ///                 </param><param name="destinationType">A <see cref="T:System.Type"/> that represents the type you want to convert to. 
+        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.
+        ///                 </param><param name="destinationType">A <see cref="T:System.Type"/> that represents the type you want to convert to.
         ///                 </param>
         public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
         {
@@ -69,12 +89,12 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// An <see cref="T:System.Object"/> that represents the converted value.
         /// </returns>
-        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context. 
-        ///                 </param><param name="culture">A <see cref="T:System.Globalization.CultureInfo"/>. If null is passed, the current culture is assumed. 
-        ///                 </param><param name="value">The <see cref="T:System.Object"/> to convert. 
-        ///                 </param><param name="destinationType">The <see cref="T:System.Type"/> to convert the <paramref name="value"/> parameter to. 
-        ///                 </param><exception cref="T:System.ArgumentNullException">The <paramref name="destinationType"/> parameter is null. 
-        ///                 </exception><exception cref="T:System.NotSupportedException">The conversion cannot be performed. 
+        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.
+        ///                 </param><param name="culture">A <see cref="T:System.Globalization.CultureInfo"/>. If null is passed, the current culture is assumed.
+        ///                 </param><param name="value">The <see cref="T:System.Object"/> to convert.
+        ///                 </param><param name="destinationType">The <see cref="T:System.Type"/> to convert the <paramref name="value"/> parameter to.
+        ///                 </param><exception cref="T:System.ArgumentNullException">The <paramref name="destinationType"/> parameter is null.
+        ///                 </exception><exception cref="T:System.NotSupportedException">The conversion cannot be performed.
         ///                 </exception>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
@@ -99,8 +119,8 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// true if this converter can perform the conversion; otherwise, false.
         /// </returns>
-        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context. 
-        ///                 </param><param name="sourceType">A <see cref="T:System.Type"/> that represents the type you want to convert from. 
+        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.
+        ///                 </param><param name="sourceType">A <see cref="T:System.Type"/> that represents the type you want to convert from.
         ///                 </param>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
@@ -113,10 +133,10 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// An <see cref="T:System.Object"/> that represents the converted value.
         /// </returns>
-        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context. 
-        ///                 </param><param name="culture">The <see cref="T:System.Globalization.CultureInfo"/> to use as the current culture. 
-        ///                 </param><param name="value">The <see cref="T:System.Object"/> to convert. 
-        ///                 </param><exception cref="T:System.NotSupportedException">The conversion cannot be performed. 
+        /// <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.
+        ///                 </param><param name="culture">The <see cref="T:System.Globalization.CultureInfo"/> to use as the current culture.
+        ///                 </param><param name="value">The <see cref="T:System.Object"/> to convert.
+        ///                 </param><exception cref="T:System.NotSupportedException">The conversion cannot be performed.
         ///                 </exception>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
@@ -150,25 +170,13 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Returns whether this object supports a standard set of values that can be picked from a list, using the specified context.
         /// </summary>
-        public override bool GetStandardValuesSupported(ITypeDescriptorContext context)
-        {
-            return true;
-        }
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
 
         /// <summary>
         /// Returns a collection of standard values for the data type this type converter is designed for when provided with a format context.
         /// </summary>
-        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
-        {
-            return new StandardValuesCollection(Encodings);
-        }
+        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context) => new StandardValuesCollection(Encodings);
 
-        /// <summary>
-        /// Returns whether the collection of standard values returned from <see cref="M:System.ComponentModel.TypeConverter.GetStandardValues"/> is an exclusive list of possible values, using the specified context.
-        /// </summary>
-        public override bool GetStandardValuesExclusive(ITypeDescriptorContext context)
-        {
-            return false;
-        }
+        #endregion
     }
 }

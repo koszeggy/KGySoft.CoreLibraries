@@ -1,9 +1,20 @@
-﻿using System;
+﻿//---------------------------------------------------------------------------------------------------------------------
+// <copyright file="BinaryTypeConverter.cs" company="QVA Development">
+//   Copyright © QVA Development 2018. All rights reserved. Confidential.
+// </copyright>
+//---------------------------------------------------------------------------------------------------------------------
+
+#region Usings
+
+using System;
 using System.ComponentModel;
 using System.Globalization;
+
 using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -13,13 +24,15 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="TypeConverter" />
     public class BinaryTypeConverter : TypeConverter
     {
+        #region Methods
+
         /// <summary>
         /// Returns whether this converter can convert the object to the specified type, using the specified context.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
         /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.</param>
         /// <returns><see langword="true" /> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
-        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) 
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
             => destinationType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
@@ -34,8 +47,8 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Converts the given value object to the specified type.
         /// </summary>
-        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. For this converter, this parameter is ignored.</param>
-        /// <param name="culture">A <see cref="CultureInfo" />. For this converter, this parameter is ignored.</param>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
+        /// <param name="culture">A <see cref="CultureInfo" />. In this converter this parameter is ignored.</param>
         /// <param name="value">The <see cref="object" /> to convert.</param>
         /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to. The <see cref="BinaryTypeConverter"/> supports string and byte array target types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
@@ -50,8 +63,8 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Converts the given object to its original type.
         /// </summary>
-        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. For this converter, this parameter is ignored.</param>
-        /// <param name="culture">The <see cref="CultureInfo" /> to use as the current culture. For this converter, this parameter is ignored.</param>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
+        /// <param name="culture">The <see cref="CultureInfo" /> to use as the current culture. In this converter this parameter is ignored.</param>
         /// <param name="value">The <see cref="object"/> to convert.</param>
         /// <returns>
         /// An <see cref="object" /> that represents the converted value.
@@ -66,5 +79,7 @@ namespace KGySoft.ComponentModel
 
             return bytes != null ? BinarySerializer.Deserialize(bytes) : base.ConvertFrom(context, culture, value);
         }
+
+        #endregion
     }
 }

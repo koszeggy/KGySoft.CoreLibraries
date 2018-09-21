@@ -175,10 +175,6 @@ namespace KGySoft.Libraries
 
 #region Non-generic Methods
 
-#if NET35
-
-#endif
-
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the type of the <see langword="enum"/>,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the type of the <see langword="enum"/>.
@@ -201,8 +197,11 @@ namespace KGySoft.Libraries
         /// <remarks><note>For better performance use the generic overload (<see cref="IsSingleFlag{TEnum}">IsSingleFlag&lt;TEnum&gt;(TEnum)</see>) whenever it is possible.</note></remarks>
         public static bool IsSingleFlag(this Enum value)
         {
-            var rawValue = Convert.ToInt64(value);
-            return (rawValue & (rawValue - 1)) == 0L;
+            if (value == null)
+                return false;
+
+            ulong rawValue = Enum.GetUnderlyingType(value.GetType()) == typeof(ulong) ? Convert.ToUInt64(value) : (ulong)Convert.ToInt64(value) & GetMask();
+            return rawValue != 0UL && (rawValue & (rawValue - 1)) == 0UL;
         }
 
 #endregion
