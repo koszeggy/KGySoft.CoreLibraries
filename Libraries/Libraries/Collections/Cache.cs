@@ -756,7 +756,7 @@ namespace KGySoft.Libraries.Collections
 
         #region Constants
 
-        private const int defaultCapacity = 100;
+        private const int defaultCapacity = 128;
 
         #endregion
 
@@ -801,7 +801,7 @@ namespace KGySoft.Libraries.Collections
         private int cacheDeletes;
         private int capacity;
         private int cacheWrites;
-        private bool ensureCapacity = true;
+        private bool ensureCapacity;
         private CacheBehavior behavior = CacheBehavior.RemoveLeastRecentUsedElement;
         private int version;
         private Dictionary<TKey, CacheItem> cacheStore;
@@ -850,7 +850,7 @@ namespace KGySoft.Libraries.Collections
         #region Instance Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with default capacity of 100 and no item loader.
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with default capacity of 128 and no item loader.
         /// </summary>
         /// <remarks>
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
@@ -893,7 +893,7 @@ namespace KGySoft.Libraries.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with the specified <paramref name="comparer"/>, default capacity of 100 and no item loader.
+        /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with the specified <paramref name="comparer"/>, default capacity of 128 and no item loader.
         /// </summary>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
         /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
@@ -1288,7 +1288,8 @@ namespace KGySoft.Libraries.Collections
 
         /// <summary>
         /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
-        /// allocate memory for all cache entries. Default value is <see langword="true"/>.
+        /// allocate memory for all cache entries.
+        /// <br/>Default value is <see langword="true"/>.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="Capacity"/> is very large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>

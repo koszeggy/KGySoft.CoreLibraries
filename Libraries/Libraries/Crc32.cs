@@ -3,11 +3,18 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using KGySoft.Libraries.Collections;
 
 #endregion
 
 namespace KGySoft.Libraries
 {
+
+    // TODO: két verzió:
+    // Az egyik ez: https://github.com/damieng/DamienGKit/blob/master/CSharp/DamienG.Library/Security/Cryptography/Crc32.cs
+    // A másik ez: https://github.com/force-net/Crc32.NET/blob/develop/Crc32.NET/Crc32Algorithm.cs, https://github.com/force-net/Crc32.NET/blob/develop/Crc32.NET/SafeProxy.cs
+    // Két kompatibilis osztályt mindkettő alapján, eredményt és performaciát összehasonlítani
+
     /// <summary>
     /// Implementation of CRC32 hash algorithm.
     /// </summary>
@@ -16,14 +23,19 @@ namespace KGySoft.Libraries
         #region Constants
 
         /// <summary>
-        /// Default polinomial for the <see cref="Crc32"/> hash algorithm.
+        /// The standard polynomial for the <see cref="Crc32"/> hash algorithm. This field is constant.
         /// </summary>
-        public const uint DefaultPolynomial = 0xedb88320;
+        public const uint StandardPolynomial = 0xEDB88320;
 
         /// <summary>
-        /// Default seed for the <see cref="Crc32"/> hash algorithm.
+        /// The Castagnoli polynomial for the <see cref="Crc32"/> hash algorithm (also known as CRC-32C). This field is constant.
         /// </summary>
-        public const uint DefaultSeed = UInt32.MaxValue;
+        public const uint CastagnoliPolynomial = 0x82F63B78;
+
+        /// <summary>
+        /// The Koopman polynomial for the <see cref="Crc32"/> hash algorithm (also known as CRC-32K). This field is constant.
+        /// </summary>
+        public const uint KoopmanPolynomial = 0xEB31D82E;
 
         #endregion
 
@@ -31,7 +43,7 @@ namespace KGySoft.Libraries
 
         #region Static Fields
 
-        private static uint[] defaultTable;
+        private static readonly Cache<uint, uint[]> tablesCache = new Cache<uint, uint[]>(CreateTable, 16);
 
         #endregion
 
@@ -40,8 +52,8 @@ namespace KGySoft.Libraries
         private uint hash;
 
         private readonly uint seed;
-
         private readonly uint[] table;
+        private readonly bool isBigEndian;
 
         #endregion
 
@@ -67,21 +79,20 @@ namespace KGySoft.Libraries
         /// <summary>
         /// Initializes a new instance of <see cref="Crc32"/> class with default settings.
         /// </summary>
-        public Crc32()
+        public Crc32() : this(StandardPolynomial, 0U)
         {
-            table = InitializeTable(DefaultPolynomial);
-            seed = DefaultSeed;
-            Initialize();
         }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="Crc32"/> class with custom settings.
+        /// Initializes a new instance of the <see cref="Crc32"/> class.
         /// </summary>
+        /// <param name="polynomial">The polynomial to use to calculate the CRC value.</param>
+        /// <param name="seed">The initial seed value to use.</param>
         public Crc32(uint polynomial, uint seed)
         {
-            table = InitializeTable(polynomial);
+            lock (tablesCache)
+                table = tablesCache[polynomial];
             this.seed = seed;
-            Initialize();
         }
 
         #endregion
@@ -157,12 +168,9 @@ namespace KGySoft.Libraries
 
         #region Private Methods
 
-        private static uint[] InitializeTable(uint polynomial)
+        private static uint[] CreateTable(uint polynomial)
         {
-            if (polynomial == DefaultPolynomial && defaultTable != null)
-                return defaultTable;
-
-            uint[] createTable = new uint[256];
+            uint[] result = new uint[256];
             for (int i = 0; i < 256; i++)
             {
                 uint entry = (uint)i;
@@ -171,13 +179,10 @@ namespace KGySoft.Libraries
                         entry = (entry >> 1) ^ polynomial;
                     else
                         entry = entry >> 1;
-                createTable[i] = entry;
+                result[i] = entry;
             }
 
-            if (polynomial == DefaultPolynomial)
-                defaultTable = createTable;
-
-            return createTable;
+            return result;
         }
 
         private static uint CalculateHash(uint[] table, uint seed, byte[] buffer, int start, int size)

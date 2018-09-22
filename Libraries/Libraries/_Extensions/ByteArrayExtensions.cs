@@ -31,7 +31,7 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Contains extension methods for <see cref="byte">byte</see> <see cref="Array">arrays</see>.
+    /// Contains extension methods for the <see cref="Array">byte[]</see> type.
     /// </summary>
     public static class ByteArrayExtensions
     {
@@ -293,9 +293,7 @@ namespace KGySoft.Libraries
                 throw new ArgumentNullException(nameof(password), Res.Get(Res.ArgumentNull));
 
             CheckSalt(ref salt);
-
             Rfc2898DeriveBytes passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
-
             return Encrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
         }
 
@@ -445,7 +443,7 @@ namespace KGySoft.Libraries
         {
             if (String.IsNullOrEmpty(salt))
             {
-                salt = "abcdefgh";
+                salt = "ABCDEFGH";
                 return;
             }
             if (salt.Length < 8)
