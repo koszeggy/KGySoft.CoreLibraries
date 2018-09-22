@@ -105,9 +105,8 @@ namespace KGySoft.Libraries
             string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
             byte[] result = new byte[values.Length];
             for (int i = 0; i < values.Length; i++)
-            {
                 result[i] = Byte.Parse(values[i].Trim(), NumberStyles.HexNumber);
-            }
+
             return result;
         }
 
@@ -123,13 +122,12 @@ namespace KGySoft.Libraries
                 return new byte[0];
 
             if (s.Length % 2 != 0)
-                throw new ArgumentException("Source length error", nameof(s));
+                throw new ArgumentException(Res.SourceLengthNotEven, nameof(s));
 
             byte[] result = new byte[s.Length >> 1];
             for (int i = 0; i < (s.Length >> 1); i++)
-            {
-                result[i] = Byte.Parse(s.Substring(i * 2, 2), NumberStyles.HexNumber);
-            }
+                result[i] = Byte.Parse(s.Substring(i << 1, 2), NumberStyles.HexNumber);
+
             return result;
         }
 

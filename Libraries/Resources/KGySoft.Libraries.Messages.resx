@@ -766,4 +766,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="InvalidDrmPropertyChange" xml:space="preserve">
     <value>Setting this property is invalid when UseLanguageSettings is true.</value>
   </data>
+  <data name="SourceLengthNotEven" xml:space="preserve">
+    <value>Source length must consist of even amount of bytes.</value>
+  </data>
 </root>

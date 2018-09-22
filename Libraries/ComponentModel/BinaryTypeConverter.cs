@@ -29,7 +29,7 @@ using KGySoft.Libraries.Serialization;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Provides a type converter to convert any kind of objects to and from base64 encoded string or byte array representations.
+    /// Provides a type converter to convert any <see cref="object"/> to and from base64 encoded <see cref="string"/> or <see cref="Array">byte array</see> representations.
     /// </summary>
     /// <seealso cref="TypeConverter" />
     public class BinaryTypeConverter : TypeConverter
@@ -39,8 +39,9 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Returns whether this converter can convert the object to the specified type, using the specified context.
         /// </summary>
-        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
-        /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.</param>
+        /// <param name="context">In this type converter this parameter is ignored.</param>
+        /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
+        /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true" /> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
             => destinationType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertTo(context, destinationType);
@@ -48,8 +49,9 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Returns whether this converter can convert an object of the given type to the type of this converter, using the specified context.
         /// </summary>
-        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
-        /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.</param>
+        /// <param name="context">In this type converter this parameter is ignored.</param>
+        /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.
+        /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true" /> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
             => sourceType.In(Reflector.StringType, Reflector.ByteArrayType) || base.CanConvertFrom(context, sourceType);
@@ -60,7 +62,8 @@ namespace KGySoft.ComponentModel
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
         /// <param name="culture">A <see cref="CultureInfo" />. In this converter this parameter is ignored.</param>
         /// <param name="value">The <see cref="object" /> to convert.</param>
-        /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to. The <see cref="BinaryTypeConverter"/> supports string and byte array target types.</param>
+        /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
+        /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
@@ -75,10 +78,9 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
         /// <param name="culture">The <see cref="CultureInfo" /> to use as the current culture. In this converter this parameter is ignored.</param>
-        /// <param name="value">The <see cref="object"/> to convert.</param>
-        /// <returns>
-        /// An <see cref="object" /> that represents the converted value.
-        /// </returns>
+        /// <param name="value">The <see cref="object"/> to convert.
+        /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
+        /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             byte[] bytes = null;

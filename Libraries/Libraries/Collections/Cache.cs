@@ -4,21 +4,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
 using KGySoft.Libraries.Annotations;
 using KGySoft.Libraries.Diagnostics;
+using KGySoft.Libraries.Resources;
 
 #endregion
 
 namespace KGySoft.Libraries.Collections
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
-    /// Generic cache. Cache expansion is transparent; user needs only to read the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property) to retrieve items.
+    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent; user needs only to read the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property) to retrieve items.
     /// When a non-existing key is accessed, then item is loaded automatically by the loader function that was passed to one of the constructors.
     /// If the cache is full (elements <see cref="Count"/> reaches the <see cref="Capacity"/>) and a new element has to be stored, then
     /// the oldest or least recent used element (depends on the value of <see cref="Behavior"/>) is removed from the cache.

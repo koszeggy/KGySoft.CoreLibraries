@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries
 {
     /// <summary>
-    /// Represents a range with lower and upper bounds. Can be assigned by a tuple or a single <typeparamref name="T"/>.
+    /// Represents a range with lower and upper bounds.
     /// </summary>
     public struct Range<T> : IEquatable<Range<T>>
         where T : IComparable<T>

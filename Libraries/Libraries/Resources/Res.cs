@@ -244,6 +244,7 @@ namespace KGySoft.Libraries.Resources
         internal const string SeparatorInvalidDec = nameof(SeparatorInvalidDec);
         internal const string HybridResSourceBinary = nameof(HybridResSourceBinary);
         internal const string InvalidDrmPropertyChange = nameof(InvalidDrmPropertyChange);
+        internal const string SourceLengthNotEven = nameof(SourceLengthNotEven);
 
         #endregion
 

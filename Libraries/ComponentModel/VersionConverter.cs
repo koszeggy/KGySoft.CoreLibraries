@@ -25,7 +25,7 @@ using System.Globalization;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Type converter for <see cref="Version"/> class.
+    /// Provides a type converter to convert <see cref="Version"/> instances to and from their <see cref="string"/> representation.
     /// </summary>
     public class VersionConverter : TypeConverter
     {
@@ -35,18 +35,20 @@ namespace KGySoft.ComponentModel
         /// Returns whether this converter can convert the object to the specified type, using the specified context.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
-        /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.</param>
+        /// <param name="destinationType">A <see cref="Type" /> that represents the type you want to convert to.
+        /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true" /> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            => (destinationType == typeof(string)) || base.CanConvertTo(context, destinationType);
+            => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
         /// <summary>
         /// Converts the given value object to the specified type, using the specified context and culture information.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
         /// <param name="culture">A <see cref="CultureInfo" />. In this converter this parameter is ignored.</param>
-        /// <param name="value">The <see cref="object" /> to convert.</param>
-        /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to.</param>
+        /// <param name="value">The <see cref="Version" /> instance to convert.</param>
+        /// <param name="destinationType">The <see cref="Type" /> to convert the <paramref name="value" /> parameter to.
+        /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
@@ -60,7 +62,8 @@ namespace KGySoft.ComponentModel
         /// Returns whether this converter can convert an object of the given type to the type of this converter, using the specified context.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
-        /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.</param>
+        /// <param name="sourceType">A <see cref="Type" /> that represents the type you want to convert from.
+        /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true" /> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
             => (sourceType == typeof(string)) || base.CanConvertFrom(context, sourceType);
@@ -70,8 +73,9 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this converter this parameter is ignored.</param>
         /// <param name="culture">A <see cref="CultureInfo" />. In this converter this parameter is ignored.</param>
-        /// <param name="value">The <see cref="object" /> to convert.</param>
-        /// <returns>An <see cref="object" /> that represents the converted value.</returns>
+        /// <param name="value">The <see cref="object" /> to convert.
+        /// This type converter supports <see cref="string"/> type only.</param>
+        /// <returns>A <see cref="Version" /> instance that represents the converted value.</returns>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             if (value == null)

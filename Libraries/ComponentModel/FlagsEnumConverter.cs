@@ -30,7 +30,7 @@ using KGySoft.Libraries.Resources;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Provides a type converter to provide <see cref="bool"/> properties for each flags of an <see cref="Enum"/> instance.
+    /// By extending the <see cref="EnumConverter"/>, this class provides a type converter for flags <see cref="Enum"/> instances (not necessarily but typically marked by <see cref="FlagsAttribute"/>) by providing <see cref="bool"/> properties for each flags in the specific <see cref="Enum"/> type.
     /// </summary>
     public class FlagsEnumConverter : EnumConverter
     {
@@ -39,9 +39,9 @@ namespace KGySoft.ComponentModel
         #region EnumFieldDescriptor class
 
         /// <summary>
-        /// This class represents an enumeration field in the property grid.
+        /// Represents an enumeration flag as a <see cref="bool"/> property.
         /// </summary>
-        protected class EnumFieldDescriptor : SimplePropertyDescriptor
+        protected class EnumFlagDescriptor : SimplePropertyDescriptor
         {
             #region Fields
 
@@ -74,7 +74,7 @@ namespace KGySoft.ComponentModel
             /// <param name="defaultValue">The default value of the <see langword="enum"/> instance specified by the <see cref="DefaultValueAttribute"/> of its property or <see langword="null"/>.</param>
             /// <param name="valueField">The underlying value field of the <see langword="enum"/> type.</param>
             /// <param name="attributes">Custom attributes of the <see langword="enum"/> flag field.</param>
-            public EnumFieldDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
+            public EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
                 : base(componentType, name, typeof(bool))
             {
                 this.flagValue = flagValue;
@@ -122,22 +122,25 @@ namespace KGySoft.ComponentModel
             }
 
             /// <summary>
-            /// Retrieves a value indicating whether the enumeration
-            /// field is set to a non-default value.
+            /// Returns whether the value of this property can persist.
             /// </summary>
+            /// <param name="component">The <see cref="Enum"/> instance with the property that is to be examined for persistence.</param>
+            /// <returns><see langword="true" /> if the value of the property can persist; otherwise, <see langword="false" />.</returns>
             public override bool ShouldSerializeValue(object component) =>
                 // ReSharper disable once AssignNullToNotNullAttribute
                 !Equals(GetValue(component), GetDefaultValue());
 
             /// <summary>
-            /// Resets the enumeration field to its default value.
+            /// Resets the value for this property of the component.
             /// </summary>
+            /// <param name="component">The <see cref="Enum"/> instance with the property value to be reset.</param>
             public override void ResetValue(object component) => SetValue(component, GetDefaultValue());
 
             /// <summary>
-            /// Retrieves a value indicating whether the enumeration
-            /// field can be reset to the default value.
+            /// Returns whether resetting the component changes the value of the component.
             /// </summary>
+            /// <param name="component">The <see cref="Enum"/> instance to test for reset capability.</param>
+            /// <returns><see langword="true" /> if resetting the component changes the value of the component; otherwise, <see langword="false" />.</returns>
             public override bool CanResetValue(object component) => ShouldSerializeValue(component);
 
             #endregion
@@ -161,7 +164,7 @@ namespace KGySoft.ComponentModel
         #region Constructors
 
         /// <summary>
-        /// Creates an instance of the FlagsEnumConverter class.
+        /// Creates an instance of the <see cref="FlagsEnumConverter"/> class.
         /// </summary>
         /// <param name="type">The type of the enumeration.</param>
         public FlagsEnumConverter(Type type) : base(type) { }
@@ -175,9 +178,10 @@ namespace KGySoft.ComponentModel
         /// These property descriptors will be used by the property grid
         /// to show separate enumeration fields.
         /// </summary>
-        /// <param name="context">The current context.</param>
-        /// <param name="value">A value of an enumeration type.</param>
-        /// <param name="attributes">An array of type <see cref="T:System.Attribute"/> that is used as a filter.</param>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. If specified, will be used to determine the <see cref="DefaultValueAttribute"/> of
+        /// the converted <see langword="enum"/>, and to set the <see langword="enum"/> property of the container instance if one of the flags are set.</param>
+        /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
+        /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
         {
             Type enumType = value.GetType();
@@ -198,7 +202,7 @@ namespace KGySoft.ComponentModel
             {
                 Enum enumValue = (Enum)Reflector.GetField(null, field);
                 if (enumValue.IsSingleFlag())
-                    enumFields.Add(new EnumFieldDescriptor(enumType, field.Name, enumValue.ToUInt64(), defaultValue, valueField, Attribute.GetCustomAttributes(field, false), context));
+                    enumFields.Add(new EnumFlagDescriptor(enumType, field.Name, enumValue.ToUInt64(), defaultValue, valueField, Attribute.GetCustomAttributes(field, false), context));
             }
 
             return enumFields;
@@ -207,14 +211,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Returns whether this object supports properties, using the specified context.
         /// </summary>
-        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
-        /// <returns><see langword="true" /> if <see cref="TypeConverter.GetProperties(object)" /> should be called to find the properties of this object; otherwise, <see langword="false" />.</returns>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this method this parameter is ignored.</param>
+        /// <returns>This method always returns <see langword="true" />.</returns>
         public override bool GetPropertiesSupported(ITypeDescriptorContext context) => true;
 
         /// <summary>
         /// Gets whether this object supports a standard set of values that can be picked from a list using the specified context.
         /// </summary>
-        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. In this method this parameter is ignored.</param>
         /// <returns>This method always returns <see langword="false" />.</returns>
         public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => false;
 
