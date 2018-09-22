@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using KGySoft.Libraries.Resources;
 
 #endregion
 
@@ -38,7 +39,7 @@ namespace KGySoft.Libraries
 
         #region Methods
 
-        #region Generic methods
+        #region Public methods
 
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
@@ -171,10 +172,6 @@ namespace KGySoft.Libraries
             return Enum<TEnum>.GetFlags(flags, onlyDefinedValues);
         }
 
-        #endregion
-
-#region Non-generic Methods
-
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the type of the <see langword="enum"/>,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the type of the <see langword="enum"/>.
@@ -200,12 +197,33 @@ namespace KGySoft.Libraries
             if (value == null)
                 return false;
 
-            ulong rawValue = Enum.GetUnderlyingType(value.GetType()) == typeof(ulong) ? Convert.ToUInt64(value) : (ulong)Convert.ToInt64(value) & GetMask();
+            ulong rawValue = ToUInt64(value);
             return rawValue != 0UL && (rawValue & (rawValue - 1)) == 0UL;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #region Internal Methods
+
+        internal static ulong ToUInt64(this Enum value)
+        {
+            switch (value.GetTypeCode())
+            {
+                case TypeCode.SByte:
+                    return (byte)Convert.ToSByte(value);
+                case TypeCode.Int16:
+                    return (ushort)Convert.ToInt16(value);
+                case TypeCode.Int32:
+                    return (uint)Convert.ToInt32(value);
+                case TypeCode.Int64:
+                    return (ulong)Convert.ToInt64(value);
+                default:
+                    return Convert.ToUInt64(value);
+            }
+        }
+
+        #endregion
+
+        #endregion
     }
 }

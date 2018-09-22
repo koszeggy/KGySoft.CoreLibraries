@@ -1,213 +1,223 @@
+#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FlagsEnumConverter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.ComponentModel;
+
+using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
+using KGySoft.Libraries.Resources;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
-    // TODO: A beágyazott osztály GetValue/SetValue/GetDefaultValue-ja int-re épít, sima reflection-t használ, a küls? osztály GetProperties/IsSingleFlag-je int-re épít
-	/// <summary>
-	/// Makes possible for an enumeration that is marked by <see cref="FlagsAttribute"/>
-	/// to set each bits as a bool field instead of selecting exactly one element of
-	/// the enumeration.
-	/// </summary>
-	public class FlagsEnumConverter: EnumConverter
-	{
-		/// <summary>
-		/// This class represents an enumeration field in the property grid.
-		/// </summary>
-		protected class EnumFieldDescriptor: SimplePropertyDescriptor
-		{
-			#region Fields
-			/// <summary>
-			/// Stores the context which the enumeration field descriptor was created in.
-			/// </summary>
-			ITypeDescriptorContext context;
+    /// <summary>
+    /// Provides a type converter to provide <see cref="bool"/> properties for each flags of an <see cref="Enum"/> instance.
+    /// </summary>
+    public class FlagsEnumConverter : EnumConverter
+    {
+        #region Nested classes
 
-            private IEnumerable<Attribute> attributes;
+        #region EnumFieldDescriptor class
 
-			#endregion
-
-			#region Methods
-			/// <summary>
-			/// Creates an instance of the enumeration field descriptor class.
-			/// </summary>
-			/// <param name="componentType">The type of the enumeration.</param>
-			/// <param name="name">The name of the enumeration field.</param>
-			/// <param name="context">The current context.</param>
-			/// <param name="attributes">Custom attributes of enum field.</param>
-			public EnumFieldDescriptor(Type componentType, string name, object[] attributes, ITypeDescriptorContext context)
-				: base(componentType, name, typeof(bool))
-			{
-				this.context = context;
-			    this.attributes = attributes.Cast<Attribute>();
-			}
-
-			/// <summary>
-			/// Retrieves the value of the enumeration field.
-			/// </summary>
-			/// <param name="component">
-			/// The instance of the enumeration type which to retrieve the field value for.
-			/// </param>
-			/// <returns>
-			/// True if the enumeration field is included to the enumeration; 
-			/// otherwise, False.
-			/// </returns>
-			public override object GetValue(object component)
-			{
-				return ((int)component & (int)Enum.Parse(ComponentType, Name)) != 0;
-			}
-
-			/// <summary>
-			/// Sets the value of the enumeration field.
-			/// </summary>
-			/// <param name="component">
-			/// The instance of the enumeration type which to set the field value to.
-			/// </param>
-			/// <param name="value">
-			/// True if the enumeration field should included to the enumeration; 
-			/// otherwise, False.
-			/// </param>
-			public override void SetValue(object component, object value)
-			{
-				bool myValue = (bool)value;
-				int myNewValue;
-				if (myValue)
-					myNewValue = ((int)component) | (int)Enum.Parse(ComponentType, Name);
-				else
-					myNewValue = ((int)component) & ~(int)Enum.Parse(ComponentType, Name);
-
-				FieldInfo myField = component.GetType().GetField("value__", BindingFlags.Instance | BindingFlags.Public);
-				myField.SetValue(component, myNewValue);
-				context.PropertyDescriptor.SetValue(context.Instance, component);
-			}
-
-			/// <summary>
-			/// Retrieves a value indicating whether the enumeration 
-			/// field is set to a non-default value.
-			/// </summary>
-			public override bool ShouldSerializeValue(object component)
-			{
-				return (bool)GetValue(component) != GetDefaultValue();
-			}
-
-			/// <summary>
-			/// Resets the enumeration field to its default value.
-			/// </summary>
-			public override void ResetValue(object component)
-			{
-				SetValue(component, GetDefaultValue());
-			}
-
-			/// <summary>
-			/// Retrieves a value indicating whether the enumeration 
-			/// field can be reset to the default value.
-			/// </summary>
-			public override bool CanResetValue(object component)
-			{
-				return ShouldSerializeValue(component);
-			}
-
-			/// <summary>
-			/// Retrieves the enumerations field's default value.
-			/// </summary>
-			private bool GetDefaultValue()
-			{
-				object myDefaultValue = null;
-				string myPropertyName = context.PropertyDescriptor.Name;
-				Type myComponentType = context.PropertyDescriptor.ComponentType;
-
-				// Get DefaultValueAttribute
-				DefaultValueAttribute myDefaultValueAttribute = (DefaultValueAttribute)Attribute.GetCustomAttribute(
-						myComponentType.GetProperty(myPropertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
-						typeof(DefaultValueAttribute));
-				if (myDefaultValueAttribute != null)
-					myDefaultValue = myDefaultValueAttribute.Value;
-
-				if (myDefaultValue != null)
-					return ((int)myDefaultValue & (int)Enum.Parse(ComponentType, Name)) != 0;
-				return false;
-			}
-
-			#endregion
-
-			#region Properties
-
-			public override AttributeCollection Attributes
-			{
-				get
-				{
-					return new AttributeCollection(attributes.Union(new Attribute[] { RefreshPropertiesAttribute.Repaint }).ToArray());
-				}
-			}
-
-			#endregion
-		}
-
-		#region Methods
-		/// <summary>
-		/// Creates an instance of the FlagsEnumConverter class.
-		/// </summary>
-		/// <param name="type">The type of the enumeration.</param>
-		public FlagsEnumConverter(Type type) : base(type) { }
-
-		/// <summary>
-		/// Retrieves the property descriptors for the enumeration fields. 
-		/// These property descriptors will be used by the property grid 
-		/// to show separate enumeration fields.
-		/// </summary>
-		/// <param name="context">The current context.</param>
-		/// <param name="value">A value of an enumeration type.</param>
-        /// <param name="attributes">An array of type <see cref="T:System.Attribute"/> that is used as a filter.</param>
-		public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
-		{
-		    if (context == null)
-		        return base.GetProperties(context, value, attributes);
-
-		    Type enumType = value.GetType();
-		    FieldInfo[] fields = enumType.GetFields(BindingFlags.Static | BindingFlags.Public);
-                
-		    if (fields.Length > 0)
-		    {
-		        PropertyDescriptorCollection enumFields = new PropertyDescriptorCollection(null);
-		        for (int i = 0; i < fields.Length; i++)
-		        {
-		            int enumValue = (int)Reflector.GetField(null, fields[i]);
-		            if (enumValue != 0 && IsSingleFlag(enumValue))
-		            {
-		                enumFields.Add(new EnumFieldDescriptor(enumType, fields[i].Name, fields[i].GetCustomAttributes(false), context));
-		            }
-		        }
-		        return enumFields;
-		    }
-		    return base.GetProperties(context, value, attributes);
-		}
-
-        private static bool IsSingleFlag(int i)
+        /// <summary>
+        /// This class represents an enumeration field in the property grid.
+        /// </summary>
+        protected class EnumFieldDescriptor : SimplePropertyDescriptor
         {
-            if (i == 0)
-                return false;
+            #region Fields
 
-            uint u = (uint)i;
-            while ((u & 1U) == 0U)
+            private readonly ulong flagValue;
+            private readonly ulong defaultValue;
+            private readonly FieldInfo valueField;
+            private readonly ITypeDescriptorContext context;
+            private readonly Attribute[] attributes;
+
+            #endregion
+
+            #region Properties
+
+            /// <summary>
+            /// Gets the collection of attributes for this member.
+            /// </summary>
+            public override AttributeCollection Attributes => new AttributeCollection(attributes.Union(new Attribute[] { RefreshPropertiesAttribute.Repaint }).ToArray());
+
+            #endregion
+
+            #region Constructors
+
+            /// <summary>
+            /// Creates an instance of the enumeration field descriptor class.
+            /// </summary>
+            /// <param name="componentType">The type of the enumeration.</param>
+            /// <param name="name">The name of the <see langword="enum"/> flag field.</param>
+            /// <param name="flagValue">The value of the <see langword="enum"/> flag.</param>
+            /// <param name="context">The current context or <see langword="null"/> if no context exists.</param>
+            /// <param name="defaultValue">The default value of the <see langword="enum"/> instance specified by the <see cref="DefaultValueAttribute"/> of its property or <see langword="null"/>.</param>
+            /// <param name="valueField">The underlying value field of the <see langword="enum"/> type.</param>
+            /// <param name="attributes">Custom attributes of the <see langword="enum"/> flag field.</param>
+            public EnumFieldDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
+                : base(componentType, name, typeof(bool))
             {
-                u >>= 1;
+                this.flagValue = flagValue;
+                this.defaultValue = defaultValue;
+                this.valueField = valueField;
+                this.context = context;
+                this.attributes = attributes;
             }
 
-            return u == 1U;
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            /// <summary>
+            /// Retrieves the value of the <see cref="Enum"/> flag.
+            /// </summary>
+            /// <param name="component">The <see cref="Enum"/> instance to retrieve the flag value for.</param>
+            /// <returns><see langword="true"/> if the enumeration field is included to the enumeration; otherwise, <see langword="false"/>.</returns>
+            public override object GetValue(object component)
+                => (((Enum)component).ToUInt64() & flagValue) != 0UL;
+
+            /// <summary>
+            /// Sets the value of the <see cref="Enum"/> flag.
+            /// </summary>
+            /// <param name="component">The <see cref="Enum"/> instance whose flag is about to be set.</param>
+            /// <param name="value">The <see cref="bool"/> value of the flag to set.</param>
+            public override void SetValue(object component, object value)
+            {
+                // bit manipulation as UInt64
+                bool bit = (bool)value;
+                ulong result = ((Enum)component).ToUInt64();
+                if (bit)
+                    result |= flagValue;
+                else
+                    result &= ~flagValue;
+
+                // trick: setting the value field in the enum instance so the boxed component variable will be reassigned
+                Reflector.SetField(component, valueField, Reflector.GetField(Enum.ToObject(ComponentType, result), valueField));
+
+                // if there is a context (eg. property grid), then we set the enum property of its parent instance
+                if (context?.Instance != null)
+                    context.PropertyDescriptor?.SetValue(context.Instance, component);
+            }
+
+            /// <summary>
+            /// Retrieves a value indicating whether the enumeration
+            /// field is set to a non-default value.
+            /// </summary>
+            public override bool ShouldSerializeValue(object component) =>
+                // ReSharper disable once AssignNullToNotNullAttribute
+                !Equals(GetValue(component), GetDefaultValue());
+
+            /// <summary>
+            /// Resets the enumeration field to its default value.
+            /// </summary>
+            public override void ResetValue(object component) => SetValue(component, GetDefaultValue());
+
+            /// <summary>
+            /// Retrieves a value indicating whether the enumeration
+            /// field can be reset to the default value.
+            /// </summary>
+            public override bool CanResetValue(object component) => ShouldSerializeValue(component);
+
+            #endregion
+
+            #region Private Methods
+
+            /// <summary>
+            /// Retrieves the default value of the <see langword="enum"/> flag.
+            /// </summary>
+            private object GetDefaultValue() => (defaultValue & flagValue) != 0UL;
+
+            #endregion
+
+            #endregion
         }
 
-		public override bool GetPropertiesSupported(ITypeDescriptorContext context)
-		{
-		    return context != null || base.GetPropertiesSupported(context);
-		}
+        #endregion
 
-	    public override bool GetStandardValuesSupported(ITypeDescriptorContext context)
-		{
-			return false;
-		}
-		#endregion
-	}
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Creates an instance of the FlagsEnumConverter class.
+        /// </summary>
+        /// <param name="type">The type of the enumeration.</param>
+        public FlagsEnumConverter(Type type) : base(type) { }
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Retrieves the property descriptors for the enumeration fields.
+        /// These property descriptors will be used by the property grid
+        /// to show separate enumeration fields.
+        /// </summary>
+        /// <param name="context">The current context.</param>
+        /// <param name="value">A value of an enumeration type.</param>
+        /// <param name="attributes">An array of type <see cref="T:System.Attribute"/> that is used as a filter.</param>
+        public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
+        {
+            Type enumType = value.GetType();
+            if (!enumType.IsEnum)
+                throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType, typeof(Enum)), nameof(value));
+
+            // Obtaining enum fields by reflection. GetNames/Values could be also used but this way be get also the attributes.
+            FieldInfo[] fields = enumType.GetFields(BindingFlags.Static | BindingFlags.Public);
+            if (fields.Length == 0)
+                return base.GetProperties(context, value, attributes);
+
+            // this is how value field is obtained in Type.GetEnumUnderlyingType
+            FieldInfo valueField = enumType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)[0];
+            DefaultValueAttribute defaultAttr = context?.PropertyDescriptor?.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
+            ulong defaultValue = defaultAttr?.Value?.GetType() == enumType ? ((Enum)defaultAttr.Value).ToUInt64() : 0UL;
+            PropertyDescriptorCollection enumFields = new PropertyDescriptorCollection(null);
+            foreach (FieldInfo field in fields)
+            {
+                Enum enumValue = (Enum)Reflector.GetField(null, field);
+                if (enumValue.IsSingleFlag())
+                    enumFields.Add(new EnumFieldDescriptor(enumType, field.Name, enumValue.ToUInt64(), defaultValue, valueField, Attribute.GetCustomAttributes(field, false), context));
+            }
+
+            return enumFields;
+        }
+
+        /// <summary>
+        /// Returns whether this object supports properties, using the specified context.
+        /// </summary>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
+        /// <returns><see langword="true" /> if <see cref="TypeConverter.GetProperties(object)" /> should be called to find the properties of this object; otherwise, <see langword="false" />.</returns>
+        public override bool GetPropertiesSupported(ITypeDescriptorContext context) => true;
+
+        /// <summary>
+        /// Gets whether this object supports a standard set of values that can be picked from a list using the specified context.
+        /// </summary>
+        /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context.</param>
+        /// <returns>This method always returns <see langword="false" />.</returns>
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => false;
+
+        #endregion
+    }
 }

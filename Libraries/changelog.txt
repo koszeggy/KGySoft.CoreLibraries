@@ -6,6 +6,11 @@
 
 2018 - ez majd verzióra átírni
 
+* KGySoft.ComponentModel namespace:
+===================================
++ New type converter: BinaryTypeConverter: A TypeConverter that can convert any type to byte[] or string.
+- FlagsEnumConverter fix: Now works for all enum types of any underlying type.
+
 + KGySoft.Libraries.Resources namespace:
 ========================================
 + ResXDataNode: Like System.Resources.ResXDataNode with more functionality. Makes possible to obtain every information

@@ -69,7 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ComponentModel\BinaryTypeConverter.cs" />
-    <Compile Include="ComponentModel\FlagsEnumConverter - Copy.cs" />
+    <Compile Include="ComponentModel\FlagsEnumConverter.cs" />
     <Compile Include="Libraries\Annotations\Annotations.cs" />
     <Compile Include="Libraries\Diagnostics\DiagnosticTools.cs">
     </Compile>
@@ -191,7 +191,6 @@
     <Compile Include="Libraries\_Extensions\_Structs\Range.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ComponentModel\EncodingConverter.cs" />
-    <Compile Include="ComponentModel\FlagsEnumConverter.cs" />
     <Compile Include="ComponentModel\VersionConverter.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -209,7 +208,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
