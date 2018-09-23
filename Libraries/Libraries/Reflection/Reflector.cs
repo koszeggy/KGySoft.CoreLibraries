@@ -8,8 +8,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Threading;
-
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using KGySoft.Libraries.Resources;
 using KGySoft.Libraries.WinApi;
 

@@ -19,7 +19,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using KGySoft.Libraries.Resources;
 
 #endregion

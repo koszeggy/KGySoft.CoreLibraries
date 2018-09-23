@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using _PerformanceTest.Libraries.Reflection;
 

@@ -5,7 +5,7 @@ using System.Collections;
 
 #endregion
 
-namespace KGySoft.Libraries.Collections
+namespace KGySoft.Collections
 {
     /// <summary>
     /// Provides a non-generic access to the <see cref="Cache{TKey,TValue}"/> class.

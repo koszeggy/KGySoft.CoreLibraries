@@ -6,8 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
-
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 

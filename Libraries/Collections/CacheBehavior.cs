@@ -1,4 +1,4 @@
-﻿namespace KGySoft.Libraries.Collections
+﻿namespace KGySoft.Collections
 {
     /// <summary>
     /// Possible behaviors of <see cref="Cache{TKey,TValue}"/> when the cache store is full and an element has to be removed.

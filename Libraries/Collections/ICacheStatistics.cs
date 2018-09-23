@@ -1,4 +1,4 @@
-﻿namespace KGySoft.Libraries.Collections
+﻿namespace KGySoft.Collections
 {
     /// <summary>
     /// Represents cache statistics retrieved by <see cref="Cache{TKey,TValue}.GetStatistics"/>.

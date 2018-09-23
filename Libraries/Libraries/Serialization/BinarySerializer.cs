@@ -5,8 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 
 namespace KGySoft.Libraries.Serialization
 {

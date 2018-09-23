@@ -5,8 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using KGySoft.Libraries.Resources;
 
 #endregion

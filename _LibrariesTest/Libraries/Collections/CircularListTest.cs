@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using KGySoft.Collections;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

@@ -9,11 +9,11 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using KGySoft.Collections;
 #if !NET35
 using System.Threading.Tasks;
 #endif
 using KGySoft.Libraries;
-using KGySoft.Libraries.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Extensions

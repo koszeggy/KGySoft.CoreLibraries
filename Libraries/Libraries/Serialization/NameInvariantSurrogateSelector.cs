@@ -6,8 +6,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
-
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using KGySoft.Libraries.Reflection;
 
 namespace KGySoft.Libraries.Serialization

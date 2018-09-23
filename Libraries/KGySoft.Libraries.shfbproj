@@ -38,7 +38,8 @@ Contains the &lt;strong&gt;Reflector&lt;/strong&gt; class that provides most of 
 <NamespaceSummaryItem name="KGySoft.Libraries.Diagnostics" isDocumented="True">Contains diagnostic tools and &lt;strong&gt;Exception&lt;/strong&gt; utilities along with some generic debugger views.</NamespaceSummaryItem>
 <NamespaceSummaryItem name="KGySoft.Libraries.Collections" isDocumented="True">Contains generic collections such as &lt;strong&gt;Cache&lt;/strong&gt; or &lt;strong&gt;CircularList&lt;/strong&gt; classes.</NamespaceSummaryItem>
 <NamespaceSummaryItem name="KGySoft.Libraries.Resources" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" /></NamespaceSummaries>
+<NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
+<NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True">Contains generic collections.</NamespaceSummaryItem></NamespaceSummaries>
     <SyntaxFilters>Standard</SyntaxFilters>
     <CleanIntermediates>True</CleanIntermediates>
     <ApiFilter>

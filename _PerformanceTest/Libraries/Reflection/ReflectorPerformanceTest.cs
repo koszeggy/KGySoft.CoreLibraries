@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

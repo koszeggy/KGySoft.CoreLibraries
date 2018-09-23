@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Collections

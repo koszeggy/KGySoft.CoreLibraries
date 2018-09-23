@@ -8,15 +8,16 @@ using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
 using KGySoft.Annotations;
+using KGySoft.Libraries;
 using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 
 #endregion
 
-namespace KGySoft.Libraries.Collections
+namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent; user needs only to read the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property) to retrieve items.
+    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent; user needs only to read the indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property) to retrieve items.
     /// When a non-existing key is accessed, then item is loaded automatically by the loader function that was passed to one of the constructors.
     /// If the cache is full (elements <see cref="Count"/> reaches the <see cref="Capacity"/>) and a new element has to be stored, then
     /// the oldest or least recent used element (depends on the value of <see cref="Behavior"/>) is removed from the cache.
@@ -37,7 +38,7 @@ namespace KGySoft.Libraries.Collections
     /// <item><term>Associative access</term><description>Accessing elements works the same way as in case of the <see cref="Dictionary{TKey,TValue}"/> type.
     /// <see cref="Cache{TKey,TValue}"/> implements both the generic <see cref="IDictionary{TKey,TValue}"/> and the non-generic <see cref="IDictionary"/> interfaces so can be
     /// used similarly as <see cref="Dictionary{TKey,TValue}"/> or <see cref="Hashtable"/> types.</description></item>
-    /// <item><term>Transparency</term><description>Users of the cache need only to read the cache by its indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property).
+    /// <item><term>Transparency</term><description>Users of the cache need only to read the cache by its indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property).
     /// If needed, elements will be automatically loaded on the first access.</description></item>
     /// <item><term>Size management</term><description><see cref="Cache{TKey,TValue}"/> type has a <see cref="Capacity"/>, which is the allowed maximal elements count. If the cache is full, the
     /// oldest or least recent used element will be automatically removed from the cache (see <see cref="Behavior"/> property).</description></item>
@@ -917,7 +918,7 @@ namespace KGySoft.Libraries.Collections
         /// </summary>
         /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>)</param>
         /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by calling the
-        /// <see cref="GetValue">GetValue</see> method or by reading the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)">indexer</see>.
+        /// <see cref="GetValue">GetValue</see> method or by reading the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see>.
         /// If <see langword="null"/>, then similarly to a regular <see cref="Dictionary{TKey,TValue}"/>, a <see cref="KeyNotFoundException"/> will be thrown on accessing a non-existing key.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
         /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
@@ -1013,14 +1014,14 @@ namespace KGySoft.Libraries.Collections
         /// <returns>A <typeparamref name="TValue"/> instance that was retrieved by the item loader that was used to initialize this <see cref="Cache{TKey,TValue}"/> instance.</returns>
         /// <remarks>
         /// <para>To get a value from the <see cref="Cache{TKey,TValue}"/>, and using the item loader only when <paramref name="key"/> does not exist in the cache,
-        /// read the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property.</para>
+        /// read the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property.</para>
         /// <para>The loaded value will be stored in the <see cref="Cache{TKey,TValue}"/>. If a value already existed in the cache for the given <paramref name="key"/>, then the value will be replaced.</para>
         /// <para><note type="caution">Do not use this method when the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader.</note></para>
         /// <para>The cost of this method depends on the cost of the item loader function that was passed to the constructor. Handling the already loaded value approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader.</exception>
-        /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
+        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         public TValue GetValueUncached(TKey key)
         {
             if (key == null)
@@ -1477,17 +1478,17 @@ namespace KGySoft.Libraries.Collections
         /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
         /// <remarks>
         /// <para>You need to call this method only when this <see cref="Cache{TKey,TValue}"/> instance was initialized without using an item loader.
-        /// Otherwise, you need only to read the get accessor of the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property),
+        /// Otherwise, you need only to read the get accessor of the indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property),
         /// which automatically invokes the item loader to add new items.</para>
         /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
-        /// In contrast, using the setter of the indexer (<see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property) replaces the old value with the new one.</para>
+        /// In contrast, using the setter of the indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property) replaces the old value with the new one.</para>
         /// <para>If you want to renew an element in the evaluation order, use the <see cref="Touch"/> method.</para>
         /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/> this method approaches an O(1) operation. Otherwise, when the capacity of the inner storage must be increased to accommodate the new element,
         /// this method becomes an O(n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
-        /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
+        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         public void Add(TKey key, TValue value)
         {
             if (key == null)

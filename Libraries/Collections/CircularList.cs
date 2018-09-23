@@ -7,13 +7,13 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-
+using KGySoft.Libraries;
 using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 
 #endregion
 
-namespace KGySoft.Libraries.Collections
+namespace KGySoft.Collections
 {
     /// <summary>
     /// Implements an <see cref="IList{T}"/> where inserting/removing at the beginning/end position are O(1) operations.

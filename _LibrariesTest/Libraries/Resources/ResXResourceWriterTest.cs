@@ -9,13 +9,12 @@ using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-
+using KGySoft.Collections;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using KGySoft.ComponentModel;
 using KGySoft.Drawing;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 using KGySoft.Libraries.Serialization;

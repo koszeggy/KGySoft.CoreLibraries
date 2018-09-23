@@ -6,6 +6,10 @@
 
 2018 - ez majd verzióra átírni
 
+! KGySoft.Collections namespace:
+================================
+! Moved here from the KGySoft.Libraries.Collections namespace
+
 * KGySoft.ComponentModel namespace:
 ===================================
 + New type converter: BinaryTypeConverter: A TypeConverter that can convert any type to byte[] or string.
@@ -25,8 +29,9 @@
 ! KGySoft.Libraries namespace:
 ==============================
 
-! Crc32 class: has been moved to the KGySoft.Security.Cryptography namespace
+! Crc32 class: Moved to the KGySoft.Security.Cryptography namespace
 ! Unicode class: Removed
+! KGySoft.Libraries.Collections namespace: Moved to the KGySoft.Collections namespace
 + New DateTimeExtensions class
   + AsUtc method
 + New DictionaryExtensions class
@@ -75,7 +80,7 @@
 ==========================================
 
 ! Crc32:
-  ! Has been moved here from the KGySoft.Libraries namespace
+  ! Moved here from the KGySoft.Libraries namespace
   + Lookup tables for different polynomials are now cached.
   + Now uses the slice-by-16 technique for better performance.
 + SecureRandom: A RandomNumberGenerator wrapper for generating cryptographically secure random numbers, which is compatible with the

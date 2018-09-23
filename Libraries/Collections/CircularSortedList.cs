@@ -5,13 +5,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-
+using KGySoft.Libraries;
 using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 
 #endregion
 
-namespace KGySoft.Libraries.Collections
+namespace KGySoft.Collections
 {
 
     /// <summary>
@@ -953,9 +953,9 @@ namespace KGySoft.Libraries.Collections
         /// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
         /// <remarks>
         /// <para>A key cannot be <see langword="null"/>, but a value can be, if the type of values in the sorted list, <typeparamref name="TValue"/>, is a reference or <see cref="Nullable{T}"/> type.</para>
-        /// <para>You can also use the <see cref="P:KGySoft.Libraries.Collections.CircularSortedList`2.Item(`0)"/> property to add new elements by setting the value of a
+        /// <para>You can also use the <see cref="P:KGySoft.Collections.CircularSortedList`2.Item(`0)"/> property to add new elements by setting the value of a
         /// key that does not exist in the <see cref="CircularSortedList{TKey,TValue}"/>; for example, <code>myCollection["myNonexistentKey"] = myValue</code>.
-        /// However, if the specified key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>, setting the <see cref="P:KGySoft.Libraries.Collections.CircularSortedList`2.Item(`0)"/> property
+        /// However, if the specified key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>, setting the <see cref="P:KGySoft.Collections.CircularSortedList`2.Item(`0)"/> property
         /// overwrites the old value. In contrast, the Add method does not modify existing elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the <see cref="CircularSortedList{TKey,TValue}"/> is increased by
         /// automatically reallocating the array in internal <see cref="CircularList{T}"/>, and the existing elements are copied to the new array before the new element is added.</para>

@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
-using KGySoft.Libraries.Collections;
+using KGySoft.Collections;
 
 namespace KGySoft.Libraries.Serialization
 {
