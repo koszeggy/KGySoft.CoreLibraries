@@ -8,8 +8,6 @@ namespace KGySoft.Libraries
 {
     using System.Reflection;
 
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// File utilities.
     /// </summary>

@@ -26,10 +26,14 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
+using KGySoft.Libraries;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Enums.Extensions;
+using KGySoft.Resources.Interfaces;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific resources at run time.

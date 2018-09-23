@@ -29,11 +29,14 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using KGySoft.Libraries;
 using KGySoft.Reflection;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Interfaces;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.

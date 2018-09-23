@@ -21,7 +21,7 @@ using KGySoft.Reflection;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     internal class DataNodeInfo
     {

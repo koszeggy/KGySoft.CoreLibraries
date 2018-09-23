@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Threading;
 using KGySoft.Diagnostics;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 
 #endregion
 

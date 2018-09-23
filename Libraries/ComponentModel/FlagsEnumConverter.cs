@@ -22,7 +22,6 @@ using System.Linq;
 using System.Reflection;
 
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection;
 
 #endregion

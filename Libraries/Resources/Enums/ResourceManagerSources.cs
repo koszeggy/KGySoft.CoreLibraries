@@ -14,7 +14,9 @@
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+using KGySoft.Libraries;
+
+namespace KGySoft.Resources.Enums
 {
     /// <summary>
     /// Represents the possible sources of <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>

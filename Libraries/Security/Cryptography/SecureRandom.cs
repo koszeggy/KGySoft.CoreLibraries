@@ -18,7 +18,6 @@
 
 using System;
 using System.Security.Cryptography;
-using KGySoft.Libraries.Resources;
 
 #endregion
 

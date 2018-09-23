@@ -17,10 +17,11 @@
 #region Usings
 
 using System;
+using KGySoft.Libraries;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Enums.Extensions
 {
     internal static class AutoAppendOptionsExtensions
     {

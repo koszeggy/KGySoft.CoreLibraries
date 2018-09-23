@@ -9,7 +9,6 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using KGySoft.ComponentModel;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection;
 
 namespace KGySoft.Libraries.Serialization

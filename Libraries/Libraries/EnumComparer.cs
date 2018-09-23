@@ -10,8 +10,6 @@ using KGySoft.Libraries.Serialization;
 
 namespace KGySoft.Libraries
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Efficient <see cref="IEqualityComparer{T}"/> and <see cref="IComparer{T}"/> implementation for <see cref="Enum"/> types.
     /// Can be used for example in <see cref="Dictionary{TKey,TValue}"/>, <see cref="SortedList{TKey,TValue}"/> or <see cref="Cache{TKey,TValue}"/> instances with enum key,

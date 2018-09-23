@@ -11,7 +11,6 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
 

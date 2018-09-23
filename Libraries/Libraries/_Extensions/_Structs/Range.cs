@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Libraries
 {

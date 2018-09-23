@@ -25,7 +25,7 @@ using KGySoft.Reflection;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a link to an external resource.

@@ -22,7 +22,7 @@ using System.Threading;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     [Serializable]
     internal sealed class ResXNullRef : IObjectReference

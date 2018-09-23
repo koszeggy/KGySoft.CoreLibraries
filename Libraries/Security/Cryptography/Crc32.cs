@@ -20,7 +20,6 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using KGySoft.Collections;
-using KGySoft.Libraries.Resources;
 
 #endregion
 

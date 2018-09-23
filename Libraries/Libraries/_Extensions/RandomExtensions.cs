@@ -23,7 +23,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using KGySoft.Libraries.Resources;
 using KGySoft.Security.Cryptography;
 
 #endregion

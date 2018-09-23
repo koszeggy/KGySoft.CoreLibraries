@@ -5,7 +5,7 @@ using System.IO;
 using System.Resources;
 using System.Runtime.CompilerServices;
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Contains classes for resource management, which support read-write access directly to .resx files (<see cref="ResXResourceManager"/>) or even combined access to compiled and .resx resources

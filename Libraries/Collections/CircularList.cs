@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading;
 using KGySoft.Diagnostics;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 
 #endregion
 

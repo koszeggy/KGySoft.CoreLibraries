@@ -24,7 +24,7 @@ using System.Resources;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Interfaces
 {
     /// <summary>
     /// Represents a <see cref="ResourceSet"/> class that can hold replaceable resources.

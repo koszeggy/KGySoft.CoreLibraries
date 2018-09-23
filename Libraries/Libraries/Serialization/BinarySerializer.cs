@@ -9,8 +9,6 @@ using KGySoft.Collections;
 
 namespace KGySoft.Libraries.Serialization
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Provides public static methods for binary serialization. Exception with struct serialization routines,
     /// serialization is performed by a <see cref="BinarySerializationFormatter"/> instance.

@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using KGySoft.Collections;
-using KGySoft.Libraries.Resources;
 
 #endregion
 

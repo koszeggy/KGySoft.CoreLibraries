@@ -19,17 +19,6 @@
 + New type converter: BinaryTypeConverter: A TypeConverter that can convert any type to byte[] or string.
 - FlagsEnumConverter fix: Now works for all enum types of any underlying type.
 
-+ KGySoft.Libraries.Resources namespace:
-========================================
-+ ResXDataNode: Like System.Resources.ResXDataNode with more functionality. Makes possible to obtain every information
-  of the raw XML data before serializing.
-  Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
-+ ResXFileRef class: Like System.Resources.ResXFileRef with some improvements
-  Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
-+ ResXResourceReader: ...
-
-+ ... TODO
-
 ! KGySoft.Libraries namespace:
 ==============================
 
@@ -85,6 +74,17 @@
 ! KGySoft.Reflection namespace:
 ================================
 ! Moved here from the KGySoft.Libraries.Reflection namespace
+
++ KGySoft.Resources namespace:
+========================================
++ ResXDataNode: Like System.Resources.ResXDataNode with more functionality. Makes possible to obtain every information
+  of the raw XML data before serializing.
+  Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
++ ResXFileRef class: Like System.Resources.ResXFileRef with some improvements
+  Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
++ ResXResourceReader: ...
+
++ ... TODO
 
 + KGySoft.Security.Cryptography namespace:
 ==========================================

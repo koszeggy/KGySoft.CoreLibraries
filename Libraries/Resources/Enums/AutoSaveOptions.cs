@@ -17,10 +17,11 @@
 #region Usings
 
 using System;
+using KGySoft.Libraries;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Enums
 {
     /// <summary>
     /// Represents the auto saving options of a <see cref="DynamicResourceManager"/> instance.

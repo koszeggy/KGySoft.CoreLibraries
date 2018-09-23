@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading;
 using KGySoft.Collections;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection.WinApi;
 
 namespace KGySoft.Reflection

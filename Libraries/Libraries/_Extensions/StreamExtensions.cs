@@ -19,8 +19,6 @@
 using System;
 using System.IO;
 
-using KGySoft.Libraries.Resources;
-
 #endregion
 
 namespace KGySoft.Libraries

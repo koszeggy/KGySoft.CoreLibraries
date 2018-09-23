@@ -20,9 +20,9 @@ using System;
 using System.Globalization;
 using System.Resources;
 using System.Threading;
-
-using KGySoft.Libraries.Resources;
-
+using KGySoft.Resources;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Enums.Extensions;
 using Microsoft.Win32;
 
 #endregion

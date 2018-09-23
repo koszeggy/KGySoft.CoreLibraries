@@ -22,8 +22,10 @@ using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Xml;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Interfaces;
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.

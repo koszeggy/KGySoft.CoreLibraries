@@ -18,8 +18,6 @@
 
 using System;
 
-using KGySoft.Libraries.Resources;
-
 #endregion
 
 namespace KGySoft.Libraries

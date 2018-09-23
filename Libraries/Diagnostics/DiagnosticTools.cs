@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection;
 
 namespace KGySoft.Diagnostics

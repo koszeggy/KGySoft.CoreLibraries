@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: ResXEnumeratorModes.cs
+//  File: IExpandoResourceSetInternal.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
 //
@@ -14,14 +14,25 @@
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Interfaces
 {
-    internal enum ResXEnumeratorModes
+    /// <summary>
+    /// Represents a class that can hold replaceable resources
+    /// </summary>
+    internal interface IExpandoResourceSetInternal
     {
-        Resources,
+        #region Properties
 
-        Metadata,
+        bool SafeMode { set; }
 
-        Aliases
+        #endregion
+
+        #region Methods
+
+        object GetResource(string name, bool ignoreCase, bool isString, bool asSafe);
+
+        object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe);
+
+        #endregion
     }
 }

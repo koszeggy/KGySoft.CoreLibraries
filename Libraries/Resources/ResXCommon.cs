@@ -19,11 +19,12 @@
 using System;
 using System.Runtime.Serialization;
 using System.Xml;
+using KGySoft.Libraries;
 using KGySoft.Reflection;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     internal static class ResXCommon
     {

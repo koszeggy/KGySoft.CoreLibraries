@@ -20,10 +20,11 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Resources;
+using KGySoft.Resources.Enums;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Interfaces
 {
     /// <summary>
     /// Represents a <see cref="ResourceManager"/> with write capabilities.

@@ -20,10 +20,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Interfaces;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Provides an enumerator for resx resource classes, which have already cached resource data.

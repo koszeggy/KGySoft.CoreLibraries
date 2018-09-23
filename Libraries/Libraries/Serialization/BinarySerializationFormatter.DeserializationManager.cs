@@ -9,8 +9,6 @@ using KGySoft.Reflection;
 
 namespace KGySoft.Libraries.Serialization
 {
-    using KGySoft.Libraries.Resources;
-
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>

@@ -14,7 +14,9 @@
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+using KGySoft.Resources.Interfaces;
+
+namespace KGySoft.Resources.Enums
 {
     /// <summary>
     /// Represents the retrieval behavior of an <see cref="IExpandoResourceSet"/> in <see cref="IExpandoResourceManager.GetExpandoResourceSet">IExpandoResourceManager.GetExpandoResourceSet</see> method.

@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: AutoSaveErrorEventArgs.cs
+//  File: IResXResourceContainer.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
 //
@@ -16,33 +16,35 @@
 
 #region Usings
 
-using System;
-using System.ComponentModel;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Interfaces
 {
     /// <summary>
-    /// Provides data for the <see cref="DynamicResourceManager.AutoSaveError"/> event.
+    /// Represents a class that can contain cached ResX resources: resource entries, meta and aliases.
     /// </summary>
-    public sealed class AutoSaveErrorEventArgs : HandledEventArgs
+    internal interface IResXResourceContainer
     {
         #region Properties
 
-        /// <summary>
-        /// Gets the <see cref="System.Exception"/> instance that occurred on auto saving.
-        /// </summary>
-        public Exception Exception { get; }
+        ICollection<KeyValuePair<string, ResXDataNode>> Resources { get; }
 
-        #endregion
+        ICollection<KeyValuePair<string, ResXDataNode>> Metadata { get; }
 
-        #region Constructors
+        ICollection<KeyValuePair<string, string>> Aliases { get; }
 
-        internal AutoSaveErrorEventArgs(Exception exception) : base(false)
-        {
-            Exception = exception;
-        }
+        bool SafeMode { get; }
+
+        bool AutoFreeXmlData { get; }
+
+        ITypeResolutionService TypeResolver { get; }
+
+        string BasePath { get; }
+
+        int Version { get; }
 
         #endregion
     }

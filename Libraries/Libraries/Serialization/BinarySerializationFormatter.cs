@@ -54,8 +54,6 @@ using KGySoft.Reflection;
 */
 namespace KGySoft.Libraries.Serialization
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Serializes objects in a more effective(*) way than <see cref="BinaryFormatter"/>.
     /// Natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.

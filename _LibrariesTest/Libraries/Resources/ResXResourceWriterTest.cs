@@ -15,9 +15,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KGySoft.ComponentModel;
 using KGySoft.Drawing;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 using KGySoft.Libraries.Serialization;
 using KGySoft.Reflection;
+using KGySoft.Resources;
 using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 using SystemResXResourceReader = System.Resources.ResXResourceReader;
 

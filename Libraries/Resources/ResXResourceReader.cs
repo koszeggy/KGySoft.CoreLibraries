@@ -29,10 +29,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 using KGySoft.Libraries.Serialization;
 using KGySoft.Reflection;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Interfaces;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
 #pragma warning disable 618
     /// <summary>

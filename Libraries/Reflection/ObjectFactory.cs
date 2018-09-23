@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using KGySoft.Libraries.Resources;
 
 namespace KGySoft.Reflection
 {

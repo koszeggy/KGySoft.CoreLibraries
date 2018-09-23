@@ -18,11 +18,13 @@
 
 using System;
 using KGySoft.Annotations;
+using KGySoft.Libraries;
 using KGySoft.Reflection;
+using KGySoft.Resources;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft
 {
     /// <summary>
     /// Contains the IDs of string resources.

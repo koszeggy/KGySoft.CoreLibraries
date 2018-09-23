@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 using System.Resources;
-using KGySoft.Libraries.Resources;
+using KGySoft.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest.Libraries.Resources

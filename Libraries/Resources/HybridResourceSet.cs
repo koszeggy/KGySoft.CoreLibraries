@@ -21,10 +21,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Resources;
+using KGySoft.Resources.Interfaces;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource set of hybrid sources (both resx and compiled source).

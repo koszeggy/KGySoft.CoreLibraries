@@ -24,8 +24,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-using KGySoft.Libraries.Resources;
-
 #endregion
 
 namespace KGySoft.Libraries

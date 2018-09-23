@@ -25,7 +25,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using KGySoft.Collections;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection;
 
 #endregion

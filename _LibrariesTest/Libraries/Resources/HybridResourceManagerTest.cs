@@ -4,8 +4,9 @@ using System.Globalization;
 using System.Linq;
 using System.Resources;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Resources;
 using KGySoft.Reflection;
+using KGySoft.Resources;
+using KGySoft.Resources.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Resources

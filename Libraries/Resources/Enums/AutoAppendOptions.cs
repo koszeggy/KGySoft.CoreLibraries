@@ -19,10 +19,11 @@
 using System;
 using System.Globalization;
 using System.Resources;
+using KGySoft.Libraries;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources.Enums
 {
     /// <summary>
     /// Represents the resource auto append options of a <see cref="DynamicResourceManager"/> instance.

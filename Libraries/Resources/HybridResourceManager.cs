@@ -26,11 +26,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using KGySoft.Libraries;
 using KGySoft.Reflection;
+using KGySoft.Resources.Enums;
+using KGySoft.Resources.Interfaces;
 
 #endregion
 
-namespace KGySoft.Libraries.Resources
+namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific resources at run time.
