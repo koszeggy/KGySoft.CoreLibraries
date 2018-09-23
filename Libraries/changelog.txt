@@ -37,6 +37,7 @@
 ! Unicode class: Removed
 ! KGySoft.Libraries.Collections namespace: Moved to the KGySoft.Collections namespace
 ! KGySoft.Libraries.Diagnostics namespace: Moved to the KGySoft.Diagnostics namespace
+! KGySoft.Libraries.Reflection namespace: Moved to the KGySoft.Reflection namespace
 + New DateTimeExtensions class
   + AsUtc method
 + New DictionaryExtensions class
@@ -80,6 +81,10 @@
   + Supporting objects without default constructor, if they are fields or properties of a parent object,
     which are not null after creating the parent.
   + Supporting types with conflicting member names (non-virtual redefined members in derived classes).
+
+! KGySoft.Reflection namespace:
+================================
+! Moved here from the KGySoft.Libraries.Reflection namespace
 
 + KGySoft.Security.Cryptography namespace:
 ==========================================

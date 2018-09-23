@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Reflection;
+using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Base class of method (action or function) invokation classes.
     /// Provides static <see cref="GetMethodInvoker"/> method to obtain invoker of any method.

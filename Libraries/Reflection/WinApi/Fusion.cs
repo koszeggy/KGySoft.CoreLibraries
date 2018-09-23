@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace KGySoft.Libraries.WinApi
+namespace KGySoft.Reflection.WinApi
 {
 
     /// <summary>

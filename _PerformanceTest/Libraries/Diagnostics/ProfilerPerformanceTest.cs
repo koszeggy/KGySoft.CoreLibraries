@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using KGySoft.Diagnostics;
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest.Libraries.Diagnostics

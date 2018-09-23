@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using KGySoft.Collections;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest.Libraries.Collections

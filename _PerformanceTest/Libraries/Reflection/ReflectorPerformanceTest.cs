@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using KGySoft.Collections;
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest.Libraries.Reflection

@@ -29,8 +29,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
-
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 
 #endregion
 

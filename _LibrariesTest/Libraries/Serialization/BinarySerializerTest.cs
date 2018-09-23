@@ -15,8 +15,8 @@ using System.Security.Policy;
 using System.Text;
 using KGySoft.Collections;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
+using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Serialization

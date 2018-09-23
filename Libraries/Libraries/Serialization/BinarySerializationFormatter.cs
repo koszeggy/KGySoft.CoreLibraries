@@ -11,7 +11,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using KGySoft.Collections;
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 
 /* HOWTO
  * =====

@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
+using KGySoft.Reflection;
 
 namespace KGySoft.Libraries.Serialization
 {
-    using KGySoft.Libraries.Reflection;
-
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>

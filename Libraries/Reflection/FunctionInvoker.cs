@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection.Emit;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
     /// <summary>
     /// Function invoker for any parameters. Internal, cannot be instantiated from outside.

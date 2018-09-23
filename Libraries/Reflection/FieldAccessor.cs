@@ -2,10 +2,9 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-
 using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
     /// <summary>
     /// Field accessor class for getting and setting fields via dynamic delegates.

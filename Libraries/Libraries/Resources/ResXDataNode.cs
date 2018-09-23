@@ -29,9 +29,8 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
-
-using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Serialization;
+using KGySoft.Reflection;
 
 #endregion
 

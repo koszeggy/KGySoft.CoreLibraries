@@ -2,9 +2,8 @@
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-
-using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
+using KGySoft.Reflection;
 
 namespace KGySoft.Libraries.Serialization
 {

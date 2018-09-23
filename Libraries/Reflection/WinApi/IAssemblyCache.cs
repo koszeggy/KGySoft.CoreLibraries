@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
-namespace KGySoft.Libraries.WinApi
+
+namespace KGySoft.Reflection.WinApi
 {
     /// <summary>
     /// Represents the global assembly cache for use by the fusion technology.

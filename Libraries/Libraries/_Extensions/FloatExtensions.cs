@@ -18,8 +18,7 @@
 
 using System;
 using System.Globalization;
-
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 
 #endregion
 

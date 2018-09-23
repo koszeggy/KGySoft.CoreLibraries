@@ -21,8 +21,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Text;
-
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 
 #endregion
 

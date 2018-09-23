@@ -7,8 +7,8 @@ using System.Reflection;
 using System.Resources;
 using System.Security.Policy;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
+using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Resources

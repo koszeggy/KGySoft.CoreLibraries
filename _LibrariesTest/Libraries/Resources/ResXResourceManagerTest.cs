@@ -9,9 +9,9 @@ using System.Linq;
 using System.Resources;
 using System.Windows.Forms;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 using KGySoft.Libraries.Serialization;
+using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Resources

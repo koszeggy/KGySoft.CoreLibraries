@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
     internal sealed class IndexerAccessor: PropertyAccessor
     {

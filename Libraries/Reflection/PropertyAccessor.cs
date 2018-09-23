@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Reflection;
+using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Base class of property and indexer accessor classes.
     /// Provides static <see cref="GetPropertyAccessor"/> method to obtain invoker of any property or indexer.

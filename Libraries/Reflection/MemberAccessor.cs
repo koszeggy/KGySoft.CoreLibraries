@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using KGySoft.Collections;
+using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Base class of accessor classes that may access members without system reflection.
     /// </summary>

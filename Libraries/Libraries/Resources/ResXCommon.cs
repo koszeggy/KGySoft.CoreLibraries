@@ -19,8 +19,7 @@
 using System;
 using System.Runtime.Serialization;
 using System.Xml;
-
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 
 #endregion
 

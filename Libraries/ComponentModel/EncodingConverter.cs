@@ -22,7 +22,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using KGySoft.Libraries.Reflection;
+using KGySoft.Reflection;
 
 #endregion
 

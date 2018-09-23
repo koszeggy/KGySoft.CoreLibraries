@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Reflection;
 using KGySoft.Security.Cryptography;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

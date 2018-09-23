@@ -5,7 +5,7 @@ using System.Text;
 using System.Xml;
 
 // ReSharper disable InconsistentNaming - Properties are named here: Type_Member. Fields: accessorType_Member
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
     /// <summary>
     /// Contains lazy initialized well-known accessors used in the project.

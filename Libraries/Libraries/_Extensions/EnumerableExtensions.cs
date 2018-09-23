@@ -23,8 +23,8 @@ using System.Linq;
 using System.Reflection;
 using KGySoft.Annotations;
 using KGySoft.Collections;
-using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
+using KGySoft.Reflection;
 
 #endregion
 

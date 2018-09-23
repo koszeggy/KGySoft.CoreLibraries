@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.ComponentModel;
-using System.Globalization;
 using System.Text;
 using System.Threading;
 using KGySoft.Collections;
+using KGySoft.Libraries;
 using KGySoft.Libraries.Resources;
-using KGySoft.Libraries.WinApi;
+using KGySoft.Reflection.WinApi;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
     /// <summary>
     /// Possible reflection ways in methods of <see cref="Reflector"/> class.
@@ -492,7 +493,7 @@ namespace KGySoft.Libraries.Reflection
         /// Sets an instance property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties. To avoid ambiguity (in case of indexers), this method gets
         /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexerParameters"/> fit.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the property should be set.</param>
@@ -529,7 +530,7 @@ namespace KGySoft.Libraries.Reflection
         /// Sets an instance property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties. To avoid ambiguity (in case of indexers), this method gets
         /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexerParameters"/> fit.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the property should be set.</param>
@@ -552,7 +553,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Sets a static property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the property to set.</param>
@@ -577,7 +578,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Sets a static property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the property to set.</param>
@@ -596,7 +597,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Sets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
         /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
-        /// access, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// access, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <remarks>
@@ -704,7 +705,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Sets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
         /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
-        /// access, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// access, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <remarks>
@@ -838,7 +839,7 @@ namespace KGySoft.Libraries.Reflection
         /// Gets an instance property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties. To avoid ambiguity (in case of indexers), this method gets
         /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexerParameters"/> fit.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the property should be set.</param>
@@ -875,7 +876,7 @@ namespace KGySoft.Libraries.Reflection
         /// Gets an instance property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties. To avoid ambiguity (in case of indexers), this method gets
         /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexerParameters"/> fit.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the property should be set.</param>
@@ -898,7 +899,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Gets a static property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the property to set.</param>
@@ -923,7 +924,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Gets a static property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties.
-        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the property to set.</param>
@@ -941,7 +942,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Gets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
         /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
-        /// access, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// access, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the indexer should be get.</param>
@@ -1039,7 +1040,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Gets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
         /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
-        /// access, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// access, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <remarks>
@@ -1232,7 +1233,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs an instance method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided parameters (<paramref name="genericParameters"/> and <paramref name="parameters"/>) fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the method should be called.</param>
@@ -1272,7 +1273,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs an instance method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided parameters (<paramref name="genericParameters"/> and <paramref name="parameters"/>) fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the method should be called.</param>
@@ -1290,7 +1291,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs an instance method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided <paramref name="parameters"/> fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the method should be called.</param>
@@ -1319,7 +1320,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs an instance method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided <paramref name="parameters"/> fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the method should be called.</param>
@@ -1336,7 +1337,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs a static method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided parameters (<paramref name="genericParameters"/> and <paramref name="parameters"/>) fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the method to call.</param>
@@ -1369,7 +1370,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs a static method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided parameters (<paramref name="genericParameters"/> and <paramref name="parameters"/>) fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the method to call.</param>
@@ -1387,7 +1388,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs a static method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided <paramref name="parameters"/> fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the method to call.</param>
@@ -1410,7 +1411,7 @@ namespace KGySoft.Libraries.Reflection
         /// Runs a static method based on a method name given in <paramref name="methodName"/> parameter.
         /// Method can refer to either public or non-public methods. To avoid ambiguity, this method gets
         /// all of the methods of the same name and chooses the first one to which provided <paramref name="parameters"/> fit.
-        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Libraries.Reflection.ReflectionWays,object[])"/>
+        /// If you do not need the method name to be parsed from string, then it is recommended to use <see cref="RunMethod(object,System.Reflection.MethodInfo,System.Type[],KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the method to call.</param>
@@ -1471,7 +1472,7 @@ namespace KGySoft.Libraries.Reflection
 
         /// <summary>
         /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="Construct(System.Reflection.ConstructorInfo,KGySoft.Libraries.Reflection.ReflectionWays,object[])"/> overload
+        /// If you know the exact constructor to invoke use the <see cref="Construct(System.Reflection.ConstructorInfo,KGySoft.Reflection.ReflectionWays,object[])"/> overload
         /// for better performance.
         /// </summary>
         /// <param name="type">Type of the instance to create.</param>
@@ -1695,7 +1696,7 @@ namespace KGySoft.Libraries.Reflection
         /// Sets an instance field based on a field name given in <paramref name="fieldName"/> parameter.
         /// Field can refer to either public or non-public fields.
         /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="SetField(object,System.Reflection.FieldInfo,object,KGySoft.Libraries.Reflection.ReflectionWays)"/>
+        /// <see cref="SetField(object,System.Reflection.FieldInfo,object,KGySoft.Reflection.ReflectionWays)"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the field should be set.</param>
@@ -1749,7 +1750,7 @@ namespace KGySoft.Libraries.Reflection
         /// Sets a static field based on a field name given in <paramref name="fieldName"/> parameter.
         /// Field can refer to either public or non-public fields.
         /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="SetField(object,System.Reflection.FieldInfo,object,KGySoft.Libraries.Reflection.ReflectionWays)"/>
+        /// <see cref="SetField(object,System.Reflection.FieldInfo,object,KGySoft.Reflection.ReflectionWays)"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the field to set.</param>
@@ -1870,7 +1871,7 @@ namespace KGySoft.Libraries.Reflection
         /// Gets an instance field based on a field name given in <paramref name="fieldName"/> parameter.
         /// Field can refer to either public or non-public fields.
         /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Libraries.Reflection.ReflectionWays)"/>
+        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Reflection.ReflectionWays)"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the field value should be get.</param>
@@ -1895,7 +1896,7 @@ namespace KGySoft.Libraries.Reflection
         /// Gets an instance field based on a field name given in <paramref name="fieldName"/> parameter.
         /// Field can refer to either public or non-public fields.
         /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Libraries.Reflection.ReflectionWays)"/>
+        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Reflection.ReflectionWays)"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the field should be set.</param>
@@ -1916,7 +1917,7 @@ namespace KGySoft.Libraries.Reflection
         /// Gets a static field based on a field name given in <paramref name="fieldName"/> parameter.
         /// Field can refer to either public or non-public fields.
         /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Libraries.Reflection.ReflectionWays)"/>
+        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Reflection.ReflectionWays)"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the field to set.</param>
@@ -1939,7 +1940,7 @@ namespace KGySoft.Libraries.Reflection
         /// <summary>
         /// Gets a static field based on a field name given in <paramref name="fieldName"/> parameter.
         /// Field can refer to either public or non-public fields.
-        /// If you do not need the field name to be parsed from string, then it is recommended to use <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Libraries.Reflection.ReflectionWays)"/>
+        /// If you do not need the field name to be parsed from string, then it is recommended to use <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Reflection.ReflectionWays)"/>
         /// method for better performance.
         /// </summary>
         /// <param name="type">The type that contains the static the field to set.</param>

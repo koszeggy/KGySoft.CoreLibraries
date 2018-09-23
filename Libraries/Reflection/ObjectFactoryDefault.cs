@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
     /// <summary>
     /// Object factory for creating new instance of an object with default constructor

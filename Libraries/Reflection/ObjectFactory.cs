@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Reflection.Emit;
-using System.Linq.Expressions;
+using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Reflection
+namespace KGySoft.Reflection
 {
-    using KGySoft.Libraries.Resources;
-
     /// <summary>
     /// Base class of constructor invokation classes.
     /// Provides static <see cref="GetObjectFactory(System.Reflection.ConstructorInfo)"/> method to obtain invoker of any constructor.
