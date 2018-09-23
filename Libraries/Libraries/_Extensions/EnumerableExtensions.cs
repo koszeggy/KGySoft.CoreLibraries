@@ -21,7 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using KGySoft.Libraries.Annotations;
+using KGySoft.Annotations;
 using KGySoft.Libraries.Collections;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;

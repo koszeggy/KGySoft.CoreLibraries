@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
-using KGySoft.Libraries.Annotations;
+using KGySoft.Annotations;
 using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 

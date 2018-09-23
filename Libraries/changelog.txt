@@ -25,6 +25,7 @@
 ! KGySoft.Libraries namespace:
 ==============================
 
+! Crc32 class: has been moved to the KGySoft.Security.Cryptography namespace
 ! Unicode class: Removed
 + New DateTimeExtensions class
   + AsUtc method
@@ -69,3 +70,13 @@
   + Supporting objects without default constructor, if they are fields or properties of a parent object,
     which are not null after creating the parent.
   + Supporting types with conflicting member names (non-virtual redefined members in derived classes).
+
++ KGySoft.Security.Cryptography namespace:
+==========================================
+
+! Crc32:
+  ! Has been moved here from the KGySoft.Libraries namespace
+  + Lookup tables for different polynomials are now cached.
+  + Now uses the slice-by-16 technique for better performance.
++ SecureRandom: A RandomNumberGenerator wrapper for generating cryptographically secure random numbers, which is compatible with the
+  Random class, so all of the extensions in the RandomExtensions can be used also for the SecureRandom class.

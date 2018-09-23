@@ -70,7 +70,7 @@
   <ItemGroup>
     <Compile Include="ComponentModel\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\FlagsEnumConverter.cs" />
-    <Compile Include="Libraries\Annotations\Annotations.cs" />
+    <Compile Include="Annotations\Annotations.cs" />
     <Compile Include="Libraries\Diagnostics\DiagnosticTools.cs">
     </Compile>
     <Compile Include="Libraries\Diagnostics\DictionaryDebugView.cs" />
@@ -84,13 +84,11 @@
     <Compile Include="Libraries\Collections\CircularSortedList.cs" />
     <Compile Include="Libraries\Collections\ICache.cs" />
     <Compile Include="Libraries\Collections\ICacheStatistics.cs" />
-    <Compile Include="Libraries\Crc32.cs" />
     <Compile Include="Libraries\Diagnostics\CollectionDebugView.cs" />
     <Compile Include="Libraries\Enum.cs" />
     <Compile Include="Libraries\EnumComparer.cs" />
     <Compile Include="Libraries\Collections\CacheBehavior.cs" />
     <Compile Include="Libraries\EnumFormattingOptions.cs" />
-    <Compile Include="Libraries\SecureRandom.cs" />
     <Compile Include="Libraries\Serialization\XElementDeserializer.cs" />
     <Compile Include="Libraries\Serialization\XElementSerializer.cs" />
     <Compile Include="Libraries\Serialization\XmlDeserializerBase.cs" />
@@ -182,6 +180,9 @@
     <Compile Include="Libraries\WinApi\ASSEMBLY_INFO.cs" />
     <Compile Include="Libraries\WinApi\Fusion.cs" />
     <Compile Include="Libraries\WinApi\IAssemblyCache.cs" />
+    <Compile Include="Security\Cryptography\Crc32.cs" />
+    <Compile Include="Security\Cryptography\NamespaceDoc.cs" />
+    <Compile Include="Security\Cryptography\SecureRandom.cs" />
     <Compile Include="_.cs" />
     <None Include="LICENSE" />
     <Compile Include="Libraries\_Extensions\WaitHandleExtensions.cs" />
@@ -208,7 +209,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

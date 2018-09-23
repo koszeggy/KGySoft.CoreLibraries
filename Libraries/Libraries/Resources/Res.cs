@@ -17,7 +17,7 @@
 #region Usings
 
 using System;
-using KGySoft.Libraries.Annotations;
+using KGySoft.Annotations;
 using KGySoft.Libraries.Reflection;
 
 #endregion

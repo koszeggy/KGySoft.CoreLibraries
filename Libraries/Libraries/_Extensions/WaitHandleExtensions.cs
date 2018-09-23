@@ -21,7 +21,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using KGySoft.Libraries.Annotations;
+using KGySoft.Annotations;
 using KGySoft.Libraries.Resources;
 
 #endregion

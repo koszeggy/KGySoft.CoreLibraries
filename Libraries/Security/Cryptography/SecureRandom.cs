@@ -18,12 +18,11 @@
 
 using System;
 using System.Security.Cryptography;
-
 using KGySoft.Libraries.Resources;
 
 #endregion
 
-namespace KGySoft.Libraries
+namespace KGySoft.Security.Cryptography
 {
     /// <summary>
     /// Represents a secure random number generator, which uses a <see cref="RandomNumberGenerator"/> instance to produce

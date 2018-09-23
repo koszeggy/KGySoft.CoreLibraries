@@ -1,6 +1,6 @@
 ﻿using System;
+using KGySoft.Annotations;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Annotations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Extensions
