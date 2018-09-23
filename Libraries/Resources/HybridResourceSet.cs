@@ -21,7 +21,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Resources;
-using KGySoft.Resources.Interfaces;
 
 #endregion
 

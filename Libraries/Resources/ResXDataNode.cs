@@ -30,8 +30,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Serialization;
 using KGySoft.Reflection;
+using KGySoft.Serialization;
 
 #endregion
 

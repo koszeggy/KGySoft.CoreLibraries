@@ -27,9 +27,6 @@ using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
 using KGySoft.Libraries;
-using KGySoft.Resources.Enums;
-using KGySoft.Resources.Enums.Extensions;
-using KGySoft.Resources.Interfaces;
 
 #endregion
 
@@ -51,7 +48,7 @@ namespace KGySoft.Resources
     /// and <see cref="AutoSave"/> properties (see <see cref="AutoAppendOptions"/> and <see cref="AutoSaveOptions"/> enumerations).</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>,
     /// <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para><see cref="DynamicResourceManager"/> combines the functionality of <see cref="ResourceManager"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/>
     /// and extends these with the feature of auto expansion. It can be an ideal choice to use it as a resource manager of an application or a class library
     /// because it gives you freedom (or to the consumer of your library) to choose the strategy. If <see cref="AutoAppend"/> and <see cref="AutoSave"/> functionalities
@@ -91,9 +88,9 @@ namespace KGySoft.Resources
     /// <item><term>Unknown resources</term>
     /// <description>If <see cref="AutoAppendOptions.AddUnknownToInvariantCulture"/> option is enabled and an unknown resource is requested, then the resource set
     /// of the invariant culture will be appended by the newly requested resource. It also means that <see cref="MissingManifestResourceException"/> will never be thrown,
-    /// even if <see cref="HybridResourceManager.ThrowException"/> property is <see langword="true"/>. If the unknown resource is requested by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetString">GetString</see>
+    /// even if <see cref="HybridResourceManager.ThrowException"/> property is <see langword="true"/>. If the unknown resource is requested by <see cref="O:KGySoft.Resources.DynamicResourceManager.GetString">GetString</see>
     /// methods, then the value of the requested name will be the name itself prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see> property.
-    /// On the other hand, if the unknown resource is requested by the <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> methods, then a <see langword="null"/> value will be added.
+    /// On the other hand, if the unknown resource is requested by the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods, then a <see langword="null"/> value will be added.
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using KGySoft.Libraries.Resources;
@@ -925,7 +922,7 @@ namespace KGySoft.Resources
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
-        /// As a result, the subsequent <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> calls
+        /// As a result, the subsequent <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> calls
         /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
         /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> and <see cref="GetResourceSet">GetResourceSet</see> methods will return the resources with <see langword="null" /> value.</para>
@@ -954,8 +951,8 @@ namespace KGySoft.Resources
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <remarks>
         /// <para>If there is a binary resource defined for <paramref name="name" /> and <paramref name="culture" />,
-        /// then after this call the originally defined value will be returned by <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> method from the binary resources.
-        /// If you want to force hiding the binary resource and make <see cref="O:KGySoft.Libraries.Resources.DynamicResourceManager.GetObject">GetObject</see> to default to the parent <see cref="CultureInfo" /> of the specified <paramref name="culture" />,
+        /// then after this call the originally defined value will be returned by <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> method from the binary resources.
+        /// If you want to force hiding the binary resource and make <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> to default to the parent <see cref="CultureInfo" /> of the specified <paramref name="culture" />,
         /// then use the <see cref="SetObject">SetObject</see> method with a <see langword="null" /> value.</para>
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>

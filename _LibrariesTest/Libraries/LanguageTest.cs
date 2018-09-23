@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Threading;
+using KGySoft;
 using KGySoft.Libraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

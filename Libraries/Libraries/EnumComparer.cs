@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using KGySoft.Collections;
-using KGySoft.Libraries.Serialization;
 
 #endregion
 

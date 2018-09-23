@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Text;
-using KGySoft.Libraries.Serialization;
+using KGySoft.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 

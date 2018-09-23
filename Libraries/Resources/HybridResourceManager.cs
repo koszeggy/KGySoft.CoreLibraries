@@ -28,8 +28,6 @@ using System.Reflection;
 using System.Resources;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
-using KGySoft.Resources.Enums;
-using KGySoft.Resources.Interfaces;
 
 #endregion
 
@@ -48,7 +46,7 @@ namespace KGySoft.Resources
     /// Just like the <see cref="ResXResourceManager"/> it is an <see cref="IExpandoResourceManager"/> implementation. The replacement and newly added content can be saved into .resx files.</para>
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Expanding compiled resources created by Visual Studio</h1>
     /// <para>You can create compiled resources by Visual Studio and you can dynamically expand them by <see cref="HybridResourceManager"/>. The new and overridden content
     /// will be saved as .resx files. See the following example for a step-by-step guide.
@@ -161,25 +159,25 @@ namespace KGySoft.Resources
     /// // Test string in compiled invariant resource
     /// // Test string in compiled invariant resource]]></code>
     /// <para>Considering there are also .resx files in the background not just <see cref="string"/> and other <see cref="object"/> resources
-    /// can be obtained by <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> methods
+    /// can be obtained by <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> methods
     /// but metadata as well by <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. Please note that accessing aliases are not exposed
     /// by the <see cref="HybridResourceManager"/> class, but you can still access them via the <see cref="IExpandoResourceSet"/> type returned by the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method.
-    /// <note>Please note that unlike in case of <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> methods,
+    /// <note>Please note that unlike in case of <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> methods,
     /// there is no falling back to the parent cultures (as seen in the example above) for metadata accessed by the <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods.</note></para>
     /// <h1 class="heading">Safety<a name="safety">&#160;</a></h1>
     /// <para>Similarly to <see cref="ResXResourceSet"/>, <see cref="ResXResourceReader"/> and <see cref="ResXResourceManager"/>, the <see cref="HybridResourceManager"/>
-    /// class also has a <see cref="SafeMode"/> which changes the behavior of <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
-    /// and <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
+    /// class also has a <see cref="SafeMode"/> which changes the behavior of <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
+    /// and <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
     /// methods:
     /// <list type="bullet">
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, and the result is from a .resx resource, then the return value
-    /// of <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see>
+    /// of <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see>
     /// methods is a <see cref="ResXDataNode"/> rather than the resource or metadata value.
     /// This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source.
     /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.
     /// See also the third example at the <see cref="ResXResourceSet"/> class.</item>
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, and the result is from a .resx resource, then
-    /// <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see>
+    /// <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see>
     /// methods will not throw an <see cref="InvalidOperationException"/> even for non-string entries; they return the raw XML value instead.</item>
     /// </list>
     /// <note type="security">Even if <see cref="SafeMode"/> is <see langword="false"/>, loading a .resx content with corrupt or malicious entry
@@ -207,9 +205,9 @@ namespace KGySoft.Resources
     /// You can start even with pure compiled resources, add new content during runtime and save the changes (see the example above).</description></item>
     /// <item><term>Security</term>
     /// <description>During the initialization of <see cref="HybridResourceManager"/> and loading of a resource set from a .resx file no object is deserialized even if <see cref="SafeMode"/>
-    /// property is <see langword="false"/>. Objects are deserialized only when they are accessed (see <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>).
+    /// property is <see langword="false"/>. Objects are deserialized only when they are accessed (see <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>).
     /// If <see cref="SafeMode"/> is <see langword="true"/>, then security is even more increased because if an entry is from a .resx file, then
-    /// <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+    /// <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
     /// return a <see cref="ResXDataNode"/> instance instead of a deserialized object so you can check whether the resource or metadata
     /// can be treat as a safe object before actually deserializing it. See the <a href="#safety">Safety</a> section above for more details.</description></item>
     /// <item><term>Disposal</term>
@@ -387,8 +385,8 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets a value that indicates whether the resource manager allows case-insensitive resource lookups in the
-        /// <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
-        /// and <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see> methods.
+        /// <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
+        /// and <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see> methods.
         /// </summary>
         public override bool IgnoreCase
         {
@@ -412,10 +410,10 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx resource.
         /// For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
@@ -680,7 +678,7 @@ namespace KGySoft.Resources
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
         /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.
-        /// Unlike in case of <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.</param>
+        /// Unlike in case of <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.</param>
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
@@ -701,7 +699,7 @@ namespace KGySoft.Resources
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
         /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
-        /// Unlike in case of <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.</param>
+        /// Unlike in case of <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.</param>
         /// <returns>
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the metadata localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
@@ -750,7 +748,7 @@ namespace KGySoft.Resources
         /// stored for the specified <paramref name="culture"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
-        /// As a result, the subsequent <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> calls
+        /// As a result, the subsequent <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> calls
         /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
         /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> and <see cref="GetResourceSet">GetResourceSet</see> methods will return the resources with <see langword="null" /> value.</para>
@@ -778,8 +776,8 @@ namespace KGySoft.Resources
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <remarks>
         /// <para>If there is a binary resource defined for <paramref name="name" /> and <paramref name="culture" />,
-        /// then after this call the originally defined value will be returned by <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> method from the binary resources.
-        /// If you want to force hiding the binary resource and make <see cref="O:KGySoft.Libraries.Resources.HybridResourceManager.GetObject">GetObject</see> to default to the parent <see cref="CultureInfo" /> of the specified <paramref name="culture" />,
+        /// then after this call the originally defined value will be returned by <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> method from the binary resources.
+        /// If you want to force hiding the binary resource and make <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> to default to the parent <see cref="CultureInfo" /> of the specified <paramref name="culture" />,
         /// then use the <see cref="SetObject">SetObject</see> method with a <see langword="null" /> value.</para>
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>

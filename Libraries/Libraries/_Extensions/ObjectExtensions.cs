@@ -18,8 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-
-using KGySoft.Libraries.Serialization;
+using KGySoft.Serialization;
 
 #endregion
 

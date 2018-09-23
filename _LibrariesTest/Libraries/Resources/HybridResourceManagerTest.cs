@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Resources;
+using KGySoft;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using KGySoft.Resources.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Resources

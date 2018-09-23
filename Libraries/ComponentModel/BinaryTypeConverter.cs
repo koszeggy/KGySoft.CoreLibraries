@@ -21,8 +21,8 @@ using System.ComponentModel;
 using System.Globalization;
 
 using KGySoft.Libraries;
-using KGySoft.Libraries.Serialization;
 using KGySoft.Reflection;
+using KGySoft.Serialization;
 
 #endregion
 

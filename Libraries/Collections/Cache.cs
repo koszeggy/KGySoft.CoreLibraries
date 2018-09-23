@@ -771,14 +771,14 @@ namespace KGySoft.Collections
         /// <remarks>
         /// When this field is used as loader function at one of the constructors, the <see cref="Cache{TKey,TValue}"/> can be used
         /// similarly to a <see cref="Dictionary{TKey,TValue}"/>: existence of keys should be tested by <see cref="ContainsKey"/> or <see cref="TryGetValue"/>
-        /// methods, and elements should be added by <see cref="Add"/> method or by setter of the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property.
+        /// methods, and elements should be added by <see cref="Add"/> method or by setter of the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property.
         /// The only difference to a <see cref="Dictionary{TKey,TValue}"/> is that <see cref="Capacity"/> is still maintained so
         /// when the <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> equals to <see cref="Capacity"/>), and
         /// a new element is added, then an element will be dropped from the cache depending on the current <see cref="Behavior"/>.
         /// </remarks>
         /// </summary>
-        /// <seealso cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
-        /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
+        /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
+        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         /// <seealso cref="Behavior"/>
         private static readonly Func<TKey, TValue> nullLoader = key => throw new KeyNotFoundException(Res.Get(Res.CacheNullLoaderInvoke));
 
@@ -1404,7 +1404,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>Getting this property retrieves the needed element, while setting adds a new item (or overwrites an already existing item).
         /// If this instance was initialized by a non-<see langword="null"/> item loader only the get accessor should be used because that will
-        /// load elements into the cache by the delegate instance that was passed to the <see cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.
+        /// load elements into the cache by the delegate instance that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.
         /// When the cache was initialized without an item loader, then getting a non-existing key will throw a <see cref="KeyNotFoundException"/>.</para>
         /// <para>By using the getter of this property, it is transparent whether the returned value was in the cache before retrieving it.
         /// To test whether a key exists in the cache, use <see cref="ContainsKey"/> method. To retrieve a key only when it already exists in the cache,
@@ -1417,7 +1417,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
         /// <exception cref="KeyNotFoundException">The property is retrieved, the <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader
         /// and <paramref name="key"/> does not exist in the cache.</exception>
-        /// <seealso cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
+        /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
         /// <seealso cref="Behavior"/>
         public TValue this[TKey key]
         {
@@ -1535,8 +1535,8 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>Use this method if the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader, or when you want to determine if a
         /// <paramref name="key"/> exists in the <see cref="Cache{TKey,TValue}"/> and if so, you want to get the value as well.
-        /// Reading the <see cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/> property would transparently load a non-existing element by
-        /// calling the item loader delegate that was passed to the <see cref="M:KGySoft.Libraries.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.</para>
+        /// Reading the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property would transparently load a non-existing element by
+        /// calling the item loader delegate that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.</para>
         /// <para>Works exactly the same way as in case of <see cref="Dictionary{TKey,TValue}"/> class. If <paramref name="key"/> is not found, does not use the
         /// item loader passed to the constructor.</para>
         /// <para>If the <paramref name="key"/> is not found, then the <paramref name="value"/> parameter gets the appropriate default value
@@ -1544,7 +1544,7 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <seealso cref="P:KGySoft.Libraries.Collections.Cache`2.Item(`0)"/>
+        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         public bool TryGetValue(TKey key, out TValue value)
         {
             if (key == null)

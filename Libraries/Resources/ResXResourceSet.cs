@@ -22,8 +22,6 @@ using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Xml;
-using KGySoft.Resources.Enums;
-using KGySoft.Resources.Interfaces;
 
 namespace KGySoft.Resources
 {
@@ -35,7 +33,7 @@ namespace KGySoft.Resources
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section to see the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>
     /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
     /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
@@ -152,7 +150,7 @@ namespace KGySoft.Resources
     /// </example>
     /// <para>The <see cref="ResXResourceSet"/> class supports adding new resources (<see cref="SetObject">SetObject</see>), metadata (<see cref="SetMetaObject">SetMetaObject</see>) and aliases (<see cref="SetAliasValue">SetAliasValue</see>).
     /// Existing entries can be removed by <see cref="RemoveObject">RemoveObject</see>, <see cref="RemoveMetaObject">RemoveMetaObject</see> and <see cref="RemoveAliasValue">RemoveAliasValue</see> methods.
-    /// The changed set can be saved by the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> overloads.</para>
+    /// The changed set can be saved by the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> overloads.</para>
     /// <example>
     /// The following example shows how to create a new resource set, add a new resource and save the content. It demonstrates the usage of the key-based resource access, too.
     /// <code lang="C#"><![CDATA[
@@ -197,10 +195,10 @@ namespace KGySoft.Resources
     /// <para>If a .resx content contains the same resource name multiple times, <see cref="ResXResourceSet"/> will contain the lastly defined key. To obtain redefined values use <see cref="ResXResourceReader"/> explicitly
     /// and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <see langword="true"/>.</para>
     /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/> the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property returned by the enumerator methods is a <see cref="ResXDataNode"/>
-    /// instance rather than the resource value. The same applies for the return value of <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.
+    /// instance rather than the resource value. The same applies for the return value of <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.
     /// <note type="security">Even if <see cref="SafeMode"/> is <see langword="false"/>, loading a .resx content with corrupt or malicious entry will have no effect until we try to obtain the corresponding value. See the example below for the demonstration.</note>
     /// </para>
-    /// <para>If <see cref="SafeMode"/> property is <see langword="true"/> the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods will not throw an
+    /// <para>If <see cref="SafeMode"/> property is <see langword="true"/> the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods will not throw an
     /// <see cref="InvalidOperationException"/> even for non-string entries; they return the raw XML value instead.</para>
     /// <example>
     /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).
@@ -359,7 +357,7 @@ namespace KGySoft.Resources
     /// property of the enumerators returned by <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return a <see cref="ResXDataNode"/> instance instead of a deserialized object
     /// so you can check whether the resource or metadata can be treat as a safe object before actually deserializing it. See the example above for more details.</description></item>
     /// <item><term>Write support</term>
-    /// <description>The .resx file content can be expanded, existing entries can be replaced or removed and the new content can be saved by the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
+    /// <description>The .resx file content can be expanded, existing entries can be replaced or removed and the new content can be saved by the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
     /// You can start even with a completely empty set, add content dynamically and save the new resource set.</description></item>
     /// </list>
     /// </para>
@@ -436,7 +434,7 @@ namespace KGySoft.Resources
         /// A path that, if prepended to the relative file path specified in a <see cref="ResXFileRef"/> object, yields an absolute path to a resource file.
         /// </returns>
         /// <remarks>This property is read-only. To define a base path specify it in the constructors. When a <see cref="ResXResourceSet"/> is saved by
-        /// one of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods you can define an alternative path, which will not overwrite the value of this property.</remarks>
+        /// one of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods you can define an alternative path, which will not overwrite the value of this property.</remarks>
         public string BasePath => basePath;
 
         /// <summary>
@@ -448,8 +446,8 @@ namespace KGySoft.Resources
         /// </value>
         /// <remarks>
         /// <para>If the value of the property is <see langword="true"/>, then the stored raw XML data will be automatically freed when
-        /// a resource or metadata item is obtained by <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
-        /// <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString">GetString</see> or <see cref="GetMetaString">GetMetaString</see> methods.
+        /// a resource or metadata item is obtained by <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
+        /// <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> or <see cref="GetMetaString">GetMetaString</see> methods.
         /// The raw XML data is re-generated on demand if needed, it is transparent to the user.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, this property has no effect and the clean-up can be controlled by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// </remarks>
@@ -593,14 +591,14 @@ namespace KGySoft.Resources
         /// </returns>
         /// <remarks>
         /// <para>The returned enumerator iterates through the resources of the <see cref="ResXResourceSet"/>.
-        /// To obtain a specific resource by name, use the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see> or <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString">GetString</see> methods.
+        /// To obtain a specific resource by name, use the <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> or <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> methods.
         /// To obtain an enumerator for the metadata entries instead, use the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method instead.</para>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
         /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
         /// </remarks>
-        /// <seealso cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject"/>
-        /// <seealso cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetString"/>
+        /// <seealso cref="O:KGySoft.Resources.ResXResourceSet.GetObject"/>
+        /// <seealso cref="O:KGySoft.Resources.ResXResourceSet.GetString"/>
         /// <seealso cref="GetMetadataEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
         public override IDictionaryEnumerator GetEnumerator()
@@ -806,11 +804,11 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
-        /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method (<see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.GetObject">GetObject</see> will return <see langword="null"/> in both cases),
+        /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method (<see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> will return <see langword="null"/> in both cases),
         /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetEnumerator">GetEnumerator</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
-        /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
+        /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
         /// If <c>forceEmbeddedResources</c> is <see langword="true"/> on saving, the file references will be converted to embedded ones.</para>
         /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
         /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
@@ -834,7 +832,7 @@ namespace KGySoft.Resources
         /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
-        /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Libraries.Resources.ResXResourceSet.Save">Save</see> methods.
+        /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
         /// If <c>forceEmbeddedResources</c> is <see langword="true"/> on saving, the file references will be converted to embedded ones.</para>
         /// <note>Not just <see cref="ResXDataNode"/> and <see cref="ResXFileRef"/> are handled but <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
         /// and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions

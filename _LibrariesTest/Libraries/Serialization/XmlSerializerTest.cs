@@ -21,10 +21,10 @@ using System.Xml.Serialization;
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Serialization;
 using KGySoft.Reflection;
+using KGySoft.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using KGyXmlSerializer = KGySoft.Libraries.Serialization.XmlSerializer;
+using KGyXmlSerializer = KGySoft.Serialization.XmlSerializer;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
 namespace _LibrariesTest.Libraries.Serialization

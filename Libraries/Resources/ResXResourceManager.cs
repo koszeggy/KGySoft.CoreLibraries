@@ -31,8 +31,6 @@ using System.Text;
 using System.Threading;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
-using KGySoft.Resources.Enums;
-using KGySoft.Resources.Interfaces;
 
 #endregion
 
@@ -49,7 +47,7 @@ namespace KGySoft.Resources
     /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures and it can save the changed contents.</para>
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Libraries.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Using XML resources created by Visual Studio</h1>
     /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.
     /// <list type="number">
@@ -107,10 +105,10 @@ namespace KGySoft.Resources
     /// // Test string in en-US resource set.
     /// // Test string in en resource set.</code>
     /// <para>Considering there are .resx files in the background not just <see cref="string"/> and other <see cref="object"/> resources
-    /// can be obtained by <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> methods
+    /// can be obtained by <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods
     /// but metadata as well by <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods. Please note that accessing aliases are not exposed
     /// by the <see cref="ResXResourceManager"/> class, but you can still access them via the <see cref="IExpandoResourceSet"/> type returned by the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method.
-    /// <note>Please note that unlike in case of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> methods,
+    /// <note>Please note that unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods,
     /// there is no falling back to the parent cultures (as seen in the example above) for metadata accessed by the <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see> methods.</note></para>
     /// <h1 class="heading">Instantiating a <see cref="ResXResourceManager"/> object</h1>
     /// <para>You instantiate a <see cref="ResXResourceManager"/> object that retrieves resources from .resx files by calling one of its class constructor overloads.
@@ -140,7 +138,7 @@ namespace KGySoft.Resources
     /// <para>The changes in the resource sets can be saved by calling the <see cref="SaveAllResources">SaveAllResources</see> method. A single resource set can be saved
     /// by calling the <see cref="SaveResourceSet">SaveResourceSet</see> method.
     /// <note>The <see cref="ResXResourceManager"/> always saves the resources into files and never embeds the resources if they are file references (see <see cref="ResXFileRef"/>). If you need more control
-    /// over saving you can call the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method to access the various <see cref="O:KGySoft.Libraries.Resources.IExpandoResourceSet.Save">Save</see> overloads)</note></para>
+    /// over saving you can call the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method to access the various <see cref="O:KGySoft.Resources.IExpandoResourceSet.Save">Save</see> overloads)</note></para>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Globalization;
@@ -227,16 +225,16 @@ namespace KGySoft.Resources
     /// // Value of resource 'DefaultOnly' for culture 'en-US': This resource is the same everywhere]]></code>
     /// <h1 class="heading">Safety<a name="safety">&#160;</a></h1>
     /// <para>Similarly to <see cref="ResXResourceSet"/> and <see cref="ResXResourceReader"/>, the <see cref="ResXResourceManager"/>
-    /// class also has a <see cref="SafeMode"/> which changes the behavior of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
-    /// and <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
+    /// class also has a <see cref="SafeMode"/> which changes the behavior of <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see>
+    /// and <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
     /// methods:
     /// <list type="bullet">
-    /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/> the return value of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see>
+    /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/> the return value of <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see>
     /// and <see cref="GetMetaObject">GetMetaObject</see> methods is a <see cref="ResXDataNode"/> rather than the resource or metadata value.
     /// This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source.
     /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.
     /// See also the third example at the <see cref="ResXResourceSet"/> class.</item>
-    /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, then <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see>
+    /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>
     /// and <see cref="GetMetaString">GetMetaString</see> methods will not throw an <see cref="InvalidOperationException"/>
     /// even for non-string entries; they return the raw XML value instead.</item>
     /// </list>
@@ -265,8 +263,8 @@ namespace KGySoft.Resources
     /// You can start even with a completely empty manager, add content dynamically and save the new resources (see the example above).</description></item>
     /// <item><term>Security</term>
     /// <description>During the initialization of <see cref="ResXResourceManager"/> and loading of a resource set no object is deserialized even if <see cref="SafeMode"/>
-    /// property is <see langword="false"/>. Objects are deserialized only when they are accessed (see <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>).
-    /// If <see cref="SafeMode"/> is <see langword="true"/>, then security is even more increased because <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+    /// property is <see langword="false"/>. Objects are deserialized only when they are accessed (see <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>).
+    /// If <see cref="SafeMode"/> is <see langword="true"/>, then security is even more increased because <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
     /// return a <see cref="ResXDataNode"/> instance instead of a deserialized object so you can check whether the resource or metadata
     /// can be treat as a safe object before actually deserializing it. See the <a href="#safety">Safety</a> section above for more details.</description></item>
     /// <item><term>Disposal</term>
@@ -460,10 +458,10 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
         /// <seealso cref="ResXResourceReader.SafeMode"/>
@@ -837,7 +835,7 @@ namespace KGySoft.Resources
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
         /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
-        /// Unlike in case of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.
+        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.
         /// </param>
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
@@ -859,7 +857,7 @@ namespace KGySoft.Resources
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
         /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
-        /// Unlike in case of <see cref="O:KGySoft.Libraries.Resources.ResXResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.
+        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.
         /// </param>
         /// <returns>
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.

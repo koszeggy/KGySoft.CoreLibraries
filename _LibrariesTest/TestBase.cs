@@ -15,9 +15,9 @@ using System.Windows.Forms;
 
 using KGySoft.Drawing;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Serialization;
 using KGySoft.Reflection;
 using KGySoft.Resources;
+using KGySoft.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using SystemFileRef = System.Resources.ResXFileRef;

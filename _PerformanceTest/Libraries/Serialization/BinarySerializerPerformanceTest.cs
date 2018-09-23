@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using KGySoft.Libraries.Serialization;
+using KGySoft.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest.Libraries.Serialization

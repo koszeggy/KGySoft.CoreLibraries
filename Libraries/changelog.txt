@@ -27,6 +27,7 @@
 ! KGySoft.Libraries.Collections namespace: Moved to the KGySoft.Collections namespace
 ! KGySoft.Libraries.Diagnostics namespace: Moved to the KGySoft.Diagnostics namespace
 ! KGySoft.Libraries.Reflection namespace: Moved to the KGySoft.Reflection namespace
+! KGySoft.Libraries.Serialization namespace: Moved to the KGySoft.Serialization namespace
 + New DateTimeExtensions class
   + AsUtc method
 + New DictionaryExtensions class
@@ -51,9 +52,9 @@
   + IsGenericTypeOf method
   + IsImplementationOfGenericType method
 
-* KGySoft.Libraries.Serialization namespace:
-============================================
-
+* KGySoft.Serialization namespace:
+==================================
+! Moved here from the KGySoft.Libraries.Serialization namespace
 ! XmlSerializer:
   ! XmlSerializationOptions change: 
     ! Obsolete flag ForcedSerializationValueTypesAsFallback removed.
