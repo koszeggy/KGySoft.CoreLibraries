@@ -1,21 +1,16 @@
 using System;
 using System.ComponentModel;
-using System.Globalization;
-using System.Text;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Security.Principal;
-using System.IO;
-
+using System.Text;
+using KGySoft.Libraries;
 using KGySoft.Libraries.Reflection;
 using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
-    using System.Security;
-    using System.Threading;
-    using System.Runtime.InteropServices;
-
     /// <summary>
     /// Diagnostic tools and <see cref="Exception"/> utilities that can be used in logs, error reports,
     /// user feedbacks, etc.

@@ -5,8 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using KGySoft.Diagnostics;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 
 #endregion

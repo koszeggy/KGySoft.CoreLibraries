@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Represents a measurement item that is managed by the <see cref="Profiler"/> class.

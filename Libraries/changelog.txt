@@ -10,6 +10,10 @@
 ================================
 ! Moved here from the KGySoft.Libraries.Collections namespace
 
+! KGySoft.Diagnostics namespace:
+================================
+! Moved here from the KGySoft.Libraries.Diagnostics namespace
+
 * KGySoft.ComponentModel namespace:
 ===================================
 + New type converter: BinaryTypeConverter: A TypeConverter that can convert any type to byte[] or string.
@@ -32,6 +36,7 @@
 ! Crc32 class: Moved to the KGySoft.Security.Cryptography namespace
 ! Unicode class: Removed
 ! KGySoft.Libraries.Collections namespace: Moved to the KGySoft.Collections namespace
+! KGySoft.Libraries.Diagnostics namespace: Moved to the KGySoft.Diagnostics namespace
 + New DateTimeExtensions class
   + AsUtc method
 + New DictionaryExtensions class

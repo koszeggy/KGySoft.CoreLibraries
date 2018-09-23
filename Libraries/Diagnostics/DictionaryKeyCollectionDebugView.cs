@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
     internal sealed class DictionaryKeyCollectionDebugView<TKey, TValue>
     {

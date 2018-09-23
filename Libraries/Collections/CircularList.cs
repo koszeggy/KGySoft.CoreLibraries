@@ -7,8 +7,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using KGySoft.Diagnostics;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 
 #endregion

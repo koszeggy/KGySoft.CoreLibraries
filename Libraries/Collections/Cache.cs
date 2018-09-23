@@ -8,8 +8,8 @@ using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
 using KGySoft.Annotations;
+using KGySoft.Diagnostics;
 using KGySoft.Libraries;
-using KGySoft.Libraries.Diagnostics;
 using KGySoft.Libraries.Resources;
 
 #endregion

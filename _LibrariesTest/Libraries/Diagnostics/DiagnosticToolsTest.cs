@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Security.Policy;
-using KGySoft.Libraries.Diagnostics;
+using KGySoft.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _LibrariesTest.Libraries.Diagnostics

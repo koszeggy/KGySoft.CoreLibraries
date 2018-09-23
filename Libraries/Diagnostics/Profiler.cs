@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Xml.Linq;
-
+using KGySoft.Libraries;
 using KGySoft.Libraries.Resources;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Represents a profiler for performance monitoring.

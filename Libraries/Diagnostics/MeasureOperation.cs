@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Represents a measured profiler operation

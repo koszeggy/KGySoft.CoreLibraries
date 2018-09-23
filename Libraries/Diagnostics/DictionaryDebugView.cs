@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a debug view applicable for <see cref="DebuggerTypeProxyAttribute"/>

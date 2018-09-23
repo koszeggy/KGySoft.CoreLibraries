@@ -1,19 +1,20 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
 
-namespace KGySoft.Libraries.Diagnostics
+namespace KGySoft.Diagnostics
 {
-    internal sealed class DictionaryValueCollectionDebugView<TKey, TValue>
+    /// <summary>
+    /// Provides a debug view applicable for <see cref="DebuggerTypeProxyAttribute"/>
+    /// for <see cref="ICollection{T}"/> types.
+    /// </summary>
+    public sealed class CollectionDebugView<T>
     {
-        private readonly ICollection<TValue> collection;
+        private readonly ICollection<T> collection;
 
         ///<summary>
         /// Creates a new instance of CollectionDebugView
         ///</summary>
-        public DictionaryValueCollectionDebugView(ICollection<TValue> collection)
+        public CollectionDebugView(ICollection<T> collection)
         {
             this.collection = collection;
         }
@@ -22,11 +23,11 @@ namespace KGySoft.Libraries.Diagnostics
         /// Gets the visible items in debugger view
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public TValue[] Items
+        public T[] Items
         {
             get
             {
-                TValue[] items = new TValue[collection.Count];
+                T[] items = new T[collection.Count];
                 collection.CopyTo(items, 0);
                 return items;
             }

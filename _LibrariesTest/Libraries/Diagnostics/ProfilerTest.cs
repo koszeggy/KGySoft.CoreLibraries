@@ -1,5 +1,5 @@
 ﻿using System;
-using KGySoft.Libraries.Diagnostics;
+using KGySoft.Diagnostics;
 using KGySoft.Libraries.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
