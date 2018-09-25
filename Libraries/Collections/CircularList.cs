@@ -96,10 +96,7 @@ namespace KGySoft.Collections
             /// <summary>
             /// Gets the element at the current position of the enumerator.
             /// </summary>
-            public T Current
-            {
-                get { return current; }
-            }
+            public T Current => current;
 
             #endregion
 
@@ -389,10 +386,7 @@ namespace KGySoft.Collections
 
             #region IEnumerator<T> Members
 
-            public T Current
-            {
-                get { return current; }
-            }
+            public T Current => current;
 
             #endregion
 
@@ -481,10 +475,7 @@ namespace KGySoft.Collections
 
             #region IEnumerator<T> Members
 
-            public T Current
-            {
-                get { return current; }
-            }
+            public T Current => current;
 
             #endregion
 
@@ -628,7 +619,7 @@ namespace KGySoft.Collections
         /// </remarks>
         public int Capacity
         {
-            get { return items.Length; }
+            get => items.Length;
             set
             {
                 if (value != items.Length) // deleted: || startIndex > 0
@@ -657,11 +648,11 @@ namespace KGySoft.Collections
 
         #region Internal Properties
 
-        internal T[] Items { get { return items; } }
+        internal T[] Items => items;
 
-        internal int Version { get { return version; } }
+        internal int Version => version;
 
-        internal int StartIndex { get { return startIndex; } }
+        internal int StartIndex => startIndex;
 
         #endregion
 
@@ -2846,15 +2837,9 @@ isNonIntEnum
         /// <summary>
         /// Gets the number of elements contained in the list.
         /// </summary>
-        public int Count
-        {
-            get { return size; }
-        }
+        public int Count => size;
 
-        bool ICollection<T>.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool ICollection<T>.IsReadOnly => false;
 
         /// <summary>
         /// Removes the first occurrence of the specific <paramref name="item"/> from the list.
@@ -2933,15 +2918,9 @@ isNonIntEnum
             Insert(index, (T)value);
         }
 
-        bool IList.IsFixedSize
-        {
-            get { return false; }
-        }
+        bool IList.IsFixedSize => false;
 
-        bool IList.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool IList.IsReadOnly => false;
 
         void IList.Remove(object value)
         {
@@ -2952,7 +2931,7 @@ isNonIntEnum
 
         object IList.this[int index]
         {
-            get { return this[index]; }
+            get => this[index];
             set
             {
                 if (!typeof(T).CanAcceptValue(value))
@@ -2989,10 +2968,7 @@ isNonIntEnum
             throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
         }
 
-        bool ICollection.IsSynchronized
-        {
-            get { return false; }
-        }
+        bool ICollection.IsSynchronized => false;
 
         object ICollection.SyncRoot
         {

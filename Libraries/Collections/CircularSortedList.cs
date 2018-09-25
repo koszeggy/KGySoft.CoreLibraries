@@ -141,7 +141,7 @@ namespace KGySoft.Collections
 
             public TKey this[int index]
             {
-                get { return list.keys[index]; }
+                get => list.keys[index];
                 set { throw new NotSupportedException(Res.Get(Res.ModifyNotSupported)); }
             }
 
@@ -174,15 +174,9 @@ namespace KGySoft.Collections
                 throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
             }
 
-            public int Count
-            {
-                get { return list.keys.Count; }
-            }
+            public int Count => list.keys.Count;
 
-            public bool IsReadOnly
-            {
-                get { return true; }
-            }
+            public bool IsReadOnly => true;
 
             #endregion
 
@@ -231,10 +225,7 @@ namespace KGySoft.Collections
                 throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
             }
 
-            bool IList.IsFixedSize
-            {
-                get { return true; }
-            }
+            bool IList.IsFixedSize => true;
 
             void IList.Remove(object value)
             {
@@ -243,7 +234,7 @@ namespace KGySoft.Collections
 
             object IList.this[int index]
             {
-                get { return list.keys[index]; }
+                get => list.keys[index];
                 set { throw new NotSupportedException(Res.Get(Res.ModifyNotSupported)); }
             }
 
@@ -256,10 +247,7 @@ namespace KGySoft.Collections
                 ((ICollection)list.keys).CopyTo(array, index);
             }
 
-            bool ICollection.IsSynchronized
-            {
-                get { return false; }
-            }
+            bool ICollection.IsSynchronized => false;
 
             object ICollection.SyncRoot
             {
@@ -325,10 +313,7 @@ namespace KGySoft.Collections
             /// <summary>
             /// Gets the element at the current position of the enumerator.
             /// </summary>
-            public KeyValuePair<TKey, TValue> Current
-            {
-                get { return current; }
-            }
+            public KeyValuePair<TKey, TValue> Current => current;
 
             #endregion
 
@@ -472,10 +457,7 @@ namespace KGySoft.Collections
 
             #region IEnumerator<T> Members
 
-            public KeyValuePair<TKey, TValue> Current
-            {
-                get { return current; }
-            }
+            public KeyValuePair<TKey, TValue> Current => current;
 
             #endregion
 
@@ -579,10 +561,7 @@ namespace KGySoft.Collections
             /// <summary>
             /// Gets the element at the current position of the enumerator.
             /// </summary>
-            public KeyValuePair<TKey, TValue> Current
-            {
-                get { return current; }
-            }
+            public KeyValuePair<TKey, TValue> Current => current;
 
             #endregion
 
@@ -707,7 +686,7 @@ namespace KGySoft.Collections
         /// </remarks>
         public int Capacity
         {
-            get { return keys.Capacity; }
+            get => keys.Capacity;
             set
             {
                 keys.Capacity = value;
@@ -718,10 +697,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the <see cref="IComparer{T}"/> that is used in the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
-        public IComparer<TKey> Comparer
-        {
-            get { return comparer; }
-        }
+        public IComparer<TKey> Comparer => comparer;
 
         /// <summary>
         /// Gets an indexable list containing the keys in the <see cref="CircularSortedList{TKey,TValue}"/>, in sorted order.
@@ -736,10 +712,7 @@ namespace KGySoft.Collections
         /// <code lang="C#">string v = mySortedList.Keys[3];</code>
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// </remarks>
-        public IList<TKey> Keys
-        {
-            get { return GetKeys(); }
-        }
+        public IList<TKey> Keys => GetKeys();
 
         /// <summary>
         /// Gets an indexable list containing the values in the <see cref="CircularSortedList{TKey,TValue}"/>, in the order of the sorted keys.
@@ -754,10 +727,7 @@ namespace KGySoft.Collections
         /// <code lang="C#">string v = mySortedList.Values[3];</code>
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// </remarks>
-        public IList<TValue> Values
-        {
-            get { return GetValues(); }
-        }
+        public IList<TValue> Values => GetValues();
 
         /// <summary>
         /// Gets the <see cref="CircularSortedList{TKey,TValue}"/> cast to an <see cref="IList{T}"/>.
@@ -781,10 +751,7 @@ namespace KGySoft.Collections
         /// ]]></code>
         /// </example>
         /// </remarks>
-        public IList<KeyValuePair<TKey, TValue>> AsList
-        {
-            get { return this; }
-        }
+        public IList<KeyValuePair<TKey, TValue>> AsList => this;
 
         #endregion
 
@@ -1308,10 +1275,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="ICollection{T}"/> containing the keys of the object that implements <see cref="IDictionary{TKey,TValue}"/>.
         /// </returns>
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys
-        {
-            get { return GetKeys(); }
-        }
+        ICollection<TKey> IDictionary<TKey, TValue>.Keys => GetKeys();
 
         /// <summary>
         /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey,TValue}"/>.
@@ -1319,10 +1283,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="ICollection{T}"/> containing the values in the object that implements <see cref="IDictionary{TKey,TValue}"/>.
         /// </returns>
-        ICollection<TValue> IDictionary<TKey, TValue>.Values
-        {
-            get { return GetValues(); }
-        }
+        ICollection<TValue> IDictionary<TKey, TValue>.Values => GetValues();
 
         #endregion
 
@@ -1359,7 +1320,7 @@ namespace KGySoft.Collections
 
         KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
         {
-            get { return ElementAt(index); }
+            get => ElementAt(index);
             set { throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported)); }
         }
 
@@ -1434,15 +1395,9 @@ namespace KGySoft.Collections
         /// <returns>
         /// The number of key/value pairs contained in the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </returns>
-        public int Count
-        {
-            get { return keys.Count; }
-        }
+        public int Count => keys.Count;
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
         #endregion
 
@@ -1498,20 +1453,11 @@ namespace KGySoft.Collections
             return new EnumeratorAsReference(this, false);
         }
 
-        bool IDictionary.IsFixedSize
-        {
-            get { return false; }
-        }
+        bool IDictionary.IsFixedSize => false;
 
-        bool IDictionary.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool IDictionary.IsReadOnly => false;
 
-        ICollection IDictionary.Keys
-        {
-            get { return (ICollection)Keys; }
-        }
+        ICollection IDictionary.Keys => (ICollection)Keys;
 
         void IDictionary.Remove(object key)
         {
@@ -1521,10 +1467,7 @@ namespace KGySoft.Collections
                 Remove((TKey)key);
         }
 
-        ICollection IDictionary.Values
-        {
-            get { return (ICollection)Values; }
-        }
+        ICollection IDictionary.Values => (ICollection)Values;
 
         object IDictionary.this[object key]
         {
@@ -1595,10 +1538,7 @@ namespace KGySoft.Collections
             throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
         }
 
-        bool ICollection.IsSynchronized
-        {
-            get { return false; }
-        }
+        bool ICollection.IsSynchronized => false;
 
         object ICollection.SyncRoot
         {
@@ -1679,15 +1619,9 @@ namespace KGySoft.Collections
             throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported));
         }
 
-        bool IList.IsFixedSize
-        {
-            get { return false; }
-        }
+        bool IList.IsFixedSize => false;
 
-        bool IList.IsReadOnly
-        {
-            get { return false; }
-        }
+        bool IList.IsReadOnly => false;
 
         void IList.Remove(object value)
         {
@@ -1710,7 +1644,7 @@ namespace KGySoft.Collections
 
         object IList.this[int index]
         {
-            get { return ElementAt(index); }
+            get => ElementAt(index);
             set { throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported)); }
         }
 
@@ -1719,24 +1653,15 @@ namespace KGySoft.Collections
 #if NET45
         #region IReadOnlyDictionary<TKey,TValue> Members
 
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys
-        {
-            get { return GetKeys(); }
-        }
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetKeys();
 
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values
-        {
-            get { return GetValues(); }
-        }
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetValues();
 
         #endregion
 
         #region IReadOnlyList<KeyValuePair<TKey,TValue>> Members
 
-        KeyValuePair<TKey, TValue> IReadOnlyList<KeyValuePair<TKey, TValue>>.this[int index]
-        {
-            get { return ElementAt(index); }
-        }
+        KeyValuePair<TKey, TValue> IReadOnlyList<KeyValuePair<TKey, TValue>>.this[int index] => ElementAt(index);
 
         #endregion
 #elif !(NET35 || NET40)

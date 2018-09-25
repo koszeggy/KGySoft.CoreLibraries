@@ -35,7 +35,7 @@ namespace KGySoft
     /// </summary>
     /// <seealso cref="DynamicResourceManager"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
-    /// <remarks>For an example to see how to configure a resource manager for a class library
+    /// <remarks>For an example to see how to configure a dynamic resource manager for a class library
     /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</remarks>
     public static class LanguageSettings
     {

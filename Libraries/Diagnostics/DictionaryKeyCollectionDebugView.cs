@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 namespace KGySoft.Diagnostics
 {
+    // ReSharper disable once UnusedTypeParameter
     internal sealed class DictionaryKeyCollectionDebugView<TKey, TValue>
     {
         private readonly ICollection<TKey> collection;

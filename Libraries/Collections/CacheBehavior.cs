@@ -25,7 +25,7 @@
         /// <br/>This is the suggested behavior when loading a non-cached element is slow, the cache is often full, and there are elements that are
         /// typically accessed more often than the others. This is the default behavior when a <see cref="Cache{TKey,TValue}"/> instance is instantiated.
         /// <br/>With this strategy element is access is slightly slower than in case of <see cref="RemoveOldestElement"/> because
-        /// whenever an element is accessed, it is renewed in the evaluation order. (See also <see cref="Cache{TKey,TValue}.Touch"/>. method)
+        /// whenever an element is accessed, it is renewed in the evaluation order. (See also the <see cref="Cache{TKey,TValue}.Touch">Touch</see>. method)
         /// </summary>
         RemoveLeastRecentUsedElement
     }

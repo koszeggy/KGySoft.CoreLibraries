@@ -15,7 +15,7 @@
     <RootNamespace>Documentation</RootNamespace>
     <Name>Documentation</Name>
     <!-- SHFB properties -->
-    <OutputPath>.\Help\</OutputPath>
+    <OutputPath>HelpOut\</OutputPath>
     <HtmlHelpName>KGySoft.Libraries</HtmlHelpName>
     <Language>en-US</Language>
     <DocumentationSources>
@@ -30,16 +30,11 @@
     <RootNamespaceContainer>False</RootNamespaceContainer>
     <MissingTags>Summary, Parameter, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
     <NamespaceSummaries>
-      <NamespaceSummaryItem name="KGySoft.ComponentModel" isDocumented="True">Contains converter classes that can be applied for a class or property as a type converter.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="KGySoft.Libraries" isDocumented="True">Contains general library classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="KGySoft.Libraries.Reflection" isDocumented="True">Contains several classes that can dynamically reflect objects, their members and type information by dynamically generated delegates.
-Contains the &lt;strong&gt;Reflector&lt;/strong&gt; class that provides most of the needed reflection tasks.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="KGySoft.Libraries.Serialization" isDocumented="True">Contains classes both for XML and binary serialization.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="KGySoft.Libraries.Diagnostics" isDocumented="True">Contains diagnostic tools and &lt;strong&gt;Exception&lt;/strong&gt; utilities along with some generic debugger views.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="KGySoft.Libraries.Collections" isDocumented="True">Contains generic collections such as &lt;strong&gt;Cache&lt;/strong&gt; or &lt;strong&gt;CircularList&lt;/strong&gt; classes.</NamespaceSummaryItem>
-<NamespaceSummaryItem name="KGySoft.Libraries.Resources" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True">Contains generic collections.</NamespaceSummaryItem></NamespaceSummaries>
+      <NamespaceSummaryItem name="KGySoft.ComponentModel" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Libraries" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True" />
+    </NamespaceSummaries>
     <SyntaxFilters>Standard</SyntaxFilters>
     <CleanIntermediates>True</CleanIntermediates>
     <ApiFilter>
@@ -74,6 +69,7 @@ Contains the &lt;strong&gt;Reflector&lt;/strong&gt; class that provides most of 
     <HelpFileVersion>1.0.0.0</HelpFileVersion>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>
+    <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional

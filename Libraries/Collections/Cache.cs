@@ -1,4 +1,20 @@
-#region Used namespaces
+#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Cache.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections;
@@ -7,6 +23,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
+
 using KGySoft.Annotations;
 using KGySoft.Diagnostics;
 using KGySoft.Libraries;
@@ -16,8 +33,9 @@ using KGySoft.Libraries;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent; user needs only to read the indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property) to retrieve items.
-    /// When a non-existing key is accessed, then item is loaded automatically by the loader function that was passed to one of the constructors.
+    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent; user needs only to read the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> to retrieve items.
+    /// When a non-existing key is accessed, then item is loaded automatically by the loader function that was passed to the
+    /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
     /// If the cache is full (elements <see cref="Count"/> reaches the <see cref="Capacity"/>) and a new element has to be stored, then
     /// the oldest or least recent used element (depends on the value of <see cref="Behavior"/>) is removed from the cache.
     /// </summary>
@@ -28,8 +46,7 @@ namespace KGySoft.Collections
     /// <see cref="Cache{TKey,TValue}"/> type provides a fast-access storage with limited capacity and transparent access. If you need to store
     /// items that are expensive to retrieve (for example from a database or remote service) and you don't want to run out of memory because of
     /// just storing newer and newer elements without getting rid of old ones, then this type might fit your expectations.
-    /// Once a value is stored in the cache, its retrieval by using its key is very fast, close to O(1), because the <see cref="Cache{TKey,TValue}"/>
-    /// uses a <see cref="Dictionary{TKey,TValue}"/> internally.
+    /// Once a value is stored in the cache, its retrieval by using its key is very fast, close to O(1).
     /// </para>
     /// <para>
     /// A cache store must meet the following three criteria:
@@ -37,165 +54,160 @@ namespace KGySoft.Collections
     /// <item><term>Associative access</term><description>Accessing elements works the same way as in case of the <see cref="Dictionary{TKey,TValue}"/> type.
     /// <see cref="Cache{TKey,TValue}"/> implements both the generic <see cref="IDictionary{TKey,TValue}"/> and the non-generic <see cref="IDictionary"/> interfaces so can be
     /// used similarly as <see cref="Dictionary{TKey,TValue}"/> or <see cref="Hashtable"/> types.</description></item>
-    /// <item><term>Transparency</term><description>Users of the cache need only to read the cache by its indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property).
+    /// <item><term>Transparency</term><description>Users of the cache need only to read the cache by its <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> property.
     /// If needed, elements will be automatically loaded on the first access.</description></item>
     /// <item><term>Size management</term><description><see cref="Cache{TKey,TValue}"/> type has a <see cref="Capacity"/>, which is the allowed maximal elements count. If the cache is full, the
     /// oldest or least recent used element will be automatically removed from the cache (see <see cref="Behavior"/> property).</description></item>
     /// </list>
     /// </para>
     /// <para>
-    /// Since <see cref="Cache{TKey,TValue}"/> implements <see cref="IDictionary{TKey,TValue}"/> interface, <see cref="Add"/>, <see cref="Remove"/>, <see cref="ContainsKey"/> and
-    /// <see cref="TryGetValue"/> are available for it, and these method work exactly the same way as in case the <see cref="Dictionary{TKey,TValue}"/> type. But using these methods
+    /// Since <see cref="Cache{TKey,TValue}"/> implements <see cref="IDictionary{TKey,TValue}"/> interface, <see cref="Add">Add</see>, <see cref="Remove">Remove</see>, <see cref="ContainsKey">ContainsKey</see> and
+    /// <see cref="TryGetValue">TryGetValue</see> methods are available for it, and these methods work exactly the same way as in case the <see cref="Dictionary{TKey,TValue}"/> type. But using these methods
     /// usually are not necessary, unless we want to manually manage cache content or when cache is initialized without an item loader. Normally after cache is instantiated,
     /// it is needed to be accessed only by the getter accessor of its indexer.
     /// </para>
     /// <note type="caution">
-    /// Serializing a cache instance involves the serialization of the item loader delegate. To deserialize a cache the assembly of the loader must be accessible. If you need to
+    /// Serializing a cache instance by <see cref="IFormatter"/> implementations involves the serialization of the item loader delegate. To deserialize a cache the assembly of the loader must be accessible. If you need to
     /// serialize cache instances try to use static methods as data loaders and avoid using anonymous delegates or lambda expressions, otherwise it is not guaranteed that another
     /// implementations or versions of CLR will able to deserialize data and resolve the compiler-generated members.
     /// </note>
     /// </remarks>
     /// <example>
     /// The following example shows the suggested usage of <see cref="Cache{TKey,TValue}"/>.
-    /// <code lang="C#">
-    ///using System;
-    ///using System.Collections.Generic;
-    ///using KGySoft.Libraries;
-    ///class Example
-    ///{
-    ///    private static Cache&lt;int, bool&gt; isPrimeCache;
-    ///    public static void Main()
-    ///    {
-    ///        // Cache capacity is initialized to store maximum 4 values
-    ///        isPrimeCache = new Cache&lt;int, bool&gt;(ItemLoader, 4);
-    ///        // If cache is full the least recent used element will be deleted
-    ///        isPrimeCache.Behavior = CacheBehavior.RemoveLeastRecentUsedElement;
-    ///        // cache is now empty
-    ///        DumpCache();
-    ///        // reading the cache invokes the loader method
-    ///        CheckPrime(13);
-    ///        // reading a few more values
-    ///        CheckPrime(23);
-    ///        CheckPrime(33);
-    ///        CheckPrime(43);
-    ///        // dumping content
-    ///        DumpCache();
-    ///        // accessing an already read item does not invoke loader again
-    ///        // Now it changes cache order because of the chosen behavior
-    ///        CheckPrime(13);
-    ///        DumpCache();
-    ///        // reading a new element with full cache will delete an old one (now 23)
-    ///        CheckPrime(111);
-    ///        DumpCache();
-    ///        // but accessing a deleted element causes to load it again
-    ///        CheckPrime(23);
-    ///        DumpCache();
-    ///        // dumping some statistics
-    ///        Console.WriteLine(isPrimeCache.GetStatistics().ToString());
-    ///    }
-    ///    // This is the item loader method. It can access database or perform slow calculations.
-    ///    // If cache is meant to be serialized it should be a static method rather than an anonymous delegate or lambda expression.
-    ///    private static bool ItemLoader(int number)
-    ///    {
-    ///        Console.WriteLine("Item loading has been invoked for value {0}", number);
-    ///        // In this example item loader checks whether the given number is a prime by a not too efficient algorithm.
-    ///        if (number &lt;= 1)
-    ///            return false;
-    ///        if (number % 2 == 0)
-    ///            return true;
-    ///        int i = 3;
-    ///        int sqrt = (int)Math.Floor(Math.Sqrt(number));
-    ///        while (i &lt;= sqrt)
-    ///        {
-    ///            if (number % i == 0)
-    ///                return false;
-    ///            i += 2;
-    ///        }
-    ///        return true;
-    ///    }
-    ///    private static void CheckPrime(int number)
-    ///    {
-    ///        // cache is used transparently here: indexer is always just read
-    ///        bool isPrime = isPrimeCache[number];
-    ///        Console.WriteLine("{0} is a prime: {1}", number, isPrime);
-    ///    }
-    ///    private static void DumpCache()
-    ///    {
-    ///        Console.WriteLine();
-    ///        Console.WriteLine("Cache elements count: {0}", isPrimeCache.Count);
-    ///        if (isPrimeCache.Count &gt; 0)
-    ///        {
-    ///            // enumerating through the cache shows the elements in the evaluation order
-    ///            Console.WriteLine("Cache elements:");
-    ///            foreach (KeyValuePair&lt;int, bool&gt; item in isPrimeCache)
-    ///            {
-    ///                Console.WriteLine("\tKey: {0},\tValue: {1}", item.Key, item.Value);
-    ///            }
-    ///        }
-    ///        Console.WriteLine();
-    ///    }
-    ///}
-    /// /* This code example produces the following output:
-    ///
-    ///Cache elements count: 0
-    ///Item loading has been invoked for value 13
-    ///13 is a prime: True
-    ///Item loading has been invoked for value 23
-    ///23 is a prime: True
-    ///Item loading has been invoked for value 33
-    ///33 is a prime: False
-    ///Item loading has been invoked for value 43
-    ///43 is a prime: True
-    ///Cache elements count: 4
-    ///Cache elements:
-    ///        Key: 13,        Value: True
-    ///        Key: 23,        Value: True
-    ///        Key: 33,        Value: False
-    ///        Key: 43,        Value: True
-    ///13 is a prime: True
-    ///Cache elements count: 4
-    ///Cache elements:
-    ///        Key: 23,        Value: True
-    ///        Key: 33,        Value: False
-    ///        Key: 43,        Value: True
-    ///        Key: 13,        Value: True
-    ///Item loading has been invoked for value 111
-    ///111 is a prime: False
-    ///Cache elements count: 4
-    ///Cache elements:
-    ///        Key: 33,        Value: False
-    ///        Key: 43,        Value: True
-    ///        Key: 13,        Value: True
-    ///        Key: 111,       Value: False
-    ///Item loading has been invoked for value 23
-    ///23 is a prime: True
-    ///Cache elements count: 4
-    ///Cache elements:
-    ///        Key: 43,        Value: True
-    ///        Key: 13,        Value: True
-    ///        Key: 111,       Value: False
-    ///        Key: 23,        Value: True
-    ///Cache&lt;Int32, Boolean&gt; cache statistics:
-    ///Count: 4
-    ///Capacity: 4
-    ///Number of writes: 6
-    ///Number of reads: 7
-    ///Number of cache hits: 1
-    ///Number of deletes: 2
-    ///Hit rate: 14,29%
-    /// */
-    /// </code></example>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections.Generic;
+    /// using KGySoft.Collections;
+    /// 
+    /// class Example
+    /// {
+    ///     private static Cache<int, bool> isPrimeCache;
+    /// 
+    ///     public static void Main()
+    ///     {
+    ///         // Cache capacity is initialized to store maximum 4 values
+    ///         isPrimeCache = new Cache<int, bool>(ItemLoader, 4);
+    /// 
+    ///         // If cache is full the least recent used element will be deleted
+    ///         isPrimeCache.Behavior = CacheBehavior.RemoveLeastRecentUsedElement;
+    /// 
+    ///         // cache is now empty
+    ///         DumpCache();
+    /// 
+    ///         // reading the cache invokes the loader method
+    ///         CheckPrime(13);
+    /// 
+    ///         // reading a few more values
+    ///         CheckPrime(23);
+    ///         CheckPrime(33);
+    ///         CheckPrime(43);
+    /// 
+    ///         // dumping content
+    ///         DumpCache();
+    /// 
+    ///         // accessing an already read item does not invoke loader again
+    ///         // Now it changes cache order because of the chosen behavior
+    ///         CheckPrime(13);
+    ///         DumpCache();
+    /// 
+    ///         // reading a new element with full cache will delete an old one (now 23)
+    ///         CheckPrime(111);
+    ///         DumpCache();
+    /// 
+    ///         // but accessing a deleted element causes to load it again
+    ///         CheckPrime(23);
+    ///         DumpCache();
+    /// 
+    ///         // dumping some statistics
+    ///         Console.WriteLine(isPrimeCache.GetStatistics().ToString());
+    ///     }
+    /// 
+    ///     // This is the item loader method. It can access database or perform slow calculations.
+    ///     // If cache is meant to be serialized it should be a static method rather than an anonymous delegate or lambda expression.
+    ///     private static bool ItemLoader(int number)
+    ///     {
+    ///         Console.WriteLine("Item loading has been invoked for value {0}", number);
+    /// 
+    ///         // In this example item loader checks whether the given number is a prime by a not too efficient algorithm.
+    ///         if (number <= 1)
+    ///             return false;
+    ///         if (number % 2 == 0)
+    ///             return true;
+    ///         int i = 3;
+    ///         int sqrt = (int)Math.Floor(Math.Sqrt(number));
+    ///         while (i <= sqrt)
+    ///         {
+    ///             if (number % i == 0)
+    ///                 return false;
+    ///             i += 2;
+    ///         }
+    /// 
+    ///         return true;
+    ///     }
+    /// 
+    ///     private static void CheckPrime(int number)
+    ///     {
+    ///         // cache is used transparently here: indexer is always just read
+    ///         bool isPrime = isPrimeCache[number];
+    ///         Console.WriteLine("{0} is a prime: {1}", number, isPrime);
+    ///     }
+    /// 
+    ///     private static void DumpCache()
+    ///     {
+    ///         Console.WriteLine();
+    ///         Console.WriteLine("Cache elements count: {0}", isPrimeCache.Count);
+    ///         if (isPrimeCache.Count > 0)
+    ///         {
+    ///             // enumerating through the cache shows the elements in the evaluation order
+    ///             Console.WriteLine("Cache elements:");
+    ///             foreach (KeyValuePair<int, bool> item in isPrimeCache)
+    ///             {
+    ///                 Console.WriteLine("\tKey: {0},\tValue: {1}", item.Key, item.Value);
+    ///             }
+    ///         }
+    /// 
+    ///         Console.WriteLine();
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces the following output:
+    /// // 
+    /// // Item loading has been invoked for value 111
+    /// // 111 is a prime: False
+    /// // 
+    /// // Cache elements count: 4
+    /// // Cache elements:
+    /// // Key: 33,        Value: False
+    /// // Key: 43,        Value: True
+    /// // Key: 13,        Value: True
+    /// // Key: 111,       Value: False
+    /// // 
+    /// // Item loading has been invoked for value 23
+    /// // 23 is a prime: True
+    /// // 
+    /// // Cache elements count: 4
+    /// // Cache elements:
+    /// // Key: 43,        Value: True
+    /// // Key: 13,        Value: True
+    /// // Key: 111,       Value: False
+    /// // Key: 23,        Value: True
+    /// // 
+    /// // Cache<Int32, Boolean> cache statistics:
+    /// // Count: 4
+    /// // Capacity: 4
+    /// // Number of writes: 6
+    /// // Number of reads: 7
+    /// // Number of cache hits: 1
+    /// // Number of deletes: 2
+    /// // Hit rate: 14,29%]]></code></example>
     /// <seealso cref="CacheBehavior"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    [DebuggerDisplay("Count = {Count}; TKey = {typeof(TKey)}; TValue = {typeof(TValue)}; Hit = {GetStatistics().HitRate * 100}%")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}; Hit = {" + nameof(Cache<_,_>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
     public sealed class Cache<TKey, TValue> : IDictionary<TKey, TValue>, ICache, ISerializable
-#if NET45
+#if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
-#elif !(NET35 || NET40)
-#error .NET version is not set or not supported!
 #endif
-
     {
         #region Nested classes
 
@@ -219,49 +231,15 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region Constructors
+            #region Properties
 
-            internal Enumerator(Cache<TKey, TValue> cache, bool isGeneric)
-            {
-                this.cache = cache;
-                version = cache.version;
-                current = null;
-                this.isGeneric = isGeneric;
-                beforeFirst = true;
-            }
+            #region Public Properties
+
+            public KeyValuePair<TKey, TValue> Current => current != null ? new KeyValuePair<TKey, TValue>(current.Key, current.Value) : default;
 
             #endregion
 
-            #region IEnumerator<KeyValuePair<TKey,TValue>> Members
-
-            /// <summary>
-            /// Gets the element at the current position of the enumerator.
-            /// </summary>
-            public KeyValuePair<TKey, TValue> Current
-            {
-                get
-                {
-                    if (current != null)
-                        return new KeyValuePair<TKey, TValue>(current.Key, current.Value);
-
-                    return default(KeyValuePair<TKey, TValue>);
-                }
-            }
-
-            #endregion
-
-            #region IDisposable Members
-
-            /// <summary>
-            /// Releases the enumerator
-            /// </summary>
-            public void Dispose()
-            {
-            }
-
-            #endregion
-
-            #region IEnumerator Members
+            #region Explicitly Implemented Interface Properties
 
             object IEnumerator.Current
             {
@@ -274,53 +252,6 @@ namespace KGySoft.Collections
                     return new DictionaryEntry(current.Key, current.Value);
                 }
             }
-
-            /// <summary>
-            /// Advances the enumerator to the next element of the collection.
-            /// </summary>
-            /// <returns>
-            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
-            /// </returns>
-            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
-            public bool MoveNext()
-            {
-                if (version != cache.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
-
-                if (beforeFirst)
-                {
-                    beforeFirst = false;
-                    if (cache.first == null)
-                        return false;
-
-                    current = cache.first;
-                    return true;
-                }
-
-                if (current != null)
-                {
-                    current = current.Next;
-                    return current != null;
-                }
-
-                return false;
-            }
-
-            /// <summary>
-            /// Sets the enumerator to its initial position, which is before the first element in the collection.
-            /// </summary>
-            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
-            public void Reset()
-            {
-                if (version != cache.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
-                beforeFirst = true;
-                current = null;
-            }
-
-            #endregion
-
-            #region IDictionaryEnumerator Members
 
             DictionaryEntry IDictionaryEnumerator.Entry
             {
@@ -353,6 +284,61 @@ namespace KGySoft.Collections
             }
 
             #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(Cache<TKey, TValue> cache, bool isGeneric)
+            {
+                this.cache = cache;
+                version = cache.version;
+                current = null;
+                this.isGeneric = isGeneric;
+                beforeFirst = true;
+            }
+
+            #endregion
+
+            #region Methods
+
+            public void Dispose()
+            {
+            }
+
+            public bool MoveNext()
+            {
+                if (version != cache.version)
+                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+
+                if (beforeFirst)
+                {
+                    beforeFirst = false;
+                    if (cache.first == null)
+                        return false;
+
+                    current = cache.first;
+                    return true;
+                }
+
+                if (current != null)
+                {
+                    current = current.Next;
+                    return current != null;
+                }
+
+                return false;
+            }
+
+            public void Reset()
+            {
+                if (version != cache.version)
+                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                beforeFirst = true;
+                current = null;
+            }
+
+            #endregion
         }
 
         #endregion
@@ -373,51 +359,27 @@ namespace KGySoft.Collections
 
             #region Properties
 
-            /// <summary>
-            /// Gets number of cache reads.
-            /// </summary>
-            public int Reads { get { return owner.cacheReads; } }
+            public int Reads => owner.cacheReads;
 
-            /// <summary>
-            /// Gets number of cache writes.
-            /// </summary>
-            public int Writes { get { return owner.cacheWrites; } }
+            public int Writes => owner.cacheWrites;
 
-            /// <summary>
-            /// Gets number of cache deletes.
-            /// </summary>
-            public int Deletes { get { return owner.cacheDeletes; } }
+            public int Deletes => owner.cacheDeletes;
 
-            /// <summary>
-            /// Gets number of cache hits.
-            /// </summary>
-            public int Hits { get { return owner.cacheHit; } }
+            public int Hits => owner.cacheHit;
 
-            /// <summary>
-            /// Gets the hit rate of the cache
-            /// </summary>
-            public float HitRate { get { return Reads == 0 ? 0 : (float)Hits / Reads; } }
+            public float HitRate => Reads == 0 ? 0 : (float)Hits / Reads;
 
             #endregion
 
             #region Constructors
 
-            internal CacheStatistics(Cache<TKey, TValue> owner)
-            {
-                this.owner = owner;
-            }
+            internal CacheStatistics(Cache<TKey, TValue> owner) => this.owner = owner;
 
             #endregion
 
             #region Methods
 
-            /// <summary>
-            /// Gets the statistics of the cache as a string.
-            /// </summary>
-            public override string ToString()
-            {
-                return Res.Get(Res.CacheStatistics, typeof(TKey).Name, typeof(TValue).Name, owner.Count, owner.Capacity, Writes, Reads, Hits, Deletes, HitRate);
-            }
+            public override string ToString() => Res.Get(Res.CacheStatistics, typeof(TKey).Name, typeof(TValue).Name, owner.Count, owner.Capacity, Writes, Reads, Hits, Deletes, HitRate);
 
             #endregion
         }
@@ -427,7 +389,7 @@ namespace KGySoft.Collections
         #region CacheItem class
 
         [Serializable]
-        [DebuggerDisplay("[{Key}; {Value}]")]
+        [DebuggerDisplay("[{" + nameof(Key) + "}; {" + nameof(Value) + "}]")]
         private sealed class CacheItem
         {
             #region Fields
@@ -445,42 +407,59 @@ namespace KGySoft.Collections
         #region KeysCollection class
 
         [DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
-        [DebuggerDisplay("Count = {Count}; TKey = {typeof(TKey)}")]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}")]
         [Serializable]
         private sealed class KeysCollection : ICollection<TKey>, ICollection
         {
             #region Fields
 
-            private Cache<TKey, TValue> owner;
+            private readonly Cache<TKey, TValue> owner;
+            [NonSerialized] private object syncRoot;
 
-            [NonSerialized]
-            private object syncRoot;
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            public int Count => owner.Count;
+
+            public bool IsReadOnly => true;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            bool ICollection.IsSynchronized => false;
+
+            object ICollection.SyncRoot
+            {
+                get
+                {
+                    if (syncRoot == null)
+                        Interlocked.CompareExchange(ref syncRoot, new object(), null);
+                    return syncRoot;
+                }
+            }
+
+            #endregion
 
             #endregion
 
             #region Constructors
 
-            internal KeysCollection(Cache<TKey, TValue> owner)
-            {
-                this.owner = owner;
-            }
+            internal KeysCollection(Cache<TKey, TValue> owner) => this.owner = owner;
 
             #endregion
 
-            #region ICollection<TKey> Members
+            #region Methods
 
-            void ICollection<TKey>.Add(TKey item)
-            {
-                throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
-            }
-
-            void ICollection<TKey>.Clear()
-            {
-                throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
-            }
+            #region Public Methods
 
             public bool Contains(TKey item)
             {
+                if (item == null)
+                    throw new ArgumentNullException(nameof(item), Res.Get(Res.ArgumentNull));
                 return owner.ContainsKey(item);
             }
 
@@ -499,25 +478,6 @@ namespace KGySoft.Collections
                 }
             }
 
-            public int Count
-            {
-                get { return owner.Count; }
-            }
-
-            public bool IsReadOnly
-            {
-                get { return true; }
-            }
-
-            bool ICollection<TKey>.Remove(TKey item)
-            {
-                throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
-            }
-
-            #endregion
-
-            #region IEnumerable<TKey> Members
-
             public IEnumerator<TKey> GetEnumerator()
             {
                 if (owner.cacheStore == null || owner.first == null)
@@ -535,24 +495,22 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerable Members
+            #region Explicitly Implemented Interface Methods
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            void ICollection<TKey>.Add(TKey item) => throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
 
-            #endregion
+            void ICollection<TKey>.Clear() => throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
 
-            #region ICollection Members
+            bool ICollection<TKey>.Remove(TKey item) => throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
                     throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
 
-                TKey[] keys = array as TKey[];
-                if (keys != null)
+                if (array is TKey[] keys)
                 {
                     CopyTo(keys, index);
                     return;
@@ -565,22 +523,49 @@ namespace KGySoft.Collections
                 if (array.Rank != 1)
                     throw new ArgumentException(Res.Get(Res.ArrayDimension), nameof(array));
 
-                object[] objectArray = array as object[];
-                if (objectArray != null)
+                if (array is object[] objectArray)
                 {
                     for (CacheItem current = owner.first; current != null; current = current.Next)
-                    {
                         objectArray[index++] = current.Key;
-                    }
                 }
 
                 throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
             }
 
-            bool ICollection.IsSynchronized
-            {
-                get { return false; }
-            }
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ValuesCollection class
+
+        [DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ")}")]
+        [Serializable]
+        private sealed class ValuesCollection : ICollection<TValue>, ICollection
+        {
+            #region Fields
+
+            private readonly Cache<TKey, TValue> owner;
+            [NonSerialized] private object syncRoot;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            public int Count => owner.Count;
+
+            public bool IsReadOnly => true;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            bool ICollection.IsSynchronized => false;
 
             object ICollection.SyncRoot
             {
@@ -593,51 +578,20 @@ namespace KGySoft.Collections
             }
 
             #endregion
-        }
-
-        #endregion
-
-        #region ValuesCollection class
-
-        [DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
-        [DebuggerDisplay("Count = {Count}; TValue = {typeof(TValue)}")]
-        [Serializable]
-        private sealed class ValuesCollection : ICollection<TValue>, ICollection
-        {
-            #region Fields
-
-            private Cache<TKey, TValue> owner;
-
-            [NonSerialized]
-            private object syncRoot;
 
             #endregion
 
             #region Constructors
 
-            internal ValuesCollection(Cache<TKey, TValue> owner)
-            {
-                this.owner = owner;
-            }
+            internal ValuesCollection(Cache<TKey, TValue> owner) => this.owner = owner;
 
             #endregion
 
-            #region ICollection<TValue> Members
+            #region Methods
 
-            void ICollection<TValue>.Add(TValue item)
-            {
-                throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
-            }
+            #region Public Methods
 
-            void ICollection<TValue>.Clear()
-            {
-                throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
-            }
-
-            public bool Contains(TValue item)
-            {
-                return owner.ContainsValue(item);
-            }
+            public bool Contains(TValue item) => owner.ContainsValue(item);
 
             public void CopyTo(TValue[] array, int arrayIndex)
             {
@@ -649,29 +603,8 @@ namespace KGySoft.Collections
                     throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
                 for (CacheItem current = owner.first; current != null; current = current.Next)
-                {
                     array[arrayIndex++] = current.Value;
-                }
             }
-
-            public int Count
-            {
-                get { return owner.Count; }
-            }
-
-            public bool IsReadOnly
-            {
-                get { return true; }
-            }
-
-            bool ICollection<TValue>.Remove(TValue item)
-            {
-                throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
-            }
-
-            #endregion
-
-            #region IEnumerable<TKey> Members
 
             public IEnumerator<TValue> GetEnumerator()
             {
@@ -690,24 +623,22 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerable Members
+            #region Explicitly Implemented Interface Methods
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            void ICollection<TValue>.Add(TValue item) => throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
 
-            #endregion
+            void ICollection<TValue>.Clear() => throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
 
-            #region ICollection Members
+            bool ICollection<TValue>.Remove(TValue item) => throw new NotSupportedException(Res.Get(Res.ModifyNotSupported));
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
                     throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
 
-                TValue[] values = array as TValue[];
-                if (values != null)
+                if (array is TValue[] values)
                 {
                     CopyTo(values, index);
                     return;
@@ -720,32 +651,16 @@ namespace KGySoft.Collections
                 if (array.Rank != 1)
                     throw new ArgumentException(Res.Get(Res.ArrayDimension), nameof(array));
 
-                object[] objectArray = array as object[];
-                if (objectArray != null)
+                if (array is object[] objectArray)
                 {
                     for (CacheItem current = owner.first; current != null; current = current.Next)
-                    {
                         objectArray[index++] = current.Value;
-                    }
                 }
 
                 throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
             }
 
-            bool ICollection.IsSynchronized
-            {
-                get { return false; }
-            }
-
-            object ICollection.SyncRoot
-            {
-                get
-                {
-                    if (syncRoot == null)
-                        Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                    return syncRoot;
-                }
-            }
+            #endregion
 
             #endregion
         }
@@ -787,6 +702,7 @@ namespace KGySoft.Collections
         private static readonly bool useEnumValueComparer;
         private static readonly Type typeKey;
         private static readonly Type typeValue;
+        // ReSharper restore StaticMemberInGenericType
 
         #endregion
 
@@ -823,6 +739,305 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Properties and Indexers
+
+        #region Properties
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets or sets the capacity of the cache. If new value is smaller than elements count (value of the <see cref="Count"/> property),
+        /// then old or least used elements (depending on <see cref="Behavior"/>) will be removed from <see cref="Cache{TKey,TValue}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If new value is smaller than elements count, then cost of setting this property is O(n), where n is the difference of
+        /// <see cref="Count"/> before setting the property and the new capacity to set.</para>
+        /// <para>If new value is larger than elements count, and <see cref="EnsureCapacity"/> returns <see langword="true"/>, then cost of setting this property is O(n),
+        /// where n is the new capacity.</para>
+        /// <para>Otherwise, the cost of setting this property is O(1).</para>
+        /// </remarks>
+        /// <seealso cref="Count"/>
+        /// <seealso cref="Behavior"/>
+        /// <seealso cref="EnsureCapacity"/>
+        public int Capacity
+        {
+            get => capacity;
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CacheMinSize));
+
+                if (capacity == value)
+                    return;
+
+                capacity = value;
+                if (Count - value > 0)
+                    RemoveLeastUsedItems(Count - value);
+
+                if (ensureCapacity)
+                    DoEnsureCapacity();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the cache behavior when cache is full and an element has to be removed.
+        /// The cache is full, when <see cref="Count"/> reaches the <see cref="Capacity"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// When cache is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element
+        /// has to be stored, then an element has to be dropped out from the cache. The dropping-out strategy is
+        /// specified by a <see cref="Behavior"/> property. The suggested behavior depends on cache usage. See
+        /// possible behaviors at <see cref="CacheBehavior"/> enumeration.
+        /// </para>
+        /// <para>
+        /// Default value: <see cref="CacheBehavior.RemoveLeastRecentUsedElement"/>.
+        /// </para>
+        /// <note>
+        /// Changing value of this property will not reorganize cache, just switches between the maintaining strategies.
+        /// Cache order is maintained on accessing a value.
+        /// </note>
+        /// </remarks>
+        /// <seealso cref="Count"/>
+        /// <seealso cref="Capacity"/>
+        /// <seealso cref="CacheBehavior"/>
+        /// <seealso cref="EnsureCapacity"/>
+        public CacheBehavior Behavior
+        {
+            get => behavior;
+            set
+            {
+                if (!Enum<CacheBehavior>.IsDefined(value))
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+
+                behavior = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
+        /// allocate memory for all cache entries.
+        /// <br/>Default value is <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="Capacity"/> is large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>
+        /// <para>When <see cref="EnsureCapacity"/> is <see langword="true"/>, the full capacity of the inner storage is allocated when the first
+        /// item is added to the cache. Otherwise, inner storage is allocated dynamically, doubling the currently used inner
+        /// storage until the preset <see cref="Capacity"/> is reached.
+        /// <note>When <see cref="EnsureCapacity"/> is <see langword="false"/> and <see cref="Capacity"/> is not a power of 2, then after the last storage doubling
+        /// the internally allocated storage can be bigger than <see cref="Capacity"/>. But setting <see langword="true"/> to this property trims the possibly exceeded size of the internal storage.</note>
+        /// <note>Even if <see cref="EnsureCapacity"/> is <see langword="true"/> (and thus the internal storage is preallocated), adding elements to the cache
+        /// consumes some memory for each added element.</note>
+        /// </para>
+        /// <para>When cache is not empty and <see cref="EnsureCapacity"/> is just turned on, the cost of setting this property is O(n),
+        /// where n is <see cref="Count"/>. In any other cases cost of setting this property is O(1).</para>
+        /// </remarks>
+        /// <seealso cref="Capacity"/>
+        public bool EnsureCapacity
+        {
+            get => ensureCapacity;
+            set
+            {
+                if (ensureCapacity == value)
+                    return;
+
+                ensureCapacity = value;
+                if (ensureCapacity)
+                    DoEnsureCapacity();
+            }
+        }
+
+        /// <summary>
+        /// Gets the keys stored in the cache in evaluation order.
+        /// </summary>
+        /// <remarks>
+        /// <para>The order of the keys in the <see cref="ICollection{T}"/> represents the evaluation order. When the <see cref="Cache{TKey,TValue}"/> is full, the element with the first key will be dropped.</para>
+        /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the keys in the original <see cref="Cache{TKey,TValue}"/>.
+        /// Therefore, changes to the <see cref="Cache{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
+        /// <para>Retrieving the value of this property is an O(1) operation.</para>
+        /// <para>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// </remarks>
+        public ICollection<TKey> Keys => keysCollection ?? (keysCollection = new KeysCollection(this));
+
+        /// <summary>
+        /// Gets the values stored in the cache in evaluation order.
+        /// </summary>
+        /// <remarks>
+        /// <para>The order of the values in the <see cref="ICollection{T}"/> represents the evaluation order. When the <see cref="Cache{TKey,TValue}"/> is full, the element with the value key will be dropped.</para>
+        /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the values in the original <see cref="Cache{TKey,TValue}"/>.
+        /// Therefore, changes to the <see cref="Cache{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
+        /// <para>Retrieving the value of this property is an O(1) operation.</para>
+        /// <para>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// </remarks>
+        public ICollection<TValue> Values => valuesCollection ?? (valuesCollection = new ValuesCollection(this));
+
+        /// <summary>
+        /// Gets number of elements currently stored in this <see cref="Cache{TKey,TValue}"/> instance.
+        /// </summary>
+        /// <seealso cref="Capacity"/>
+        public int Count => cacheStore?.Count ?? 0;
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
+        /// </summary>
+        /// <returns>
+        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
+        /// </returns>
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object has a fixed size.
+        /// </summary>
+        /// <returns>
+        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
+        /// </returns>
+        bool IDictionary.IsFixedSize => false;
+
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object is read-only.
+        /// </summary>
+        /// <returns>
+        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
+        /// </returns>
+        bool IDictionary.IsReadOnly => false;
+
+        /// <summary>
+        /// Gets an <see cref="T:System.Collections.ICollection"/> object containing the keys of the <see cref="T:System.Collections.IDictionary"/> object.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="T:System.Collections.ICollection"/> object containing the keys of the <see cref="T:System.Collections.IDictionary"/> object.
+        /// </returns>
+        ICollection IDictionary.Keys => (ICollection)Keys;
+
+        /// <summary>
+        /// Gets an <see cref="T:System.Collections.ICollection"/> object containing the values in the
+        /// <see cref="T:System.Collections.IDictionary"/> object.
+        /// </summary>
+        /// <returns>
+        /// An <see cref="T:System.Collections.ICollection"/> object containing the values in the <see cref="T:System.Collections.IDictionary"/> object.
+        /// </returns>
+        ICollection IDictionary.Values => (ICollection)Values;
+
+        bool ICollection.IsSynchronized => false;
+
+        object ICollection.SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
+                return syncRoot;
+            }
+        }
+
+#if !(NET35 || NET40)
+
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
+
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
+#endif
+
+        #endregion
+
+        #endregion
+
+        #region Indexers
+
+        #region Public Indexers
+
+        /// <summary>
+        /// Gets or sets the value associated with the specified <paramref name="key"/>. When an element with a non-existing key
+        /// is read, and an item loader was specified by the appropriate <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>,
+        /// then the value is retrieved by the specified loader delegate of this <see cref="Cache{TKey,TValue}"/> instance.
+        /// </summary>
+        /// <param name="key">Key of the element to get or set.</param>
+        /// <returns>
+        /// The element with the specified <paramref name="key"/>.
+        /// </returns>
+        /// <remarks>
+        /// <para>Getting this property retrieves the needed element, while setting adds a new item (or overwrites an already existing item).
+        /// If this <see cref="Cache{TKey,TValue}"/> instance was initialized by a non-<see langword="null"/> item loader, then it is enough to use only the get accessor because that will
+        /// load elements into the cache by the delegate instance that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
+        /// When the cache was initialized without an item loader, then getting a non-existing key will throw a <see cref="KeyNotFoundException"/>.</para>
+        /// <para>If an item loader was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>, then
+        /// it is transparent whether the returned value of this property was in the cache before retrieving it.
+        /// To test whether a key exists in the cache, use <see cref="ContainsKey">ContainsKey</see> method. To retrieve a key only when it already exists in the cache,
+        /// use <see cref="TryGetValue">TryGetValue</see> method.</para>
+        /// <para>When the <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> equals to <see cref="Capacity"/>) and
+        /// a new item is added, an element (depending on <see cref="Behavior"/> property) will be dropped from the cache.</para>
+        /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/>, getting or setting this property approaches an O(1) operation. Otherwise,
+        /// when the capacity of the inner storage must be increased to accommodate a new element, this property becomes an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
+        /// <exception cref="KeyNotFoundException">The property is retrieved, the <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader
+        /// and <paramref name="key"/> does not exist in the cache.</exception>
+        /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})"/>
+        /// <seealso cref="Behavior"/>
+        public TValue this[TKey key]
+        {
+            [CollectionAccess(CollectionAccessType.UpdatedContent)]
+            get { return GetValue(key); }
+            set
+            {
+                if (cacheStore != null && cacheStore.TryGetValue(key, out var element))
+                {
+                    if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
+                        InternalTouch(element);
+
+                    // replacing original value
+                    element.Value = value;
+                    version++;
+                }
+                else
+                    Insert(key, value);
+            }
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Indexers
+
+        /// <summary>
+        /// Gets or sets the element with the specified key.
+        /// </summary>
+        /// <returns>
+        /// The element with the specified key.
+        /// </returns>
+        /// <param name="key">The key of the element to get or set.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
+        /// <exception cref="T:System.ArgumentException"><paramref name="key"/> or <paramref name="value"/> has an invalid type.</exception>
+        object IDictionary.this[object key]
+        {
+            get
+            {
+                if (key == null)
+                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                if (!typeKey.CanAcceptValue(key))
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
+                return this[(TKey)key];
+            }
+            set
+            {
+                if (key == null)
+                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                if (!typeKey.CanAcceptValue(key))
+                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
+                if (!typeValue.CanAcceptValue(value))
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+                this[(TKey)key] = (TValue)value;
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
         #region Constructors
 
         #region Static Constructor
@@ -843,11 +1058,14 @@ namespace KGySoft.Collections
 #error .NET version is not set or not supported!
 #endif
 
+
         }
 
         #endregion
 
         #region Instance Constructors
+
+        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with default capacity of 128 and no item loader.
@@ -856,8 +1074,8 @@ namespace KGySoft.Collections
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
         /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
         /// <para>This constructor does not specify an item loader so you have to add elements manually to this <see cref="Cache{TKey,TValue}"/> instance. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey">ContainsKey</see>
+        /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
@@ -871,7 +1089,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>)</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>The <paramref name="capacity"/> of a <see cref="Cache{TKey,TValue}"/> is the maximum number of elements that the <see cref="Cache{TKey,TValue}"/> can hold. When <see cref="EnsureCapacity"/>
@@ -882,8 +1101,8 @@ namespace KGySoft.Collections
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
         /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
         /// <para>This constructor does not specify an item loader so you have to add elements manually to this <see cref="Cache{TKey,TValue}"/> instance. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey">ContainsKey</see>
+        /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
@@ -896,14 +1115,14 @@ namespace KGySoft.Collections
         /// Initializes a new instance of the <see cref="Cache{TKey, TValue}"/> class with the specified <paramref name="comparer"/>, default capacity of 128 and no item loader.
         /// </summary>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
         /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
         /// <para>This constructor does not specify an item loader so you have to add elements manually to this <see cref="Cache{TKey,TValue}"/> instance. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey">ContainsKey</see>
+        /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
@@ -915,12 +1134,14 @@ namespace KGySoft.Collections
         /// <summary>
         /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/>, <paramref name="capacity"/> and <paramref name="comparer"/>.
         /// </summary>
-        /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>)</param>
-        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by calling the
-        /// <see cref="GetValue">GetValue</see> method or by reading the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see>.
+        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by reading the
+        /// <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see>.
         /// If <see langword="null"/>, then similarly to a regular <see cref="Dictionary{TKey,TValue}"/>, a <see cref="KeyNotFoundException"/> will be thrown on accessing a non-existing key.</param>
+        /// <param name="capacity"><see cref="Capacity"/> of the <see cref="Cache{TKey,TValue}"/> (possible maximum value of <see cref="Count"/>). This parameter is optional.
+        /// <br/>Default value: <c>128</c>.</param>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/> key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>The <paramref name="capacity"/> of a <see cref="Cache{TKey,TValue}"/> is the maximum number of elements that the <see cref="Cache{TKey,TValue}"/> can hold. When <see cref="EnsureCapacity"/>
@@ -931,8 +1152,8 @@ namespace KGySoft.Collections
         /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
         /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
         /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass <see langword="null"/> to the <paramref name="itemLoader"/> parameter. In this case
-        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey"/>
-        /// or <see cref="TryGetValue"/> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey">ContainsKey</see>
+        /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="itemLoader"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less or equal to 0.</exception>
@@ -948,6 +1169,47 @@ namespace KGySoft.Collections
             this.comparer = comparer ?? (useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default);
             isDefaultComparer = useEnumKeyComparer ? this.comparer.Equals(EnumComparer<TKey>.Comparer) : this.comparer.Equals(EqualityComparer<TKey>.Default);
         }
+
+        #endregion
+
+        #region Private Constructors
+
+        /// <summary>
+        /// Special constructor for deserialization
+        /// </summary>
+        private Cache(SerializationInfo info, StreamingContext context)
+        {
+            // capacity
+            capacity = info.GetInt32(nameof(capacity));
+            ensureCapacity = info.GetBoolean(nameof(ensureCapacity));
+
+            // comparer
+            comparer = (IEqualityComparer<TKey>)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>));
+            isDefaultComparer = comparer == null;
+            if (comparer == null)
+                comparer = useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default;
+
+            // loader
+            itemLoader = (Func<TKey, TValue>)info.GetValue(nameof(itemLoader), typeof(Func<TKey, TValue>)) ?? nullLoader;
+
+            // elements
+            TKey[] keys = (TKey[])info.GetValue(nameof(keys), typeof(TKey[]));
+            TValue[] values = (TValue[])info.GetValue(nameof(values), typeof(TValue[]));
+            cacheStore = new Dictionary<TKey, CacheItem>(ensureCapacity ? capacity : keys.Length, comparer);
+            for (int i = 0; i < keys.Length; i++)
+            {
+                Insert(keys[i], values[i]);
+            }
+
+            // other data
+            version = info.GetInt32(nameof(version));
+            cacheReads = info.GetInt32(nameof(cacheReads));
+            cacheDeletes = info.GetInt32(nameof(cacheWrites));
+            cacheDeletes = info.GetInt32(nameof(cacheDeletes));
+            cacheHit = info.GetInt32(nameof(cacheHit));
+        }
+
+        #endregion
 
         #endregion
 
@@ -977,8 +1239,7 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
 
-            CacheItem element;
-            if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+            if (cacheStore != null && cacheStore.TryGetValue(key, out CacheItem element))
             {
                 InternalTouch(element);
                 version++;
@@ -989,7 +1250,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Refreshes the value of the <paramref name="key"/> in the <see cref="Cache{TKey,TValue}"/> even if it already exists in the cache
-        /// by using the item loader that was passed to the constructor.
+        /// by using the item loader that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
         /// </summary>
         /// <param name="key">The key of the item to refresh.</param>
         /// <remarks>
@@ -1000,20 +1261,17 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader.</exception>
-        public void RefreshValue(TKey key)
-        {
-            GetValueUncached(key);
-        }
+        public void RefreshValue(TKey key) => GetValueUncached(key);
 
         /// <summary>
         /// Loads the value of the <paramref name="key"/> even if it already exists in the <see cref="Cache{TKey,TValue}"/>
-        /// by using the item loader that was passed to the constructor.
+        /// by using the item loader that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
         /// </summary>
         /// <param name="key">The key of the item to reload.</param>
         /// <returns>A <typeparamref name="TValue"/> instance that was retrieved by the item loader that was used to initialize this <see cref="Cache{TKey,TValue}"/> instance.</returns>
         /// <remarks>
         /// <para>To get a value from the <see cref="Cache{TKey,TValue}"/>, and using the item loader only when <paramref name="key"/> does not exist in the cache,
-        /// read the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property.</para>
+        /// read the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> property.</para>
         /// <para>The loaded value will be stored in the <see cref="Cache{TKey,TValue}"/>. If a value already existed in the cache for the given <paramref name="key"/>, then the value will be replaced.</para>
         /// <para><note type="caution">Do not use this method when the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader.</note></para>
         /// <para>The cost of this method depends on the cost of the item loader function that was passed to the constructor. Handling the already loaded value approaches an O(1) operation.</para>
@@ -1027,8 +1285,7 @@ namespace KGySoft.Collections
                 throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
 
             TValue result = itemLoader(key);
-            CacheItem element;
-            if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+            if (cacheStore != null && cacheStore.TryGetValue(key, out CacheItem element))
             {
                 if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
                     InternalTouch(element);
@@ -1059,15 +1316,187 @@ namespace KGySoft.Collections
             if (cacheStore == null)
                 return false;
 
-            IEqualityComparer<TValue> comparer = useEnumValueComparer ? (IEqualityComparer<TValue>)EnumComparer<TValue>.Comparer : EqualityComparer<TValue>.Default;
+            IEqualityComparer<TValue> valueComparer = useEnumValueComparer ? (IEqualityComparer<TValue>)EnumComparer<TValue>.Comparer : EqualityComparer<TValue>.Default;
             for (CacheItem item = first; item != null; item = item.Next)
             {
-                if (comparer.Equals(value, item.Value))
+                if (valueComparer.Equals(value, item.Value))
                     return true;
             }
 
             return false;
         }
+
+        /// <summary>
+        /// Clears the <see cref="Cache{TKey,TValue}"/> and resets statistics.
+        /// </summary>
+        /// <remarks>
+        /// <para>The <see cref="Count"/> property is set to 0, and references to other objects from elements of the collection are also released.
+        /// The <see cref="Capacity"/> remains unchanged. The statistics will be reset.</para>
+        /// <para>This method is an O(1) operation.</para>
+        /// </remarks>
+        /// <seealso cref="Clear"/>
+        public void Reset()
+        {
+            Clear();
+            cacheReads = 0;
+            cacheWrites = 0;
+            cacheDeletes = 0;
+            cacheHit = 0;
+        }
+
+        /// <summary>
+        /// Gets an <see cref="ICacheStatistics"/> instance of the <see cref="Cache{TKey,TValue}"/> that can provide statistical information about the cache.
+        /// </summary>
+        /// <remarks>
+        /// <para>The returned <see cref="ICacheStatistics"/> instance is a wrapper around the <see cref="Cache{TKey,TValue}"/> and reflects any changes
+        /// happened to the cache immediately. Therefore it is not necessary to call this method again whenever new statistics are required.</para>
+        /// <para>This method is an O(1) operation.</para>
+        /// </remarks>
+        public ICacheStatistics GetStatistics() => new CacheStatistics(this);
+
+        /// <summary>
+        /// Adds an element with the provided key and value to the <see cref="Cache{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <remarks>
+        /// <para>You need to call this method only when this <see cref="Cache{TKey,TValue}"/> instance was initialized without using an item loader.
+        /// Otherwise, you need only to read the get accessor of the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> property,
+        /// which automatically invokes the item loader to add new items.</para>
+        /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
+        /// In contrast, using the setter of the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> property replaces the old value with the new one.</para>
+        /// <para>If you want to renew an element in the evaluation order, use the <see cref="Touch">Touch</see> method.</para>
+        /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/> this method approaches an O(1) operation. Otherwise, when the capacity of the inner storage must be increased to accommodate the new element,
+        /// this method becomes an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
+        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
+        public void Add(TKey key, TValue value)
+        {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+            if (cacheStore != null && cacheStore.ContainsKey(key))
+                throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
+
+            Insert(key, value);
+        }
+
+        /// <summary>
+        /// Removes the value with the specified <paramref name="key"/> from the <see cref="Cache{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="key">Key of the item to remove.</param>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>. This method also returns <see langword="false"/> if key was not found in the <see cref="Cache{TKey,TValue}"/>.</returns>
+        /// <remarks><para>If the <see cref="Cache{TKey,TValue}"/> does not contain an element with the specified key, the <see cref="Cache{TKey,TValue}"/> remains unchanged. No exception is thrown.</para>
+        /// <para>This method approaches an O(1) operation.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool Remove(TKey key)
+        {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+
+            if (cacheStore == null)
+                return false;
+
+            if (!cacheStore.TryGetValue(key, out CacheItem element))
+                return false;
+
+            InternalRemove(element);
+            return true;
+        }
+
+        /// <summary>
+        /// Tries to gets the value associated with the specified <paramref name="key"/> without using the item loader passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>, if cache contains an element with the specified key; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="value">When this method returns, the value associated with the specified key, if the <paramref name="key"/> is found;
+        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
+        /// <remarks>
+        /// <para>Use this method if the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader, or when you want to determine if a
+        /// <paramref name="key"/> exists in the <see cref="Cache{TKey,TValue}"/> and if so, you want to get the value as well.
+        /// Reading the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> property would transparently load a non-existing element by
+        /// calling the item loader delegate that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.</para>
+        /// <para>Works exactly the same way as in case of <see cref="Dictionary{TKey,TValue}"/> class. If <paramref name="key"/> is not found, does not use the
+        /// item loader passed to the constructor.</para>
+        /// <para>If the <paramref name="key"/> is not found, then the <paramref name="value"/> parameter gets the appropriate default value
+        /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <see langword="false"/> for Boolean types, and <see langword="null"/> for reference types.</para>
+        /// <para>This method approaches an O(1) operation.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key));
+
+            if (cacheStore == null)
+            {
+                value = default;
+                return false;
+            }
+
+            cacheReads++;
+            if (cacheStore.TryGetValue(key, out CacheItem element))
+            {
+                cacheHit++;
+                if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
+                    InternalTouch(element);
+
+                value = element.Value;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether the <see cref="Cache{TKey,TValue}"/> contains a specific key.
+        /// </summary>
+        /// <param name="key">The key to locate in the <see cref="Cache{TKey,TValue}"/>.</param>
+        /// <returns><see langword="true"/> if the <see cref="Cache{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
+        /// <remarks><para>This method approaches an O(1) operation.</para></remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool ContainsKey(TKey key)
+        {
+            if (key == null)
+                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+
+            return (cacheStore != null && cacheStore.ContainsKey(key));
+        }
+
+        /// <summary>
+        /// Removes all keys and values from the <see cref="Cache{TKey,TValue}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>The <see cref="Count"/> property is set to 0, and references to other objects from elements of the collection are also released.
+        /// The <see cref="Capacity"/> remains unchanged.</para>
+        /// <para>This method is an O(1) operation.</para>
+        /// </remarks>
+        /// <seealso cref="Reset"/>
+        public void Clear()
+        {
+            cacheDeletes += Count;
+            first = null;
+            last = null;
+            cacheStore = null;
+            version++;
+        }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
+        /// </returns>
+        /// <remarks>
+        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// </remarks>
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => new Enumerator(this, true);
 
         #endregion
 
@@ -1081,9 +1510,7 @@ namespace KGySoft.Collections
             var old = cacheStore;
             cacheStore = new Dictionary<TKey, CacheItem>(capacity, comparer);
             foreach (KeyValuePair<TKey, CacheItem> pair in old)
-            {
                 cacheStore.Add(pair.Key, pair.Value);
-            }
         }
 
         /// <summary>
@@ -1094,8 +1521,7 @@ namespace KGySoft.Collections
         {
             cacheReads++;
 
-            CacheItem element;
-            if (cacheStore != null && cacheStore.TryGetValue(key, out element))
+            if (cacheStore != null && cacheStore.TryGetValue(key, out CacheItem element))
             {
                 cacheHit++;
                 if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
@@ -1170,6 +1596,8 @@ namespace KGySoft.Collections
             for (int i = 0; i < amount; i++)
             {
                 Debug.Assert(first != null, "first is null at RemoveLeastUsedItems");
+
+                // ReSharper disable once PossibleNullReferenceException
                 cacheStore.Remove(first.Key);
                 first = first.Next;
                 if (first != null)
@@ -1213,142 +1641,7 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #endregion
-
-        #region ICache Members
-
-        /// <summary>
-        /// Gets or sets the capacity of the cache. If new value is smaller than elements count (value of the <see cref="Count"/> property),
-        /// then old or least used elements (depending on <see cref="Behavior"/>) will be removed from <see cref="Cache{TKey,TValue}"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>If new value is smaller than elements count, then cost of setting this property is O(n), where n is the difference of
-        /// <see cref="Count"/> before setting the property and the new capacity to set.</para>
-        /// <para>If new value is larger than elements count, and <see cref="EnsureCapacity"/> returns <see langword="true"/>, then cost of setting this property is O(n),
-        /// where n is the new capacity.</para>
-        /// <para>Otherwise, the cost of setting this property is O(1).</para>
-        /// </remarks>
-        /// <seealso cref="Count"/>
-        /// <seealso cref="Behavior"/>
-        /// <seealso cref="EnsureCapacity"/>
-        public int Capacity
-        {
-            get { return capacity; }
-            set
-            {
-                if (value <= 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CacheMinSize));
-
-                if (capacity == value)
-                    return;
-
-                capacity = value;
-                if (Count - value > 0)
-                    RemoveLeastUsedItems(Count - value);
-
-                if (ensureCapacity)
-                    DoEnsureCapacity();
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the cache behavior when cache is full and an element has to be removed.
-        /// The cache is full, when <see cref="Count"/> reaches the <see cref="Capacity"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// When cache is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element
-        /// has to be stored, then an element has to be dropped out from the cache. The dropping-out strategy is
-        /// specified by a <see cref="Behavior"/> property. The suggested behavior depends on cache usage. See
-        /// possible behaviors at <see cref="CacheBehavior"/> enumeration.
-        /// </para>
-        /// <para>
-        /// Default value: <see cref="CacheBehavior.RemoveLeastRecentUsedElement"/>.
-        /// </para>
-        /// <note>
-        /// Changing value of this property will not reorganize cache, just switches between the maintaining strategies.
-        /// Cache order is maintained on accessing a value.
-        /// </note>
-        /// </remarks>
-        /// <seealso cref="Count"/>
-        /// <seealso cref="Capacity"/>
-        /// <seealso cref="CacheBehavior"/>
-        /// <seealso cref="EnsureCapacity"/>
-        public CacheBehavior Behavior
-        {
-            get { return behavior; }
-            set
-            {
-                if (!Enum<CacheBehavior>.IsDefined(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
-
-                behavior = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
-        /// allocate memory for all cache entries.
-        /// <br/>Default value is <see langword="true"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>If <see cref="Capacity"/> is very large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>
-        /// <para>When <see cref="EnsureCapacity"/> is <see langword="true"/>, the full capacity of the inner storage is allocated when the first
-        /// item is added to the cache. Otherwise, inner storage is allocated dynamically, doubling the currently used inner
-        /// storage until the preset <see cref="Capacity"/> is reached.
-        /// <note>When <see cref="EnsureCapacity"/> is <see langword="false"/> and <see cref="Capacity"/> is power of 2, after the last storage doubling
-        /// the internally allocated storage can be bigger than <see cref="Capacity"/>. In this case turning on this property trims the internal storage.</note>
-        /// <note>Even if <see cref="EnsureCapacity"/> is <see langword="true"/> (and thus the internal storage is preallocated), adding elements to the cache
-        /// consumes some memory for each added element.</note>
-        /// </para>
-        /// <para>When cache is not empty and <see cref="EnsureCapacity"/> is just turned on, the cost of setting this property is O(n),
-        /// where n is <see cref="Count"/>. In any other cases cost of setting this property is O(1).</para>
-        /// </remarks>
-        /// <seealso cref="Capacity"/>
-        public bool EnsureCapacity
-        {
-            get { return ensureCapacity; }
-            set
-            {
-                if (ensureCapacity == value)
-                    return;
-
-                ensureCapacity = value;
-                if (ensureCapacity)
-                    DoEnsureCapacity();
-            }
-        }
-
-        /// <summary>
-        /// Clears the <see cref="Cache{TKey,TValue}"/> and resets statistics.
-        /// </summary>
-        /// <remarks>
-        /// <para>The <see cref="Count"/> property is set to 0, and references to other objects from elements of the collection are also released.
-        /// The <see cref="Capacity"/> remains unchanged. The statistics will be reset.</para>
-        /// <para>This method is an O(1) operation.</para>
-        /// </remarks>
-        /// <seealso cref="Clear"/>
-        public void Reset()
-        {
-            Clear();
-            cacheReads = 0;
-            cacheWrites = 0;
-            cacheDeletes = 0;
-            cacheHit = 0;
-        }
-
-        /// <summary>
-        /// Gets an <see cref="ICacheStatistics"/> instance of the <see cref="Cache{TKey,TValue}"/> that can provide statistical information about the cache.
-        /// </summary>
-        /// <remarks>
-        /// <para>The returned <see cref="ICacheStatistics"/> instance is a wrapper around the <see cref="Cache{TKey,TValue}"/> and reflects any changes
-        /// happened to the cache immediately. Therefore it is not necessary to call this method again whenever new statistics are required.</para>
-        /// <para>This method is an O(1) operation.</para>
-        /// </remarks>
-        public ICacheStatistics GetStatistics()
-        {
-            return new CacheStatistics(this);
-        }
+        #region Explicitly Implemented Interface Methods
 
         /// <summary>
         /// Renews an item in the evaluation order.
@@ -1389,253 +1682,6 @@ namespace KGySoft.Collections
             return GetValueUncached((TKey)key);
         }
 
-        #endregion
-
-        #region IDictionary<TKey,TValue> Members
-
-        /// <summary>
-        /// Gets or sets the value associated with the specified <paramref name="key"/>. When an element with a non-existing key
-        /// is read, then the value is retrieved by the loader delegate that was passed to one of the constructors of this <see cref="Cache{TKey,TValue}"/> instance.
-        /// </summary>
-        /// <param name="key">Key of the element to get or set.</param>
-        /// <returns>
-        /// The element with the specified <paramref name="key"/>.
-        /// </returns>
-        /// <remarks>
-        /// <para>Getting this property retrieves the needed element, while setting adds a new item (or overwrites an already existing item).
-        /// If this instance was initialized by a non-<see langword="null"/> item loader only the get accessor should be used because that will
-        /// load elements into the cache by the delegate instance that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.
-        /// When the cache was initialized without an item loader, then getting a non-existing key will throw a <see cref="KeyNotFoundException"/>.</para>
-        /// <para>By using the getter of this property, it is transparent whether the returned value was in the cache before retrieving it.
-        /// To test whether a key exists in the cache, use <see cref="ContainsKey"/> method. To retrieve a key only when it already exists in the cache,
-        /// use <see cref="TryGetValue"/> method.</para>
-        /// <para>When the <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> equals to <see cref="Capacity"/>) and
-        /// a new item is added, an element (depending on <see cref="Behavior"/> property) will be dropped from the cache.</para>
-        /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/>, getting or setting this property approaches an O(1) operation. Otherwise,
-        /// when the capacity of the inner storage must be increased to accommodate a new element, this property becomes an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
-        /// <exception cref="KeyNotFoundException">The property is retrieved, the <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader
-        /// and <paramref name="key"/> does not exist in the cache.</exception>
-        /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
-        /// <seealso cref="Behavior"/>
-        public TValue this[TKey key]
-        {
-            [CollectionAccess(CollectionAccessType.UpdatedContent)]
-            get { return GetValue(key); }
-            set
-            {
-                CacheItem element;
-                if (cacheStore != null && cacheStore.TryGetValue(key, out element))
-                {
-                    if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
-                        InternalTouch(element);
-
-                    // replacing original value
-                    element.Value = value;
-                    version++;
-                }
-                else
-                {
-                    Insert(key, value);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the keys stored in the cache in evaluation order.
-        /// </summary>
-        /// <remarks>
-        /// <para>The order of the keys in the <see cref="ICollection{T}"/> represents the evaluation order. When the <see cref="Cache{TKey,TValue}"/> is full, the element with the first key will be dropped.</para>
-        /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the keys in the original <see cref="Cache{TKey,TValue}"/>.
-        /// Therefore, changes to the <see cref="Cache{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
-        /// <para>Retrieving the value of this property is an O(1) operation.</para>
-        /// </remarks>
-        public ICollection<TKey> Keys
-        {
-            get { return keysCollection ?? (keysCollection = new KeysCollection(this)); }
-        }
-
-        /// <summary>
-        /// Gets the values stored in the cache in evaluation order.
-        /// </summary>
-        /// <remarks>
-        /// <para>The order of the values in the <see cref="ICollection{T}"/> represents the evaluation order. When the <see cref="Cache{TKey,TValue}"/> is full, the element with the value key will be dropped.</para>
-        /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the values in the original <see cref="Cache{TKey,TValue}"/>.
-        /// Therefore, changes to the <see cref="Cache{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
-        /// <para>Retrieving the value of this property is an O(1) operation.</para>
-        /// </remarks>
-        public ICollection<TValue> Values
-        {
-            get { return valuesCollection ?? (valuesCollection = new ValuesCollection(this)); }
-        }
-
-        /// <summary>
-        /// Adds an element with the provided key and value to the <see cref="Cache{TKey,TValue}"/>.
-        /// </summary>
-        /// <param name="key">The key of the element to add.</param>
-        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
-        /// <remarks>
-        /// <para>You need to call this method only when this <see cref="Cache{TKey,TValue}"/> instance was initialized without using an item loader.
-        /// Otherwise, you need only to read the get accessor of the indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property),
-        /// which automatically invokes the item loader to add new items.</para>
-        /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
-        /// In contrast, using the setter of the indexer (<see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property) replaces the old value with the new one.</para>
-        /// <para>If you want to renew an element in the evaluation order, use the <see cref="Touch"/> method.</para>
-        /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/> this method approaches an O(1) operation. Otherwise, when the capacity of the inner storage must be increased to accommodate the new element,
-        /// this method becomes an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
-        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        public void Add(TKey key, TValue value)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
-            if (cacheStore != null && cacheStore.ContainsKey(key))
-                throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
-
-            Insert(key, value);
-        }
-
-        /// <summary>
-        /// Removes the value with the specified <paramref name="key"/> from the <see cref="Cache{TKey,TValue}"/>.
-        /// </summary>
-        /// <param name="key">Key of the item to remove.</param>
-        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>. This method also returns <see langword="false"/> if key was not found in the <see cref="Cache{TKey,TValue}"/>.</returns>
-        /// <remarks><para>If the <see cref="Cache{TKey,TValue}"/> does not contain an element with the specified key, the <see cref="Cache{TKey,TValue}"/> remains unchanged. No exception is thrown.</para>
-        /// <para>This method approaches an O(1) operation.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        public bool Remove(TKey key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
-
-            if (cacheStore == null)
-                return false;
-
-            CacheItem element;
-            if (!cacheStore.TryGetValue(key, out element))
-                return false;
-
-            InternalRemove(element);
-            return true;
-        }
-
-        /// <summary>
-        /// Tries to gets the value associated with the specified <paramref name="key"/> without using the item loader passed to the constructor.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/>, if cache contains an element with the specified key; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="key">The key whose value to get.</param>
-        /// <param name="value">When this method returns, the value associated with the specified key, if the <paramref name="key"/> is found;
-        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
-        /// <remarks>
-        /// <para>Use this method if the <see cref="Cache{TKey,TValue}"/> was initialized without an item loader, or when you want to determine if a
-        /// <paramref name="key"/> exists in the <see cref="Cache{TKey,TValue}"/> and if so, you want to get the value as well.
-        /// Reading the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)"/> property would transparently load a non-existing element by
-        /// calling the item loader delegate that was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)">constructor</see>.</para>
-        /// <para>Works exactly the same way as in case of <see cref="Dictionary{TKey,TValue}"/> class. If <paramref name="key"/> is not found, does not use the
-        /// item loader passed to the constructor.</para>
-        /// <para>If the <paramref name="key"/> is not found, then the <paramref name="value"/> parameter gets the appropriate default value
-        /// for the type <typeparamref name="TValue"/>; for example, 0 (zero) for integer types, <see langword="false"/> for Boolean types, and <see langword="null"/> for reference types.</para>
-        /// <para>This method approaches an O(1) operation.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            if (cacheStore == null)
-            {
-                value = default(TValue);
-                return false;
-            }
-
-            cacheReads++;
-            CacheItem element;
-            if (cacheStore.TryGetValue(key, out element))
-            {
-                cacheHit++;
-                if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
-                    InternalTouch(element);
-
-                value = element.Value;
-                return true;
-            }
-
-            value = default(TValue);
-            return false;
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="Cache{TKey,TValue}"/> contains a specific key.
-        /// </summary>
-        /// <param name="key">The key to locate in the <see cref="Cache{TKey,TValue}"/>.</param>
-        /// <returns><see langword="true"/> if the <see cref="Cache{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
-        /// <remarks><para>This method approaches an O(1) operation.</para></remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        public bool ContainsKey(TKey key)
-        {
-            if (key == null)
-                throw new ArgumentNullException(nameof(key));
-
-            return (cacheStore != null && cacheStore.ContainsKey(key));
-        }
-
-        #endregion
-
-#if NET45
-        #region IReadOnlyDictionary<TKey,TValue> Members
-
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys
-        {
-            get { return Keys; }
-        }
-
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values
-        {
-            get { return Values; }
-        }
-
-        #endregion
-#elif !(NET35 || NET40)
-#error .NET version is not set or not supported!
-#endif
-
-        #region ICollection<KeyValuePair<TKey,TValue>> Members
-
-        /// <summary>
-        /// Gets number of elements currently stored in this <see cref="Cache{TKey,TValue}"/> instance.
-        /// </summary>
-        /// <seealso cref="Capacity"/>
-        public int Count
-        {
-            get { return (cacheStore == null) ? 0 : cacheStore.Count; }
-        }
-
-        /// <summary>
-        /// Removes all keys and values from the <see cref="Cache{TKey,TValue}"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>The <see cref="Count"/> property is set to 0, and references to other objects from elements of the collection are also released.
-        /// The <see cref="Capacity"/> remains unchanged.</para>
-        /// <para>This method is an O(1) operation.</para>
-        /// </remarks>
-        /// <seealso cref="Reset"/>
-        public void Clear()
-        {
-            cacheDeletes += Count;
-            first = null;
-            last = null;
-            cacheStore = null;
-            version++;
-        }
-
         /// <summary>
         /// Adds an item to the <see cref="T:System.Collections.Generic.ICollection`1"/>.
         /// </summary>
@@ -1656,8 +1702,7 @@ namespace KGySoft.Collections
         {
             if (cacheStore == null)
                 return false;
-            CacheItem element;
-            if (cacheStore.TryGetValue(item.Key, out element))
+            if (cacheStore.TryGetValue(item.Key, out CacheItem element))
             {
                 return useEnumValueComparer
                     ? EnumComparer<TValue>.Comparer.Equals(item.Value, element.Value)
@@ -1692,20 +1737,7 @@ namespace KGySoft.Collections
                 throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
             for (CacheItem current = first; current != null; current = current.Next)
-            {
                 array[arrayIndex++] = new KeyValuePair<TKey, TValue>(current.Key, current.Value);
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1"/> is read-only.
-        /// </summary>
-        /// <returns>
-        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
-        /// </returns>
-        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly
-        {
-            get { return false; }
         }
 
         /// <summary>
@@ -1722,34 +1754,11 @@ namespace KGySoft.Collections
             if (cacheStore == null)
                 return false;
 
-            CacheItem element;
-            if (cacheStore.TryGetValue(item.Key, out element) && EqualityComparer<TValue>.Default.Equals(item.Value, element.Value))
-            {
-                InternalRemove(element);
-                return true;
-            }
-
-            return false;
+            if (!cacheStore.TryGetValue(item.Key, out CacheItem element) || !EqualityComparer<TValue>.Default.Equals(item.Value, element.Value))
+                return false;
+            InternalRemove(element);
+            return true;
         }
-
-        #endregion
-
-        #region IEnumerable<KeyValuePair<TKey,TValue>> Members
-
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
-        /// </returns>
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-        {
-            return new Enumerator(this, true);
-        }
-
-        #endregion
-
-        #region IEnumerable Members
 
         /// <summary>
         /// Returns an enumerator that iterates through a collection.
@@ -1757,14 +1766,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.
         /// </returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new Enumerator(this, true);
-        }
-
-        #endregion
-
-        #region IDictionary Members
+        IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this, true);
 
         /// <summary>
         /// Adds an element with the provided key and value to the <see cref="T:System.Collections.IDictionary"/> object.
@@ -1809,43 +1811,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="T:System.Collections.IDictionaryEnumerator"/> object for the <see cref="T:System.Collections.IDictionary"/> object.
         /// </returns>
-        IDictionaryEnumerator IDictionary.GetEnumerator()
-        {
-            return new Enumerator(this, false);
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object has a fixed size.
-        /// </summary>
-        /// <returns>
-        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
-        /// </returns>
-        bool IDictionary.IsFixedSize
-        {
-            get { return false; }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="T:System.Collections.IDictionary"/> object is read-only.
-        /// </summary>
-        /// <returns>
-        /// This is always a <see langword="false"/> value for <see cref="Cache{TKey,TValue}"/>.
-        /// </returns>
-        bool IDictionary.IsReadOnly
-        {
-            get { return false; }
-        }
-
-        /// <summary>
-        /// Gets an <see cref="T:System.Collections.ICollection"/> object containing the keys of the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="T:System.Collections.ICollection"/> object containing the keys of the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </returns>
-        ICollection IDictionary.Keys
-        {
-            get { return (ICollection)Keys; }
-        }
+        IDictionaryEnumerator IDictionary.GetEnumerator() => new Enumerator(this, false);
 
         /// <summary>
         /// Removes the element with the specified key from the <see cref="T:System.Collections.IDictionary"/> object.
@@ -1859,53 +1825,6 @@ namespace KGySoft.Collections
             if (typeKey.CanAcceptValue(key))
                 Remove((TKey)key);
         }
-
-        /// <summary>
-        /// Gets an <see cref="T:System.Collections.ICollection"/> object containing the values in the
-        /// <see cref="T:System.Collections.IDictionary"/> object.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="T:System.Collections.ICollection"/> object containing the values in the <see cref="T:System.Collections.IDictionary"/> object.
-        /// </returns>
-        ICollection IDictionary.Values
-        {
-            get { return (ICollection)Values; }
-        }
-
-        /// <summary>
-        /// Gets or sets the element with the specified key.
-        /// </summary>
-        /// <returns>
-        /// The element with the specified key.
-        /// </returns>
-        /// <param name="key">The key of the element to get or set.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="key"/> or <paramref name="value"/> has an invalid type.</exception>
-        object IDictionary.this[object key]
-        {
-            get
-            {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
-                return this[(TKey)key];
-            }
-            set
-            {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
-                if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
-                this[(TKey)key] = (TValue)value;
-            }
-        }
-
-        #endregion
-
-        #region ICollection Members
 
         /// <summary>
         /// Copies the elements of the <see cref="T:System.Collections.ICollection"/> to an <see cref="T:System.Array"/>,
@@ -1937,65 +1856,39 @@ namespace KGySoft.Collections
             if (first == null)
                 return;
 
-            KeyValuePair<TKey, TValue>[] keyValuePairs = array as KeyValuePair<TKey, TValue>[];
-            if (keyValuePairs != null)
+            switch (array)
             {
-                ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
-                return;
-            }
+                case KeyValuePair<TKey, TValue>[] keyValuePairs:
+                    ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
+                    return;
 
-            DictionaryEntry[] dictionaryEntries = array as DictionaryEntry[];
-            if (dictionaryEntries != null)
-            {
-                for (CacheItem current = first; current != null; current = current.Next)
-                {
-                    dictionaryEntries[index++] = new DictionaryEntry(current.Key, current.Value);
-                }
-            }
+                case DictionaryEntry[] dictionaryEntries:
+                    for (CacheItem current = first; current != null; current = current.Next)
+                        dictionaryEntries[index++] = new DictionaryEntry(current.Key, current.Value);
+                    return;
 
-            object[] objectArray = array as object[];
-            if (objectArray != null)
-            {
-                for (CacheItem current = first; current != null; current = current.Next)
-                {
-                    objectArray[index++] = new KeyValuePair<TKey, TValue>(current.Key, current.Value);
-                }
-            }
+                case object[] objectArray:
+                    for (CacheItem current = first; current != null; current = current.Next)
+                        objectArray[index++] = new KeyValuePair<TKey, TValue>(current.Key, current.Value);
+                    return;
 
-            throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
-        }
-
-        bool ICollection.IsSynchronized
-        {
-            get { return false; }
-        }
-
-        object ICollection.SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                return syncRoot;
+                default:
+                    throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
             }
         }
-
-        #endregion
-
-        #region ISerializable Members
 
         [SecurityCritical]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             // capacity
-            info.AddValue("capacity", capacity);
-            info.AddValue("ensureCapacity", ensureCapacity);
+            info.AddValue(nameof(capacity), capacity);
+            info.AddValue(nameof(ensureCapacity), ensureCapacity);
 
             // comparer
-            info.AddValue("comparer", isDefaultComparer ? null : comparer);
+            info.AddValue(nameof(comparer), isDefaultComparer ? null : comparer);
 
             // loader
-            info.AddValue("loader", itemLoader.Equals(nullLoader) ? null : itemLoader);
+            info.AddValue(nameof(itemLoader), itemLoader.Equals(nullLoader) ? null : itemLoader);
 
             // elements
             int count = Count;
@@ -2011,51 +1904,18 @@ namespace KGySoft.Collections
                 }
             }
 
-            info.AddValue("keys", keys);
-            info.AddValue("values", values);
+            info.AddValue(nameof(keys), keys);
+            info.AddValue(nameof(values), values);
 
             // other data
-            info.AddValue("version", version);
-            info.AddValue("reads", cacheReads);
-            info.AddValue("writes", cacheWrites);
-            info.AddValue("deletes", cacheDeletes);
-            info.AddValue("hit", cacheHit);
+            info.AddValue(nameof(version), version);
+            info.AddValue(nameof(cacheReads), cacheReads);
+            info.AddValue(nameof(cacheWrites), cacheWrites);
+            info.AddValue(nameof(cacheDeletes), cacheDeletes);
+            info.AddValue(nameof(cacheHit), cacheHit);
         }
 
-        /// <summary>
-        /// Special constructor for deserialization
-        /// </summary>
-        private Cache(SerializationInfo info, StreamingContext context)
-        {
-            // capacity
-            capacity = info.GetInt32("capacity");
-            ensureCapacity = info.GetBoolean("ensureCapacity");
-
-            // comparer
-            comparer = (IEqualityComparer<TKey>)info.GetValue("comparer", typeof(IEqualityComparer<TKey>));
-            isDefaultComparer = comparer == null;
-            if (comparer == null)
-                comparer = useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default;
-
-            // loader
-            itemLoader = (Func<TKey, TValue>)info.GetValue("loader", typeof(Func<TKey, TValue>)) ?? nullLoader;
-
-            // elements
-            TKey[] keys = (TKey[])info.GetValue("keys", typeof(TKey[]));
-            TValue[] values = (TValue[])info.GetValue("values", typeof(TValue[]));
-            cacheStore = new Dictionary<TKey, CacheItem>(ensureCapacity ? capacity : keys.Length, comparer);
-            for (int i = 0; i < keys.Length; i++)
-            {
-                Insert(keys[i], values[i]);
-            }
-
-            // other data
-            version = info.GetInt32("version");
-            cacheReads = info.GetInt32("reads");
-            cacheDeletes = info.GetInt32("writes");
-            cacheDeletes = info.GetInt32("deletes");
-            cacheHit = info.GetInt32("hit");
-        }
+        #endregion
 
         #endregion
     }
