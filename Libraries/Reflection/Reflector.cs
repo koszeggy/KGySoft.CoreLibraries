@@ -2136,7 +2136,7 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Type resolve
+        #region Type routines
 
         /// <summary>
         /// Resolves a type definition given in string. When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
@@ -2507,6 +2507,14 @@ namespace KGySoft.Reflection
 
             if (!TypeDescriptor.GetAttributes(typeof(T)).Contains(attr))
                 TypeDescriptor.AddAttributes(typeof(T), attr);
+        }
+
+        internal static int SizeOf<T>()
+        {
+            var type = typeof(T);
+            if (type.IsPrimitive)
+                return Buffer.ByteLength(new T[1]);
+            return type.SizeOf();
         }
 
         #endregion

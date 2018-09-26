@@ -46,7 +46,7 @@ namespace KGySoft.Libraries
         private static readonly Type collectionGenType = typeof(ICollection<>);
         private static readonly string collectionGenTypeName = collectionGenType.Name;
 
-        private static readonly Cache<Type, int> sizeOfCache = new Cache<Type, int>(DoGetSizeOf, 1024) { EnsureCapacity = false };
+        private static readonly Cache<Type, int> sizeOfCache = new Cache<Type, int>(GetSize, 1024) { EnsureCapacity = false };
 
         #endregion
 
@@ -387,18 +387,23 @@ namespace KGySoft.Libraries
         internal static int SizeOf(this Type type)
         {
             lock (sizeOfCache)
-            {
                 return sizeOfCache[type];
-            }
         }
 
         #endregion
 
         #region
 
-        private static int DoGetSizeOf(Type type)
+        private static int GetSize(Type type)
         {
-            var dm = new DynamicMethod(nameof(DoGetSizeOf), typeof(uint), Type.EmptyTypes, typeof(TypeExtensions), true);
+            if (type.IsPrimitive)
+            {
+                Array array = Array.CreateInstance(type, 1);
+                return Buffer.ByteLength(array);
+            }
+
+            // Emitting the SizeOf OpCode for the type
+            var dm = new DynamicMethod(nameof(GetSize), typeof(uint), Type.EmptyTypes, typeof(TypeExtensions), true);
             ILGenerator gen = dm.GetILGenerator();
             gen.Emit(OpCodes.Sizeof, type);
             gen.Emit(OpCodes.Ret);

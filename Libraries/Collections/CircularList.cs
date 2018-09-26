@@ -1,4 +1,20 @@
-﻿#region Used namespaces
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: CircularList.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections;
@@ -7,8 +23,10 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+
 using KGySoft.Diagnostics;
 using KGySoft.Libraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -43,131 +61,23 @@ namespace KGySoft.Collections
     /// provide a better performance.
     /// </para>
     /// </remarks>
+    // TODO: Performance improvements to List (mint a resource osztályok esetében)
+    // - Insert: O(1) if index == 0 (AddFirst), otherwise O(N) but n/2
+    // - InsertRange: O(n) even if not ICollection (list: O(n * m))
+    // - Enumerator: reference type if obtained as IEnumerable (boosts the performance of LINQ)
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    [DebuggerDisplay("Count = {Count}; T = {typeof(T)}")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     [Serializable]
     public sealed class CircularList<T> : IList<T>, IList
 #if NET45
-, IReadOnlyList<T>
+        , IReadOnlyList<T>
 #elif !(NET35 || NET40)
 #error .NET version is not set or not supported!
 #endif
     {
+        // ReSharper disable ParameterHidesMember
+
         #region Nested types
-
-        #region Nested structs
-
-        #region Enumerator struct
-
-        /// <summary>
-        /// Enumerates the elements of a <see cref="CircularList{T}"/>.
-        /// </summary>
-        [Serializable]
-        public struct Enumerator : IEnumerator<T>
-        {
-            #region Fields
-
-            private readonly CircularList<T> list;
-            private readonly int version;
-            private readonly int length;
-
-            private int index;
-            private int steps;
-            private T current;
-
-            #endregion
-
-            #region Constructors
-
-            internal Enumerator(CircularList<T> list)
-            {
-                this.list = list;
-                index = list.startIndex;
-                version = list.version;
-                length = list.items.Length;
-                steps = 0;
-                current = default(T);
-            }
-
-            #endregion
-
-            #region IEnumerator<T> Members
-
-            /// <summary>
-            /// Gets the element at the current position of the enumerator.
-            /// </summary>
-            public T Current => current;
-
-            #endregion
-
-            #region IDisposable Members
-
-            /// <summary>
-            /// Releases the enumerator
-            /// </summary>
-            public void Dispose()
-            {
-            }
-
-            #endregion
-
-            #region IEnumerator Members
-
-            /// <summary>
-            /// Advances the enumerator to the next element of the collection.
-            /// </summary>
-            /// <returns>
-            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
-            /// </returns>
-            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
-            public bool MoveNext()
-            {
-                if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
-
-                if (steps < list.size)
-                {
-                    current = list.items[index++];
-                    if (index == length)
-                        index = 0;
-                    steps++;
-                    return true;
-                }
-                steps = list.size + 1;
-                current = default(T);
-                return false;
-            }
-
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
-                    return current;
-                }
-            }
-
-            /// <summary>
-            /// Sets the enumerator to its initial position, which is before the first element in the collection.
-            /// </summary>
-            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
-            public void Reset()
-            {
-                if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
-
-                index = list.startIndex;
-                steps = 0;
-                current = default(T);
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #endregion
 
         #region Nested classes
 
@@ -186,19 +96,13 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            internal ComparisonWrapper(Comparison<T> comparison)
-            {
-                this.comparison = comparison;
-            }
+            internal ComparisonWrapper(Comparison<T> comparison) => this.comparison = comparison;
 
             #endregion
 
             #region Methods
 
-            public int Compare(T x, T y)
-            {
-                return comparison(x, y);
-            }
+            public int Compare(T x, T y) => comparison(x, y);
 
             #endregion
         }
@@ -208,10 +112,10 @@ namespace KGySoft.Collections
         #region BinarySearchHelper class
 
         /// <summary>
-        /// Base class for performing binary search on a CircularList. This class uses a comparer for the search.
-        /// This class accesses the CircularList through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
+        /// Base class for performing binary search on a <see cref="CircularList{T}"/>. This class uses a comparer for the search.
+        /// This class accesses the <see cref="CircularList{T}"/> through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
         /// </summary>
-        /// <typeparam name="TElem">Same as T. Type must be generic, otherwise, the derived GenericBinarySearchHelper could not call the base methods.</typeparam>
+        /// <typeparam name="TElem">Same as T. Type must be generic, otherwise, the derived <see cref="ComparableBinarySearchHelper{TComparable}"/> could not call the base methods.</typeparam>
         private class BinarySearchHelper<TElem>
         {
             #region Methods
@@ -275,11 +179,11 @@ namespace KGySoft.Collections
         #region GenericBinarySearchHelper class
 
         /// <summary>
-        /// Helper class for performing binary search on a CircularList. This class can handle elements as generic IComparable instances.
-        /// This class accesses the CircularList through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
+        /// Helper class for performing binary search on a <see cref="CircularList{T}"/>. This class can handle elements as generic IComparable instances.
+        /// This class accesses the <see cref="CircularList{T}"/> through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
         /// </summary>
-        /// <typeparam name="TComp">Represents a <see cref="IComparable{T}"/> type.</typeparam>
-        private class GenericBinarySearchHelper<TComp> : BinarySearchHelper<TComp> where TComp : IComparable<TComp>
+        /// <typeparam name="TComparable">Represents a <see cref="IComparable{T}"/> type.</typeparam>
+        private class ComparableBinarySearchHelper<TComparable> : BinarySearchHelper<TComparable> where TComparable : IComparable<TComparable>
         {
             #region Methods
 
@@ -288,14 +192,14 @@ namespace KGySoft.Collections
             /// <summary>
             /// Performs a binary search on the list. Elements are constrainted to be <see cref="IComparable{T}"/> instances.
             /// </summary>
-            private static int BinarySearchAsComparable(CircularList<TComp> list, int index, int length, TComp value)
+            private static int BinarySearchAsComparable(CircularList<TComparable> list, int index, int length, TComparable value)
             {
                 int lo = index;
                 int hi = index + length - 1;
                 while (lo <= hi)
                 {
                     int i = lo + ((hi - lo) >> 1);
-                    TComp item = list.ElementAtNonZeroStart(i);
+                    TComparable item = list.ElementAtNonZeroStart(i);
 
                     int order;
                     if (item == null)
@@ -327,11 +231,11 @@ namespace KGySoft.Collections
             /// <summary>
             /// Performs a binary search on the list. When comparer is specified, it is used, otherwise, using <see cref="IComparable{T}.CompareTo"/> on elements.
             /// </summary>
-            internal override int BinarySearch(CircularList<TComp> list, int index, int length, TComp value, IComparer<TComp> comparer)
+            internal override int BinarySearch(CircularList<TComparable> list, int index, int length, TComparable value, IComparer<TComparable> comparer)
             {
                 try
                 {
-                    return comparer == null || comparer == Comparer<TComp>.Default
+                    return comparer?.Equals(Comparer<TComparable>.Default) != false
                         ? BinarySearchAsComparable(list, index, length, value)
                         : BinarySearchWithComparer(list, index, length, value, comparer);
                 }
@@ -372,6 +276,30 @@ namespace KGySoft.Collections
 
             #endregion
 
+            #region Properties
+
+            #region Public Properties
+
+            public T Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    return current;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
             #region Constructors
 
             internal EnumeratorAsReference(CircularList<T> list)
@@ -384,21 +312,11 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerator<T> Members
-
-            public T Current => current;
-
-            #endregion
-
-            #region IDisposable Members
+            #region Methods
 
             public void Dispose()
             {
             }
-
-            #endregion
-
-            #region IEnumerator Members
 
             public bool MoveNext()
             {
@@ -418,16 +336,6 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
-                    return current;
-                }
-            }
-
             public void Reset()
             {
                 if (version != list.version)
@@ -443,7 +351,7 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region SimpleEnumerator class
+        #region SimpleEnumeratorAsReference class
 
         /// <summary>
         /// Enumerates the elements of a <see cref="CircularList{T}"/> when start index is 0.
@@ -463,6 +371,30 @@ namespace KGySoft.Collections
 
             #endregion
 
+            #region Properties
+
+            #region Public Properties
+
+            public T Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (index == 0 || index > list.Count)
+                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    return current;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
             #region Constructors
 
             internal SimpleEnumeratorAsReference(CircularList<T> list)
@@ -473,21 +405,11 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerator<T> Members
-
-            public T Current => current;
-
-            #endregion
-
-            #region IDisposable Members
+            #region Methods
 
             public void Dispose()
             {
             }
-
-            #endregion
-
-            #region IEnumerator Members
 
             public bool MoveNext()
             {
@@ -505,22 +427,130 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (index == 0 || index > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
-                    return current;
-                }
-            }
-
             public void Reset()
             {
                 if (version != list.version)
                     throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
 
                 index = 0;
+                current = default(T);
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Nested structs
+
+        #region Enumerator struct
+
+        /// <summary>
+        /// Enumerates the elements of a <see cref="CircularList{T}"/>.
+        /// </summary>
+        [Serializable]
+        public struct Enumerator : IEnumerator<T>
+        {
+            #region Fields
+
+            private readonly CircularList<T> list;
+            private readonly int version;
+            private readonly int length;
+
+            private int index;
+            private int steps;
+            private T current;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            /// <summary>
+            /// Gets the element at the current position of the enumerator.
+            /// </summary>
+            public T Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                    return current;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(CircularList<T> list)
+            {
+                this.list = list;
+                index = list.startIndex;
+                version = list.version;
+                length = list.items.Length;
+                steps = 0;
+                current = default(T);
+            }
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Releases the enumerator
+            /// </summary>
+            public void Dispose()
+            {
+            }
+
+            /// <summary>
+            /// Advances the enumerator to the next element of the collection.
+            /// </summary>
+            /// <returns>
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
+            /// </returns>
+            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public bool MoveNext()
+            {
+                if (version != list.version)
+                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+
+                if (steps < list.size)
+                {
+                    current = list.items[index++];
+                    if (index == length)
+                        index = 0;
+                    steps++;
+                    return true;
+                }
+                steps = list.size + 1;
+                current = default(T);
+                return false;
+            }
+
+            /// <summary>
+            /// Sets the enumerator to its initial position, which is before the first element in the collection.
+            /// </summary>
+            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public void Reset()
+            {
+                if (version != list.version)
+                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+
+                index = list.startIndex;
+                steps = 0;
                 current = default(T);
             }
 
@@ -544,16 +574,18 @@ namespace KGySoft.Collections
         #region Static Fields
 
         private static readonly T[] emptyArray = new T[0];
+        private static BinarySearchHelper<T> binarySearchHelper;
+
+        // ReSharper disable StaticMemberInGenericType
         private static readonly bool isEnum;
+        private static readonly bool isPrimitive;
+        private static readonly int elementSizeExponent;
 #if NET40 || NET45
         private static readonly bool isNonIntEnum;
 #elif !NET35
-#error .NET version is not set or not supported!
+#error .NET version is not set or not supported! - check EnumComparer performance in new framework
 #endif
-        private static readonly bool isPrimitive;
-        private static readonly int elementSizeExponent;
-
-        private static BinarySearchHelper<T> binarySearchHelper;
+        // ReSharper restore StaticMemberInGenericType
 
         #endregion
 
@@ -563,13 +595,14 @@ namespace KGySoft.Collections
         private int size;
         private int startIndex;
         private int version;
-
         [NonSerialized]
         private object syncRoot;
 
         #endregion
 
         #endregion
+
+        #region Properties and Indexers
 
         #region Properties
 
@@ -583,7 +616,7 @@ namespace KGySoft.Collections
                 {
                     if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
                     {
-                        Type typeHelper = typeof(GenericBinarySearchHelper<>).MakeGenericType(typeof(T), typeof(T));
+                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeof(T), typeof(T));
                         binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeHelper, true);
                     }
                     else
@@ -631,7 +664,7 @@ namespace KGySoft.Collections
                     {
                         T[] newItems = new T[value];
                         if (size > 0)
-                            CopyTo(newItems, 0);
+                            CopyTo(newItems);
 
                         items = newItems;
                         startIndex = 0;
@@ -644,6 +677,11 @@ namespace KGySoft.Collections
             }
         }
 
+        /// <summary>
+        /// Gets the number of elements contained in the list.
+        /// </summary>
+        public int Count => size;
+
         #endregion
 
         #region Internal Properties
@@ -653,6 +691,89 @@ namespace KGySoft.Collections
         internal int Version => version;
 
         internal int StartIndex => startIndex;
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        bool ICollection<T>.IsReadOnly => false;
+
+        bool IList.IsFixedSize => false;
+
+        bool IList.IsReadOnly => false;
+
+        bool ICollection.IsSynchronized => false;
+
+        object ICollection.SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
+                return syncRoot;
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Indexers
+
+        #region Public Indexers
+
+        /// <summary>
+        /// Gets or sets the element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get or set.</param>
+        /// <returns>The element at the specified index.</returns>
+        public T this[int index]
+        {
+            get
+            {
+                // casting to uint reduces the range check by one
+                if ((uint)index >= (uint)size)
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+                // not calling ElementAt to be sure this code is inlined
+                if (startIndex == 0)
+                    return items[index];
+
+                // faster than return items[(startIndex + count) % length];
+                int pos = startIndex + index;
+                int length = items.Length;
+                if (pos >= length)
+                    pos -= length;
+
+                return items[pos];
+            }
+            set
+            {
+                // casting to uint reduces the range check by one
+                if ((uint)index >= (uint)size)
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+                SetElementAt(index, value);
+                version++;
+            }
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Indexers
+
+        object IList.this[int index]
+        {
+            get => this[index];
+            set
+            {
+                if (!typeof(T).CanAcceptValue(value))
+                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+                this[index] = (T)value;
+            }
+        }
 
         #endregion
 
@@ -674,10 +795,11 @@ namespace KGySoft.Collections
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
+
             isPrimitive = type.IsPrimitive;
             if (isPrimitive)
             {
-                elementSizeExponent = (int)Math.Log(Buffer.ByteLength(new T[1]), 2);
+                elementSizeExponent = (int)Math.Log(Reflector.SizeOf<T>(), 2);
             }
         }
 
@@ -743,7 +865,6 @@ namespace KGySoft.Collections
         #region Instance Methods
 
         #region Public Methods
-
 
         /// <summary>
         /// Adds an <paramref name="item"/> to the end of the list.
@@ -899,11 +1020,12 @@ namespace KGySoft.Collections
 #if NET35
                 isEnum
 #elif NET40 || NET45
-isNonIntEnum
+                isNonIntEnum
 #else
 #error .NET version is not set or not supported!
 #endif
-)
+
+                )
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindIndex(index, count, enumItem => enumComparer.Equals(enumItem, item));
@@ -956,11 +1078,12 @@ isNonIntEnum
 #if NET35
                 isEnum
 #elif NET40 || NET45
-isNonIntEnum
+                isNonIntEnum
 #else
 #error .NET version is not set or not supported!
 #endif
-)
+
+                )
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindLastIndex(size - 1, size, enumItem => enumComparer.Equals(enumItem, item));
@@ -1030,11 +1153,12 @@ isNonIntEnum
 #if NET35
                 isEnum
 #elif NET40 || NET45
-isNonIntEnum
+                isNonIntEnum
 #else
 #error .NET version is not set or not supported!
 #endif
-)
+
+                )
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindLastIndex(index, count, enumItem => enumComparer.Equals(enumItem, item));
@@ -1343,66 +1467,67 @@ isNonIntEnum
             if ((uint)index > (uint)size)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
-            ICollection<T> c = collection as ICollection<T>;
-            T[] array = null;
-            if (c == null || c == this)
-            {
-                array = collection.ToArray();
-                c = null;
-            }
+            T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
+            ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
 
-            int colLength = c != null ? c.Count : array.Length;
-            if (colLength == 0)
+            // ReSharper disable PossibleMultipleEnumeration - collection is not enumerated multiple times
+            // to prevent O(n * m) cost with inserting IEnumerable elements one by one we create a temp buffer
+            if (asArray == null && asCollection == null)
+                asArray = collection.ToArray();
+
+            int collectionSize = asArray?.Length ?? asCollection.Count;
+            if (collectionSize == 0)
                 return;
 
-            int length = items.Length;
-            if (size + colLength > length)
+            int storageSize = items.Length;
+            if (size + collectionSize > storageSize)
             {
-                IncreaseCapacityWithInsert(index, c ?? array);
+                IncreaseCapacityWithInsert(index, asArray ?? asCollection);
                 return;
             }
 
             // calculating position
             int pos = startIndex + index;
-            if (pos >= length)
-                pos -= length;
+            if (pos >= storageSize)
+                pos -= storageSize;
 
             // optimized for minimal data moving
             if (index >= (size >> 1))
-                ShiftUp(pos, size - index, colLength);
+                ShiftUp(pos, size - index, collectionSize);
             else
             {
                 // decreasing startIndex and pos
-                startIndex -= colLength;
+                startIndex -= collectionSize;
                 if (startIndex < 0)
-                    startIndex += length;
+                    startIndex += storageSize;
 
-                int topIndex = pos > 0 ? pos - 1 : length - 1;
+                int topIndex = pos > 0 ? pos - 1 : storageSize - 1;
 
-                pos -= colLength;
+                pos -= collectionSize;
                 if (pos < 0)
-                    pos += length;
+                    pos += storageSize;
 
-                ShiftDown(topIndex, index, colLength);
+                ShiftDown(topIndex, index, collectionSize);
             }
 
-            // if collection that fits into list without wrapping
-            if (c != null && pos + colLength <= length)
+            // if non-array collection that fits into list without wrapping
+            if (asCollection != null && pos + collectionSize <= storageSize)
             {
-                c.CopyTo(items, pos);
+                asCollection.CopyTo(items, pos);
             }
             // otherwise, as array copied up to two sessions
             else
             {
-                if (array == null)
-                    array = collection as T[] ?? collection.ToArray();
-                int carry = pos + colLength - length;
-                CopyElements(array, 0, items, pos, carry <= 0 ? colLength : colLength - carry);
+                if (asArray == null)
+                    asArray = collection.ToArray();
+                int carry = pos + collectionSize - storageSize;
+                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
-                    CopyElements(array, colLength - carry, items, 0, carry);
+                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
             }
+            // ReSharper restore PossibleMultipleEnumeration
 
-            size += colLength;
+            size += collectionSize;
             version++;
         }
 
@@ -1486,7 +1611,7 @@ isNonIntEnum
         public T[] ToArray()
         {
             T[] array = new T[size];
-            CopyTo(array, 0);
+            CopyTo(array);
             return array;
         }
 
@@ -1643,18 +1768,18 @@ isNonIntEnum
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
 
-            int length = items.Length;
+            int storageSize = items.Length;
             int start = startIndex + index;
-            int carry = start + count - length;
+            int carry = start + count - storageSize;
 
             // the section to sort is wrapped
-            if (carry > 0 && start < length)
+            if (carry > 0 && start < storageSize)
             {
                 // fast solution: the whole list must be sorted
                 if (index == 0 && count == size)
                 {
-                    // fastest solution: the list is full, the full list will be sorted so mo move is needed
-                    if (length == size)
+                    // fastest solution: the list is full, the full list will be sorted so no move is needed
+                    if (storageSize == size)
                     {
                         startIndex = 0;
                         start = index;
@@ -1667,16 +1792,16 @@ isNonIntEnum
                         if (nonWrapped <= carry)
                         {
                             CopyElements(items, startIndex, items, carry, nonWrapped);
-                            Array.Clear(items, length - nonWrapped, nonWrapped);
+                            Array.Clear(items, storageSize - nonWrapped, nonWrapped);
                             startIndex = 0;
                             start = index;
                         }
                         // moving up the elements from the start
                         else
                         {
-                            CopyElements(items, 0, items, length - count, carry);
+                            CopyElements(items, 0, items, storageSize - count, carry);
                             Array.Clear(items, 0, carry);
-                            startIndex = length - count;
+                            startIndex = storageSize - count;
                             start = startIndex + index;
                         }
                     }
@@ -1685,15 +1810,15 @@ isNonIntEnum
                 else
                 {
                     T[] newItems = new T[size];
-                    CopyTo(newItems, 0);
+                    CopyTo(newItems);
                     items = newItems;
                     startIndex = 0;
                     start = index;
                 }
             }
 
-            if (start >= length)
-                start -= length;
+            if (start >= storageSize)
+                start -= storageSize;
             Array.Sort(items, start, count, comparer);
             version++;
         }
@@ -1755,7 +1880,7 @@ isNonIntEnum
         /// <param name="index">The zero-based starting index of the range to search.</param>
         /// <param name="count">The length of the range to search.</param>
         /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the 
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the
         /// <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> for <see langword="enum"/> element types, or the default comparer
         /// <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other element types.</param>
         /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
@@ -1821,7 +1946,7 @@ isNonIntEnum
         /// </summary>
         /// <remarks>
         /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection.
-        /// The cost of reallocating and copying a large list can be considerable, however, so the TrimExcess method does nothing if the list is 
+        /// The cost of reallocating and copying a large list can be considerable, however, so the TrimExcess method does nothing if the list is
         /// at more than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
         /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
         /// <para>To reset a list to its initial state, call the <see cref="Reset"/> method. Calling the <see cref="Clear"/> and TrimExcess methods has the same effect; however,
@@ -1880,21 +2005,20 @@ isNonIntEnum
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
-            CircularList<T> result = new CircularList<T>(count);
-            result.size = count;
+            CircularList<T> result = new CircularList<T>(count) { size = count };
 
             // every element to copy is carried
-            int length = items.Length;
+            int storageSize = items.Length;
             int start = startIndex + index;
-            if (start >= length)
+            if (start >= storageSize)
             {
-                start -= length;
+                start -= storageSize;
                 CopyElements(items, start, result.items, 0, count);
                 return result;
             }
 
             // there are also not carried elements to copy
-            int carry = start + count - length;
+            int carry = start + count - storageSize;
             CopyElements(items, start, result.items, 0, carry <= 0 ? count : count - carry);
 
             if (carry > 0)
@@ -2022,22 +2146,6 @@ isNonIntEnum
         }
 
         /// <summary>
-        /// Copies the entire list to a compatible one-dimensional array, starting at the beginning of the target array.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the list.
-        /// The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="array"/> is multidimensional.
-        /// <br/>-or-<br/>
-        /// The number of elements in the source list is greater than the length of the destination <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
-        public void CopyTo(T[] array)
-        {
-            CopyTo(array, 0);
-        }
-
-        /// <summary>
         /// Copies a range of elements from the list to a compatible one-dimensional array, starting at the specified index of the target array.
         /// </summary>
         /// <param name="index">The zero-based index in the source list at which copying begins.</param>
@@ -2111,7 +2219,7 @@ isNonIntEnum
             // the first free slot in items array
             int freeIndex = 0;
 
-            // Find the first item which needs to be removed. 
+            // Find the first item which needs to be removed.
             while (freeIndex < size && !match(ElementAt(freeIndex)))
                 freeIndex++;
 
@@ -2121,7 +2229,7 @@ isNonIntEnum
             int current = freeIndex + 1;
             while (current < size)
             {
-                // Find the first item which needs to be kept. 
+                // Find the first item which needs to be kept.
                 while (current < size && match(ElementAt(current)))
                     current++;
 
@@ -2147,6 +2255,261 @@ isNonIntEnum
             return new Enumerator(this);
         }
 
+        /// <summary>
+        /// Determines the index of a specific item in the list.
+        /// </summary>
+        /// <param name="item">The object to locate in the list.</param>
+        /// <returns>
+        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
+        /// </returns>
+        /// <remarks>
+        /// <para>The list is searched forward starting at the first element and ending at the last element.</para>
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type,
+        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
+        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
+        /// </remarks>
+        public int IndexOf(T item)
+        {
+            if (
+#if NET35
+                isEnum
+#elif NET40 || NET45
+                isNonIntEnum
+#else
+#error .NET version is not set or not supported!
+#endif
+
+                )
+            {
+                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
+                return FindIndex(0, size, enumItem => enumComparer.Equals(enumItem, item));
+            }
+
+            int length = items.Length;
+            int carry = startIndex + size - length;
+
+            int result = Array.IndexOf(items, item, startIndex, carry <= 0 ? size : size - carry);
+            if (result >= 0)
+                return result - startIndex;
+            if (carry > 0)
+                result = Array.IndexOf(items, item, 0, carry);
+            if (result >= 0)
+                return length - startIndex + result;
+            return result;
+        }
+
+        /// <summary>
+        /// Inserts an <paramref name="item"/> to the list at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
+        /// <param name="item">The object to insert into the list.</param>
+        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
+        /// <remarks>Inserting an item at the first or last position are O(1) operations if no capacity increase is needed.
+        /// Otherwise, insertion is an O(n) operation.</remarks>
+        public void Insert(int index, T item)
+        {
+            if (index == 0)
+                AddFirst(item);
+            else if (index == size)
+                AddLast(item);
+            else
+            {
+                // if we are here, shifting is necessary
+                if ((uint)index > (uint)size)
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+                if (size == items.Length)
+                {
+                    IncreaseCapacityWithInsert(index, item);
+                    return;
+                }
+
+                // calculating position
+                int pos = startIndex + index;
+                int length = items.Length;
+                if (pos >= length)
+                    pos -= length;
+
+                // optimized for minimal data moving
+                if (index >= (size >> 1))
+                    ShiftUp(pos, size - index);
+                else
+                {
+                    // decreasing startIndex and pos
+                    if (startIndex > 0)
+                        startIndex--;
+                    else
+                        startIndex = length - 1;
+
+                    if (pos > 0)
+                        pos--;
+                    else
+                        pos = length - 1;
+
+                    ShiftDown(pos, index);
+                }
+
+                items[pos] = item;
+                size++;
+                version++;
+            }
+        }
+
+        /// <summary>
+        /// Removes the item from the list at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the item to remove.</param>
+        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
+        /// <remarks>Removing an item at the first or last position are O(1) operations. At other positions removal is
+        /// an O(n) operation.</remarks>
+        public void RemoveAt(int index)
+        {
+            if ((uint)index >= (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+            if (index == 0)
+            {
+                RemoveFirst();
+                return;
+            }
+
+            if (index == size - 1)
+            {
+                RemoveLast();
+                return;
+            }
+
+            // if we are here, shifting is necessary and there are at least 3 elements
+            // optimized for minimal data moving
+            if (index <= (--size >> 1))
+            {
+                ShiftUp(startIndex, index);
+                items[startIndex++] = default(T);
+                if (startIndex == items.Length)
+                    startIndex = 0;
+            }
+            else
+            {
+                // calculating end position
+                int pos = startIndex + size;
+                int length = items.Length;
+                if (pos >= length)
+                    pos -= length;
+
+                ShiftDown(pos, size - index);
+
+                items[pos] = default(T);
+            }
+
+            version++;
+        }
+
+        /// <summary>
+        /// Adds an <paramref name="item"/> to the end of the list.
+        /// </summary>
+        /// <param name="item">The item to add to the list.</param>
+        /// <remarks>
+        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
+        /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
+        /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
+        /// new element, this method becomes an O(n) operation, where n is <see cref="Count"/>.
+        /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
+        /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
+        /// </remarks>
+        public void Add(T item)
+        {
+            AddLast(item);
+        }
+
+        /// <summary>
+        /// Removes all items from the list.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
+        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the list to 0 as well, call the <see cref="Reset"/> method instead, which is an O(1) operation.
+        /// Calling <see cref="TrimExcess"/> after Clear also resets the list, though Clear has more cost.</para>
+        /// </remarks>
+        public void Clear()
+        {
+            if (size == 0)
+                return;
+
+            int length = items.Length;
+            int carry = startIndex + size - length;
+
+            Array.Clear(items, startIndex, carry <= 0 ? size : size - carry);
+            if (carry > 0)
+                Array.Clear(items, 0, carry);
+            size = 0;
+            startIndex = 0;
+            version++;
+        }
+
+        /// <summary>
+        /// Determines whether the list contains the specific <paramref name="item"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if <paramref name="item"/> is found in the list; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="item">The object to locate in the list.</param>
+        public bool Contains(T item)
+        {
+            return IndexOf(item) >= 0;
+        }
+
+        /// <summary>
+        /// Copies the entire list to a compatible one-dimensional array, starting at a particular array index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the list.
+        /// The <see cref="T:System.Array"/> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
+        /// <exception cref="T:System.ArgumentException"><paramref name="array"/> is multidimensional.
+        /// <br/>-or-<br/>
+        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
+        /// <br/>-or-<br/>
+        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
+        /// <br/>-or-<br/>
+        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
+        public void CopyTo(T[] array, int arrayIndex = 0)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+
+            if (array.Length - arrayIndex < size)
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
+
+            // Delegating rest error checking to Array.Copy.
+            if (size <= 0)
+                return;
+
+            int carry = startIndex + size - items.Length;
+            CopyElements(items, startIndex, array, arrayIndex, carry <= 0 ? size : size - carry);
+            if (carry > 0)
+                CopyElements(items, 0, array, size - carry + arrayIndex, carry);
+        }
+
+        /// <summary>
+        /// Removes the first occurrence of the specific <paramref name="item"/> from the list.
+        /// </summary>
+        /// <param name="item">The object to remove from the list.</param>
+        /// <returns>
+        /// <see langword="true"/> if <paramref name="item"/> was successfully removed from the list; otherwise, <see langword="false"/>. This method also returns false if <paramref name="item"/> is not found in the original list.
+        /// </returns>
+        public bool Remove(T item)
+        {
+            int index = IndexOf(item);
+            if (index >= 0)
+            {
+                RemoveAt(index);
+                return true;
+            }
+
+            return false;
+        }
+
         #endregion
 
         #region Private Methods
@@ -2157,43 +2520,50 @@ isNonIntEnum
         /// <param name="collection">The collection to add to the list.</param>
         private void AddLast(IEnumerable<T> collection)
         {
-            ICollection<T> c = collection as ICollection<T>;
-            T[] array = null;
-            if (c == null || c == this)
+            T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
+            ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
+
+            // as simple enumerable
+            if (asArray == null && asCollection == null)
             {
-                array = collection.ToArray();
-                c = null;
+                using (var enumerator = collection.GetEnumerator())
+                {
+                    while (enumerator.MoveNext())
+                        AddLast(enumerator.Current);
+                }
+
+                return;
             }
 
-            int colLength = c != null ? c.Count : array.Length;
-            if (colLength == 0)
+            int collectionSize = asArray?.Length ?? asCollection.Count;
+            if (collectionSize == 0)
                 return;
 
-            EnsureCapacity(size + colLength);
+            EnsureCapacity(size + collectionSize);
 
             // calculating insert position
             int pos = startIndex + size;
-            int length = items.Length;
-            if (pos >= length)
-                pos -= length;
+            int storageSize = items.Length;
+            if (pos >= storageSize)
+                pos -= storageSize;
 
             // if collection that fits into list without wrapping
-            if (c != null && pos + colLength <= length)
+            if (asCollection != null && pos + collectionSize <= storageSize)
             {
-                c.CopyTo(items, pos);
+                asCollection.CopyTo(items, pos);
             }
             // otherwise, as array copied up to in two sessions
             else
             {
-                if (array == null)
-                    array = collection as T[] ?? collection.ToArray();
-                int carry = pos + colLength - length;
-                CopyElements(array, 0, items, pos, carry <= 0 ? colLength : colLength - carry);
+                if (asArray == null)
+                    asArray = collection.ToArray();
+                int carry = pos + collectionSize - storageSize;
+                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
-                    CopyElements(array, colLength - carry, items, 0, carry);
+                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
             }
 
-            size += colLength;
+            size += collectionSize;
             version++;
         }
 
@@ -2203,44 +2573,45 @@ isNonIntEnum
         /// <param name="collection">The collection to add to the list.</param>
         private void AddFirst(IEnumerable<T> collection)
         {
-            ICollection<T> c = collection as ICollection<T>;
-            T[] array = null;
-            if (c == null || c == this)
-            {
-                array = collection.ToArray();
-                c = null;
-            }
+            T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
+            ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
 
-            int colLength = c != null ? c.Count : array.Length;
-            if (colLength == 0)
+            // ReSharper disable PossibleMultipleEnumeration - collection is not enumerated multiple times
+            // to prevent O(n ^ 2) cost (n is collection.Count) we create a temp buffer
+            if (asArray == null && asCollection == null)
+                asArray = collection.ToArray();
+
+            int collectionSize = asArray?.Length ?? asCollection.Count;
+            if (collectionSize == 0)
                 return;
 
-            EnsureCapacity(size + colLength);
+            EnsureCapacity(size + collectionSize);
 
             // calculating insert position
-            int pos = startIndex - colLength;
-            int length = items.Length;
+            int pos = startIndex - collectionSize;
+            int storageSize = items.Length;
             if (pos < 0)
-                pos += length;
+                pos += storageSize;
 
-            // if collection that fits into list without wrapping
-            if (c != null && pos + colLength <= length)
+            // if non-array collection that fits into list without wrapping
+            if (asCollection != null && pos + collectionSize <= storageSize)
             {
-                c.CopyTo(items, pos);
+                asCollection.CopyTo(items, pos);
             }
             // otherwise, as array copied up to two sessions
             else
             {
-                if (array == null)
-                    array = collection as T[] ?? collection.ToArray();
-                int carry = pos + colLength - length;
-                CopyElements(array, 0, items, pos, carry <= 0 ? colLength : colLength - carry);
+                if (asArray == null)
+                    asArray = collection.ToArray();
+                int carry = pos + collectionSize - storageSize;
+                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
-                    CopyElements(array, colLength - carry, items, 0, carry);
+                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
             }
+            // ReSharper restore PossibleMultipleEnumeration
 
             startIndex = pos;
-            size += colLength;
+            size += collectionSize;
             version++;
         }
 
@@ -2363,7 +2734,10 @@ isNonIntEnum
                 CopyElements(items, 0, newItems, index - carry, carry);
 
             // collection items
-            collection.CopyTo(newItems, index);
+            if (collection is T[] array)
+                CopyElements(array, 0, newItems, index, array.Length);
+            else
+                collection.CopyTo(newItems, index);
 
             // elements after collection items
             int pos = startIndex + index;
@@ -2553,316 +2927,7 @@ isNonIntEnum
 
         #endregion
 
-        #endregion
-
-        #endregion
-
-        #region IList<T> Members
-
-        /// <summary>
-        /// Determines the index of a specific item in the list.
-        /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
-        /// <returns>
-        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
-        /// </returns>
-        /// <remarks>
-        /// <para>The list is searched forward starting at the first element and ending at the last element.</para>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type,
-        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
-        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
-        /// </remarks>
-        public int IndexOf(T item)
-        {
-            if (
-#if NET35
-                isEnum
-#elif NET40 || NET45
-isNonIntEnum
-#else
-#error .NET version is not set or not supported!
-#endif
-)
-            {
-                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
-                return FindIndex(0, size, enumItem => enumComparer.Equals(enumItem, item));
-            }
-
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
-            int result = Array.IndexOf(items, item, startIndex, carry <= 0 ? size : size - carry);
-            if (result >= 0)
-                return result - startIndex;
-            if (carry > 0)
-                result = Array.IndexOf(items, item, 0, carry);
-            if (result >= 0)
-                return length - startIndex + result;
-            return result;
-        }
-
-        /// <summary>
-        /// Inserts an <paramref name="item"/> to the list at the specified index.
-        /// </summary>
-        /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
-        /// <param name="item">The object to insert into the list.</param>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
-        /// <remarks>Inserting an item at the first or last position are O(1) operations if no capacity increase is needed.
-        /// Otherwise, insertion is an O(n) operation.</remarks>
-        public void Insert(int index, T item)
-        {
-            if (index == 0)
-                AddFirst(item);
-            else if (index == size)
-                AddLast(item);
-            else
-            {
-                // if we are here, shifting is necessary
-                if ((uint)index > (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-                if (size == items.Length)
-                {
-                    IncreaseCapacityWithInsert(index, item);
-                    return;
-                }
-
-                // calculating position
-                int pos = startIndex + index;
-                int length = items.Length;
-                if (pos >= length)
-                    pos -= length;
-
-                // optimized for minimal data moving
-                if (index >= (size >> 1))
-                    ShiftUp(pos, size - index);
-                else
-                {
-                    // decreasing startIndex and pos
-                    if (startIndex > 0)
-                        startIndex--;
-                    else
-                        startIndex = length - 1;
-
-                    if (pos > 0)
-                        pos--;
-                    else
-                        pos = length - 1;
-
-                    ShiftDown(pos, index);
-                }
-
-                items[pos] = item;
-                size++;
-                version++;
-            }
-        }
-
-        /// <summary>
-        /// Removes the item from the list at the specified index.
-        /// </summary>
-        /// <param name="index">The zero-based index of the item to remove.</param>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
-        /// <remarks>Removing an item at the first or last position are O(1) operations. At other positions removal is
-        /// an O(n) operation.</remarks>
-        public void RemoveAt(int index)
-        {
-            if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-            if (index == 0)
-            {
-                RemoveFirst();
-                return;
-            }
-
-            if (index == size - 1)
-            {
-                RemoveLast();
-                return;
-            }
-
-            // if we are here, shifting is necessary and there are at least 3 elements
-            // optimized for minimal data moving
-            if (index <= (--size >> 1))
-            {
-                ShiftUp(startIndex, index);
-                items[startIndex++] = default(T);
-                if (startIndex == items.Length)
-                    startIndex = 0;
-            }
-            else
-            {
-                // calculating end position
-                int pos = startIndex + size;
-                int length = items.Length;
-                if (pos >= length)
-                    pos -= length;
-
-                ShiftDown(pos, size - index);
-
-                items[pos] = default(T);
-            }
-
-            version++;
-        }
-
-        /// <summary>
-        /// Gets or sets the element at the specified <paramref name="index"/>.
-        /// </summary>
-        /// <param name="index">The zero-based index of the element to get or set.</param>
-        /// <returns>The element at the specified index.</returns>
-        public T this[int index]
-        {
-            get
-            {
-                // casting to uint reduces the range check by one
-                if ((uint)index >= (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-                // not calling ElementAt to be sure this code is inlined
-                if (startIndex == 0)
-                    return items[index];
-
-                // faster than return items[(startIndex + count) % length];
-                int pos = startIndex + index;
-                int length = items.Length;
-                if (pos >= length)
-                    pos -= length;
-
-                return items[pos];
-            }
-            set
-            {
-                // casting to uint reduces the range check by one
-                if ((uint)index >= (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-                SetElementAt(index, value);
-                version++;
-            }
-        }
-
-        #endregion
-
-        #region ICollection<T> Members
-
-        /// <summary>
-        /// Adds an <paramref name="item"/> to the end of the list.
-        /// </summary>
-        /// <param name="item">The item to add to the list.</param>
-        /// <remarks>
-        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
-        /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
-        /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
-        /// new element, this method becomes an O(n) operation, where n is <see cref="Count"/>.
-        /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
-        /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
-        /// </remarks>
-        public void Add(T item)
-        {
-            AddLast(item);
-        }
-
-        /// <summary>
-        /// Removes all items from the list.
-        /// </summary>
-        /// <remarks>
-        /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
-        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the list to 0 as well, call the <see cref="Reset"/> method instead, which is an O(1) operation.
-        /// Calling <see cref="TrimExcess"/> after Clear also resets the list, though Clear has more cost.</para>
-        /// </remarks>
-        public void Clear()
-        {
-            if (size == 0)
-                return;
-
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
-            Array.Clear(items, startIndex, carry <= 0 ? size : size - carry);
-            if (carry > 0)
-                Array.Clear(items, 0, carry);
-            size = 0;
-            startIndex = 0;
-            version++;
-        }
-
-        /// <summary>
-        /// Determines whether the list contains the specific <paramref name="item"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/> if <paramref name="item"/> is found in the list; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="item">The object to locate in the list.</param>
-        public bool Contains(T item)
-        {
-            return IndexOf(item) >= 0;
-        }
-
-        /// <summary>
-        /// Copies the entire list to a compatible one-dimensional array, starting at a particular array index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the list.
-        /// The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="array"/> is multidimensional.
-        /// <br/>-or-<br/>
-        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
-
-            if (array.Length - arrayIndex < size)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
-
-            // Delegating rest error checking to Array.Copy.
-            if (size <= 0)
-                return;
-
-            int carry = startIndex + size - items.Length;
-            CopyElements(items, startIndex, array, arrayIndex, carry <= 0 ? size : size - carry);
-            if (carry > 0)
-                CopyElements(items, 0, array, size - carry + arrayIndex, carry);
-        }
-
-        /// <summary>
-        /// Gets the number of elements contained in the list.
-        /// </summary>
-        public int Count => size;
-
-        bool ICollection<T>.IsReadOnly => false;
-
-        /// <summary>
-        /// Removes the first occurrence of the specific <paramref name="item"/> from the list.
-        /// </summary>
-        /// <param name="item">The object to remove from the list.</param>
-        /// <returns>
-        /// <see langword="true"/> if <paramref name="item"/> was successfully removed from the list; otherwise, <see langword="false"/>. This method also returns false if <paramref name="item"/> is not found in the original list.
-        /// </returns>
-        public bool Remove(T item)
-        {
-            int index = IndexOf(item);
-            if (index >= 0)
-            {
-                RemoveAt(index);
-                return true;
-            }
-
-            return false;
-        }
-
-        #endregion
-
-        #region IEnumerable<T> Members
+        #region Explicitly Implemented Interface Methods
 
         /// <summary>
         /// Returns an enumerator that iterates through the collection.
@@ -2876,18 +2941,10 @@ isNonIntEnum
             return new EnumeratorAsReference(this);
         }
 
-        #endregion
-
-        #region IEnumerable Members
-
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable<T>)this).GetEnumerator();
         }
-
-        #endregion
-
-        #region IList Members
 
         int IList.Add(object value)
         {
@@ -2918,10 +2975,6 @@ isNonIntEnum
             Insert(index, (T)value);
         }
 
-        bool IList.IsFixedSize => false;
-
-        bool IList.IsReadOnly => false;
-
         void IList.Remove(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
@@ -2929,56 +2982,30 @@ isNonIntEnum
             Remove((T)value);
         }
 
-        object IList.this[int index]
-        {
-            get => this[index];
-            set
-            {
-                if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
-                this[index] = (T)value;
-            }
-        }
-
-        #endregion
-
-        #region ICollection Members
-
         void ICollection.CopyTo(Array array, int index)
         {
             if (array != null && array.Rank != 1)
                 throw new ArgumentException(Res.Get(Res.ArrayDimension), nameof(array));
 
-            T[] typedArray = array as T[];
-            if (typedArray != null)
+            switch (array)
             {
-                CopyTo(typedArray, index);
-                return;
-            }
+                case T[] typedArray:
+                    CopyTo(typedArray, index);
+                    return;
 
-            object[] objectArray = array as object[];
-            if (objectArray != null)
-            {
-                for (int i = 0; i < size; i++)
-                {
-                    objectArray[index++] = ElementAt(i);
-                }
-            }
+                case object[] objectArray:
+                    for (int i = 0; i < size; i++)
+                        objectArray[index++] = ElementAt(i);
+                    return;
 
-            throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
-        }
-
-        bool ICollection.IsSynchronized => false;
-
-        object ICollection.SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                return syncRoot;
+                default:
+                    throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
             }
         }
+
+        #endregion
+
+        #endregion
 
         #endregion
     }
