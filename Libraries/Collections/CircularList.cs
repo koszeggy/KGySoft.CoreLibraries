@@ -65,6 +65,7 @@ namespace KGySoft.Collections
     // - Insert: O(1) if index == 0 (AddFirst), otherwise O(N) but n/2
     // - InsertRange: O(n) even if not ICollection (list: O(n * m))
     // - Enumerator: reference type if obtained as IEnumerable (boosts the performance of LINQ)
+    // When to prefer this összefoglaló: ha az első felébe is szúrunk be, ha nem-Collection insert range nem a legvégére, ha enumerálás IEnumerable-ként (pl. linq).
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     [Serializable]
@@ -109,149 +110,6 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region BinarySearchHelper class
-
-        /// <summary>
-        /// Base class for performing binary search on a <see cref="CircularList{T}"/>. This class uses a comparer for the search.
-        /// This class accesses the <see cref="CircularList{T}"/> through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
-        /// </summary>
-        /// <typeparam name="TElem">Same as T. Type must be generic, otherwise, the derived <see cref="ComparableBinarySearchHelper{TComparable}"/> could not call the base methods.</typeparam>
-        private class BinarySearchHelper<TElem>
-        {
-            #region Methods
-
-            #region Static Methods
-
-            /// <summary>
-            /// Performs a binary search on the list using the comparer.
-            /// </summary>
-            protected static int BinarySearchWithComparer(CircularList<TElem> list, int index, int length, TElem value, IComparer<TElem> comparer)
-            {
-                int lo = index;
-                int hi = index + length - 1;
-                while (lo <= hi)
-                {
-                    int i = lo + ((hi - lo) >> 1);
-                    int order = comparer.Compare(list.ElementAtNonZeroStart(i), value);
-
-                    if (order == 0)
-                        return i;
-
-                    if (order < 0)
-                        lo = i + 1;
-                    else
-                        hi = i - 1;
-                }
-
-                return ~lo;
-            }
-
-            #endregion
-
-            #region Instance Methods
-
-            /// <summary>
-            /// Performs a binary search on the list using the comparer or the default comparer, when comparer is null.
-            /// </summary>
-            internal virtual int BinarySearch(CircularList<TElem> list, int index, int length, TElem value, IComparer<TElem> comparer)
-            {
-                try
-                {
-                    // in case of enum element, comparer is already assigned
-                    if (comparer == null)
-                        comparer = Comparer<TElem>.Default;
-
-                    return BinarySearchWithComparer(list, index, length, value, comparer);
-                }
-                catch (Exception e)
-                {
-                    throw new InvalidOperationException(Res.Get(Res.ComparerFail), e);
-                }
-            }
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region GenericBinarySearchHelper class
-
-        /// <summary>
-        /// Helper class for performing binary search on a <see cref="CircularList{T}"/>. This class can handle elements as generic IComparable instances.
-        /// This class accesses the <see cref="CircularList{T}"/> through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
-        /// </summary>
-        /// <typeparam name="TComparable">Represents a <see cref="IComparable{T}"/> type.</typeparam>
-        private class ComparableBinarySearchHelper<TComparable> : BinarySearchHelper<TComparable> where TComparable : IComparable<TComparable>
-        {
-            #region Methods
-
-            #region Static Methods
-
-            /// <summary>
-            /// Performs a binary search on the list. Elements are constrainted to be <see cref="IComparable{T}"/> instances.
-            /// </summary>
-            private static int BinarySearchAsComparable(CircularList<TComparable> list, int index, int length, TComparable value)
-            {
-                int lo = index;
-                int hi = index + length - 1;
-                while (lo <= hi)
-                {
-                    int i = lo + ((hi - lo) >> 1);
-                    TComparable item = list.ElementAtNonZeroStart(i);
-
-                    int order;
-                    if (item == null)
-                    {
-                        if (value == null)
-                            order = 0;
-                        else
-                            order = -1;
-                    }
-                    else
-                        order = item.CompareTo(value);
-
-                    if (order == 0)
-                        return i;
-
-                    if (order < 0)
-                        lo = i + 1;
-                    else
-                        hi = i - 1;
-                }
-
-                return ~lo;
-            }
-
-            #endregion
-
-            #region Instance Methods
-
-            /// <summary>
-            /// Performs a binary search on the list. When comparer is specified, it is used, otherwise, using <see cref="IComparable{T}.CompareTo"/> on elements.
-            /// </summary>
-            internal override int BinarySearch(CircularList<TComparable> list, int index, int length, TComparable value, IComparer<TComparable> comparer)
-            {
-                try
-                {
-                    return comparer?.Equals(Comparer<TComparable>.Default) != false
-                        ? BinarySearchAsComparable(list, index, length, value)
-                        : BinarySearchWithComparer(list, index, length, value, comparer);
-                }
-                catch (Exception e)
-                {
-                    throw new InvalidOperationException(Res.Get(Res.ComparerFail), e);
-                }
-            }
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
         #region EnumeratorAsReference class
 
         /// <summary>
@@ -268,7 +126,7 @@ namespace KGySoft.Collections
 
             private readonly CircularList<T> list;
             private readonly int version;
-            private readonly int length;
+            private readonly int capacity;
 
             private int index;
             private int steps;
@@ -307,7 +165,7 @@ namespace KGySoft.Collections
                 this.list = list;
                 index = list.startIndex;
                 version = list.version;
-                length = list.items.Length;
+                capacity = list.items.Length;
             }
 
             #endregion
@@ -326,7 +184,7 @@ namespace KGySoft.Collections
                 if (steps < list.size)
                 {
                     current = list.items[index++];
-                    if (index == length)
+                    if (index == capacity)
                         index = 0;
                     steps++;
                     return true;
@@ -457,7 +315,7 @@ namespace KGySoft.Collections
 
             private readonly CircularList<T> list;
             private readonly int version;
-            private readonly int length;
+            private readonly int capacity;
 
             private int index;
             private int steps;
@@ -499,7 +357,7 @@ namespace KGySoft.Collections
                 this.list = list;
                 index = list.startIndex;
                 version = list.version;
-                length = list.items.Length;
+                capacity = list.items.Length;
                 steps = 0;
                 current = default(T);
             }
@@ -530,7 +388,7 @@ namespace KGySoft.Collections
                 if (steps < list.size)
                 {
                     current = list.items[index++];
-                    if (index == length)
+                    if (index == capacity)
                         index = 0;
                     steps++;
                     return true;
@@ -743,9 +601,8 @@ namespace KGySoft.Collections
 
                 // faster than return items[(startIndex + count) % length];
                 int pos = startIndex + index;
-                int length = items.Length;
-                if (pos >= length)
-                    pos -= length;
+                if (pos >= items.Length)
+                    pos -= items.Length;
 
                 return items[pos];
             }
@@ -878,6 +735,23 @@ namespace KGySoft.Collections
         /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
         /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
         /// </remarks>
+        public void Add(T item)
+        {
+            AddLast(item);
+        }
+
+        /// <summary>
+        /// Adds an <paramref name="item"/> to the end of the list.
+        /// </summary>
+        /// <param name="item">The item to add to the list.</param>
+        /// <remarks>
+        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
+        /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
+        /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
+        /// new element, this method becomes an O(n) operation, where n is <see cref="Count"/>.
+        /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
+        /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
+        /// </remarks>
         public void AddLast(T item)
         {
             if (size == items.Length)
@@ -885,9 +759,8 @@ namespace KGySoft.Collections
 
             // faster than items[(startIndex + count) % length] = item;
             int pos = startIndex + size++;
-            int length = items.Length;
-            if (pos >= length)
-                pos -= length;
+            if (pos >= items.Length)
+                pos -= items.Length;
             items[pos] = item;
             version++;
         }
@@ -932,9 +805,8 @@ namespace KGySoft.Collections
                 return false;
 
             int pos = startIndex + --size;
-            int length = items.Length;
-            if (pos >= length)
-                pos -= length;
+            if (pos >= items.Length)
+                pos -= items.Length;
 
             items[pos] = default(T);
 
@@ -972,6 +844,48 @@ namespace KGySoft.Collections
                 throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
 
             AddLast(collection);
+        }
+
+        /// <summary>
+        /// Determines the index of a specific item in the list.
+        /// </summary>
+        /// <param name="item">The object to locate in the list.</param>
+        /// <returns>
+        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
+        /// </returns>
+        /// <remarks>
+        /// <para>The list is searched forward starting at the first element and ending at the last element.</para>
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type,
+        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
+        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
+        /// </remarks>
+        public int IndexOf(T item)
+        {
+            if (
+#if NET35
+                isEnum
+#elif NET40 || NET45
+                isNonIntEnum
+#else
+#error .NET version is not set or not supported!
+#endif
+
+            )
+            {
+                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
+                return FindIndex(0, size, enumItem => enumComparer.Equals(enumItem, item));
+            }
+
+            int carry = startIndex + size - items.Length;
+
+            int result = Array.IndexOf(items, item, startIndex, carry <= 0 ? size : size - carry);
+            if (result >= 0)
+                return result - startIndex;
+            if (carry > 0)
+                result = Array.IndexOf(items, item, 0, carry);
+            if (result >= 0)
+                return items.Length - startIndex + result;
+            return result;
         }
 
         /// <summary>
@@ -1032,21 +946,21 @@ namespace KGySoft.Collections
             }
 
             // every searched element is carried
-            int length = items.Length;
+            int capacity = items.Length;
             int start = startIndex + index;
             int result;
-            if (start >= length)
+            if (start >= capacity)
             {
-                start -= length;
+                start -= capacity;
                 result = Array.IndexOf(items, item, start, count);
                 if (result >= 0)
-                    return length - startIndex + result;
+                    return capacity - startIndex + result;
 
                 return result;
             }
 
             // there are also not carried elements to search
-            int carry = start + count - length;
+            int carry = start + count - capacity;
 
             result = Array.IndexOf(items, item, start, carry <= 0 ? count : count - carry);
             if (result >= 0)
@@ -1054,7 +968,7 @@ namespace KGySoft.Collections
             if (carry > 0)
                 result = Array.IndexOf(items, item, 0, carry);
             if (result >= 0)
-                return length - startIndex + result;
+                return capacity - startIndex + result;
             return result;
         }
 
@@ -1071,8 +985,7 @@ namespace KGySoft.Collections
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         public int LastIndexOf(T item)
         {
-            int length = items.Length;
-            int carry = startIndex + size - length;
+            int carry = startIndex + size - items.Length;
 
             if (
 #if NET35
@@ -1094,7 +1007,7 @@ namespace KGySoft.Collections
             {
                 result = Array.LastIndexOf(items, item, carry - 1, carry);
                 if (result >= 0)
-                    return length - startIndex + result;
+                    return items.Length - startIndex + result;
             }
             if (carry < 0)
                 carry = 0;
@@ -1165,26 +1078,26 @@ namespace KGySoft.Collections
             }
 
             // every searched element is carried
-            int length = items.Length;
+            int capacity = items.Length;
             int start = startIndex + index;
             int result;
-            if (start - count + 1 >= length)
+            if (start - count + 1 >= capacity)
             {
-                start -= length;
+                start -= capacity;
                 result = Array.LastIndexOf(items, item, start, count);
                 if (result >= 0)
-                    return length - startIndex + result;
+                    return capacity - startIndex + result;
 
                 return result;
             }
 
             // there are not carried (and optionally carried) elements to search
-            int carry = start - length + 1;
+            int carry = start - capacity + 1;
             if (carry > 0)
             {
                 result = Array.LastIndexOf(items, item, carry - 1, carry);
                 if (result >= 0)
-                    return length - startIndex + result;
+                    return capacity - startIndex + result;
 
                 start -= carry;
             }
@@ -1237,13 +1150,13 @@ namespace KGySoft.Collections
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            int length = items.Length;
+            int capacity = items.Length;
             int start = this.startIndex + startIndex;
-            int carry = start + count - length;
+            int carry = start + count - capacity;
 
-            if (start <= length)
+            if (start <= capacity)
             {
-                int endIndex = carry > 0 ? length : start + count;
+                int endIndex = carry > 0 ? capacity : start + count;
                 for (int i = start; i < endIndex; i++)
                 {
                     if (match(items[i]))
@@ -1256,7 +1169,7 @@ namespace KGySoft.Collections
                 for (int i = 0; i < carry; i++)
                 {
                     if (match(items[i]))
-                        return length - this.startIndex + i;
+                        return capacity - this.startIndex + i;
                 }
             }
 
@@ -1313,9 +1226,9 @@ namespace KGySoft.Collections
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            int length = items.Length;
+            int capacity = items.Length;
             int start = this.startIndex + startIndex;
-            int carry = start - length + 1;
+            int carry = start - capacity + 1;
 
             if (carry > 0)
             {
@@ -1323,7 +1236,7 @@ namespace KGySoft.Collections
                 for (int i = carry - 1; i >= endIndex; i--)
                 {
                     if (match(items[i]))
-                        return length - this.startIndex + i;
+                        return capacity - this.startIndex + i;
                 }
 
                 if (count <= carry)
@@ -1332,7 +1245,7 @@ namespace KGySoft.Collections
                 count -= carry;
             }
 
-            for (int i = (carry >= 0 ? length : start) - 1; count > 0; i--, count--)
+            for (int i = (carry >= 0 ? capacity : start) - 1; count > 0; i--, count--)
             {
                 if (match(items[i]))
                     return i - this.startIndex;
@@ -1353,10 +1266,9 @@ namespace KGySoft.Collections
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            int length = items.Length;
-            int carry = startIndex + size - length;
+            int carry = startIndex + size - items.Length;
 
-            int endIndex = carry > 0 ? length : startIndex + size;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 if (match(items[i]))
@@ -1386,8 +1298,7 @@ namespace KGySoft.Collections
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            int length = items.Length;
-            int carry = startIndex + size - length;
+            int carry = startIndex + size - items.Length;
 
             if (carry > 0)
             {
@@ -1397,7 +1308,7 @@ namespace KGySoft.Collections
                         return items[i];
                 }
             }
-            int endIndex = carry > 0 ? length : startIndex + size;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = endIndex - 1; i >= startIndex; i--)
             {
                 if (match(items[i]))
@@ -1418,10 +1329,9 @@ namespace KGySoft.Collections
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            int length = items.Length;
-            int carry = startIndex + size - length;
+            int carry = startIndex + size - items.Length;
 
-            int endIndex = carry > 0 ? length : startIndex + size;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 if (match(items[i]))
@@ -1479,8 +1389,8 @@ namespace KGySoft.Collections
             if (collectionSize == 0)
                 return;
 
-            int storageSize = items.Length;
-            if (size + collectionSize > storageSize)
+            int capacity = items.Length;
+            if (size + collectionSize > capacity)
             {
                 IncreaseCapacityWithInsert(index, asArray ?? asCollection);
                 return;
@@ -1488,8 +1398,8 @@ namespace KGySoft.Collections
 
             // calculating position
             int pos = startIndex + index;
-            if (pos >= storageSize)
-                pos -= storageSize;
+            if (pos >= capacity)
+                pos -= capacity;
 
             // optimized for minimal data moving
             if (index >= (size >> 1))
@@ -1499,19 +1409,19 @@ namespace KGySoft.Collections
                 // decreasing startIndex and pos
                 startIndex -= collectionSize;
                 if (startIndex < 0)
-                    startIndex += storageSize;
+                    startIndex += capacity;
 
-                int topIndex = pos > 0 ? pos - 1 : storageSize - 1;
+                int topIndex = pos > 0 ? pos - 1 : capacity - 1;
 
                 pos -= collectionSize;
                 if (pos < 0)
-                    pos += storageSize;
+                    pos += capacity;
 
                 ShiftDown(topIndex, index, collectionSize);
             }
 
             // if non-array collection that fits into list without wrapping
-            if (asCollection != null && pos + collectionSize <= storageSize)
+            if (asCollection != null && pos + collectionSize <= capacity)
             {
                 asCollection.CopyTo(items, pos);
             }
@@ -1520,7 +1430,7 @@ namespace KGySoft.Collections
             {
                 if (asArray == null)
                     asArray = collection.ToArray();
-                int carry = pos + collectionSize - storageSize;
+                int carry = pos + collectionSize - capacity;
                 CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
                     CopyElements(asArray, collectionSize - carry, items, 0, carry);
@@ -1568,26 +1478,26 @@ namespace KGySoft.Collections
                 return;
             }
 
-            int length = items.Length;
+            int capacity = items.Length;
 
             // optimized for minimal data moving
             if (index <= size >> 1)
             {
                 ShiftUp(startIndex, index, count);
-                int carry = startIndex + count - length;
+                int carry = startIndex + count - capacity;
                 Array.Clear(items, startIndex, carry <= 0 ? count : count - carry);
                 if (carry > 0)
                     Array.Clear(items, 0, carry);
 
                 startIndex += count;
-                if (startIndex >= length)
-                    startIndex -= length;
+                if (startIndex >= capacity)
+                    startIndex -= capacity;
             }
             else
             {
                 int topIndex = startIndex + size - 1;
-                if (topIndex > length)
-                    topIndex -= length;
+                if (topIndex > capacity)
+                    topIndex -= capacity;
 
                 ShiftDown(topIndex, size - index - count, count);
                 int carry = -(topIndex - count + 1);
@@ -1595,7 +1505,7 @@ namespace KGySoft.Collections
                     Array.Clear(items, -carry, count);
                 else
                 {
-                    Array.Clear(items, length - carry, carry);
+                    Array.Clear(items, capacity - carry, carry);
                     Array.Clear(items, 0, count - carry);
                 }
             }
@@ -1641,12 +1551,11 @@ namespace KGySoft.Collections
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
-            int length = items.Length;
             int start = startIndex + index;
-            int carry = start + count - length;
+            int carry = start + count - items.Length;
 
             // the section to reverse is wrapped: reversing manually via indexer
-            if (carry > 0 && start < length)
+            if (carry > 0 && start < items.Length)
             {
                 int i = index;
                 int j = index + count - 1;
@@ -1664,8 +1573,8 @@ namespace KGySoft.Collections
             }
 
             // fast reverse
-            if (start >= length)
-                start -= length;
+            if (start >= items.Length)
+                start -= items.Length;
             Array.Reverse(items, start, count);
             version++;
         }
@@ -1768,18 +1677,18 @@ namespace KGySoft.Collections
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
 
-            int storageSize = items.Length;
+            int capacity = items.Length;
             int start = startIndex + index;
-            int carry = start + count - storageSize;
+            int carry = start + count - capacity;
 
             // the section to sort is wrapped
-            if (carry > 0 && start < storageSize)
+            if (carry > 0 && start < capacity)
             {
                 // fast solution: the whole list must be sorted
                 if (index == 0 && count == size)
                 {
                     // fastest solution: the list is full, the full list will be sorted so no move is needed
-                    if (storageSize == size)
+                    if (capacity == size)
                     {
                         startIndex = 0;
                         start = index;
@@ -1792,16 +1701,16 @@ namespace KGySoft.Collections
                         if (nonWrapped <= carry)
                         {
                             CopyElements(items, startIndex, items, carry, nonWrapped);
-                            Array.Clear(items, storageSize - nonWrapped, nonWrapped);
+                            Array.Clear(items, capacity - nonWrapped, nonWrapped);
                             startIndex = 0;
                             start = index;
                         }
                         // moving up the elements from the start
                         else
                         {
-                            CopyElements(items, 0, items, storageSize - count, carry);
+                            CopyElements(items, 0, items, capacity - count, carry);
                             Array.Clear(items, 0, carry);
-                            startIndex = storageSize - count;
+                            startIndex = capacity - count;
                             start = startIndex + index;
                         }
                     }
@@ -1817,8 +1726,8 @@ namespace KGySoft.Collections
                 }
             }
 
-            if (start >= storageSize)
-                start -= storageSize;
+            if (start >= capacity)
+                start -= capacity;
             Array.Sort(items, start, count, comparer);
             version++;
         }
@@ -1915,12 +1824,12 @@ namespace KGySoft.Collections
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
 
-            int length = items.Length;
+            int capacity = items.Length;
             int start = startIndex + index;
-            int carry = start + count - length;
+            int carry = start + count - capacity;
 
             // the section to search is wrapped: doing it manually
-            if (carry > 0 && start < length)
+            if (carry > 0 && start < capacity)
             {
                 return BinarySearchHelperInstance.BinarySearch(this, index, count, item, comparer);
             }
@@ -1936,9 +1845,9 @@ namespace KGySoft.Collections
             }
 
             // search in the wrapped-only part
-            start -= length;
+            start -= capacity;
             result = Array.BinarySearch(items, start, count, item, comparer);
-            return result >= 0 ? length - startIndex + result : ~(length - startIndex + ~result);
+            return result >= 0 ? capacity - startIndex + result : ~(capacity - startIndex + ~result);
         }
 
         /// <summary>
@@ -2008,17 +1917,16 @@ namespace KGySoft.Collections
             CircularList<T> result = new CircularList<T>(count) { size = count };
 
             // every element to copy is carried
-            int storageSize = items.Length;
             int start = startIndex + index;
-            if (start >= storageSize)
+            if (start >= items.Length)
             {
-                start -= storageSize;
+                start -= items.Length;
                 CopyElements(items, start, result.items, 0, count);
                 return result;
             }
 
             // there are also not carried elements to copy
-            int carry = start + count - storageSize;
+            int carry = start + count - items.Length;
             CopyElements(items, start, result.items, 0, carry <= 0 ? count : count - carry);
 
             if (carry > 0)
@@ -2038,10 +1946,8 @@ namespace KGySoft.Collections
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
-            int endIndex = carry > 0 ? length : startIndex + size;
+            int carry = startIndex + size - items.Length;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 if (!match(items[i]))
@@ -2072,10 +1978,8 @@ namespace KGySoft.Collections
                 throw new ArgumentNullException(nameof(action), Res.Get(Res.ArgumentNull));
 
             int ver = version;
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
-            int endIndex = carry > 0 ? length : startIndex + size;
+            int carry = startIndex + size - items.Length;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 action(items[i]);
@@ -2125,10 +2029,8 @@ namespace KGySoft.Collections
 
             CircularList<TOutput> list = new CircularList<TOutput>(size);
             int targetIndex = 0;
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
-            int endIndex = carry > 0 ? length : startIndex + size;
+            int carry = startIndex + size - items.Length;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 list.items[targetIndex++] = converter(items[i]);
@@ -2183,17 +2085,16 @@ namespace KGySoft.Collections
                 return;
 
             // every element to be copied is carried
-            int length = items.Length;
             int start = startIndex + index;
-            if (start >= length)
+            if (start >= items.Length)
             {
-                start -= length;
+                start -= items.Length;
                 CopyElements(items, start, array, arrayIndex, count);
                 return;
             }
 
             // there are also not carried elements to copy
-            int carry = start + count - length;
+            int carry = start + count - items.Length;
             CopyElements(items, start, array, arrayIndex, carry <= 0 ? count : count - carry);
             if (carry > 0)
                 CopyElements(items, 0, array, count - carry + arrayIndex, carry);
@@ -2256,49 +2157,6 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Determines the index of a specific item in the list.
-        /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
-        /// <returns>
-        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
-        /// </returns>
-        /// <remarks>
-        /// <para>The list is searched forward starting at the first element and ending at the last element.</para>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type,
-        /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
-        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
-        /// </remarks>
-        public int IndexOf(T item)
-        {
-            if (
-#if NET35
-                isEnum
-#elif NET40 || NET45
-                isNonIntEnum
-#else
-#error .NET version is not set or not supported!
-#endif
-
-                )
-            {
-                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
-                return FindIndex(0, size, enumItem => enumComparer.Equals(enumItem, item));
-            }
-
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
-            int result = Array.IndexOf(items, item, startIndex, carry <= 0 ? size : size - carry);
-            if (result >= 0)
-                return result - startIndex;
-            if (carry > 0)
-                result = Array.IndexOf(items, item, 0, carry);
-            if (result >= 0)
-                return length - startIndex + result;
-            return result;
-        }
-
-        /// <summary>
         /// Inserts an <paramref name="item"/> to the list at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
@@ -2326,9 +2184,9 @@ namespace KGySoft.Collections
 
                 // calculating position
                 int pos = startIndex + index;
-                int length = items.Length;
-                if (pos >= length)
-                    pos -= length;
+                int capacity = items.Length;
+                if (pos >= capacity)
+                    pos -= capacity;
 
                 // optimized for minimal data moving
                 if (index >= (size >> 1))
@@ -2339,12 +2197,12 @@ namespace KGySoft.Collections
                     if (startIndex > 0)
                         startIndex--;
                     else
-                        startIndex = length - 1;
+                        startIndex = capacity - 1;
 
                     if (pos > 0)
                         pos--;
                     else
-                        pos = length - 1;
+                        pos = capacity - 1;
 
                     ShiftDown(pos, index);
                 }
@@ -2405,23 +2263,6 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Adds an <paramref name="item"/> to the end of the list.
-        /// </summary>
-        /// <param name="item">The item to add to the list.</param>
-        /// <remarks>
-        /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
-        /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
-        /// <para>If <see cref="Count"/> is less than <see cref="Capacity"/>, this method is an O(1) operation. If the capacity needs to be increased to accommodate the
-        /// new element, this method becomes an O(n) operation, where n is <see cref="Count"/>.
-        /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
-        /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
-        /// </remarks>
-        public void Add(T item)
-        {
-            AddLast(item);
-        }
-
-        /// <summary>
         /// Removes all items from the list.
         /// </summary>
         /// <remarks>
@@ -2435,9 +2276,7 @@ namespace KGySoft.Collections
             if (size == 0)
                 return;
 
-            int length = items.Length;
-            int carry = startIndex + size - length;
-
+            int carry = startIndex + size - items.Length;
             Array.Clear(items, startIndex, carry <= 0 ? size : size - carry);
             if (carry > 0)
                 Array.Clear(items, 0, carry);
@@ -2543,12 +2382,11 @@ namespace KGySoft.Collections
 
             // calculating insert position
             int pos = startIndex + size;
-            int storageSize = items.Length;
-            if (pos >= storageSize)
-                pos -= storageSize;
+            if (pos >= items.Length)
+                pos -= items.Length;
 
             // if collection that fits into list without wrapping
-            if (asCollection != null && pos + collectionSize <= storageSize)
+            if (asCollection != null && pos + collectionSize <= items.Length)
             {
                 asCollection.CopyTo(items, pos);
             }
@@ -2557,7 +2395,7 @@ namespace KGySoft.Collections
             {
                 if (asArray == null)
                     asArray = collection.ToArray();
-                int carry = pos + collectionSize - storageSize;
+                int carry = pos + collectionSize - items.Length;
                 CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
                     CopyElements(asArray, collectionSize - carry, items, 0, carry);
@@ -2589,12 +2427,11 @@ namespace KGySoft.Collections
 
             // calculating insert position
             int pos = startIndex - collectionSize;
-            int storageSize = items.Length;
             if (pos < 0)
-                pos += storageSize;
+                pos += items.Length;
 
             // if non-array collection that fits into list without wrapping
-            if (asCollection != null && pos + collectionSize <= storageSize)
+            if (asCollection != null && pos + collectionSize <= items.Length)
             {
                 asCollection.CopyTo(items, pos);
             }
@@ -2603,7 +2440,7 @@ namespace KGySoft.Collections
             {
                 if (asArray == null)
                     asArray = collection.ToArray();
-                int carry = pos + collectionSize - storageSize;
+                int carry = pos + collectionSize - items.Length;
                 CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
                 if (carry > 0)
                     CopyElements(asArray, collectionSize - carry, items, 0, carry);
@@ -2627,8 +2464,7 @@ namespace KGySoft.Collections
                 return;
             }
 
-            int length = items.Length;
-            int carry = startIndex + count - length;
+            int carry = startIndex + count - items.Length;
             Array.Clear(items, startIndex, carry <= 0 ? count : count - carry);
             if (carry > 0)
             {
@@ -2638,7 +2474,7 @@ namespace KGySoft.Collections
             else
             {
                 startIndex += count;
-                if (startIndex == length)
+                if (startIndex == items.Length)
                     startIndex = 0;
             }
 
@@ -2659,11 +2495,10 @@ namespace KGySoft.Collections
             }
 
             int pos = startIndex + size - count;
-            int length = items.Length;
-            if (pos >= length)
-                pos -= length;
+            if (pos >= items.Length)
+                pos -= items.Length;
 
-            int carry = pos + count - length;
+            int carry = pos + count - items.Length;
             Array.Clear(items, pos, carry <= 0 ? count : count - carry);
             if (carry > 0)
                 Array.Clear(items, 0, carry);
@@ -2762,21 +2597,23 @@ namespace KGySoft.Collections
         /// <param name="elemCount">Count of elements to shift up.</param>
         private void ShiftUp(int index, int elemCount)
         {
-            int length = items.Length;
             // determining count of wrapped elements (the ones at the beginning of the physical array)
-            int carry = index + elemCount - length;
+            int carry = index + elemCount - items.Length;
+
             // if needed, moving them up by one
             if (carry > 0)
             {
                 CopyElements(items, 0, items, 1, carry);
                 elemCount -= carry;
             }
+
             // if needed, moving the last item in the physical array to the first position
             if (carry >= 0)
             {
-                items[0] = items[length - 1];
+                items[0] = items[items.Length - 1];
                 elemCount--;
             }
+
             // moving the rest of the items normally
             if (elemCount > 0)
             {
@@ -2792,8 +2629,7 @@ namespace KGySoft.Collections
         /// <param name="shiftCount">Distance of the shift.</param>
         private void ShiftUp(int index, int elemCount, int shiftCount)
         {
-            int length = items.Length;
-            int carry = index + elemCount - length;
+            int carry = index + elemCount - items.Length;
 
             // 1.) Moving up wrapped elements at the beginning of the physical array by shiftCount
             if (carry > 0)
@@ -2826,22 +2662,23 @@ namespace KGySoft.Collections
         /// <param name="elemCount">Count of elements to shift down</param>
         private void ShiftDown(int index, int elemCount)
         {
-            int length = items.Length;
-
             // determining count of wrapped elements (the ones at the end of the physical array)
             int carry = -(index - elemCount + 1);
+
             // if needed, moving them down by one
             if (carry > 0)
             {
-                CopyElements(items, length - carry, items, length - carry - 1, carry);
+                CopyElements(items, items.Length - carry, items, items.Length - carry - 1, carry);
                 elemCount -= carry;
             }
+
             // if needed, moving the first item in the physical array to the last position
             if (carry >= 0)
             {
-                items[length - 1] = items[0];
+                items[items.Length - 1] = items[0];
                 elemCount--;
             }
+
             // moving the rest of the items normally
             if (elemCount > 0)
             {
@@ -2857,14 +2694,13 @@ namespace KGySoft.Collections
         /// <param name="shiftCount">Distance of the shift.</param>
         private void ShiftDown(int index, int elemCount, int shiftCount)
         {
-            int length = items.Length;
             int carry = -(index - elemCount + 1);
             int sourceIndex;
 
             // 1.) Moving down wrapped elements at the end of the physical array by shiftCount
             if (carry > 0)
             {
-                sourceIndex = length - carry;
+                sourceIndex = items.Length - carry;
                 CopyElements(items, sourceIndex, items, sourceIndex - shiftCount, carry);
                 elemCount -= carry;
                 carry = 0;
@@ -2875,7 +2711,7 @@ namespace KGySoft.Collections
             if (carry > 0)
             {
                 int carryActual = Math.Min(carry, elemCount);
-                CopyElements(items, index - elemCount + 1, items, length - carry, carryActual);
+                CopyElements(items, index - elemCount + 1, items, items.Length - carry, carryActual);
                 elemCount -= carryActual;
             }
 
