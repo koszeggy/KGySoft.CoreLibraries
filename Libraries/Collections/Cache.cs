@@ -1488,10 +1488,10 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the collection.
+        /// Returns an enumerator that iterates through the <see cref="Cache{TKey,TValue}"/> elements in the evaluation order.
         /// </summary>
         /// <returns>
-        /// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
+        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
         /// </returns>
         /// <remarks>
         /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>

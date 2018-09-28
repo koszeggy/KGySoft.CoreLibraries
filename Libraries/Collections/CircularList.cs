@@ -34,8 +34,8 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Implements an <see cref="IList{T}"/> where inserting/removing at the beginning/end position are O(1) operations.
-    /// <see cref="CircularList{T}"/> is fully compatible with <see cref="List{T}"/>, but
-    /// can be ideal instead of <see cref="LinkedList{T}"/> as well, as <see cref="CircularList{T}"/> outperforms <see cref="LinkedList{T}"/> in most cases.
+    /// <see cref="CircularList{T}"/> is fully compatible with <see cref="List{T}"/> but has a better performance in several cases.
+    /// See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>Circularity means a dynamic start/end position in the internal store. If inserting/removing elements is required typically
@@ -49,23 +49,23 @@ namespace KGySoft.Collections
     /// <see cref="CircularList{T}"/> outperforms <see cref="LinkedList{T}"/> in most practical cases.</para>
     /// <para>Adding elements to the first/last position are generally O(1) operations. If the capacity needs to be increased to accommodate the
     /// new element, adding becomes an O(n) operation, where n is <see cref="Count"/>. Though when elements are continuously added to the list,
-    /// the amortized cost of adding methods (<see cref="Add"/>, <see cref="AddLast(T)"/>, <see cref="AddFirst(T)"/> or <see cref="Insert"/> at the first/ last position)
-    /// is O(1) due to the low frequency of increasing capacity. For example, when 20 million
+    /// the amortized cost of adding methods (<see cref="Add">Add</see>, <see cref="AddLast(T)">AddLast</see>, <see cref="AddFirst(T)">AddFirst</see> or <see cref="Insert">Insert</see>
+    /// at the first/last position) is O(1) due to the low frequency of increasing capacity. For example, when 20 million
     /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
-    /// <para>When a list is populated only by the <see cref="Add"/> method or by the indexer, and then it is never modified, <see cref="List{T}"/> class basically has better
+    /// <para>Inserting more elements are also optimized. If the length of the <see cref="CircularList{T}"/> is n and the length of the collection to insert is m, then the cost of <see cref="InsertRange">InsertRange</see>
+    /// to the first or last position is O(m). When the collection is inserted in the middle of the <see cref="CircularList{T}"/>, the cost is O(Max(n, m)), and in practice no more than n/2 elements are moved in the <see cref="CircularList{T}"/>.
+    /// In contrast, inserting a collection into the first position of a <see cref="List{T}"/> moves all of the already existing elements. And if the collection to insert does not implement <see cref="ICollection{T}"/>, then
+    /// <see cref="List{T}"/> works with an O(n * m) cost as it will insert the elements one by one, shifting the elements by 1 in every iteration.</para>
+    /// <para><see cref="CircularList{T}"/> provides an O(1) solution also for emptying the collection: the <see cref="Reset">Reset</see> method clears all elements and resets the internal capacity to 0 in one
+    /// quick step. The effect is the same as calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods in a row but the latter solution has an O(n) cost.</para>
+    /// <para>When a list is populated only by the <see cref="Add">Add</see> method or by the indexer, and then it is never modified, <see cref="List{T}"/> class can have a slightly better
     /// performance. Though when the list is enumerated as an <see cref="IEnumerable{T}"/> implementation (occurs for example, when the list is used in LINQ queries or when used
-    /// as an <see cref="IList{T}"/> instance), then <see cref="CircularList{T}"/> can be a better choice than <see cref="List{T}"/>, because the enumerator of
-    /// <see cref="List{T}"/> class has worse performance when it is cast to the <see cref="IEnumerator{T}"/> interface. While <see cref="GetEnumerator()"/> method of
-    /// <see cref="CircularList{T}"/> returns a value type enumerator (similarly to the <see cref="List{T}"/> class), when the
-    /// enumerator is obtained via the <see cref="IEnumerable{T}"/> interface, the <see cref="CircularList{T}"/> returns a reference type to avoid boxing and to
-    /// provide a better performance.
+    /// as an <see cref="IList{T}"/> instance), then <see cref="CircularList{T}"/> can be a better choice than <see cref="List{T}"/> because the enumerator of
+    /// <see cref="List{T}"/> class has worse performance when it boxed into an <see cref="IEnumerator{T}"/> reference. While the <see cref="GetEnumerator">GetEnumerator</see> method of
+    /// <see cref="CircularList{T}"/> returns a value type enumerator (similarly to the <see cref="List{T}"/> class), when the enumerator is obtained via the <see cref="IEnumerable{T}"/>
+    /// interface, the <see cref="CircularList{T}"/> returns a reference type to avoid boxing and to provide a better performance.
     /// </para>
     /// </remarks>
-    // TODO: Performance improvements to List (mint a resource osztályok esetében)
-    // - Insert: O(1) if index == 0 (AddFirst), otherwise O(N) but n/2
-    // - InsertRange: O(n) even if not ICollection (list: O(n * m))
-    // - Enumerator: reference type if obtained as IEnumerable (boosts the performance of LINQ)
-    // When to prefer this összefoglaló: ha az első felébe is szúrunk be, ha nem-Collection insert range nem a legvégére, ha enumerálás IEnumerable-ként (pl. linq).
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     [Serializable]
@@ -79,8 +79,6 @@ namespace KGySoft.Collections
         // ReSharper disable ParameterHidesMember
 
         #region Nested types
-
-        #region Nested classes
 
         #region ComparisonWrapper class
 
@@ -113,10 +111,8 @@ namespace KGySoft.Collections
         #region EnumeratorAsReference class
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="CircularList{T}"/>.
-        /// This enumerator is exactly the same as <see cref="Enumerator"/>,
-        /// but is implemented as a reference type. This is returned when
-        /// enumerator is requested as an <see cref="IEnumerator{T}"/> interface
+        /// Enumerates the elements of a <see cref="CircularList{T}"/>. This enumerator is exactly the same as <see cref="Enumerator"/>,
+        /// but is implemented as a reference type. This is returned when enumerator is requested as an <see cref="IEnumerator{T}"/> interface
         /// to avoid performance hit of boxing.
         /// </summary>
         [Serializable]
@@ -189,6 +185,7 @@ namespace KGySoft.Collections
                     steps++;
                     return true;
                 }
+
                 steps = list.size + 1;
                 current = default(T);
                 return false;
@@ -212,9 +209,8 @@ namespace KGySoft.Collections
         #region SimpleEnumeratorAsReference class
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="CircularList{T}"/> when start index is 0.
-        /// This enumerator is returned when enumerator is requested as an <see cref="IEnumerator{T}"/> interface
-        /// to avoid performance hit of boxing.
+        /// Enumerates the elements of a <see cref="CircularList{T}"/> when start index is 0. This enumerator is returned when enumerator is
+        /// requested as an <see cref="IEnumerator{T}"/> interface to avoid performance hit of boxing.
         /// </summary>
         [Serializable]
         private class SimpleEnumeratorAsReference : IEnumerator<T>
@@ -299,10 +295,6 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #endregion
-
-        #region Nested structs
-
         #region Enumerator struct
 
         /// <summary>
@@ -379,7 +371,7 @@ namespace KGySoft.Collections
             /// <returns>
             /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
             /// </returns>
-            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
             {
                 if (version != list.version)
@@ -393,6 +385,7 @@ namespace KGySoft.Collections
                     steps++;
                     return true;
                 }
+
                 steps = list.size + 1;
                 current = default(T);
                 return false;
@@ -401,7 +394,7 @@ namespace KGySoft.Collections
             /// <summary>
             /// Sets the enumerator to its initial position, which is before the first element in the collection.
             /// </summary>
-            /// <exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public void Reset()
             {
                 if (version != list.version)
@@ -414,8 +407,6 @@ namespace KGySoft.Collections
 
             #endregion
         }
-
-        #endregion
 
         #endregion
 
@@ -478,9 +469,7 @@ namespace KGySoft.Collections
                         binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeHelper, true);
                     }
                     else
-                    {
                         binarySearchHelper = new BinarySearchHelper<T>();
-                    }
                 }
 
                 return binarySearchHelper;
@@ -500,38 +489,35 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>Capacity is the number of elements that the <see cref="CircularList{T}"/> can store before resizing is required, whereas
         /// <see cref="Count"/> is the number of elements that are actually in the <see cref="CircularList{T}"/>.</para>
-        /// <para>Capacity is always greater than or equal to <see cref="Count"/>. If <see cref="Count"/> exceeds Capacity while adding elements,
+        /// <para>Capacity is always greater than or equal to <see cref="Count"/>. If <see cref="Count"/> exceeds <see cref="Capacity"/> while adding elements,
         /// the capacity is increased by automatically reallocating the internal array before copying the old elements and adding the new elements.</para>
         /// <para>If the capacity is significantly larger than the count and you want to reduce the memory used by the <see cref="CircularList{T}"/>,
-        /// you can decrease capacity by calling the <see cref="TrimExcess"/> method or by setting the Capacity property explicitly.
-        /// When the value of Capacity is set explicitly, the the internal array is also reallocated to accommodate the specified capacity,
+        /// you can decrease capacity by calling the <see cref="TrimExcess">TrimExcess</see> method or by setting the <see cref="Capacity"/> property explicitly.
+        /// When the value of <see cref="Capacity"/> is set explicitly, the internal array is also reallocated to accommodate the specified capacity,
         /// and all the elements are copied.</para>
-        /// <para>Retrieving the value of this property is an O(1) operation; setting the property is an O(n) operation, where n is the new capacity.</para>
+        /// <para>Retrieving the value of this property is an O(1) operation; setting the property is an O(n) operation, where n is the number of stored elements.</para>
         /// </remarks>
         public int Capacity
         {
             get => items.Length;
             set
             {
-                if (value != items.Length) // deleted: || startIndex > 0
+                if (value == items.Length)
+                    return;
+                if (value < size)
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CapacityTooSmall));
+
+                if (value > 0)
                 {
-                    if (value < size)
-                        throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CapacityTooSmall));
+                    T[] newItems = new T[value];
+                    if (size > 0)
+                        CopyTo(newItems);
 
-                    if (value > 0)
-                    {
-                        T[] newItems = new T[value];
-                        if (size > 0)
-                            CopyTo(newItems);
-
-                        items = newItems;
-                        startIndex = 0;
-                    }
-                    else
-                    {
-                        items = emptyArray;
-                    }
+                    items = newItems;
+                    startIndex = 0;
                 }
+                else
+                    items = emptyArray;
             }
         }
 
@@ -545,9 +531,7 @@ namespace KGySoft.Collections
         #region Internal Properties
 
         internal T[] Items => items;
-
         internal int Version => version;
-
         internal int StartIndex => startIndex;
 
         #endregion
@@ -555,11 +539,8 @@ namespace KGySoft.Collections
         #region Explicitly Implemented Interface Properties
 
         bool ICollection<T>.IsReadOnly => false;
-
         bool IList.IsFixedSize => false;
-
         bool IList.IsReadOnly => false;
-
         bool ICollection.IsSynchronized => false;
 
         object ICollection.SyncRoot
@@ -587,6 +568,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Count"/>.</exception>
         public T this[int index]
         {
             get
@@ -655,9 +637,7 @@ namespace KGySoft.Collections
 
             isPrimitive = type.IsPrimitive;
             if (isPrimitive)
-            {
                 elementSizeExponent = (int)Math.Log(Reflector.SizeOf<T>(), 2);
-            }
         }
 
         #endregion
@@ -667,34 +647,34 @@ namespace KGySoft.Collections
         /// <summary>
         /// Creates a new instance of <see cref="CircularList{T}"/>.
         /// </summary>
-        public CircularList()
-        {
-            items = emptyArray;
-        }
+        public CircularList() => items = emptyArray;
 
         /// <summary>
         /// Creates a new instance of <see cref="CircularList{T}"/> that is empty and has the specified initial capacity.
         /// </summary>
         /// <param name="capacity">The number of elements that the new list can initially store.</param>
-        public CircularList(int capacity)
-        {
-            items = new T[capacity];
-        }
+        public CircularList(int capacity) => items = new T[capacity];
 
         /// <summary>
         /// Creates a new instance of <see cref="CircularList{T}"/> with the elements of provided <paramref name="collection"/>.
         /// </summary>
-        /// <param name="collection">The collection whose elements are copied to the new list.</param>
+        /// <param name="collection">The collection whose elements are copied to the new <see cref="CircularList{T}"/>.</param>
         public CircularList(IEnumerable<T> collection)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
 
-            ICollection<T> c = collection as ICollection<T> ?? collection.ToArray();
-            int length = c.Count;
-            items = new T[length];
-            c.CopyTo(items, 0);
-            size = length;
+            if (collection is ICollection<T> coll)
+            {
+                size = coll.Count;
+                items = new T[size];
+                coll.CopyTo(items, 0);
+                return;
+            }
+
+            items = emptyArray;
+            foreach (T item in collection)
+                AddLast(item);
         }
 
         #endregion
@@ -708,13 +688,9 @@ namespace KGySoft.Collections
         private static void CopyElements(T[] source, int sourceIndex, T[] dest, int destIndex, int count)
         {
             if (isPrimitive)
-            {
                 Buffer.BlockCopy(source, sourceIndex << elementSizeExponent, dest, destIndex << elementSizeExponent, count << elementSizeExponent);
-            }
             else
-            {
                 Array.Copy(source, sourceIndex, dest, destIndex, count);
-            }
         }
 
         #endregion
@@ -723,10 +699,12 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
+        #region Add
+
         /// <summary>
-        /// Adds an <paramref name="item"/> to the end of the list.
+        /// Adds an <paramref name="item"/> to the end of the <see cref="CircularList{T}"/>.
         /// </summary>
-        /// <param name="item">The item to add to the list.</param>
+        /// <param name="item">The item to add to the <see cref="CircularList{T}"/>.</param>
         /// <remarks>
         /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
@@ -735,15 +713,12 @@ namespace KGySoft.Collections
         /// When adding elements continuously, the amortized cost of this method is O(1) due to the low frequency of increasing capacity. For example, when 20 million
         /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
         /// </remarks>
-        public void Add(T item)
-        {
-            AddLast(item);
-        }
+        public void Add(T item) => AddLast(item);
 
         /// <summary>
-        /// Adds an <paramref name="item"/> to the end of the list.
+        /// Adds an <paramref name="item"/> to the end of the <see cref="CircularList{T}"/>.
         /// </summary>
-        /// <param name="item">The item to add to the list.</param>
+        /// <param name="item">The item to add to the <see cref="CircularList{T}"/>.</param>
         /// <remarks>
         /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array, and the existing elements are copied to the new array before the new element is added.</para>
@@ -766,9 +741,9 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Adds an <paramref name="item"/> to the beginning of the list.
+        /// Adds an <paramref name="item"/> to the beginning of the <see cref="CircularList{T}"/>.
         /// </summary>
-        /// <param name="item">The item to add to the list.</param>
+        /// <param name="item">The item to add to the <see cref="CircularList{T}"/>.</param>
         /// <remarks>
         /// <para><see cref="CircularList{T}"/> accepts <see langword="null"/> as a valid value for reference and nullable types and allows duplicate elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the list is increased by automatically reallocating the internal array,
@@ -796,9 +771,201 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Removes the last element of the list. This method has an O(1) cost.
+        /// Adds a <paramref name="collection"/> to the end of the <see cref="CircularList{T}"/>.
+        /// </summary>
+        /// <param name="collection">The collection to add to the <see cref="CircularList{T}"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
+        public void AddRange(IEnumerable<T> collection)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+
+            AddLast(collection);
+        }
+
+        /// <summary>
+        /// Inserts an <paramref name="item"/> to the <see cref="CircularList{T}"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
+        /// <param name="item">The object to insert into the <see cref="CircularList{T}"/>.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
+        /// <remarks>Inserting an item at the first or last position are O(1) operations if no capacity increase is needed. Otherwise, insertion is an O(n) operation.</remarks>
+        public void Insert(int index, T item)
+        {
+            if (index == 0)
+                AddFirst(item);
+            else if (index == size)
+                AddLast(item);
+            else
+            {
+                // if we are here, shifting is necessary
+                if ((uint)index > (uint)size)
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+                if (size == items.Length)
+                {
+                    IncreaseCapacityWithInsert(index, item);
+                    return;
+                }
+
+                // calculating position
+                int pos = startIndex + index;
+                int capacity = items.Length;
+                if (pos >= capacity)
+                    pos -= capacity;
+
+                // optimized for minimal data moving
+                if (index >= (size >> 1))
+                    ShiftUp(pos, size - index);
+                else
+                {
+                    // decreasing startIndex and pos
+                    if (startIndex > 0)
+                        startIndex--;
+                    else
+                        startIndex = capacity - 1;
+
+                    if (pos > 0)
+                        pos--;
+                    else
+                        pos = capacity - 1;
+
+                    ShiftDown(pos, index);
+                }
+
+                items[pos] = item;
+                size++;
+                version++;
+            }
+        }
+
+        /// <summary>
+        /// Inserts a <paramref name="collection"/> into the <see cref="CircularList{T}"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="collection"/> items should be inserted.</param>
+        /// <param name="collection">The collection to insert into the list.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularList{T}"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <para>If the length of the <see cref="CircularList{T}"/> is n and the length of the collection to insert is m, then inserting to the first or last position has O(m) cost.</para>
+        /// <para>If capacity increase is needed (considering actual list size), or when the collection is inserted in the middle of the <see cref="CircularList{T}"/>, the cost is O(Max(n, m)), and in practice no more than n/2 elements are moved.</para>
+        /// </remarks>
+        public void InsertRange(int index, IEnumerable<T> collection)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+
+            if (index == 0)
+            {
+                AddFirst(collection);
+                return;
+            }
+
+            if (index == size)
+            {
+                AddLast(collection);
+                return;
+            }
+
+            // if we are here, shifting is necessary
+            if ((uint)index > (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+            T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
+            ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
+
+            // ReSharper disable PossibleMultipleEnumeration - collection is not enumerated multiple times
+            // to prevent O(n * m) cost with inserting IEnumerable elements one by one we create a temp buffer
+            if (asArray == null && asCollection == null)
+                asArray = collection.ToArray();
+
+            int collectionSize = asArray?.Length ?? asCollection.Count;
+            if (collectionSize == 0)
+                return;
+
+            int capacity = items.Length;
+            if (size + collectionSize > capacity)
+            {
+                IncreaseCapacityWithInsert(index, asArray ?? asCollection);
+                return;
+            }
+
+            // calculating position
+            int pos = startIndex + index;
+            if (pos >= capacity)
+                pos -= capacity;
+
+            // optimized for minimal data moving
+            if (index >= (size >> 1))
+                ShiftUp(pos, size - index, collectionSize);
+            else
+            {
+                // decreasing startIndex and pos
+                startIndex -= collectionSize;
+                if (startIndex < 0)
+                    startIndex += capacity;
+
+                int topIndex = pos > 0 ? pos - 1 : capacity - 1;
+
+                pos -= collectionSize;
+                if (pos < 0)
+                    pos += capacity;
+
+                ShiftDown(topIndex, index, collectionSize);
+            }
+
+            // if non-array collection that fits into list without wrapping
+            if (asCollection != null && pos + collectionSize <= capacity)
+                asCollection.CopyTo(items, pos);
+            // otherwise, as array copied up to two sessions
+            else
+            {
+                if (asArray == null)
+                    asArray = collection.ToArray();
+                int carry = pos + collectionSize - capacity;
+                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
+                if (carry > 0)
+                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
+            }
+            // ReSharper restore PossibleMultipleEnumeration
+
+            size += collectionSize;
+            version++;
+        }
+
+        #endregion
+
+        #region Remove
+
+        /// <summary>
+        /// Removes the first occurrence of the specific <paramref name="item"/> from the <see cref="CircularList{T}"/>.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="CircularList{T}"/>.</param>
+        /// <returns>
+        /// <see langword="true"/> if <paramref name="item"/> was successfully removed from the <see cref="CircularList{T}"/>; otherwise, <see langword="false"/>.
+        /// This method also returns false if <paramref name="item"/> is not found in the original list.
+        /// </returns>
+        /// <remarks>
+        /// <para>If the position of the element to remove is known it is recommended to use the <see cref="RemoveAt">RemoveAt</see> method instead.</para>
+        /// <para>This method has an O(n) cost.</para>
+        /// </remarks>
+        public bool Remove(T item)
+        {
+            int index = IndexOf(item);
+            if (index >= 0)
+            {
+                RemoveAt(index);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes the last element from the <see cref="CircularList{T}"/>.
         /// </summary>
         /// <returns><see langword="true"/>, if the list was not empty before the removal, otherwise, <see langword="false"/>.</returns>
+        /// <remarks>This method has an O(1) cost.</remarks>
         public bool RemoveLast()
         {
             if (size == 0)
@@ -817,9 +984,10 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Removes the first element of the list. This method has an O(1) cost.
+        /// Removes the first element of the see <see cref="CircularList{T}"/>.
         /// </summary>
         /// <returns><see langword="true"/>, if the list was not empty before the removal, otherwise, <see langword="false"/>.</returns>
+        /// <remarks>This method has an O(1) cost.</remarks>
         public bool RemoveFirst()
         {
             if (size == 0)
@@ -834,22 +1002,250 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Adds a <paramref name="collection"/> to the end of the list.
+        /// Removes the item from the see <see cref="CircularList{T}"/> at the specified index.
         /// </summary>
-        /// <param name="collection">The collection to add to the list.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
-        public void AddRange(IEnumerable<T> collection)
+        /// <param name="index">The zero-based index of the item to remove.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularList{T}"/>.</exception>
+        /// <remarks>Removing an item at the first or last position are O(1) operations. At other positions removal is an O(n) operation, though
+        /// the method is optimized for not moving more than n/2 elements.</remarks>
+        public void RemoveAt(int index)
         {
-            if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+            if ((uint)index >= (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
 
-            AddLast(collection);
+            if (index == 0)
+            {
+                RemoveFirst();
+                return;
+            }
+
+            if (index == size - 1)
+            {
+                RemoveLast();
+                return;
+            }
+
+            // if we are here, shifting is necessary and there are at least 3 elements
+            // optimized for minimal data moving
+            if (index <= (--size >> 1))
+            {
+                ShiftUp(startIndex, index);
+                items[startIndex++] = default(T);
+                if (startIndex == items.Length)
+                    startIndex = 0;
+            }
+            else
+            {
+                // calculating end position
+                int pos = startIndex + size;
+                int length = items.Length;
+                if (pos >= length)
+                    pos -= length;
+
+                ShiftDown(pos, size - index);
+                items[pos] = default(T);
+            }
+
+            version++;
         }
 
         /// <summary>
-        /// Determines the index of a specific item in the list.
+        /// Removes <paramref name="count"/> amount of items from the <see cref="CircularList{T}"/> at the specified index.
         /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
+        /// <param name="index">The zero-based index of the first item to remove.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularList{T}"/>.
+        /// <br/>-or-
+        /// <br/><paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the list.</exception>
+        /// <remarks>Removing items at the first or last positions are O(1) operations considering list size. At other positions removal is an O(n) operation, though
+        /// the method is optimized for not moving more than n/2 elements.</remarks>
+        public void RemoveRange(int index, int count)
+        {
+            if ((uint)index >= (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+
+            if (index + count > size)
+                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+
+            if (count == 0)
+                return;
+
+            if (index == 0)
+            {
+                RemoveFirst(count);
+                return;
+            }
+
+            if (index + count == size)
+            {
+                RemoveLast(count);
+                return;
+            }
+
+            int capacity = items.Length;
+
+            // optimized for minimal data moving
+            if (index <= size >> 1)
+            {
+                ShiftUp(startIndex, index, count);
+                int carry = startIndex + count - capacity;
+                Array.Clear(items, startIndex, carry <= 0 ? count : count - carry);
+                if (carry > 0)
+                    Array.Clear(items, 0, carry);
+
+                startIndex += count;
+                if (startIndex >= capacity)
+                    startIndex -= capacity;
+            }
+            else
+            {
+                int topIndex = startIndex + size - 1;
+                if (topIndex > capacity)
+                    topIndex -= capacity;
+
+                ShiftDown(topIndex, size - index - count, count);
+                int carry = -(topIndex - count + 1);
+                if (carry <= 0)
+                    Array.Clear(items, -carry, count);
+                else
+                {
+                    Array.Clear(items, capacity - carry, carry);
+                    Array.Clear(items, 0, count - carry);
+                }
+            }
+
+            size -= count;
+            version++;
+        }
+
+        /// <summary>
+        /// Removes all the elements from the <see cref="CircularList{T}"/> that match the conditions defined by the specified predicate.
+        /// </summary>
+        /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the elements to remove.</param>
+        /// <returns>The number of elements removed from the list.</returns>
+        /// <remarks>
+        /// <para>The <see cref="Predicate{T}"/> is a delegate to a method that returns <see langword="true"/> if the object passed to it matches the conditions defined in the delegate.
+        /// The elements of the current <see cref="CircularList{T}"/> are individually passed to the <see cref="Predicate{T}"/> delegate, and the elements that match the conditions
+        /// are removed from the list.</para>
+        /// <para>This method performs a linear search; therefore, this method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="match"/> is <see langword="null"/>.</exception>
+        public int RemoveAll(Predicate<T> match)
+        {
+            if (match == null)
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+
+            // the first free slot in items array
+            int freeIndex = 0;
+
+            // Find the first item which needs to be removed.
+            while (freeIndex < size && !match(ElementAt(freeIndex)))
+                freeIndex++;
+
+            if (freeIndex >= size)
+                return 0;
+
+            int current = freeIndex + 1;
+            while (current < size)
+            {
+                // Find the first item which needs to be kept.
+                while (current < size && match(ElementAt(current)))
+                    current++;
+
+                // copy item to the free slot.
+                if (current < size)
+                    SetElementAt(freeIndex++, ElementAt(current++));
+            }
+
+            int result = size - freeIndex;
+
+            // RemoveLast will adjust size and version
+            RemoveLast(result);
+            return result;
+        }
+
+        /// <summary>
+        /// Removes all items from the <see cref="CircularList{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
+        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the list to 0 as well, call the <see cref="Reset"/> method instead, which is an O(1) operation.
+        /// Calling <see cref="TrimExcess"/> after <see cref="Clear">Clear</see> also resets the list, though <see cref="Clear">Clear</see> has more cost.</para>
+        /// </remarks>
+        public void Clear()
+        {
+            if (size == 0)
+                return;
+
+            int carry = startIndex + size - items.Length;
+            Array.Clear(items, startIndex, carry <= 0 ? size : size - carry);
+            if (carry > 0)
+                Array.Clear(items, 0, carry);
+            size = 0;
+            startIndex = 0;
+            version++;
+        }
+
+        /// <summary>
+        /// Sets the capacity to the actual number of elements in the list, if that number (<see cref="Count"/>) is less than the 90 percent of <see cref="Capacity"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection.
+        /// The cost of reallocating and copying a large list can be considerable, however, so the <see cref="TrimExcess">TrimExcess</see> method does nothing if the list is
+        /// at more than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
+        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para>To reset a list to its initial state, call the <see cref="Reset"/> method. Calling the <see cref="Clear"/> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
+        /// <see cref="Reset"/> method is an O(1) operation, while <see cref="Clear"/> is an O(n) operation. Trimming an empty list sets the capacity of the list to 0.</para>
+        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
+        /// </remarks>
+        public void TrimExcess()
+        {
+            int threshold = (int)(items.Length * 0.9);
+            if (size < threshold)
+                Capacity = size;
+        }
+
+        /// <summary>
+        /// Removes all items from the list and resets the <see cref="Capacity"/> of the list to 0.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="Count"/> and <see cref="Capacity"/> are set to 0, and references to other objects from elements of the collection are also released.</para>
+        /// <para>This method is an O(1) operation.</para>
+        /// <para>Calling <see cref="Clear"/> and then <see cref="TrimExcess"/> methods also resets the list, though <see cref="Clear"/> is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// </remarks>
+        public void Reset()
+        {
+            if (size == 0)
+                return;
+            items = emptyArray;
+            startIndex = 0;
+            size = 0;
+            version++;
+        }
+
+        #endregion
+
+        #region Search
+
+        /// <summary>
+        /// Determines whether the list contains the specific <paramref name="item"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if <paramref name="item"/> is found in the <see cref="CircularList{T}"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
+        public bool Contains(T item) => IndexOf(item) >= 0;
+
+        /// <summary>
+        /// Determines the index of a specific item in the <see cref="CircularList{T}"/>.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <returns>
         /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
         /// </returns>
@@ -890,28 +1286,25 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Searches for the specified object and returns the zero-based index of the first occurrence within the range
-        /// of elements in the list that that extends from the specified index to the last element.
+        /// of elements in the <see cref="CircularList{T}"/> that extends from the specified index to the last element.
         /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <param name="index">The zero-based starting index of the search.</param>
         /// <returns>
-        /// The zero-based index of the first occurrence of item within the range of elements in the list
+        /// The zero-based index of the first occurrence of item within the range of elements in the <see cref="CircularList{T}"/>
         /// that extends from index to the last element, if found; otherwise, –1.
         /// </returns>
         /// <para>The list is searched forward starting at <paramref name="index"/> and ending at the last element.</para>
         /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
-        public int IndexOf(T item, int index)
-        {
-            return IndexOf(item, index, size - index);
-        }
+        public int IndexOf(T item, int index) => IndexOf(item, index, size - index);
 
         /// <summary>
         /// Searches for the specified object and returns the zero-based index of the first occurrence within the range
-        /// of elements in the list that starts at the specified index and contains the specified number of elements.
+        /// of elements in the <see cref="CircularList{T}"/> that starts at the specified index and contains the specified number of elements.
         /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <param name="index">The zero-based starting index of the search.</param>
         /// <param name="count">The number of elements in the section to search.</param>
         /// <returns>
@@ -973,9 +1366,9 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Determines the index of the last occurrence of a specific item in the list.
+        /// Determines the index of the last occurrence of a specific item in the <see cref="CircularList{T}"/>.
         /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <returns>
         /// The index of the last occurrence of the <paramref name="item"/> if found in the list; otherwise, -1.
         /// </returns>
@@ -1018,9 +1411,10 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Searches for the specified object and returns the zero-based index of the last occurrence within the range of elements in the list that extends from the first element to the specified <paramref name="index"/>.
+        /// Searches for the specified object and returns the zero-based index of the last occurrence within the range of elements in the <see cref="CircularList{T}"/> that
+        /// extends from the first element to the specified <paramref name="index"/>.
         /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <param name="index">The zero-based starting index of the backward search.</param>
         /// <returns>
         /// The zero-based index of the last occurrence of <paramref name="item"/> within the range of elements in the list that extends from the first element to <paramref name="index"/>, if found; otherwise, –1.
@@ -1029,15 +1423,13 @@ namespace KGySoft.Collections
         /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/> type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
-        public int LastIndexOf(T item, int index)
-        {
-            return LastIndexOf(item, index, index + 1);
-        }
+        public int LastIndexOf(T item, int index) => LastIndexOf(item, index, index + 1);
 
         /// <summary>
-        /// Searches for the specified object and returns the zero-based index of the last occurrence within the range of elements in the list that contains the specified number of elements and ends at the specified <paramref name="index"/>.
+        /// Searches for the specified object and returns the zero-based index of the last occurrence within the range of elements in the <see cref="CircularList{T}"/> that
+        /// contains the specified number of elements and ends at the specified <paramref name="index"/>.
         /// </summary>
-        /// <param name="item">The object to locate in the list.</param>
+        /// <param name="item">The object to locate in the <see cref="CircularList{T}"/>.</param>
         /// <param name="index">The zero-based starting index of the backward search.</param>
         /// <param name="count">The number of elements in the section to search.</param>
         /// <returns>
@@ -1111,35 +1503,32 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate,
-        /// and returns the zero-based index of the first occurrence within the list.
+        /// and returns the zero-based index of the first occurrence within the <see cref="CircularList{T}"/>.
         /// </summary>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the first occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
-        public int FindIndex(Predicate<T> match)
-        {
-            return FindIndex(0, size, match);
-        }
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
+        public int FindIndex(Predicate<T> match) => FindIndex(0, size, match);
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based
-        /// index of the first occurrence within the range of elements in the list that extends from the specified index to the last element.
+        /// index of the first occurrence within the range of elements in the <see cref="CircularList{T}"/> that extends from the specified index to the last element.
         /// </summary>
         /// <param name="startIndex">The zero-based starting index of the search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the first occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
-        public int FindIndex(int startIndex, Predicate<T> match)
-        {
-            return FindIndex(startIndex, size - startIndex, match);
-        }
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
+        public int FindIndex(int startIndex, Predicate<T> match) => FindIndex(startIndex, size - startIndex, match);
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of
-        /// the first occurrence within the range of elements in the list that starts at the specified index and contains the specified number of elements.
+        /// the first occurrence within the range of elements in the <see cref="CircularList{T}"/> that starts at the specified index and contains the specified number of elements.
         /// </summary>
         /// <param name="startIndex">The zero-based starting index of the search.</param>
         /// <param name="count">The number of elements in the section to search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the first occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
         public int FindIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)size)
@@ -1177,46 +1566,33 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Determines whether the list contains elements that match the conditions defined by the specified predicate.
-        /// </summary>
-        /// <param name="match">The delegate that defines the conditions of the elements to search for.</param>
-        /// <returns><see langword="true"/> if the list contains one or more elements that match the conditions defined by the specified predicate; otherwise, <see langword="false"/>.</returns>
-        public bool Exists(Predicate<T> match)
-        {
-            return (FindIndex(match) != -1);
-        }
-
-        /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate,
-        /// and returns the zero-based index of the last occurrence within the list.
+        /// and returns the zero-based index of the last occurrence within the <see cref="CircularList{T}"/>.
         /// </summary>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the last occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
-        public int FindLastIndex(Predicate<T> match)
-        {
-            return FindLastIndex(size - 1, size, match);
-        }
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
+        public int FindLastIndex(Predicate<T> match) => FindLastIndex(size - 1, size, match);
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index
-        /// of the last occurrence within the range of elements in the list that extends from the first element to the specified index.
+        /// of the last occurrence within the range of elements in the <see cref="CircularList{T}"/> that extends from the first element to the specified index.
         /// </summary>
         /// <param name="startIndex">The zero-based starting index of the backward search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the last occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
-        public int FindLastIndex(int startIndex, Predicate<T> match)
-        {
-            return FindLastIndex(startIndex, startIndex + 1, match);
-        }
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
+        public int FindLastIndex(int startIndex, Predicate<T> match) => FindLastIndex(startIndex, startIndex + 1, match);
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of
-        /// the last occurrence within the range of elements in the list that contains the specified number of elements and ends at the specified index.
+        /// the last occurrence within the range of elements in the <see cref="CircularList{T}"/> that contains the specified number of elements and ends at the specified index.
         /// </summary>
         /// <param name="startIndex">The zero-based starting index of the backward search.</param>
         /// <param name="count">The number of elements in the section to search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the last occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
         public int FindLastIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)size)
@@ -1255,25 +1631,34 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
+        /// Determines whether the <see cref="CircularList{T}"/> contains elements that match the conditions defined by the specified predicate.
+        /// </summary>
+        /// <param name="match">The delegate that defines the conditions of the elements to search for.</param>
+        /// <returns><see langword="true"/> if the list contains one or more elements that match the conditions defined by the specified predicate; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
+        public bool Exists(Predicate<T> match) => FindIndex(match) != -1;
+
+        /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate,
-        /// and returns the first occurrence within the list.
+        /// and returns the first occurrence within the <see cref="CircularList{T}"/>.
         /// </summary>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The first element that matches the conditions defined by the specified predicate, if found;
         /// otherwise, the default value for type <typeparamref name="T"/>.</returns>
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
         public T Find(Predicate<T> match)
         {
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int carry = startIndex + size - items.Length;
-
             int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 if (match(items[i]))
                     return items[i];
             }
+
             if (carry > 0)
             {
                 for (int i = 0; i < carry; i++)
@@ -1288,18 +1673,18 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate,
-        /// and returns the last occurrence within the list.
+        /// and returns the last occurrence within the <see cref="CircularList{T}"/>.
         /// </summary>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The last element that matches the conditions defined by the specified predicate, if found;
         /// otherwise, the default value for type <typeparamref name="T"/>.</returns>
+        /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
         public T FindLast(Predicate<T> match)
         {
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
             int carry = startIndex + size - items.Length;
-
             if (carry > 0)
             {
                 for (int i = carry - 1; i >= 0; i--)
@@ -1308,6 +1693,7 @@ namespace KGySoft.Collections
                         return items[i];
                 }
             }
+
             int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = endIndex - 1; i >= startIndex; i--)
             {
@@ -1322,197 +1708,151 @@ namespace KGySoft.Collections
         /// Retrieves all the elements that match the conditions defined by the specified predicate.
         /// </summary>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> containing all the elements that match the conditions defined by the specified predicate, if found;
-        /// otherwise, an empty <see cref="IEnumerable{T}"/>.</returns>
-        public IEnumerable<T> FindAll(Predicate<T> match)
+        /// <returns>An <see cref="CircularList{T}"/> containing all the elements that match the conditions defined by the specified predicate, if found;
+        /// otherwise, an empty <see cref="CircularList{T}"/>.</returns>
+        /// <remarks>This method is an O(n) operation.</remarks>
+        public CircularList<T> FindAll(Predicate<T> match)
         {
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
+            var result = new CircularList<T>(Count);
             int carry = startIndex + size - items.Length;
-
             int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
                 if (match(items[i]))
-                    yield return items[i];
+                    result.Add(items[i]);
             }
+
             if (carry > 0)
             {
                 for (int i = 0; i < carry; i++)
                 {
                     if (match(items[i]))
-                        yield return items[i];
+                        result.Add(items[i]);
                 }
             }
+
+            return result;
         }
 
         /// <summary>
-        /// Inserts a <paramref name="collection"/> into the list at the specified index.
+        /// Searches the entire sorted list for an element using the default comparer and returns the zero-based index of the element.
         /// </summary>
-        /// <param name="index">The zero-based index at which <paramref name="collection"/> items should be inserted.</param>
-        /// <param name="collection">The collection to insert into the list.</param>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
-        /// <remarks>Inserting items at the first or last position are O(1) operations if no capacity increase is needed (considering actual list size).
-        /// Otherwise, insertion is an O(n) operation.</remarks>
-        public void InsertRange(int index, IEnumerable<T> collection)
-        {
-            if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
-
-            if (index == 0)
-            {
-                AddFirst(collection);
-                return;
-            }
-
-            if (index == size)
-            {
-                AddLast(collection);
-                return;
-            }
-
-            // if we are here, shifting is necessary
-            if ((uint)index > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-            T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
-            ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
-
-            // ReSharper disable PossibleMultipleEnumeration - collection is not enumerated multiple times
-            // to prevent O(n * m) cost with inserting IEnumerable elements one by one we create a temp buffer
-            if (asArray == null && asCollection == null)
-                asArray = collection.ToArray();
-
-            int collectionSize = asArray?.Length ?? asCollection.Count;
-            if (collectionSize == 0)
-                return;
-
-            int capacity = items.Length;
-            if (size + collectionSize > capacity)
-            {
-                IncreaseCapacityWithInsert(index, asArray ?? asCollection);
-                return;
-            }
-
-            // calculating position
-            int pos = startIndex + index;
-            if (pos >= capacity)
-                pos -= capacity;
-
-            // optimized for minimal data moving
-            if (index >= (size >> 1))
-                ShiftUp(pos, size - index, collectionSize);
-            else
-            {
-                // decreasing startIndex and pos
-                startIndex -= collectionSize;
-                if (startIndex < 0)
-                    startIndex += capacity;
-
-                int topIndex = pos > 0 ? pos - 1 : capacity - 1;
-
-                pos -= collectionSize;
-                if (pos < 0)
-                    pos += capacity;
-
-                ShiftDown(topIndex, index, collectionSize);
-            }
-
-            // if non-array collection that fits into list without wrapping
-            if (asCollection != null && pos + collectionSize <= capacity)
-            {
-                asCollection.CopyTo(items, pos);
-            }
-            // otherwise, as array copied up to two sessions
-            else
-            {
-                if (asArray == null)
-                    asArray = collection.ToArray();
-                int carry = pos + collectionSize - capacity;
-                CopyElements(asArray, 0, items, pos, carry <= 0 ? collectionSize : collectionSize - carry);
-                if (carry > 0)
-                    CopyElements(asArray, collectionSize - carry, items, 0, carry);
-            }
-            // ReSharper restore PossibleMultipleEnumeration
-
-            size += collectionSize;
-            version++;
-        }
+        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns>The zero-based index of <paramref name="item"/> in the sorted <see cref="CircularList{T}"/>, if <paramref name="item"/> is found; otherwise, a negative number
+        /// that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
+        /// <remarks>
+        /// <para>If <typeparamref name="T"/> is an <see langword="enum"/>, this method uses the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>; otherwise,
+        /// the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for type <typeparamref name="T"/> to determine the order of list elements.
+        /// The <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> property checks whether type <typeparamref name="T"/> implements the <see cref="IComparable{T}"/> generic interface
+        /// and uses that implementation, if available. If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether type <typeparamref name="T"/> implements
+        /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
+        /// throws an <see cref="InvalidOperationException"/>.</para>
+        /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
+        /// <para>Comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
+        /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
+        /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
+        /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">The default comparer <see cref="Comparer{T}.Default"/> cannot find an implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
+        public int BinarySearch(T item) => BinarySearch(0, size, item, null);
 
         /// <summary>
-        /// Removes <paramref name="count"/> amount of items from the list at the specified index.
+        /// Searches the entire sorted <see cref="CircularList{T}"/> for an element using the specified comparer and returns the zero-based index of the element.
         /// </summary>
-        /// <param name="index">The zero-based index of the first item to remove.</param>
-        /// <param name="count">The number of items to remove.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.
+        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the <see cref="EnumComparer{TEnum}.Comparer"/> for <see langword="enum"/> element types, or the default comparer <see cref="Comparer{T}.Default"/> for other element types.</param>
+        /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement
+        /// of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="comparer"/> customizes how the elements are compared. For example, you can use a <see cref="CaseInsensitiveComparer"/> instance as the comparer to perform case-insensitive string searches.</para>
+        /// <para>If <paramref name="comparer"/> is provided, the elements of the list are compared to the specified value using the specified <see cref="IComparer{T}"/> implementation.</para>
+        /// <para>If comparer is <see langword="null"/>, then if <typeparamref name="T"/> is an <see langword="enum"/>, this method uses
+        /// the <see cref="EnumComparer{TEnum}.Comparer"/>; otherwise, the default comparer <see cref="Comparer{T}.Default"/> for type <typeparamref name="T"/> to
+        /// determine the order of list elements. The <see cref="Comparer{T}.Default"/> property checks whether type <typeparamref name="T"/> implements
+        /// the <see cref="IComparable{T}"/> generic interface and uses that implementation, if available. If not, <see cref="Comparer{T}.Default"/> checks whether
+        /// type <typeparamref name="T"/> implements the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either
+        /// interface, <see cref="Comparer{T}.Default"/> throws an <see cref="InvalidOperationException"/>.</para>
+        /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
+        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
+        /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
+        /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
+        /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/> cannot find an implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
+        public int BinarySearch(T item, IComparer<T> comparer) => BinarySearch(0, size, item, comparer);
+
+        /// <summary>
+        /// Searches a range of elements in the sorted <see cref="CircularList{T}"/> for an element using the specified <paramref name="comparer"/> and returns the zero-based index of the element.
+        /// </summary>
+        /// <param name="index">The zero-based starting index of the range to search.</param>
+        /// <param name="count">The length of the range to search.</param>
+        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the
+        /// <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> for <see langword="enum"/> element types, or the default comparer
+        /// <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other element types.</param>
+        /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement
+        /// of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="comparer"/> customizes how the elements are compared. For example, you can use a <see cref="CaseInsensitiveComparer"/> instance as the comparer to perform case-insensitive string searches.</para>
+        /// <para>If <paramref name="comparer"/> is provided, the elements of the list are compared to the specified value using the specified <see cref="IComparer{T}"/> implementation.</para>
+        /// <para>If comparer is <see langword="null"/>, then if <typeparamref name="T"/> is an <see langword="enum"/>, this method uses the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>; otherwise,
+        /// the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for type <typeparamref name="T"/> to determine the order of list elements.
+        /// The <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> property checks whether type <typeparamref name="T"/> implements the <see cref="IComparable{T}"/> generic interface
+        /// and uses that implementation, if available. If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether type <typeparamref name="T"/> implements
+        /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
+        /// throws an <see cref="InvalidOperationException"/>.</para>
+        /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
+        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
+        /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
+        /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
+        /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than 0.
         /// <br/>-or-
         /// <br/><paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the list.</exception>
-        /// <remarks>Removing items at the first or last positions are O(1) operations considering list size. At other positions removal is an O(n) operation, though
-        /// the method is optimized for not moving more than n/2 elements.</remarks>
-        public void RemoveRange(int index, int count)
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the list.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/> cannot find an implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
+        public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
         {
-            if ((uint)index >= (uint)size)
+            if (index < 0)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
-
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
-
-            if (count == 0)
-                return;
-
-            if (index == 0)
-            {
-                RemoveFirst(count);
-                return;
-            }
-
-            if (index + count == size)
-            {
-                RemoveLast(count);
-                return;
-            }
+            if (comparer == null && isEnum)
+                comparer = EnumComparer<T>.Comparer;
 
             int capacity = items.Length;
+            int start = startIndex + index;
+            int carry = start + count - capacity;
 
-            // optimized for minimal data moving
-            if (index <= size >> 1)
+            // the section to search is wrapped: doing it manually
+            if (carry > 0 && start < capacity)
+                return BinarySearchHelperInstance.BinarySearch(this, index, count, item, comparer);
+
+            // search in the non-wrapped part
+            int result;
+            if (carry <= 0)
             {
-                ShiftUp(startIndex, index, count);
-                int carry = startIndex + count - capacity;
-                Array.Clear(items, startIndex, carry <= 0 ? count : count - carry);
-                if (carry > 0)
-                    Array.Clear(items, 0, carry);
-
-                startIndex += count;
-                if (startIndex >= capacity)
-                    startIndex -= capacity;
-            }
-            else
-            {
-                int topIndex = startIndex + size - 1;
-                if (topIndex > capacity)
-                    topIndex -= capacity;
-
-                ShiftDown(topIndex, size - index - count, count);
-                int carry = -(topIndex - count + 1);
-                if (carry <= 0)
-                    Array.Clear(items, -carry, count);
-                else
-                {
-                    Array.Clear(items, capacity - carry, carry);
-                    Array.Clear(items, 0, count - carry);
-                }
+                result = Array.BinarySearch(items, start, count, item, comparer);
+                if (startIndex == 0)
+                    return result;
+                return result >= 0 ? result - startIndex : ~(~result - startIndex);
             }
 
-            size -= count;
-            version++;
+            // search in the wrapped-only part
+            start -= capacity;
+            result = Array.BinarySearch(items, start, count, item, comparer);
+            return result >= 0 ? capacity - startIndex + result : ~(capacity - startIndex + ~result);
         }
+
+        #endregion
+
+        #region Transform
 
         /// <summary>
         /// Copies the elements of the list to a new array.
@@ -1526,12 +1866,134 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Reverses the order of the elements in the entire list.
+        /// Returns a read-only <see cref="IList{T}"/> wrapper for the current collection.
         /// </summary>
-        public void Reverse()
+        /// <returns>A <see cref="ReadOnlyCollection{T}"/> that acts as a read-only wrapper around the current <see cref="CircularList{T}"/>.</returns>
+        /// <remarks>
+        /// <para>To prevent any modifications to <see cref="CircularList{T}"/>, expose <see cref="CircularList{T}"/> only through this wrapper.
+        /// A <see cref="ReadOnlyCollection{T}"/> does not expose methods that modify the collection. However, if changes are made to the underlying <see cref="CircularList{T}"/>,
+        /// the read-only collection reflects those changes.</para>
+        /// <para>This method is an O(1) operation.</para>
+        /// </remarks>
+        public ReadOnlyCollection<T> AsReadOnly() => new ReadOnlyCollection<T>(this);
+
+        /// <summary>
+        /// Converts the elements in the current list to another type, and returns a <see cref="CircularList{T}"/> containing the converted elements.
+        /// </summary>
+        /// <typeparam name="TOutput">The type of the elements of the target list.</typeparam>
+        /// <param name="converter">A <see cref="Converter{TInput,TOutput}"/> delegate that converts each element from one type to another type.</param>
+        /// <returns>A <see cref="CircularList{T}"/> of the target type containing the converted elements from the current list.</returns>
+        public CircularList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
         {
-            Reverse(0, size);
+            if (converter == null)
+                throw new ArgumentNullException(nameof(converter), Res.Get(Res.ArgumentNull));
+
+            CircularList<TOutput> list = new CircularList<TOutput>(size);
+            int targetIndex = 0;
+            int carry = startIndex + size - items.Length;
+            int endIndex = carry > 0 ? items.Length : startIndex + size;
+            for (int i = startIndex; i < endIndex; i++)
+                list.items[targetIndex++] = converter(items[i]);
+
+            if (carry > 0)
+            {
+                for (int i = 0; i < carry; i++)
+                    list.items[targetIndex++] = converter(items[i]);
+            }
+
+            return list;
         }
+
+        /// <summary>
+        /// Copies the entire <see cref="CircularList{T}"/> to a compatible one-dimensional array, starting at a particular array index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the <see cref="CircularList{T}"/>.
+        /// The <see cref="Array"/> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException"><paramref name="array"/> is multidimensional.
+        /// <br/>-or-<br/>
+        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
+        /// <br/>-or-<br/>
+        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
+        /// <br/>-or-<br/>
+        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
+        public void CopyTo(T[] array, int arrayIndex = 0)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+            if (array.Length - arrayIndex < size)
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
+
+            // Delegating rest error checking to Array.Copy.
+            if (size <= 0)
+                return;
+            int carry = startIndex + size - items.Length;
+            CopyElements(items, startIndex, array, arrayIndex, carry <= 0 ? size : size - carry);
+            if (carry > 0)
+                CopyElements(items, 0, array, size - carry + arrayIndex, carry);
+        }
+
+        /// <summary>
+        /// Copies a range of elements from the <see cref="CircularList{T}"/> to a compatible one-dimensional array, starting at the specified index of the target array.
+        /// </summary>
+        /// <param name="index">The zero-based index in the source list at which copying begins.</param>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the <see cref="CircularList{T}"/>.
+        /// The <see cref="Array"/> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
+        /// <param name="count">The number of elements to copy.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.
+        /// <br/>-or-<br/>
+        /// <paramref name="arrayIndex"/> is less than 0.
+        /// <br/>-or-<br/>
+        /// <paramref name="count"/> is less than 0.
+        /// </exception>
+        /// <exception cref="ArgumentException"><paramref name="array"/> is multidimensional.
+        /// <br/>-or-<br/>
+        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
+        /// <br/>-or-<br/>
+        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
+        /// <br/>-or-<br/>
+        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
+        public void CopyTo(int index, T[] array, int arrayIndex, int count)
+        {
+            if (size - index < count)
+                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+            if (array == null)
+                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+            if (array.Length - arrayIndex < count)
+                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
+
+            // Delegating rest error checking to Array.Copy.
+            if (size <= 0)
+                return;
+
+            // every element to be copied is carried
+            int start = startIndex + index;
+            if (start >= items.Length)
+            {
+                start -= items.Length;
+                CopyElements(items, start, array, arrayIndex, count);
+                return;
+            }
+
+            // there are also not carried elements to copy
+            int carry = start + count - items.Length;
+            CopyElements(items, start, array, arrayIndex, carry <= 0 ? count : count - carry);
+            if (carry > 0)
+                CopyElements(items, 0, array, count - carry + arrayIndex, carry);
+        }
+
+        #endregion
+
+        #region Manipulate
+
+        /// <summary>
+        /// Reverses the order of the elements in the entire <see cref="CircularList{T}"/>.
+        /// </summary>
+        public void Reverse() => Reverse(0, size);
 
         /// <summary>
         /// Reverses the order of the elements in the specified range.
@@ -1580,7 +2042,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Sorts the elements in the entire list using the default comparer.
+        /// Sorts the elements in the entire <see cref="CircularList{T}"/> using the default comparer.
         /// </summary>
         /// <remarks>
         /// <para>If <typeparamref name="T"/> is an <see langword="enum"/>, this method uses
@@ -1592,13 +2054,10 @@ namespace KGySoft.Collections
         /// In contrast, a stable sort preserves the order of elements that are equal.</para>
         /// <para>On average, this method is an O(n log n) operation, where n is <see cref="Count"/>; in the worst case it is an O(n ^ 2) operation.</para>
         /// </remarks>
-        public void Sort()
-        {
-            Sort(0, size, null);
-        }
+        public void Sort() => Sort(0, size, null);
 
         /// <summary>
-        /// Sorts the elements in the entire list using the specified <paramref name="comparer"/>.
+        /// Sorts the elements in the entire <see cref="CircularList{T}"/> using the specified <paramref name="comparer"/>.
         /// </summary>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>
         /// to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
@@ -1615,13 +2074,10 @@ namespace KGySoft.Collections
         /// In contrast, a stable sort preserves the order of elements that are equal.</para>
         /// <para>On average, this method is an O(n log n) operation, where n is <see cref="Count"/>; in the worst case it is an O(n ^ 2) operation.</para>
         /// </remarks>
-        public void Sort(IComparer<T> comparer)
-        {
-            Sort(0, size, comparer);
-        }
+        public void Sort(IComparer<T> comparer) => Sort(0, size, comparer);
 
         /// <summary>
-        /// Sorts the elements in the entire list using the specified <see cref="Comparison{T}"/>.
+        /// Sorts the elements in the entire <see cref="CircularList{T}"/> using the specified <see cref="Comparison{T}"/>.
         /// </summary>
         /// <param name="comparison">The <see cref="Comparison{T}"/> to use when comparing elements.</param>
         /// <exception cref="ArgumentNullException"><paramref name="comparison"/> is <see langword="null"/>.</exception>
@@ -1637,13 +2093,11 @@ namespace KGySoft.Collections
                 throw new ArgumentNullException(nameof(comparison), Res.Get(Res.ArgumentNull));
 
             if (size > 0)
-            {
                 Sort(0, size, new ComparisonWrapper(comparison));
-            }
         }
 
         /// <summary>
-        /// Sorts the elements in a range of elements in list using the specified <paramref name="comparer"/>.
+        /// Sorts the elements in a range of elements in <see cref="CircularList{T}"/> using the specified <paramref name="comparer"/>.
         /// </summary>
         /// <param name="index">The zero-based starting index of the range to sort.</param>
         /// <param name="count">The length of the range to sort.</param>
@@ -1651,7 +2105,7 @@ namespace KGySoft.Collections
         /// to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than 0.
         /// <br/>-or-<br/><paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not specify a valid range in the list.
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not specify a valid range in the <see cref="CircularList{T}"/>.
         /// <br/>-or-<br/><paramref name="count"/>The implementation of <paramref name="comparer"/> caused an error during the sort.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/>
         /// cannot find implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
@@ -1733,243 +2187,9 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Searches the entire sorted list for an element using the default comparer and returns the zero-based index of the element.
+        /// Performs the specified action on each element of the <see cref="CircularList{T}"/>.
         /// </summary>
-        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
-        /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
-        /// <remarks>
-        /// <para>If <typeparamref name="T"/> is an <see langword="enum"/>, this method uses the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>; otherwise,
-        /// the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for type <typeparamref name="T"/> to determine the order of list elements.
-        /// The <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> property checks whether type <typeparamref name="T"/> implements the <see cref="IComparable{T}"/> generic interface
-        /// and uses that implementation, if available. If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether type <typeparamref name="T"/> implements
-        /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
-        /// throws an <see cref="InvalidOperationException"/>.</para>
-        /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
-        /// <para>Comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
-        /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
-        /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
-        /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException">The default comparer <see cref="Comparer{T}.Default"/> cannot find an implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
-        public int BinarySearch(T item)
-        {
-            return BinarySearch(0, size, item, null);
-        }
-
-        /// <summary>
-        /// Searches the entire sorted list for an element using the specified comparer and returns the zero-based index of the element.
-        /// </summary>
-        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the <see cref="EnumComparer{TEnum}.Comparer"/> for <see langword="enum"/> element types, or the default comparer <see cref="Comparer{T}.Default"/> for other element types.</param>
-        /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
-        /// <remarks>
-        /// <para>The <paramref name="comparer"/> customizes how the elements are compared. For example, you can use a <see cref="CaseInsensitiveComparer"/> instance as the comparer to perform case-insensitive string searches.</para>
-        /// <para>If <paramref name="comparer"/> is provided, the elements of the list are compared to the specified value using the specified <see cref="IComparer{T}"/> implementation.</para>
-        /// <para>If comparer is <see langword="null"/>, then if <typeparamref name="T"/> is an <see langword="enum"/>, this method uses
-        /// the <see cref="EnumComparer{TEnum}.Comparer"/>; otherwise, the default comparer <see cref="Comparer{T}.Default"/> for type <typeparamref name="T"/> to
-        /// determine the order of list elements. The <see cref="Comparer{T}.Default"/> property checks whether type <typeparamref name="T"/> implements
-        /// the <see cref="IComparable{T}"/> generic interface and uses that implementation, if available. If not, <see cref="Comparer{T}.Default"/> checks whether
-        /// type <typeparamref name="T"/> implements the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either
-        /// interface, <see cref="Comparer{T}.Default"/> throws an <see cref="InvalidOperationException"/>.</para>
-        /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
-        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
-        /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
-        /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
-        /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
-        /// </remarks>
-        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/> cannot find an implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
-        public int BinarySearch(T item, IComparer<T> comparer)
-        {
-            return BinarySearch(0, size, item, comparer);
-        }
-
-        /// <summary>
-        /// Searches a range of elements in the sorted list for an element using the specified <paramref name="comparer"/> and returns the zero-based index of the element.
-        /// </summary>
-        /// <param name="index">The zero-based starting index of the range to search.</param>
-        /// <param name="count">The length of the range to search.</param>
-        /// <param name="item">The object to locate. The value can be <see langword="null"/> for reference types.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use the
-        /// <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> for <see langword="enum"/> element types, or the default comparer
-        /// <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other element types.</param>
-        /// <returns>The zero-based index of <paramref name="item"/> in the sorted list, if <paramref name="item"/> is found; otherwise, a negative number that is the bitwise complement of the index of the next element that is larger than item or, if there is no larger element, the bitwise complement of <see cref="Count"/>.</returns>
-        /// <remarks>
-        /// <para>The <paramref name="comparer"/> customizes how the elements are compared. For example, you can use a <see cref="CaseInsensitiveComparer"/> instance as the comparer to perform case-insensitive string searches.</para>
-        /// <para>If <paramref name="comparer"/> is provided, the elements of the list are compared to the specified value using the specified <see cref="IComparer{T}"/> implementation.</para>
-        /// <para>If comparer is <see langword="null"/>, then if <typeparamref name="T"/> is an <see langword="enum"/>, this method uses the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>; otherwise,
-        /// the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for type <typeparamref name="T"/> to determine the order of list elements.
-        /// The <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> property checks whether type <typeparamref name="T"/> implements the <see cref="IComparable{T}"/> generic interface
-        /// and uses that implementation, if available. If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether type <typeparamref name="T"/> implements
-        /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
-        /// throws an <see cref="InvalidOperationException"/>.</para>
-        /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
-        /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/> with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/> is considered to be less than any other object.</para>
-        /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
-        /// <para>If the list does not contain the specified value, the method returns a negative integer. You can apply the bitwise complement operation (~) to this negative integer to get the index of the first element that is larger than the search value. When inserting the value into the <see cref="CircularList{T}"/>, this index should be used as the insertion point to maintain the sort order.</para>
-        /// <para>This method is an O(log n) operation, where n is the number of elements in the range.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than 0.
-        /// <br/>-or-
-        /// <br/><paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the list.</exception>
-        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/> cannot find an implementation of the <see cref="IComparable{T}"/> generic interface or the <see cref="IComparable"/> interface for type <typeparamref name="T"/>.</exception>
-        public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
-        {
-            if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-            if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
-            if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
-            if (comparer == null && isEnum)
-                comparer = EnumComparer<T>.Comparer;
-
-            int capacity = items.Length;
-            int start = startIndex + index;
-            int carry = start + count - capacity;
-
-            // the section to search is wrapped: doing it manually
-            if (carry > 0 && start < capacity)
-            {
-                return BinarySearchHelperInstance.BinarySearch(this, index, count, item, comparer);
-            }
-
-            // search in the non-wrapped part
-            int result;
-            if (carry <= 0)
-            {
-                result = Array.BinarySearch(items, start, count, item, comparer);
-                if (startIndex == 0)
-                    return result;
-                return result >= 0 ? result - startIndex : ~(~result - startIndex);
-            }
-
-            // search in the wrapped-only part
-            start -= capacity;
-            result = Array.BinarySearch(items, start, count, item, comparer);
-            return result >= 0 ? capacity - startIndex + result : ~(capacity - startIndex + ~result);
-        }
-
-        /// <summary>
-        /// Sets the capacity to the actual number of elements in the list, if that number (<see cref="Count"/>) is less than the 90 percent of <see cref="Capacity"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>This method can be used to minimize a collection's memory overhead if no new elements will be added to the collection.
-        /// The cost of reallocating and copying a large list can be considerable, however, so the TrimExcess method does nothing if the list is
-        /// at more than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
-        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para>To reset a list to its initial state, call the <see cref="Reset"/> method. Calling the <see cref="Clear"/> and TrimExcess methods has the same effect; however,
-        /// <see cref="Reset"/> method is an O(1) operation, while <see cref="Clear"/> is an O(n) operation. Trimming an empty list sets the capacity of the list to 0.</para>
-        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
-        /// </remarks>
-        public void TrimExcess()
-        {
-            int threshold = (int)(items.Length * 0.9);
-            if (size < threshold)
-                Capacity = size;
-        }
-
-        /// <summary>
-        /// Removes all items from the list and resets the <see cref="Capacity"/> of the list to 0.
-        /// </summary>
-        /// <remarks>
-        /// <para><see cref="Count"/> and <see cref="Capacity"/> are set to 0, and references to other objects from elements of the collection are also released.</para>
-        /// <para>This method is an O(1) operation.</para>
-        /// <para>Calling <see cref="Clear"/> and then <see cref="TrimExcess"/> methods also resets the list, though <see cref="Clear"/> is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// </remarks>
-        public void Reset()
-        {
-            if (size == 0)
-                return;
-
-            items = emptyArray;
-            startIndex = 0;
-            size = 0;
-            version++;
-        }
-
-        /// <summary>
-        /// Creates a shallow copy of a range of elements in the source <see cref="CircularList{T}"/>.
-        /// </summary>
-        /// <param name="index">The zero-based index at which the range starts.</param>
-        /// <param name="count">The number of elements in the range.</param>
-        /// <returns>A shallow copy of a range of elements in the source <see cref="CircularList{T}"/>.</returns>
-        /// <remarks>
-        /// <para>A shallow copy of a collection of reference types, or a subset of that collection, contains only the references to the elements of the collection.
-        /// The objects themselves are not copied. The references in the new list point to the same objects as the references in the original list.</para>
-        /// <para>A shallow copy of a collection of value types, or a subset of that collection, contains the elements of the collection.
-        /// However, if the elements of the collection contain references to other objects, those objects are not copied.
-        /// The references in the elements of the new collection point to the same objects as the references in the elements of the original collection.</para>
-        /// <para>In contrast, a deep copy of a collection copies the elements and everything directly or indirectly referenced by the elements.</para>
-        /// <para>This method is an O(n) operation, where n is count.</para>
-        /// </remarks>
-        public CircularList<T> GetRange(int index, int count)
-        {
-            if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-            if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
-
-            if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
-
-            CircularList<T> result = new CircularList<T>(count) { size = count };
-
-            // every element to copy is carried
-            int start = startIndex + index;
-            if (start >= items.Length)
-            {
-                start -= items.Length;
-                CopyElements(items, start, result.items, 0, count);
-                return result;
-            }
-
-            // there are also not carried elements to copy
-            int carry = start + count - items.Length;
-            CopyElements(items, start, result.items, 0, carry <= 0 ? count : count - carry);
-
-            if (carry > 0)
-                CopyElements(items, 0, result.items, count - carry, carry);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Determines whether every element in the list matches the conditions defined by the specified predicate.
-        /// </summary>
-        /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions to check against the elements.</param>
-        /// <returns><see langword="true"/> if every element in the list matches the conditions defined by the specified predicate; otherwise, <see langword="false"/>.
-        /// If the list has no elements, the return value is <see langword="true"/>.</returns>
-        public bool TrueForAll(Predicate<T> match)
-        {
-            if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
-
-            int carry = startIndex + size - items.Length;
-            int endIndex = carry > 0 ? items.Length : startIndex + size;
-            for (int i = startIndex; i < endIndex; i++)
-            {
-                if (!match(items[i]))
-                    return false;
-            }
-
-            if (carry > 0)
-            {
-                for (int i = 0; i < carry; i++)
-                {
-                    if (!match(items[i]))
-                        return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Performs the specified action on each element of the list.
-        /// </summary>
-        /// <param name="action">The <see cref="Action{T}"/> delegate to perform on each element of the list.</param>
+        /// <param name="action">The <see cref="Action{T}"/> delegate to perform on each element of the <see cref="CircularList{T}"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
         /// <exception cref="InvalidOperationException">The list has been modified during the operation.</exception>
         public void ForEach(Action<T> action)
@@ -2001,353 +2221,94 @@ namespace KGySoft.Collections
                 throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
         }
 
+        #endregion
+
+        #region Query
+
         /// <summary>
-        /// Returns a read-only <see cref="IList{T}"/> wrapper for the current collection.
+        /// Returns an enumerator that iterates through the <see cref="CircularList{T}"/>.
         /// </summary>
-        /// <returns>A <see cref="ReadOnlyCollection{T}"/> that acts as a read-only wrapper around the current <see cref="CircularList{T}"/>.</returns>
         /// <remarks>
-        /// <para>To prevent any modifications to <see cref="CircularList{T}"/>, expose <see cref="CircularList{T}"/> only through this wrapper.
-        /// A <see cref="ReadOnlyCollection{T}"/> does not expose methods that modify the collection. However, if changes are made to the underlying <see cref="CircularList{T}"/>,
-        /// the read-only collection reflects those changes.</para>
-        /// <para>This method is an O(1) operation.</para>
+        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
         /// </remarks>
-        public ReadOnlyCollection<T> AsReadOnly()
+        public Enumerator GetEnumerator() => new Enumerator(this);
+
+        /// <summary>
+        /// Creates a shallow copy of a range of elements in the source <see cref="CircularList{T}"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index at which the range starts.</param>
+        /// <param name="count">The number of elements in the range.</param>
+        /// <returns>A shallow copy of a range of elements in the source <see cref="CircularList{T}"/>.</returns>
+        /// <remarks>
+        /// <para>A shallow copy of a collection of reference types, or a subset of that collection, contains only the references to the elements of the collection.
+        /// The objects themselves are not copied. The references in the new list point to the same objects as the references in the original list.</para>
+        /// <para>A shallow copy of a collection of value types, or a subset of that collection, contains the elements of the collection.
+        /// However, if the elements of the collection contain references to other objects, those objects are not copied.
+        /// The references in the elements of the new collection point to the same objects as the references in the elements of the original collection.</para>
+        /// <para>In contrast, a deep copy of a collection copies the elements and everything directly or indirectly referenced by the elements.</para>
+        /// <para>This method is an O(n) operation, where n is count.</para>
+        /// </remarks>
+        public CircularList<T> GetRange(int index, int count)
         {
-            return new ReadOnlyCollection<T>(this);
+            if ((uint)index >= (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+            if (index + count > size)
+                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+
+            CircularList<T> result = new CircularList<T>(count) { size = count };
+
+            // every element to copy is carried
+            int start = startIndex + index;
+            if (start >= items.Length)
+            {
+                start -= items.Length;
+                CopyElements(items, start, result.items, 0, count);
+                return result;
+            }
+
+            // there are also not carried elements to copy
+            int carry = start + count - items.Length;
+            CopyElements(items, start, result.items, 0, carry <= 0 ? count : count - carry);
+            if (carry > 0)
+                CopyElements(items, 0, result.items, count - carry, carry);
+
+            return result;
         }
 
         /// <summary>
-        /// Converts the elements in the current list to another type, and returns a list containing the converted elements.
+        /// Determines whether every element in the <see cref="CircularList{T}"/> matches the conditions defined by the specified predicate.
         /// </summary>
-        /// <typeparam name="TOutput">The type of the elements of the target list.</typeparam>
-        /// <param name="converter">A <see cref="Converter{TInput,TOutput}"/> delegate that converts each element from one type to another type.</param>
-        /// <returns>A <see cref="CircularList{T}"/> of the target type containing the converted elements from the current list.</returns>
-        public CircularList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
+        /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions to check against the elements.</param>
+        /// <returns><see langword="true"/> if every element in the list matches the conditions defined by the specified predicate; otherwise, <see langword="false"/>.
+        /// If the list has no elements, the return value is <see langword="true"/>.</returns>
+        public bool TrueForAll(Predicate<T> match)
         {
-            if (converter == null)
-                throw new ArgumentNullException(nameof(converter), Res.Get(Res.ArgumentNull));
+            if (match == null)
+                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
 
-            CircularList<TOutput> list = new CircularList<TOutput>(size);
-            int targetIndex = 0;
             int carry = startIndex + size - items.Length;
             int endIndex = carry > 0 ? items.Length : startIndex + size;
             for (int i = startIndex; i < endIndex; i++)
             {
-                list.items[targetIndex++] = converter(items[i]);
+                if (!match(items[i]))
+                    return false;
             }
 
             if (carry > 0)
             {
                 for (int i = 0; i < carry; i++)
                 {
-                    list.items[targetIndex++] = converter(items[i]);
+                    if (!match(items[i]))
+                        return false;
                 }
             }
 
-            return list;
+            return true;
         }
 
-        /// <summary>
-        /// Copies a range of elements from the list to a compatible one-dimensional array, starting at the specified index of the target array.
-        /// </summary>
-        /// <param name="index">The zero-based index in the source list at which copying begins.</param>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the list.
-        /// The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        /// <param name="count">The number of elements to copy.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.
-        /// <br/>-or-<br/>
-        /// <paramref name="arrayIndex"/> is less than 0.
-        /// <br/>-or-<br/>
-        /// <paramref name="count"/> is less than 0.
-        /// </exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="array"/> is multidimensional.
-        /// <br/>-or-<br/>
-        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
-        public void CopyTo(int index, T[] array, int arrayIndex, int count)
-        {
-            if (size - index < count)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
-
-            if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
-
-            if (array.Length - arrayIndex < count)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
-
-            // Delegating rest error checking to Array.Copy.
-            if (size <= 0)
-                return;
-
-            // every element to be copied is carried
-            int start = startIndex + index;
-            if (start >= items.Length)
-            {
-                start -= items.Length;
-                CopyElements(items, start, array, arrayIndex, count);
-                return;
-            }
-
-            // there are also not carried elements to copy
-            int carry = start + count - items.Length;
-            CopyElements(items, start, array, arrayIndex, carry <= 0 ? count : count - carry);
-            if (carry > 0)
-                CopyElements(items, 0, array, count - carry + arrayIndex, carry);
-        }
-
-        /// <summary>
-        /// Removes all the elements from the list that match the conditions defined by the specified predicate.
-        /// </summary>
-        /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the elements to remove.</param>
-        /// <returns>The number of elements removed from the list.</returns>
-        /// <remarks>
-        /// <para>The <see cref="Predicate{T}"/> is a delegate to a method that returns <see langword="true"/> if the object passed to it matches the conditions defined in the delegate.
-        /// The elements of the current <see cref="CircularList{T}"/> are individually passed to the <see cref="Predicate{T}"/> delegate, and the elements that match the conditions
-        /// are removed from the list.</para>
-        /// <para>This method performs a linear search; therefore, this method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="match"/> is <see langword="null"/>.</exception>
-        public int RemoveAll(Predicate<T> match)
-        {
-            if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
-
-            // the first free slot in items array
-            int freeIndex = 0;
-
-            // Find the first item which needs to be removed.
-            while (freeIndex < size && !match(ElementAt(freeIndex)))
-                freeIndex++;
-
-            if (freeIndex >= size)
-                return 0;
-
-            int current = freeIndex + 1;
-            while (current < size)
-            {
-                // Find the first item which needs to be kept.
-                while (current < size && match(ElementAt(current)))
-                    current++;
-
-                if (current < size)
-                {
-                    // copy item to the free slot.
-                    SetElementAt(freeIndex++, ElementAt(current++));
-                }
-            }
-
-            int result = size - freeIndex;
-
-            // RemoveLast will adjust size and version
-            RemoveLast(result);
-            return result;
-        }
-
-        /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="CircularList{T}"/>.
-        /// </summary>
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        /// <summary>
-        /// Inserts an <paramref name="item"/> to the list at the specified index.
-        /// </summary>
-        /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
-        /// <param name="item">The object to insert into the list.</param>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
-        /// <remarks>Inserting an item at the first or last position are O(1) operations if no capacity increase is needed.
-        /// Otherwise, insertion is an O(n) operation.</remarks>
-        public void Insert(int index, T item)
-        {
-            if (index == 0)
-                AddFirst(item);
-            else if (index == size)
-                AddLast(item);
-            else
-            {
-                // if we are here, shifting is necessary
-                if ((uint)index > (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-                if (size == items.Length)
-                {
-                    IncreaseCapacityWithInsert(index, item);
-                    return;
-                }
-
-                // calculating position
-                int pos = startIndex + index;
-                int capacity = items.Length;
-                if (pos >= capacity)
-                    pos -= capacity;
-
-                // optimized for minimal data moving
-                if (index >= (size >> 1))
-                    ShiftUp(pos, size - index);
-                else
-                {
-                    // decreasing startIndex and pos
-                    if (startIndex > 0)
-                        startIndex--;
-                    else
-                        startIndex = capacity - 1;
-
-                    if (pos > 0)
-                        pos--;
-                    else
-                        pos = capacity - 1;
-
-                    ShiftDown(pos, index);
-                }
-
-                items[pos] = item;
-                size++;
-                version++;
-            }
-        }
-
-        /// <summary>
-        /// Removes the item from the list at the specified index.
-        /// </summary>
-        /// <param name="index">The zero-based index of the item to remove.</param>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the list.</exception>
-        /// <remarks>Removing an item at the first or last position are O(1) operations. At other positions removal is
-        /// an O(n) operation.</remarks>
-        public void RemoveAt(int index)
-        {
-            if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
-
-            if (index == 0)
-            {
-                RemoveFirst();
-                return;
-            }
-
-            if (index == size - 1)
-            {
-                RemoveLast();
-                return;
-            }
-
-            // if we are here, shifting is necessary and there are at least 3 elements
-            // optimized for minimal data moving
-            if (index <= (--size >> 1))
-            {
-                ShiftUp(startIndex, index);
-                items[startIndex++] = default(T);
-                if (startIndex == items.Length)
-                    startIndex = 0;
-            }
-            else
-            {
-                // calculating end position
-                int pos = startIndex + size;
-                int length = items.Length;
-                if (pos >= length)
-                    pos -= length;
-
-                ShiftDown(pos, size - index);
-
-                items[pos] = default(T);
-            }
-
-            version++;
-        }
-
-        /// <summary>
-        /// Removes all items from the list.
-        /// </summary>
-        /// <remarks>
-        /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
-        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the list to 0 as well, call the <see cref="Reset"/> method instead, which is an O(1) operation.
-        /// Calling <see cref="TrimExcess"/> after Clear also resets the list, though Clear has more cost.</para>
-        /// </remarks>
-        public void Clear()
-        {
-            if (size == 0)
-                return;
-
-            int carry = startIndex + size - items.Length;
-            Array.Clear(items, startIndex, carry <= 0 ? size : size - carry);
-            if (carry > 0)
-                Array.Clear(items, 0, carry);
-            size = 0;
-            startIndex = 0;
-            version++;
-        }
-
-        /// <summary>
-        /// Determines whether the list contains the specific <paramref name="item"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/> if <paramref name="item"/> is found in the list; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="item">The object to locate in the list.</param>
-        public bool Contains(T item)
-        {
-            return IndexOf(item) >= 0;
-        }
-
-        /// <summary>
-        /// Copies the entire list to a compatible one-dimensional array, starting at a particular array index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from the list.
-        /// The <see cref="T:System.Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="array"/> is null.</exception>
-        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
-        /// <exception cref="T:System.ArgumentException"><paramref name="array"/> is multidimensional.
-        /// <br/>-or-<br/>
-        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
-        public void CopyTo(T[] array, int arrayIndex = 0)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
-
-            if (array.Length - arrayIndex < size)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
-
-            // Delegating rest error checking to Array.Copy.
-            if (size <= 0)
-                return;
-
-            int carry = startIndex + size - items.Length;
-            CopyElements(items, startIndex, array, arrayIndex, carry <= 0 ? size : size - carry);
-            if (carry > 0)
-                CopyElements(items, 0, array, size - carry + arrayIndex, carry);
-        }
-
-        /// <summary>
-        /// Removes the first occurrence of the specific <paramref name="item"/> from the list.
-        /// </summary>
-        /// <param name="item">The object to remove from the list.</param>
-        /// <returns>
-        /// <see langword="true"/> if <paramref name="item"/> was successfully removed from the list; otherwise, <see langword="false"/>. This method also returns false if <paramref name="item"/> is not found in the original list.
-        /// </returns>
-        public bool Remove(T item)
-        {
-            int index = IndexOf(item);
-            if (index >= 0)
-            {
-                RemoveAt(index);
-                return true;
-            }
-
-            return false;
-        }
+        #endregion
 
         #endregion
 
@@ -2387,9 +2348,7 @@ namespace KGySoft.Collections
 
             // if collection that fits into list without wrapping
             if (asCollection != null && pos + collectionSize <= items.Length)
-            {
                 asCollection.CopyTo(items, pos);
-            }
             // otherwise, as array copied up to in two sessions
             else
             {
@@ -2432,9 +2391,7 @@ namespace KGySoft.Collections
 
             // if non-array collection that fits into list without wrapping
             if (asCollection != null && pos + collectionSize <= items.Length)
-            {
                 asCollection.CopyTo(items, pos);
-            }
             // otherwise, as array copied up to two sessions
             else
             {
@@ -2509,13 +2466,13 @@ namespace KGySoft.Collections
 
         private void EnsureCapacity(int min)
         {
-            if (items.Length < min)
-            {
-                int newCapacity = items.Length == 0 ? defaultCapacity : items.Length << 1;
-                if (newCapacity < min)
-                    newCapacity = min;
-                Capacity = newCapacity;
-            }
+            if (items.Length >= min)
+                return;
+
+            int newCapacity = items.Length == 0 ? defaultCapacity : items.Length << 1;
+            if (newCapacity < min)
+                newCapacity = min;
+            Capacity = newCapacity;
         }
 
         private void IncreaseCapacityWithInsert(int index, T item)
@@ -2616,9 +2573,7 @@ namespace KGySoft.Collections
 
             // moving the rest of the items normally
             if (elemCount > 0)
-            {
                 CopyElements(items, index, items, index + 1, elemCount);
-            }
         }
 
         /// <summary>
@@ -2650,9 +2605,7 @@ namespace KGySoft.Collections
 
             // 3.) Moving rest of the items up normally
             if (elemCount > 0)
-            {
                 CopyElements(items, index, items, index + shiftCount, elemCount);
-            }
         }
 
         /// <summary>
@@ -2681,9 +2634,7 @@ namespace KGySoft.Collections
 
             // moving the rest of the items normally
             if (elemCount > 0)
-            {
                 CopyElements(items, index - elemCount + 1, items, index - elemCount, elemCount);
-            }
         }
 
         /// <summary>
@@ -2726,13 +2677,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets an element without check
         /// </summary>
-        private T ElementAt(int index)
-        {
-            if (startIndex == 0)
-                return items[index];
-
-            return ElementAtNonZeroStart(index);
-        }
+        private T ElementAt(int index) 
+            => startIndex == 0 ? items[index] : ElementAtNonZeroStart(index);
 
         /// <summary>
         /// Gets an element without check, from any base.
@@ -2769,18 +2715,10 @@ namespace KGySoft.Collections
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            // Since result is handled as an interface,
-            // returning a reference type enumerator to avoid boxing
-            if (startIndex == 0)
-                return new SimpleEnumeratorAsReference(this);
-            return new EnumeratorAsReference(this);
-        }
+            // Since result is handled as an interface, returning a reference type enumerator to avoid boxing
+            => startIndex == 0 ? (IEnumerator<T>)new SimpleEnumeratorAsReference(this) : new EnumeratorAsReference(this);
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable<T>)this).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
 
         int IList.Add(object value)
         {
@@ -2790,19 +2728,11 @@ namespace KGySoft.Collections
             return size - 1;
         }
 
-        bool IList.Contains(object value)
-        {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
-            return Contains((T)value);
-        }
+        bool IList.Contains(object value) 
+            => typeof(T).CanAcceptValue(value) ? Contains((T)value) : throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
 
-        int IList.IndexOf(object value)
-        {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
-            return IndexOf((T)value);
-        }
+        int IList.IndexOf(object value) 
+            => typeof(T).CanAcceptValue(value) ? IndexOf((T)value) : throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
 
         void IList.Insert(int index, object value)
         {
