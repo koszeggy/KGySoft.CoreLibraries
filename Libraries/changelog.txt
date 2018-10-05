@@ -18,6 +18,10 @@
 ===================================
 + New type converter: BinaryTypeConverter: A TypeConverter that can convert any type to byte[] or string.
 - FlagsEnumConverter fix: Now works for all enum types of any underlying type.
++ Interfaces and base classes for business objects and ViewModel classes:
+  + IPersistableObject
+  + ObservableObjectBase
+  + PersistableObjectBase
 
 ! KGySoft.Libraries namespace:
 ==============================

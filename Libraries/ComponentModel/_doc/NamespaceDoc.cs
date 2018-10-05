@@ -25,7 +25,7 @@ using KGySoft.Collections;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Contains <see cref="TypeConverter"/> implementations for several types as well as base classes for business types or ViewModel classes as well as types for commands
+    /// Contains <see cref="TypeConverter"/> implementations for several types as well as base classes for business types or ViewModel classes, and types for command
     /// handling, which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface and <see cref="CommandBindingsCollection"/> for details).
     /// </summary>
     [CompilerGenerated]

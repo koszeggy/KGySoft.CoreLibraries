@@ -247,6 +247,10 @@ namespace KGySoft
         internal const string HybridResSourceBinary = nameof(HybridResSourceBinary);
         internal const string InvalidDrmPropertyChange = nameof(InvalidDrmPropertyChange);
         internal const string SourceLengthNotEven = nameof(SourceLengthNotEven);
+        internal const string CannotGetProperty = nameof(CannotGetProperty);
+        internal const string CannotSetProperty = nameof(CannotSetProperty);
+        internal const string ReturnedTypeInvalid = nameof(ReturnedTypeInvalid);
+        internal const string PropertyValueNotExist = nameof(PropertyValueNotExist);
 
         #endregion
 

@@ -80,8 +80,13 @@
     <Compile Include="ComponentModel\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\FlagsEnumConverter.cs" />
     <Compile Include="Annotations\Annotations.cs" />
-    <Compile Include="ComponentModel\ICommand.cs" />
-    <Compile Include="ComponentModel\ICommandBinding.cs" />
+    <Compile Include="ComponentModel\PersistableObjectBase.cs" />
+    <Compile Include="ComponentModel\_Interfaces\ICommand.cs" />
+    <Compile Include="ComponentModel\_Interfaces\ICommandBinding.cs" />
+    <Compile Include="ComponentModel\_Interfaces\ICommandSourceStateUpdater.cs" />
+    <Compile Include="ComponentModel\_Interfaces\ICommandState.cs" />
+    <Compile Include="ComponentModel\_Interfaces\IPersistableObject.cs" />
+    <Compile Include="ComponentModel\ObservableObjectBase.cs" />
     <Compile Include="ComponentModel\SourceAwareTargetedCommand.cs" />
     <Compile Include="ComponentModel\_doc\NamespaceDoc.cs" />
     <Compile Include="Diagnostics\CollectionDebugView.cs" />

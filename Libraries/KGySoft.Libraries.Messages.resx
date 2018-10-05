@@ -238,6 +238,9 @@ Hit rate: {8:P2}</value>
   <data name="NotAnInstanceOfType" xml:space="preserve">
     <value>Provided object is not an instance of type {0}</value>
   </data>
+  <data name="ReturnedTypeInvalid" xml:space="preserve">
+    <value>The returned value is not compatible with type {0}</value>
+  </data>
   <data name="NotAType" xml:space="preserve">
     <value>Value "{0}" cannot be resolved as a System.Type</value>
   </data>
@@ -330,6 +333,9 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="InstancePropertyDoesNotExist" xml:space="preserve">
     <value>No suitable instance property "{0}" found on type "{1}".</value>
+  </data>
+  <data name="PropertyValueNotExist" xml:space="preserve">
+    <value>No value exists for property '{0}'.</value>
   </data>
   <data name="InvokeMethodTypeDescriptorNotSupported" xml:space="preserve">
     <value>Invoking a method via TypeDescriptor is not supported.</value>
@@ -635,10 +641,10 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Value element not found in key/value pair element.</value>
   </data>
   <data name="XmlMultipleKeys" xml:space="preserve">
-    <value>Multiple Key elements occured in key-value element.</value>
+    <value>Multiple Key elements occurred in key-value element.</value>
   </data>
   <data name="XmlMultipleValues" xml:space="preserve">
-    <value>Multiple Value elements occured in key-value element.</value>
+    <value>Multiple Value elements occurred in key-value element.</value>
   </data>
   <data name="XmlUnexpectedEnd" xml:space="preserve">
     <value>Unexpected end of XML content.</value>
@@ -689,7 +695,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Working Set: {0} bytes</value>
   </data>
   <data name="ObjectDisposed" xml:space="preserve">
-    <value>Cannot access a dosposed object.</value>
+    <value>Cannot access a disposed object.</value>
   </data>
   <data name="InvalidResXReaderPropertyChange" xml:space="preserve">
     <value>Property can be changed only before the enumeration.</value>
@@ -768,5 +774,11 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="SourceLengthNotEven" xml:space="preserve">
     <value>Source length must consist of even amount of bytes.</value>
+  </data>
+  <data name="CannotGetProperty" xml:space="preserve">
+    <value>Cannot get property '{0}'.</value>
+  </data>
+  <data name="CannotSetProperty" xml:space="preserve">
+    <value>Cannot set property '{0}'.</value>
   </data>
 </root>
