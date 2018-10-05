@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: NamespaceDoc.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution. If not, then this file is considered as
@@ -25,7 +25,8 @@ using KGySoft.Collections;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Contains <see cref="TypeConverter"/> implementations for several types.
+    /// Contains <see cref="TypeConverter"/> implementations for several types as well as base classes for business types or ViewModel classes as well as types for commands
+    /// handling, which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface and <see cref="CommandBindingsCollection"/> for details).
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

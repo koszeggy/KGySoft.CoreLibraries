@@ -80,6 +80,9 @@
     <Compile Include="ComponentModel\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\FlagsEnumConverter.cs" />
     <Compile Include="Annotations\Annotations.cs" />
+    <Compile Include="ComponentModel\ICommand.cs" />
+    <Compile Include="ComponentModel\ICommandBinding.cs" />
+    <Compile Include="ComponentModel\SourceAwareTargetedCommand.cs" />
     <Compile Include="ComponentModel\_doc\NamespaceDoc.cs" />
     <Compile Include="Diagnostics\CollectionDebugView.cs" />
     <Compile Include="Diagnostics\DiagnosticTools.cs" />
@@ -217,7 +220,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

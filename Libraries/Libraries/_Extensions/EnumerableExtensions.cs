@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: EnumerableExtensions.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2018 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution. If not, then this file is considered as
@@ -240,6 +240,52 @@ namespace KGySoft.Libraries
                     return defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
                 return shuffledEnumerator.Current;
             }
+        }
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/> or empty (has no elements).
+        /// </summary>
+        /// <param name="source">The source to check.</param>
+        /// <returns><see langword="true"/> if the <paramref name="source"/> collection is <see langword="null"/> or empty; otherwise, <see langword="false"/>.</returns>
+        public static bool IsNullOrEmpty(this IEnumerable source)
+        {
+            if (source == null)
+                return true;
+
+            if (source is ICollection collection)
+                return collection.Count == 0;
+
+            var disposableEnumerator = source as IDisposable;
+            try
+            {
+                IEnumerator enumerator = source.GetEnumerator();
+                return enumerator.MoveNext();
+            }
+            finally
+            {
+                disposableEnumerator?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/> or empty (has no elements).
+        /// </summary>
+        /// <param name="source">The source to check.</param>
+        /// <returns><see langword="true"/> if the <paramref name="source"/> collection is <see langword="null"/> or empty; otherwise, <see langword="false"/>.</returns>
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)
+        {
+            if (source == null)
+                return true;
+
+            if (source is ICollection<T> collection)
+                return collection.Count == 0;
+
+#if !(NET35 || NET40)
+            if (source is IReadOnlyCollection<T> readOnlyCollection)
+                return readOnlyCollection.Count == 0;
+#endif
+
+            return ((IEnumerable)source).IsNullOrEmpty();
         }
 
         #endregion

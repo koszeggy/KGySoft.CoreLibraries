@@ -94,6 +94,11 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
+        /// Gets the reflection member info of the accessed member.
+        /// </summary>
+        public MemberInfo MemberInfo { get; protected set; }
+
+        /// <summary>
         /// This method is associated with itemLoader of cache.
         /// </summary>
         /// <remarks>
@@ -138,11 +143,6 @@ namespace KGySoft.Reflection
         {
             get { return parameterTypes; }
         }
-
-        /// <summary>
-        /// Gets or sets the reflection member info of the accessed member.
-        /// </summary>
-        protected MemberInfo MemberInfo { get; set; }
 
         /// <summary>
         /// Protected constructor for the abstract <see cref="MemberAccessor"/>.
