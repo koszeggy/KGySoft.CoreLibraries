@@ -42,25 +42,26 @@ namespace KGySoft.ComponentModel
     /// <code lang="C#"><![CDATA[
     /// public static class MyCommands
     /// {
-    ///     // A lazy initialized simple command with no target and ignored source:
+    ///     // A simple command with no target and ignored source: (assumes we have an ExitCode state)
+    ///     // Note that commands are lazy initialized
     ///     private static ICommand closeApplicationCommand;
-    ///     public static ICommand CloseApplication => closeApplicationCommand ?? (closeApplicationCommand = 
-    ///         new SimpleCommand(() => Environment.Exit(0)));
+    ///     public static ICommand CloseApplication => closeApplicationCommand ?? (closeApplicationCommand =
+    ///         new SimpleCommand(state => Environment.Exit((int)state["ExitCode"]))); // or: .Exit(state.AsDynamic.ExitCode)
     /// 
-    ///     // A source aware command to use arguments for the command:
-    ///     private static ICommand closeApplicationWithExitCodeCommand;
-    ///     public static ICommand CloseApplicationWithExitCode => closeApplicationWithExitCodeCommand ?? (closeApplicationWithExitCodeCommand =
-    ///         new SourceAwareCommand<EventArgs>((source, eventName, e) => Environment.Exit((MySourceObject)source).ExitCode));
-    /// 
-    ///     // A targeted command (also demonstrates how to change a command state by another command):
-    ///     private static ICommand toggleCommandEnabledCommand;
-    ///     public static ICommand ToggleCommandEnabled => toggleCommandEnabledCommand ?? (toggleCommandEnabledCommand =
-    ///         new TargetedCommand<ICommandState>(state => state.Enabled = !state.Enabled));
-    /// 
+    ///     // A source aware command, which can access the source object and the triggering event data
+    ///     private static ICommand logMouseCommand;
+    ///     public static ICommand LogMouse => logMouseCommand ?? (logMouseCommand =
+    ///         new SourceAwareCommand<MouseEventArgs>((source, state) => Debug.WriteLine($"Mouse coordinates: {source.EventArgs.X}; {source.EventArgs.Y}")));
+    ///
+    ///     // A targeted command (also demonstrates how to change the command state of another command):
+    ///     private static ICommand toggleEnabledCommand;
+    ///     public static ICommand ToggleCommandEnabled => toggleEnabledCommand ?? (toggleEnabledCommand =
+    ///         new TargetedCommand<ICommandState>((state, targetState) => targetState.Enabled = !targetState.Enabled));
+    ///
     ///     // A source aware targeted command:
     ///     private static ICommand processKeysCommand;
     ///     public static ICommand ProcessKeys => processKeysCommand ?? (processKeysCommand =
-    ///         new SourceAwareTargetedCommand<KeyEventArgs, Control>((source, eventName, e, target) => HandleKeys(e.KeyData, target)));
+    ///         new SourceAwareTargetedCommand<KeyEventArgs, Control>((source, state, target) => HandleKeys(source.EventArgs.KeyData, target)));
     /// }
     /// ]]></code>
     /// And a binding for a command can be created in an application, with any kind of UI, which uses events, or even without any UI: only event sources are needed.
@@ -76,20 +77,26 @@ namespace KGySoft.ComponentModel
     ///         // ...some initialization of our View...
     /// 
     ///         // Simplest case: using the CreateBinding extension on ICommand.
-    ///         // Below we assume we have a menu item with a Click event. We initialize its Text and shortcut as well.
+    ///         // Below we assume we have a menu item with a Click event.
+    ///         // We set also the initial status. If they are properties on the source the states will be applied on it.
     ///         exitBinding = MyBindings.CloseApplication.CreateBinding(menuItemExit, "Click",
-    ///             new Dictionary<string, object>{ { "Text", "Exit Application" }, { "ShortcutKeys", Keys.Alt | Keys.F4 } });
+    ///             new Dictionary<string, object>
+    ///             {
+    ///                 { "Text", "Exit Application" },
+    ///                 { "ShortcutKeys", Keys.Alt | Keys.F4 },
+    ///                 { "ExitCode", 0 },
+    ///             });
     /// 
     ///         // If we add the created bindings to a CommandBindingsCollection, then all of them can be disposed at once by disposing the collection.
     ///         commandBindings.Add(exitBinding);
     /// 
     ///         // We can create a binding by the Add methods of the collection, too:
-    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled, checkBoxToggle, nameof(CheckBox.Checked),
+    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled, buttonToggle, "Click",
     ///             new Dictionary<string, object>{ { "Text", "Toggle Enabled of Exit" } }, exitBinding.State);
     /// 
     ///         // The line above can be written by a more descriptive fluent syntax (and that's how multiple sources can be added):
     ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled)
-    ///             .AddSource(checkBoxToggle, nameof(CheckBox.Checked))
+    ///             .AddSource(buttonToggle, nameof(Button.Click))
     ///             .AddTarget(exitBinding.State);
     /// 
     ///         // If we now set the state of the binding it will be applied for all sources (only if a matching property exists):
@@ -125,11 +132,10 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Executes the command invoked by the specified <paramref name="source"/> for the specified <paramref name="target"/>.
         /// </summary>
-        /// <param name="source">The source invocation.</param>
-        /// <param name="triggeringEvent">The triggering event of the source object.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data. The actual type depends on the triggering event.</param>
+        /// <param name="source">An <see cref="ICommandSource"/> object containing information about the source of the command.</param>
+        /// <param name="state">An <see cref="ICommandState"/> instance containing the state of the current command binding. The state can be changed during the execution.</param>
         /// <param name="target">The target of the execution. Can be <see langword="null"/> if the binding contains no targets.</param>
-        void Execute(object source, string triggeringEvent, EventArgs e, object target);
+        void Execute(ICommandSource source, ICommandState state, object target);
 
         #endregion
     }

@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: SourceAwareTargetedCommand.cs
+//  File: SimpleCommand.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
@@ -23,30 +23,26 @@ using System;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is aware of its triggering sources and has one or more bound targets.
+    /// Represents a command, which is unaware of its triggering sources and has no bound targets.
     /// <br/>To see examples how to use the difference command types see the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface.
     /// </summary>
-    /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
-    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <seealso cref="ICommand" />
-    public class SourceAwareTargetedCommand<TEventArgs, TTarget> : ICommand<TEventArgs>, IDisposable
-        where TEventArgs : EventArgs
+    public class SimpleCommand : ICommand, IDisposable
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback;
+        private Action<ICommandState> callback;
 
         #endregion
 
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback)
-            => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
+        public SimpleCommand(Action<ICommandState> callback) => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
 
         #endregion
 
@@ -63,11 +59,7 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target)
-            => callback.Invoke(source, state, (TTarget)target);
-
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target)
-            => callback.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target);
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target) => callback.Invoke(state);
 
         #endregion
 

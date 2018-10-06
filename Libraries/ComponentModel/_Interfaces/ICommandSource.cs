@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: NamespaceDoc.cs
+//  File: ICommandSource.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
@@ -16,20 +16,34 @@
 
 #region Usings
 
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using KGySoft.Collections;
+using System;
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Contains <see cref="TypeConverter"/> implementations for several types as well as base classes for business types or ViewModel classes, and types for command
-    /// binding, which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface for details and examples).
+    /// Represents source information about the command.
     /// </summary>
-    [CompilerGenerated]
-    internal static class NamespaceDoc
+    public interface ICommandSource
     {
+        #region Properties
+
+        /// <summary>
+        /// Gets the source if the invocation, which is the object that triggered the event.
+        /// </summary>
+        object Source { get; }
+
+        /// <summary>
+        /// Gets the triggering event of the source object.
+        /// </summary>
+        string TriggeringEvent { get; }
+
+        /// <summary>
+        /// Gets the <see cref="System.EventArgs"/> instance containing the event data.
+        /// </summary>
+        EventArgs EventArgs { get; }
+
+        #endregion
     }
 }

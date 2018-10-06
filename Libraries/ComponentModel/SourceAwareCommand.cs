@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: SourceAwareTargetedCommand.cs
+//  File: SourceAwareCommand.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
@@ -23,18 +23,17 @@ using System;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents a command, which is aware of its triggering sources and has one or more bound targets.
+    /// Represents a command, which is aware of its triggering sources and has no bound targets.
     /// <br/>To see examples how to use the difference command types see the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface.
     /// </summary>
     /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
-    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <seealso cref="ICommand" />
-    public class SourceAwareTargetedCommand<TEventArgs, TTarget> : ICommand<TEventArgs>, IDisposable
+    public class SourceAwareCommand<TEventArgs> : ICommand<TEventArgs>, IDisposable
         where TEventArgs : EventArgs
     {
         #region Fields
 
-        private Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback;
+        private Action<ICommandSource<TEventArgs>, ICommandState> callback;
 
         #endregion
 
@@ -45,7 +44,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="callback">A delegate to invoke when the command is triggered.</param>
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
-        public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback)
+        public SourceAwareCommand(Action<ICommandSource<TEventArgs>, ICommandState> callback)
             => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
 
         #endregion
@@ -64,10 +63,10 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target)
-            => callback.Invoke(source, state, (TTarget)target);
+            => callback.Invoke(source, state);
 
         void ICommand.Execute(ICommandSource source, ICommandState state, object target)
-            => callback.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target);
+            => callback.Invoke(source.Cast<TEventArgs>(), state);
 
         #endregion
 

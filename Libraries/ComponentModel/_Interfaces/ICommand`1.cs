@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: NamespaceDoc.cs
+//  File: ICommand`1.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
 //
@@ -16,20 +16,23 @@
 
 #region Usings
 
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using KGySoft.Collections;
+using System;
 
 #endregion
 
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Contains <see cref="TypeConverter"/> implementations for several types as well as base classes for business types or ViewModel classes, and types for command
-    /// binding, which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface for details and examples).
+    /// This interface exists just because in <see cref="CommandBinding"/> we already create a strongly typed delegate for EventArgs
+    /// so we can keep this strongly typed attribute in source aware commands.
     /// </summary>
-    [CompilerGenerated]
-    internal static class NamespaceDoc
+    /// <typeparam name="TEventArgs">The type of the event arguments.</typeparam>
+    internal interface ICommand<in TEventArgs> : ICommand where TEventArgs : EventArgs
     {
+        #region Methods
+
+        void Execute(ICommandSource<TEventArgs> source, ICommandState state, object target);
+
+        #endregion
     }
 }
