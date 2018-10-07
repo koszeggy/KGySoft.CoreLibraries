@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace KGySoft.Reflection
@@ -14,17 +15,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// The method invoker delegate.
         /// </summary>
-        protected Delegate Invoker
-        {
-            get
-            {
-                if (invoker == null)
-                {
-                    invoker = CreateInvoker();
-                }
-                return invoker;
-            }
-        }
+        protected Delegate Invoker => invoker ?? (invoker = CreateInvoker());
 
         /// <summary>
         /// When overridden, returns a delegate that invokes the associated method.
@@ -32,10 +23,11 @@ namespace KGySoft.Reflection
         protected abstract Delegate CreateInvoker();
 
         /// <summary>
-        /// Creates a new instance of <see cref="MethodInvoker"/>
+        /// Initializes a new instance of the <see cref="MethodInvoker"/> class.
         /// </summary>
-        protected MethodInvoker(MethodInfo method, Type declaringType, Type[] parameterTypes) :
-            base(method, declaringType, parameterTypes)
+        /// <param name="method">The method to associate with this <see cref="MethodInvoker"/>.</param>
+        protected MethodInvoker(MethodInfo method) :
+            base(method, method.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
 
@@ -44,33 +36,15 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The <see cref="MethodInfo"/> that contains informations of the method to invoke.</param>
         /// <returns>Returns a <see cref="MethodInvoker"/> instance that can be used to invoke the method.</returns>
-        public static MethodInvoker GetMethodInvoker(MethodInfo method)
-        {
-            if (method == null)
-                throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull));
-            if (CachingEnabled)
-                return (MethodInvoker)GetCreateAccessor(method);
-            else
-                return CreateMethodInvoker(method);
-        }
+        public static MethodInvoker GetMethodInvoker(MethodInfo method) 
+            => (MethodInvoker)GetCreateAccessor(method ?? throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull)));
 
         /// <summary>
         /// Non-caching version of invoker creation.
         /// </summary>
-        internal static MethodInvoker CreateMethodInvoker(MethodInfo method)
-        {
-            ParameterInfo[] pi = method.GetParameters() ?? new ParameterInfo[0];
-            Type[] parameterTypes = new Type[pi.Length];
-            for (int i = 0; i < pi.Length; i++)
-            {
-                parameterTypes[i] = pi[i].ParameterType;
-            }
-            // late-initialization of MemberInfo to avoid caching
-            if (method.ReturnType == typeof(void))
-                return new ActionInvoker(method.DeclaringType, parameterTypes) { MemberInfo = method };
-            else
-                return new FunctionInvoker(method.DeclaringType, parameterTypes) { MemberInfo = method };
-        }
+        internal static MethodInvoker CreateMethodInvoker(MethodInfo method) => method.ReturnType == typeof(void) 
+            ? (MethodInvoker)new ActionInvoker(method) 
+            : new FunctionInvoker(method);
 
         /// <summary>
         /// Invokes the method. Return value of <see cref="Void"/>-types methods are null.

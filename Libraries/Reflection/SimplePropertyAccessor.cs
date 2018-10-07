@@ -17,11 +17,8 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate object PropertyGetter(object instance);
 
-        /// <summary>
-        /// Non-caching internal constructor. Called from cache.
-        /// </summary>
-        internal SimplePropertyAccessor(Type instanceType)
-            : base(null, instanceType, null)
+        internal SimplePropertyAccessor(PropertyInfo pi)
+            : base(pi)
         {
         }
 
@@ -29,15 +26,18 @@ namespace KGySoft.Reflection
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
             MethodInfo getterMethod = property.GetGetMethod(true);
+            Type declaringType = getterMethod.DeclaringType;
+            if (declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // for classes and static properties: Lambda expression
-            if (!DeclaringType.IsValueType || getterMethod.IsStatic)
+            if (!declaringType.IsValueType || getterMethod.IsStatic)
             {
                 //---by property expression---
                 ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
 
                 MemberExpression member = Expression.Property(
-                    getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, DeclaringType), // (TInstance)instance
+                    getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                     (PropertyInfo)MemberInfo);
 
                 LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
@@ -71,9 +71,12 @@ namespace KGySoft.Reflection
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
             MethodInfo setterMethod = property.GetSetMethod(true);
+            Type declaringType = setterMethod.DeclaringType;
+            if (declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // for classes and static properties: Lambda expression
-            if (!DeclaringType.IsValueType || setterMethod.IsStatic)
+            if (!declaringType.IsValueType || setterMethod.IsStatic)
             {
                 // .NET 4.0: Using Expression.Assign could be used, though it calls setter after all and will not work for struct instances
                 //#  var param = Expression.Parameter(this.Type, "obj");
@@ -93,7 +96,7 @@ namespace KGySoft.Reflection
                 UnaryExpression castValue = Expression.Convert(valueParameter, property.PropertyType);
 
                 MethodCallExpression setterCall = Expression.Call(
-                    setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, DeclaringType), // (TInstance)instance
+                    setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                     setterMethod, // setter
                     castValue); // original parameter: (TProp)value
 

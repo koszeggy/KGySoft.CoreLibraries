@@ -81,11 +81,10 @@ namespace KGySoft.Reflection
                 typeof(DBNull), typeof(IntPtr), typeof(UIntPtr)
             };
 
-        private static Cache<Type, string> defaultMemberCache;
-        private static Cache<string, Assembly> assemblyCache;
-        private static Cache<string, Type> typeCacheByString;
-        private static Cache<Assembly, Cache<string, Type>> typeCacheByAssembly;
-        private static object syncRoot;
+        private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
+        private static LockingDictionary<string, Assembly> assemblyCache;
+        private static LockingDictionary<string, Type> typeCacheByString;
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
 
         #endregion
 
@@ -101,38 +100,17 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        private static object SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                return syncRoot;
-            }
-        }
+        private static IThreadSafeCacheAccessor<Type, string> DefaultMemberCache 
+            => defaultMemberCache ?? (defaultMemberCache = new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor());
 
-        private static Cache<Type, string> DefaultMemberCache
-        {
-            get
-            {
-                return defaultMemberCache ?? (defaultMemberCache = new Cache<Type, string>(GetDefaultMember, 16));
-            }
-        }
+        private static LockingDictionary<string, Type> TypeCacheByString 
+            => typeCacheByString ?? (typeCacheByString = new Cache<string, Type>().AsThreadSafe());
 
-        private static Cache<string, Type> TypeCacheByString
-        {
-            get { return typeCacheByString ?? (typeCacheByString = new Cache<string, Type>(64)); }
-        }
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly 
+            => typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>(64).AsThreadSafe()).GetThreadSafeAccessor(true)); // true because the inner creation is fast
 
-        private static Cache<Assembly, Cache<string, Type>> TypeCacheByAssembly
-        {
-            get { return typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, Cache<string, Type>>(a => new Cache<string, Type>(64), 16)); }
-        }
-
-        private static Cache<string, Assembly> AssemblyCache
-        {
-            get { return assemblyCache ?? (assemblyCache = new Cache<string, Assembly>(16)); }
-        }
+        private static LockingDictionary<string, Assembly> AssemblyCache 
+            => assemblyCache ?? (assemblyCache = new Cache<string, Assembly>().AsThreadSafe());
 
         #endregion
 
@@ -660,10 +638,7 @@ namespace KGySoft.Reflection
 
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
-                lock (SyncRoot)
-                {
-                    defaultMemberName = DefaultMemberCache[checkedType];
-                }
+                defaultMemberName = DefaultMemberCache[checkedType];
 
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
@@ -996,11 +971,7 @@ namespace KGySoft.Reflection
 
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
-                lock (SyncRoot)
-                {
-                    defaultMemberName = DefaultMemberCache[checkedType];
-                }
-
+                defaultMemberName = DefaultMemberCache[checkedType];
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
@@ -2000,11 +1971,8 @@ namespace KGySoft.Reflection
 
             Assembly result;
             string key = (matchBySimpleName ? "-" : "+") + assemblyName;
-            lock (SyncRoot)
-            {
-                if (AssemblyCache.TryGetValue(key, out result))
-                    return result;
-            }
+            if (AssemblyCache.TryGetValue(key, out result))
+                return result;
 
             // 1.) Iterating through loaded assemblies, checking names
             AssemblyName asmName = new AssemblyName(assemblyName);
@@ -2059,10 +2027,7 @@ namespace KGySoft.Reflection
 
             if (result != null)
             {
-                lock (syncRoot)
-                {
-                    assemblyCache[key] = result;
-                }
+                assemblyCache[key] = result;
             }
 
             return result;
@@ -2173,27 +2138,23 @@ namespace KGySoft.Reflection
             if (String.IsNullOrEmpty(typeName))
                 return null;
 
-            Type result;
-            lock (SyncRoot)
+            if (TypeCacheByString.TryGetValue(typeName, out Type result))
+                return result;
+
+            try
             {
-                if (TypeCacheByString.TryGetValue(typeName, out result))
-                    return result;
+                // mscorlib type of fully qualified names
+                result = Type.GetType(typeName);
+            }
+            catch (Exception e)
+            {
+                throw new ReflectionException(Res.Get(Res.NotAType, typeName), e);
+            }
 
-                try
-                {
-                    // mscorlib type of fully qualified names
-                    result = Type.GetType(typeName);
-                }
-                catch (Exception e)
-                {
-                    throw new ReflectionException(Res.Get(Res.NotAType, typeName), e);
-                }
-
-                if (result != null)
-                {
-                    typeCacheByString[typeName] = result;
-                    return result;
-                }
+            if (result != null)
+            {
+                typeCacheByString[typeName] = result;
+                return result;
             }
 
             // no success: partial name or non-mscorlib type without name
@@ -2239,10 +2200,7 @@ namespace KGySoft.Reflection
 
             if (result != null)
             {
-                lock (syncRoot)
-                {
-                    typeCacheByString[typeName] = result;
-                }
+                typeCacheByString[typeName] = result;
             }
 
             return result;
@@ -2281,15 +2239,10 @@ namespace KGySoft.Reflection
         /// </summary>
         private static Type ResolveType(Assembly assembly, string typeName, bool loadPartiallyDefinedAssemblies, bool matchAssemblyByWeakName)
         {
-            Cache<string, Type> cache;
-            Type result;
-            lock (SyncRoot)
+            LockingDictionary<string, Type> cache = TypeCacheByAssembly[assembly];
+            if (cache.TryGetValue(typeName, out var result))
             {
-                cache = TypeCacheByAssembly[assembly];
-                if (cache.TryGetValue(typeName, out result))
-                {
-                    return result;
-                }
+                return result;
             }
 
             try
@@ -2359,10 +2312,7 @@ namespace KGySoft.Reflection
 
             if (result != null)
             {
-                lock (syncRoot)
-                {
-                    cache[typeName] = result;
-                }
+                cache[typeName] = result;
             }
 
             return result;

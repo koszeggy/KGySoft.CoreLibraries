@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -9,8 +11,6 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
 using KGySoft.Collections;
-#if NET40 || NET45
-#endif
 
 namespace KGySoft.Serialization
 {
@@ -22,6 +22,7 @@ namespace KGySoft.Serialization
     {
 #if NET35
 #pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
+#pragma warning disable 1584,1711,1572,1581,1580
 #endif
         /// <summary>
         /// <para>Represents no enabled options.</para>
@@ -56,6 +57,7 @@ namespace KGySoft.Serialization
         None,
 #if NET35
 #pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
+#pragma warning restore 1584,1711,1572,1581,1580
 #endif
 
         /// <summary>

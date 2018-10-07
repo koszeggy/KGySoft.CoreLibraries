@@ -68,7 +68,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly Cache<Type, Dictionary<string, PropertyInfo>> properties = new Cache<Type, Dictionary<string, PropertyInfo>>(GetProperties);
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, PropertyInfo>> properties = new Cache<Type, Dictionary<string, PropertyInfo>>(GetProperties).GetThreadSafeAccessor();
 
         #endregion
 
@@ -115,7 +115,13 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
-        protected T Get<T>(Func<T> createInitialValue, [CallerMemberName] string propertyName = null)
+        protected T Get<T>(Func<T> createInitialValue,
+#if NET35 || NET40
+            string propertyName
+#else
+            [CallerMemberName] string propertyName = null
+#endif
+            )
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
@@ -156,7 +162,13 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
-        protected T Get<T>(T defaultValue = default, [CallerMemberName] string propertyName = null)
+        protected T Get<T>(
+#if NET35 || NET40
+            T defaultValue, string propertyName
+#else
+            T defaultValue = default, [CallerMemberName] string propertyName = null
+#endif
+            )
             => ((IPersistableObject)this).GetPropertyOrDefault(propertyName, defaultValue);
 
         /// <summary>
@@ -172,7 +184,13 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanSetProperty">CanSetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance, or <paramref name="value"/> is not compatible with the property type.
         /// </exception>
-        protected void Set(object value, bool invokeChangedEvent = true, [CallerMemberName]string propertyName = null)
+        protected void Set(object value,
+#if NET35 || NET40
+            bool invokeChangedEvent, string propertyName
+#else
+            bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null
+#endif
+            )
             => ((IPersistableObject)this).SetProperty(propertyName, value, invokeChangedEvent);
 
         /// <summary>
@@ -183,8 +201,7 @@ namespace KGySoft.ComponentModel
         protected virtual bool CanGetProperty(string propertyName)
         {
             Dictionary<string, PropertyInfo> props;
-            lock (properties)
-                props = properties[GetType()];
+            props = properties[GetType()];
             return props.ContainsKey(propertyName);
         }
 
@@ -197,8 +214,7 @@ namespace KGySoft.ComponentModel
         protected virtual bool CanSetProperty(string propertyName, object value)
         {
             Dictionary<string, PropertyInfo> props;
-            lock (properties)
-                props = properties[GetType()];
+            props = properties[GetType()];
             return props.TryGetValue(propertyName, out PropertyInfo pi) && pi.PropertyType.CanAcceptValue(value);
         }
 
@@ -213,10 +229,10 @@ namespace KGySoft.ComponentModel
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanGetProperty(propertyName))
-                throw new InvalidOperationException($"Cannot get property '{propertyName}'");
+                throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
             if (propertyValues.TryGetValue(propertyName, out object value))
                 return value;
-            throw new InvalidOperationException($"Property '{propertyName}' does not exist");
+            throw new InvalidOperationException(Res.Get(Res.PropertyValueNotExist, propertyName));
         }
 
         T IPersistableObject.GetPropertyOrDefault<T>(string propertyName, T defaultValue)
@@ -224,7 +240,7 @@ namespace KGySoft.ComponentModel
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanGetProperty(propertyName))
-                throw new InvalidOperationException($"Cannot get property '{propertyName}'");
+                throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
             return propertyValues.TryGetValue(propertyName, out object value) && value is T result ? result : defaultValue;
         }
 
@@ -233,7 +249,7 @@ namespace KGySoft.ComponentModel
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanSetProperty(propertyName, value))
-                throw new InvalidOperationException($"Cannot set property '{propertyName}'");
+                throw new InvalidOperationException(Res.Get(Res.CannotSetProperty, propertyName));
             if (propertyValues.TryGetValue(propertyName, out object oldValue) && Equals(value, oldValue))
                 return false;
             propertyValues[propertyName] = value;
@@ -243,7 +259,7 @@ namespace KGySoft.ComponentModel
         }
 
         IDictionary<string, object> IPersistableObject.GetProperties()
-            => propertyValues.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException($"Cannot get property '{p.Key}'"));
+            => propertyValues.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
 
         void IPersistableObject.SetProperties(IDictionary<string, object> newProperties, bool merge)
         {

@@ -385,7 +385,8 @@ namespace KGySoft.Serialization
         #region Static Fields
 
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo;
-        private static readonly Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256);
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache 
+            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
         #endregion
 
@@ -2125,12 +2126,7 @@ namespace KGySoft.Serialization
 
         private static IEnumerable<MethodInfo> GetMethodsWithAttribute(Type attribute, Type type)
         {
-            // locks are to protect methodsByAttributeCache because it is a static member with variable content
-            Dictionary<Type, IEnumerable<MethodInfo>> cacheItem;
-            lock (methodsByAttributeCache)
-            {
-                cacheItem = methodsByAttributeCache[type];
-            }
+            Dictionary<Type, IEnumerable<MethodInfo>> cacheItem = methodsByAttributeCache[type];
 
             lock (cacheItem)
             {

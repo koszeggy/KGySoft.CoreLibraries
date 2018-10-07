@@ -156,10 +156,10 @@ namespace KGySoft.Libraries
 
             #region Fields
 
-            private static readonly Cache<Assembly, Type[]> assemblyTypesCache = new Cache<Assembly, Type[]>(LoadAssemblyTypes);
-            private static readonly Cache<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors);
-            private static readonly Cache<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric);
-            private static readonly Cache<Type, Delegate> delegatesCache = new Cache<Type, Delegate>(CreateDelegate);
+            private static readonly IThreadSafeCacheAccessor<Assembly, Type[]> assemblyTypesCache = new Cache<Assembly, Type[]>(LoadAssemblyTypes).GetThreadSafeAccessor();
+            private static readonly IThreadSafeCacheAccessor<Type, Type[]> typeImplementorsCache = new Cache<Type, Type[]>(SearchForImplementors).GetThreadSafeAccessor();
+            private static readonly IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type> defaultConstructedGenerics = new Cache<DefaultGenericTypeKey, Type>(TryCreateDefaultGeneric).GetThreadSafeAccessor();
+            private static readonly IThreadSafeCacheAccessor<Type, Delegate> delegatesCache = new Cache<Type, Delegate>(CreateDelegate).GetThreadSafeAccessor();
 
             /// <summary>
             /// Must be a separate instance because dynamic method references will never freed.
@@ -260,7 +260,7 @@ namespace KGySoft.Libraries
                 Type[] genericArguments = type.GetGenericArguments();
                 foreach (var assembly in Reflector.GetLoadedAssemblies())
                 {
-                    foreach (Type t in GetAssemblyTypes(assembly))
+                    foreach (Type t in assemblyTypesCache[assembly])
                     {
                         // Skipping interfaces, abstract (and static) classes and delegates unless delegate types are searched
                         if (t.IsInterface || t.IsAbstract || (t.IsDelegate() && !type.IsDelegate()))
@@ -294,21 +294,13 @@ namespace KGySoft.Libraries
 
                         // Generic type for non-generic interface or for non-interface (eg. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
                         // Trying to resolve its constraints and see whether the construction is compatible with the provided type.
-                        Type constructedType = TryMakeGenericType(t, genericArguments);
+                        Type constructedType = defaultConstructedGenerics[new DefaultGenericTypeKey(t, genericArguments)];
                         if (constructedType != null && type.IsAssignableFrom(constructedType))
                             result.Add(constructedType);
                     }
                 }
 
                 return result.ToArray();
-            }
-
-            private static Type TryMakeGenericType(Type typeDef, Type[] suggestedArguments)
-            {
-                lock (defaultConstructedGenerics)
-                {
-                    return defaultConstructedGenerics[new DefaultGenericTypeKey(typeDef, suggestedArguments)];
-                }
             }
 
             private static Type TryCreateDefaultGeneric(DefaultGenericTypeKey key)
@@ -588,13 +580,13 @@ namespace KGySoft.Libraries
             {
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
                 Assembly asm = assemblies.GetRandomElement(context.Random);
-                Type[] types = GetAssemblyTypes(asm);
+                Type[] types = assemblyTypesCache[asm];
 
                 if (types.Length == 0)
                 {
                     foreach (Assembly candidate in assemblies.Except(new[] { asm }).Shuffle(context.Random))
                     {
-                        types = GetAssemblyTypes(candidate);
+                        types = assemblyTypesCache[candidate];
                         if (types.Length != 0)
                             break;
                     }
@@ -644,7 +636,7 @@ namespace KGySoft.Libraries
 
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
                 Assembly asm = assemblies.GetRandomElement(context.Random);
-                MemberInfo result = TryPickMemberInfo(GetAssemblyTypes(asm).GetRandomElement(context.Random, true), memberTypes, ref context, constants);
+                MemberInfo result = TryPickMemberInfo(assemblyTypesCache[asm].GetRandomElement(context.Random, true), memberTypes, ref context, constants);
 
                 if (result != null)
                     return result;
@@ -652,7 +644,7 @@ namespace KGySoft.Libraries
                 // low performance fallback: shuffling
                 foreach (Assembly assembly in assemblies.Except(new[] { asm }).Shuffle(context.Random))
                 {
-                    foreach (Type t in GetAssemblyTypes(assembly).Shuffle(context.Random))
+                    foreach (Type t in assemblyTypesCache[assembly].Shuffle(context.Random))
                     {
                         result = TryPickMemberInfo(t, memberTypes, ref context, constants);
                         if (result != null)
@@ -793,7 +785,7 @@ namespace KGySoft.Libraries
                 Type typeToCreate = type;
                 if (resolveType)
                 {
-                    typeCandidates = GetResolvedTypes(type);
+                    typeCandidates = typeImplementorsCache[type];
                     typeToCreate = typeCandidates.GetRandomElement(context.Random, true);
                     if (typeToCreate == null)
                         return null;
@@ -815,22 +807,6 @@ namespace KGySoft.Libraries
                     }
                 }
                 return null;
-            }
-
-            private static IList<Type> GetResolvedTypes(Type type)
-            {
-                lock (typeImplementorsCache)
-                {
-                    return typeImplementorsCache[type];
-                }
-            }
-
-            private static Type[] GetAssemblyTypes(Assembly asm)
-            {
-                lock (assemblyTypesCache)
-                {
-                    return assemblyTypesCache[asm];
-                }
             }
 
             private static Array GenerateArray(Type arrayType, ref GeneratorContext context)
@@ -933,7 +909,7 @@ namespace KGySoft.Libraries
 
                 // Special case 3: Delegate
                 if (type.IsDelegate())
-                    return GetDelegate(type, ref context);
+                    return delegatesCache[type];
 
                 if (context.IsGenerating(type))
                     return null;
@@ -965,14 +941,6 @@ namespace KGySoft.Libraries
                 finally
                 {
                     context.PopType(type);
-                }
-            }
-
-            private static Delegate GetDelegate(Type type, ref GeneratorContext context)
-            {
-                lock (delegatesCache)
-                {
-                    return delegatesCache[type];
                 }
             }
 

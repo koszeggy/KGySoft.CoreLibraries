@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -13,8 +15,6 @@ using System.Xml.Serialization;
 using KGySoft.Collections;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
-#if !NET35
-#endif
 
 namespace KGySoft.Serialization
 {
@@ -57,7 +57,7 @@ namespace KGySoft.Serialization
 #endif
         };
 
-        private static readonly Cache<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted);
+        private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted).GetThreadSafeAccessor();
 
         private static bool IsTypeTrusted(Type type) =>
             // has default constructor
@@ -121,13 +121,7 @@ namespace KGySoft.Serialization
         protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
 
-        protected bool IsTrustedType(Type type)
-        {
-            lock (trustedTypesCache)
-            {
-                return trustedTypesCache[type];
-            }
-        }
+        protected bool IsTrustedType(Type type) => trustedTypesCache[type];
 
         protected IEnumerable<Member> GetMembersToSerialize(object obj)
         {
@@ -146,8 +140,10 @@ namespace KGySoft.Serialization
                         || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))))
 #if NET35
                 .Cast<MemberInfo>()
+                // ReSharper disable RedundantCast
 #endif
                         ;
+
                 // getting non read-only instance fields
                 IEnumerable<MemberInfo> fields = ExcludeFields ? (IEnumerable<MemberInfo>)new MemberInfo[0] : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
                     .Where(f => !f.IsInitOnly
@@ -156,6 +152,7 @@ namespace KGySoft.Serialization
                         // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
                         || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)))
 #if NET35
+                // ReSharper restore RedundantCast
                 .Cast<MemberInfo>()
 #endif
                         ;

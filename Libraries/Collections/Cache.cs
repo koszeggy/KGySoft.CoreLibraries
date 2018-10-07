@@ -673,7 +673,6 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            private readonly object syncRoot = new object();
             private readonly Cache<TKey, TValue> cache;
 
             #endregion
@@ -684,7 +683,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    lock (syncRoot)
+                    lock (cache.syncRootForThreadSafeAccessor)
                         return cache[key];
                 }
             }
@@ -706,7 +705,6 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            private readonly object syncRoot = new object();
             private readonly Cache<TKey, TValue> cache;
 
             #endregion
@@ -717,7 +715,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    lock (syncRoot)
+                    lock (cache.syncRootForThreadSafeAccessor)
                     {
                         if (cache.TryGetValue(key, out TValue result))
                             return result;
@@ -725,7 +723,7 @@ namespace KGySoft.Collections
 
                     // ReSharper disable once InconsistentlySynchronizedField - intended: item loading is not locked
                     TValue newItem = cache.itemLoader.Invoke(key);
-                    lock (syncRoot)
+                    lock (cache.syncRootForThreadSafeAccessor)
                     {
                         if (cache.TryGetValue(key, out TValue result))
                             return result;
@@ -802,6 +800,7 @@ namespace KGySoft.Collections
         private int version;
         private Dictionary<TKey, CacheItem> cacheStore;
         private object syncRoot;
+        private object syncRootForThreadSafeAccessor;
         private KeysCollection keysCollection;
         private ValuesCollection valuesCollection;
 
@@ -1585,12 +1584,16 @@ namespace KGySoft.Collections
         /// and the cache will not be accessed by other members but via the returned accessor.
         /// </summary>
         /// <param name="protectItemLoader"><see langword="true"/> to ensure that also the item loader is locked if a new element has to be loaded and
-        /// <see langword="false"/> to allow the item loader to be called parallelly. In latter case the <see cref="Cache{TKey,TValue}"/> is locked for shorter
-        /// time but it can happen that the value of same key is loaded multiple times and all but one will be discarded. This parameter is optional.
+        /// <see langword="false"/> to allow the item loader to be called parallelly. In latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called
+        /// but it can happen that values for same key are loaded multiple times and all but one will be discarded. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
-        public IThreadSafeCacheAccessor<TKey, TValue> GetThreadSafeAccessor(bool protectItemLoader = false) 
-            => protectItemLoader ? (IThreadSafeCacheAccessor<TKey, TValue>)new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
+        public IThreadSafeCacheAccessor<TKey, TValue> GetThreadSafeAccessor(bool protectItemLoader = false)
+        {
+            if (syncRootForThreadSafeAccessor == null)
+                Interlocked.CompareExchange(ref syncRootForThreadSafeAccessor, new object(), null);
+            return protectItemLoader ? (IThreadSafeCacheAccessor<TKey, TValue>)new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
+        }
 
         #endregion
 

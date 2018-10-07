@@ -16,11 +16,8 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate void AnyAction(object target, object[] arguments);
 
-        /// <summary>
-        /// Non-caching internal constructor. Called from cache.
-        /// </summary>
-        internal ActionInvoker(Type instanceType, Type[] parameterTypes)
-            : base(null, instanceType, parameterTypes)
+        internal ActionInvoker(MethodInfo mi)
+            : base(mi)
         {
         }
 
@@ -29,7 +26,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">The instance on which the method is invoked</param>
         /// <param name="parameters">Method parameters</param>
-        /// <returns>Returns alwas null because this class represents a method with void return type.</returns>
+        /// <returns>Returns always <see langword="null"/> because this class represents a method with <see cref="Void"/> return type.</returns>
         public override object Invoke(object instance, params object[] parameters)
         {
             ((AnyAction)Invoker)(instance, parameters);
@@ -40,9 +37,13 @@ namespace KGySoft.Reflection
         {
             MethodInfo method = (MethodInfo)MemberInfo;
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
+            Type declaringType = method.DeclaringType;
+            if (!method.IsStatic && declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // for classes and static methods that have no ref parameters: Lambda expression
-            if (!hasRefParameters && (method.IsStatic || !DeclaringType.IsValueType))
+            // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
+            if (!hasRefParameters && (method.IsStatic || !declaringType.IsValueType))
             {
                 ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
                 ParameterExpression parametersParameter = Expression.Parameter(typeof(object[]), "parameters");
@@ -56,8 +57,9 @@ namespace KGySoft.Reflection
                     methodParameters[i] = Expression.Convert(Expression.ArrayIndex(parametersParameter, Expression.Constant(i)), ParameterTypes[i]);
                 }
 
+                // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
                 MethodCallExpression methodToCall = Expression.Call(
-                    method.IsStatic ? null : Expression.Convert(instanceParameter, DeclaringType), // (TInstance)instance
+                    method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                     method, // method info
                     methodParameters); // parameters casted to target types
 

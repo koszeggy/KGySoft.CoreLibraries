@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -10,8 +12,6 @@ using System.Runtime.Serialization;
 using System.Text;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
-#if !NET35
-#endif
 
 namespace KGySoft.Serialization
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using KGySoft.Collections;
+using KGySoft.Libraries;
 
 namespace KGySoft.Reflection
 {
@@ -39,70 +40,54 @@ namespace KGySoft.Reflection
         }
 
         private readonly Type[] parameterTypes;
-        private readonly Type declaringType;
 
         /// <summary>
-        /// The cache of the stored accessors. This field is read-only.
+        /// This locks also the loader method but this is OK because a new accessor creation is fast.
         /// </summary>
-        private static readonly Cache<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
+        private static readonly LockingDictionary<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192).AsThreadSafe();
 
-        /// <summary>
-        /// Gets or sets the cache size used for caching compiled accessors. Setting size to 0 disables caching.
-        /// </summary>
-        public static int CacheSize
-        {
-            get
-            {
-                return CachingEnabled ? accessorCache.Capacity : 0;
-            }
-            set
-            {
-                if (value < 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
-                else if (value == 0)
-                {
-                    CachingEnabled = false;
-                    accessorCache.Clear();
-                }
-                else
-                {
-                    CachingEnabled = true;
-                    accessorCache.Capacity = value;
-                }
-            }
-        }
+        ///// <summary>
+        ///// Gets or sets the cache size used for caching compiled accessors. Setting size to 0 disables caching.
+        ///// </summary>
+        //public static int CacheSize
+        //{
+        //    get
+        //    {
+        //        return CachingEnabled ? accessorCache.Capacity : 0;
+        //    }
+        //    set
+        //    {
+        //        if (value < 0)
+        //            throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+        //        else if (value == 0)
+        //        {
+        //            CachingEnabled = false;
+        //            accessorCache.Clear();
+        //        }
+        //        else
+        //        {
+        //            CachingEnabled = true;
+        //            accessorCache.Capacity = value;
+        //        }
+        //    }
+        //}
 
-        /// <summary>
-        /// Gets or sets whether caching of compiled <see cref="MemberAccessor"/> instaces is enabled.
-        /// Disabling caching is not recommended.
-        /// </summary>
-        public static bool CachingEnabled { get; set; }
-
-        /// <summary>
-        /// Gets or sets the accessor cache behavior when cache is full and an element has to be removed.
-        /// </summary>
-        /// <remarks>
-        /// <note>
-        /// Changing value of this property will not reorganize cache. Cache order is maintaned on accessing a value.
-        /// </note>
-        /// </remarks>
-        /// <seealso cref="Cache{TKey,TValue}.Behavior"/>.
-        public static CacheBehavior CacheBehavior
-        {
-            get { return accessorCache.Behavior; }
-            set { accessorCache.Behavior = value; }
-        }
+        ///// <summary>
+        ///// Gets or sets whether caching of compiled <see cref="MemberAccessor"/> instances is enabled.
+        ///// Disabling caching is not recommended.
+        ///// </summary>
+        //public static bool CachingEnabled { get; set; }
 
         /// <summary>
         /// Gets the reflection member info of the accessed member.
         /// </summary>
-        public MemberInfo MemberInfo { get; protected set; }
+        public MemberInfo MemberInfo { get; }
 
         /// <summary>
         /// This method is associated with itemLoader of cache.
         /// </summary>
         /// <remarks>
-        /// Note: Make sure that created MemberAccessor is not cached until returnig from this method
+        /// Note: Make sure that created MemberAccessor is not cached until returning from this method
         /// </remarks>        
         private static MemberAccessor CreateAccessor(MemberInfo member)
         {
@@ -129,14 +114,6 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// Gets the type that contains the accessed member.
-        /// </summary>
-        protected Type DeclaringType
-        {
-            get { return declaringType; }
-        }
-
-        /// <summary>
         /// Gets the type of parameters of the accessed member in the reflected type.
         /// </summary>
         protected Type[] ParameterTypes
@@ -149,33 +126,17 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="member">Pass null when invoked from non-public constructors to avoid double caching.
         /// You may set member from initializer, too. Public constructors must not allow null member to avoid violating encapsulation</param>
-        /// <param name="declaringType">The <see cref="Type"/> that contains the member to access</param>
         /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
-        protected MemberAccessor(MemberInfo member, Type declaringType, Type[] parameterTypes)
+        protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
         {
-            if (member != null)
-            {
-                MemberInfo = member;
-                if (CachingEnabled)
-                {
-                    // deadlock never happens because GetCreateAccessor invokes create and this method with null member.
-                    // TODO: Currently this part never executed. Can be activated with strong-typed accessors, see commented ActionInvoker<T, ...>
-                    lock (accessorCache)
-                    {
-                        accessorCache[member] = this;                        
-                    }
-                }
-            }
-            this.declaringType = declaringType;
-            if (parameterTypes == null)
-                parameterTypes = Type.EmptyTypes;
-            this.parameterTypes = parameterTypes;
+            MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.Get(Res.ArgumentNull));
+            this.parameterTypes = parameterTypes ?? Type.EmptyTypes;
         }
 
-        static MemberAccessor()
-        {
-            CachingEnabled = true;
-        }
+        //static MemberAccessor()
+        //{
+        //    CachingEnabled = true;
+        //}
 
         /// <summary>
         /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="MemberAccessor"/>.
@@ -212,10 +173,7 @@ namespace KGySoft.Reflection
         /// <returns></returns>
         protected static MemberAccessor GetCreateAccessor(MemberInfo memberInfo)
         {
-            lock (accessorCache)
-            {
-                return accessorCache[memberInfo];
-            }
+            return accessorCache[memberInfo];
         }
 
         /// <summary>
@@ -238,12 +196,15 @@ namespace KGySoft.Reflection
         {
             if (methodBase == null)
                 throw new ArgumentNullException(nameof(methodBase), Res.Get(Res.ArgumentNull));
+            Type declaringType = methodBase.DeclaringType;
+            if (declaringType == null)
+                throw new ArgumentException(Res.Get(Res.DeclaringTypeExpected), nameof(methodBase));
             MethodInfo method = methodBase as MethodInfo;
             ConstructorInfo ctor = methodBase as ConstructorInfo;
             if (method == null && ctor == null)
                 throw new ArgumentException(Res.Get(Res.InvalidMethodBase), nameof(methodBase));
 
-            Type returnType = ctor != null ? DeclaringType : method.ReturnType;
+            Type returnType = ctor != null ? declaringType : method.ReturnType;
             Type dmReturnType = returnType == typeof(void) ? typeof(void) : typeof(object);
 
             List<Type> methodParameters = new List<Type>();
@@ -251,7 +212,7 @@ namespace KGySoft.Reflection
 
             if (ctor != null)
             {
-                methodName = String.Format("<Construct>__{0}", DeclaringType.Name);
+                methodName = String.Format("<Construct>__{0}", declaringType.Name);
                 methodParameters.Add(typeof(object[])); // ctor parameters
             }
             else
@@ -277,7 +238,7 @@ namespace KGySoft.Reflection
             DynamicMethod dm = new DynamicMethod(methodName, // method name
                 dmReturnType, // return type
                 methodParameters.ToArray(), // parameters
-                DeclaringType, true); // owner
+                declaringType, true); // owner
 
             ILGenerator il = dm.GetILGenerator();
 
@@ -317,12 +278,12 @@ namespace KGySoft.Reflection
             if (method != null && !method.IsStatic)
             {
                 il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                if (DeclaringType.IsValueType)
+                if (declaringType.IsValueType)
                 {
                     // Note: this is a tricky solution that could not be made in C#:
                     // We are just unboxing the value type without storing it in a typed local variable
                     // This makes possible to preserve the modified content of a value type without using ref parameter
-                    il.Emit(OpCodes.Unbox, DeclaringType); // unboxing the instance
+                    il.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
                     //LocalBuilder unboxedInstance = il.DeclareLocal(DeclaringType);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace KGySoft.Reflection
@@ -22,7 +23,7 @@ namespace KGySoft.Reflection
                 if (getter == null)
                 {
                     if (!CanRead)
-                        throw new NotSupportedException(Res.Get(Res.PropertyHasNoGetter, DeclaringType, MemberInfo));
+                        throw new NotSupportedException(Res.Get(Res.PropertyHasNoGetter, MemberInfo.DeclaringType, MemberInfo));
 
                     getter = CreateGetter();
                 }
@@ -45,7 +46,7 @@ namespace KGySoft.Reflection
                 if (setter == null)
                 {
                     if (!CanWrite)
-                        throw new NotSupportedException(Res.Get(Res.PropertyHasNoSetter, DeclaringType, MemberInfo));
+                        throw new NotSupportedException(Res.Get(Res.PropertyHasNoSetter, MemberInfo.DeclaringType, MemberInfo));
 
                     setter = CreateSetter();
                 }
@@ -77,42 +78,26 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Creates a new PropertyAccessor.
         /// </summary>
-        protected PropertyAccessor(PropertyInfo property, Type declaringType, params Type[] indexerParameterTypes) :
-            base(property, declaringType, indexerParameterTypes)
+        protected PropertyAccessor(PropertyInfo property) :
+            base(property, property.GetIndexParameters().Select(p => p.ParameterType).ToArray())
         {
         }
 
         /// <summary>
-        /// Creates an accessor for the <paramref name="property"/> that provides faster
+        /// Gets an accessor for the <paramref name="property"/> that provides faster
         /// property access than <see cref="PropertyInfo"/>.
         /// </summary>
-        public static PropertyAccessor GetPropertyAccessor(PropertyInfo property)
-        {
-            if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull));
-            if (CachingEnabled)
-                return (PropertyAccessor)GetCreateAccessor(property);
-            else
-                return CreatePropertyAccessor(property);
-        }
+        public static PropertyAccessor GetPropertyAccessor(PropertyInfo property) 
+            => (PropertyAccessor)GetCreateAccessor(property ?? throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull)));
 
         /// <summary>
         /// Non-caching version of property accessor creation.
         /// </summary>
         internal static PropertyAccessor CreatePropertyAccessor(PropertyInfo property)
         {
-            ParameterInfo[] indexParameters = property.GetIndexParameters() ?? new ParameterInfo[0];
-            Type[] parameterTypes = new Type[indexParameters.Length];
-            for (int i = 0; i < indexParameters.Length; i++)
-            {
-                parameterTypes[i] = indexParameters[i].ParameterType;
-            }
-
-            // late-initialization of MemberInfo to avoid caching
-            if (indexParameters.Length == 0)
-                return new SimplePropertyAccessor(property.DeclaringType) { MemberInfo = property };
-            else
-                return new IndexerAccessor(property.DeclaringType, parameterTypes) { MemberInfo = property };
+            return property.GetIndexParameters().Length == 0
+                ? (PropertyAccessor)new SimplePropertyAccessor(property)
+                : new IndexerAccessor(property);
         }
 
         /// <summary>

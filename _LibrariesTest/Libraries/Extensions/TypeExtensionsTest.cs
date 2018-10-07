@@ -45,7 +45,7 @@ namespace _LibrariesTest.Libraries.Extensions
 
             Test<object>(false, false, null, null, false);
             Test<string>(true, false, typeof(char[]), typeof(char), false);
-            Test<byte[]>(false, false, null, typeof(byte), false);
+            Test<byte[]>(true, false, null, typeof(byte), false);
             Test<List<byte>>(true, true, typeof(IEnumerable<byte>), typeof(byte), false);
             Test<Dictionary<int, string>>(true, true, typeof(IDictionary<int, string>), typeof(KeyValuePair<int, string>), true);
             Test<ArrayList>(true, true, typeof(ICollection), typeof(object), false);
@@ -53,7 +53,7 @@ namespace _LibrariesTest.Libraries.Extensions
             Test<Queue<int>>(true, false, typeof(IEnumerable<int>), typeof(int), false);
             Test<Queue>(true, false, typeof(ICollection), typeof(object), false);
             Test<BitArray>(true, false, typeof(bool[]), typeof(bool), false);
-            Test<StringDictionary>(false, false, null, null, false);
+            Test<StringDictionary>(false, false, null, typeof(object), false);
             Test<HybridDictionary>(true, true, null, typeof(DictionaryEntry), true);
             Test<ListDictionary>(true, true, null, typeof(DictionaryEntry), true);
             Test<OrderedDictionary>(true, true, null, typeof(DictionaryEntry), true);

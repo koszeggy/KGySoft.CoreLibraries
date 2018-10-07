@@ -234,12 +234,10 @@ namespace _PerformanceTest.Libraries.Diagnostics
         /// </summary>
         private int DoSomething()
         {
-            MemberAccessor.CachingEnabled = false;
             Type t = this.GetType();
             MethodInfo mi = t.GetMethod("DoNothing", BindingFlags.Instance | BindingFlags.NonPublic);
-            MethodInvoker invoker = MethodInvoker.GetMethodInvoker(mi);
+            MethodInvoker invoker = new FunctionInvoker(mi);
             int result = (int)invoker.Invoke(this, null);
-            MemberAccessor.CachingEnabled = true;
             return result;
         }
 

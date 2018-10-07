@@ -99,10 +99,12 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly Cache<Type, Dictionary<string, EventInfo>> eventsCache = new Cache<Type, Dictionary<string, EventInfo>>(t => t.GetEvents(BindingFlags.Public | BindingFlags.Instance).ToDictionary(e => e.Name, e => e));
-        private static readonly Cache<Type, Dictionary<string, PropertyInfo>> properties = new Cache<Type, Dictionary<string, PropertyInfo>>(t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache = new Cache<Type, Dictionary<string, EventInfo>>(t =>
+            t.GetEvents(BindingFlags.Public | BindingFlags.Instance).ToDictionary(e => e.Name, e => e)).GetThreadSafeAccessor();
+
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, PropertyInfo>> properties = new Cache<Type, Dictionary<string, PropertyInfo>>(t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0)
-            .ToDictionary(p => p.Name, p => p), 256);
+            .ToDictionary(p => p.Name, p => p), 256).GetThreadSafeAccessor();
 
         #endregion
 
@@ -148,16 +150,10 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static Dictionary<string, PropertyInfo> GetProperties(Type type)
-        {
-            lock (properties)
-                return properties[type];
-        }
-
         private static void DefaultUpdateState(object source, string propertyName, object stateValue)
         {
             Type type = source.GetType();
-            if (!GetProperties(type).TryGetValue(propertyName, out PropertyInfo pi) || !pi.PropertyType.CanAcceptValue(stateValue))
+            if (!properties[type].TryGetValue(propertyName, out PropertyInfo pi) || !pi.PropertyType.CanAcceptValue(stateValue))
                 return;
             Reflector.SetProperty(source, pi, stateValue);
         }
@@ -213,7 +209,7 @@ namespace KGySoft.ComponentModel
 
             // subscribing the event by info.Execute
             info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
-            Reflector.RunMethod(source, eventInfo.AddMethod, info.Delegate);
+            Reflector.RunMethod(source, eventInfo.GetAddMethod(), info.Delegate);
 
             if (subscriptions == null)
                 sources[source] = new Dictionary<EventInfo, SubscriptionInfo> { { eventInfo, info } };
@@ -230,7 +226,7 @@ namespace KGySoft.ComponentModel
                 return false;
 
             foreach (var subscriptionInfo in subscriptions)
-                Reflector.RunMethod(source, subscriptionInfo.Key.RemoveMethod, subscriptionInfo.Value.Delegate);
+                Reflector.RunMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
 
             return sources.Remove(source);
         }

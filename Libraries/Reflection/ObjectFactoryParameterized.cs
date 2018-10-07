@@ -17,11 +17,8 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate object Ctor(object[] arguments);
 
-        /// <summary>
-        /// Non-caching internal constructor. Called from cache.
-        /// </summary>
-        internal ObjectFactoryParameterized(Type instanceType, Type[] parameterTypes)
-            : base(null, instanceType, parameterTypes)
+        internal ObjectFactoryParameterized(ConstructorInfo ctor)
+            : base(ctor)
         {
         }
 

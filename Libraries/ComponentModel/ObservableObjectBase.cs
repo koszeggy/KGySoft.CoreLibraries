@@ -78,7 +78,13 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">Name of the property. This parameter is optional.
         /// <br/>Default value: The name of the caller member.</param>
         [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected virtual void OnPropertyChanged(
+#if NET35 || NET40
+            string propertyName
+#else
+            [CallerMemberName] string propertyName = null
+#endif
+            )
         {
             if (suspendCounter <= 0)
                 propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -102,8 +108,8 @@ namespace KGySoft.ComponentModel
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing) => propertyChanged = null;
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

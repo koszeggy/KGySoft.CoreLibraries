@@ -104,6 +104,7 @@ namespace _PerformanceTest.Libraries.Reflection
 
         static Cache<MemberInfo, MemberAccessor> GetCache()
         {
+            // this is not a cache anymore
             return (Cache<MemberInfo, MemberAccessor>)Reflector.GetField(null, typeof(MemberAccessor).GetField("accessorCache", BindingFlags.NonPublic | BindingFlags.Static), ReflectionWays.SystemReflection);
         }
 
@@ -139,9 +140,10 @@ namespace _PerformanceTest.Libraries.Reflection
             const int p2 = 10;
             Test t = new Test();
             const string methodName = "SetValue";
-            MemberAccessor.CachingEnabled = false;
+
+            // a new uncached invoker
             MethodInfo mi = t.GetType().GetMethod(methodName);
-            MethodInvoker invokerAction = MethodInvoker.GetMethodInvoker(mi);
+            MethodInvoker invokerAction = new ActionInvoker(mi);
 
             int cacheSize = 1024;
             int iterations = 1000000;
@@ -161,7 +163,6 @@ namespace _PerformanceTest.Libraries.Reflection
             Console.WriteLine("Direct invocation (instance.(...)): " + watch.ElapsedMilliseconds.ToString());
 
             // Lambda accessor
-            MemberAccessor.CachingEnabled = true;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -173,7 +174,6 @@ namespace _PerformanceTest.Libraries.Reflection
 
             // Method invoker
             ResetCache(cacheSize);
-            MemberAccessor.CachingEnabled = true;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -239,53 +239,53 @@ namespace _PerformanceTest.Libraries.Reflection
             watch.Stop();
             Console.WriteLine("Reflector.RunMethod(instance, \"MethodName\", ReflectionWays.SystemReflection, ...): " + watch.ElapsedMilliseconds.ToString());
 
-            //return;
-            Console.WriteLine("****************************************************");
+            return;
+            //Console.WriteLine("****************************************************");
 
-            ResetCache(cacheSize);
-            Console.WriteLine(">>>>>> Cache Size: " + cacheSize);
-            MethodInvoker.GetMethodInvoker(mi); // cache generic accessor
-            Console.WriteLine("   Pre-Cached accessor, cache is on");
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, null);
+            //ResetCache(cacheSize);
+            //Console.WriteLine(">>>>>> Cache Size: " + cacheSize);
+            //MethodInvoker.GetMethodInvoker(mi); // cache generic accessor
+            //Console.WriteLine("   Pre-Cached accessor, cache is on");
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, null);
 
-            ResetCache(cacheSize);
-            foreach (var item in typeof(Console).GetMethods())
-                MethodInvoker.GetMethodInvoker(item);
-            Console.WriteLine("   " + GetCacheSize() + " items in cache, Behavior = " + MemberAccessor.CacheBehavior);
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, null);
+            //ResetCache(cacheSize);
+            //foreach (var item in typeof(Console).GetMethods())
+            //    MethodInvoker.GetMethodInvoker(item);
+            //Console.WriteLine("   " + GetCacheSize() + " items in cache, Behavior = " + MemberAccessor.CacheBehavior);
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, null);
 
-            ResetCache(cacheSize);
-            foreach (var item in typeof(Console).GetMethods())
-                MethodInvoker.GetMethodInvoker(item);
-            MemberAccessor.CacheBehavior = CacheBehavior.RemoveLeastRecentUsedElement;
-            Console.WriteLine("   " + GetCacheSize() + " items in cache, Behavior = " + MemberAccessor.CacheBehavior);
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, null);
+            //ResetCache(cacheSize);
+            //foreach (var item in typeof(Console).GetMethods())
+            //    MethodInvoker.GetMethodInvoker(item);
+            //MemberAccessor.CacheBehavior = CacheBehavior.RemoveLeastRecentUsedElement;
+            //Console.WriteLine("   " + GetCacheSize() + " items in cache, Behavior = " + MemberAccessor.CacheBehavior);
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, null);
 
-            MethodInfo[] methods = typeof(Math).GetMethods();
-            ResetCache(cacheSize);
-            MemberAccessor.CacheBehavior = CacheBehavior.RemoveOldestElement;
-            Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
+            //MethodInfo[] methods = typeof(Math).GetMethods();
+            //ResetCache(cacheSize);
+            //MemberAccessor.CacheBehavior = CacheBehavior.RemoveOldestElement;
+            //Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
 
-            ResetCache(cacheSize);
-            MemberAccessor.CacheBehavior = CacheBehavior.RemoveLeastRecentUsedElement;
-            Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
+            //ResetCache(cacheSize);
+            //MemberAccessor.CacheBehavior = CacheBehavior.RemoveLeastRecentUsedElement;
+            //Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
 
-            cacheSize = 32;
-            ResetCache(cacheSize);
-            Console.WriteLine(">>>>>> Cache Size: " + cacheSize);
+            //cacheSize = 32;
+            //ResetCache(cacheSize);
+            //Console.WriteLine(">>>>>> Cache Size: " + cacheSize);
 
-            MemberAccessor.CacheBehavior = CacheBehavior.RemoveOldestElement;
-            Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
-            DumpStatistics();
+            //MemberAccessor.CacheBehavior = CacheBehavior.RemoveOldestElement;
+            //Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
+            //DumpStatistics();
 
-            ResetCache(cacheSize);
-            MemberAccessor.CacheBehavior = CacheBehavior.RemoveLeastRecentUsedElement;
-            Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
-            ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
-            DumpStatistics();
+            //ResetCache(cacheSize);
+            //MemberAccessor.CacheBehavior = CacheBehavior.RemoveLeastRecentUsedElement;
+            //Console.WriteLine("   Semi-random invokes, Behavior = " + MemberAccessor.CacheBehavior);
+            //ReFetchedAccessors(t, p1, p2, mi, iterations, watch, methods);
+            //DumpStatistics();
 
             //Console.WriteLine("****************************************************");
             //iterations = 10000;
@@ -381,45 +381,45 @@ Hit rate: 100,00 %
              */
         }
 
-        private static void ReFetchedAccessors(Test t, int p1, int p2, MethodInfo miInstanceAction, int iterations, Stopwatch watch, MethodInfo[] randomMethods)
-        {
-            Random rnd = new Random(0);
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                if (randomMethods != null && (i & 1) == 1)
-                {
-                    int j;
-                    j = rnd.Next(100);
-                    // a legutóbbiak gyakori használatának szimulálása: 100-ból egyszer ritka eset is jöhet, egyébként ugyanaz a 32 elem
-                    if (j != 0)
-                        j = rnd.Next(Math.Min(32, randomMethods.Length));
-                    else
-                        j = rnd.Next(randomMethods.Length);
+        //private static void ReFetchedAccessors(Test t, int p1, int p2, MethodInfo miInstanceAction, int iterations, Stopwatch watch, MethodInfo[] randomMethods)
+        //{
+        //    Random rnd = new Random(0);
+        //    watch.Reset();
+        //    watch.Start();
+        //    for (int i = 0; i < iterations; i++)
+        //    {
+        //        if (randomMethods != null && (i & 1) == 1)
+        //        {
+        //            int j;
+        //            j = rnd.Next(100);
+        //            // a legutóbbiak gyakori használatának szimulálása: 100-ból egyszer ritka eset is jöhet, egyébként ugyanaz a 32 elem
+        //            if (j != 0)
+        //                j = rnd.Next(Math.Min(32, randomMethods.Length));
+        //            else
+        //                j = rnd.Next(randomMethods.Length);
 
-                    object[] args = new object[randomMethods[j].GetParameters().Length];
-                    ParameterInfo[] pi = randomMethods[j].GetParameters();
-                    for (int k = 0; k < args.Length; k++)
-                    {
-                        if (!pi[k].ParameterType.IsEnum && typeof(IConvertible).IsAssignableFrom(pi[k].ParameterType))
-                            args[k] = Convert.ChangeType(1, pi[k].ParameterType);
-                        else if (pi[k].ParameterType.IsValueType)
-                            args[k] = Activator.CreateInstance(pi[k].ParameterType);
-                        else if (pi[k].ParameterType == typeof(string))
-                            args[k] = String.Empty;
-                        else if (pi[k].ParameterType.IsArray)
-                            args[k] = Activator.CreateInstance(pi[k].ParameterType, 0);
-                    }
-                    MethodInvoker.GetMethodInvoker(randomMethods[j]).Invoke(t, args);
-                }
-                else
-                    MethodInvoker.GetMethodInvoker(miInstanceAction).Invoke(t, new object[] { p1, p2 });
-            }
-            watch.Stop();
-            Console.WriteLine("MethodInvoker.GetMethodInvoker from {0} elements (capacity: {2}): {1} ms", randomMethods == null ? 1 : randomMethods.Length + 1, watch.ElapsedMilliseconds, MemberAccessor.CacheSize);
+        //            object[] args = new object[randomMethods[j].GetParameters().Length];
+        //            ParameterInfo[] pi = randomMethods[j].GetParameters();
+        //            for (int k = 0; k < args.Length; k++)
+        //            {
+        //                if (!pi[k].ParameterType.IsEnum && typeof(IConvertible).IsAssignableFrom(pi[k].ParameterType))
+        //                    args[k] = Convert.ChangeType(1, pi[k].ParameterType);
+        //                else if (pi[k].ParameterType.IsValueType)
+        //                    args[k] = Activator.CreateInstance(pi[k].ParameterType);
+        //                else if (pi[k].ParameterType == typeof(string))
+        //                    args[k] = String.Empty;
+        //                else if (pi[k].ParameterType.IsArray)
+        //                    args[k] = Activator.CreateInstance(pi[k].ParameterType, 0);
+        //            }
+        //            MethodInvoker.GetMethodInvoker(randomMethods[j]).Invoke(t, args);
+        //        }
+        //        else
+        //            MethodInvoker.GetMethodInvoker(miInstanceAction).Invoke(t, new object[] { p1, p2 });
+        //    }
+        //    watch.Stop();
+        //    Console.WriteLine("MethodInvoker.GetMethodInvoker from {0} elements (capacity: {2}): {1} ms", randomMethods == null ? 1 : randomMethods.Length + 1, watch.ElapsedMilliseconds, MemberAccessor.CacheSize);
 
-        }
+        //}
 
         [TestMethod]
         public void TestFieldAccess()
@@ -428,9 +428,10 @@ Hit rate: 100,00 %
             Test t = new Test();
             int fieldValue = 1;
             const string fieldName = "field";
-            MemberAccessor.CachingEnabled = false;
+
+            // new uncached accessor
             FieldInfo fi = t.GetType().GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            FieldAccessor accessor = FieldAccessor.GetFieldAccessor(fi);
+            FieldAccessor accessor = new FieldAccessor(fi);
 
             const int iterations = 1000000;
 
@@ -484,7 +485,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 FieldAccessor.GetFieldAccessor(fi).Set(t, fieldValue);
@@ -496,7 +496,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 fieldValue = (int)FieldAccessor.GetFieldAccessor(fi).Get(t);
@@ -624,9 +623,10 @@ Hit rate: 100,00 %
             Test t = new Test();
             int propValue = 1;
             string propName = "Value";
-            MemberAccessor.CachingEnabled = false;
+
+            // new uncached accessor
             PropertyInfo pi = t.GetType().GetProperty(propName);
-            PropertyAccessor accessor = PropertyAccessor.GetPropertyAccessor(pi);
+            PropertyAccessor accessor = new SimplePropertyAccessor(pi);
 
             int iterations = 1000000;
 
@@ -680,7 +680,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 PropertyAccessor.GetPropertyAccessor(pi).Set(t, propValue);
@@ -692,7 +691,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 propValue = (int)PropertyAccessor.GetPropertyAccessor(pi).Get(t);
@@ -845,9 +843,10 @@ Hit rate: 100,00 %
             int propValue = 1;
             int ind = 1;
             string propName = "Indexer"; // Item is renamed by IndexerNameAttribute
-            MemberAccessor.CachingEnabled = false;
+
+            // new uncached accessor
             PropertyInfo pi = t.GetType().GetProperty(propName);
-            PropertyAccessor accessor = PropertyAccessor.GetPropertyAccessor(pi);
+            PropertyAccessor accessor = new IndexerAccessor(pi);
 
             int iterations = 1000000;
 
@@ -899,7 +898,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 PropertyAccessor.GetPropertyAccessor(pi).Set(t, propValue, ind);
@@ -911,7 +909,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 propValue = (int)PropertyAccessor.GetPropertyAccessor(pi).Get(t, ind);
@@ -1133,11 +1130,12 @@ Hit rate: 100,00 %
         public void TestClassCreation()
         {
             // Obtaining information
-            MemberAccessor.CachingEnabled = false;
             Type type = typeof(Test);
+
+            // new uncached accessors
             ConstructorInfo ci = type.GetConstructor(Type.EmptyTypes);
-            ObjectFactory factoryByType = ObjectFactory.GetObjectFactory(type);
-            ObjectFactory factoryByCtor = ObjectFactory.GetObjectFactory(ci);
+            ObjectFactory factoryByType = new ObjectFactoryDefault(type);
+            ObjectFactory factoryByCtor = new ObjectFactoryParameterized(ci);
             Test t;
 
             const int iterations = 1000000;
@@ -1158,7 +1156,6 @@ Hit rate: 100,00 %
             // Lambda accessor - by type
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 t = (Test)factoryByType.Create();
@@ -1169,7 +1166,6 @@ Hit rate: 100,00 %
             // Lambda accessor - by ctor
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 t = (Test)factoryByCtor.Create();
@@ -1181,7 +1177,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 t = (Test)ObjectFactory.GetObjectFactory(type).Create();
@@ -1193,7 +1188,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 t = (Test)ObjectFactory.GetObjectFactory(ci).Create();
@@ -1333,9 +1327,8 @@ Hit rate: 100,00 %
             // Obtaining information
             const int p1 = 1;
             const int p2 = 10;
-            MemberAccessor.CachingEnabled = false;
             ci = type.GetConstructor(new Type[] { typeof(int), typeof(int) });
-            factoryByCtor = ObjectFactory.GetObjectFactory(ci);
+            factoryByCtor = new ObjectFactoryParameterized(ci);
 
             ResetCache();
             Console.WriteLine("Number of iterations: {0:N0}", iterations);
@@ -1353,7 +1346,6 @@ Hit rate: 100,00 %
             // Lambda accessor - by ctor
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 t = (Test)factoryByCtor.Create(p1, p2);
@@ -1365,7 +1357,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 t = (Test)ObjectFactory.GetObjectFactory(ci).Create(p1, p2);
@@ -1474,9 +1465,8 @@ Hit rate: 100,00 %
         public void TestStructCreation()
         {
             // Obtaining information
-            MemberAccessor.CachingEnabled = false;
             Type type = typeof(Point);
-            ObjectFactory factoryByType = ObjectFactory.GetObjectFactory(type);
+            ObjectFactory factoryByType = new ObjectFactoryDefault(type);
             Point p;
 
             const int iterations = 1000000;
@@ -1497,7 +1487,6 @@ Hit rate: 100,00 %
             // Lambda accessor - by type
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 p = (Point)factoryByType.Create();
@@ -1509,7 +1498,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 p = (Point)ObjectFactory.GetObjectFactory(type).Create();
@@ -1606,9 +1594,8 @@ Hit rate: 100,00 %
             // Obtaining information
             const int p1 = 1;
             const int p2 = 10;
-            MemberAccessor.CachingEnabled = false;
             ConstructorInfo ci = type.GetConstructor(new Type[] { typeof(int), typeof(int) });
-            ObjectFactory factoryByCtor = ObjectFactory.GetObjectFactory(ci);
+            ObjectFactory factoryByCtor = new ObjectFactoryParameterized(ci);
 
             ResetCache();
             Console.WriteLine("Number of iterations: {0:N0}", iterations);
@@ -1626,7 +1613,6 @@ Hit rate: 100,00 %
             // Lambda accessor - by ctor
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 p = (Point)factoryByCtor.Create(p1, p2);
@@ -1638,7 +1624,6 @@ Hit rate: 100,00 %
             ResetCache();
             watch.Reset();
             watch.Start();
-            MemberAccessor.CachingEnabled = true;
             for (int i = 0; i < iterations; i++)
             {
                 p = (Point)ObjectFactory.GetObjectFactory(ci).Create(p1, p2);

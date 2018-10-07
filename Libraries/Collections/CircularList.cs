@@ -465,7 +465,7 @@ namespace KGySoft.Collections
                 {
                     if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
                     {
-                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeof(T), typeof(T));
+                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeof(T));
                         binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeHelper, true);
                     }
                     else

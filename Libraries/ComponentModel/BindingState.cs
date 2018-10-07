@@ -2,14 +2,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+#if !NET35
 using System.Dynamic;
+#endif
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace KGySoft.ComponentModel
 {
-    internal sealed class BindingState : DynamicObject, ICommandState, INotifyPropertyChanged
+    internal sealed class BindingState :
+#if !NET35
+        DynamicObject, 
+#endif
+        ICommandState, INotifyPropertyChanged
     {
         private readonly Dictionary<string, object> stateProperties = new Dictionary<string, object> { [nameof(Enabled)] = true };
 
@@ -153,12 +158,15 @@ namespace KGySoft.ComponentModel
             set => this[nameof(Enabled)] = value;
         }
 
+#if !NET35
         public dynamic AsDynamic => this;
+#endif
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
+#if !NET35
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             this[binder.Name] = value;
@@ -170,5 +178,6 @@ namespace KGySoft.ComponentModel
             result = this[binder.Name];
             return true;
         }
+#endif
     }
 }

@@ -23,7 +23,10 @@ namespace KGySoft.Serialization
 
         internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures; //| BinarySerializationOptions.CompactSerializationOfBoolCollections;
 
-        private static readonly Cache<Type, FieldInfo[]> serializableFieldsCache = new Cache<Type, FieldInfo[]>(t => t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(f => !f.IsNotSerialized).OrderBy(f => f.MetadataToken).ToArray(), 1024);
+        private static readonly IThreadSafeCacheAccessor<Type, FieldInfo[]> serializableFieldsCache = new Cache<Type, FieldInfo[]>(t =>
+            t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(f => !f.IsNotSerialized)
+                .OrderBy(f => f.MetadataToken).ToArray(), 1024).GetThreadSafeAccessor();
 
         #endregion
 
@@ -486,13 +489,7 @@ namespace KGySoft.Serialization
 
         #region Internal Methods
 
-        internal static FieldInfo[] GetSerializableFields(Type t)
-        {
-            lock (serializableFieldsCache)
-            {
-                return serializableFieldsCache[t];
-            }
-        }
+        internal static FieldInfo[] GetSerializableFields(Type t) => serializableFieldsCache[t];
 
         #endregion
     }

@@ -251,6 +251,7 @@ namespace KGySoft
         internal const string CannotSetProperty = nameof(CannotSetProperty);
         internal const string ReturnedTypeInvalid = nameof(ReturnedTypeInvalid);
         internal const string PropertyValueNotExist = nameof(PropertyValueNotExist);
+        internal const string DeclaringTypeExpected = nameof(DeclaringTypeExpected);
 
         #endregion
 

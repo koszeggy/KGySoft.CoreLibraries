@@ -14,11 +14,8 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate object DefaultCtor();
 
-        /// <summary>
-        /// Non-caching internal constructor. Called from cache.
-        /// </summary>
         internal ObjectFactoryDefault(Type instanceType)
-            : base(null, instanceType, Type.EmptyTypes)
+            : base(instanceType)
         {
         }
 

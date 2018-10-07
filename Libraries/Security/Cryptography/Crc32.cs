@@ -53,7 +53,7 @@ namespace KGySoft.Security.Cryptography
 
         #region Static Fields
 
-        private static readonly Cache<uint, uint[]> tablesCache = new Cache<uint, uint[]>(CreateTable);
+        private static readonly IThreadSafeCacheAccessor<uint, uint[]> tablesCache = new Cache<uint, uint[]>(CreateTable).GetThreadSafeAccessor();
 
         #endregion
 
@@ -100,7 +100,7 @@ namespace KGySoft.Security.Cryptography
         public Crc32(uint polynomial, uint initialCrc = 0U, bool isBigEndian = true)
         {
             HashSizeValue = 32;
-            table = GetTable(polynomial);
+            table = tablesCache[polynomial];
             this.initialCrc = initialCrc;
             this.isBigEndian = isBigEndian;
             Reset();
@@ -132,7 +132,7 @@ namespace KGySoft.Security.Cryptography
                 throw new ArgumentNullException(nameof(buffer), Res.Get(Res.ArgumentNull));
             if (offset < 0 || count < 0 || offset + count > buffer.Length)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
-            return CalculateHash(GetTable(polynomial), initialCrc, buffer, offset, count);
+            return CalculateHash(tablesCache[polynomial], initialCrc, buffer, offset, count);
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace KGySoft.Security.Cryptography
         {
             if (buffer == null)
                 throw new ArgumentNullException(nameof(buffer), Res.Get(Res.ArgumentNull));
-            return CalculateHash(GetTable(polynomial), initialCrc, buffer, 0, buffer.Length);
+            return CalculateHash(tablesCache[polynomial], initialCrc, buffer, 0, buffer.Length);
         }
 
         /// <summary>
@@ -167,18 +167,12 @@ namespace KGySoft.Security.Cryptography
                 throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
 
             byte[] buffer = (encoding ?? Encoding.UTF8).GetBytes(s);
-            return CalculateHash(GetTable(polynomial), 0U, buffer, 0, buffer.Length);
+            return CalculateHash(tablesCache[polynomial], 0U, buffer, 0, buffer.Length);
         }
 
         #endregion
 
         #region Private Methods
-
-        private static uint[] GetTable(uint polynomial)
-        {
-            lock (tablesCache)
-                return tablesCache[polynomial];
-        }
 
         private static uint[] CreateTable(uint polynomial)
         {

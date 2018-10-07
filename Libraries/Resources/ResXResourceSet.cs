@@ -679,7 +679,7 @@ namespace KGySoft.Resources
         /// The requested resource, or when <see cref="SafeMode"/> is <see langword="true"/>, a <see cref="ResXDataNode"/> instance
         /// from which the resource can be obtained. If the requested <paramref name="name"/> cannot be found, <see langword="null"/> is returned.
         /// </returns>
-        /// <remarks>
+        /// <remarks> 
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the returned object is a <see cref="ResXDataNode"/> instance from which the resource can be obtained.</para>
         /// <para>For examples, see the description of the <see cref="ResXResourceSet"/> and <see cref="ResXDataNode"/> classes.</para>
         /// </remarks>

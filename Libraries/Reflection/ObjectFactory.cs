@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace KGySoft.Reflection
@@ -32,10 +33,11 @@ namespace KGySoft.Reflection
         protected abstract Delegate CreateFactory();
 
         /// <summary>
-        /// Creates a new instance of <see cref="ObjectFactory"/>.
+        /// Initializes a new instance of the <see cref="ObjectFactory"/> class.
         /// </summary>
-        protected ObjectFactory(MemberInfo member, Type declaringType, params Type[] parameterTypes) :
-            base(member, declaringType, parameterTypes)
+        /// <param name="member">Can be a <see cref="Type"/> or a <see cref="ConstructorInfo"/>.</param>
+        protected ObjectFactory(MemberInfo member) :
+            base(member, (member as ConstructorInfo)?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
 
@@ -45,53 +47,31 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type"><see cref="Type"/> of the object to create.</param>
         /// <returns>A new instance of <paramref name="type"/>.</returns>
-        public static ObjectFactory GetObjectFactory(Type type)
-        {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
-            if (CachingEnabled)
-                return (ObjectFactory)GetCreateAccessor(type);
-            else
-                return CreateObjectFactory(type);
-        }
+        public static ObjectFactory GetObjectFactory(Type type) 
+            => (ObjectFactory)GetCreateAccessor(type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull)));
 
         /// <summary>
         /// Retrieves a factory for an object based on a <see cref="ConstructorInfo"/>.
         /// </summary>
         /// <param name="ctor">The <see cref="ConstructorInfo"/> metadata of the object to create.</param>
         /// <returns>A new instance of the object created by the provided constructor.</returns>
-        public static ObjectFactory GetObjectFactory(ConstructorInfo ctor)
-        {
-            if (ctor == null)
-                throw new ArgumentNullException(nameof(ctor), Res.Get(Res.ArgumentNull));
-            if (CachingEnabled)
-                return (ObjectFactory)GetCreateAccessor(ctor);
-            else
-                return CreateObjectFactory(ctor);
-        }
+        public static ObjectFactory GetObjectFactory(ConstructorInfo ctor) 
+            => (ObjectFactory)GetCreateAccessor(ctor ?? throw new ArgumentNullException(nameof(ctor), Res.Get(Res.ArgumentNull)));
 
         /// <summary>
         /// Non-caching version of object factory creation.
         /// </summary>
         internal static ObjectFactory CreateObjectFactory(MemberInfo member)
         {
-            ConstructorInfo ctor = member as ConstructorInfo;
-            if (ctor != null)
+            switch (member)
             {
-                ParameterInfo[] pi = ctor.GetParameters() ?? new ParameterInfo[0];
-                Type[] parameterTypes = new Type[pi.Length];
-                for (int i = 0; i < pi.Length; i++)
-                {
-                    parameterTypes[i] = pi[i].ParameterType;
-                }
-                // late-initialization of MemberInfo to avoid caching
-                return new ObjectFactoryParameterized(ctor.DeclaringType, parameterTypes) { MemberInfo = member };                
+                case ConstructorInfo ci:
+                    return new ObjectFactoryParameterized(ci);
+                case Type t:
+                    return new ObjectFactoryDefault(t);
+                default:
+                    throw new ArgumentException(Res.Get(Res.TypeOrCtorInfoExpected), nameof(member));
             }
-            else if (member is Type)
-                // late-initialization of MemberInfo to avoid caching
-                return new ObjectFactoryDefault((Type)member) { MemberInfo = member };
-            else
-                throw new ArgumentException(Res.Get(Res.TypeOrCtorInfoExpected), nameof(member));
         }
 
         /// <summary>

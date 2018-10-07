@@ -17,11 +17,8 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate object IndexerGetter(object instance, object[] indexArguments);
 
-        /// <summary>
-        /// Non-caching internal constructor. Called from cache.
-        /// </summary>
-        internal IndexerAccessor(Type instanceType, Type[] parameterTypes)
-            : base(null, instanceType, parameterTypes)
+        internal IndexerAccessor(PropertyInfo pi)
+            : base(pi)
         {
         }
 
@@ -30,9 +27,12 @@ namespace KGySoft.Reflection
             PropertyInfo property = (PropertyInfo)MemberInfo;
 
             MethodInfo getterMethod = property.GetGetMethod(true);
+            Type declaringType = getterMethod.DeclaringType;
+            if (declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // for classes: Lambda expression
-            if (!DeclaringType.IsValueType)
+            if (!declaringType.IsValueType)
             {
 
                 ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
@@ -44,7 +44,7 @@ namespace KGySoft.Reflection
                 }
 
                 MethodCallExpression getterCall = Expression.Call(
-                    Expression.Convert(instanceParameter, this.DeclaringType), // (TInstance)instance
+                    Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                     getterMethod, // getter
                     getterParameters); // arguments casted to target types
 
@@ -66,9 +66,12 @@ namespace KGySoft.Reflection
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
             MethodInfo setterMethod = property.GetSetMethod(true);
+            Type declaringType = setterMethod.DeclaringType;
+            if (declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // for classes: Lambda expression
-            if (!DeclaringType.IsValueType)
+            if (!declaringType.IsValueType)
             {
                 ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
                 ParameterExpression valueParameter = Expression.Parameter(typeof(object), "value");
@@ -84,7 +87,7 @@ namespace KGySoft.Reflection
                 setterParameters[ParameterTypes.Length] = Expression.Convert(valueParameter, property.PropertyType);
 
                 MethodCallExpression setterCall = Expression.Call(
-                    Expression.Convert(instanceParameter, DeclaringType), // (TInstance)instance
+                    Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                     setterMethod, // setter
                     setterParameters); // arguments casted to target types + value as last argument casted to property type
 

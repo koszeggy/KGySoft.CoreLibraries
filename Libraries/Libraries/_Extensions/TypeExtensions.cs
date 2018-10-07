@@ -46,7 +46,7 @@ namespace KGySoft.Libraries
         private static readonly Type collectionGenType = typeof(ICollection<>);
         private static readonly string collectionGenTypeName = collectionGenType.Name;
 
-        private static readonly Cache<Type, int> sizeOfCache = new Cache<Type, int>(GetSize, 1024) { EnsureCapacity = false };
+        private static readonly IThreadSafeCacheAccessor<Type, int> sizeOfCache = new Cache<Type, int>(GetSize).GetThreadSafeAccessor();
 
         #endregion
 
@@ -384,11 +384,7 @@ namespace KGySoft.Libraries
         internal static bool CanBeCreatedWithoutParameters(this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
 
-        internal static int SizeOf(this Type type)
-        {
-            lock (sizeOfCache)
-                return sizeOfCache[type];
-        }
+        internal static int SizeOf(this Type type) => sizeOfCache[type];
 
         #endregion
 

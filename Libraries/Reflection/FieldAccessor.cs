@@ -43,8 +43,11 @@ namespace KGySoft.Reflection
             ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
 
             FieldInfo field = (FieldInfo)MemberInfo;
+            Type declaringType = field.DeclaringType;
+            if (!field.IsStatic && declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
             MemberExpression member = Expression.Field(
-                field.IsStatic ? null : Expression.Convert(instanceParameter, DeclaringType), // (TInstance)instance
+                field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                 field);
 
             LambdaExpression lambda = Expression.Lambda<FieldGetter>(
@@ -63,7 +66,7 @@ namespace KGySoft.Reflection
                 if (setter == null)
                 {
                     if (IsConst)
-                        throw new InvalidOperationException(Res.Get(Res.SetConstantField, DeclaringType, MemberInfo));
+                        throw new InvalidOperationException(Res.Get(Res.SetConstantField, MemberInfo.DeclaringType, MemberInfo));
                     setter = CreateSetter();
                 }
                 return setter;
@@ -73,6 +76,9 @@ namespace KGySoft.Reflection
         private FieldSetter CreateSetter()
         {
             FieldInfo field = (FieldInfo)MemberInfo;
+            Type declaringType = field.DeclaringType;
+            if (declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // .NET 4.0: Using Expression.Assign (does not work for struct instance fields)
             // http://scmccart.wordpress.com/2009/10/08/c-4-0-exposer-an-evil-dynamicobject/
@@ -91,7 +97,7 @@ namespace KGySoft.Reflection
 
             DynamicMethod dm = new DynamicMethod(String.Format("<SetField>__{0}", field.Name), // setter method name
                 typeof(void), // return type
-                new Type[] { typeof(object), typeof(object) }, DeclaringType, true); // instance and value parameters
+                new Type[] { typeof(object), typeof(object) }, declaringType, true); // instance and value parameters
 
             ILGenerator il = dm.GetILGenerator();
 
@@ -100,12 +106,12 @@ namespace KGySoft.Reflection
             {
                 il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
                 // casting object instance to target type
-                if (DeclaringType.IsValueType)
+                if (declaringType.IsValueType)
                 {
                     // Note: this is a tricky solution that cannot be made in C#:
                     // We are just unboxing the value type without storing it in a typed local variable
                     // This makes possible to preserve the modified content of a value type without using ref parameter
-                    il.Emit(OpCodes.Unbox, DeclaringType); // unboxing the instance
+                    il.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
                     //LocalBuilder typedInstance = il.DeclareLocal(DeclaringType);
@@ -117,7 +123,7 @@ namespace KGySoft.Reflection
                 }
                 else
                 {
-                    il.Emit(OpCodes.Castclass, DeclaringType);
+                    il.Emit(OpCodes.Castclass, declaringType);
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
                     //LocalBuilder typedInstance = il.DeclareLocal(DeclaringType);
@@ -168,32 +174,21 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Creates a new FieldAccessor.
         /// </summary>
-        private FieldAccessor(FieldInfo field, Type declaringType) :
-            base(field, declaringType, null)
+        internal FieldAccessor(FieldInfo field) :
+            base(field, null)
         {
         }
+
+        /// <summary>
+        /// Gets an accessor for a field.
+        /// </summary>
+        public static FieldAccessor GetFieldAccessor(FieldInfo field) 
+            => (FieldAccessor)GetCreateAccessor(field ?? throw new ArgumentNullException(nameof(field), Res.Get(Res.ArgumentNull)));
 
         /// <summary>
         /// Creates an accessor for a field.
         /// </summary>
-        public static FieldAccessor GetFieldAccessor(FieldInfo field)
-        {
-            if (field == null)
-                throw new ArgumentNullException(nameof(field), Res.Get(Res.ArgumentNull));
-            if (CachingEnabled)
-                return (FieldAccessor)GetCreateAccessor(field);
-            else
-                return CreateFieldAccessor(field);
-        }
-
-        /// <summary>
-        /// Non-caching version of field accessor creation.
-        /// </summary>
-        internal static FieldAccessor CreateFieldAccessor(FieldInfo field)
-        {
-            // late-initialization of MemberInfo to avoid caching
-            return new FieldAccessor(null, field.DeclaringType) { MemberInfo = field };
-        }
+        internal static FieldAccessor CreateFieldAccessor(FieldInfo field) => new FieldAccessor(field);
 
         /// <summary>
         /// Sets the field.

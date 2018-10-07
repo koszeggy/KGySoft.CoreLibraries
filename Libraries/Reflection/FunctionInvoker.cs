@@ -19,18 +19,21 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Non-caching internal constructor. Called from cache.
         /// </summary>
-        internal FunctionInvoker(Type instanceType, Type[] parameterTypes)
-            : base(null, instanceType, parameterTypes)
+        internal FunctionInvoker(MethodInfo mi)
+            : base(mi)
         {
         }
 
         protected override Delegate CreateInvoker()
         {
             MethodInfo method = (MethodInfo)MemberInfo;
+            Type declaringType = method.DeclaringType;
+            if (!method.IsStatic && declaringType == null)
+                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
 
             // for classes and static methods that have no ref parameters: Lambda expression
-            if (!hasRefParameters && (method.IsStatic || !DeclaringType.IsValueType))
+            if (!hasRefParameters && (method.IsStatic || !declaringType.IsValueType))
             {
                 ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "target");
                 ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
@@ -41,7 +44,7 @@ namespace KGySoft.Reflection
                 }
 
                 MethodCallExpression methodToCall = Expression.Call(
-                    method.IsStatic ? null : Expression.Convert(instanceParameter, this.DeclaringType), // (TInstance)instance
+                    method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                     method, // method info
                     methodParameters); // arguments casted to target types
 
