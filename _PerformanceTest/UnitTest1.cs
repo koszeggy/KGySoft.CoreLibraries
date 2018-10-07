@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
+using KGySoft.Collections;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
@@ -68,7 +69,6 @@ namespace _PerformanceTest
                 Iterations = 10000,
                 Repeat = 5
             }.DoTest();
-
         }
 
         private void ByReflector()

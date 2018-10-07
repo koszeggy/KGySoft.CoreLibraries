@@ -74,8 +74,12 @@
     <Compile Include="Collections\CircularList.cs" />
     <Compile Include="Collections\CircularSortedList.cs" />
     <Compile Include="Collections\ComparableBinarySearchHelper.cs" />
-    <Compile Include="Collections\ICache.cs" />
-    <Compile Include="Collections\ICacheStatistics.cs" />
+    <Compile Include="Collections\LockingCollection.cs" />
+    <Compile Include="Collections\LockingDictionary.cs" />
+    <Compile Include="Collections\LockingList.cs" />
+    <Compile Include="Collections\_Interfaces\ICache.cs" />
+    <Compile Include="Collections\_Interfaces\ICacheStatistics.cs" />
+    <Compile Include="Collections\_Interfaces\IThreadSafeCacheAccessor.cs" />
     <Compile Include="Collections\_doc\NamespaceDoc.cs" />
     <Compile Include="ComponentModel\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\BindingState.cs" />
@@ -117,6 +121,7 @@
     <Compile Include="Libraries\ThreadSafeRandom.cs" />
     <Compile Include="Libraries\_doc\NamespaceDoc.cs" />
     <Compile Include="Libraries\_Extensions\CharExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\CollectionExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DateTimeExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DecimalExtensions.cs" />
     <Compile Include="Libraries\_Extensions\DictionaryExtensions.cs" />
@@ -124,6 +129,7 @@
     <Compile Include="Libraries\_Extensions\EnumerableExtensions.cs" />
     <Compile Include="Libraries\_Extensions\EnumExtensions.cs" />
     <Compile Include="Libraries\_Extensions\FloatExtensions.cs" />
+    <Compile Include="Libraries\_Extensions\ListExtensions.cs" />
     <Compile Include="Libraries\_Extensions\RandomExtensions.WordGenerator.cs" />
     <Compile Include="Libraries\_Extensions\_Classes\GenerateObjectSettings.cs" />
     <Compile Include="Libraries\_Extensions\ObjectExtensions.cs" />
@@ -237,7 +243,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

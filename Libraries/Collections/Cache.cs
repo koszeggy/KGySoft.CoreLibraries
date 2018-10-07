@@ -42,14 +42,11 @@ namespace KGySoft.Collections
     /// <typeparam name="TKey">Type of the keys stored in the cache.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the cache.</typeparam>
     /// <remarks>
-    /// <para>
-    /// <see cref="Cache{TKey,TValue}"/> type provides a fast-access storage with limited capacity and transparent access. If you need to store
+    /// <para><see cref="Cache{TKey,TValue}"/> type provides a fast-access storage with limited capacity and transparent access. If you need to store
     /// items that are expensive to retrieve (for example from a database or remote service) and you don't want to run out of memory because of
     /// just storing newer and newer elements without getting rid of old ones, then this type might fit your expectations.
-    /// Once a value is stored in the cache, its retrieval by using its key is very fast, close to O(1).
-    /// </para>
-    /// <para>
-    /// A cache store must meet the following three criteria:
+    /// Once a value is stored in the cache, its retrieval by using its key is very fast, close to O(1).</para>
+    /// <para>A cache store must meet the following three criteria:
     /// <list type="number">
     /// <item><term>Associative access</term><description>Accessing elements works the same way as in case of the <see cref="Dictionary{TKey,TValue}"/> type.
     /// <see cref="Cache{TKey,TValue}"/> implements both the generic <see cref="IDictionary{TKey,TValue}"/> and the non-generic <see cref="IDictionary"/> interfaces so can be
@@ -58,20 +55,23 @@ namespace KGySoft.Collections
     /// If needed, elements will be automatically loaded on the first access.</description></item>
     /// <item><term>Size management</term><description><see cref="Cache{TKey,TValue}"/> type has a <see cref="Capacity"/>, which is the allowed maximal elements count. If the cache is full, the
     /// oldest or least recent used element will be automatically removed from the cache (see <see cref="Behavior"/> property).</description></item>
-    /// </list>
-    /// </para>
-    /// <para>
-    /// Since <see cref="Cache{TKey,TValue}"/> implements <see cref="IDictionary{TKey,TValue}"/> interface, <see cref="Add">Add</see>, <see cref="Remove">Remove</see>, <see cref="ContainsKey">ContainsKey</see> and
+    /// </list></para>
+    /// <para>Since <see cref="Cache{TKey,TValue}"/> implements <see cref="IDictionary{TKey,TValue}"/> interface, <see cref="Add">Add</see>, <see cref="Remove">Remove</see>, <see cref="ContainsKey">ContainsKey</see> and
     /// <see cref="TryGetValue">TryGetValue</see> methods are available for it, and these methods work exactly the same way as in case the <see cref="Dictionary{TKey,TValue}"/> type. But using these methods
     /// usually are not necessary, unless we want to manually manage cache content or when cache is initialized without an item loader. Normally after cache is instantiated,
-    /// it is needed to be accessed only by the getter accessor of its indexer.
-    /// </para>
+    /// it is needed to be accessed only by the getter accessor of its indexer.</para>
     /// <note type="caution">
     /// Serializing a cache instance by <see cref="IFormatter"/> implementations involves the serialization of the item loader delegate. To deserialize a cache the assembly of the loader must be accessible. If you need to
     /// serialize cache instances try to use static methods as data loaders and avoid using anonymous delegates or lambda expressions, otherwise it is not guaranteed that another
     /// implementations or versions of CLR will able to deserialize data and resolve the compiler-generated members.
     /// </note>
     /// </remarks>
+    /// <threadsafety instance="false">Members of this type are not safe for multi-threaded operations, though a thread-safe accessor can be obtained for the <see cref="Cache{TKey,TValue}"/>
+    /// by the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method. To get a thread-safe wrapper for all members use the
+    /// <see cref="DictionaryExtensions.AsThreadSafe">AsThreadSafe</see> extension method instead.
+    /// <note>If a <see cref="Cache{TKey,TValue}"/> instance is wrapped into a <see cref="LockingDictionary{TKey, TValue}"/> instance, then the whole cache will be locked during the time when the item loader delegate is being called.
+    /// If that is not desirable consider to use the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method instead with the default arguments and access the cache only via the returned accessor.</note>
+    /// </threadsafety>
     /// <example>
     /// The following example shows the suggested usage of <see cref="Cache{TKey,TValue}"/>.
     /// <code lang="C#"><![CDATA[
@@ -667,6 +667,86 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region ThreadSafeAccessorProtectLoader class
+
+        private class ThreadSafeAccessorProtectLoader : IThreadSafeCacheAccessor<TKey, TValue>
+        {
+            #region Fields
+
+            private readonly object syncRoot = new object();
+            private readonly Cache<TKey, TValue> cache;
+
+            #endregion
+
+            #region Indexers
+
+            public TValue this[TKey key]
+            {
+                get
+                {
+                    lock (syncRoot)
+                        return cache[key];
+                }
+            }
+
+            #endregion
+
+            #region Constructors
+
+            public ThreadSafeAccessorProtectLoader(Cache<TKey, TValue> cache) => this.cache = cache;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ThreadSafeAccessor class
+
+        private class ThreadSafeAccessor : IThreadSafeCacheAccessor<TKey, TValue>
+        {
+            #region Fields
+
+            private readonly object syncRoot = new object();
+            private readonly Cache<TKey, TValue> cache;
+
+            #endregion
+
+            #region Indexers
+
+            public TValue this[TKey key]
+            {
+                get
+                {
+                    lock (syncRoot)
+                    {
+                        if (cache.TryGetValue(key, out TValue result))
+                            return result;
+                    }
+
+                    // ReSharper disable once InconsistentlySynchronizedField - intended: item loading is not locked
+                    TValue newItem = cache.itemLoader.Invoke(key);
+                    lock (syncRoot)
+                    {
+                        if (cache.TryGetValue(key, out TValue result))
+                            return result;
+                        cache.Insert(key, newItem);
+                    }
+
+                    return newItem;
+                }
+            }
+
+            #endregion
+
+            #region Constructors
+
+            public ThreadSafeAccessor(Cache<TKey, TValue> cache) => this.cache = cache;
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Constants
@@ -955,9 +1035,7 @@ namespace KGySoft.Collections
         /// then the value is retrieved by the specified loader delegate of this <see cref="Cache{TKey,TValue}"/> instance.
         /// </summary>
         /// <param name="key">Key of the element to get or set.</param>
-        /// <returns>
-        /// The element with the specified <paramref name="key"/>.
-        /// </returns>
+        /// <returns>The element with the specified <paramref name="key"/>.</returns>
         /// <remarks>
         /// <para>Getting this property retrieves the needed element, while setting adds a new item (or overwrites an already existing item).
         /// If this <see cref="Cache{TKey,TValue}"/> instance was initialized by a non-<see langword="null"/> item loader, then it is enough to use only the get accessor because that will
@@ -971,12 +1049,14 @@ namespace KGySoft.Collections
         /// a new item is added, an element (depending on <see cref="Behavior"/> property) will be dropped from the cache.</para>
         /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/>, getting or setting this property approaches an O(1) operation. Otherwise,
         /// when the capacity of the inner storage must be increased to accommodate a new element, this property becomes an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para><note type="tip">You can retrieve a thread-safe accessor by the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method.</note></para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
         /// <exception cref="KeyNotFoundException">The property is retrieved, the <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader
         /// and <paramref name="key"/> does not exist in the cache.</exception>
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})"/>
         /// <seealso cref="Behavior"/>
+        /// <seealso cref="GetThreadSafeAccessor"/>
         public TValue this[TKey key]
         {
             [CollectionAccess(CollectionAccessType.UpdatedContent)]
@@ -1497,6 +1577,20 @@ namespace KGySoft.Collections
         /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
         /// </remarks>
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => new Enumerator(this, true);
+
+        /// <summary>
+        /// Gets a thread safe accessor for this <see cref="Cache{TKey,TValue}"/> instance. As it provides only a
+        /// single readable indexer, it makes sense only if an item loader was passed to the appropriate
+        /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>
+        /// and the cache will not be accessed by other members but via the returned accessor.
+        /// </summary>
+        /// <param name="protectItemLoader"><see langword="true"/> to ensure that also the item loader is locked if a new element has to be loaded and
+        /// <see langword="false"/> to allow the item loader to be called parallelly. In latter case the <see cref="Cache{TKey,TValue}"/> is locked for shorter
+        /// time but it can happen that the value of same key is loaded multiple times and all but one will be discarded. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
+        public IThreadSafeCacheAccessor<TKey, TValue> GetThreadSafeAccessor(bool protectItemLoader = false) 
+            => protectItemLoader ? (IThreadSafeCacheAccessor<TKey, TValue>)new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
 
         #endregion
 

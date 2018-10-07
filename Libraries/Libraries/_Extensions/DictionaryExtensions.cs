@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using KGySoft.Collections;
 
 #endregion
 
@@ -64,6 +65,18 @@ namespace KGySoft.Libraries
 
             return dictionary.TryGetValue(key, out var objValue) && objValue is TActualValue value ? value : defaultValue;
         }
+
+        /// <summary>
+        /// Returns a <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.
+        /// This only means that if the members are accessed through the returned <see cref="LockingDictionary{TKey,TValue}"/>, then the inner state of the wrapped dictionary remains always consistent and not that all of the multi-threading concerns can be ignored.
+        /// For a <see cref="Cache{TKey,TValue}"/> instance consider to use the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method instead, which not necessarily locks the item loader delegate.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingDictionary{TKey,TValue}"/> class for details and some examples.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
+        /// <param name="dictionary">The dictionary to create a thread-safe wrapper for.</param>
+        /// <returns>A <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.</returns>
+        public static LockingDictionary<TKey, TValue> AsThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) => new LockingDictionary<TKey, TValue>(dictionary);
 
         #endregion
     }
