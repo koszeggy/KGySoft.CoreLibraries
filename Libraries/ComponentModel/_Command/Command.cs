@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 #endregion
 
@@ -42,7 +43,9 @@ namespace KGySoft.ComponentModel
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
-            => new CommandBinding(command, source ?? throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull)), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.Get(Res.ArgumentNull)), initialState, targets);
+            => targets.Aggregate(
+                command.CreateBinding(initialState).AddSource(source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull)),
+                (b, t) => b.AddTarget(t));
 
         /// <summary>
         /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
@@ -53,7 +56,7 @@ namespace KGySoft.ComponentModel
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, params object[] targets)
-            => new CommandBinding(command, source, eventName, null, targets);
+            => command.CreateBinding(source, eventName, null, targets);
 
         /// <summary>
         /// Creates a binding for a <paramref name="command"/> without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
@@ -66,7 +69,7 @@ namespace KGySoft.ComponentModel
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
         /// </returns>
         public static ICommandBinding CreateBinding(this ICommand command, IDictionary<string, object> initialState = null)
-            => new CommandBinding(command, null, null, initialState);
+            => new CommandBinding(command, initialState);
 
         #endregion
 

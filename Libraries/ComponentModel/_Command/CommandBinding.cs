@@ -112,7 +112,7 @@ namespace KGySoft.ComponentModel
 
         private readonly ICommand command;
         private readonly HashSet<object> targets = new HashSet<object>();
-        private readonly BindingState state;
+        private readonly CommandState state;
         private readonly Dictionary<object, Dictionary<EventInfo, SubscriptionInfo>> sources = new Dictionary<object, Dictionary<EventInfo, SubscriptionInfo>>();
         private readonly CircularList<ICommandStateUpdater> stateUpdaters = new CircularList<ICommandStateUpdater>();
 
@@ -130,18 +130,11 @@ namespace KGySoft.ComponentModel
 
         #region Constructors
 
-        internal CommandBinding(ICommand command, object source, string eventName, IDictionary<string, object> initialState, params object[] targets)
+        internal CommandBinding(ICommand command, IDictionary<string, object> initialState)
         {
             this.command = command ?? throw new ArgumentNullException(nameof(command));
-            state = new BindingState(initialState);
-            if (source != null)
-                AddSource(source, eventName);
+            state = initialState is CommandState s ? s : new CommandState(initialState);
             state.PropertyChanged += State_PropertyChanged;
-            if (!targets.IsNullOrEmpty())
-            {
-                foreach (object target in targets)
-                    AddTarget(target);
-            }
         }
 
         #endregion
@@ -259,7 +252,7 @@ namespace KGySoft.ComponentModel
 
         private void UpdateSource(object source)
         {
-            foreach (string propertyName in state.Keys)
+            foreach (string propertyName in ((IDictionary<string, object>)state).Keys)
                 UpdateSource(source, propertyName);
         }
 

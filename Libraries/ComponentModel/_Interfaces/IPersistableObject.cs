@@ -28,7 +28,7 @@ namespace KGySoft.ComponentModel
     /// Represents an object that can store its own properties and is able to notify its consumer about property changes.
     /// </summary>
     /// <seealso cref="INotifyPropertyChanged" />
-    public interface IPersistableObject : INotifyPropertyChanged
+    public interface IPersistableObject : INotifyPropertyChanged, INotifyPropertyChanging
     {
         #region Methods
 
@@ -60,14 +60,15 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">The name of the property to set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
         /// <returns><see langword="true"/> if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot set the property.</exception>
-        bool SetProperty(string propertyName, object value, bool triggerChangedEvent = true);
+        bool SetProperty(string propertyName, object value, bool triggerChangeEvents = true);
 
         /// <summary>
         /// Gets a copy of the stored properties.
         /// </summary>
+        /// <returns>A copy of the stored properties.</returns>
         /// <exception cref="InvalidOperationException">A property cannot be get.</exception>
         IDictionary<string, object> GetProperties();
 
@@ -75,10 +76,8 @@ namespace KGySoft.ComponentModel
         /// Sets the properties provided in the specified dictionary.
         /// </summary>
         /// <param name="properties">The properties to set.</param>
-        /// <param name="merge">If set to <see langword="true"/>, then merges the provided values with already existing ones.
-        /// If set to <see langword="false"/>, then clears the originally stored properties.</param>
         /// <exception cref="InvalidOperationException">A property cannot be set.</exception>
-        void SetProperties(IDictionary<string, object> properties, bool merge = false);
+        void SetProperties(IDictionary<string, object> properties);
 
         #endregion
     }

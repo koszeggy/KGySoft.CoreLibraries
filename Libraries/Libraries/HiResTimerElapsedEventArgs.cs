@@ -15,7 +15,7 @@ namespace KGySoft.Libraries
 
         /// <summary>
         /// Gets the number of the fallen out <see cref="HiResTimer.Enabled"/> events since the last invoke.
-        /// The value is nonzero if the delay <see cref="HiResTimer.IgnoreElapsedThreshold"/> the delais smaller enough and the delay
+        /// The value is nonzero if the delay <see cref="HiResTimer.IgnoreElapsedThreshold"/> the delays smaller enough and the delay
         /// </summary>
         /// <value>
         /// The fallouts.

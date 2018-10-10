@@ -784,4 +784,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="CannotSetProperty" xml:space="preserve">
     <value>Cannot set property '{0}'.</value>
   </data>
+  <data name="NotEditing" xml:space="preserve">
+    <value>Object is not in editing state.</value>
+  </data>
 </root>

@@ -79,7 +79,11 @@ namespace KGySoft.ComponentModel
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add(ICommand command, IDictionary<string, object> initialState = null)
-            => Add(command, null, null, initialState);
+        {
+            var result = command.CreateBinding(initialState);
+            Add(result);
+            return result;
+        }
 
         /// <summary>
         /// Releases every binding in this <see cref="CommandBindingsCollection"/>.

@@ -32,11 +32,12 @@ namespace KGySoft.ComponentModel
     /// </summary>
     /// <seealso cref="INotifyPropertyChanged" />
     /// <seealso cref="PersistableObjectBase" />
-    public abstract class ObservableObjectBase : INotifyPropertyChanged, IDisposable
+    public abstract class ObservableObjectBase : INotifyPropertyChanged, INotifyPropertyChanging, IDisposable
     {
         #region Fields
 
         private PropertyChangedEventHandler propertyChanged;
+        private PropertyChangingEventHandler propertyChanging;
         private int suspendCounter;
 
         #endregion
@@ -44,12 +45,21 @@ namespace KGySoft.ComponentModel
         #region Events
 
         /// <summary>
-        /// Occurs when a property value changes.
+        /// Occurs when a property value changed.
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged
         {
             add => propertyChanged += value;
             remove => propertyChanged -= value;
+        }
+
+        /// <summary>
+        /// Occurs when a property value changes.
+        /// </summary>
+        public event PropertyChangingEventHandler PropertyChanging
+        {
+            add => propertyChanging += value;
+            remove => propertyChanging -= value;
         }
 
         #endregion
@@ -80,6 +90,7 @@ namespace KGySoft.ComponentModel
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged(
 #if NET35 || NET40
+#error TODO: nullable, by stack frames, careful with explicit implementation
             string propertyName
 #else
             [CallerMemberName] string propertyName = null
@@ -91,24 +102,46 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Suspends the raising of the <see cref="PropertyChanged"/> event until <see cref="ResumePropertyChanged">ResumePropertyChanged</see>
-        /// method is called. Supports nested calls.
+        /// Raises the <see cref="PropertyChanging"/> event.
         /// </summary>
-        protected void SuspendPropertyChanged() => Interlocked.Increment(ref suspendCounter);
+        /// <param name="propertyName">Name of the property. This parameter is optional.
+        /// <br/>Default value: The name of the caller member.</param>
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanging(
+#if NET35 || NET40
+            string propertyName
+#else
+            [CallerMemberName] string propertyName = null
+#endif
+        )
+        {
+            if (suspendCounter <= 0)
+                propertyChanging?.Invoke(this, new PropertyChangingEventArgs(propertyName));
+        }
 
         /// <summary>
-        /// Resumes the raising of the <see cref="PropertyChanged"/> event suspended by the <see cref="SuspendPropertyChanged">SuspendPropertyChanged</see> method.
+        /// Suspends the raising of the <see cref="PropertyChanging"/> and <see cref="PropertyChanged"/> event until <see cref="ResumeEvents">ResumeEvents</see>
+        /// method is called. Supports nested calls.
         /// </summary>
-        protected void ResumePropertyChanged() => Interlocked.Decrement(ref suspendCounter);
+        protected void SuspendEvents() => Interlocked.Increment(ref suspendCounter);
+
+        /// <summary>
+        /// Resumes the raising of the <see cref="PropertyChanging"/> and <see cref="PropertyChanged"/> event suspended by the <see cref="SuspendEvents">SuspendEvents</see> method.
+        /// </summary>
+        protected void ResumeEvents() => Interlocked.Decrement(ref suspendCounter);
 
         /// <summary>
         /// Releases the resources held by this instance.
-        /// The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
+        /// The base implementation removes the subscribers of the <see cref="PropertyChanged"/> and <see cref="PropertyChanging"/> events.
         /// </summary>
         /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing) => propertyChanged = null;
+        protected virtual void Dispose(bool disposing)
+        {
+            propertyChanged = null;
+            propertyChanging = null;
+        }
 
-#endregion
+        #endregion
 
 #endregion
     }

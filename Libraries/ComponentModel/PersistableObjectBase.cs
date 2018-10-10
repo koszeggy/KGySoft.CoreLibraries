@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -43,8 +44,8 @@ namespace KGySoft.ComponentModel
     /// <example>
     /// The following example shows a possible implementation of a derived class.
     /// <code lang="C#"><![CDATA[
-    /// public class BusinessClassExample : PersistableObjectBasepublic class BusinessClassExample : PersistableObjectBase
-    /// {{
+    /// class BusinessClassExample : PersistableObjectBase
+    /// {
     ///     // A simple integer property (with zero default value):    public int IntProperty { get => Get<int>() }
     ///     public int IntProperty { get => Get<int>(); set => Set(value); }
     ///
@@ -56,7 +57,7 @@ namespace KGySoft.ComponentModel
     ///     // When this property is read for the first time without setting it before, the provided delegate will be invoked
     ///     // and the returned default value is stored without triggering the PropertyChanged event.
     ///     public MyComplexType ComplexProperty { get => Get(() => new MyComplexType()); set => Set(value); }
-    /// }}
+    /// }
     /// ]]></code>
     /// </example>
     /// </remarks>
@@ -68,15 +69,25 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, PropertyInfo>> properties = new Cache<Type, Dictionary<string, PropertyInfo>>(GetProperties).GetThreadSafeAccessor();
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, PropertyInfo>> reflectedProperties = new Cache<Type, Dictionary<string, PropertyInfo>>(GetProperties).GetThreadSafeAccessor();
 
         #endregion
 
         #region Instance Fields
 
-        private Dictionary<string, object> propertyValues = new Dictionary<string, object>();
+        private readonly LockingDictionary<string, object> propertyValues = new LockingDictionary<string, object>(new Dictionary<string, object>());
+        private readonly object writeLock = new object(); // read lock is the dictionary itself
 
         #endregion
+
+        #endregion
+
+        #region Properties
+
+        // TODO: actually private protected
+        internal LockingDictionary<string, object> PropertiesInternal => propertyValues;
+
+        internal IPersistableObject AsPersistable => this;
 
         #endregion
 
@@ -89,6 +100,29 @@ namespace KGySoft.ComponentModel
         #endregion
 
         #region Instance Methods
+
+        #region Internal Methods
+
+        // TODO: actually private protected
+        internal void ReplaceProperties(ICollection<KeyValuePair<string, object>> newProperties)
+        {
+            lock (writeLock)
+            {
+                // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
+                IEnumerable<string> toRemove = propertyValues.Keys.Except(newProperties.Select(p => p.Key));
+                foreach (var propertyName in toRemove)
+                {
+                    OnPropertyChanging(propertyName);
+                    propertyValues.Remove(propertyName);
+                    OnPropertyChanged(propertyName);
+                }
+
+                foreach (var property in newProperties)
+                    AsPersistable.SetProperty(property.Key, property.Value);
+            }
+        }
+
+        #endregion
 
         #region Protected Methods
 
@@ -140,7 +174,7 @@ namespace KGySoft.ComponentModel
             else
             {
                 T result = createInitialValue.Invoke();
-                ((IPersistableObject)this).SetProperty(propertyName, result, false);
+                AsPersistable.SetProperty(propertyName, result, false);
                 return result;
             }
         }
@@ -169,7 +203,7 @@ namespace KGySoft.ComponentModel
             T defaultValue = default, [CallerMemberName] string propertyName = null
 #endif
             )
-            => ((IPersistableObject)this).GetPropertyOrDefault(propertyName, defaultValue);
+            => AsPersistable.GetPropertyOrDefault(propertyName, defaultValue);
 
         /// <summary>
         /// Sets the value of a property.
@@ -186,12 +220,13 @@ namespace KGySoft.ComponentModel
         /// </exception>
         protected void Set(object value,
 #if NET35 || NET40
+#error TODO: set propertyName if null
             bool invokeChangedEvent, string propertyName
 #else
             bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null
 #endif
             )
-            => ((IPersistableObject)this).SetProperty(propertyName, value, invokeChangedEvent);
+            => AsPersistable.SetProperty(propertyName, value, invokeChangedEvent);
 
         /// <summary>
         /// Gets whether the specified property can be get. The base implementation allows to get the actual instance properties in this instance.
@@ -201,7 +236,7 @@ namespace KGySoft.ComponentModel
         protected virtual bool CanGetProperty(string propertyName)
         {
             Dictionary<string, PropertyInfo> props;
-            props = properties[GetType()];
+            props = reflectedProperties[GetType()];
             return props.ContainsKey(propertyName);
         }
 
@@ -214,7 +249,7 @@ namespace KGySoft.ComponentModel
         protected virtual bool CanSetProperty(string propertyName, object value)
         {
             Dictionary<string, PropertyInfo> props;
-            props = properties[GetType()];
+            props = reflectedProperties[GetType()];
             return props.TryGetValue(propertyName, out PropertyInfo pi) && pi.PropertyType.CanAcceptValue(value);
         }
 
@@ -244,7 +279,7 @@ namespace KGySoft.ComponentModel
             return propertyValues.TryGetValue(propertyName, out object value) && value is T result ? result : defaultValue;
         }
 
-        bool IPersistableObject.SetProperty(string propertyName, object value, bool invokeChangedEvent)
+        bool IPersistableObject.SetProperty(string propertyName, object value, bool invokeChangeEvents)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
@@ -252,21 +287,42 @@ namespace KGySoft.ComponentModel
                 throw new InvalidOperationException(Res.Get(Res.CannotSetProperty, propertyName));
             if (propertyValues.TryGetValue(propertyName, out object oldValue) && Equals(value, oldValue))
                 return false;
-            propertyValues[propertyName] = value;
-            if (invokeChangedEvent)
+
+            // including changing in the lock so if the consumer wants to read the value can be sure it is the original one
+            lock (writeLock)
+            {
+                if (invokeChangeEvents)
+                    OnPropertyChanging(propertyName);
+                propertyValues[propertyName] = value;
+            }
+
+            if (invokeChangeEvents)
                 OnPropertyChanged(propertyName);
             return true;
         }
 
         IDictionary<string, object> IPersistableObject.GetProperties()
-            => propertyValues.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
-
-        void IPersistableObject.SetProperties(IDictionary<string, object> newProperties, bool merge)
         {
-            if (!merge)
-                propertyValues = new Dictionary<string, object>();
-            foreach (var property in newProperties)
-                ((IPersistableObject)this).SetProperty(property.Key, property.Value);
+            propertyValues.Lock();
+            try
+            {
+                return propertyValues.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
+            }
+            finally
+            {
+                propertyValues.Unlock();
+            }
+        }
+
+        void IPersistableObject.SetProperties(IDictionary<string, object> newProperties)
+        {
+            // Using a separate lock makes possible to read the properties during the set.
+            // This is desirable because OnChanging/changed events are raised during this process.
+            lock (writeLock)
+            {
+                foreach (var property in newProperties)
+                    AsPersistable.SetProperty(property.Key, property.Value);
+            }
         }
 
         #endregion
