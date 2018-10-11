@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -57,6 +56,10 @@ namespace KGySoft.ComponentModel
     ///     // When this property is read for the first time without setting it before, the provided delegate will be invoked
     ///     // and the returned default value is stored without triggering the PropertyChanged event.
     ///     public MyComplexType ComplexProperty { get => Get(() => new MyComplexType()); set => Set(value); }
+    /// 
+    ///     // The value of this property will not be accessible through the IPersistableObject implementation.
+    ///     // The property cannot be a target of undo and editing features but we can invoke the base change events if needed.
+    ///     public int NotPersistedProperty { get; set; }
     /// }
     /// ]]></code>
     /// </example>
@@ -75,7 +78,7 @@ namespace KGySoft.ComponentModel
 
         #region Instance Fields
 
-        private readonly LockingDictionary<string, object> propertyValues = new LockingDictionary<string, object>(new Dictionary<string, object>());
+        private readonly LockingDictionary<string, object> properties = new LockingDictionary<string, object>(new Dictionary<string, object>());
         private readonly object writeLock = new object(); // read lock is the dictionary itself
 
         #endregion
@@ -84,9 +87,7 @@ namespace KGySoft.ComponentModel
 
         #region Properties
 
-        // TODO: actually private protected
-        internal LockingDictionary<string, object> PropertiesInternal => propertyValues;
-
+        internal LockingDictionary<string, object> PropertiesInternal => properties; // actually private protected
         internal IPersistableObject AsPersistable => this;
 
         #endregion
@@ -103,18 +104,18 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
-        // TODO: actually private protected
-        internal void ReplaceProperties(ICollection<KeyValuePair<string, object>> newProperties)
+        internal void ReplaceProperties(KeyValuePair<string, object>[] newProperties) // TODO: actually private protected
         {
+            // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
+            IEnumerable<string> toRemove = properties.Keys.Except(newProperties.Select(p => p.Key));
             lock (writeLock)
             {
-                // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
-                IEnumerable<string> toRemove = propertyValues.Keys.Except(newProperties.Select(p => p.Key));
                 foreach (var propertyName in toRemove)
                 {
-                    OnPropertyChanging(propertyName);
-                    propertyValues.Remove(propertyName);
-                    OnPropertyChanged(propertyName);
+                    var oldValue = properties.GetValueOrDefault(propertyName, MissingProperty);
+                    OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldValue, propertyName));
+                    properties.Remove(propertyName);
+                    OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldValue, MissingProperty, propertyName));
                 }
 
                 foreach (var property in newProperties)
@@ -162,7 +163,7 @@ namespace KGySoft.ComponentModel
             if (!CanGetProperty(propertyName))
                 throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
 
-            if (propertyValues.TryGetValue(propertyName, out object value))
+            if (properties.TryGetValue(propertyName, out object value))
             {
                 if (!(value is T result))
                     throw new InvalidOperationException(Res.Get(Res.ReturnedTypeInvalid, typeof(T)));
@@ -257,7 +258,7 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        bool IPersistableObject.PropertyExists(string propertyName) => propertyValues.ContainsKey(propertyName);
+        bool IPersistableObject.PropertyExists(string propertyName) => properties.ContainsKey(propertyName);
 
         object IPersistableObject.GetProperty(string propertyName)
         {
@@ -265,7 +266,7 @@ namespace KGySoft.ComponentModel
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanGetProperty(propertyName))
                 throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
-            if (propertyValues.TryGetValue(propertyName, out object value))
+            if (properties.TryGetValue(propertyName, out object value))
                 return value;
             throw new InvalidOperationException(Res.Get(Res.PropertyValueNotExist, propertyName));
         }
@@ -276,41 +277,65 @@ namespace KGySoft.ComponentModel
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanGetProperty(propertyName))
                 throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
-            return propertyValues.TryGetValue(propertyName, out object value) && value is T result ? result : defaultValue;
+            return properties.TryGetValue(propertyName, out object value) && value is T result ? result : defaultValue;
         }
 
         bool IPersistableObject.SetProperty(string propertyName, object value, bool invokeChangeEvents)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
+
+            if (value == MissingProperty)
+                return AsPersistable.ResetProperty(propertyName, invokeChangeEvents);
+
             if (!CanSetProperty(propertyName, value))
                 throw new InvalidOperationException(Res.Get(Res.CannotSetProperty, propertyName));
-            if (propertyValues.TryGetValue(propertyName, out object oldValue) && Equals(value, oldValue))
-                return false;
 
-            // including changing in the lock so if the consumer wants to read the value can be sure it is the original one
-            lock (writeLock)
-            {
-                if (invokeChangeEvents)
-                    OnPropertyChanging(propertyName);
-                propertyValues[propertyName] = value;
-            }
+            bool exists = properties.TryGetValue(propertyName, out object oldValue);
+            if (exists && Equals(value, oldValue))
+                return false;
+            if (!exists)
+                oldValue = MissingProperty;
 
             if (invokeChangeEvents)
-                OnPropertyChanged(propertyName);
+                OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldValue, propertyName));
+            lock (writeLock)
+                properties[propertyName] = value;
+            if (invokeChangeEvents)
+                OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldValue, value, propertyName));
+
             return true;
         }
 
+        bool IPersistableObject.ResetProperty(string propertyName, bool invokeChangeEvents)
+        {
+            if (propertyName == null)
+                throw new ArgumentNullException(nameof(propertyName));
+
+            if (!properties.TryGetValue(propertyName, out object oldValue))
+                return false;
+
+            if (invokeChangeEvents)
+                OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldValue, propertyName));
+            lock (writeLock)
+                properties.Remove(propertyName);
+            if (invokeChangeEvents)
+                OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldValue, MissingProperty, propertyName));
+
+            return true;
+        }
+
+
         IDictionary<string, object> IPersistableObject.GetProperties()
         {
-            propertyValues.Lock();
+            properties.Lock();
             try
             {
-                return propertyValues.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
+                return properties.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
             }
             finally
             {
-                propertyValues.Unlock();
+                properties.Unlock();
             }
         }
 

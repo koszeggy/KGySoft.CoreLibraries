@@ -787,4 +787,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="NotEditing" xml:space="preserve">
     <value>Object is not in editing state.</value>
   </data>
+  <data name="MissingPropertyReference" xml:space="preserve">
+    <value>&lt;Missing property value&gt;</value>
+  </data>
 </root>

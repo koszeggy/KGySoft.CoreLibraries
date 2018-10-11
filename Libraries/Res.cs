@@ -253,6 +253,7 @@ namespace KGySoft
         internal const string PropertyValueNotExist = nameof(PropertyValueNotExist);
         internal const string DeclaringTypeExpected = nameof(DeclaringTypeExpected);
         internal const string NotEditing = nameof(NotEditing);
+        internal const string MissingPropertyReference = nameof(MissingPropertyReference);
 
         #endregion
 

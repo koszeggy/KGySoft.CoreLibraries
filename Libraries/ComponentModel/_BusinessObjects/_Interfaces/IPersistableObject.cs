@@ -66,6 +66,14 @@ namespace KGySoft.ComponentModel
         bool SetProperty(string propertyName, object value, bool triggerChangeEvents = true);
 
         /// <summary>
+        /// Resets the property with specified property, meaning, it will be removed from the underlying storage so the property getters will return the default value again.
+        /// </summary>
+        /// <param name="propertyName">The name of the property to reset.</param>
+        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <returns><see langword="true"/> if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
+        bool ResetProperty(string propertyName, bool triggerChangeEvents = true);
+
+        /// <summary>
         /// Gets a copy of the stored properties.
         /// </summary>
         /// <returns>A copy of the stored properties.</returns>
