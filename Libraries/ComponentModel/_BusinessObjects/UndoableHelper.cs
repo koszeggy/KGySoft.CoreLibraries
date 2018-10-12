@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading;
 using KGySoft.Collections;
 
 namespace KGySoft.ComponentModel
 {
-    internal class UndoableHelper : ICanUndoRedo
+    internal class UndoableHelper : ICanUndoRedo, ICanUndoInternal
     {
+        private struct UndoEntry
+        {
+            internal object From;
+            internal object To;
+        }
+
         private const int defaultUndoCapacity = 20;
 
-#error inkább 2 elem kéne a lépésekbe. Vagy hogy redozunk valamit, ha csak a régi értéket tudjuk?
-        private readonly CircularList<KeyValuePair<string, object>> undoSteps = new CircularList<KeyValuePair<string, object>>();
-        private readonly CircularList<KeyValuePair<string, object>> redoSteps = new CircularList<KeyValuePair<string, object>>();
+        private readonly CircularList<KeyValuePair<string, UndoEntry>> undoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
+        private readonly CircularList<KeyValuePair<string, UndoEntry>> redoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
 
         private int undoCapacity = defaultUndoCapacity;
         private int suspendCounter;
 
-        private PersistableObjectBase owner;
+        private readonly PersistableObjectBase owner;
 
         internal UndoableHelper(PersistableObjectBase owner)
         {
@@ -64,8 +70,8 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        internal void SuspendUndo() => Interlocked.Increment(ref suspendCounter);
-        internal void ResumeUndo() => Interlocked.Decrement(ref suspendCounter);
+        public void SuspendUndo() => Interlocked.Increment(ref suspendCounter);
+        public void ResumeUndo() => Interlocked.Decrement(ref suspendCounter);
 
         private void Owner_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -76,10 +82,10 @@ namespace KGySoft.ComponentModel
 
             // These calls are already locked inside because steps can be accessed from other methods in this class, too
             ClearSteps(redoSteps, nameof(CanRedo));
-            AddUndoStep(new KeyValuePair<string, object>(e.PropertyName, extArgs.OldValue));
+            AddUndoStep(new KeyValuePair<string, UndoEntry>(e.PropertyName, new UndoEntry { From = extArgs.NewValue, To = extArgs.OldValue }));
         }
 
-        private void ClearSteps(CircularList<KeyValuePair<string, object>> storage, string canUndoRedoName)
+        private void ClearSteps(CircularList<KeyValuePair<string, UndoEntry>> storage, string canUndoRedoName)
         {
             if (storage.Count == 0)
                 return;
@@ -90,9 +96,9 @@ namespace KGySoft.ComponentModel
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(true, false, canUndoRedoName));
         }
 
-        private void AddUndoStep(KeyValuePair<string, object> newStep)
+        private void AddUndoStep(KeyValuePair<string, UndoEntry> newStep)
         {
-            CircularList<KeyValuePair<string, object>> storage = undoSteps;
+            CircularList<KeyValuePair<string, UndoEntry>> storage = undoSteps;
             bool raiseEvents = storage.Count == 0;
             if (raiseEvents)
                 owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(false, nameof(CanUndo)));
@@ -110,109 +116,79 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Applying 1 undo/redo step and raising Can... events if necessary.
         /// </summary>
-        private bool ApplyStep(CircularList<KeyValuePair<string, object>> source, string sourceName, CircularList<KeyValuePair<string, object>> target, string targetName)
+        private bool ApplyStep(CircularList<KeyValuePair<string, UndoEntry>> source, string sourceName, CircularList<KeyValuePair<string, UndoEntry>> target, string targetName)
         {
             if (source.Count == 0)
                 return false;
 
             bool raiseSource = source.Count == 1;
-            bool raiseTarget = source.Count == 0;
-
-            var step = source[source.Count - 1];
             if (raiseSource)
                 owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(true, sourceName));
-            if (raiseTarget)
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(false, targetName));
+            bool success, raiseTarget;
             lock (undoSteps)
             {
+                var step = source[source.Count - 1];
                 source.RemoveLast();
 
                 SuspendUndo();
                 try
                 {
-                    owner.AsPersistable.SetProperty(step.Key, step.Value);
+                    // This will be false if actual value was not equal to From, which means an inconsistency between actual and tracked values.
+                    success = owner.AsPersistable.TryReplaceProperty(step.Key, step.Value.From, step.Value.To);
                 }
                 finally
                 {
                     ResumeUndo();
                 }
 
-                target.AddLast(step);
+                if (raiseSource)
+                    owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(true, false, sourceName));
+
+                raiseTarget = target.Count == 0 && success;
+                if (raiseTarget)
+                    owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(false, targetName));
+                if (success)
+                    target.AddLast(new KeyValuePair<string, UndoEntry>(step.Key, new UndoEntry { From = step.Value.To, To = step.Value.From }));
             }
 
-            if (raiseSource)
-                owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(true, false, sourceName));
             if (raiseTarget)
                 owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(false, true, targetName));
 
-            return true;
+            return success;
         }
 
         /// <summary>
-        /// Applying all undo/redo step and raising Can... events if necessary. Optimized to call Set only once per property.
+        /// Applying all undo/redo steps.
         /// </summary>
-        private void ApplyAll(CircularList<KeyValuePair<string, object>> source, string sourceName, CircularList<KeyValuePair<string, object>> target, string targetName)
+        private void ApplyAll(CircularList<KeyValuePair<string, UndoEntry>> source, string sourceName, CircularList<KeyValuePair<string, UndoEntry>> target, string targetName)
         {
-                if (source.Count == 0)
-                    return;
+            if (source.Count == 0)
+                return;
 
-                    bool raiseTarget = source.Count == 0;
-                    OnPropertyChanging(sourceName);
-                    if (raiseTarget)
-                        OnPropertyChanging(targetName);
-
-            lock (undoSteps)
+            SuspendUndo();
+            try
             {
-                    // Reversing so it can be added at once to the target. Now the last entry is the oldest change.
-                    source.Reverse();
-                    Dictionary<string, object> changes = new Dictionary<string, object>();
-
-                    // collecting all changes in a dictionary where every property has the oldest state
-                    foreach (var step in source)
-                        changes[step.Key] = step.Value;
-
-
-                SuspendUndo();
-                try
+                lock (undoSteps)
                 {
-                    foreach (var change in changes)
-                        AsPersistable.SetProperty(change.Key, change.Value);
+                    while (source.Count > 0)
+                        ApplyStep(source, sourceName, target, targetName);
                 }
-                finally
-                {
-                    ResumeUndo();
-                }
-
-                    target.AddRange(source);
-                    source.Reset();
-
             }
-                    OnPropertyChanged(sourceName);
-                    if (raiseTarget)
-                        OnPropertyChanged(targetName);
+            finally
+            {
+                ResumeUndo();
+            }
         }
 
-        #endregion
-
-        #region Explicitly Implemented Interface Methods
-
-        void IChangeTracking.AcceptChanges() => AsUndoable.ClearHistory();
-        void IRevertibleChangeTracking.RejectChanges() => AsUndoable.UndoAll();
-
-        void ICanUndo.ClearHistory()
+        public void ClearUndoHistory()
         {
             ClearSteps(redoSteps, nameof(ICanUndoRedo.CanRedo));
             ClearSteps(undoSteps, nameof(ICanUndo.CanUndo));
         }
 
-        bool ICanUndo.TryUndo() => ApplyStep(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
-        bool ICanUndoRedo.TryRedo() => ApplyStep(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
-
-        void ICanUndo.UndoAll() => ApplyAll(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
-        void ICanUndoRedo.RedoAll() => ApplyAll(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
-
-        #endregion
-
-        #endregion
+        public bool TryUndo() => ApplyStep(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
+        public bool TryRedo() => ApplyStep(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
+        public void UndoAll() => ApplyAll(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
+        public void RedoAll() => ApplyAll(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
     }
 }

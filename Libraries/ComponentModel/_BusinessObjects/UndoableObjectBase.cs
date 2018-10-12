@@ -29,13 +29,26 @@ using KGySoft.Collections;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents an object with step-by-step undo/redo capabilities.
+    /// Represents an object with step-by-step undo/redo capabilities by adding <see cref="ICanUndoRedo"/> implementation to <see cref="PersistableObjectBase"/>.
     /// Undoing and redoing works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="PersistableObjectBase.Set">PersistableObjectBase.Set</see> method.
     /// </summary>
-    /// <seealso cref="PersistableObjectBase" />
+    /// <remarks>
+    /// <para>An object derived from <see cref="UndoableObjectBase"/> continuously tracks the property changes of properties, which are set through the <see cref="IPersistableObject"/> implementation
+    /// and the <see cref="PersistableObjectBase.Set">PersistableObjectBase.Set</see> method.</para> 
+    /// TODO
+    /// - note: differences to EditableObjectBase
+    /// - note: Other undoable classes are not derived from UndoableObjectBase - akár kép is! - Avoid casting to UndoableObjectBase because for example ModelBase does not implement it. Cast to ICanUndoRedo instead
+    /// - note: IsModified vs CanUndo and IRevertibleChangeTracking.IsChanged
+    /// - Example (or just mention the one in the base, which also applies here)
+    /// - IRevertibleChangeTracking
+    /// </remarks>
     /// <seealso cref="ICanUndoRedo" />
     /// <seealso cref="IRevertibleChangeTracking" />
-    public abstract class UndoableObjectBase : PersistableObjectBase, ICanUndoRedo, IRevertibleChangeTracking
+    /// <seealso cref="PersistableObjectBase" />
+    /// <seealso cref="EditableObjectBase" />
+    /// <seealso cref="ValidatingObjectBase" />
+    /// <seealso cref="ModelBase" />
+    public abstract class UndoableObjectBase : PersistableObjectBase, ICanUndoRedo, ICanUndoInternal, IRevertibleChangeTracking
     {
         private UndoableHelper undoable;
 
@@ -48,5 +61,46 @@ namespace KGySoft.ComponentModel
                 return undoable;
             }
         }
+
+        /// <inheritdoc />
+        public bool CanUndo => AsUndoable.CanUndo;
+
+        /// <inheritdoc />
+        public bool TryUndo() => AsUndoable.TryUndo();
+
+        /// <summary>
+        /// Gets or sets the undo capacity.
+        /// <br/>Default value: <c>20</c>.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
+        public int UndoCapacity
+        {
+            get => AsUndoable.UndoCapacity;
+            set => AsUndoable.UndoCapacity = value;
+        }
+
+        /// <inheritdoc />
+        public void UndoAll() => AsUndoable.UndoAll();
+
+        void ICanUndoInternal.SuspendUndo() => undoable.SuspendUndo();
+        void ICanUndoInternal.ResumeUndo() => undoable.ResumeUndo();
+
+        /// <summary>
+        /// Clears the undo/redo history without performing any undo.
+        /// </summary>
+        public void ClearUndoHistory() => AsUndoable.ClearUndoHistory();
+
+        /// <inheritdoc />
+        public bool CanRedo => AsUndoable.CanRedo;
+
+        /// <inheritdoc />
+        public bool TryRedo() => AsUndoable.TryRedo();
+
+        /// <inheritdoc />
+        public void RedoAll() => AsUndoable.RedoAll();
+
+        bool IChangeTracking.IsChanged => CanUndo;
+        void IChangeTracking.AcceptChanges() => ClearUndoHistory();
+        void IRevertibleChangeTracking.RejectChanges() => UndoAll();
     }
 }

@@ -60,7 +60,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">The name of the property to set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> events; otherwise, <see langword="false"/>.</param>
         /// <returns><see langword="true"/> if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot set the property.</exception>
         bool SetProperty(string propertyName, object value, bool triggerChangeEvents = true);
@@ -69,7 +69,7 @@ namespace KGySoft.ComponentModel
         /// Resets the property with specified property, meaning, it will be removed from the underlying storage so the property getters will return the default value again.
         /// </summary>
         /// <param name="propertyName">The name of the property to reset.</param>
-        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> events; otherwise, <see langword="false"/>.</param>
         /// <returns><see langword="true"/> if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
         bool ResetProperty(string propertyName, bool triggerChangeEvents = true);
 
@@ -86,6 +86,17 @@ namespace KGySoft.ComponentModel
         /// <param name="properties">The properties to set.</param>
         /// <exception cref="InvalidOperationException">A property cannot be set.</exception>
         void SetProperties(IDictionary<string, object> properties);
+
+        /// <summary>
+        /// Tries to the replace property value. The replacement will succeed if the currently stored value equals to <paramref name="originalValue"/>.
+        /// Non-existing value can be represented by <see cref="ObservableObjectBase.MissingProperty"/> so the method supports also "try remove" and "try add" functionality.
+        /// </summary>
+        /// <param name="propertyName">Name of the property.</param>
+        /// <param name="originalValue">The original value.</param>
+        /// <param name="newValue">The new value.</param>
+        /// <param name="triggerChangeEvents"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanging.PropertyChanging"/> and <see cref="INotifyPropertyChanged.PropertyChanged"/> events; otherwise, <see langword="false"/>.</param>
+        /// <returns><see langword="true"/> if the originally stored value equals <paramref name="originalValue"/> and the replacement was successful; otherwise, <see langword="false"/>.</returns>
+        bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool triggerChangeEvents = true);
 
         #endregion
     }

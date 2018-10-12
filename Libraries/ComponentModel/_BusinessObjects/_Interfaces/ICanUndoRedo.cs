@@ -16,7 +16,8 @@
         /// <summary>
         /// Tries to perform one redo step.
         /// </summary>
-        /// <returns><see langword="true"/>, if one step is successfully redone; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if one step is successfully redone; otherwise, <see langword="false"/>.
+        /// The result can be <see langword="false"/> if <see cref="CanRedo"/> was <see langword="false"/> or when the stored steps are inconsistent with the current property values.</returns>
         bool TryRedo();
 
         /// <summary>

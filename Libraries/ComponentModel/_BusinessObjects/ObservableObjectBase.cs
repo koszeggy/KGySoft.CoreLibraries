@@ -40,6 +40,8 @@ namespace KGySoft.ComponentModel
             public object GetRealObject(StreamingContext context) => Value;
             internal static MissingPropertyReference Value { get; } = new MissingPropertyReference();
             public override string ToString() => Res.Get(Res.MissingPropertyReference);
+            public override bool Equals(object obj) => obj is MissingPropertyReference;
+            public override int GetHashCode() => 0;
         }
 
         #endregion

@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 
 #endregion
 
@@ -31,94 +32,26 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents an object with editing capabilities. Starting an edit session saves a snapshot about the stored properties, which can be either applied or reverted.
     /// Works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="PersistableObjectBase.Set">PersistableObjectBase.Set</see> method.
-    /// To access the editing features call the <see cref="AsEditable"/> property, which returns an <see cref="IEditableObject"/> instance.
     /// </summary>
     /// <seealso cref="KGySoft.ComponentModel.UndoableObjectBase" />
     /// <seealso cref="System.ComponentModel.IEditableObject" />
-    public abstract class EditableObjectBase : UndoableObjectBase, IEditableObject
+    public abstract class EditableObjectBase : PersistableObjectBase, ICanEdit
     {
-        #region Fields
+        private EditableHelper editable;
 
-#if NET35
-        private readonly Stack<KeyValuePair<string, object>[]> snapshots = new Stack<KeyValuePair<string, object>[]>();
-#else
-        private readonly ConcurrentStack<KeyValuePair<string, object>[]> snapshots = new ConcurrentStack<KeyValuePair<string, object>[]>();
-#endif
-
-        #endregion
-
-        #region Properties
-
-        /// <summary>
-        /// Gets the current <see cref="EditableObjectBase"/> as an <see cref="IEditableObject"/> instance.
-        /// </summary>
-        /// <returns></returns>
-        public IEditableObject AsEditable => this;
-
-        #endregion
-
-        #region Methods
-
-        void IEditableObject.BeginEdit()
+        internal ICanEdit AsEditable
         {
-#if NET35
-            lock (snapshots)
-                snapshots.Push(PropertiesInternal.ToArray());
-#else
-            snapshots.Push(PropertiesInternal.ToArray());
-#endif
-
-        }
-
-        void IEditableObject.EndEdit()
-        {
-#if NET35
-            lock (snapshots)
+            get
             {
-                if (snapshots.Count == 0)
-                    throw new InvalidOperationException(Res.Get(Res.NotEditing));
-                snapshots.Pop();
-            }
-#else
-            if (!snapshots.TryPop(out var _))
-                throw new InvalidOperationException(Res.Get(Res.NotEditing));
-#endif
-
-        }
-
-        void IEditableObject.CancelEdit()
-        {
-            lock (snapshots)
-            {
-                // ReSharper disable once JoinDeclarationAndInitializer - .NET 3.5
-                // ReSharper disable once InlineOutVariableDeclaration - >= .NET 4.0
-                KeyValuePair<string, object>[] previousState;
-#if NET35
-                if (snapshots.Count == 0)
-                    throw new InvalidOperationException(Res.Get(Res.NotEditing));
-                previousState = snapshots.Pop();
-#else
-                if (!snapshots.TryPop(out previousState))
-                    throw new InvalidOperationException(Res.Get(Res.NotEditing));
-#endif
-
-
-                // when reverting edit clearing undo history, too because we can't reset a valid state
-                // (even with storing the undo history before every BeginEdit it would be a mess if some steps were undone)
-                SuspendUndo();
-                try
-                {
-                    ReplaceProperties(previousState);
-                }
-                finally
-                {
-                    ResumeUndo();
-                }
-
-                AsUndoable.ClearHistory();
+                if (editable == null)
+                    Interlocked.CompareExchange(ref editable, new EditableHelper(this), null);
+                return editable;
             }
         }
 
-        #endregion
+        public void BeginEdit() => AsEditable.BeginEdit();
+        public void EndEdit() => AsEditable.EndEdit();
+        public void CancelEdit() => AsEditable.CancelEdit();
+        public int EditLevel => AsEditable.EditLevel;
     }
 }

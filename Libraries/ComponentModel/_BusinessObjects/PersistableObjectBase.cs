@@ -36,7 +36,7 @@ namespace KGySoft.ComponentModel
     /// <remarks>
     /// <para>Implementers can use the <see cref="Get{T}(T,string)">Get</see> and <see cref="Set">Set</see> methods in the property accessors to handle administration of
     /// getting and setting in a unified way.</para>
-    /// <para>Consumers can subscribe the <see cref="ObservableObjectBase.PropertyChanged"/> event to get notification about the property changes.</para>
+    /// <para>Consumers can subscribe the <see cref="ObservableObjectBase.PropertyChanging"/> and <see cref="ObservableObjectBase.PropertyChanged"/> events to get notification about the property changes.</para>
     /// <para>Accessibility of properties can be fine tuned by overriding the <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods.</para>
     /// <para>If cast to <see cref="IPersistableObject"/> the actually stored values can be read and restored by the <see cref="IPersistableObject.GetProperties">GetProperties</see> and
     /// <see cref="IPersistableObject.SetProperties">SetProperties</see> methods.</para>
@@ -58,14 +58,18 @@ namespace KGySoft.ComponentModel
     ///     public MyComplexType ComplexProperty { get => Get(() => new MyComplexType()); set => Set(value); }
     /// 
     ///     // The value of this property will not be accessible through the IPersistableObject implementation.
-    ///     // The property cannot be a target of undo and editing features but we can invoke the base change events if needed.
+    ///     // The property cannot be a target of undo and editing features but we can invoke the change events explicitly.
     ///     public int NotPersistedProperty { get; set; }
     /// }
     /// ]]></code>
     /// </example>
     /// </remarks>
-    /// <seealso cref="ObservableObjectBase" />
     /// <seealso cref="IPersistableObject" />
+    /// <seealso cref="ObservableObjectBase" />
+    /// <seealso cref="UndoableObjectBase" />
+    /// <seealso cref="EditableObjectBase" />
+    /// <seealso cref="ValidatingObjectBase" />
+    /// <seealso cref="ModelBase" />
     public abstract class PersistableObjectBase : ObservableObjectBase, IPersistableObject
     {
         #region Fields
@@ -111,12 +115,7 @@ namespace KGySoft.ComponentModel
             lock (writeLock)
             {
                 foreach (var propertyName in toRemove)
-                {
-                    var oldValue = properties.GetValueOrDefault(propertyName, MissingProperty);
-                    OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldValue, propertyName));
-                    properties.Remove(propertyName);
-                    OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldValue, MissingProperty, propertyName));
-                }
+                    AsPersistable.ResetProperty(propertyName);
 
                 foreach (var property in newProperties)
                     AsPersistable.SetProperty(property.Key, property.Value);
@@ -285,7 +284,7 @@ namespace KGySoft.ComponentModel
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
 
-            if (value == MissingProperty)
+            if (MissingProperty.Equals(value))
                 return AsPersistable.ResetProperty(propertyName, invokeChangeEvents);
 
             if (!CanSetProperty(propertyName, value))
@@ -325,6 +324,27 @@ namespace KGySoft.ComponentModel
             return true;
         }
 
+        bool IPersistableObject.TryReplaceProperty(string propertyName, object originalValue, object newValue, bool invokeChangeEvents)
+        {
+            if (propertyName == null)
+                throw new ArgumentNullException(nameof(propertyName));
+
+            if (MissingProperty.Equals(newValue))
+                return AsPersistable.ResetProperty(propertyName, invokeChangeEvents);
+
+            // including reading of the old value in the lock ensuring we really replace the original value
+            lock (writeLock)
+            {
+                bool exists = properties.TryGetValue(propertyName, out object currentValue);
+                bool tryAddNew = MissingProperty.Equals(originalValue);
+                if (exists && tryAddNew || !exists || !Equals(originalValue, currentValue))
+                    return false;
+
+                AsPersistable.SetProperty(propertyName, newValue, invokeChangeEvents);
+            }
+
+            return true;
+        }
 
         IDictionary<string, object> IPersistableObject.GetProperties()
         {

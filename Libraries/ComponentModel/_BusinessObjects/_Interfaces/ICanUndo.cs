@@ -17,13 +17,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Tries to perform one undo step.
         /// </summary>
-        /// <returns><see langword="true"/>, if one step is successfully undone; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if one step is successfully undone; otherwise, <see langword="false"/>.
+        /// The result can be <see langword="false"/> if <see cref="CanUndo"/> was <see langword="false"/> or when the stored steps are inconsistent with the current property values.</returns>
         bool TryUndo();
 
         /// <summary>
         /// Gets or sets the undo capacity.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">When set, <paramref name="value"/> is less than 0.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
         int UndoCapacity { get; set; }
 
         /// <summary>
@@ -34,6 +35,6 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Clears the undo history without performing any undo.
         /// </summary>
-        void ClearHistory();
+        void ClearUndoHistory();
     }
 }
