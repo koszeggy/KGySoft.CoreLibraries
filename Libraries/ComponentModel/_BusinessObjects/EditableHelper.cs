@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 
 namespace KGySoft.ComponentModel
 {
@@ -11,6 +12,7 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly PersistableObjectBase owner;
+        private int editLevel;
 
 #if NET35
         private readonly Stack<KeyValuePair<string, object>[]> snapshots = new Stack<KeyValuePair<string, object>[]>();
@@ -20,12 +22,23 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
+        #region Properties
+
+        public int EditLevel => editLevel;
+
+        #endregion
+
+        #region Constructors
+
         internal EditableHelper(PersistableObjectBase owner) => this.owner = owner;
+
+        #endregion
 
         #region Methods
 
         public void BeginEdit()
         {
+            Interlocked.Increment(ref editLevel);
 #if NET35
             lock (snapshots)
                 snapshots.Push(owner.PropertiesInternal.ToArray());
@@ -37,6 +50,7 @@ namespace KGySoft.ComponentModel
 
         public void EndEdit()
         {
+            // TODO: if (editLevel == 0) invalidopex
 #if NET35
             lock (snapshots)
             {
@@ -48,11 +62,12 @@ namespace KGySoft.ComponentModel
             if (!snapshots.TryPop(out var _))
                 throw new InvalidOperationException(Res.Get(Res.NotEditing));
 #endif
-
+            Interlocked.Decrement(ref editLevel);
         }
 
         public void CancelEdit()
         {
+            // TODO: if (editLevel == 0) invalidopex
             lock (snapshots)
             {
                 // ReSharper disable once JoinDeclarationAndInitializer - .NET 3.5
@@ -82,14 +97,10 @@ namespace KGySoft.ComponentModel
 
                 undoable?.ClearUndoHistory();
             }
+
+            Interlocked.Decrement(ref editLevel);
         }
 
         #endregion
-
-        public int EditLevel 
-        {
-            get => throw new NotImplementedException();
-            set => throw new NotImplementedException();
-        }
     }
 }
