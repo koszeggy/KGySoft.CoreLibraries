@@ -1685,7 +1685,7 @@ namespace _LibrariesTest.Libraries.Serialization
 
 #endregion
 
-#region Private methods
+        #region Private methods
 
         private void SystemSerializeObject(object obj)
         {
