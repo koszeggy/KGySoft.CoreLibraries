@@ -388,7 +388,7 @@ namespace KGySoft.Libraries
 
         #endregion
 
-        #region
+        #region Private Methods
 
         private static int GetSize(Type type)
         {

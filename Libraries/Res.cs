@@ -254,6 +254,7 @@ namespace KGySoft
         internal const string DeclaringTypeExpected = nameof(DeclaringTypeExpected);
         internal const string NotEditing = nameof(NotEditing);
         internal const string MissingPropertyReference = nameof(MissingPropertyReference);
+        internal const string DoValidationNull = nameof(DoValidationNull);
 
         #endregion
 

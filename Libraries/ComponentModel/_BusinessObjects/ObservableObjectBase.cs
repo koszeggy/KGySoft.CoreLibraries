@@ -28,6 +28,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Provides a base class for business object model classes, which can notify their consumer about property changes.
     /// </summary>
+    /// <seealso cref="INotifyPropertyChanging" />
     /// <seealso cref="INotifyPropertyChanged" />
     /// <seealso cref="PersistableObjectBase" />
     public abstract class ObservableObjectBase : INotifyPropertyChanging, INotifyPropertyChanged, IDisposable
@@ -163,6 +164,8 @@ namespace KGySoft.ComponentModel
         /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
         protected internal virtual void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
+            if (AffectsModifiedState(e.PropertyName))
+                SetModified(true);
             if (suspendCounter <= 0)
                 propertyChanged?.Invoke(this, e);
         }
@@ -181,6 +184,14 @@ namespace KGySoft.ComponentModel
         /// Resumes the raising of the <see cref="PropertyChanging"/> and <see cref="PropertyChanged"/> events suspended by the <see cref="SuspendChangeEvents">SuspendChangeEvents</see> method.
         /// </summary>
         protected void ResumeChangeEvents() => Interlocked.Decrement(ref suspendCounter);
+
+        /// <summary>
+        /// Gets whether the change of the specified <paramref name="propertyName"/> affects the <see cref="IsModified"/> property.
+        /// <br/>The <see cref="ObservableObjectBase"/> implementation excludes only the <see cref="IsModified"/> property itself.
+        /// </summary>
+        /// <param name="propertyName">Name of the changed property.</param>
+        /// <returns><see langword="true"/> if changing of the specified <paramref name="propertyName"/> affects the value of the <see cref="IsModified"/> property; otherwise, <see langword="false"/>.</returns>
+        protected virtual bool AffectsModifiedState(string propertyName) => propertyName != nameof(IsModified);
 
         /// <summary>
         /// Releases the resources held by this instance.

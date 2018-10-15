@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Threading;
+using KGySoft.Collections;
+using KGySoft.Libraries;
 
 namespace KGySoft.ComponentModel
 {
@@ -12,19 +11,13 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly PersistableObjectBase owner;
-        private int editLevel;
-
-#if NET35
-        private readonly Stack<KeyValuePair<string, object>[]> snapshots = new Stack<KeyValuePair<string, object>[]>();
-#else
-        private readonly ConcurrentStack<KeyValuePair<string, object>[]> snapshots = new ConcurrentStack<KeyValuePair<string, object>[]>();
-#endif
+        private readonly LockingList<KeyValuePair<string, object>[]> snapshots = new List<KeyValuePair<string, object>[]>().AsThreadSafe();
 
         #endregion
 
         #region Properties
 
-        public int EditLevel => editLevel;
+        public int EditLevel => snapshots.Count;
 
         #endregion
 
@@ -36,59 +29,48 @@ namespace KGySoft.ComponentModel
 
         #region Methods
 
-        public void BeginEdit()
+        public void BeginNewEdit()
         {
-            Interlocked.Increment(ref editLevel);
-#if NET35
-            lock (snapshots)
-                snapshots.Push(owner.PropertiesInternal.ToArray());
-#else
-            snapshots.Push(owner.PropertiesInternal.ToArray());
-#endif
-
+            int oldLevel = EditLevel;
+            owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldLevel, nameof(EditLevel)));
+            snapshots.Add(owner.PropertiesInternal.ToArray());
+            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldLevel, oldLevel + 1, nameof(EditLevel)));
         }
 
-        public void EndEdit()
+        public void CommitLastEdit()
         {
-            // TODO: if (editLevel == 0) invalidopex
-#if NET35
-            lock (snapshots)
+            int currentLevel;
+            snapshots.Lock();
+            try
             {
-                if (snapshots.Count == 0)
+                currentLevel = EditLevel;
+                if (currentLevel == 0)
                     throw new InvalidOperationException(Res.Get(Res.NotEditing));
-                snapshots.Pop();
+                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
+                snapshots.RemoveAt(currentLevel - 1);
             }
-#else
-            if (!snapshots.TryPop(out var _))
-                throw new InvalidOperationException(Res.Get(Res.NotEditing));
-#endif
-            Interlocked.Decrement(ref editLevel);
+            finally
+            {
+                snapshots.Unlock();
+            }
+
+            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, currentLevel - 1, nameof(EditLevel)));
         }
 
-        public void CancelEdit()
+        public void RevertLastEdit()
         {
-            // TODO: if (editLevel == 0) invalidopex
-            lock (snapshots)
+            snapshots.Lock();
+            int currentLevel;
+            try
             {
-                // ReSharper disable once JoinDeclarationAndInitializer - .NET 3.5
-                // ReSharper disable once InlineOutVariableDeclaration - >= .NET 4.0
-                KeyValuePair<string, object>[] previousState;
-#if NET35
-                if (snapshots.Count == 0)
+                currentLevel = EditLevel;
+                if (currentLevel == 0)
                     throw new InvalidOperationException(Res.Get(Res.NotEditing));
-                previousState = snapshots.Pop();
-#else
-                if (!snapshots.TryPop(out previousState))
-                    throw new InvalidOperationException(Res.Get(Res.NotEditing));
-#endif
-
-                // when reverting edit clearing undo history, too because we can't reset a valid state
-                // (even with storing the undo history before every BeginEdit it would be a mess if some steps were undone)
                 var undoable = owner as ICanUndoInternal;
                 undoable?.SuspendUndo();
                 try
                 {
-                    owner.ReplaceProperties(previousState);
+                    owner.ReplaceProperties(snapshots[currentLevel - 1]);
                 }
                 finally
                 {
@@ -96,11 +78,123 @@ namespace KGySoft.ComponentModel
                 }
 
                 undoable?.ClearUndoHistory();
+                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
+                snapshots.RemoveAt(currentLevel - 1);
+            }
+            finally
+            {
+                snapshots.Unlock();
             }
 
-            Interlocked.Decrement(ref editLevel);
+            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, currentLevel - 1, nameof(EditLevel)));
+        }
+
+        public bool TryCommitAllEdits()
+        {
+            int currentLevel;
+            snapshots.Lock();
+            try
+            {
+                currentLevel = EditLevel;
+                if (currentLevel == 0)
+                    return false;
+                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
+                snapshots.Clear();
+            }
+            finally
+            {
+                snapshots.Unlock();
+            }
+            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, 0, nameof(EditLevel)));
+
+            return true;
+        }
+
+        public bool TryRevertAllEdits()
+        {
+            snapshots.Lock();
+            int currentLevel;
+            try
+            {
+                currentLevel = EditLevel;
+                if (currentLevel == 0)
+                    return false;
+                var undoable = owner as ICanUndoInternal;
+                undoable?.SuspendUndo();
+                try
+                {
+                    owner.ReplaceProperties(snapshots[0]);
+                }
+                finally
+                {
+                    undoable?.ResumeUndo();
+                }
+
+                undoable?.ClearUndoHistory();
+                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
+                snapshots.Clear();
+            }
+            finally
+            {
+                snapshots.Unlock();
+            }
+
+            owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(currentLevel, 0, nameof(EditLevel)));
+            return true;
         }
 
         #endregion
+
+        internal void BeginEdit(EditableObjectBehavior behavior)
+        {
+            switch (behavior)
+            {
+                case EditableObjectBehavior.NestingDisabled:
+                    if (EditLevel == 0)
+                        BeginNewEdit();
+                    break;
+                case EditableObjectBehavior.NestingAllowed:
+                    BeginNewEdit();
+                    break;
+                case EditableObjectBehavior.Disabled:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+            }
+        }
+
+        internal void EndEdit(EditableObjectBehavior behavior)
+        {
+            switch (behavior)
+            {
+                case EditableObjectBehavior.NestingDisabled:
+                    TryCommitAllEdits();
+                    break;
+                case EditableObjectBehavior.NestingAllowed:
+                    CommitLastEdit();
+                    break;
+                case EditableObjectBehavior.Disabled:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+            }
+        }
+
+        internal void CancelEdit(EditableObjectBehavior behavior)
+        {
+            switch (behavior)
+            {
+                case EditableObjectBehavior.NestingDisabled:
+                    TryRevertAllEdits();
+                    break;
+                case EditableObjectBehavior.NestingAllowed:
+                    RevertLastEdit();
+                    break;
+                case EditableObjectBehavior.Disabled:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+            }
+        }
     }
 }

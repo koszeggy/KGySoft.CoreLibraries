@@ -83,6 +83,10 @@
     <Compile Include="Collections\_doc\NamespaceDoc.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\EditableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\EditableObjectBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ModelBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ValidatingObjectBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ValidationResult.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Enums\EditableObjectBehavior.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoInternal.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\SortableBindingList.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableHelper.cs" />
@@ -92,7 +96,8 @@
     <Compile Include="ComponentModel\_BusinessObjects\_Extensions\EventArgsExtensions.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoRedo.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndo.cs" />
-    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\IEditableObject.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanEdit.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\IValidatingObject.cs" />
     <Compile Include="ComponentModel\_TypeConverters\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\_Command\CommandState.cs" />
     <Compile Include="ComponentModel\_Command\_Extensions\Command.cs" />
@@ -255,7 +260,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

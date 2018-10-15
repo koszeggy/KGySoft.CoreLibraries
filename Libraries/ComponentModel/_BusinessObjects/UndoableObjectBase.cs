@@ -23,6 +23,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using KGySoft.Collections;
+using KGySoft.Libraries;
 
 #endregion
 
@@ -40,7 +41,7 @@ namespace KGySoft.ComponentModel
     /// - note: Other undoable classes are not derived from UndoableObjectBase - akár kép is! - Avoid casting to UndoableObjectBase because for example ModelBase does not implement it. Cast to ICanUndoRedo instead
     /// - note: IsModified vs CanUndo and IRevertibleChangeTracking.IsChanged
     /// - Example (or just mention the one in the base, which also applies here)
-    /// - IRevertibleChangeTracking
+    /// - IRevertibleChangeTracking implementation
     /// </remarks>
     /// <seealso cref="ICanUndoRedo" />
     /// <seealso cref="IRevertibleChangeTracking" />
@@ -50,23 +51,16 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="ModelBase" />
     public abstract class UndoableObjectBase : PersistableObjectBase, ICanUndoRedo, ICanUndoInternal, IRevertibleChangeTracking
     {
-        private UndoableHelper undoable;
+        private readonly UndoableHelper undoable;
+        private static readonly string[] ignoreModifiedProperties = { nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo) };
 
-        internal ICanUndoRedo AsUndoable
-        {
-            get
-            {
-                if (undoable == null)
-                    Interlocked.CompareExchange(ref undoable, new UndoableHelper(this), null);
-                return undoable;
-            }
-        }
+        protected UndoableObjectBase() => undoable = new UndoableHelper(this);
 
         /// <inheritdoc />
-        public bool CanUndo => AsUndoable.CanUndo;
+        public bool CanUndo => undoable.CanUndo;
 
         /// <inheritdoc />
-        public bool TryUndo() => AsUndoable.TryUndo();
+        public bool TryUndo() => undoable.TryUndo();
 
         /// <summary>
         /// Gets or sets the undo capacity.
@@ -75,12 +69,12 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
         public int UndoCapacity
         {
-            get => AsUndoable.UndoCapacity;
-            set => AsUndoable.UndoCapacity = value;
+            get => undoable.UndoCapacity;
+            set => undoable.UndoCapacity = value;
         }
 
         /// <inheritdoc />
-        public void UndoAll() => AsUndoable.UndoAll();
+        public void UndoAll() => undoable.UndoAll();
 
         void ICanUndoInternal.SuspendUndo() => undoable.SuspendUndo();
         void ICanUndoInternal.ResumeUndo() => undoable.ResumeUndo();
@@ -88,19 +82,29 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Clears the undo/redo history without performing any undo.
         /// </summary>
-        public void ClearUndoHistory() => AsUndoable.ClearUndoHistory();
+        public void ClearUndoHistory() => undoable.ClearUndoHistory();
 
         /// <inheritdoc />
-        public bool CanRedo => AsUndoable.CanRedo;
+        public bool CanRedo => undoable.CanRedo;
 
         /// <inheritdoc />
-        public bool TryRedo() => AsUndoable.TryRedo();
+        public bool TryRedo() => undoable.TryRedo();
 
         /// <inheritdoc />
-        public void RedoAll() => AsUndoable.RedoAll();
+        public void RedoAll() => undoable.RedoAll();
 
         bool IChangeTracking.IsChanged => CanUndo;
         void IChangeTracking.AcceptChanges() => ClearUndoHistory();
         void IRevertibleChangeTracking.RejectChanges() => UndoAll();
+
+        /// <summary>
+        /// Gets whether the change of the specified <paramref name="propertyName" /> affects the <see cref="ObservableObjectBase.IsModified" /> property.
+        /// <br />The <see cref="UndoableObjectBase" /> implementation excludes the <see cref="ObservableObjectBase.IsModified"/>, <see cref="UndoCapacity"/>,
+        /// <see cref="CanUndo"/> and <see cref="CanRedo"/> properties.
+        /// </summary>
+        /// <param name="propertyName">Name of the changed property.</param>
+        /// <returns><see langword="true" /> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
+        protected override bool AffectsModifiedState(string propertyName) => 
+            base.AffectsModifiedState(propertyName) && !propertyName.In(ignoreModifiedProperties);
     }
 }

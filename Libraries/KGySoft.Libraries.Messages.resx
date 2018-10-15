@@ -790,4 +790,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="MissingPropertyReference" xml:space="preserve">
     <value>&lt;Missing property value&gt;</value>
   </data>
+  <data name="DoValidationNull" xml:space="preserve">
+    <value>The DoValidation method returned null.</value>
+  </data>
 </root>

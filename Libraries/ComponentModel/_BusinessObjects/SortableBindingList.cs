@@ -29,6 +29,7 @@ namespace KGySoft.ComponentModel
     /// Provides a sortable view for an existing <see cref="IList{T}"/> without reordering the underlying list itself.
     /// </summary>
     /// <typeparam name="T">Type of child object contained by the original list or collection.</typeparam>
+#error TODO: furán működik, ha sorted és új elemet adunk hozzá
     public sealed class SortableBindingList<T> : IList<T>, IBindingList, ICancelAddNew
     {
         #region Nested classes
