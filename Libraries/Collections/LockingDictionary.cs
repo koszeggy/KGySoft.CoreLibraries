@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using KGySoft.Diagnostics;
 
 namespace KGySoft.Collections
 {
@@ -56,6 +58,9 @@ namespace KGySoft.Collections
     /// <seealso cref="IDictionary{TKey,TValue}" />
     /// <seealso cref="LockingCollection{T}" />
     /// <seealso cref="LockingList{T}" />
+    [Serializable]
+    [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}; Hit = {" + nameof(Cache<_, _>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
     public class LockingDictionary<TKey, TValue> : LockingCollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
     {
         /// <summary>

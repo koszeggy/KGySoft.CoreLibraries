@@ -16,8 +16,11 @@
 
 #region Usings
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using KGySoft.Diagnostics;
 
 #endregion
 
@@ -68,6 +71,9 @@ namespace KGySoft.Collections
     /// <seealso cref="IList{T}" />
     /// <seealso cref="LockingCollection{T}" />
     /// <seealso cref="LockingDictionary{TKey,TValue}" />
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
+    [Serializable]
     public class LockingList<T> : LockingCollection<T>, IList<T>
     {
         #region Indexers
