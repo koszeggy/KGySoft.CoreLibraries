@@ -48,6 +48,18 @@ namespace KGySoft.ComponentModel
         public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback)
             => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
+        public SourceAwareTargetedCommand(Action<ICommandSource<TEventArgs>, TTarget> callback)
+        {
+            if (callback == null)
+                throw new ArgumentNullException(nameof(callback));
+            this.callback = (e, _, t) => callback.Invoke(e, t);
+        }
+
         #endregion
 
         #region Methods

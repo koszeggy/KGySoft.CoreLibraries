@@ -44,6 +44,18 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
         public SimpleCommand(Action<ICommandState> callback) => this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleCommand"/> class.
+        /// </summary>
+        /// <param name="callback">A delegate to invoke when the command is triggered.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="callback"/> is <see langword="null"/>.</exception>
+        public SimpleCommand(Action callback)
+        {
+            if (callback == null)
+                throw new ArgumentNullException(nameof(callback));
+            this.callback = _ => callback.Invoke();
+        }
+
         #endregion
 
         #region Methods
