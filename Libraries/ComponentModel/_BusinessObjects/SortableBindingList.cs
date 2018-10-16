@@ -28,8 +28,14 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Provides a sortable view for an existing <see cref="IList{T}"/> without reordering the underlying list itself.
     /// </summary>
-    /// <typeparam name="T">Type of child object contained by the original list or collection.</typeparam>
-#error TODO: furán működik, ha sorted és új elemet adunk hozzá
+    /// <typeparam name="T">Type of the contained elements.</typeparam>
+    /// TODO:
+    /// - Összes member leírása
+    /// - ListItem: IComparable{T} támogatása (most csak sima IComparable van a key-re, aztán ToString)
+    /// - Add/Insert/Set(this)/Remove-ba LocalChange(...) hívás, ha nem binding(/observable) list van wrappelve - Ez belül hívja az OnListChange-et - így támogatnánk a ListChanged-et akkor is, ha nem bindinglist van belül
+    /// - AddNew-ban legyen default akkor is, ha nem bindinglist a belseje
+    /// - ObservableCollection támogatás - feliratkozás az ő eseményeire, és hasonló tartalom, mint a BindingList_ListChanged-ben
+    /// - ObservableBindingList: ObservableCollection-ből származzon, akár ennek az oszyálynak is lehetne az őse
     public sealed class SortableBindingList<T> : IList<T>, IBindingList, ICancelAddNew
     {
         #region Nested classes
@@ -79,7 +85,7 @@ namespace KGySoft.ComponentModel
                     return 1;
 
                 // ReSharper disable once StringCompareToIsCultureSpecific - now this is intended
-                return key.ToString().CompareTo(target.ToString());
+                return ToString().CompareTo(target.ToString());
             }
 
             public override string ToString() => key.ToString();
@@ -165,10 +171,6 @@ namespace KGySoft.ComponentModel
                     index = sortIndex.Count;
             }
 
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
             void IDisposable.Dispose()
             {
             }
@@ -185,12 +187,9 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly IList<T> list;
-        private readonly bool supportsBinding;
-        private readonly IBindingList bindingList;
         private readonly List<ListItem> sortIndex = new List<ListItem>();
 
         private bool sorted;
-        private bool initiatedLocally;
         private PropertyDescriptor sortProperty;
         private ListSortDirection sortDirection = ListSortDirection.Ascending;
 
@@ -216,22 +215,29 @@ namespace KGySoft.ComponentModel
 
         #region Properties
 
+        #region Private Properties
+
+        private bool IsBindingList => list is IBindingList;
+        private IBindingList AsBindingList => list as IBindingList;
+
+        #endregion
+
         #region Public Properties
 
         /// <summary>
         /// Implemented by IList source object.
         /// </summary>
-        public bool AllowEdit => supportsBinding && bindingList.AllowEdit;
+        public bool AllowEdit => AsBindingList?.AllowEdit ?? false;
 
         /// <summary>
         /// Implemented by IList source object.
         /// </summary>
-        public bool AllowNew => supportsBinding && bindingList.AllowNew;
+        public bool AllowNew => AsBindingList?.AllowNew ?? false;
 
         /// <summary>
         /// Implemented by IList source object.
         /// </summary>
-        public bool AllowRemove => supportsBinding && bindingList.AllowRemove;
+        public bool AllowRemove => AsBindingList?.AllowRemove ?? false;
 
         /// <summary>
         /// Gets a value indicating whether the view is currently sorted.
@@ -257,7 +263,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Implemented by IList source object.
         /// </summary>
-        public bool SupportsSearching => supportsBinding && bindingList.SupportsSearching;
+        public bool SupportsSearching => AsBindingList?.SupportsSearching ?? false;
 
         /// <summary>
         /// Returns <see langword="true"/>. Sorting is supported.
@@ -303,7 +309,11 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (sorted)
+                {
                     list[OriginalIndex(index)] = value;
+                    if (!IsBindingList)
+                        DoSort();
+                }
                 else
                     list[index] = value;
             }
@@ -336,9 +346,8 @@ namespace KGySoft.ComponentModel
             this.list = list;
             if (!(this.list is IBindingList))
                 return;
-            supportsBinding = true;
-            bindingList = (IBindingList)this.list;
-            bindingList.ListChanged += SourceChanged;
+            if (list is IBindingList bindingList)
+                bindingList.ListChanged += BindingList_ListChanged;
         }
 
         #endregion
@@ -358,32 +367,12 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="property">Property on which
         /// to build the index.</param>
-        public void AddIndex(PropertyDescriptor property)
-        {
-            if (supportsBinding)
-                bindingList.AddIndex(property);
-        }
+        public void AddIndex(PropertyDescriptor property) => AsBindingList?.AddIndex(property);
 
         /// <summary>
         /// Implemented by IList source object.
         /// </summary>
-        public object AddNew()
-        {
-            object result;
-            if (supportsBinding)
-            {
-                initiatedLocally = true;
-                result = bindingList.AddNew();
-                initiatedLocally = false;
-                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, bindingList.Count - 1));
-                if (IsSorted)
-                    DoSort();
-            }
-            else
-                result = null;
-
-            return result;
-        }
+        public object AddNew() => AsBindingList?.AddNew();
 
         /// <summary>
         /// Applies a sort to the view.
@@ -394,6 +383,7 @@ namespace KGySoft.ComponentModel
         {
             sortProperty = property ?? throw new ArgumentNullException(nameof(property));
             sortDirection = direction;
+
             DoSort();
         }
 
@@ -432,9 +422,7 @@ namespace KGySoft.ComponentModel
         /// value.</param>
         public int Find(PropertyDescriptor property, object key)
         {
-            if (!supportsBinding)
-                return -1;
-            var originalIndex = bindingList.Find(property, key);
+            int originalIndex = AsBindingList?.Find(property, key) ?? -1;
             return originalIndex > -1 ? SortedIndex(originalIndex) : -1;
         }
 
@@ -443,11 +431,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="property">Property for which the
         /// index should be removed.</param>
-        public void RemoveIndex(PropertyDescriptor property)
-        {
-            if (supportsBinding)
-                bindingList.RemoveIndex(property);
-        }
+        public void RemoveIndex(PropertyDescriptor property) => AsBindingList?.RemoveIndex(property);
 
         /// <summary>
         /// Removes any sort currently applied to the view.
@@ -459,7 +443,7 @@ namespace KGySoft.ComponentModel
             sortDirection = ListSortDirection.Ascending;
             sorted = false;
 
-            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, 0));
+            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
         }
 
         /// <summary>
@@ -484,7 +468,7 @@ namespace KGySoft.ComponentModel
         public void Add(T item)
         {
             list.Add(item);
-            if (IsSorted)
+            if (sorted && !IsBindingList)
                 DoSort();
         }
 
@@ -514,7 +498,7 @@ namespace KGySoft.ComponentModel
         public void Insert(int index, T item)
         {
             list.Insert(index, item);
-            if (IsSorted)
+            if (sorted && !IsBindingList)
                 DoSort();
         }
 
@@ -529,21 +513,12 @@ namespace KGySoft.ComponentModel
         /// in the list, resorting the display as needed.
         /// </summary>
         /// <param name="index">The index of the object to remove.</param>
-        /// <remarks>
-        /// See Chapter 5 for details on how and why the list is
-        /// altered during the remove process.
-        /// </remarks>
         public void RemoveAt(int index)
         {
             if (sorted)
             {
-                initiatedLocally = true;
                 int baseIndex = OriginalIndex(index);
-
-                // remove the item from the source list
                 list.RemoveAt(baseIndex);
-
-                initiatedLocally = false;
             }
             else
                 list.RemoveAt(index);
@@ -584,7 +559,7 @@ namespace KGySoft.ComponentModel
             sortIndex.Sort();
             sorted = true;
 
-            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, 0));
+            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
         }
 
         private int OriginalIndex(int sortedIndex)
@@ -649,66 +624,62 @@ namespace KGySoft.ComponentModel
 
         #region Event handlers
 
-        private void SourceChanged(object sender, ListChangedEventArgs e)
+        private void BindingList_ListChanged(object sender, ListChangedEventArgs e)
         {
-            if (sorted)
+            if (!sorted)
             {
-                switch (e.ListChangedType)
-                {
-                    case ListChangedType.ItemAdded:
-                        T newItem = list[e.NewIndex];
-                        if (e.NewIndex == list.Count - 1)
-                        {
-                            var newKey = SortProperty != null ? SortProperty.GetValue(newItem) : newItem;
-
-                            if (SortDirection == ListSortDirection.Ascending)
-                                sortIndex.Add(new ListItem(newKey, e.NewIndex));
-                            else
-                                sortIndex.Insert(0, new ListItem(newKey, e.NewIndex));
-
-                            if (!initiatedLocally)
-                                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, SortedIndex(e.NewIndex)));
-                        }
-                        else
-                            DoSort();
-                        break;
-
-                    case ListChangedType.ItemChanged:
-                        // an item changed - just relay the event with a translated index value
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, SortedIndex(e.NewIndex), e.PropertyDescriptor));
-                        break;
-
-                    case ListChangedType.ItemDeleted:
-                        var internalIndex = InternalIndex(e.NewIndex);
-                        var sortedIndex = internalIndex;
-                        if (sorted && SortDirection == ListSortDirection.Descending)
-                            sortedIndex = sortIndex.Count - 1 - internalIndex;
-
-                        // remove from internal list
-                        sortIndex.RemoveAt(internalIndex);
-
-                        // now fix up all index pointers in the sort index
-                        foreach (ListItem item in sortIndex)
-                        {
-                            if (item.BaseIndex > e.NewIndex)
-                                item.BaseIndex -= 1;
-                        }
-
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, sortedIndex, e.PropertyDescriptor));
-                        break;
-
-                    default:
-                        // for anything other than add, delete or change
-                        // just re-sort the list
-                        if (!initiatedLocally)
-                            DoSort();
-                        break;
-                }
+                OnListChanged(e);
+                return;
             }
-            else
+
+            // sorting if necessary and/or translating the indexes to the consumer
+            switch (e.ListChangedType)
             {
-                if (!initiatedLocally)
-                    OnListChanged(e);
+                case ListChangedType.ItemAdded:
+                    T newItem = list[e.NewIndex];
+                    if (e.NewIndex == list.Count - 1)
+                    {
+                        var newKey = SortProperty != null ? SortProperty.GetValue(newItem) : newItem;
+
+                        if (SortDirection == ListSortDirection.Ascending)
+                            sortIndex.Add(new ListItem(newKey, e.NewIndex));
+                        else
+                            sortIndex.Insert(0, new ListItem(newKey, e.NewIndex));
+
+                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, SortedIndex(e.NewIndex)));
+                    }
+                    else
+                        DoSort();
+
+                    break;
+
+                case ListChangedType.ItemChanged:
+                    // an item changed - just relay the event with a translated index value
+                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, SortedIndex(e.NewIndex), e.PropertyDescriptor));
+                    break;
+
+                case ListChangedType.ItemDeleted:
+                    var internalIndex = InternalIndex(e.NewIndex);
+                    var sortedIndex = internalIndex;
+                    if (sorted && SortDirection == ListSortDirection.Descending)
+                        sortedIndex = sortIndex.Count - 1 - internalIndex;
+
+                    // remove from internal list
+                    sortIndex.RemoveAt(internalIndex);
+
+                    // now fix up all index pointers in the sort index
+                    foreach (ListItem item in sortIndex)
+                    {
+                        if (item.BaseIndex > e.NewIndex)
+                            item.BaseIndex -= 1;
+                    }
+
+                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, sortedIndex, e.PropertyDescriptor));
+                    break;
+
+                default:
+                    DoSort();
+                    break;
             }
         }
 
@@ -741,7 +712,7 @@ namespace KGySoft.ComponentModel
 
         void ICancelAddNew.CancelNew(int itemIndex)
         {
-            if (itemIndex > -1)
+            if (itemIndex < 0)
                 return;
 
             if (list is ICancelAddNew cancelAddNew)
