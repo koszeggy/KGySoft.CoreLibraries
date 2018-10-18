@@ -164,9 +164,9 @@ namespace KGySoft.ComponentModel
 
             if (properties.TryGetValue(propertyName, out object value))
             {
-                if (!(value is T result))
+                if (!typeof(T).CanAcceptValue(value))
                     throw new InvalidOperationException(Res.Get(Res.ReturnedTypeInvalid, typeof(T)));
-                return result;
+                return (T)value;
             }
 
             if (createInitialValue == null)
@@ -276,7 +276,7 @@ namespace KGySoft.ComponentModel
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanGetProperty(propertyName))
                 throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
-            return properties.TryGetValue(propertyName, out object value) && value is T result ? result : defaultValue;
+            return properties.TryGetValue(propertyName, out object value) && typeof(T).CanAcceptValue(value) ? (T)value : defaultValue;
         }
 
         bool IPersistableObject.SetProperty(string propertyName, object value, bool invokeChangeEvents)

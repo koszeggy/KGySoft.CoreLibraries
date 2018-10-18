@@ -64,12 +64,15 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="command">The command to bind.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
+        /// <param name="disposeCommand"><see langword="true"/> to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/> to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
+        /// Use <see langword="true"/> only if the command will not be re-used elsewhere. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
         /// </returns>
-        public static ICommandBinding CreateBinding(this ICommand command, IDictionary<string, object> initialState = null)
-            => new CommandBinding(command, initialState);
+        public static ICommandBinding CreateBinding(this ICommand command, IDictionary<string, object> initialState = null, bool disposeCommand = false)
+            => new CommandBinding(command, initialState, disposeCommand);
 
         #endregion
 

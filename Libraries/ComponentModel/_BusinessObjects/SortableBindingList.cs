@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 #endregion
 
@@ -31,6 +32,7 @@ namespace KGySoft.ComponentModel
     /// <typeparam name="T">Type of the contained elements.</typeparam>
     /// TODO:
     /// - Összes member leírása
+    /// - DoSort-ban előző/új property is a jó Moved jelentéshez (ha nem jó a Moved, és az item IEditableObject, a bindingsource/grid rosszul használja a begin/end-et)
     /// - ListItem: IComparable{T} támogatása (most csak sima IComparable van a key-re, aztán ToString)
     /// - Add/Insert/Set(this)/Remove-ba LocalChange(...) hívás, ha nem binding(/observable) list van wrappelve - Ez belül hívja az OnListChange-et - így támogatnánk a ListChanged-et akkor is, ha nem bindinglist van belül
     /// - AddNew-ban legyen default akkor is, ha nem bindinglist a belseje
@@ -44,14 +46,9 @@ namespace KGySoft.ComponentModel
 
         private class ListItem : IComparable<ListItem>
         {
-            #region Fields
-
-            private readonly object key;
-
-            #endregion
-
             #region Properties
 
+            public object Key { get; }
             public int BaseIndex { get; set; }
 
             #endregion
@@ -60,7 +57,7 @@ namespace KGySoft.ComponentModel
 
             public ListItem(object key, int baseIndex)
             {
-                this.key = key;
+                Key = key;
                 BaseIndex = baseIndex;
             }
 
@@ -70,15 +67,15 @@ namespace KGySoft.ComponentModel
 
             public int CompareTo(ListItem other)
             {
-                object target = other.key;
+                object target = other.Key;
 
-                if (key is IComparable comparable)
+                if (Key is IComparable comparable)
                     return comparable.CompareTo(target);
 
-                if (key == null)
+                if (Key == null)
                     return target == null ? 0 : 1;
 
-                if (key.Equals(target))
+                if (Key.Equals(target))
                     return 0;
 
                 if (target == null)
@@ -88,7 +85,7 @@ namespace KGySoft.ComponentModel
                 return ToString().CompareTo(target.ToString());
             }
 
-            public override string ToString() => key.ToString();
+            public override string ToString() => Key.ToString();
 
             #endregion
         }
@@ -191,7 +188,8 @@ namespace KGySoft.ComponentModel
 
         private bool sorted;
         private PropertyDescriptor sortProperty;
-        private ListSortDirection sortDirection = ListSortDirection.Ascending;
+        private ListSortDirection newSortDirection;
+        private ListSortDirection? currentSortDirection;
 
         #endregion
 
@@ -247,7 +245,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Returns the direction of the current sort.
         /// </summary>
-        public ListSortDirection SortDirection => sortDirection;
+        public ListSortDirection SortDirection => currentSortDirection.GetValueOrDefault();
 
         /// <summary>
         /// Returns the PropertyDescriptor of the current sort.
@@ -382,7 +380,7 @@ namespace KGySoft.ComponentModel
         public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
         {
             sortProperty = property ?? throw new ArgumentNullException(nameof(property));
-            sortDirection = direction;
+            newSortDirection = direction;
 
             DoSort();
         }
@@ -410,7 +408,7 @@ namespace KGySoft.ComponentModel
         public void ApplySort(ListSortDirection direction)
         {
             sortProperty = null;
-            sortDirection = direction;
+            newSortDirection = direction;
             DoSort();
         }
 
@@ -440,7 +438,7 @@ namespace KGySoft.ComponentModel
         {
             sortIndex.Clear();
             sortProperty = null;
-            sortDirection = ListSortDirection.Ascending;
+            currentSortDirection = null;
             sorted = false;
 
             OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
@@ -536,9 +534,21 @@ namespace KGySoft.ComponentModel
 
         private void DoSort()
         {
+            // TODO: same split for current/new property; otherwise, Moved cannot be reported correctly
+            object @null = new object();
             int index = 0;
-            sortIndex.Clear();
 
+            int length = Count;
+            var origIndexes = new Dictionary<object, int>();
+            if (currentSortDirection != null && sortIndex.Count == length)
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    origIndexes[sortIndex[i].Key ?? @null] = currentSortDirection == ListSortDirection.Ascending ? i : length - i - 1;
+                }
+            }
+
+            sortIndex.Clear();
             if (SortProperty == null)
             {
                 foreach (T obj in list)
@@ -558,8 +568,17 @@ namespace KGySoft.ComponentModel
 
             sortIndex.Sort();
             sorted = true;
+            currentSortDirection = newSortDirection;
 
-            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+            for (int i = 0; i < length; i++)
+            {
+                int oldIndex = origIndexes.TryGetValue(sortIndex[i].Key ?? @null, out int orig) ? orig : sortIndex[i].BaseIndex;
+                int newIndex = newSortDirection == ListSortDirection.Ascending ? i : length - i - 1;
+                if (oldIndex != newIndex)
+                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
+
+            }
+            //OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
         }
 
         private int OriginalIndex(int sortedIndex)

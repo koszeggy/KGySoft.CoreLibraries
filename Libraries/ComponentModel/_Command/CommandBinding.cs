@@ -111,6 +111,7 @@ namespace KGySoft.ComponentModel
         #region Instance Fields
 
         private readonly ICommand command;
+        private readonly bool disposeCommand;
         private readonly HashSet<object> targets = new HashSet<object>();
         private readonly CommandState state;
         private readonly Dictionary<object, Dictionary<EventInfo, SubscriptionInfo>> sources = new Dictionary<object, Dictionary<EventInfo, SubscriptionInfo>>();
@@ -130,9 +131,10 @@ namespace KGySoft.ComponentModel
 
         #region Constructors
 
-        internal CommandBinding(ICommand command, IDictionary<string, object> initialState)
+        internal CommandBinding(ICommand command, IDictionary<string, object> initialState, bool disposeCommand)
         {
             this.command = command ?? throw new ArgumentNullException(nameof(command));
+            this.disposeCommand = disposeCommand;
             state = initialState is CommandState s ? s : new CommandState(initialState);
             state.PropertyChanged += State_PropertyChanged;
         }
@@ -165,7 +167,7 @@ namespace KGySoft.ComponentModel
 
             state.PropertyChanged -= State_PropertyChanged;
 
-            foreach (IComponent source in sources.Keys.ToArray())
+            foreach (object source in sources.Keys.ToArray())
                 RemoveSource(source);
 
             foreach (ICommandStateUpdater stateUpdater in stateUpdaters)
@@ -173,6 +175,8 @@ namespace KGySoft.ComponentModel
             stateUpdaters.Reset();
 
             targets.Clear();
+            if (disposeCommand)
+                (command as IDisposable)?.Dispose();
         }
 
         public ICommandBinding AddSource(object source, string eventName)
