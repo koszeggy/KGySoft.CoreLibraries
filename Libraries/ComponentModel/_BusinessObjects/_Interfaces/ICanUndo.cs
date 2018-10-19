@@ -22,12 +22,6 @@ namespace KGySoft.ComponentModel
         bool TryUndo();
 
         /// <summary>
-        /// Gets or sets the undo capacity.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
-        int UndoCapacity { get; set; }
-
-        /// <summary>
         /// Undoes all possible undo steps.
         /// </summary>
         void UndoAll();

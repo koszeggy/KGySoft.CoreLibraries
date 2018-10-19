@@ -1,9 +1,30 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: LockingDictionary.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2018 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
 using KGySoft.Diagnostics;
+
+#endregion
 
 namespace KGySoft.Collections
 {
@@ -63,6 +84,112 @@ namespace KGySoft.Collections
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}")]
     public class LockingDictionary<TKey, TValue> : LockingCollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>
     {
+        #region Properties and Indexers
+
+        #region Properties
+
+        /// <summary>
+        /// Gets an <see cref="ICollection{T}" /> containing the keys of the <see cref="LockingDictionary{TKey,TValue}" />.
+        /// </summary>
+        /// <remarks>
+        /// <para>The returned collection represents a moment-in-time snapshot of the keys of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
+        /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
+        /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
+        /// <para>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// </remarks>
+        public ICollection<TKey> Keys
+        {
+            get
+            {
+                Lock();
+                try
+                {
+                    // returning an array because it is read-only as an ICollection<T>
+                    return ((IDictionary<TKey, TValue>)InnerCollection).Keys.ToArray();
+                }
+                finally
+                {
+                    Unlock();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets an <see cref="ICollection{T}" /> containing the values of the <see cref="LockingDictionary{TKey,TValue}" />.
+        /// </summary>
+        /// <remarks>
+        /// <para>The returned collection represents a moment-in-time snapshot of the values of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
+        /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
+        /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
+        /// <para>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// </remarks>
+        public ICollection<TValue> Values
+        {
+            get
+            {
+                Lock();
+                try
+                {
+                    // returning an array because it is read-only as an ICollection<T>
+                    return ((IDictionary<TKey, TValue>)InnerCollection).Values.ToArray();
+                }
+                finally
+                {
+                    Unlock();
+                }
+            }
+        }
+
+        #endregion
+
+        #region Indexers
+
+        /// <summary>
+        /// Gets or sets the element with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <param name="key">The key of the element to get or set.</param>
+        /// <returns>The element with the specified key.</returns>
+        public TValue this[TKey key]
+        {
+            get
+            {
+                Lock();
+                try
+                {
+                    return ((IDictionary<TKey, TValue>)InnerCollection)[key];
+                }
+                finally
+                {
+                    Unlock();
+                }
+            }
+            set
+            {
+                Lock();
+                try
+                {
+                    ((IDictionary<TKey, TValue>)InnerCollection)[key] = value;
+                }
+                finally
+                {
+                    Unlock();
+                }
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LockingDictionary{TKey, TValue}"/> class with a <see cref="Dictionary{TKey,TValue}"/> inside.
+        /// </summary>
+        public LockingDictionary() : this(new Dictionary<TKey, TValue>())
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LockingDictionary{TKey, TValue}"/> class.
         /// </summary>
@@ -70,6 +197,10 @@ namespace KGySoft.Collections
         public LockingDictionary(IDictionary<TKey, TValue> dictionary) : base(dictionary)
         {
         }
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Determines whether the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key.
@@ -147,89 +278,6 @@ namespace KGySoft.Collections
             }
         }
 
-        /// <summary>
-        /// Gets or sets the element with the specified <paramref name="key"/>.
-        /// </summary>
-        /// <param name="key">The key of the element to get or set.</param>
-        /// <returns>The element with the specified key.</returns>
-        public TValue this[TKey key]
-        {
-            get
-            {
-                Lock();
-                try
-                {
-                    return ((IDictionary<TKey, TValue>)InnerCollection)[key];
-                }
-                finally
-                {
-                    Unlock();
-                }
-            }
-            set
-            {
-                Lock();
-                try
-                {
-                    ((IDictionary<TKey, TValue>)InnerCollection)[key] = value;
-                }
-                finally
-                {
-                    Unlock();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}" /> containing the keys of the <see cref="LockingDictionary{TKey,TValue}" />.
-        /// </summary>
-        /// <remarks>
-        /// <para>The returned collection represents a moment-in-time snapshot of the keys of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
-        /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
-        /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
-        /// <para>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
-        /// </remarks>
-        public ICollection<TKey> Keys
-        {
-            get
-            {
-                Lock();
-                try
-                {
-                    // returning an array because it is read-only as an ICollection<T>
-                    return ((IDictionary<TKey, TValue>)InnerCollection).Keys.ToArray();
-                }
-                finally
-                {
-                    Unlock();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}" /> containing the values of the <see cref="LockingDictionary{TKey,TValue}" />.
-        /// </summary>
-        /// <remarks>
-        /// <para>The returned collection represents a moment-in-time snapshot of the values of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
-        /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
-        /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
-        /// <para>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
-        /// </remarks>
-        public ICollection<TValue> Values
-        {
-            get
-            {
-                Lock();
-                try
-                {
-                    // returning an array because it is read-only as an ICollection<T>
-                    return ((IDictionary<TKey, TValue>)InnerCollection).Values.ToArray();
-                }
-                finally
-                {
-                    Unlock();
-                }
-            }
-        }
+        #endregion
     }
 }

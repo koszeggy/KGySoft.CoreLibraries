@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Threading;
 using KGySoft.Collections;
 
@@ -23,9 +22,9 @@ namespace KGySoft.ComponentModel
         private int undoCapacity = defaultUndoCapacity;
         private int suspendCounter;
 
-        private readonly PersistableObjectBase owner;
+        private readonly ObservableObjectBase owner;
 
-        internal UndoableHelper(PersistableObjectBase owner)
+        internal UndoableHelper(ObservableObjectBase owner)
         {
             this.owner = owner;
             owner.PropertyChanged += Owner_PropertyChanged;
@@ -34,7 +33,7 @@ namespace KGySoft.ComponentModel
         public bool CanUndo => undoSteps.Count > 0;
         public bool CanRedo => redoSteps.Count > 0;
 
-        public int UndoCapacity
+        internal int UndoCapacity
         {
             get => undoCapacity;
             set
@@ -45,13 +44,8 @@ namespace KGySoft.ComponentModel
                 if (oldCapacity == value)
                     return;
 
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldCapacity, nameof(UndoCapacity)));
                 bool raiseUndoChange = value == 0 && undoSteps.Count > 0;
-                if (raiseUndoChange)
-                    owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(true, nameof(CanUndo)));
                 bool raiseRedoChange = value == 0 && redoSteps.Count > 0;
-                if (raiseRedoChange)
-                    owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(true, nameof(CanRedo)));
 
                 lock (undoSteps)
                 {
@@ -90,7 +84,6 @@ namespace KGySoft.ComponentModel
             if (storage.Count == 0)
                 return;
 
-            owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(true, canUndoRedoName));
             lock (undoSteps)
                 storage.Reset();
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(true, false, canUndoRedoName));
@@ -99,9 +92,7 @@ namespace KGySoft.ComponentModel
         private void AddUndoStep(KeyValuePair<string, UndoEntry> newStep)
         {
             CircularList<KeyValuePair<string, UndoEntry>> storage = undoSteps;
-            bool raiseEvents = storage.Count == 0;
-            if (raiseEvents)
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(false, nameof(CanUndo)));
+            bool raiseChangedEvent = storage.Count == 0;
             lock (undoSteps)
             {
                 if (storage.Count > 0 && storage.Count + 1 == undoCapacity)
@@ -109,7 +100,7 @@ namespace KGySoft.ComponentModel
                 storage.AddLast(newStep);
             }
 
-            if (raiseEvents)
+            if (raiseChangedEvent)
                 owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(false, true, nameof(CanUndo)));
         }
 
@@ -122,8 +113,6 @@ namespace KGySoft.ComponentModel
                 return false;
 
             bool raiseSource = source.Count == 1;
-            if (raiseSource)
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(true, sourceName));
             bool success, raiseTarget;
             lock (undoSteps)
             {
@@ -134,7 +123,7 @@ namespace KGySoft.ComponentModel
                 try
                 {
                     // This will be false if actual value was not equal to From, which means an inconsistency between actual and tracked values.
-                    success = owner.AsPersistable.TryReplaceProperty(step.Key, step.Value.From, step.Value.To);
+                    success = owner.TryReplaceProperty(step.Key, step.Value.From, step.Value.To, true);
                 }
                 finally
                 {
@@ -145,8 +134,6 @@ namespace KGySoft.ComponentModel
                     owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(true, false, sourceName));
 
                 raiseTarget = target.Count == 0 && success;
-                if (raiseTarget)
-                    owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(false, targetName));
                 if (success)
                     target.AddLast(new KeyValuePair<string, UndoEntry>(step.Key, new UndoEntry { From = step.Value.To, To = step.Value.From }));
             }

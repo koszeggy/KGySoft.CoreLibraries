@@ -3,28 +3,10 @@
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Extension methods for <see cref="PropertyChangingEventArgs"/> and <see cref="PropertyChangedEventArgs"/> types.
+    /// Extension methods for the <see cref="PropertyChangedEventArgs"/> type.
     /// </summary>
-    public static class EventArgsExtensions
+    public static class PropertyChangedEventArgsExtensions
     {
-        /// <summary>
-        /// If the specified event <paramref name="args"/> is a <see cref="PropertyChangingExtendedEventArgs"/> instance, then gets the property value before the change.
-        /// </summary>
-        /// <param name="args">The <see cref="PropertyChangingEventArgs"/> instance containing the event data.</param>
-        /// <param name="value">If the specified event <paramref name="args"/> is a <see cref="PropertyChangingExtendedEventArgs"/> instance, then the property value before the change; otherwise, <see langword="null"/>.</param>
-        /// <returns><see langword="true"/> if the specified event <paramref name="args"/> is a <see cref="PropertyChangingExtendedEventArgs"/> instance; otherwise, <see langword="null"/>.</returns>
-        public static bool TryGetPropertyValue(this PropertyChangingEventArgs args, out object value)
-        {
-            if (args is PropertyChangingExtendedEventArgs ext)
-            {
-                value = ext.PropertyValue;
-                return true;
-            }
-
-            value = null;
-            return false;
-        }
-
         /// <summary>
         /// If the specified event <paramref name="args"/> is a <see cref="PropertyChangedExtendedEventArgs"/> instance, then gets the property value before the change.
         /// </summary>

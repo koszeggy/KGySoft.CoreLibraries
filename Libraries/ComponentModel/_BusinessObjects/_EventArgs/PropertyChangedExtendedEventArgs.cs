@@ -9,7 +9,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="PropertyChangedEventArgs" />
     /// <remarks><note>The <see cref="ObservableObjectBase.PropertyChanged">ObservableObjectBase.PropertyChanged</see> event uses the <see cref="PropertyChangedEventHandler"/> delegate in order to consumers, which rely on the conventional property
     /// changed notifications can use it in a compatible way. To get the old value in an event handler you can cast the argument to <see cref="PropertyChangedExtendedEventArgs"/>
-    /// or call the <see cref="EventArgsExtensions.TryGetPropertyValue">TryGetPropertyValue</see> extension method on it.</note></remarks>
+    /// or call the <see cref="PropertyChangedEventArgsExtensions.TryGetPropertyValue">TryGetPropertyValue</see> extension method on it.</note></remarks>
     public class PropertyChangedExtendedEventArgs : PropertyChangedEventArgs
     {
         /// <summary>

@@ -116,6 +116,13 @@ namespace KGySoft.Collections
         #region Constructors
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="LockingList{T}"/> with a <see cref="List{T}"/> inside.
+        /// </summary>
+        public LockingList() : this(new List<T>())
+        {
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="LockingList{T}"/> class.
         /// </summary>
         /// <param name="list">The list to create a thread-safe wrapper for.</param>

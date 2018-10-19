@@ -30,12 +30,12 @@ using KGySoft.Libraries;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents an object with step-by-step undo/redo capabilities by adding <see cref="ICanUndoRedo"/> implementation to <see cref="PersistableObjectBase"/>.
-    /// Undoing and redoing works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="PersistableObjectBase.Set">PersistableObjectBase.Set</see> method.
+    /// Represents an object with step-by-step undo/redo capabilities by adding <see cref="ICanUndoRedo"/> implementation to the <see cref="PersistableObjectBase"/> class.
+    /// Undoing and redoing works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.
     /// </summary>
     /// <remarks>
     /// <para>An object derived from <see cref="UndoableObjectBase"/> continuously tracks the property changes of properties, which are set through the <see cref="IPersistableObject"/> implementation
-    /// and the <see cref="PersistableObjectBase.Set">PersistableObjectBase.Set</see> method.</para> 
+    /// and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.</para> 
     /// TODO
     /// - note: differences to EditableObjectBase
     /// - note: Other undoable classes are not derived from UndoableObjectBase - akár kép is! - Avoid casting to UndoableObjectBase because for example ModelBase does not implement it. Cast to ICanUndoRedo instead
@@ -43,6 +43,7 @@ namespace KGySoft.ComponentModel
     /// - Example (or just mention the one in the base, which also applies here)
     /// - IRevertibleChangeTracking implementation
     /// </remarks>
+    /// <seealso cref="ICanUndo" />
     /// <seealso cref="ICanUndoRedo" />
     /// <seealso cref="IRevertibleChangeTracking" />
     /// <seealso cref="PersistableObjectBase" />
@@ -54,6 +55,9 @@ namespace KGySoft.ComponentModel
         private readonly UndoableHelper undoable;
         private static readonly string[] ignoreModifiedProperties = { nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo) };
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UndoableObjectBase"/> class.
+        /// </summary>
         protected UndoableObjectBase() => undoable = new UndoableHelper(this);
 
         /// <inheritdoc />
@@ -67,7 +71,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <c>20</c>.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
-        public int UndoCapacity
+        protected int UndoCapacity
         {
             get => undoable.UndoCapacity;
             set => undoable.UndoCapacity = value;

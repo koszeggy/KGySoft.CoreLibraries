@@ -44,16 +44,12 @@ namespace KGySoft.ComponentModel
             if (result == null)
                 throw new InvalidOperationException(Res.Get(Res.DoValidationNull));
             bool newIsValid = !result.HasErrors;
-            bool raiseChange = newIsValid != lastIsValid;
+            bool raiseChanged = newIsValid != lastIsValid;
             isValid = lastIsValid = newIsValid;
             cachedValidationResults = result;
 
-            // not raising before setting cached fields because getting IsValid could cause infinite loop otherwise.
-            if (raiseChange)
-            {
-                OnPropertyChanging(new PropertyChangingExtendedEventArgs(!newIsValid, nameof(IsValid)));
+            if (raiseChanged)
                 OnPropertyChanged(new PropertyChangedExtendedEventArgs(!newIsValid, newIsValid, nameof(IsValid)));
-            }
 
             return result;
         }

@@ -16,13 +16,7 @@
 
 #region Usings
 
-using System;
-#if !NET35
-using System.Collections.Concurrent;
-#endif
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading;
 
 #endregion
@@ -31,7 +25,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents an object with editing capabilities. Starting an edit session saves a snapshot about the stored properties, which can be either applied or reverted.
-    /// Works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="PersistableObjectBase.Set">PersistableObjectBase.Set</see> method.
+    /// Works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.
     /// </summary>
     /// <seealso cref="ICanEdit" />
     /// <seealso cref="IEditableObject" />

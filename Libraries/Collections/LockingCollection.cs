@@ -129,6 +129,13 @@ namespace KGySoft.Collections
         #region Constructors
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="LockingCollection{T}"/> class with a <see cref="HashSet{T}"/> inside.
+        /// </summary>
+        public LockingCollection() : this(new HashSet<T>())
+        {
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="LockingCollection{T}"/> class.
         /// </summary>
         /// <param name="collection">The collection to create a thread-safe wrapper for.</param>

@@ -32,7 +32,6 @@ namespace KGySoft.ComponentModel
         public void BeginNewEdit()
         {
             int oldLevel = EditLevel;
-            owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(oldLevel, nameof(EditLevel)));
             snapshots.Add(owner.PropertiesInternal.ToArray());
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldLevel, oldLevel + 1, nameof(EditLevel)));
         }
@@ -46,7 +45,6 @@ namespace KGySoft.ComponentModel
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
                     throw new InvalidOperationException(Res.Get(Res.NotEditing));
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
                 snapshots.RemoveAt(currentLevel - 1);
             }
             finally
@@ -78,7 +76,6 @@ namespace KGySoft.ComponentModel
                 }
 
                 undoable?.ClearUndoHistory();
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
                 snapshots.RemoveAt(currentLevel - 1);
             }
             finally
@@ -98,7 +95,6 @@ namespace KGySoft.ComponentModel
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
                     return false;
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
                 snapshots.Clear();
             }
             finally
@@ -131,7 +127,6 @@ namespace KGySoft.ComponentModel
                 }
 
                 undoable?.ClearUndoHistory();
-                owner.OnPropertyChanging(new PropertyChangingExtendedEventArgs(currentLevel, nameof(EditLevel)));
                 snapshots.Clear();
             }
             finally

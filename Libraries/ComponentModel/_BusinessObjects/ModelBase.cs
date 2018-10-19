@@ -41,7 +41,7 @@ namespace KGySoft.ComponentModel
         /// <br/>Default value: <c>20</c>.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
-        public int UndoCapacity
+        protected int UndoCapacity
         {
             get => undoable.UndoCapacity;
             set => undoable.UndoCapacity = value;
