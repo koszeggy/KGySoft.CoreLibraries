@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using KGySoft.Annotations;
 using KGySoft.Libraries;
 
 namespace KGySoft.ComponentModel
@@ -12,6 +15,21 @@ namespace KGySoft.ComponentModel
     [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
     public class ValidationResultsCollection : Collection<ValidationResult>
     {
+        private ValidationResultEntries errors, warnings, infos;
+
+        public sealed class ValidationResultEntries : ReadOnlyCollection<ValidationResult>, IDataErrorInfo
+        {
+            public ValidationResultEntries([NotNull] IList<ValidationResult> list) : base(list)
+            {
+            }
+
+            string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, this.Where(e => e.PropertyName == propertyName).Select(e => e.Message));
+
+            string IDataErrorInfo.Error => String.Join(Environment.NewLine, this.Select(e => e.Message));
+        }
+
+        private void InvalidateCaches() => errors = warnings = infos = null;
+
         /// <summary>
         /// Inserts an element into the <see cref="ValidationResultsCollection" /> at the specified index.
         /// </summary>
@@ -23,6 +41,7 @@ namespace KGySoft.ComponentModel
             if (item == null)
                 throw new ArgumentNullException(nameof(item), Res.Get(Res.ArgumentNull));
             base.InsertItem(index, item);
+            InvalidateCaches();
         }
 
         /// <summary>
@@ -36,6 +55,16 @@ namespace KGySoft.ComponentModel
             if (item == null)
                 throw new ArgumentNullException(nameof(item), Res.Get(Res.ArgumentNull));
             base.SetItem(index, item);
+            InvalidateCaches();
+        }
+
+        /// <summary>
+        /// Removes all elements from the <see cref="ValidationResultsCollection" />.
+        /// </summary>
+        protected override void ClearItems()
+        {
+            base.ClearItems();
+            InvalidateCaches();
         }
 
         /// <summary>
@@ -45,22 +74,22 @@ namespace KGySoft.ComponentModel
         /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/> to get results of any severities. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns></returns>
-        public ValidationResult[] ForProperty(string propertyName, ValidationSeverity? severity = null) => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
+        public IReadOnlyList<ValidationResult> ForProperty(string propertyName, ValidationSeverity? severity = null) => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
 
         /// <summary>
         /// Gets the validation results denoting an error.
         /// </summary>
-        public ValidationResult[] Errors => this.Where(r => r.Severity == ValidationSeverity.Error).ToArray();
+        public IReadOnlyList<ValidationResult> Errors => errors ?? (errors = new ValidationResultEntries(this.Where(r => r.Severity == ValidationSeverity.Error).ToArray()));
 
         /// <summary>
         /// Gets the validation results denoting a warning.
         /// </summary>
-        public ValidationResult[] Warnings => this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray();
+        public IReadOnlyList<ValidationResult> Warnings => warnings ?? (warnings = new ValidationResultEntries(this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray()));
 
         /// <summary>
         /// Gets the validation results denoting an information.
         /// </summary>
-        public ValidationResult[] Infos => this.Where(r => r.Severity == ValidationSeverity.Information).ToArray();
+        public IReadOnlyList<ValidationResult> Infos => infos ?? (infos = new ValidationResultEntries(this.Where(r => r.Severity == ValidationSeverity.Information).ToArray()));
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has errors.
@@ -79,21 +108,6 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <value><see langword="true"/> if this instance has information entries; otherwise, <see langword="false"/>.</value>
         public bool HasInfos => this.Any(r => r.Severity == ValidationSeverity.Information);
-
-        /// <summary>
-        /// Gets a single <see cref="string"/> instance containing the errors in this <see cref="ValidationResultsCollection"/> separated by newline delimiters.
-        /// </summary>
-        public virtual string Error => String.Join(Environment.NewLine, Errors.Select(e => e.Message));
-
-        /// <summary>
-        /// Gets a single <see cref="string"/> instance containing the warnings in this <see cref="ValidationResultsCollection"/> separated by newline delimiters.
-        /// </summary>
-        public virtual string Warning => String.Join(Environment.NewLine, Warnings.Select(e => e.Message));
-
-        /// <summary>
-        /// Gets a single <see cref="string"/> instance containing the information messages in this <see cref="ValidationResultsCollection"/> separated by newline delimiters.
-        /// </summary>
-        public virtual string Information => String.Join(Environment.NewLine, Infos.Select(e => e.Message));
 
         /// <summary>
         /// Adds an error to this <see cref="ValidationResultsCollection"/>.

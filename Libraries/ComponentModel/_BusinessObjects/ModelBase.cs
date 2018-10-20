@@ -22,19 +22,24 @@ namespace KGySoft.ComponentModel
         ICanUndoRedo, ICanUndoInternal, IRevertibleChangeTracking, // Undoable
         ICanEdit, IEditableObject // Editable
     {
-        private readonly UndoableHelper undoable;
+        private UndoableHelper undoable;
         private static readonly string[] ignoreModifiedProperties = { nameof(EditLevel), nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo) };
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ModelBase"/> class.
-        /// </summary>
-        protected ModelBase() => undoable = new UndoableHelper(this);
+        internal UndoableHelper Undoable
+        {
+            get
+            {
+                if (undoable == null)
+                    Interlocked.CompareExchange(ref undoable, new UndoableHelper(this), null);
+                return undoable;
+            }
+        }
 
         /// <inheritdoc />
-        public bool CanUndo => undoable.CanUndo;
+        public bool CanUndo => Undoable.CanUndo;
 
         /// <inheritdoc />
-        public bool TryUndo() => undoable.TryUndo();
+        public bool TryUndo() => Undoable.TryUndo();
 
         /// <summary>
         /// Gets or sets the undo capacity.
@@ -43,29 +48,29 @@ namespace KGySoft.ComponentModel
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> must be greater or equal to 0.</exception>
         protected int UndoCapacity
         {
-            get => undoable.UndoCapacity;
-            set => undoable.UndoCapacity = value;
+            get => Undoable.UndoCapacity;
+            set => Undoable.UndoCapacity = value;
         }
 
         /// <inheritdoc />
-        public void UndoAll() => undoable.UndoAll();
+        public void UndoAll() => Undoable.UndoAll();
 
-        void ICanUndoInternal.SuspendUndo() => undoable.SuspendUndo();
-        void ICanUndoInternal.ResumeUndo() => undoable.ResumeUndo();
+        void ICanUndoInternal.SuspendUndo() => Undoable.SuspendUndo();
+        void ICanUndoInternal.ResumeUndo() => Undoable.ResumeUndo();
 
         /// <summary>
         /// Clears the undo/redo history without performing any undo.
         /// </summary>
-        public void ClearUndoHistory() => undoable.ClearUndoHistory();
+        public void ClearUndoHistory() => Undoable.ClearUndoHistory();
 
         /// <inheritdoc />
-        public bool CanRedo => undoable.CanRedo;
+        public bool CanRedo => Undoable.CanRedo;
 
         /// <inheritdoc />
-        public bool TryRedo() => undoable.TryRedo();
+        public bool TryRedo() => Undoable.TryRedo();
 
         /// <inheritdoc />
-        public void RedoAll() => undoable.RedoAll();
+        public void RedoAll() => Undoable.RedoAll();
 
         bool IChangeTracking.IsChanged => CanUndo;
         void IChangeTracking.AcceptChanges() => ClearUndoHistory();
@@ -124,6 +129,18 @@ namespace KGySoft.ComponentModel
         /// <seealso cref="ComponentModel.EditableObjectBehavior"/>
         /// <seealso cref="IEditableObject"/>
         protected virtual EditableObjectBehavior EditableObjectBehavior => EditableObjectBehavior.NestingDisabled;
+
+        /// <summary>
+        /// Raises the <see cref="ObservableObjectBase.PropertyChanged" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
+        protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
+        {
+            if (PropertiesInternal.ContainsKey(e.PropertyName))
+                Undoable.HandlePropertyChanged(e);
+
+            base.OnPropertyChanged(e);
+        }
 
         void IEditableObject.BeginEdit() => Editable.BeginEdit(EditableObjectBehavior);
         void IEditableObject.EndEdit() => Editable.EndEdit(EditableObjectBehavior);

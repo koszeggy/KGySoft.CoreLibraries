@@ -255,6 +255,7 @@ namespace KGySoft
         internal const string NotEditing = nameof(NotEditing);
         internal const string MissingPropertyReference = nameof(MissingPropertyReference);
         internal const string DoValidationNull = nameof(DoValidationNull);
+        internal const string ObservableObjectHasNoDefaultCtor = nameof(ObservableObjectHasNoDefaultCtor);
 
         #endregion
 

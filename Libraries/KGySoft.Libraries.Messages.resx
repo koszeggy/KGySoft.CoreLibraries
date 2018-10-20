@@ -793,4 +793,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="DoValidationNull" xml:space="preserve">
     <value>The DoValidation method returned null.</value>
   </data>
+  <data name="ObservableObjectHasNoDefaultCtor" xml:space="preserve">
+    <value>The type has no parameterless constructor and thus cannot be cloned: {0}</value>
+  </data>
 </root>

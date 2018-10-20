@@ -70,7 +70,7 @@ namespace KGySoft.ComponentModel
             => TryReplaceProperty(propertyName, originalValue, newValue, invokeChangedEvent);
 
         IDictionary<string, object> IPersistableObject.GetProperties()
-            // no need to Lock-Unlock because the enumerator of the LockingDictionary
+            // no need to Lock-Unlock because the enumerator of the LockingDictionary is already a snapshot
             => PropertiesInternal.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
 
         void IPersistableObject.SetProperties(IDictionary<string, object> newProperties)

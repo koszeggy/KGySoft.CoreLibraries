@@ -10,8 +10,8 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private readonly PersistableObjectBase owner;
-        private readonly LockingList<KeyValuePair<string, object>[]> snapshots = new List<KeyValuePair<string, object>[]>().AsThreadSafe();
+        private readonly ObservableObjectBase owner;
+        private readonly LockingList<IDictionary<string, object>> snapshots = new List<IDictionary<string, object>>().AsThreadSafe();
 
         #endregion
 
@@ -23,7 +23,7 @@ namespace KGySoft.ComponentModel
 
         #region Constructors
 
-        internal EditableHelper(PersistableObjectBase owner) => this.owner = owner;
+        internal EditableHelper(ObservableObjectBase owner) => this.owner = owner;
 
         #endregion
 
@@ -32,7 +32,7 @@ namespace KGySoft.ComponentModel
         public void BeginNewEdit()
         {
             int oldLevel = EditLevel;
-            snapshots.Add(owner.PropertiesInternal.ToArray());
+            snapshots.Add(owner.CloneProperties());
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldLevel, oldLevel + 1, nameof(EditLevel)));
         }
 

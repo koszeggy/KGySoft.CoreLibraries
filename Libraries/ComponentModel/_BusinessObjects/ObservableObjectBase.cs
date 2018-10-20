@@ -27,6 +27,7 @@ using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.Libraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -73,7 +74,7 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="EditableObjectBase" />
     /// <seealso cref="ValidatingObjectBase" />
     /// <seealso cref="ModelBase" />
-    public abstract class ObservableObjectBase : INotifyPropertyChanged, IDisposable
+    public abstract class ObservableObjectBase : INotifyPropertyChanged, IDisposable, ICloneable
     {
         #region MissingPropertyReference class
 
@@ -108,12 +109,14 @@ namespace KGySoft.ComponentModel
 
         #region Instance Fields
 
-        private readonly LockingDictionary<string, object> properties = new LockingDictionary<string, object>();
+        private LockingDictionary<string, object> properties = new LockingDictionary<string, object>();
 
         [NonSerialized]
         private object writeLock; // read lock is the dictionary itself
-        private PropertyChangedEventHandler propertyChanged;
+        [NonSerialized]
         private int suspendCounter;
+
+        private PropertyChangedEventHandler propertyChanged;
         private bool isModified;
 
         #endregion
@@ -209,6 +212,26 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
+        /// Creates a new object that is a copy of the current instance.
+        /// The base implementation clones the internal property storage, the <see cref="IsModified"/> property and the subscribers of the <see cref="PropertyChanged"/> event.
+        /// In order to release the old or the cloned instance call the <see cref="Dispose()">Dispose</see> method to clear the subscriptions of the <see cref="PropertyChanged"/> event.
+        /// </summary>
+        /// <returns>
+        /// A new object that is a copy of this instance.
+        /// </returns>
+        public virtual object Clone()
+        {
+            Type type = GetType();
+            if (type.GetDefaultConstructor() == null)
+                throw new InvalidOperationException(Res.Get(Res.ObservableObjectHasNoDefaultCtor, type));
+            ObservableObjectBase clone = (ObservableObjectBase)Reflector.Construct(type);
+            clone.properties = CloneProperties().AsThreadSafe();
+            clone.isModified = isModified;
+            clone.propertyChanged = propertyChanged;
+            return clone;
+        }
+
+        /// <summary>
         /// Releases the resources held by this instance.
         /// The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
@@ -253,18 +276,50 @@ namespace KGySoft.ComponentModel
             return true;
         }
 
-        internal void ReplaceProperties(KeyValuePair<string, object>[] newProperties)
+        internal void ReplaceProperties(IDictionary<string, object> newProperties)
         {
             // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
-            IEnumerable<string> toRemove = properties.Keys.Except(newProperties.Select(p => p.Key));
             lock (WriteLock)
             {
+                IEnumerable<string> toRemove = properties.Keys.Except(newProperties.Select(p => p.Key));
                 foreach (var propertyName in toRemove)
                     ResetProperty(propertyName);
 
                 foreach (var property in newProperties)
                     Set(property.Value, true, property.Key);
             }
+        }
+
+        internal IDictionary<string, object> CloneProperties()
+        {
+            var result = new Dictionary<string, object>();
+
+            // Locking to prevent reading the properties until they are cloned. This not prevents modifying their content
+            // if they are already cached somewhere but at least blocks their access through this class.
+            properties.Lock();
+            try
+            {
+                // iterating the underlying dictionary to prevent copying because we are already in a lock
+                foreach (KeyValuePair<string, object> property in properties.Collection)
+                {
+                    // Deep cloning classes only. It could be needed also for structs containing references but there is
+                    // no fast way to determine if a struct is blittable and we don't want lose more performance than needed.
+                    object clonedValue;
+                    if (property.Value is ICloneable cloneable)
+                        clonedValue = cloneable.Clone();
+                    else if (property.Value?.GetType().IsClass == true)
+                        clonedValue = property.Value.DeepClone();
+                    else
+                        clonedValue = property.Value;
+                    result.Add(property.Key, clonedValue);
+                }
+            }
+            finally
+            {
+                properties.Unlock();
+            }
+
+            return result;
         }
 
         #endregion

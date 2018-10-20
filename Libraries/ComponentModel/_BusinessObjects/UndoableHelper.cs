@@ -24,11 +24,7 @@ namespace KGySoft.ComponentModel
 
         private readonly ObservableObjectBase owner;
 
-        internal UndoableHelper(ObservableObjectBase owner)
-        {
-            this.owner = owner;
-            owner.PropertyChanged += Owner_PropertyChanged;
-        }
+        internal UndoableHelper(ObservableObjectBase owner) => this.owner = owner;
 
         public bool CanUndo => undoSteps.Count > 0;
         public bool CanRedo => redoSteps.Count > 0;
@@ -67,16 +63,16 @@ namespace KGySoft.ComponentModel
         public void SuspendUndo() => Interlocked.Increment(ref suspendCounter);
         public void ResumeUndo() => Interlocked.Decrement(ref suspendCounter);
 
-        private void Owner_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        internal void HandlePropertyChanged(PropertyChangedExtendedEventArgs e)
         {
-            // Ignoring if property does not exist in internal storage and cannot be set via the IPersistableObject interface. This excludes self CanUndo/CanRedo/etc. properties, too.
-            // 
-            if (undoCapacity == 0 || suspendCounter > 0 || !(e is PropertyChangedExtendedEventArgs extArgs) || !owner.PropertiesInternal.ContainsKey(e.PropertyName))
+            // CanUndo/CanRedo/etc. properties are excluded by the caller, who checks if the property exists in the internal storage.
+            // (Not here because this class is created only if really needed).
+            if (undoCapacity == 0 || suspendCounter > 0)
                 return;
 
             // These calls are already locked inside because steps can be accessed from other methods in this class, too
             ClearSteps(redoSteps, nameof(CanRedo));
-            AddUndoStep(new KeyValuePair<string, UndoEntry>(e.PropertyName, new UndoEntry { From = extArgs.NewValue, To = extArgs.OldValue }));
+            AddUndoStep(new KeyValuePair<string, UndoEntry>(e.PropertyName, new UndoEntry { From = e.NewValue, To = e.OldValue }));
         }
 
         private void ClearSteps(CircularList<KeyValuePair<string, UndoEntry>> storage, string canUndoRedoName)

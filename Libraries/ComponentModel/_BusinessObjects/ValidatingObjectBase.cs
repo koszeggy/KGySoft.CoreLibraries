@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using KGySoft.Annotations;
@@ -27,18 +28,23 @@ namespace KGySoft.ComponentModel
         private bool? isValid;
 
         /// <summary>
-        /// Gets whether this instance is valid. That is, if <see cref="IValidatingObject.Validate">Validate</see> method does not return any entries where
+        /// Gets whether this instance is valid. That is, if <see cref="ValidationResults"/> property does not return any entries where
         /// the value of <see cref="ValidationResult.Severity"/> is <see cref="ValidationSeverity.Error"/>.
         /// </summary>
         /// <value><see langword="true"/> if this instance is valid; otherwise, <see langword="false"/>.
         /// </value>
-        public bool IsValid => isValid ?? (bool)(isValid = !(cachedValidationResults ?? Validate()).HasErrors);
+        public bool IsValid => isValid ?? (bool)(isValid = !ValidationResults.HasErrors);
 
         /// <summary>
-        /// Validates this instance and returns the validation results.
+        /// Gets the validation results for this instance.
         /// </summary>
-        /// <returns>A <see cref="ValidationResultsCollection" /> instance containing the validation results.</returns>
-        public ValidationResultsCollection Validate()
+        public ValidationResultsCollection ValidationResults => cachedValidationResults ?? Validate();
+
+        public IReadOnlyList<ValidationResult> Errors => ValidationResults.Errors;
+        public IReadOnlyList<ValidationResult> Warnings => ValidationResults.Warnings;
+        public IReadOnlyList<ValidationResult> Infos => ValidationResults.Infos;
+
+        private ValidationResultsCollection Validate()
         {
             ValidationResultsCollection result = DoValidation();
             if (result == null)
@@ -67,14 +73,14 @@ namespace KGySoft.ComponentModel
         /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
-            base.OnPropertyChanged(e);
-
             // Invalidating cached validation results if an affected property has changed.
             if (isValid != null && AffectsModifiedState(e.PropertyName))
             {
                 isValid = null;
                 cachedValidationResults = null;
             }
+
+            base.OnPropertyChanged(e);
         }
 
         /// <summary>
@@ -85,7 +91,7 @@ namespace KGySoft.ComponentModel
         /// <returns><see langword="true" /> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
         protected override bool AffectsModifiedState(string propertyName) => base.AffectsModifiedState(propertyName) && propertyName != nameof(IsValid);
 
-        string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, (cachedValidationResults ?? Validate()).Errors.Where(e => e.PropertyName == propertyName).Select(e => e.Message));
-        string IDataErrorInfo.Error => (cachedValidationResults ?? Validate()).Error;
+        string IDataErrorInfo.this[string propertyName] => ((IDataErrorInfo)Errors)[propertyName];
+        string IDataErrorInfo.Error => ((IDataErrorInfo)Errors).Error;
     }
 }

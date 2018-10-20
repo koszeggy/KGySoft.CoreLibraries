@@ -16,9 +16,8 @@ namespace KGySoft.ComponentModel
         bool IsValid { get; }
 
         /// <summary>
-        /// Validates this instance and returns the validation results.
+        /// Gets the validation results for this instance.
         /// </summary>
-        /// <returns>A <see cref="ValidationResultsCollection"/> instance containing the validation results.</returns>
-        ValidationResultsCollection Validate();
+        ValidationResultsCollection ValidationResults { get; }
     }
 }
