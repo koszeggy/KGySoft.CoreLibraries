@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using KGySoft.Annotations;
+using KGySoft.Libraries;
 
 namespace KGySoft.ComponentModel
 {
@@ -40,22 +41,22 @@ namespace KGySoft.ComponentModel
         /// </summary>
         public ValidationResultsCollection ValidationResults => cachedValidationResults ?? Validate();
 
-        public IReadOnlyList<ValidationResult> Errors => ValidationResults.Errors;
-        public IReadOnlyList<ValidationResult> Warnings => ValidationResults.Warnings;
-        public IReadOnlyList<ValidationResult> Infos => ValidationResults.Infos;
-
         private ValidationResultsCollection Validate()
         {
-            ValidationResultsCollection result = DoValidation();
-            if (result == null)
-                throw new InvalidOperationException(Res.Get(Res.DoValidationNull));
+            ValidationResultsCollection result = (DoValidation() ?? throw new InvalidOperationException(Res.Get(Res.DoValidationNull))).ToReadOnly();
+
             bool newIsValid = !result.HasErrors;
-            bool raiseChanged = newIsValid != lastIsValid;
+            bool raiseIsValidChanged = newIsValid != lastIsValid;
             isValid = lastIsValid = newIsValid;
+
+            ValidationResultsCollection lastResult = cachedValidationResults;
+            bool raiseValidationResultsChanged = lastResult?.SequenceEqual(result) != true;
             cachedValidationResults = result;
 
-            if (raiseChanged)
+            if (raiseIsValidChanged)
                 OnPropertyChanged(new PropertyChangedExtendedEventArgs(!newIsValid, newIsValid, nameof(IsValid)));
+            if (raiseValidationResultsChanged)
+                OnPropertyChanged(new PropertyChangedExtendedEventArgs(lastResult, result, nameof(ValidationResults)));
 
             return result;
         }
@@ -64,7 +65,6 @@ namespace KGySoft.ComponentModel
         /// Performs the validation on this instance and returns the validation results. Must not return <see langword="null"/>.
         /// </summary>
         /// <returns> A <see cref="ValidationResultsCollection" /> instance containing the validation results.</returns>
-        [NotNull]
         protected abstract ValidationResultsCollection DoValidation();
 
         /// <summary>
@@ -85,13 +85,13 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets whether the change of the specified <paramref name="propertyName" /> affects the <see cref="ObservableObjectBase.IsModified" /> property.
-        /// <br />The <see cref="EditableObjectBase" /> implementation excludes the <see cref="ObservableObjectBase.IsModified"/> and <see cref="IsValid"/> properties.
+        /// <br />The <see cref="EditableObjectBase" /> implementation excludes the <see cref="ObservableObjectBase.IsModified"/>, <see cref="IsValid"/> and <see cref="ValidationResults"/> properties.
         /// </summary>
         /// <param name="propertyName">Name of the changed property.</param>
         /// <returns><see langword="true" /> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
-        protected override bool AffectsModifiedState(string propertyName) => base.AffectsModifiedState(propertyName) && propertyName != nameof(IsValid);
+        protected override bool AffectsModifiedState(string propertyName) => base.AffectsModifiedState(propertyName) && !propertyName.In(nameof(IsValid), nameof(ValidationResults));
 
-        string IDataErrorInfo.this[string propertyName] => ((IDataErrorInfo)Errors)[propertyName];
-        string IDataErrorInfo.Error => ((IDataErrorInfo)Errors).Error;
+        string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, ValidationResults.Errors.Where(e => e.PropertyName == propertyName).Select(e => e.Message));
+        string IDataErrorInfo.Error => String.Join(Environment.NewLine, ValidationResults.Errors.Select(e => e.Message));
     }
 }
