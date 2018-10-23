@@ -78,7 +78,7 @@ namespace KGySoft.Reflection
                 typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
                 typeof(float), typeof(double), typeof(decimal), typeof(bool),
                 typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan),
-                typeof(DBNull), typeof(IntPtr), typeof(UIntPtr)
+                typeof(IntPtr), typeof(UIntPtr)
             };
 
         private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
@@ -150,8 +150,7 @@ namespace KGySoft.Reflection
         /// <item><description><see cref="DateTime"/></description></item>
         /// <item><description><see cref="DateTimeOffset"/></description></item>
         /// <item><description><see cref="TimeSpan"/></description></item>
-        /// <item><description><see cref="DBNull"/> (if <paramref name="value"/> is <see langword="null"/>, returns null; otherwise, <paramref name="value"/> is ignored)</description></item>
-        /// <item><description><see cref="Nullable{T}"/> of types above: <c>null</c> or empty value returns <see langword="null"/>; oherwise, <paramref name="value"/> is parsed as the underlying type</description></item>
+        /// <item><description><see cref="Nullable{T}"/> of types above: <c>null</c> or empty value returns <see langword="null"/>; otherwise, <paramref name="value"/> is parsed as the underlying type</description></item>
         /// <item><description>Any types that can convert their value from <see cref="string"/> by a <see cref="TypeConverter"/> class.</description></item>
         /// </list>
         /// </remarks>
@@ -278,10 +277,6 @@ namespace KGySoft.Reflection
                     DateTimeStyles style = value.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
                     return DateTimeOffset.Parse(value, culture, style);
                 }
-                if (type == typeof(DBNull))
-                {
-                    return DBNull.Value;
-                }
 
                 // Using type converter as a fallback
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
@@ -330,7 +325,6 @@ namespace KGySoft.Reflection
         /// <item><description><see cref="bool"/></description></item>
         /// <item><description><see cref="DateTime"/></description></item>
         /// <item><description><see cref="Type"/></description></item>
-        /// <item><description><see cref="DBNull"/> (only "null", "DBNull" or empty value is accepted)</description></item>
         /// <item><description>Any types that can convert their value from System.String via type converters</description></item>
         /// </list>
         /// </remarks>

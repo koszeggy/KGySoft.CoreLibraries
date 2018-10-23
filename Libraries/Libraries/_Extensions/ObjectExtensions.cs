@@ -18,7 +18,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
 using System.Threading;
+using KGySoft.Reflection;
 using KGySoft.Serialization;
 
 #endregion
@@ -128,9 +133,147 @@ namespace KGySoft.Libraries
         /// in such case it is not guaranteed that the result is functionally equivalent to the input object.</remarks>
         public static T DeepClone<T>(this T obj)
         {
-            BinarySerializationFormatter formatter = new BinarySerializationFormatter();
-            byte[] raw = formatter.Serialize(obj);
-            return (T)formatter.Deserialize(raw);
+            var formatter = new BinarySerializationFormatter();
+            using (var stream = new MemoryStream())
+            {
+                formatter.SerializeToStream(stream, obj);
+                stream.Position = 0L;
+                return (T)formatter.DeserializeFromStream(stream);
+            }
+        }
+
+        public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
+            => TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
+                ? (TTargetType)result
+                : throw new ArgumentException(Res.Get(Res.CannotConvertToType, typeof(TTargetType)), nameof(obj), error);
+
+        public static bool TryConvert<TTargetType>(this object obj, CultureInfo culture, out TTargetType value)
+        {
+            bool success = TryConvert(obj, typeof(TTargetType), culture, out object result);
+            if (success && typeof(TTargetType).CanAcceptValue(result))
+                value = (TTargetType)result;
+            else
+                throw new ArgumentException(Res.Get(Res.CannotConvertToType, typeof(TTargetType)), nameof(obj));
+            return true;
+        }
+
+        public static bool TryConvert<TTargetType>(this object obj, out TTargetType value) => TryConvert(obj, null, out value);
+
+        public static bool TryConvert(this object obj, Type targetType, out object value) => TryConvert(obj, targetType, null, out value);
+
+        public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value) => TryConvert(obj, targetType, culture, out value, out var _);
+
+        public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
+        {
+            if (targetType == null)
+                throw new ArgumentNullException(nameof(targetType), Res.Get(Res.ArgumentNull));
+
+            error = null;
+            if (obj == null || obj is DBNull)
+            {
+                value = null;
+                return targetType.CanAcceptValue(null);
+            }
+
+            if (targetType.IsNullable())
+                targetType = Nullable.GetUnderlyingType(targetType);
+
+            Type sourceType = obj.GetType();
+            // ReSharper disable once PossibleNullReferenceException
+            if (targetType.IsAssignableFrom(sourceType))
+            {
+                value = obj;
+                return true;
+            }
+
+            // trying parse from string...
+            return obj is string strValue && TryParseFromString(targetType, strValue, culture, out value, ref error)
+                // ...IConvertible...
+                || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertCovertible(convertible, targetType, culture, out value, ref error)
+                // ...and TypeCovnerter
+                || TryConvertByConverter(obj, targetType, culture, out value, ref error);
+        }
+
+        private static bool TryParseFromString(Type targetType, string value, CultureInfo culture, out object result, ref Exception error)
+        {
+            if (!Reflector.CanParseNatively(targetType))
+            {
+                result = null;
+                return false;
+            }
+
+            try
+            {
+                result = Reflector.Parse(targetType, value, null, culture);
+                return true;
+            }
+            catch (Exception e)
+            {
+                error = e;
+                result = null;
+                return false;
+            }
+        }
+
+        private static bool TryConvertCovertible(IConvertible convertible, Type targetType, CultureInfo culture, out object value, ref Exception error)
+        {
+            try
+            {
+                if (targetType.IsEnum)
+                {
+                    value = Enum.ToObject(targetType, convertible);
+                    return true;
+                }
+
+                value = convertible.ToType(targetType, culture);
+                return true;
+
+            }
+            catch (Exception e)
+            {
+                error = e;
+                value = null;
+                return false;
+            }
+        }
+
+        private static bool TryConvertByConverter(object source, Type targetType, CultureInfo culture, out object value, ref Exception error)
+        {
+            value = null;
+            Type sourceType = source.GetType();
+
+            // 1.) by target
+            TypeConverter converter = TypeDescriptor.GetConverter(targetType);
+            if (converter.CanConvertFrom(sourceType))
+            {
+                try
+                {
+                    // ReSharper disable once AssignNullToNotNullAttribute - actually it CAN be null...
+                    value = converter.ConvertFrom(null, culture, source);
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    error = e;
+                }
+            }
+
+            // 2.) by source
+            converter = TypeDescriptor.GetConverter(sourceType);
+            if (converter.CanConvertTo(targetType))
+            {
+                try
+                {
+                    value = converter.ConvertTo(null, culture, source, targetType);
+                }
+                catch (Exception e)
+                {
+                    error = e;
+                    return false;
+                }
+            }
+
+            return false;
         }
 
         #endregion

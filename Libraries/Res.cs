@@ -256,6 +256,7 @@ namespace KGySoft
         internal const string MissingPropertyReference = nameof(MissingPropertyReference);
         internal const string DoValidationNull = nameof(DoValidationNull);
         internal const string ObservableObjectHasNoDefaultCtor = nameof(ObservableObjectHasNoDefaultCtor);
+        internal const string CannotConvertToType = nameof(CannotConvertToType);
 
         #endregion
 

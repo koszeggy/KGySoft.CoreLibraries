@@ -68,7 +68,7 @@ namespace KGySoft.ComponentModel
                 undoable?.SuspendUndo();
                 try
                 {
-                    owner.ReplaceProperties(snapshots[currentLevel - 1]);
+                    owner.ReplaceProperties(snapshots[currentLevel - 1], true);
                 }
                 finally
                 {
@@ -119,7 +119,7 @@ namespace KGySoft.ComponentModel
                 undoable?.SuspendUndo();
                 try
                 {
-                    owner.ReplaceProperties(snapshots[0]);
+                    owner.ReplaceProperties(snapshots[0], true);
                 }
                 finally
                 {

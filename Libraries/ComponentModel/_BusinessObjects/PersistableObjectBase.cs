@@ -73,16 +73,19 @@ namespace KGySoft.ComponentModel
             // no need to Lock-Unlock because the enumerator of the LockingDictionary is already a snapshot
             => PropertiesInternal.ToDictionary(p => p.Key, p => CanGetProperty(p.Key) ? p.Value : throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, p.Key)));
 
-        void IPersistableObject.SetProperties(IDictionary<string, object> newProperties)
+        void IPersistableObject.SetProperties(IDictionary<string, object> newProperties, bool triggerChangedEvent)
         {
             // Using a separate lock makes possible to read the properties during the set.
             // This is desirable because OnChanging/changed events are raised during this process, which may cause that consumers read the values.
             lock (WriteLock)
             {
                 foreach (var property in newProperties)
-                    Set(property.Value, true, property.Key);
+                    Set(property.Value, triggerChangedEvent, property.Key);
             }
         }
+
+        void IPersistableObject.ReplaceProperties(IDictionary<string, object> properties, bool triggerChangedEvent)
+            => ReplaceProperties(properties, triggerChangedEvent);
 
         #endregion
     }

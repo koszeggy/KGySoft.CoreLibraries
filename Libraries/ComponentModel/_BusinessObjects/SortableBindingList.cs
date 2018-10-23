@@ -190,6 +190,7 @@ namespace KGySoft.ComponentModel
         private PropertyDescriptor sortProperty;
         private ListSortDirection newSortDirection;
         private ListSortDirection? currentSortDirection;
+        private bool explicitAddNew;
 
         #endregion
 
@@ -370,7 +371,18 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Implemented by IList source object.
         /// </summary>
-        public object AddNew() => AsBindingList?.AddNew();
+        public object AddNew()
+        {
+            explicitAddNew = true;
+            try
+            {
+                return AsBindingList?.AddNew();
+            }
+            finally
+            {
+                explicitAddNew = false;
+            }
+        }
 
         /// <summary>
         /// Applies a sort to the view.
@@ -548,6 +560,7 @@ namespace KGySoft.ComponentModel
                 }
             }
 
+            bool reset = length != sortIndex.Count;
             sortIndex.Clear();
             if (SortProperty == null)
             {
@@ -570,6 +583,15 @@ namespace KGySoft.ComponentModel
             sorted = true;
             currentSortDirection = newSortDirection;
 
+            // Problems: with ItemMoved:
+            // - not just currentSortDirection but also sortProperty should be checked for good results
+            // - if there is a binding without property name (whole object), then the elements will be mixed
+            if (reset)
+            {
+                OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                return;
+            }
+
             for (int i = 0; i < length; i++)
             {
                 int oldIndex = origIndexes.TryGetValue(sortIndex[i].Key ?? @null, out int orig) ? orig : sortIndex[i].BaseIndex;
@@ -578,7 +600,6 @@ namespace KGySoft.ComponentModel
                     OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
 
             }
-            //OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
         }
 
         private int OriginalIndex(int sortedIndex)
@@ -656,18 +677,14 @@ namespace KGySoft.ComponentModel
             {
                 case ListChangedType.ItemAdded:
                     T newItem = list[e.NewIndex];
-                    if (e.NewIndex == list.Count - 1)
-                    {
-                        var newKey = SortProperty != null ? SortProperty.GetValue(newItem) : newItem;
-
-                        if (SortDirection == ListSortDirection.Ascending)
-                            sortIndex.Add(new ListItem(newKey, e.NewIndex));
-                        else
-                            sortIndex.Insert(0, new ListItem(newKey, e.NewIndex));
-
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, SortedIndex(e.NewIndex)));
-                    }
+                    var newKey = SortProperty != null ? SortProperty.GetValue(newItem) : newItem;
+                    if (SortDirection == ListSortDirection.Ascending)
+                        sortIndex.Add(new ListItem(newKey, e.NewIndex));
                     else
+                        sortIndex.Insert(0, new ListItem(newKey, e.NewIndex));
+                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, SortedIndex(e.NewIndex)));
+
+                    if (!explicitAddNew || e.NewIndex < list.Count - 1)
                         DoSort();
 
                     break;

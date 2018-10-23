@@ -54,7 +54,8 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">The name of the property to set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/> if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">Cannot set the property.</exception>
         bool SetProperty(string propertyName, object value, bool triggerChangedEvent = true);
@@ -63,7 +64,8 @@ namespace KGySoft.ComponentModel
         /// Resets the property with specified property, meaning, it will be removed from the underlying storage so the property getters will return the default value again and <see cref="TryGetPropertyValue">TryGetPropertyValue</see> will return <see langword="false"/>.
         /// </summary>
         /// <param name="propertyName">The name of the property to reset.</param>
-        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
         /// <returns><see langword="true"/> if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
         bool ResetProperty(string propertyName, bool triggerChangedEvent = true);
 
@@ -75,11 +77,22 @@ namespace KGySoft.ComponentModel
         IDictionary<string, object> GetProperties();
 
         /// <summary>
-        /// Sets the properties provided in the specified dictionary.
+        /// Sets the provided <paramref name="properties"/> in the <see cref="IPersistableObject"/>. The new set of properties will be merged with the existing ones.
         /// </summary>
         /// <param name="properties">The properties to set.</param>
+        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="InvalidOperationException">A property cannot be set.</exception>
-        void SetProperties(IDictionary<string, object> properties);
+        void SetProperties(IDictionary<string, object> properties, bool triggerChangedEvent = true);
+
+        /// <summary>
+        /// Replaces the properties of the <see cref="IPersistableObject"/> with the provided new <paramref name="properties"/>. If contains less entries than the actually stored entries, then the difference will be removed from the <see cref="IPersistableObject"/>.
+        /// </summary>
+        /// <param name="properties">The new properties to set.</param>
+        /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <exception cref="InvalidOperationException">A property cannot be set.</exception>
+        void ReplaceProperties(IDictionary<string, object> properties, bool triggerChangedEvent = true);
 
         /// <summary>
         /// Tries to the replace a property value. The replacement will succeed if the currently stored value equals to <paramref name="originalValue"/>.

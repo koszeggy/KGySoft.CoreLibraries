@@ -276,17 +276,17 @@ namespace KGySoft.ComponentModel
             return true;
         }
 
-        internal void ReplaceProperties(IDictionary<string, object> newProperties)
+        internal void ReplaceProperties(IDictionary<string, object> newProperties, bool invokeChangedEvent)
         {
             // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
             lock (WriteLock)
             {
                 IEnumerable<string> toRemove = properties.Keys.Except(newProperties.Select(p => p.Key));
                 foreach (var propertyName in toRemove)
-                    ResetProperty(propertyName);
+                    ResetProperty(propertyName, invokeChangedEvent);
 
                 foreach (var property in newProperties)
-                    Set(property.Value, true, property.Key);
+                    Set(property.Value, invokeChangedEvent, property.Key);
             }
         }
 

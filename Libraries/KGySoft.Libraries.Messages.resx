@@ -796,4 +796,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="ObservableObjectHasNoDefaultCtor" xml:space="preserve">
     <value>The type has no parameterless constructor and thus cannot be cloned: {0}</value>
   </data>
+  <data name="CannotConvertToType" xml:space="preserve">
+    <value>The specified argument cannot be converted to type {0}</value>
+  </data>
 </root>
