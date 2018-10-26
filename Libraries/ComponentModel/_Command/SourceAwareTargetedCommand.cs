@@ -76,10 +76,10 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         void ICommand<TEventArgs>.Execute(ICommandSource<TEventArgs> source, ICommandState state, object target)
-            => callback.Invoke(source, state, (TTarget)target);
+            => (callback ?? throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed))).Invoke(source, state, (TTarget)target);
 
         void ICommand.Execute(ICommandSource source, ICommandState state, object target)
-            => callback.Invoke(source.Cast<TEventArgs>(), state, (TTarget)target);
+            => (callback ?? throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed))).Invoke(source.Cast<TEventArgs>(), state, (TTarget)target);
 
         #endregion
 

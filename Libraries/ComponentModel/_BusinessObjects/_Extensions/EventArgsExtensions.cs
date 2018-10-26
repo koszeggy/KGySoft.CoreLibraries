@@ -18,7 +18,7 @@ namespace KGySoft.ComponentModel
             if (args is PropertyChangedExtendedEventArgs ext)
             {
                 oldValue = ext.OldValue;
-                return true;
+                return !ObservableObjectBase.MissingProperty.Equals(oldValue);
             }
 
             oldValue = null;
@@ -36,7 +36,7 @@ namespace KGySoft.ComponentModel
             if (args is PropertyChangedExtendedEventArgs ext)
             {
                 newValue = ext.NewValue;
-                return true;
+                return !ObservableObjectBase.MissingProperty.Equals(newValue);
             }
 
             newValue = null;

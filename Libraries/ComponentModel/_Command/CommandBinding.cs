@@ -219,10 +219,10 @@ namespace KGySoft.ComponentModel
 
         public bool RemoveSource(object source)
         {
-            if (!sources.TryGetValue(source, out var subscriptions))
+            if (!sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions))
                 return false;
 
-            foreach (var subscriptionInfo in subscriptions)
+            foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
                 Reflector.RunMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
 
             return sources.Remove(source);
@@ -244,6 +244,8 @@ namespace KGySoft.ComponentModel
             targets.Add(target ?? throw new ArgumentNullException(nameof(target)));
             return this;
         }
+
+        public ICommandBinding AddTarget(Func<object> getTarget) => AddTarget((object)getTarget);
 
         public bool RemoveTarget(object target)
         {
@@ -285,8 +287,9 @@ namespace KGySoft.ComponentModel
                 cmd.Execute(source, state, null);
             else
             {
-                foreach (object target in targets)
+                foreach (object targetEntry in targets)
                 {
+                    object target = targetEntry is Func<object> factory ? factory.Invoke() : targetEntry;
                     cmd.Execute(source, state, target);
                     if (disposed || !state.Enabled)
                         return;

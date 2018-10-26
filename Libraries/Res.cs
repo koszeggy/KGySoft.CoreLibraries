@@ -257,6 +257,8 @@ namespace KGySoft
         internal const string DoValidationNull = nameof(DoValidationNull);
         internal const string ObservableObjectHasNoDefaultCtor = nameof(ObservableObjectHasNoDefaultCtor);
         internal const string CannotConvertToType = nameof(CannotConvertToType);
+        internal const string EnabledMustBeBool = nameof(EnabledMustBeBool);
+        internal const string PropertyBindingNoPropertyName = nameof(PropertyBindingNoPropertyName);
 
         #endregion
 

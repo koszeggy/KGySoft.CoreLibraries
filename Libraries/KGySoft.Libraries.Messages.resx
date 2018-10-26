@@ -799,4 +799,10 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="CannotConvertToType" xml:space="preserve">
     <value>The specified argument cannot be converted to type {0}</value>
   </data>
+  <data name="EnabledMustBeBool" xml:space="preserve">
+    <value>'Enabled' state must have a boolean value.</value>
+  </data>
+  <data name="PropertyBindingNoPropertyName" xml:space="preserve">
+    <value>The property binding command state does not contain the property name.</value>
+  </data>
 </root>

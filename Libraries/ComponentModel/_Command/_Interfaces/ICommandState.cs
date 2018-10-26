@@ -17,6 +17,7 @@
 #region Usings
 
 using System.Collections.Generic;
+using System.ComponentModel;
 
 #endregion
 
@@ -28,7 +29,7 @@ namespace KGySoft.ComponentModel
     /// for the binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
     /// <br/>See the <strong>Remarks</strong> section of <see cref="ICommand"/> for examples.
     /// </summary>
-    public interface ICommandState : IDictionary<string, object>
+    public interface ICommandState : IDictionary<string, object>, INotifyPropertyChanged
     {
         #region Properties
 

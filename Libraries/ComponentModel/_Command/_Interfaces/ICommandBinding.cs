@@ -75,6 +75,12 @@ namespace KGySoft.ComponentModel
         ICommandBinding AddTarget(object target);
 
         /// <summary>
+        /// Adds a target getter the target to this <see cref="ICommandBinding"/> instance. Whenever the underlying <see cref="ICommand"/> executes it will evaluate the specified getter callback.
+        /// </summary>
+        /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
+        ICommandBinding AddTarget(Func<object> getTarget);
+
+        /// <summary>
         /// Adds a state updater to the binding. If no updaters are added, then changing the entries of the <see cref="State"/> property will be
         /// applied on all added sources by setting the matching properties. This behavior can be overridden by adding new updaters.
         /// If we don't want to any property synchronization, we can use the <see cref="NullStateUpdater"/>.

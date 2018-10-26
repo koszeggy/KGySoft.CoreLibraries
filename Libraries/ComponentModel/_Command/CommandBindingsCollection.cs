@@ -19,6 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using KGySoft.Libraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -34,9 +37,60 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="ICommandBinding" />
     public class CommandBindingsCollection : Collection<ICommandBinding>, IDisposable
     {
+        private const string statePropertyName = nameof(statePropertyName);
+        private const string stateFormatValue = nameof(stateFormatValue);
+        private static ICommand BindPropertyCommand { get; } = new SourceAwareTargetedCommand<PropertyChangedEventArgs, object>(OnBindPropertyCommand);
+
+        private static void OnBindPropertyCommand(ICommandSource<PropertyChangedEventArgs> src, ICommandState state, object target)
+        {
+            string propertyName = state.GetValueOrDefault<string>(statePropertyName) ?? throw new InvalidOperationException(Res.Get(Res.PropertyBindingNoPropertyName));
+            if (propertyName != src.EventArgs.PropertyName)
+                return;
+
+            object source = src.Source;
+            if (!src.EventArgs.TryGetNewPropertyValue(out object propertyValue))
+            {
+                propertyValue = source is IPersistableObject persistableSource && persistableSource.TryGetPropertyValue(propertyName, out propertyValue) 
+                    || source is ICommandState stateSource && stateSource.TryGetValue(propertyName, out propertyValue)
+                    ? propertyValue : Reflector.GetInstancePropertyByName(src.Source, propertyName);
+            }
+
+            Func<object, object> formatValue = state.GetValueOrDefault<Func<object, object>>(stateFormatValue);
+            if (formatValue != null)
+                propertyValue = formatValue?.Invoke(propertyValue);
+
+            if (target is IPersistableObject persistableTarget)
+                persistableTarget.SetProperty(propertyName, propertyValue);
+            else if (target is ICommandState stateTarget)
+                stateTarget[propertyName] = propertyValue;
+            else
+                Reflector.SetInstancePropertyByName(target, propertyName, propertyValue);
+        }
+
         #region Methods
 
         #region Public Methods
+
+        /// <summary>
+        /// Creates a binding for a <paramref name="command"/> without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
+        /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
+        /// </summary>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
+        /// <param name="disposeCommand"><see langword="true"/> to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/> to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
+        /// Use <see langword="true"/> only if the command will not be re-used elsewhere. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
+        /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
+        /// </returns>
+        public virtual ICommandBinding Add(ICommand command, IDictionary<string, object> initialState = null, bool disposeCommand = false)
+        {
+            var result = command.CreateBinding(initialState, disposeCommand);
+            Add(result);
+            return result;
+        }
 
         /// <summary>
         /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/> as well as the optionally provided initial state of the binding.
@@ -48,10 +102,36 @@ namespace KGySoft.ComponentModel
         /// <param name="initialState">The initial state of the binding. The state entries, which are properties on the <paramref name="source"/> will be applied to the source object.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
-        public virtual ICommandBinding Add(ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
+        public ICommandBinding Add(ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
         {
-            var result = command.CreateBinding(source, eventName, initialState, targets);
-            Add(result);
+            ICommandBinding result = Add(command, initialState).AddSource(source, eventName);
+            if (!targets.IsNullOrEmpty())
+            {
+                foreach (object target in targets)
+                    result.AddTarget(target);
+            }
+
+            return result;
+        }
+
+        public ICommandBinding AddPropertyBinding(INotifyPropertyChanged source, string propertyName, params object[] targets)
+            => AddPropertyBinding(source, propertyName, null, targets);
+
+        public ICommandBinding AddPropertyBinding(INotifyPropertyChanged source, string propertyName, Func<object, object> format, params object[] targets)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+            if (propertyName == null)
+                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+            ICommandBinding result = BindPropertyCommand.CreateBinding(new CommandState { { statePropertyName, propertyName }, { stateFormatValue, format } }, true)
+                .AddStateUpdater(NullStateUpdater.Updater)
+                .AddSource(source, nameof(source.PropertyChanged));
+            if (!targets.IsNullOrEmpty())
+            {
+                foreach (object target in targets)
+                    result.AddTarget(target);
+            }
+
             return result;
         }
 
@@ -68,37 +148,16 @@ namespace KGySoft.ComponentModel
             => Add(command, source, eventName, null, targets);
 
         /// <summary>
-        /// Creates a binding for a <paramref name="command"/> without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
-        /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
-        /// </summary>
-        /// <param name="command">The command to bind.</param>
-        /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
-        /// <param name="disposeCommand"><see langword="true"/> to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/> to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
-        /// Use <see langword="true"/> only if the command will not be re-used elsewhere. This parameter is optional.
-        /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
-        /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
-        /// </returns>
-        public ICommandBinding Add(ICommand command, IDictionary<string, object> initialState = null, bool disposeCommand = false)
-        {
-            var result = command.CreateBinding(initialState, disposeCommand);
-            Add(result);
-            return result;
-        }
-
-        /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SimpleCommand"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add(Action<ICommandState> callback, IDictionary<string, object> initialState = null)
             => Add(new SimpleCommand(callback), initialState, true);
@@ -106,14 +165,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SimpleCommand"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add(Action callback, IDictionary<string, object> initialState = null)
             => Add(new SimpleCommand(callback), initialState, true);
@@ -121,14 +180,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SourceAwareCommand{TEventArgs}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>, ICommandState> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareCommand<TEventArgs>(callback), initialState, true);
@@ -136,14 +195,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SourceAwareCommand{TEventArgs}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add<TEventArgs>(Action<ICommandSource<TEventArgs>> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareCommand<TEventArgs>(callback), initialState, true);
@@ -151,14 +210,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="TargetedCommand{TTarget}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add<TTarget>(Action<ICommandState, TTarget> callback, IDictionary<string, object> initialState = null)
             => Add(new TargetedCommand<TTarget>(callback), initialState, true);
@@ -166,14 +225,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="TargetedCommand{TTarget}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add<TTarget>(Action<TTarget> callback, IDictionary<string, object> initialState = null)
             => Add(new TargetedCommand<TTarget>(callback), initialState, true);
@@ -181,14 +240,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SourceAwareTargetedCommand{TEventArgs,TTarget}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, ICommandState, TTarget> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareTargetedCommand<TEventArgs, TTarget>(callback), initialState, true);
@@ -196,14 +255,14 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Creates a binding with an internally created disposable <see cref="SourceAwareTargetedCommand{TEventArgs,TTarget}"/> for the specified <paramref name="callback"/>
         /// without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
-        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> method.
+        /// If an initial state was provided, then its entries will be applied on the added sources. Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="callback">The delegate to create the command from.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the command invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
-        /// Targets can be added by the <see cref="ICommandBinding.AddTarget">AddTarget</see> method on the result.
+        /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public ICommandBinding Add<TEventArgs, TTarget>(Action<ICommandSource<TEventArgs>, TTarget> callback, IDictionary<string, object> initialState = null) where TEventArgs : EventArgs
             => Add(new SourceAwareTargetedCommand<TEventArgs, TTarget>(callback), initialState, true);

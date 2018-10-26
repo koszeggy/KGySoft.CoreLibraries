@@ -71,7 +71,7 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
-        void ICommand.Execute(ICommandSource source, ICommandState state, object target) => callback.Invoke(state);
+        void ICommand.Execute(ICommandSource source, ICommandState state, object target) => (callback ?? throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed))).Invoke(state);
 
         #endregion
 

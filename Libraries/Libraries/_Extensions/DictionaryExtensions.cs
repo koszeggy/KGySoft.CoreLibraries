@@ -32,7 +32,7 @@ namespace KGySoft.Libraries
         #region Methods
 
         /// <summary>
-        /// Tries to get a value from a <see cref="Dictionary{TKey,TValue}"/> for the given key.
+        /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
@@ -44,11 +44,11 @@ namespace KGySoft.Libraries
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
 
-            return dictionary.TryGetValue(key, out var value) ? value : default;
+            return dictionary.TryGetValue(key, out TValue value) ? value : default;
         }
 
         /// <summary>
-        /// Tries to get the typed value from a dictionary for the given key.
+        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
@@ -63,7 +63,22 @@ namespace KGySoft.Libraries
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
 
-            return dictionary.TryGetValue(key, out var objValue) && objValue is TActualValue value ? value : defaultValue;
+            return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+        }
+
+        /// <summary>
+        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/> <paramref name="dictionary"/> for the given key.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
+        {
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
+            return dictionary.TryGetValue(key, out object value) && value is TActualValue actualValue ? actualValue : defaultValue;
         }
 
         /// <summary>

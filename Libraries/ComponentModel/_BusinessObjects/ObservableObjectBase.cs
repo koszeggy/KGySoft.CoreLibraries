@@ -213,7 +213,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Creates a new object that is a copy of the current instance.
-        /// The base implementation clones the internal property storage, the <see cref="IsModified"/> property and the subscribers of the <see cref="PropertyChanged"/> event.
+        /// The base implementation clones the internal property storage, the <see cref="IsModified" /> property and the subscribers of the <see cref="PropertyChanged"/> event.
         /// In order to release the old or the cloned instance call the <see cref="Dispose()">Dispose</see> method to clear the subscriptions of the <see cref="PropertyChanged"/> event.
         /// </summary>
         /// <returns>
@@ -227,7 +227,7 @@ namespace KGySoft.ComponentModel
             ObservableObjectBase clone = (ObservableObjectBase)Reflector.Construct(type);
             clone.properties = CloneProperties().AsThreadSafe();
             clone.isModified = isModified;
-            clone.propertyChanged = propertyChanged;
+            //clone.propertyChanged = propertyChanged;
             return clone;
         }
 

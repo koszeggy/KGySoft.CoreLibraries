@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KGySoft.Libraries;
 
 #endregion
 
@@ -43,9 +44,17 @@ namespace KGySoft.ComponentModel
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
-            => targets.Aggregate(
-                command.CreateBinding(initialState).AddSource(source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull)),
-                (b, t) => b.AddTarget(t));
+        {
+            ICommandBinding result = command.CreateBinding(initialState)
+                .AddSource(source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull));
+            if (!targets.IsNullOrEmpty())
+            {
+                foreach (object target in targets)
+                    result.AddTarget(target);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
