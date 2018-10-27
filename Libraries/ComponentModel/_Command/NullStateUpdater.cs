@@ -24,7 +24,8 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides an updater, which does not synchronize command state changes to any command source.
-    /// Set this updater to a <see cref="ICommandBinding"/> if command states are not properties on sources or setting source properties should be avoided.
+    /// Adding this updater to a <see cref="ICommandBinding"/> ensures that no other updater will be called, which are added after the <see cref="NullStateUpdater"/>.
+    /// You can add this updater to a <see cref="ICommandBinding"/> first to disable any other possibly added updater.
     /// </summary>
     /// <seealso cref="ICommandStateUpdater" />
     public class NullStateUpdater : ICommandStateUpdater

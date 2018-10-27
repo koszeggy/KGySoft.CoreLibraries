@@ -27,7 +27,7 @@ namespace KGySoft.ComponentModel
     /// </summary>
     /// <remarks>
     /// <para>Whereas an <see cref="ICommand"/> is a static logic without state, the created binding is a dynamic entity: it has a state,
-    /// which can be changed to update the properties of the source (see <see cref="ICommandState"/>), and has sources and targets, which can be added and removed
+    /// which can store variable elements (see <see cref="ICommandState"/>), and has sources and targets, which can be added and removed
     /// during the lifetime of the binding.</para>
     /// <para>The binding should be disposed when it is not used anymore so it releases the events it used internally. If more bindings are used it is recommended
     /// to create them by a <see cref="CommandBindingsCollection"/> instance so when it is disposed releases all of the added bindings at once.</para>

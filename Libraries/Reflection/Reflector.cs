@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using KGySoft.Collections;
@@ -405,7 +406,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Internal implementation of SetInstance/StaticPropertyByName methods
         /// </summary>
-        private static void SetPropertyByName(string propertyName, Type type, object instance, object value, ReflectionWays way, object[] indexerParameters)
+        private static bool TrySetPropertyByName(string propertyName, Type type, object instance, object value, ReflectionWays way, object[] indexerParameters, bool throwError)
         {
             // type descriptor
             if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexerParameters == null || indexerParameters.Length == 0)))
@@ -416,13 +417,11 @@ namespace KGySoft.Reflection
                 if (property != null)
                 {
                     property.SetValue(instance, value);
-                    return;
+                    return true;
                 }
-                throw new ReflectionException(Res.Get(Res.CannotSetPropertyTypeDescriptor, propertyName, type.FullName));
+                return throwError ? throw new ReflectionException(Res.Get(Res.CannotSetPropertyTypeDescriptor, propertyName, type.FullName)) : false;
             }
 
-            // lambda or system reflection
-            Exception lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
@@ -440,24 +439,30 @@ namespace KGySoft.Reflection
                     try
                     {
                         SetProperty(instance, property, value, way, indexerParameters);
-                        return;
+                        return true;
                     }
                     catch (TargetInvocationException e)
                     {
-                        // invocation was successful, the exception comes from the property itself: we may rethrow the inner exception.
-                        throw e.InnerException;
-                    }
-                    catch (Exception e)
-                    {
-                        // invoking of the property failed - maybe we tried to invoke an incorrect overloaded version of the property: we skip to the next overloaded property while save last exception
-                        lastException = e;
+                        // re-throwing the inner exception by preserving its stack trace
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
                 }
             }
 
-            if (lastException != null)
-                throw lastException;
-            throw new ReflectionException(Res.Get(instance == null ? Res.StaticPropertyDoesNotExist : Res.InstancePropertyDoesNotExist, propertyName, type));
+            return throwError ? throw new ReflectionException(Res.Get(instance == null ? Res.StaticPropertyDoesNotExist : Res.InstancePropertyDoesNotExist, propertyName, type)) : false;
+        }
+
+        internal static bool TrySetInstancePropertyByName(object instance, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto, params object[] indexerParameters)
+        {
+            if (propertyName == null)
+                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+            if (instance == null)
+                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+            if (indexerParameters == null)
+                indexerParameters = EmptyObjects;
+
+            Type type = instance.GetType();
+            return TrySetPropertyByName(propertyName, type, instance, value, way, indexerParameters, false);
         }
 
         /// <summary>
@@ -494,7 +499,7 @@ namespace KGySoft.Reflection
                 indexerParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            SetPropertyByName(propertyName, type, instance, value, way, indexerParameters);
+            TrySetPropertyByName(propertyName, type, instance, value, way, indexerParameters, true);
         }
 
         /// <summary>
@@ -518,7 +523,7 @@ namespace KGySoft.Reflection
                 indexerParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            SetPropertyByName(propertyName, type, instance, value, ReflectionWays.Auto, indexerParameters);
+            TrySetPropertyByName(propertyName, type, instance, value, ReflectionWays.Auto, indexerParameters, false);
         }
 
         /// <summary>
@@ -543,7 +548,7 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
 
-            SetPropertyByName(propertyName, type, null, value, way, EmptyObjects);
+            TrySetPropertyByName(propertyName, type, null, value, way, EmptyObjects, true);
         }
 
         /// <summary>
@@ -562,7 +567,7 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
 
-            SetPropertyByName(propertyName, type, null, value, ReflectionWays.Auto, EmptyObjects);
+            TrySetPropertyByName(propertyName, type, null, value, ReflectionWays.Auto, EmptyObjects, true);
         }
 
         /// <summary>
@@ -627,12 +632,10 @@ namespace KGySoft.Reflection
 
             // Real indexers
             Type type = instance.GetType();
-            Exception lastException = null;
-            string defaultMemberName;
 
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
-                defaultMemberName = DefaultMemberCache[checkedType];
+                string defaultMemberName = DefaultMemberCache[checkedType];
 
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
@@ -654,19 +657,12 @@ namespace KGySoft.Reflection
                     }
                     catch (TargetInvocationException e)
                     {
-                        // invocation was successful, the exception comes from the indexer itself: we may rethrow the inner exception.
-                        throw e.InnerException;
-                    }
-                    catch (Exception e)
-                    {
-                        // invoking of the indexer failed - maybe we tried to invoke an incorrect overloaded version of the indexer: we skip to the next overloaded indexer while save last exception
-                        lastException = e;
+                        // re-throwing the inner exception by preserving its stack trace
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
                 }
             }
 
-            if (lastException != null)
-                throw lastException;
             throw new ReflectionException(Res.Get(Res.IndexerDoesNotExist, instance.GetType()));
         }
 
@@ -762,7 +758,6 @@ namespace KGySoft.Reflection
                 throw new ReflectionException(Res.Get(Res.CannotGetPropertyTypeDescriptor, propertyName, type.FullName));
             }
 
-            Exception lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
                 // lambda or system reflection
@@ -786,19 +781,11 @@ namespace KGySoft.Reflection
                     }
                     catch (TargetInvocationException e)
                     {
-                        // invokation was successful, the exception comes from the property itself: we may rethrow the inner exception.
-                        throw e.InnerException;
-                    }
-                    catch (Exception e)
-                    {
-                        // invoking of the method failed - maybe we tried to invoke an incorrect overloaded version of the method: we skip to the next overloaded method while save last exception
-                        lastException = e;
+                        // re-throwing the inner exception by preserving its stack trace
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
                 }
             }
-
-            if (lastException != null)
-                throw lastException;
 
             throw new ReflectionException(Res.Get(instance == null ? Res.StaticPropertyDoesNotExist : Res.InstancePropertyDoesNotExist, propertyName, type.FullName));
         }
@@ -960,12 +947,9 @@ namespace KGySoft.Reflection
 
             // Real indexers
             Type type = instance.GetType();
-            Exception lastException = null;
-            string defaultMemberName;
-
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
-                defaultMemberName = DefaultMemberCache[checkedType];
+                string defaultMemberName = DefaultMemberCache[checkedType];
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
@@ -985,19 +969,12 @@ namespace KGySoft.Reflection
                     }
                     catch (TargetInvocationException e)
                     {
-                        // invocation was successful, the exception comes from the indexer itself: we may rethrow the inner exception.
-                        throw e.InnerException;
-                    }
-                    catch (Exception e)
-                    {
-                        // invoking of the indexer failed - maybe we tried to invoke an incorrect overloaded version of the indexer: we skip to the next overloaded indexer while save last exception
-                        lastException = e;
-                        continue;
+                        // re-throwing the inner exception by preserving its stack trace
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
                 }
             }
-            if (lastException != null)
-                throw lastException;
+
             throw new ReflectionException(Res.Get(Res.IndexerDoesNotExist, instance.GetType()));
         }
 
@@ -1176,13 +1153,8 @@ namespace KGySoft.Reflection
                     }
                     catch (TargetInvocationException e)
                     {
-                        // the method was successfully invoked, the exception comes from the method itself: we may rethrow the inner exception.
-                        throw e.InnerException;
-                    }
-                    catch (Exception e)
-                    {
-                        // invoking of the method failed - maybe we tried to invoke an incorrect overloaded version of the method: we skip to the next overloaded method while save last exception
-                        lastException = e;
+                        // re-throwing the inner exception by preserving its stack trace
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
                 }
             }
@@ -1455,7 +1427,6 @@ namespace KGySoft.Reflection
             if (type.IsValueType && parameters.Length == 0)
                 return Construct(type, way);
 
-            Exception lastException = null;
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 ParameterInfo[] ctorParams = ctor.GetParameters();
@@ -1473,18 +1444,11 @@ namespace KGySoft.Reflection
                 }
                 catch (TargetInvocationException e)
                 {
-                    // the constructor was successfully invoked, the exception comes from the ctor itself: we may rethrow the inner exception.
-                    throw e.InnerException;
-                }
-                catch (Exception e)
-                {
-                    // invoking of the constructor failed - maybe we tried to invoke an incorrect overloaded version of the constructor: we skip to the next overloaded ctor while save last exception
-                    lastException = e;
-                    continue;
+                    // re-throwing the inner exception by preserving its stack trace
+                    ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                 }
             }
-            if (lastException != null)
-                throw lastException;
+
             throw new ReflectionException(Res.Get(Res.CtorDoesNotExist, type));
         }
 

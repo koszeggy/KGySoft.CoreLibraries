@@ -13,14 +13,13 @@ using KGySoft.Reflection;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents the states of a command for a specific command binding. When a state property is set it is tried to be applied for all of the command sources.
-    /// By default, they are tried to be set as a property on the sources but this behavior can be overridden if an <see cref="ICommandStateUpdater"/> is added
-    /// for the binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
-    /// <br/>See the <strong>Remarks</strong> section of <see cref="ICommand"/> for examples.
+    /// Represents the states of a command for a specific command binding. See the <see cref="ICommandState"/> interface for details
+    /// and the <strong>Remarks</strong> section of <see cref="ICommand"/> for examples.
     /// </summary>
-    /// <seealso cref="DynamicObject" />
-    /// <seealso cref="KGySoft.ComponentModel.ICommandState" />
-    /// <seealso cref="System.ComponentModel.INotifyPropertyChanged" />
+    /// <seealso cref="ICommand" />
+    /// <seealso cref="ICommandState" />
+    /// <seealso cref="ICommandStateUpdater" />
+    /// <seealso cref="ICommandBinding" />
     public sealed class CommandState :
 #if !NET35
         DynamicObject,

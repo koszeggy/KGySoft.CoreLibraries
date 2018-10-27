@@ -35,7 +35,7 @@ namespace KGySoft.ComponentModel
     /// <para>To implement a command by using a delegate you can also choose one of the four predefined classes: <see cref="SimpleCommand"/>, <see cref="TargetedCommand{TTarget}"/>,
     /// <see cref="SourceAwareCommand{TEventArgs}"/> and <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/> depending whether the command targets specific objects and
     /// behaves differently based on the source's state or event arguments.</para>
-    /// <para>A binding can be created by the <see cref="Commands.CreateBinding">Commands.CreateBinding</see> method or by the <see cref="CommandBindingsCollection"/> class.
+    /// <para>A binding can be created by the <see cref="O:KGySoft.ComponentModel.Command.CreateBinding">Commands.CreateBinding</see> methods or by the <see cref="CommandBindingsCollection"/> class.
     /// When a binding or a collection of bindings are disposed all of the event subscriptions are released, which makes the cleanup really simple.</para>
     /// <example>
     /// The following examples demonstrate how to define different kind of commands:
@@ -78,32 +78,33 @@ namespace KGySoft.ComponentModel
     /// 
     ///         // Simplest case: using the CreateBinding extension on ICommand.
     ///         // Below we assume we have a menu item with a Click event.
-    ///         // We set also the initial status. If they are properties on the source the states will be applied on it.
+    ///         // We set also the initial status. By adding the property state updater the
+    ///         // states will be applied on the source as properties.
     ///         exitBinding = MyBindings.CloseApplication.CreateBinding(menuItemExit, "Click",
     ///             new Dictionary<string, object>
     ///             {
     ///                 { "Text", "Exit Application" },
     ///                 { "ShortcutKeys", Keys.Alt | Keys.F4 },
     ///                 { "ExitCode", 0 },
-    ///             });
+    ///             }).AddStateUpdater(PropertyCommandStateUpdater.Updater);
     /// 
     ///         // If we add the created bindings to a CommandBindingsCollection, then all of them can be disposed at once by disposing the collection.
     ///         commandBindings.Add(exitBinding);
     /// 
     ///         // We can create a binding by the Add methods of the collection, too:
-    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled, buttonToggle, "Click",
-    ///             new Dictionary<string, object>{ { "Text", "Toggle Enabled of Exit" } }, exitBinding.State);
+    ///         // As we added the property state updater to the exitBinding the menuItemExit.Enabled property will reflect the command state.
+    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled, buttonToggle, "Click", exitBinding.State);
     /// 
     ///         // The line above can be written by a more descriptive fluent syntax (and that's how multiple sources can be added):
     ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled)
     ///             .AddSource(buttonToggle, nameof(Button.Click))
     ///             .AddTarget(exitBinding.State);
     /// 
-    ///         // If we now set the state of the binding it will be applied for all sources (only if a matching property exists):
-    ///         toggleEnabledBinding.State["Text"] = "Toggle Enabled of Exit";
+    ///         // If we set the state of a binding with a property updater it will be applied for all sources (only if a matching property exists):
+    ///         exitBinding.State["Text"] = "A new text for the exit command";
     /// 
     ///         // Or as dynamic:
-    ///         toggleEnabledBinding.State.AsDynamic.Text = "Toggle Enabled of Exit";
+    ///         toggleEnabledBinding.State.AsDynamic.Text = "A new text for the exit command";
     ///     }
     /// 
     ///     protected override Dispose(bool disposing)

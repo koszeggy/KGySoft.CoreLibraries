@@ -24,11 +24,23 @@ using System.ComponentModel;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents the states of a command for a specific command binding. When a state property is set it is tried to be applied for all of the command sources.
-    /// By default, they are tried to be set as a property on the sources but this behavior can be overridden if an <see cref="ICommandStateUpdater"/> is added
-    /// for the binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
-    /// <br/>See the <strong>Remarks</strong> section of <see cref="ICommand"/> for examples.
+    /// Represents the states of a command for a specific command binding. When a state value is set (eg. <see cref="Enabled"/>) it can be applied for all of the
+    /// command sources. By default, no application occurs but this can be overridden if an <see cref="ICommandStateUpdater"/> is added to the binding by the
+    /// <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
+    /// For example, if the command sources are UI elements (eg. a button and a menu item), then the <see cref="Enabled"/>
+    /// or any arbitrary state (eg. text, image, shortcut, etc.) can be applied to the sources as properties.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <remarks>
+    /// <para>If a binding has no updaters, then the states are not synchronized back to the sources.</para>
+    /// <para>A state updater can be added to a binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
+    /// Multiple updaters can be added so if the first one cannot apply a state entry, then the second one will be used as a fallback and so on.</para>
+    /// <para>If state entries represent properties on the source use can add the <see cref="PropertyCommandStateUpdater"/> to the <see cref="ICommandBinding"/>.</para>
+    /// <para>See the <strong>Remarks</strong> section of <see cref="ICommand"/> for examples.</para>
+    /// </remarks>
+    /// <seealso cref="ICommand" />
+    /// <seealso cref="ICommandStateUpdater" />
+    /// <seealso cref="ICommandBinding" />
     public interface ICommandState : IDictionary<string, object>, INotifyPropertyChanged
     {
         #region Properties

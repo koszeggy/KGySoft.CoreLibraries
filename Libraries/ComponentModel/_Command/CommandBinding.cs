@@ -102,10 +102,6 @@ namespace KGySoft.ComponentModel
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache = new Cache<Type, Dictionary<string, EventInfo>>(t =>
             t.GetEvents(BindingFlags.Public | BindingFlags.Instance).ToDictionary(e => e.Name, e => e)).GetThreadSafeAccessor();
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, PropertyInfo>> properties = new Cache<Type, Dictionary<string, PropertyInfo>>(t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0)
-            .ToDictionary(p => p.Name, p => p), 256).GetThreadSafeAccessor();
-
         #endregion
 
         #region Instance Fields
@@ -142,20 +138,6 @@ namespace KGySoft.ComponentModel
         #endregion
 
         #region Methods
-
-        #region Static Methods
-
-        private static void DefaultUpdateState(object source, string propertyName, object stateValue)
-        {
-            Type type = source.GetType();
-            if (!properties[type].TryGetValue(propertyName, out PropertyInfo pi) || !pi.PropertyType.CanAcceptValue(stateValue))
-                return;
-            Reflector.SetProperty(source, pi, stateValue);
-        }
-
-        #endregion
-
-        #region Instance Methods
 
         #region Public Methods
 
@@ -272,8 +254,6 @@ namespace KGySoft.ComponentModel
                 if (updater.TryUpdateState(source, propertyName, stateValue))
                     return;
             }
-
-            DefaultUpdateState(source, propertyName, stateValue);
         }
 
         private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source)
@@ -306,8 +286,6 @@ namespace KGySoft.ComponentModel
             foreach (IComponent component in sources.Keys)
                 UpdateSource(component, e.PropertyName);
         }
-
-        #endregion
 
         #endregion
 
