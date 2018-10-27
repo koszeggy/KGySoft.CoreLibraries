@@ -259,6 +259,7 @@ namespace KGySoft
         internal const string CannotConvertToType = nameof(CannotConvertToType);
         internal const string EnabledMustBeBool = nameof(EnabledMustBeBool);
         internal const string PropertyBindingNoPropertyName = nameof(PropertyBindingNoPropertyName);
+        internal const string BindingListCannotAddNewFormat = nameof(BindingListCannotAddNewFormat);
 
         #endregion
 

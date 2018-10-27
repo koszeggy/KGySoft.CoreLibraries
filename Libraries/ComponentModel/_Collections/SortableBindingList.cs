@@ -309,6 +309,8 @@ namespace KGySoft.ComponentModel
             {
                 if (sorted)
                 {
+                    if (isMoving) // if the list is bound to an object without a specific property name (eg. to a PropertyGrid.SelectedObject a whole element is bound), then on moving the currency manager tries to set the elements back.
+                        return;
                     list[OriginalIndex(index)] = value;
                     if (!IsBindingList)
                         DoSort();
@@ -592,6 +594,7 @@ namespace KGySoft.ComponentModel
                 return;
             }
 
+            isMoving = true;
             for (int i = 0; i < length; i++)
             {
                 int oldIndex = origIndexes.TryGetValue(sortIndex[i].Key ?? @null, out int orig) ? orig : sortIndex[i].BaseIndex;
@@ -600,7 +603,10 @@ namespace KGySoft.ComponentModel
                     OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
 
             }
+            isMoving = false;
         }
+
+        private bool isMoving;
 
         private int OriginalIndex(int sortedIndex)
         {

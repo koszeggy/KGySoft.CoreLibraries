@@ -805,4 +805,8 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="PropertyBindingNoPropertyName" xml:space="preserve">
     <value>The property binding command state does not contain the property name.</value>
   </data>
+  <data name="BindingListCannotAddNewFormat" xml:space="preserve">
+    <value>Cannot add new item to the binding list because type '{T}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</value>
+  </data>
+
 </root>
