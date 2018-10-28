@@ -17,6 +17,8 @@
 #region Usings
 
 using System;
+using System.ComponentModel;
+using System.Linq;
 using KGySoft.Annotations;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
@@ -35,6 +37,7 @@ namespace KGySoft
 
         #region Internal Constants
 
+        // TODO: all to methods
         internal const string ArgumentNull = nameof(ArgumentNull);
         internal const string ArgumentOutOfRange = nameof(ArgumentOutOfRange);
         internal const string ArgumentInvalidString = nameof(ArgumentInvalidString);
@@ -259,7 +262,6 @@ namespace KGySoft
         internal const string CannotConvertToType = nameof(CannotConvertToType);
         internal const string EnabledMustBeBool = nameof(EnabledMustBeBool);
         internal const string PropertyBindingNoPropertyName = nameof(PropertyBindingNoPropertyName);
-        internal const string BindingListCannotAddNewFormat = nameof(BindingListCannotAddNewFormat);
 
         #endregion
 
@@ -270,7 +272,7 @@ namespace KGySoft
         private const string invalidResource = "Resource text is not valid for {0} arguments: {1}";
 
         #endregion
-        
+
         #endregion
 
         #region Fields
@@ -279,15 +281,53 @@ namespace KGySoft
 
         #endregion
 
+        #region Properties
+
+        private static string QuoteStart => Get("General_QuoteStart");
+        private static string QuoteEnd => Get("General_QuoteEnd");
+
+        #endregion
+
         #region Methods
 
         #region Internal Methods
 
+        #region General
+
+        /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
+        internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatValues<TEnum>());
+
+        /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumFlagsOutOfRangeFormat", value.GetType().Name, FormatFlags<TEnum>());
+
+        #endregion
+
+        #region SortableBindingList
+
+        /// <summary>Property '{0}' of descriptor type '{1}' does not belong to type '{2}'.</summary>
+        internal static string SortableBindingListInvalidProperty(PropertyDescriptor property, Type t) => Get("SortableBindingList_InvalidPropertyFormat", property.Name, property.GetType(), t);
+
+        /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</summary>
+        internal static string SortableBindingCannotAddNew(Type t) => Get("SortableBindingList_CannotAddNewFormat", t);
+
+        /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
+        internal static string SortableBindingListPropertyNotExists(string propertyName, Type type) => Get("SortableBindingList_PropertyNotExistsFormat", propertyName, type);
+
+        #endregion
+
+        private static string FormatValues<TEnum>() where TEnum : struct, IConvertible
+            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd));
+
+        private static string FormatFlags<TEnum>() where TEnum : struct, IConvertible
+            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd));
+
+        // TODO: private
         internal static string Get([NotNull]string id)
         {
             return resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
         }
 
+        // TODO: private
         internal static string Get([NotNull]string id, params object[] args)
         {
             string format = Get(id);

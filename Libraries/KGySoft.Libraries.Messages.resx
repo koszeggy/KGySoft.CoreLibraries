@@ -805,8 +805,25 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="PropertyBindingNoPropertyName" xml:space="preserve">
     <value>The property binding command state does not contain the property name.</value>
   </data>
-  <data name="BindingListCannotAddNewFormat" xml:space="preserve">
-    <value>Cannot add new item to the binding list because type '{T}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</value>
+  <data name="SortableBindingList_CannotAddNewFormat" xml:space="preserve">
+    <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</value>
   </data>
-
+  <data name="SortableBindingList_InvalidPropertyFormat" xml:space="preserve">
+    <value>Property '{0}' of descriptor type '{1}' does not belong to type '{2}'.</value>
+  </data>
+  <data name="SortableBindingList_PropertyNotExistsFormat" xml:space="preserve">
+    <value>No property descriptor found for property name '{0}' in type '{1}'.</value>
+  </data>
+  <data name="General_QuoteStart" xml:space="preserve">
+    <value>'</value>
+  </data>
+  <data name="General_QuoteEnd" xml:space="preserve">
+    <value>'</value>
+  </data>
+  <data name="General_EnumOutOfRangeFormat" xml:space="preserve">
+    <value>Enum instance of '{0}' type must be one of the following values: {1}.</value>
+  </data>
+  <data name="General_EnumFlagsOutOfRangeFormat" xml:space="preserve">
+    <value>Enum instance of '{0}' type must consist of the following flags: {1}.</value>
+  </data>
 </root>

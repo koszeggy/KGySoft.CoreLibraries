@@ -23,10 +23,11 @@ namespace KGySoft.ComponentModel
     // - If AddingNew does not create an item of T t
     // - Return value of AllowNew does not depend on whether AddingNew is subscribed. It must be set explicitly if we want to allow new events.
     [Serializable]
-    public class SortableBindingList2<T> : Collection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
+    public class SortableBindingList2<T> : Collection<T>, IList<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
     {
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
+        private static readonly object @null = new object();
 
         private bool disposed;
         private bool allowNew;
@@ -40,6 +41,14 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private EventHandler<AddingNewEventArgs<T>> addingNewHandler;
         [NonSerialized] private ListChangedEventHandler listChangedHandler;
         [NonSerialized] private int lastChangeIndex = -1;
+
+        private bool sorted;
+        private PropertyDescriptor sortProperty;
+        private ListSortDirection? sortDirection;
+        private List<SortIndex> sortedToOrigIndex;
+        private List<int> origToSortedIndex;
+        private Dictionary<T, int> itemToOrigIndex;
+        private Dictionary<T, int> itemToSortedIndex;
 
         // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
         private PropertyDescriptorCollection PropertyDescriptors => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
@@ -188,7 +197,7 @@ namespace KGySoft.ComponentModel
         {
             var e = new AddingNewEventArgs<T>();
             OnAddingNew(e);
-            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.Construct(typeof(T)) : throw new InvalidOperationException(Res.Get(Res.BindingListCannotAddNewFormat));
+            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.Construct(typeof(T)) : throw new InvalidOperationException(Res.SortableBindingCannotAddNew(typeof(T)));
             Add(newItem);
 
             // Return new item to caller
@@ -243,85 +252,65 @@ namespace KGySoft.ComponentModel
 
         bool IBindingList.SupportsSorting => SupportsSortingCore;
 
-        protected virtual bool SupportsSortingCore => false;
+        protected virtual bool SupportsSortingCore => true;
 
-        // TODO: sorting
-        bool IBindingList.IsSorted
+        public bool IsSorted => IsSortedCore;
+
+        /// note: base implementation can return true when a new item is being added
+        protected virtual bool IsSortedCore => sorted;
+
+        public PropertyDescriptor SortProperty => SortPropertyCore;
+
+        protected virtual PropertyDescriptor SortPropertyCore => sortProperty;
+
+        ListSortDirection IBindingList.SortDirection => SortDirectionCore;
+
+        protected virtual ListSortDirection SortDirectionCore => sortDirection.GetValueOrDefault();
+
+        public void ApplySort(PropertyDescriptor property, ListSortDirection direction) 
+            => ApplySortCore(property ?? throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull)), direction);
+
+        public void ApplySort(ListSortDirection direction)
+            => ApplySortCore(null, direction);
+
+        public void ApplySort(string propertyName, ListSortDirection direction)
         {
-            get
-            {
-                return IsSortedCore;
-            }
+            var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull))];
+            if (property == null)
+                throw new ArgumentException(Res.SortableBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+            ApplySortCore(property, direction);
         }
 
-        // TODO: sorting
-        protected virtual bool IsSortedCore
+        protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction)
         {
-            get
-            {
-                return false;
-            }
+            if (property != null && !PropertyDescriptors.Contains(property))
+                throw new ArgumentException(Res.SortableBindingListInvalidProperty(property, typeof(T)), nameof(property));
+
+            if (!Enum<ListSortDirection>.IsDefined(direction))
+                throw new ArgumentOutOfRangeException(nameof(direction), Res.EnumOutOfRange(direction));
+
+            sortProperty = null;
+            sortDirection = direction;
+            DoSort();
         }
 
-        // TODO: sorting
-        PropertyDescriptor IBindingList.SortProperty
-        {
-            get
-            {
-                return SortPropertyCore;
-            }
-        }
+        public void RemoveSort() => RemoveSortCore();
 
-        // TODO: sorting
-        protected virtual PropertyDescriptor SortPropertyCore
-        {
-            get
-            {
-                return null;
-            }
-        }
-
-        // TODO: sorting
-        ListSortDirection IBindingList.SortDirection
-        {
-            get
-            {
-                return SortDirectionCore;
-            }
-        }
-
-        // TODO: sorting
-        protected virtual ListSortDirection SortDirectionCore
-        {
-            get
-            {
-                return ListSortDirection.Ascending;
-            }
-        }
-
-        // TODO: sorting - public
-        void IBindingList.ApplySort(PropertyDescriptor prop, ListSortDirection direction)
-        {
-            ApplySortCore(prop, direction);
-        }
-
-        // TODO: sorting
-        protected virtual void ApplySortCore(PropertyDescriptor prop, ListSortDirection direction)
-        {
-            throw new NotSupportedException();
-        }
-
-        // TODO: sorting - public?
-        void IBindingList.RemoveSort()
-        {
-            RemoveSortCore();
-        }
-
-        // TODO: sorting
         protected virtual void RemoveSortCore()
         {
-            throw new NotSupportedException();
+            sortIndex = null;
+            sortProperty = null;
+            sortDirection = null;
+            sorted = false;
+
+            FireListChanged(ListChangedType.Reset, -1);
         }
+
+        private void DoSort()
+        {
+
+        }
+
 
         int IBindingList.Find(PropertyDescriptor prop, object key)
         {
@@ -421,6 +410,22 @@ namespace KGySoft.ComponentModel
 
             FireListChanged(ListChangedType.ItemChanged, index);
         }
+
+        #endregion
+
+        #region IList[<T>] hacks
+
+        int IList.Add(object value)
+        {
+            Add((T)value);
+            return SortedIndex(Count - 1);
+        }
+
+        public new int IndexOf(T item) => SortedIndex(list.IndexOf(item));
+
+        int IList<T>.IndexOf(T item) => SortedIndex(list.IndexOf(item));
+
+        int IList.IndexOf(object value) => SortedIndex(list.IndexOf(item));
 
         #endregion
 
