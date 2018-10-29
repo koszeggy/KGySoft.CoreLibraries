@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using KGySoft.Collections;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
@@ -25,9 +26,23 @@ namespace KGySoft.ComponentModel
     [Serializable]
     public class SortableBindingList2<T> : Collection<T>, IList<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
     {
+#error A sok Collection<T> hack miatt ne abból származzon, csak legyen IList<T> és IList
+
+        private struct SortIndex
+        {
+            internal object Value { get; }
+            internal int OrigIndex { get; }
+
+            internal SortIndex(object value, int origIndex)
+            {
+                Value = value;
+                OrigIndex = origIndex;
+            }
+        }
+
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
-        private static readonly object @null = new object();
+        //private static readonly object @null = new object();
 
         private bool disposed;
         private bool allowNew;
@@ -45,10 +60,9 @@ namespace KGySoft.ComponentModel
         private bool sorted;
         private PropertyDescriptor sortProperty;
         private ListSortDirection? sortDirection;
-        private List<SortIndex> sortedToOrigIndex;
-        private List<int> origToSortedIndex;
-        private Dictionary<T, int> itemToOrigIndex;
-        private Dictionary<T, int> itemToSortedIndex;
+        //private List<int> origToSortedIndex;
+        //private Dictionary<T, int> itemToOrigIndex;
+        //private Dictionary<T, int> itemToSortedIndex;
 
         // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
         private PropertyDescriptorCollection PropertyDescriptors => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
@@ -298,7 +312,7 @@ namespace KGySoft.ComponentModel
 
         protected virtual void RemoveSortCore()
         {
-            sortIndex = null;
+            sortedToOrigIndex = null;
             sortProperty = null;
             sortDirection = null;
             sorted = false;
@@ -306,11 +320,79 @@ namespace KGySoft.ComponentModel
             FireListChanged(ListChangedType.Reset, -1);
         }
 
-        private void DoSort()
-        {
+        private CircularList<SortIndex> sortedToOrigIndex; // int is not enough, because contains the evaluated property value can be used for comparison when an item is inserted/changed
+        private IComparer<SortIndex> itemComparer;
 
+        private sealed class ItemComparer : IComparer<SortIndex>
+        {
+            private readonly bool ascending;
+
+            public ItemComparer(bool ascending) => this.ascending = ascending;
+
+            public int Compare(SortIndex x, SortIndex y)
+            {
+                int sign = ascending ? 1 : -1;
+
+                if (x.Value == null)
+                    return y.Value == null ? 0 : sign;
+                if (x.Value.Equals(y.Value))
+                    return 0;
+
+                if (x.Value is IComparable comparable)
+                    return sign * comparable.CompareTo(y.Value);
+
+                // ReSharper disable once StringCompareToIsCultureSpecific - now this is intended
+                return sign * x.Value.ToString().CompareTo(y.Value?.ToString());
+            }
         }
 
+        private sealed class ItemGenericComparer<TElement> : IComparer<SortIndex>
+        {
+            private readonly bool ascending;
+
+            public ItemGenericComparer(bool ascending) => this.ascending = ascending;
+
+            public int Compare(SortIndex x, SortIndex y)
+            {
+                int sign = ascending ? 1 : -1;
+
+                if (x.Value == null)
+                    return y.Value == null ? 0 : sign;
+                return sign * ((IComparable<TElement>)x.Value).CompareTo((TElement)y.Value);
+            }
+        }
+
+        private static IComparer<SortIndex> CreateComparer(bool ascending, Type valueType)
+        {
+            if (valueType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == valueType))
+                return (IComparer<SortIndex>)Reflector.Construct(typeof(ItemGenericComparer<>).MakeGenericType(valueType), ascending);
+            return new ItemComparer(ascending);
+        }
+
+        private void DoSort()
+        {
+            // TODO: original list
+            // reset, ha volt rendezve, de nem talaljuk a regi elemeket
+            
+            if (sortedToOrigIndex == null)
+                sortedToOrigIndex = new CircularList<SortIndex>(Count);
+            else
+                sortedToOrigIndex.Reset();
+
+            for (var i = 0; i < Items.Count; i++)
+            {
+                T item = Items[i];
+                sortedToOrigIndex.AddLast(new SortIndex(sortProperty == null ? item : sortProperty.GetValue(item), i));
+            }
+
+            itemComparer = CreateComparer(sortDirection.GetValueOrDefault() == ListSortDirection.Ascending, sortProperty == null ? typeof(T) : sortProperty.PropertyType);
+            sortedToOrigIndex.Sort(itemComparer);
+
+            sorted = true;
+            FireListChanged(ListChangedType.Reset, -1);
+        }
+
+        public new IEnumerator<T> GetEnumerator() => sorted ? new SortedEnumerator(list, sortIndex, SortDirection) : list.GetEnumerator();
 
         int IBindingList.Find(PropertyDescriptor prop, object key)
         {
@@ -415,17 +497,49 @@ namespace KGySoft.ComponentModel
 
         #region IList[<T>] hacks
 
+        public new int IndexOf(T item) => SortedIndex(list.IndexOf(item));
+
+        public new T this[int index]
+        {
+            get => sorted ? list[OriginalIndex(index)] : list[index];
+            set
+            {
+                if (sorted)
+                {
+                    if (isMoving) // if the list is bound to an object without a specific property name (eg. to a PropertyGrid.SelectedObject a whole element is bound), then on moving the currency manager tries to set the elements back.
+                        return;
+                    list[OriginalIndex(index)] = value;
+                    if (!IsBindingList)
+                        DoSort();
+                }
+                else
+                    list[index] = value;
+            }
+        }
+
+        T IList<T>.this[int index]
+        {
+            get => this[index];
+            set => this[index] = value;
+        }
+
+        int IList<T>.IndexOf(T item) => SortedIndex(list.IndexOf(item));
+
+
         int IList.Add(object value)
         {
             Add((T)value);
             return SortedIndex(Count - 1);
         }
 
-        public new int IndexOf(T item) => SortedIndex(list.IndexOf(item));
-
-        int IList<T>.IndexOf(T item) => SortedIndex(list.IndexOf(item));
 
         int IList.IndexOf(object value) => SortedIndex(list.IndexOf(item));
+
+        object IList.this[int index]
+        {
+            get => this[index];
+            set => this[index] = (T)value;
+        }
 
         #endregion
 
