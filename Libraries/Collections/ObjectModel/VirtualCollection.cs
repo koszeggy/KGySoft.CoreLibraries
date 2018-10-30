@@ -30,11 +30,11 @@ namespace KGySoft.Collections.ObjectModel
 {
     /// <summary>
     /// Similar to <see cref="Collection{T}"/> but provides virtual members not just for writing an setting but also for getting elements
-    /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties such as <see cref="Count"/> and <see cref="IsReadOnly"/>.
+    /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties such as <see cref="IsReadOnly"/> and <see cref="CanSetItem"/>.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <seealso cref="IList{T}" />
-    /// <seealso cref="IList" />
+    /// <seealso cref="Collection{T}" />
     public class VirtualCollection<T> : IList<T>, IList,
 #if !(NET35 || NET40)
         IReadOnlyList<T>
@@ -56,9 +56,8 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Gets the number of elements actually contained in the <see cref="VirtualCollection{T}"/>.
-        /// <br/>The base implementation returns the number of elements held in the underlying collection.
         /// </summary>
-        public virtual int Count => items.Count;
+        public int Count => items.Count;
 
         /// <summary>
         /// Gets whether the <see cref="VirtualCollection{T}" /> is read-only. Affects the behavior of <see cref="Add">Add</see>, <see cref="Insert">Insert</see>,
