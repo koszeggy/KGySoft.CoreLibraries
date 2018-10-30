@@ -617,7 +617,7 @@ namespace KGySoft.Resources
         public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
 
             writer = new ResXWriter(fileName);
             this.typeNameConverter = typeNameConverter;
@@ -694,7 +694,7 @@ namespace KGySoft.Resources
         public void AddAlias(string aliasName, AssemblyName assemblyName, bool forceWriteImmediately = false)
         {
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
 
             AddAlias(aliasName, assemblyName.FullName, forceWriteImmediately);
         }
@@ -710,9 +710,9 @@ namespace KGySoft.Resources
         public void AddAlias(string aliasName, string assemblyName, bool forceWriteImmediately = false)
         {
             if (aliasName == null)
-                throw new ArgumentNullException(nameof(aliasName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(aliasName), Res.ArgumentNull);
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
 
             if (aliases == null)
                 aliases = new Dictionary<string, string>();

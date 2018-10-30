@@ -129,7 +129,7 @@ namespace KGySoft.Security.Cryptography
         public static uint CalculateHash(byte[] buffer, int offset, int count, uint initialCrc = 0U, uint polynomial = StandardPolynomial)
         {
             if (buffer == null)
-                throw new ArgumentNullException(nameof(buffer), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(buffer), Res.ArgumentNull);
             if (offset < 0 || count < 0 || offset + count > buffer.Length)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
             return CalculateHash(tablesCache[polynomial], initialCrc, buffer, offset, count);
@@ -148,7 +148,7 @@ namespace KGySoft.Security.Cryptography
         public static uint CalculateHash(byte[] buffer, uint initialCrc = 0U, uint polynomial = StandardPolynomial)
         {
             if (buffer == null)
-                throw new ArgumentNullException(nameof(buffer), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(buffer), Res.ArgumentNull);
             return CalculateHash(tablesCache[polynomial], initialCrc, buffer, 0, buffer.Length);
         }
 
@@ -164,7 +164,7 @@ namespace KGySoft.Security.Cryptography
         public static uint CalculateHash(string s, Encoding encoding = null, uint polynomial = StandardPolynomial)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
             byte[] buffer = (encoding ?? Encoding.UTF8).GetBytes(s);
             return CalculateHash(tablesCache[polynomial], 0U, buffer, 0, buffer.Length);

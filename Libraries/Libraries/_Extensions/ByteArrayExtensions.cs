@@ -49,7 +49,7 @@ namespace KGySoft.Libraries
         public static string ToHexValuesString(this byte[] bytes, string separator = null)
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             bool useSeparator = !String.IsNullOrEmpty(separator);
             if (useSeparator && separator.Any(c => c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f'))
                 throw new ArgumentException(Res.Get(Res.SeparatorInvalidHex), nameof(separator));
@@ -119,9 +119,9 @@ namespace KGySoft.Libraries
         public static string ToDecimalValuesString(this byte[] bytes, string separator = ", ")
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             if (separator == null)
-                throw new ArgumentNullException(nameof(separator), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(separator), Res.ArgumentNull);
 
             if (separator.Length == 0 || separator.Any(c => c >= '0' && c <= '9'))
                 throw new ArgumentException(Res.Get(Res.SeparatorInvalidDec), nameof(separator));
@@ -181,7 +181,7 @@ namespace KGySoft.Libraries
         public static string ToBase64String(this byte[] bytes, int lineLength = 0, int indentSize = 0, char indentChar = ' ', bool indentSingleLine = false)
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
 
             string raw = Convert.ToBase64String(bytes);
             return Split(raw, lineLength, indentSize, indentChar, indentSingleLine);
@@ -200,7 +200,7 @@ namespace KGySoft.Libraries
         public static byte[] Compress(this byte[] bytes)
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
 
             using (MemoryStream encStream = new MemoryStream())
             {
@@ -222,7 +222,7 @@ namespace KGySoft.Libraries
         public static byte[] Decompress(this byte[] bytes)
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
 
             using (MemoryStream result = new MemoryStream(), encStream = new MemoryStream(bytes))
             {
@@ -254,13 +254,13 @@ namespace KGySoft.Libraries
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             if (algorithm == null)
-                throw new ArgumentNullException(nameof(algorithm), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (iv == null)
-                throw new ArgumentNullException(nameof(iv), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(iv), Res.ArgumentNull);
 
             algorithm.Key = key;
             algorithm.IV = iv;
@@ -288,7 +288,7 @@ namespace KGySoft.Libraries
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (password == null)
-                throw new ArgumentNullException(nameof(password), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
             Rfc2898DeriveBytes passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
@@ -355,13 +355,13 @@ namespace KGySoft.Libraries
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
         {
             if (bytes == null)
-                throw new ArgumentNullException(nameof(bytes), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             if (algorithm == null)
-                throw new ArgumentNullException(nameof(algorithm), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (iv == null)
-                throw new ArgumentNullException(nameof(iv), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(iv), Res.ArgumentNull);
 
             algorithm.Key = key;
             algorithm.IV = iv;
@@ -407,7 +407,7 @@ namespace KGySoft.Libraries
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (password == null)
-                throw new ArgumentNullException(nameof(password), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
 

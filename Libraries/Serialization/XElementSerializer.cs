@@ -60,9 +60,9 @@ namespace KGySoft.Serialization
         public void SerializeContent(XElement parent, object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
             if (parent == null)
-                throw new ArgumentNullException(nameof(parent), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(parent), Res.ArgumentNull);
 
             try
             {

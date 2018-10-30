@@ -198,7 +198,7 @@ namespace KGySoft.Serialization
         public static byte[] SerializeStruct(ValueType obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
             byte[] rawdata = new byte[Marshal.SizeOf(obj)];
             GCHandle handle = GCHandle.Alloc(rawdata, GCHandleType.Pinned);
             try
@@ -223,7 +223,7 @@ namespace KGySoft.Serialization
             result = null;
 
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
             if (CanSerializeStruct(obj.GetType()))
             {
                 try
@@ -260,7 +260,7 @@ namespace KGySoft.Serialization
         public static byte[] SerializeStructArray<T>(T[] array) where T : struct
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length == 0)
                 return new byte[0];
 
@@ -290,7 +290,7 @@ namespace KGySoft.Serialization
             result = null;
 
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length == 0)
             {
                 result = new byte[0];
@@ -366,11 +366,11 @@ namespace KGySoft.Serialization
         public static object DeserializeStruct(Type type, byte[] data)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (!type.IsValueType)
                 throw new ArgumentException(Res.Get(Res.ValueTypeExpected), nameof(type));
             if (data == null)
-                throw new ArgumentNullException(nameof(data), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
             if (data.Length < Marshal.SizeOf(type))
                 throw new ArgumentException(Res.Get(Res.DataLenghtTooSmall), nameof(data));
 
@@ -396,11 +396,11 @@ namespace KGySoft.Serialization
         public static object DeserializeStruct(Type type, byte[] data, int offset)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (!type.IsValueType)
                 throw new ArgumentException(Res.Get(Res.ValueTypeExpected), nameof(type));
             if (data == null)
-                throw new ArgumentNullException(nameof(data), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
 
             int len = Marshal.SizeOf(type);
             if (data.Length < len)
@@ -443,7 +443,7 @@ namespace KGySoft.Serialization
             where T : struct
         {
             if (data == null)
-                throw new ArgumentNullException(nameof(data), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 

@@ -45,7 +45,7 @@ namespace KGySoft.Libraries
         public static async Task<bool> WaitOneAsync([NotNull] this WaitHandle handle, int timeout = Timeout.Infinite, CancellationToken cancellationToken = default)
         {
             if (handle == null)
-                throw new ArgumentNullException(nameof(handle), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(handle), Res.ArgumentNull);
             if (cancellationToken.IsCancellationRequested)
                 return false;
             RegisteredWaitHandle registeredHandle = null;

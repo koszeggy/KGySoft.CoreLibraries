@@ -42,7 +42,7 @@ namespace KGySoft.Libraries
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
             if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
 
             return dictionary.TryGetValue(key, out TValue value) ? value : default;
         }
@@ -61,7 +61,7 @@ namespace KGySoft.Libraries
             where TActualValue : TValue
         {
             if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
 
             return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
         }
@@ -77,7 +77,7 @@ namespace KGySoft.Libraries
         public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
         {
             if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
             return dictionary.TryGetValue(key, out object value) && value is TActualValue actualValue ? actualValue : defaultValue;
         }
 

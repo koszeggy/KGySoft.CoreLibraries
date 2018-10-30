@@ -752,7 +752,7 @@ namespace KGySoft.Resources
         public ResXResourceReader(string fileName, ITypeResolutionService typeResolver = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
 
             reader = new ResXReader(fileName);
             this.typeResolver = typeResolver;
@@ -766,7 +766,7 @@ namespace KGySoft.Resources
         public ResXResourceReader(TextReader reader, ITypeResolutionService typeResolver = null)
         {
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
 
             this.reader = new ResXReader(reader);
             this.typeResolver = typeResolver;
@@ -780,7 +780,7 @@ namespace KGySoft.Resources
         public ResXResourceReader(Stream stream, ITypeResolutionService typeResolver = null)
         {
             if (stream == null)
-                throw new ArgumentNullException(nameof(stream), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
 
             reader = new ResXReader(stream);
             this.typeResolver = typeResolver;

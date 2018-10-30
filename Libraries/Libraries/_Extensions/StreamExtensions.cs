@@ -41,9 +41,9 @@ namespace KGySoft.Libraries
         public static void CopyTo(this Stream source, Stream destination, int bufferSize)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (destination == null)
-                throw new ArgumentNullException(nameof(destination), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(destination), Res.ArgumentNull);
             if (bufferSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(bufferSize), Res.Get(Res.ArgumentOutOfRange));
             if (!source.CanRead)
@@ -87,7 +87,7 @@ namespace KGySoft.Libraries
         public static byte[] ToArray(this Stream s)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (!s.CanRead)
                 throw new ArgumentException(Res.Get(Res.StreamCannotRead));
 

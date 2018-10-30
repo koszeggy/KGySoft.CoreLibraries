@@ -65,7 +65,7 @@ namespace KGySoft.Libraries
         public static byte[] NextBytes(this Random random, int length)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (length < 0)
                 throw new ArgumentOutOfRangeException(nameof(length), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
             if (length == 0)
@@ -89,7 +89,7 @@ namespace KGySoft.Libraries
         public static bool NextBoolean(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             return (random.Next() & 1) == 0;
         }
 
@@ -364,7 +364,7 @@ namespace KGySoft.Libraries
         public static long NextInt64(this Random random, long minValue, long maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minValue == maxValue)
                 return minValue;
 
@@ -426,7 +426,7 @@ namespace KGySoft.Libraries
         public static ulong NextUInt64(this Random random, ulong minValue, ulong maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minValue == maxValue)
                 return minValue;
 
@@ -559,7 +559,7 @@ namespace KGySoft.Libraries
             double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
 
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
             // both are the same infinity
             if ((Double.IsPositiveInfinity(minValue) && Double.IsPositiveInfinity(maxValue) || Double.IsNegativeInfinity(minValue) && Double.IsNegativeInfinity(maxValue))
@@ -634,7 +634,7 @@ namespace KGySoft.Libraries
         public static decimal NextDecimal(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
             decimal result;
             do
@@ -688,7 +688,7 @@ namespace KGySoft.Libraries
         public static decimal NextDecimal(this Random random, decimal minValue, decimal maxValue, FloatScale scale = FloatScale.Auto)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
             if (maxValue < minValue)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
@@ -782,13 +782,13 @@ namespace KGySoft.Libraries
         public static string NextString(this Random random, int minLength, int maxLength, string allowedCharacters)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minLength < 0)
                 throw new ArgumentOutOfRangeException(nameof(minLength), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
             if (maxLength < minLength)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), Res.Get(Res.MaxLengthLessThanMinLength));
             if (allowedCharacters == null)
-                throw new ArgumentNullException(nameof(allowedCharacters), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(allowedCharacters), Res.ArgumentNull);
             if (allowedCharacters.Length == 0)
                 throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(allowedCharacters));
 
@@ -813,7 +813,7 @@ namespace KGySoft.Libraries
         public static string NextString(this Random random, int minLength = 4, int maxLength = 10, StringCreation strategy = StringCreation.Ascii)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minLength < 0)
                 throw new ArgumentOutOfRangeException(nameof(minLength), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
             if (maxLength < minLength)
@@ -897,7 +897,7 @@ namespace KGySoft.Libraries
         public static DateTime NextDateTime(this Random random, DateTime? minValue = null, DateTime? maxValue = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             var minTicks = minValue.GetValueOrDefault(DateTime.MinValue).Ticks;
             var maxTicks = maxValue.GetValueOrDefault(DateTime.MaxValue).Ticks;
             if (maxTicks < minTicks)
@@ -927,7 +927,7 @@ namespace KGySoft.Libraries
         public static DateTime NextDate(this Random random, DateTime? minValue = null, DateTime? maxValue = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             var minDate = minValue.GetValueOrDefault(DateTime.MinValue).Date;
             var maxDate = maxValue.GetValueOrDefault(DateTime.MaxValue).Date;
             if (maxDate < minDate)
@@ -953,7 +953,7 @@ namespace KGySoft.Libraries
         {
             const int maximumOffset = 14 * 60;
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             var minDateTime = minValue?.UtcDateTime ?? DateTime.MinValue;
             var maxDateTime = maxValue?.UtcDateTime ?? DateTime.MaxValue;
             if (maxDateTime < minDateTime)
@@ -980,7 +980,7 @@ namespace KGySoft.Libraries
         public static TimeSpan NextTimeSpan(this Random random, TimeSpan? minValue = null, TimeSpan? maxValue = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
             var minTicks = minValue.GetValueOrDefault(TimeSpan.MinValue).Ticks;
             var maxTicks = maxValue.GetValueOrDefault(TimeSpan.MaxValue).Ticks;
@@ -1004,7 +1004,7 @@ namespace KGySoft.Libraries
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             return Enum<TEnum>.GetValues().GetRandomElement(random, true);
         }
 
@@ -1026,7 +1026,7 @@ namespace KGySoft.Libraries
         public static Guid NextGuid(this Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
             var result = random.NextBytes(16);
             result[6] = (byte)((result[6] & 0x0F) | 0x40); // the high nibble of 6th byte is 4
@@ -1079,7 +1079,7 @@ namespace KGySoft.Libraries
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             return (T)ObjectGenerator.GenerateObject(random, typeof(T), settings ?? GenerateObjectSettings.DefaultSettings);
         }
 

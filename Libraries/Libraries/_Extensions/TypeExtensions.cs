@@ -61,7 +61,7 @@ namespace KGySoft.Libraries
         public static bool CanAcceptValue(this Type type, object value)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             if (type == Reflector.ObjectType)
                 return true;
@@ -108,7 +108,7 @@ namespace KGySoft.Libraries
         /// <param name="type">The type to check</param>
         /// <returns><see langword="true"/>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullable(this Type type)
-            => (type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull))).IsGenericTypeOf(nullableType);
+            => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsGenericTypeOf(nullableType);
 
         /// <summary>
         /// Determines whether the specified <paramref name="type"/> is an <see cref="Enum">enum</see> and <see cref="FlagsAttribute"/> is defined on it.
@@ -117,7 +117,7 @@ namespace KGySoft.Libraries
         /// <returns><see langword="true"/> if <paramref name="type"/> is a flags <see cref="Enum">enum</see>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="System.ArgumentNullException">type</exception>
         public static bool IsFlagsEnum(this Type type)
-            => (type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull))).IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
+            => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
 
         /// <summary>
         /// Gets whether the specified <paramref name="type"/> is a delegate.
@@ -126,7 +126,7 @@ namespace KGySoft.Libraries
         /// <returns><see langword="true"/> if the specified type is a delegate; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsDelegate(this Type type)
-            => typeof(Delegate).IsAssignableFrom(type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull)));
+            => typeof(Delegate).IsAssignableFrom(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
 
         /// <summary>
         /// Gets whether the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>.
@@ -138,9 +138,9 @@ namespace KGySoft.Libraries
         public static bool IsGenericTypeOf(this Type type, Type genericTypeDefinition)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (genericTypeDefinition == null)
-                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
             return type.IsGenericType && type.GetGenericTypeDefinition() == genericTypeDefinition;
         }
 
@@ -154,9 +154,9 @@ namespace KGySoft.Libraries
         public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (genericTypeDefinition == null)
-                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
 
             string rootName = genericTypeDefinition.Name;
             if (genericTypeDefinition.IsInterface)

@@ -975,7 +975,7 @@ namespace KGySoft.Resources
         public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
             var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
             ResourceSet rs;
             lock (SyncRoot)
@@ -1122,7 +1122,7 @@ namespace KGySoft.Resources
         internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
             var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
             ResourceSet rs;
             bool resourceFound;
@@ -1365,7 +1365,7 @@ namespace KGySoft.Resources
         private object GetObjectInternal(string name, CultureInfo culture, bool isString)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             if (culture == null)
                 culture = CultureInfo.CurrentUICulture;
@@ -1416,7 +1416,7 @@ namespace KGySoft.Resources
         private object GetMetaInternal(string name, CultureInfo culture, bool isString)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             // in case of metadata there is no hierarchy traversal so if there is no result trying to provoke the missing manifest exception
             ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);

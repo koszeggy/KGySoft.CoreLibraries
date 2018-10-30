@@ -88,7 +88,7 @@ namespace KGySoft.Reflection
         /// property access than <see cref="PropertyInfo"/>.
         /// </summary>
         public static PropertyAccessor GetPropertyAccessor(PropertyInfo property) 
-            => (PropertyAccessor)GetCreateAccessor(property ?? throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull)));
+            => (PropertyAccessor)GetCreateAccessor(property ?? throw new ArgumentNullException(nameof(property), Res.ArgumentNull));
 
         /// <summary>
         /// Non-caching version of property accessor creation.

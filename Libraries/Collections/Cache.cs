@@ -459,14 +459,14 @@ namespace KGySoft.Collections
             public bool Contains(TKey item)
             {
                 if (item == null)
-                    throw new ArgumentNullException(nameof(item), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(item), Res.ArgumentNull);
                 return owner.ContainsKey(item);
             }
 
             public void CopyTo(TKey[] array, int arrayIndex)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
                 if (arrayIndex < 0 || arrayIndex > array.Length)
                     throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.Get(Res.ArgumentOutOfRange));
                 if (array.Length - arrayIndex < Count)
@@ -508,7 +508,7 @@ namespace KGySoft.Collections
             void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
 
                 if (array is TKey[] keys)
                 {
@@ -596,7 +596,7 @@ namespace KGySoft.Collections
             public void CopyTo(TValue[] array, int arrayIndex)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
                 if (arrayIndex < 0 || arrayIndex > array.Length)
                     throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.Get(Res.ArgumentOutOfRange));
                 if (array.Length - arrayIndex < Count)
@@ -636,7 +636,7 @@ namespace KGySoft.Collections
             void ICollection.CopyTo(Array array, int index)
             {
                 if (array == null)
-                    throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
 
                 if (array is TValue[] values)
                 {
@@ -1094,7 +1094,7 @@ namespace KGySoft.Collections
             get
             {
                 if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
                     throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
                 return this[(TKey)key];
@@ -1102,7 +1102,7 @@ namespace KGySoft.Collections
             set
             {
                 if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
                     throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
                 if (!typeValue.CanAcceptValue(value))
@@ -1316,7 +1316,7 @@ namespace KGySoft.Collections
         public void Touch(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
 
             if (cacheStore != null && cacheStore.TryGetValue(key, out CacheItem element))
             {
@@ -1361,7 +1361,7 @@ namespace KGySoft.Collections
         public TValue GetValueUncached(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
 
             TValue result = itemLoader(key);
             if (cacheStore != null && cacheStore.TryGetValue(key, out CacheItem element))
@@ -1454,7 +1454,7 @@ namespace KGySoft.Collections
         public void Add(TKey key, TValue value)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (cacheStore != null && cacheStore.ContainsKey(key))
                 throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
 
@@ -1473,7 +1473,7 @@ namespace KGySoft.Collections
         public bool Remove(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
 
             if (cacheStore == null)
                 return false;
@@ -1543,7 +1543,7 @@ namespace KGySoft.Collections
         public bool ContainsKey(TKey key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
 
             return (cacheStore != null && cacheStore.ContainsKey(key));
         }
@@ -1773,7 +1773,7 @@ namespace KGySoft.Collections
         object ICache.GetValueUncached(object key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
                 throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
             return GetValueUncached((TKey)key);
@@ -1827,7 +1827,7 @@ namespace KGySoft.Collections
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.Get(Res.ArgumentOutOfRange));
             if (array.Length - arrayIndex < Count)
@@ -1877,7 +1877,7 @@ namespace KGySoft.Collections
         void IDictionary.Add(object key, object value)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
                 throw new ArgumentException(Res.Get(Res.InvalidKeyType), nameof(key));
             if (!typeValue.CanAcceptValue(value))
@@ -1897,7 +1897,7 @@ namespace KGySoft.Collections
         bool IDictionary.Contains(object key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             return typeKey.CanAcceptValue(key) && ContainsKey((TKey)key);
         }
 
@@ -1918,7 +1918,7 @@ namespace KGySoft.Collections
         void IDictionary.Remove(object key)
         {
             if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (typeKey.CanAcceptValue(key))
                 Remove((TKey)key);
         }
@@ -1943,7 +1943,7 @@ namespace KGySoft.Collections
         void ICollection.CopyTo(Array array, int index)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (index < 0 || index > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
             if (array.Length - index < Count)

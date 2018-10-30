@@ -48,7 +48,7 @@ namespace KGySoft.Reflection
         /// <param name="type"><see cref="Type"/> of the object to create.</param>
         /// <returns>A new instance of <paramref name="type"/>.</returns>
         public static ObjectFactory GetObjectFactory(Type type) 
-            => (ObjectFactory)GetCreateAccessor(type ?? throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull)));
+            => (ObjectFactory)GetCreateAccessor(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
 
         /// <summary>
         /// Retrieves a factory for an object based on a <see cref="ConstructorInfo"/>.
@@ -56,7 +56,7 @@ namespace KGySoft.Reflection
         /// <param name="ctor">The <see cref="ConstructorInfo"/> metadata of the object to create.</param>
         /// <returns>A new instance of the object created by the provided constructor.</returns>
         public static ObjectFactory GetObjectFactory(ConstructorInfo ctor) 
-            => (ObjectFactory)GetCreateAccessor(ctor ?? throw new ArgumentNullException(nameof(ctor), Res.Get(Res.ArgumentNull)));
+            => (ObjectFactory)GetCreateAccessor(ctor ?? throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull));
 
         /// <summary>
         /// Non-caching version of object factory creation.

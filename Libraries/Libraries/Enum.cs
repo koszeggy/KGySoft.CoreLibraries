@@ -335,7 +335,7 @@ namespace KGySoft.Libraries
         public static bool IsDefined(string value)
         {
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
 
             return NameValuePairs.ContainsKey(value);
         }
@@ -507,7 +507,7 @@ namespace KGySoft.Libraries
         public static bool TryParse(string value, string separator, bool ignoreCase, out TEnum result)
         {
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
             
             // simple name match test
             if (NameValuePairs.TryGetValue(value, out result))

@@ -164,7 +164,7 @@ namespace KGySoft.Libraries
         public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
         {
             if (targetType == null)
-                throw new ArgumentNullException(nameof(targetType), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
 
             error = null;
             if (obj == null || obj is DBNull)

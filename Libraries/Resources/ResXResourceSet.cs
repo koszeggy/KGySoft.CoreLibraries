@@ -861,10 +861,10 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (alias == null)
-                throw new ArgumentNullException(nameof(alias), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(alias), Res.ArgumentNull);
 
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
 
             lock (dict)
             {
@@ -913,7 +913,7 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (alias == null)
-                throw new ArgumentNullException(nameof(alias), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(alias), Res.ArgumentNull);
 
             lock (dict)
             {
@@ -1161,7 +1161,7 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             lock (data)
             {
@@ -1201,7 +1201,7 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             lock (data)
             {
@@ -1227,7 +1227,7 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             lock (data)
             {

@@ -275,9 +275,9 @@ namespace KGySoft.Resources
         public ResXFileRef(string fileName, Type type, Encoding textFileEncoding = null)
         {
             if (fileName == null)
-                throw new ArgumentNullException(nameof(fileName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             this.fileName = fileName;
             typeName = type.Assembly == Reflector.mscorlibAssembly ? type.FullName : type.AssemblyQualifiedName;

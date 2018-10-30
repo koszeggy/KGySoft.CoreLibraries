@@ -17,7 +17,7 @@ namespace _LibrariesTest
         public static IEnumerable<DictionaryEntry> ToEnumerable(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
-                throw new ArgumentNullException(nameof(enumerator), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(enumerator), Res.ArgumentNull);
 
             while (enumerator.MoveNext())
                 yield return enumerator.Entry;
@@ -35,7 +35,7 @@ namespace _LibrariesTest
         public static IEnumerable<KeyValuePair<TKey, TValue>> ToEnumerable<TKey, TValue>(this IDictionaryEnumerator enumerator)
         {
             if (enumerator == null)
-                throw new ArgumentNullException(nameof(enumerator), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(enumerator), Res.ArgumentNull);
 
             while (enumerator.MoveNext())
                 yield return new KeyValuePair<TKey, TValue>((TKey)enumerator.Key, (TValue)enumerator.Value);

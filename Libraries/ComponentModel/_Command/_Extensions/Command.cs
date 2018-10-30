@@ -143,9 +143,9 @@ namespace KGySoft.ComponentModel
         public static ICommandBinding CreatePropertyBinding(this INotifyPropertyChanged source, string propertyName, Func<object, object> format, params object[] targets)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             var state = new CommandState { { statePropertyName, propertyName }, { stateFormatValue, format } };
             ICommandBinding result = BindPropertyCommand.CreateBinding(state, true)
                 .AddStateUpdater(NullStateUpdater.Updater)

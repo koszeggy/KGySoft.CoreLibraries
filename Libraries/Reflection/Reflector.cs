@@ -162,7 +162,7 @@ namespace KGySoft.Reflection
         public static object Parse(Type type, string value, ITypeDescriptorContext context, CultureInfo culture)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             if (value == null)
             {
@@ -369,7 +369,7 @@ namespace KGySoft.Reflection
         public static void SetProperty(object instance, PropertyInfo property, object value, ReflectionWays way, params object[] indexerParameters)
         {
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
 
             if (!property.CanWrite)
                 throw new InvalidOperationException(Res.Get(Res.PropertyHasNoSetter, property.DeclaringType, property.Name));
@@ -455,9 +455,9 @@ namespace KGySoft.Reflection
         internal static bool TrySetInstancePropertyByName(object instance, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto, params object[] indexerParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
                 indexerParameters = EmptyObjects;
 
@@ -492,9 +492,9 @@ namespace KGySoft.Reflection
         public static void SetInstancePropertyByName(object instance, string propertyName, object value, ReflectionWays way, params object[] indexerParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
                 indexerParameters = EmptyObjects;
 
@@ -516,9 +516,9 @@ namespace KGySoft.Reflection
         public static void SetInstancePropertyByName(object instance, string propertyName, object value, params object[] indexerParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
                 indexerParameters = EmptyObjects;
 
@@ -544,9 +544,9 @@ namespace KGySoft.Reflection
         public static void SetStaticPropertyByName(Type type, string propertyName, object value, ReflectionWays way)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             TrySetPropertyByName(propertyName, type, null, value, way, EmptyObjects, true);
         }
@@ -563,9 +563,9 @@ namespace KGySoft.Reflection
         public static void SetStaticPropertyByName(Type type, string propertyName, object value)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             TrySetPropertyByName(propertyName, type, null, value, ReflectionWays.Auto, EmptyObjects, true);
         }
@@ -599,9 +599,9 @@ namespace KGySoft.Reflection
         public static void SetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexerParameters)
         {
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
-                throw new ArgumentNullException(nameof(indexerParameters), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(indexerParameters), Res.ArgumentNull);
             if (indexerParameters.Length == 0)
                 throw new ArgumentException(Res.Get(Res.EmptyIndices), nameof(indexerParameters));
             if (way == ReflectionWays.TypeDescriptor)
@@ -710,7 +710,7 @@ namespace KGySoft.Reflection
         public static object GetProperty(object instance, PropertyInfo property, ReflectionWays way, params object[] indexerParameters)
         {
             if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
             if (!property.CanRead)
                 throw new InvalidOperationException(Res.Get(Res.PropertyHasNoGetter, property.DeclaringType, property.Name));
             if (instance == null && !property.GetGetMethod(true).IsStatic)
@@ -817,9 +817,9 @@ namespace KGySoft.Reflection
         public static object GetInstancePropertyByName(object instance, string propertyName, ReflectionWays way, params object[] indexerParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
                 indexerParameters = EmptyObjects;
 
@@ -841,9 +841,9 @@ namespace KGySoft.Reflection
         public static object GetInstancePropertyByName(object instance, string propertyName, params object[] indexerParameters)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
                 indexerParameters = EmptyObjects;
 
@@ -869,9 +869,9 @@ namespace KGySoft.Reflection
         public static object GetStaticPropertyByName(Type type, string propertyName, ReflectionWays way)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             return GetPropertyByName(propertyName, type, null, way, EmptyObjects);
         }
@@ -887,9 +887,9 @@ namespace KGySoft.Reflection
         public static object GetStaticPropertyByName(Type type, string propertyName)
         {
             if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             return GetPropertyByName(propertyName, type, null, ReflectionWays.Auto, EmptyObjects);
         }
@@ -916,9 +916,9 @@ namespace KGySoft.Reflection
         public static object GetIndexedMember(object instance, ReflectionWays way, params object[] indexerParameters)
         {
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (indexerParameters == null)
-                throw new ArgumentNullException(nameof(indexerParameters), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(indexerParameters), Res.ArgumentNull);
             if (indexerParameters.Length == 0)
                 throw new ArgumentException(Res.Get(Res.EmptyIndices), nameof(indexerParameters));
             if (way == ReflectionWays.TypeDescriptor)
@@ -1026,7 +1026,7 @@ namespace KGySoft.Reflection
         public static object RunMethod(object instance, MethodInfo method, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (method == null)
-                throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(method), Res.ArgumentNull);
             bool isStatic = method.IsStatic;
             if (instance == null && !isStatic)
                 throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
@@ -1193,9 +1193,9 @@ namespace KGySoft.Reflection
         public static object RunInstanceMethodByName(object instance, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (methodName == null)
-                throw new ArgumentNullException(nameof(methodName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
             if (parameters == null)
                 parameters = EmptyObjects;
             if (genericParameters == null)
@@ -1291,9 +1291,9 @@ namespace KGySoft.Reflection
         public static object RunStaticMethodByName(Type type, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (methodName == null)
-                throw new ArgumentNullException(nameof(methodName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (parameters == null)
                 parameters = EmptyObjects;
             if (genericParameters == null)
@@ -1377,7 +1377,7 @@ namespace KGySoft.Reflection
         public static object Construct(ConstructorInfo ctor, ReflectionWays way, params object[] parameters)
         {
             if (ctor == null)
-                throw new ArgumentNullException(nameof(ctor), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull);
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
@@ -1418,7 +1418,7 @@ namespace KGySoft.Reflection
         public static object Construct(Type type, ReflectionWays way, params object[] parameters)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             if (parameters == null)
                 parameters = EmptyObjects;
@@ -1479,7 +1479,7 @@ namespace KGySoft.Reflection
         public static object Construct(Type type, ReflectionWays way)
         {
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             if (way == ReflectionWays.DynamicDelegate)
             {
@@ -1558,7 +1558,7 @@ namespace KGySoft.Reflection
         public static void SetField(object instance, FieldInfo field, object value, ReflectionWays way)
         {
             if (field == null)
-                throw new ArgumentNullException(nameof(field), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(field), Res.ArgumentNull);
             bool isStatic = field.IsStatic;
             if (instance == null && !isStatic)
                 throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
@@ -1645,9 +1645,9 @@ namespace KGySoft.Reflection
         public static void SetInstanceFieldByName(object instance, string fieldName, object value, ReflectionWays way)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
             SetFieldByName(fieldName, type, instance, value, way);
@@ -1666,9 +1666,9 @@ namespace KGySoft.Reflection
         public static void SetInstanceFieldByName(object instance, string fieldName, object value)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
             SetFieldByName(fieldName, type, instance, value, ReflectionWays.Auto);
@@ -1693,9 +1693,9 @@ namespace KGySoft.Reflection
         public static void SetStaticFieldByName(Type type, string fieldName, object value, ReflectionWays way)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             SetFieldByName(fieldName, type, null, value, way);
         }
@@ -1712,9 +1712,9 @@ namespace KGySoft.Reflection
         public static void SetStaticFieldByName(Type type, string fieldName, object value)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             SetFieldByName(fieldName, type, null, value, ReflectionWays.Auto);
         }
@@ -1737,9 +1737,9 @@ namespace KGySoft.Reflection
         public static object GetField(object instance, FieldInfo field, ReflectionWays way)
         {
             if (field == null)
-                throw new ArgumentNullException(nameof(field), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(field), Res.ArgumentNull);
             if (instance == null && !field.IsStatic)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
@@ -1812,9 +1812,9 @@ namespace KGySoft.Reflection
         public static object GetInstanceFieldByName(object instance, string fieldName, ReflectionWays way)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
             return GetFieldByName(fieldName, type, instance, way);
@@ -1833,9 +1833,9 @@ namespace KGySoft.Reflection
         public static object GetInstanceFieldByName(object instance, string fieldName)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (instance == null)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
             return GetFieldByName(fieldName, type, instance, ReflectionWays.Auto);
@@ -1858,9 +1858,9 @@ namespace KGySoft.Reflection
         public static object GetStaticFieldByName(Type type, string fieldName, ReflectionWays way)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             return GetFieldByName(fieldName, type, null, way);
         }
@@ -1876,9 +1876,9 @@ namespace KGySoft.Reflection
         public static object GetStaticFieldByName(Type type, string fieldName)
         {
             if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             return GetFieldByName(fieldName, type, null, ReflectionWays.Auto);
         }
@@ -1923,7 +1923,7 @@ namespace KGySoft.Reflection
         public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
         {
             if (assemblyName == null)
-                throw new ArgumentNullException(nameof(assemblyName), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
             if (assemblyName.Length == 0)
                 throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(assemblyName));
 
@@ -2180,7 +2180,7 @@ namespace KGySoft.Reflection
         public static Type ResolveType(Assembly assembly, string typeName)
         {
             if (assembly == null)
-                throw new ArgumentNullException(nameof(assembly), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(assembly), Res.ArgumentNull);
             if (String.IsNullOrEmpty(typeName))
                 return null;
 
@@ -2467,7 +2467,7 @@ namespace KGySoft.Reflection
         public static MemberInfo MemberOf<T>(Expression<Func<T>> expression)
         {
             if (expression == null)
-                throw new ArgumentNullException(nameof(expression), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
 
             Expression body = expression.Body;
             MemberExpression member = body as MemberExpression;
@@ -2516,7 +2516,7 @@ namespace KGySoft.Reflection
         internal static MethodInfo MemberOf(Expression<Action> expression)
         {
             if (expression == null)
-                throw new ArgumentNullException(nameof(expression), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
 
             Expression body = expression.Body;
             MethodCallExpression methodCall = body as MethodCallExpression;
@@ -2534,7 +2534,7 @@ namespace KGySoft.Reflection
         internal static bool IsExplicitInterfaceImplementation(MethodInfo method)
         {
             if (method == null)
-                throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(method), Res.ArgumentNull);
             Type declaringType = method.DeclaringType;
             if (declaringType == null)
                 return false;

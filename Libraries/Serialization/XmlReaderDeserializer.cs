@@ -26,7 +26,7 @@ namespace KGySoft.Serialization
         public static object Deserialize(XmlReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException(nameof(reader), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
 
             ReadToNodeType(reader, XmlNodeType.Element);
             if (reader.Name != XmlSerializer.ElementObject)
@@ -385,7 +385,7 @@ namespace KGySoft.Serialization
         private static Array DeserializeArray(Array array, Type elementType, XmlReader reader, bool canRecreateArray)
         {
             if (array == null && elementType == null)
-                throw new ArgumentNullException(nameof(elementType), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(elementType), Res.ArgumentNull);
 
             ParseArrayDimensions(reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], out int[] lengths, out int[] lowerBounds);
 

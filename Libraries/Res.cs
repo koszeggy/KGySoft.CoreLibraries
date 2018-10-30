@@ -38,7 +38,6 @@ namespace KGySoft
         #region Internal Constants
 
         // TODO: all to methods
-        internal const string ArgumentNull = nameof(ArgumentNull);
         internal const string ArgumentOutOfRange = nameof(ArgumentOutOfRange);
         internal const string ArgumentInvalidString = nameof(ArgumentInvalidString);
         internal const string KeyNotFound = nameof(KeyNotFound);
@@ -293,6 +292,9 @@ namespace KGySoft
         #region Internal Methods
 
         #region General
+
+        /// <summary>Value cannot be null.</summary>
+        internal static string ArgumentNull => Get("General_ArgumentNull");
 
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
         internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatValues<TEnum>());

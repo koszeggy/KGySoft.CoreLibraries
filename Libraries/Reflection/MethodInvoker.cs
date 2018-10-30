@@ -37,7 +37,7 @@ namespace KGySoft.Reflection
         /// <param name="method">The <see cref="MethodInfo"/> that contains informations of the method to invoke.</param>
         /// <returns>Returns a <see cref="MethodInvoker"/> instance that can be used to invoke the method.</returns>
         public static MethodInvoker GetMethodInvoker(MethodInfo method) 
-            => (MethodInvoker)GetCreateAccessor(method ?? throw new ArgumentNullException(nameof(method), Res.Get(Res.ArgumentNull)));
+            => (MethodInvoker)GetCreateAccessor(method ?? throw new ArgumentNullException(nameof(method), Res.ArgumentNull));
 
         /// <summary>
         /// Non-caching version of invoker creation.

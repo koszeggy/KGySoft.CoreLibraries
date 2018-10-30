@@ -49,7 +49,7 @@ namespace KGySoft.Security.Cryptography
         /// <param name="rng">A <see cref="RandomNumberGenerator"/> instance to use.</param>
         /// <exception cref="ArgumentNullException"><paramref name="rng"/> is <see langword="null"/>.</exception>
         public SecureRandom(RandomNumberGenerator rng) 
-            => provider = rng ?? throw new ArgumentNullException(nameof(rng), Res.Get(Res.ArgumentNull));
+            => provider = rng ?? throw new ArgumentNullException(nameof(rng), Res.ArgumentNull);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
@@ -69,7 +69,7 @@ namespace KGySoft.Security.Cryptography
         public override void NextBytes(byte[] buffer)
         {
             if (buffer == null)
-                throw new ArgumentNullException(nameof(buffer), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(buffer), Res.ArgumentNull);
 
             provider.GetBytes(buffer);
         }

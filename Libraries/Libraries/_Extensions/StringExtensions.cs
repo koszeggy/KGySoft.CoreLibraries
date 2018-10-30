@@ -57,7 +57,7 @@ namespace KGySoft.Libraries
         public static Regex ToWildcardsRegex(this string s)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             return new Regex("^" + Regex.Escape(s).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase);
         }
 
@@ -67,7 +67,7 @@ namespace KGySoft.Libraries
         public static string Repeat(this string s, int count)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
@@ -95,7 +95,7 @@ namespace KGySoft.Libraries
         public static byte[] ParseHexBytes(this string s, string separator)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
             if (string.IsNullOrEmpty(separator))
                 return ParseHexBytes(s);
@@ -114,7 +114,7 @@ namespace KGySoft.Libraries
         public static byte[] ParseHexBytes(this string s)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
             if (s.Length == 0)
                 return new byte[0];
@@ -135,7 +135,7 @@ namespace KGySoft.Libraries
         public static byte[] ParseDecimalBytes(this string s, string separator)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
             if (String.IsNullOrEmpty(separator))
                 throw new ArgumentException(Res.Get(Res.SeparatorNullOrEmpty), nameof(separator));
@@ -187,9 +187,9 @@ namespace KGySoft.Libraries
         public static bool Contains(this string s, string value, StringComparison comparison)
         {
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (value == null)
-                throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
             if (!Enum<StringComparison>.IsDefined(comparison))
                 throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
 
@@ -228,7 +228,7 @@ namespace KGySoft.Libraries
         public static bool EqualsAny(this string s, StringComparer comparer, params string[] set)
         {
             if (comparer == null)
-                throw new ArgumentNullException(nameof(comparer), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(comparer), Res.ArgumentNull);
 
             return set != null && set.Any(t => comparer.Equals(s, t));
         }
@@ -281,9 +281,9 @@ namespace KGySoft.Libraries
             if (!Enum<StringComparison>.IsDefined(comparison))
                 throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (set == null)
-                throw new ArgumentNullException(nameof(set), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(set), Res.ArgumentNull);
 
             var index = -1;
             foreach (var str in set)
@@ -328,9 +328,9 @@ namespace KGySoft.Libraries
             if (!Enum<StringComparison>.IsDefined(comparison))
                 throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
             if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (set == null)
-                throw new ArgumentNullException(nameof(set), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(set), Res.ArgumentNull);
 
             foreach (var str in set)
             {

@@ -662,7 +662,7 @@ namespace KGySoft.Collections
         public CircularList(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
 
             if (collection is ICollection<T> coll)
             {
@@ -778,7 +778,7 @@ namespace KGySoft.Collections
         public void AddRange(IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
 
             AddLast(collection);
         }
@@ -853,7 +853,7 @@ namespace KGySoft.Collections
         public void InsertRange(int index, IEnumerable<T> collection)
         {
             if (collection == null)
-                throw new ArgumentNullException(nameof(collection), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
 
             if (index == 0)
             {
@@ -1137,7 +1137,7 @@ namespace KGySoft.Collections
         public int RemoveAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             // the first free slot in items array
             int freeIndex = 0;
@@ -1537,7 +1537,7 @@ namespace KGySoft.Collections
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
 
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int capacity = items.Length;
             int start = this.startIndex + startIndex;
@@ -1600,7 +1600,7 @@ namespace KGySoft.Collections
             if (count < 0 || startIndex - count + 1 < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int capacity = items.Length;
             int start = this.startIndex + startIndex;
@@ -1649,7 +1649,7 @@ namespace KGySoft.Collections
         public T Find(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int carry = startIndex + size - items.Length;
             int endIndex = carry > 0 ? items.Length : startIndex + size;
@@ -1682,7 +1682,7 @@ namespace KGySoft.Collections
         public T FindLast(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int carry = startIndex + size - items.Length;
             if (carry > 0)
@@ -1714,7 +1714,7 @@ namespace KGySoft.Collections
         public CircularList<T> FindAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             var result = new CircularList<T>(Count);
             int carry = startIndex + size - items.Length;
@@ -1886,7 +1886,7 @@ namespace KGySoft.Collections
         public CircularList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
         {
             if (converter == null)
-                throw new ArgumentNullException(nameof(converter), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(converter), Res.ArgumentNull);
 
             CircularList<TOutput> list = new CircularList<TOutput>(size);
             int targetIndex = 0;
@@ -1922,7 +1922,7 @@ namespace KGySoft.Collections
         public void CopyTo(T[] array, int arrayIndex = 0)
         {
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length - arrayIndex < size)
                 throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
@@ -1962,7 +1962,7 @@ namespace KGySoft.Collections
             if (size - index < count)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
             if (array == null)
-                throw new ArgumentNullException(nameof(array), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length - arrayIndex < count)
                 throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
 
@@ -2090,7 +2090,7 @@ namespace KGySoft.Collections
         public void Sort(Comparison<T> comparison)
         {
             if (comparison == null)
-                throw new ArgumentNullException(nameof(comparison), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(comparison), Res.ArgumentNull);
 
             if (size > 0)
                 Sort(0, size, new ComparisonWrapper(comparison));
@@ -2195,7 +2195,7 @@ namespace KGySoft.Collections
         public void ForEach(Action<T> action)
         {
             if (action == null)
-                throw new ArgumentNullException(nameof(action), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(action), Res.ArgumentNull);
 
             int ver = version;
             int carry = startIndex + size - items.Length;
@@ -2286,7 +2286,7 @@ namespace KGySoft.Collections
         public bool TrueForAll(Predicate<T> match)
         {
             if (match == null)
-                throw new ArgumentNullException(nameof(match), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int carry = startIndex + size - items.Length;
             int endIndex = carry > 0 ? items.Length : startIndex + size;

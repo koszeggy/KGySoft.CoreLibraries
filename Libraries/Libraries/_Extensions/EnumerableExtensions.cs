@@ -45,9 +45,9 @@ namespace KGySoft.Libraries
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (action == null)
-                throw new ArgumentNullException(nameof(action), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(action), Res.ArgumentNull);
 
             foreach (T item in source)
             {
@@ -68,9 +68,9 @@ namespace KGySoft.Libraries
         public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (predicate == null)
-                throw new ArgumentNullException(nameof(predicate), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(predicate), Res.ArgumentNull);
 
             if (source is IList<TSource> list)
             {
@@ -107,7 +107,7 @@ namespace KGySoft.Libraries
         public static int IndexOf<TSource>(this IEnumerable<TSource> source, TSource element)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
             var comparer = element is Enum ? (IEqualityComparer<TSource>)EnumComparer<TSource>.Comparer : EqualityComparer<TSource>.Default;
             if (source is IList<TSource> list)
@@ -147,7 +147,7 @@ namespace KGySoft.Libraries
         public static CircularList<TSource> ToCircularList<TSource>(this IEnumerable<TSource> source)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
             return new CircularList<TSource>(source);
         }
@@ -182,9 +182,9 @@ namespace KGySoft.Libraries
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random random)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
             return source.Select(item => new { Order = random.Next(), Value = item }).OrderBy(i => i.Order).Select(i => i.Value);
         }
@@ -216,9 +216,9 @@ namespace KGySoft.Libraries
         public static T GetRandomElement<T>(this IEnumerable<T> source, Random random, bool defaultIfEmpty = false)
         {
             if (random == null)
-                throw new ArgumentNullException(nameof(random), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
             if (source is IList<T> list)
                 return list.Count > 0
@@ -300,7 +300,7 @@ namespace KGySoft.Libraries
         internal static void Add([NoEnumeration]this IEnumerable source, object item)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
             // ReSharper disable once UsePatternMatching - must be "as" cast due to .NET 3.5 part
             IList list = source as IList;
@@ -357,7 +357,7 @@ namespace KGySoft.Libraries
         internal static void Clear([NoEnumeration]this IEnumerable source)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
             IList list = source as IList;
             if (list != null)

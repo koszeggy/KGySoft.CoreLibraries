@@ -144,7 +144,7 @@ namespace KGySoft.Diagnostics
         public static IMeasureItem GetMeasurementResult(string category, string operation)
         {
             if (operation == null)
-                throw new ArgumentNullException(nameof(operation), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(operation), Res.ArgumentNull);
 
             if (String.IsNullOrEmpty(category))
                 category = Res.Get(Res.Uncategorized);

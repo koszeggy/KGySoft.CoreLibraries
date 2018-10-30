@@ -129,7 +129,7 @@ namespace KGySoft.Reflection
         /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
         protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
         {
-            MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.Get(Res.ArgumentNull));
+            MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.ArgumentNull);
             this.parameterTypes = parameterTypes ?? Type.EmptyTypes;
         }
 
@@ -195,7 +195,7 @@ namespace KGySoft.Reflection
         protected DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
             if (methodBase == null)
-                throw new ArgumentNullException(nameof(methodBase), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(methodBase), Res.ArgumentNull);
             Type declaringType = methodBase.DeclaringType;
             if (declaringType == null)
                 throw new ArgumentException(Res.Get(Res.DeclaringTypeExpected), nameof(methodBase));

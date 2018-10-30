@@ -38,7 +38,7 @@ namespace KGySoft.ComponentModel
         protected override void InsertItem(int index, ValidationResult item)
         {
             if (item == null)
-                throw new ArgumentNullException(nameof(item), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(item), Res.ArgumentNull);
             base.InsertItem(index, item);
             InvalidateCaches();
         }
@@ -52,7 +52,7 @@ namespace KGySoft.ComponentModel
         protected override void SetItem(int index, ValidationResult item)
         {
             if (item == null)
-                throw new ArgumentNullException(nameof(item), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(item), Res.ArgumentNull);
             base.SetItem(index, item);
             InvalidateCaches();
         }

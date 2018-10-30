@@ -1026,7 +1026,7 @@ namespace KGySoft.Resources
                 "Behavior can be CreateIfNotExists only if expando is requested.");
 
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
 
             ResourceSet result = null;
             bool resourceFound;
@@ -1320,7 +1320,7 @@ namespace KGySoft.Resources
         private object GetObjectInternal(string name, CultureInfo culture, bool isString)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             if (culture == null)
                 culture = CultureInfo.CurrentUICulture;
@@ -1450,7 +1450,7 @@ namespace KGySoft.Resources
         private object GetMetaInternal(string name, CultureInfo culture, bool isString)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             if (source == ResourceManagerSources.CompiledOnly)
                 return null;

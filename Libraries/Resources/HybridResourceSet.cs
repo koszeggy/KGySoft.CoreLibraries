@@ -219,9 +219,9 @@ namespace KGySoft.Resources
         internal HybridResourceSet(ResXResourceSet resx, ResourceSet compiled)
         {
             if (resx == null)
-                throw new ArgumentNullException(nameof(resx), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(resx), Res.ArgumentNull);
             if (compiled == null)
-                throw new ArgumentNullException(nameof(compiled), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(compiled), Res.ArgumentNull);
             resxResourceSet = resx;
             compiledResourceSet = compiled;
 

@@ -23,7 +23,7 @@ namespace KGySoft.Serialization
         public void Serialize(XmlWriter writer, object obj)
         {
             if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
 
             writer.WriteStartElement(XmlSerializer.ElementObject);
             if (obj == null)
@@ -57,9 +57,9 @@ namespace KGySoft.Serialization
         public void SerializeContent(XmlWriter writer, object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
             if (writer == null)
-                throw new ArgumentNullException(nameof(writer), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
             Type objType = obj.GetType();
             try
             {

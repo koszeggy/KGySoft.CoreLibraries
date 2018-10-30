@@ -307,7 +307,7 @@ namespace KGySoft
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
 
                 untranslatedResourcePrefix = value;
             }
@@ -325,7 +325,7 @@ namespace KGySoft
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException(nameof(value), Res.Get(Res.ArgumentNull));
+                    throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
 
                 unknownResourcePrefix = value;
             }

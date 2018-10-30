@@ -730,7 +730,7 @@ namespace KGySoft.Resources
         public override object GetObject(string name, CultureInfo culture)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             AdjustCulture(ref culture);
             if (!IsAppendPossible(culture))
@@ -784,7 +784,7 @@ namespace KGySoft.Resources
         public override string GetString(string name, CultureInfo culture)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             AdjustCulture(ref culture);
             if (!IsAppendPossible(culture))
@@ -840,7 +840,7 @@ namespace KGySoft.Resources
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
 
             if (loadIfExists && tryParents && IsAppendPossible(culture))
                 EnsureLoadedWithMerge(culture, ResourceSetRetrieval.LoadIfExists);
@@ -878,7 +878,7 @@ namespace KGySoft.Resources
         public override IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
 
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
                 throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));

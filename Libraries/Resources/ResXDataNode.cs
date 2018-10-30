@@ -662,7 +662,7 @@ namespace KGySoft.Resources
         public ResXDataNode(string name, object value)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             if (name.Length == 0)
                 throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(name));
@@ -728,10 +728,10 @@ namespace KGySoft.Resources
         public ResXDataNode(string name, ResXFileRef fileRef, string basePath = null)
         {
             if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             if (fileRef == null)
-                throw new ArgumentNullException(nameof(fileRef), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(fileRef), Res.ArgumentNull);
 
             if (name.Length == 0)
                 throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(name));

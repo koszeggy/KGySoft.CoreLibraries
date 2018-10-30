@@ -27,7 +27,7 @@ namespace KGySoft.Serialization
         public static object Deserialize(XElement content)
         {
             if (content == null)
-                throw new ArgumentNullException(nameof(content), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(content), Res.ArgumentNull);
 
             if (content.Name.LocalName != XmlSerializer.ElementObject)
                 throw new ArgumentException(Res.Get(Res.XmlRootExpected, content.Name.LocalName), nameof(content));
@@ -59,9 +59,9 @@ namespace KGySoft.Serialization
         public static void DeserializeContent(XElement parent, object obj)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(obj), Res.ArgumentNull);
             if (parent == null)
-                throw new ArgumentNullException(nameof(parent), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(parent), Res.ArgumentNull);
             Type objType = obj.GetType();
 
             // deserialize IXmlSerializable content
@@ -333,7 +333,7 @@ namespace KGySoft.Serialization
         private static Array DeserializeArray(Array array, Type elementType, XElement element, bool canRecreateArray)
         {
             if (array == null && elementType == null)
-                throw new ArgumentNullException(nameof(elementType), Res.Get(Res.ArgumentNull));
+                throw new ArgumentNullException(nameof(elementType), Res.ArgumentNull);
 
             ParseArrayDimensions(element.Attribute(XmlSerializer.AttributeLength)?.Value, element.Attribute(XmlSerializer.AttributeDim)?.Value, out int[] lengths, out int[] lowerBounds);
 
