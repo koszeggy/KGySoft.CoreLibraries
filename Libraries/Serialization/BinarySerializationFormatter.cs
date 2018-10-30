@@ -416,7 +416,7 @@ namespace KGySoft.Serialization
             {
                 if (!value.AllFlagsDefined())
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
                 }
 
                 serializationOptions = value;

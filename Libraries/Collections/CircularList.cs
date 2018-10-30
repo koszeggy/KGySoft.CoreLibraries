@@ -575,7 +575,7 @@ namespace KGySoft.Collections
             {
                 // casting to uint reduces the range check by one
                 if ((uint)index >= (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
                 // not calling ElementAt to be sure this code is inlined
                 if (startIndex == 0)
@@ -592,7 +592,7 @@ namespace KGySoft.Collections
             {
                 // casting to uint reduces the range check by one
                 if ((uint)index >= (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
                 SetElementAt(index, value);
                 version++;
@@ -609,7 +609,7 @@ namespace KGySoft.Collections
             set
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -800,7 +800,7 @@ namespace KGySoft.Collections
             {
                 // if we are here, shifting is necessary
                 if ((uint)index > (uint)size)
-                    throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
                 if (size == items.Length)
                 {
@@ -869,7 +869,7 @@ namespace KGySoft.Collections
 
             // if we are here, shifting is necessary
             if ((uint)index > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
             T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
             ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
@@ -1011,7 +1011,7 @@ namespace KGySoft.Collections
         public void RemoveAt(int index)
         {
             if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
             if (index == 0)
             {
@@ -1063,10 +1063,10 @@ namespace KGySoft.Collections
         public void RemoveRange(int index, int count)
         {
             if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
 
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
@@ -1319,9 +1319,9 @@ namespace KGySoft.Collections
         public int IndexOf(T item, int index, int count)
         {
             if ((uint)index > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (count < 0 || index > size - count)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (
 #if NET35
@@ -1442,17 +1442,17 @@ namespace KGySoft.Collections
         public int LastIndexOf(T item, int index, int count)
         {
             if (size != 0 && index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (size != 0 && count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (size == 0)
                 return -1;
 
             if (index >= size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (count > index + 1)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (
 #if NET35
@@ -1532,9 +1532,9 @@ namespace KGySoft.Collections
         public int FindIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.ArgumentOutOfRange);
             if (count < 0 || startIndex > size - count)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
@@ -1596,9 +1596,9 @@ namespace KGySoft.Collections
         public int FindLastIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.ArgumentOutOfRange);
             if (count < 0 || startIndex - count + 1 < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
@@ -1818,9 +1818,9 @@ namespace KGySoft.Collections
         public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
             if (comparer == null && isEnum)
@@ -1911,20 +1911,16 @@ namespace KGySoft.Collections
         /// The <see cref="Array"/> must have zero-based indexing.</param>
         /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException"><paramref name="array"/> is multidimensional.
-        /// <br/>-or-<br/>
-        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
+        /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex = 0)
         {
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+            if (arrayIndex < 0 || arrayIndex > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
             if (array.Length - arrayIndex < size)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
+                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
 
             // Delegating rest error checking to Array.Copy.
             if (size <= 0)
@@ -1964,7 +1960,7 @@ namespace KGySoft.Collections
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length - arrayIndex < count)
-                throw new ArgumentException(Res.Get(Res.DestArrayShort), nameof(array));
+                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
 
             // Delegating rest error checking to Array.Copy.
             if (size <= 0)
@@ -2007,9 +2003,9 @@ namespace KGySoft.Collections
         public void Reverse(int index, int count)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
@@ -2122,9 +2118,9 @@ namespace KGySoft.Collections
         public void Sort(int index, int count, IComparer<T> comparer)
         {
             if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
@@ -2251,9 +2247,9 @@ namespace KGySoft.Collections
         public CircularList<T> GetRange(int index, int count)
         {
             if ((uint)index >= (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
                 throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
 
@@ -2723,50 +2719,54 @@ namespace KGySoft.Collections
         int IList.Add(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             AddLast((T)value);
             return size - 1;
         }
 
-        bool IList.Contains(object value) 
-            => typeof(T).CanAcceptValue(value) ? Contains((T)value) : throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+        bool IList.Contains(object value) => typeof(T).CanAcceptValue(value) && Contains((T)value);
 
-        int IList.IndexOf(object value) 
-            => typeof(T).CanAcceptValue(value) ? IndexOf((T)value) : throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+        int IList.IndexOf(object value) => typeof(T).CanAcceptValue(value) ? IndexOf((T)value) : -1;
 
         void IList.Insert(int index, object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Insert(index, (T)value);
         }
 
         void IList.Remove(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.Get(Res.InvalidValueType), nameof(value));
+                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Remove((T)value);
         }
 
         void ICollection.CopyTo(Array array, int index)
         {
-            if (array != null && array.Rank != 1)
-                throw new ArgumentException(Res.Get(Res.ArrayDimension), nameof(array));
+            if (array == null)
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
 
-            switch (array)
+            if (array is T[] typedArray)
             {
-                case T[] typedArray:
-                    CopyTo(typedArray, index);
-                    return;
-
-                case object[] objectArray:
-                    for (int i = 0; i < size; i++)
-                        objectArray[index++] = ElementAt(i);
-                    return;
-
-                default:
-                    throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
+                CopyTo(typedArray, index);
+                return;
             }
+
+            if (index < 0 || index > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+            if (array.Length - index < Count)
+                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+            if (array.Rank != 1)
+                throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+
+            if (array is object[] objectArray)
+            {
+                for (int i = 0; i < size; i++)
+                    objectArray[index++] = ElementAt(i);
+            }
+
+            throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid), nameof(array));
         }
 
         #endregion

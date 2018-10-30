@@ -58,7 +58,7 @@ namespace KGySoft.Reflection
         //    set
         //    {
         //        if (value < 0)
-        //            throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+        //            throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
         //        else if (value == 0)
         //        {
         //            CachingEnabled = false;

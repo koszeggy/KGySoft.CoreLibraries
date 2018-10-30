@@ -38,7 +38,6 @@ namespace KGySoft
         #region Internal Constants
 
         // TODO: all to methods
-        internal const string ArgumentOutOfRange = nameof(ArgumentOutOfRange);
         internal const string ArgumentInvalidString = nameof(ArgumentInvalidString);
         internal const string KeyNotFound = nameof(KeyNotFound);
         internal const string ObjectDisposed = nameof(ObjectDisposed);
@@ -57,13 +56,8 @@ namespace KGySoft
         internal const string ValueContainsIllegalPathCharacters = nameof(ValueContainsIllegalPathCharacters);
         internal const string TypeParameterIsNotEnum = nameof(TypeParameterIsNotEnum);
         internal const string ValueCannotBeParsedAsEnum = nameof(ValueCannotBeParsedAsEnum);
-        internal const string InvalidKeyType = nameof(InvalidKeyType);
-        internal const string InvalidValueType = nameof(InvalidValueType);
-        internal const string ModifyNotSupported = nameof(ModifyNotSupported);
-        internal const string DestArrayShort = nameof(DestArrayShort);
         internal const string EnumerationNotStartedOrFinished = nameof(EnumerationNotStartedOrFinished);
         internal const string EnumerationCollectionModified = nameof(EnumerationCollectionModified);
-        internal const string ArrayDimension = nameof(ArrayDimension);
         internal const string ArrayTypeInvalid = nameof(ArrayTypeInvalid);
         internal const string CacheNullLoaderInvoke = nameof(CacheNullLoaderInvoke);
         internal const string CacheKeyNotFound = nameof(CacheKeyNotFound);
@@ -282,8 +276,35 @@ namespace KGySoft
 
         #region Properties
 
+        #region Private Properties
+
         private static string QuoteStart => Get("General_QuoteStart");
         private static string QuoteEnd => Get("General_QuoteEnd");
+
+        #endregion
+
+        #region Internal Properties
+
+        #region General
+
+        /// <summary>Value cannot be null.</summary>
+        internal static string ArgumentNull => Get("General_ArgumentNull");
+
+        /// <summary>Specified argument was out of the range of valid values.</summary>
+        internal static string ArgumentOutOfRange => Get("General_ArgumentOutOfRange");
+
+        /// <summary>Destination array is not long enough to copy all the items in the collection. Check array index and length.</summary>
+        internal static string CollectionCopyToDestArrayShort => Get("Collection_CopyToDestArrayShort");
+
+        /// <summary>Only single dimensional arrays are supported for the requested action.</summary>
+        internal static string CollectionCopyToSingleDimArrayOnly => Get("Collection_CopyToSingleDimArrayOnly");
+
+        /// <summary>Modifying a read-only collection is not supported.</summary>
+        internal static string CollectionReadOnlyModifyNotSupported => Get("Collection_ReadOnlyModifyNotSupported");
+
+        #endregion
+
+        #endregion
 
         #endregion
 
@@ -293,14 +314,17 @@ namespace KGySoft
 
         #region General
 
-        /// <summary>Value cannot be null.</summary>
-        internal static string ArgumentNull => Get("General_ArgumentNull");
-
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
         internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatValues<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
         internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumFlagsOutOfRangeFormat", value.GetType().Name, FormatFlags<TEnum>());
+
+        /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
+        internal static string CollectionNongenericKeyTypeInvalid(object key, Type type) => Get("Collection_NongenericKeyTypeInvalidFormat", key, type);
+
+        /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
+        internal static string CollectionNongenericValueTypeInvalid(object value, Type type) => Get("Collection_NongenericValueTypeInvalidFormat", value, type);
 
         #endregion
 

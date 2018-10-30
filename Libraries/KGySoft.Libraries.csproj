@@ -171,8 +171,8 @@
     <Compile Include="LanguageSettings.cs" />
     <Compile Include="Libraries\ReferenceComparer.cs" />
     <Compile Include="NamespaceDoc.cs" />
-    <Compile Include="ObjectModel\VirtualCollection.cs" />
-    <Compile Include="ObjectModel\_doc\NamespaceDoc.cs" />
+    <Compile Include="Collections\ObjectModel\VirtualCollection.cs" />
+    <Compile Include="Collections\ObjectModel\_doc\NamespaceDoc.cs" />
     <Compile Include="Reflection\WinApi\ASSEMBLY_INFO.cs" />
     <Compile Include="Reflection\WinApi\Fusion.cs" />
     <Compile Include="Reflection\WinApi\IAssemblyCache.cs" />

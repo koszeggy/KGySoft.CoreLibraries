@@ -244,7 +244,7 @@ namespace KGySoft
                     return;
 
                 if (!value.IsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
 
                 dynamicResourceManagersSource = value;
                 OnDynamicResourceManagersSourceChanged(EventArgs.Empty);
@@ -268,7 +268,7 @@ namespace KGySoft
                     return;
 
                 if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
 
                 dynamicResourceManagersAutoSave = value;
                 OnDynamicResourceManagersAutoSaveChanged(EventArgs.Empty);

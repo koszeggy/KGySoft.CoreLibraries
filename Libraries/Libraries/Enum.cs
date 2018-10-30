@@ -736,7 +736,7 @@ namespace KGySoft.Libraries
         public static string ToString(TEnum value, EnumFormattingOptions format, string separator)
         {
             if ((uint)format > (uint)EnumFormattingOptions.CompoundFlagsAndNumber)
-                throw new ArgumentOutOfRangeException(nameof(format), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(format), Res.ArgumentOutOfRange);
 
             if (format == EnumFormattingOptions.DistinctFlags)
                 return FormatDistinctFlags(value, separator);

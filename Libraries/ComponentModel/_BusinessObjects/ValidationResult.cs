@@ -37,7 +37,7 @@ namespace KGySoft.ComponentModel
             PropertyName = propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             Message = message ?? throw new ArgumentNullException(nameof(message), Res.ArgumentNull);
             if (!Enum<ValidationSeverity>.IsDefined(severity))
-                throw new ArgumentOutOfRangeException(nameof(severity), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(severity), Res.ArgumentOutOfRange);
             Severity = severity;
         }
 

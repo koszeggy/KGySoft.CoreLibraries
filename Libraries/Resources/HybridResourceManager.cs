@@ -377,7 +377,7 @@ namespace KGySoft.Resources
                     return;
 
                 if (!value.IsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
 
                 SetSource(value);
             }
@@ -728,7 +728,7 @@ namespace KGySoft.Resources
         public virtual IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
-                throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
 
             IExpandoResourceSet result = Unwrap(InternalGetResourceSet(culture, behavior, tryParents, true)) as IExpandoResourceSet;
             if (result != null)

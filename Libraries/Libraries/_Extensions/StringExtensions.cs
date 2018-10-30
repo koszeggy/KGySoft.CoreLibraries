@@ -69,7 +69,7 @@ namespace KGySoft.Libraries
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (s.Length == 0 || count == 1)
                 return s;
@@ -191,7 +191,7 @@ namespace KGySoft.Libraries
             if (value == null)
                 throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
 
             return s.IndexOf(value, comparison) >= 0;
         }
@@ -244,7 +244,7 @@ namespace KGySoft.Libraries
         public static bool EqualsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
 
             return set != null && set.Any(str => String.Equals(s, str, comparison));
         }
@@ -279,7 +279,7 @@ namespace KGySoft.Libraries
         public static int IndexOfAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (set == null)
@@ -326,7 +326,7 @@ namespace KGySoft.Libraries
         public static bool ContainsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (set == null)

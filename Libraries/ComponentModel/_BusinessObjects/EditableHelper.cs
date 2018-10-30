@@ -154,7 +154,7 @@ namespace KGySoft.ComponentModel
                 case EditableObjectBehavior.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
             }
         }
 
@@ -171,7 +171,7 @@ namespace KGySoft.ComponentModel
                 case EditableObjectBehavior.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
             }
         }
 
@@ -188,7 +188,7 @@ namespace KGySoft.ComponentModel
                 case EditableObjectBehavior.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
             }
         }
     }

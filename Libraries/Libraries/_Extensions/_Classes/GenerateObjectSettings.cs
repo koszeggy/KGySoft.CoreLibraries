@@ -105,7 +105,7 @@ namespace KGySoft.Libraries
         public StringCreation? StringCreation
         {
             get => stringCreation;
-            set => stringCreation = value == null || Enum<StringCreation>.IsDefined(value.Value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+            set => stringCreation = value == null || Enum<StringCreation>.IsDefined(value.Value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace KGySoft.Libraries
         public ObjectInitialization ObjectInitialization
         {
             get => objectInitialization;
-            set => objectInitialization = Enum<ObjectInitialization>.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+            set => objectInitialization = Enum<ObjectInitialization>.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
         }
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace KGySoft.Libraries
         public FloatScale FloatScale
         {
             get => floatScale;
-            set => floatScale = Enum<FloatScale>.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+            set => floatScale = Enum<FloatScale>.IsDefined(value) ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
         }
 
         /// <summary>

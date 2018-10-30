@@ -406,7 +406,7 @@ namespace KGySoft.Serialization
             if (data.Length < len)
                 throw new ArgumentException(Res.Get(Res.DataLenghtTooSmall), nameof(data));
             if (data.Length - offset < len || offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 
             IntPtr p = Marshal.AllocHGlobal(len);
             try
@@ -445,13 +445,13 @@ namespace KGySoft.Serialization
             if (data == null)
                 throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
             if (count < 0)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             int len = Marshal.SizeOf(typeof(T)) * count;
             if (data.Length < len)
                 throw new ArgumentException(Res.Get(Res.DataLenghtTooSmall), nameof(data));
             if (data.Length - offset < len || offset < 0)
-                throw new ArgumentOutOfRangeException(nameof(offset), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 
             if (count == 0)
                 return new T[0];

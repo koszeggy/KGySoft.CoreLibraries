@@ -45,7 +45,7 @@ namespace KGySoft.Libraries
             if (destination == null)
                 throw new ArgumentNullException(nameof(destination), Res.ArgumentNull);
             if (bufferSize <= 0)
-                throw new ArgumentOutOfRangeException(nameof(bufferSize), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(bufferSize), Res.ArgumentOutOfRange);
             if (!source.CanRead)
                 throw new ArgumentException(Res.Get(Res.StreamCannotRead));
             if (!destination.CanWrite)

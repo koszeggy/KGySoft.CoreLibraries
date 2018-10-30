@@ -582,7 +582,7 @@ namespace KGySoft.Resources
                     return;
 
                 if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentOutOfRange));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
 
                 lock (SyncRoot)
                 {
@@ -881,7 +881,7 @@ namespace KGySoft.Resources
                 throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
 
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
-                throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
 
             if (behavior != ResourceSetRetrieval.GetIfAlreadyLoaded && tryParents && IsAppendPossible(culture))
                 EnsureLoadedWithMerge(culture, behavior);

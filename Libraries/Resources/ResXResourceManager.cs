@@ -1095,7 +1095,7 @@ namespace KGySoft.Resources
         public IExpandoResourceSet GetExpandoResourceSet(CultureInfo culture, ResourceSetRetrieval behavior = ResourceSetRetrieval.LoadIfExists, bool tryParents = false)
         {
             if (!Enum<ResourceSetRetrieval>.IsDefined(behavior))
-                throw new ArgumentOutOfRangeException(nameof(behavior), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
 
             ResXResourceSet result = GetResXResourceSet(culture, behavior, tryParents);
 

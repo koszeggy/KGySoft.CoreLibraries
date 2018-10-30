@@ -131,7 +131,7 @@ namespace KGySoft.Security.Cryptography
             if (buffer == null)
                 throw new ArgumentNullException(nameof(buffer), Res.ArgumentNull);
             if (offset < 0 || count < 0 || offset + count > buffer.Length)
-                throw new ArgumentOutOfRangeException(nameof(count), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             return CalculateHash(tablesCache[polynomial], initialCrc, buffer, offset, count);
         }
 

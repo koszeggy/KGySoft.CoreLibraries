@@ -510,7 +510,7 @@ namespace KGySoft.Libraries
             // both are the same infinity
             if (Single.IsPositiveInfinity(minValue) && Single.IsPositiveInfinity(maxValue)
                 || Single.IsNegativeInfinity(minValue) && Single.IsNegativeInfinity(maxValue))
-                throw new ArgumentOutOfRangeException(nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(minValue), Res.ArgumentOutOfRange);
 
             return (float)random.NextDouble(AdjustValue(minValue), AdjustValue(maxValue), scale);
         }
@@ -570,7 +570,7 @@ namespace KGySoft.Libraries
                 throw new ArgumentOutOfRangeException(Double.IsNaN(maxValue) || maxValue < minValue ? nameof(maxValue) : nameof(minValue), Res.Get(maxValue < minValue ? Res.MaxValueLessThanMinValue : Res.ArgumentOutOfRange));
 
             if (!Enum<FloatScale>.IsDefined(scale))
-                throw new ArgumentOutOfRangeException(nameof(scale), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);
 
             minValue = AdjustValue(minValue);
             maxValue = AdjustValue(maxValue);
@@ -694,7 +694,7 @@ namespace KGySoft.Libraries
                 throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
 
             if (!Enum<FloatScale>.IsDefined(scale))
-                throw new ArgumentOutOfRangeException(nameof(scale), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);
 
             if (minValue == maxValue)
                 return minValue;
@@ -819,7 +819,7 @@ namespace KGySoft.Libraries
             if (maxLength < minLength)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), Res.Get(Res.MaxLengthLessThanMinLength));
             if (!Enum<StringCreation>.IsDefined(strategy))
-                throw new ArgumentOutOfRangeException(nameof(strategy), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(strategy), Res.ArgumentOutOfRange);
 
             int length = random.NextInt32(minLength, maxLength, true);
             if (length == 0)

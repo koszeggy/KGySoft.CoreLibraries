@@ -119,7 +119,7 @@ namespace KGySoft.Security.Cryptography
         public override int Next(int minValue, int maxValue)
         {
             if (minValue > maxValue)
-                throw new ArgumentOutOfRangeException(nameof(minValue), Res.Get(Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(nameof(minValue), Res.ArgumentOutOfRange);
 
             if (minValue == maxValue)
                 return minValue;

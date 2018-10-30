@@ -123,7 +123,7 @@
   <data name="ArgumentContainsNull" xml:space="preserve">
     <value>Specified argument contains a null element.</value>
   </data>
-  <data name="ArgumentOutOfRange" xml:space="preserve">
+  <data name="General_ArgumentOutOfRange" xml:space="preserve">
     <value>Specified argument was out of the range of valid values.</value>
   </data>
   <data name="ArgumentMustBeGreaterOrEqualThan" xml:space="preserve">
@@ -138,7 +138,7 @@
   <data name="MaxLengthLessThanMinLength" xml:space="preserve">
     <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
-  <data name="ArrayDimension" xml:space="preserve">
+  <data name="Collection_CopyToSingleDimArrayOnly" xml:space="preserve">
     <value>Only single dimensional arrays are supported for the requested action.</value>
   </data>
   <data name="ArrayTypeInvalid" xml:space="preserve">
@@ -178,7 +178,7 @@ Hit rate: {8:P2}</value>
   <data name="ComparerFail" xml:space="preserve">
     <value>Failed to compare two elements in the collection.</value>
   </data>
-  <data name="DestArrayShort" xml:space="preserve">
+  <data name="Collection_CopyToDestArrayShort" xml:space="preserve">
     <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
   </data>
   <data name="DuplicateKey" xml:space="preserve">
@@ -211,9 +211,6 @@ Hit rate: {8:P2}</value>
   <data name="InsertByIndexNotSupported" xml:space="preserve">
     <value>Adding an element by index is not supported.</value>
   </data>
-  <data name="InvalidKeyType" xml:space="preserve">
-    <value>Type of key is invalid.</value>
-  </data>
   <data name="InvalidKeyValueType" xml:space="preserve">
     <value>Type of value should be either {0} or DictionaryEntry.</value>
   </data>
@@ -226,13 +223,16 @@ Hit rate: {8:P2}</value>
   <data name="InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
-  <data name="InvalidValueType" xml:space="preserve">
-    <value>Type of value is invalid.</value>
+  <data name="Collection_NongenericKeyTypeInvalidFormat" xml:space="preserve">
+    <value>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
+  </data>
+  <data name="Collection_NongenericValueTypeInvalidFormat" xml:space="preserve">
+    <value>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>
   <data name="KeyNotFound" xml:space="preserve">
     <value>The given key was not present in the dictionary.</value>
   </data>
-  <data name="ModifyNotSupported" xml:space="preserve">
+  <data name="Collection_ReadOnlyModifyNotSupported" xml:space="preserve">
     <value>Modifying a read-only collection is not supported.</value>
   </data>
   <data name="NotABool" xml:space="preserve">
