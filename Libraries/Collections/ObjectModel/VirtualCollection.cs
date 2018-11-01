@@ -20,8 +20,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Threading;
-
+using KGySoft.Diagnostics;
 using KGySoft.Libraries;
 
 #endregion
@@ -35,6 +36,7 @@ namespace KGySoft.Collections.ObjectModel
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <seealso cref="IList{T}" />
     /// <seealso cref="Collection{T}" />
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     public class VirtualCollection<T> : IList<T>, IList,
 #if !(NET35 || NET40)
         IReadOnlyList<T>

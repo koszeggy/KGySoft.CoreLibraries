@@ -1512,24 +1512,10 @@ namespace KGySoft.Reflection
         /// </summary>
         internal static void InvokeCtor(object instance, ConstructorInfo ctor, params object[] parameters)
         {
-            MethodInvoker mi = Accessors.RuntimeMethodHandle_InvokeMethod;
-            object signature = Accessors.RuntimeConstructorInfo_Signature.Get(ctor);
-#if NET35
-            mi.Invoke(ctor.MethodHandle, instance, parameters, signature, ctor.Attributes, ctor.ReflectedType.TypeHandle);
-#elif NET40
-            if (Accessors.IsNet45)
-            {
-               mi.Invoke(null, instance, parameters, signature, false);
-               return;
-            }
-  
-            mi.Invoke(ctor.MethodHandle, instance, parameters, signature, ctor.Attributes, ctor.ReflectedType.TypeHandle);
-#elif NET45
-            // the last bool tells whether the method is a ctor but it must be false; otherwise, the fields are cleared.
-            mi.Invoke(null, instance, parameters, signature, false);
-#else
-#error .NET version is not set or not supported!
-#endif
+            // TODO: the old solution was slow and dangerous.
+            // The new could be new ActionInvoker.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
+            // Performance test: MethodBase.Invoke is just 4x slower than an already executed invoker but at the first time invoker is 3000x slower.
+            ctor.Invoke(ctor, parameters);
         }
 
         #endregion

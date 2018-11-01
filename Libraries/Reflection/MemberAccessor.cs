@@ -31,12 +31,14 @@ namespace KGySoft.Reflection
             /// <summary>
             /// Generates an object value parameter and also an object[] arguments parameter in case of indexers
             /// </summary>
-            TreatAsPropertySetter = 2,
+            TreatAsPropertySetter = 1 << 1,
 
             /// <summary>
             /// Does not emit the object[] parameter for method arguments (for simple property getters)
             /// </summary>
-            OmitParameters = 4
+            OmitParameters = 1 << 2,
+
+            TreatCtorAsMethod = 1 << 3,
         }
 
         private readonly Type[] parameterTypes;
@@ -204,20 +206,21 @@ namespace KGySoft.Reflection
             if (method == null && ctor == null)
                 throw new ArgumentException(Res.Get(Res.InvalidMethodBase), nameof(methodBase));
 
-            Type returnType = ctor != null ? declaringType : method.ReturnType;
+            bool treatCtorAsMethod = (options & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
+            Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? typeof(void) : declaringType;
             Type dmReturnType = returnType == typeof(void) ? typeof(void) : typeof(object);
 
             List<Type> methodParameters = new List<Type>();
             string methodName;
 
-            if (ctor != null)
+            if (ctor != null && !treatCtorAsMethod)
             {
                 methodName = String.Format("<Construct>__{0}", declaringType.Name);
                 methodParameters.Add(typeof(object[])); // ctor parameters
             }
             else
             {
-                methodName = String.Format("<RunMethod>__{0}", method.Name);
+                methodName = String.Format("<RunMethod>__{0}", methodBase.Name);
                 methodParameters.Add(typeof(object)); // instance parameter
 
                 // not a property setter
@@ -255,7 +258,7 @@ namespace KGySoft.Reflection
                         // initializing locals of ref (non-out) parameters
                         if (!parameters[i].IsOut)
                         {
-                            il.Emit(method != null ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
+                            il.Emit(method != null || treatCtorAsMethod ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
                             il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
                             il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
                             if (paramType.IsValueType)
@@ -275,7 +278,7 @@ namespace KGySoft.Reflection
                 returnValue = il.DeclareLocal(returnType);
 
             // if instance method:
-            if (method != null && !method.IsStatic)
+            if ((method != null && !method.IsStatic) || treatCtorAsMethod)
             {
                 il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
                 if (declaringType.IsValueType)
@@ -329,12 +332,18 @@ namespace KGySoft.Reflection
                     il.Emit(OpCodes.Castclass, pi.PropertyType); // casting value as reference               
             }
 
-            if (method != null)
-                // calling the method
-                il.Emit(method.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
+            if (ctor != null)
+            {
+                if (treatCtorAsMethod)
+                    // calling the constructor as method
+                    il.Emit(ctor.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, ctor);
+                else
+                    // invoking the constructor
+                    il.Emit(OpCodes.Newobj, ctor);
+            }
             else
-                // invoking the constructor
-                il.Emit(OpCodes.Newobj, ctor);
+                // calling the method
+                il.Emit(methodBase.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
 
             // If instance parameter was a ref parameter, then local variable should be boxed back:
             //il.Emit(OpCodes.Ldarg_0); // loading instance parameter

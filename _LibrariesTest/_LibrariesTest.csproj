@@ -90,6 +90,7 @@
     <Compile Include="Libraries\Collections\CacheTest.cs" />
     <Compile Include="Libraries\Collections\CircularListTest.cs" />
     <Compile Include="Libraries\Collections\CircularSortedListTest.cs" />
+    <Compile Include="Libraries\Collections\ObjectModel\FastLookupCollectionTest.cs" />
     <Compile Include="Libraries\Diagnostics\DiagnosticToolsTest.cs" />
     <Compile Include="Libraries\EnumTest.cs" />
     <Compile Include="Libraries\Extensions\ByteArrayExtensionsTest.cs" />
@@ -186,6 +187,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

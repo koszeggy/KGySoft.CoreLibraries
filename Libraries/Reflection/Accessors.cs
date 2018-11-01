@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Xml;
+using KGySoft.Libraries;
 
 // ReSharper disable InconsistentNaming - Properties are named here: Type_Member. Fields: accessorType_Member
 namespace KGySoft.Reflection
@@ -12,24 +14,6 @@ namespace KGySoft.Reflection
     /// </summary>
     internal static class Accessors
     {
-#if NET40
-        // needed only when compiled against .NET 4.0 because when 4.5 is installed, it replaces original 4.0 dlls
-        private static bool isNet45;
-
-        internal static bool IsNet45
-        {
-            get
-            {
-                if (RuntimeMethodHandle_InvokeMethod == null)
-                    return false;
-                return isNet45;
-            }
-        }
-
-#elif !(NET35 || NET45)
-#error .NET version is not set or not supported!
-#endif
-
         #region Fields
 
         #region Field accessors
@@ -61,18 +45,22 @@ namespace KGySoft.Reflection
 
         #region Property accessors
 
-        private static PropertyAccessor propertyRuntimeConstructorInfo_Signature;
         private static PropertyAccessor propertyPoint_X;
         private static PropertyAccessor propertyPoint_Y;
 
         #endregion
-        
+
         #region Method accessors
 
-        private static MethodInvoker methodRuntimeMethodHandle_InvokeMethod;
+#if NET35 || NET40 || NET45
 
+        private static IDictionary<Type, ActionInvoker> methodHashSet_Initialize;
+
+#else
+#error make sure not to use this from NET472, where capacity ctor is available
+#endif
         #endregion
-        
+
         #endregion
 
         #region Properties - for accessors of types of referenced assemblies
@@ -143,60 +131,29 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Property accessors
-
-        internal static PropertyAccessor RuntimeConstructorInfo_Signature
-        {
-            get
-            {
-                if (propertyRuntimeConstructorInfo_Signature == null)
-                {
-                    // retrieving a RuntimeConstructorInfo instance: Object..ctor()
-                    ConstructorInfo ctor = Reflector.ObjectType.GetConstructor(Type.EmptyTypes);
-
-                    // ReSharper disable once PossibleNullReferenceException
-                    PropertyInfo pi = ctor.GetType().GetProperty("Signature", BindingFlags.Instance | BindingFlags.NonPublic);
-                    propertyRuntimeConstructorInfo_Signature = PropertyAccessor.CreatePropertyAccessor(pi);
-                }
-
-                return propertyRuntimeConstructorInfo_Signature;
-            }
-        }
-
         #endregion
 
-        #region Method accessors
+        #region Methods - for accessors of types of referenced assemblies
 
-        internal static MethodInvoker RuntimeMethodHandle_InvokeMethod
+#if NET35 || NET40 || NET45
+
+        internal static void Initialize<T>(this HashSet<T> hashSet, int capacity)
         {
-            get
+            if (methodHashSet_Initialize == null)
+                methodHashSet_Initialize = new Dictionary<Type, ActionInvoker>().AsThreadSafe();
+            if (!methodHashSet_Initialize.TryGetValue(typeof(T), out ActionInvoker invoker))
             {
-                if (methodRuntimeMethodHandle_InvokeMethod == null)
-                {
-#if NET35
-                    MethodInfo mi = typeof(RuntimeMethodHandle).GetMethod("InvokeMethodFast", BindingFlags.NonPublic | BindingFlags.Instance);
-#elif NET40
-                    // .NET 4.0 and 4.5 cannot be differentiated (both have 4.0.0.0 mscorlib version) so probing
-                    BindingFlags bf = BindingFlags.NonPublic | BindingFlags.Static;
-                    MethodInfo mi = typeof(RuntimeMethodHandle).GetMethod("InvokeMethod", bf);
-                    isNet45 = mi != null;
-                    if (!isNet45)
-                        mi = typeof(RuntimeMethodHandle).GetMethod("InvokeMethodFast", bf);
-#elif NET45
-                    MethodInfo mi = typeof(RuntimeMethodHandle).GetMethod("InvokeMethod", BindingFlags.NonPublic | BindingFlags.Static);
+                invoker = new ActionInvoker(hashSet.GetType().GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
+                methodHashSet_Initialize[typeof(T)] = invoker;
+            }
+
+            invoker.Invoke(hashSet, capacity);
+        }
+
 #else
-#error .NET version is not set or not supported!
+#error make sure not to use this from NET472, where capacity ctor is available
 #endif
-                    // in .NET 3.5 and 4.0 it will be ActionInvoker, otherwise FunctionInvoker
-                    methodRuntimeMethodHandle_InvokeMethod = MethodInvoker.CreateMethodInvoker(mi);
-                }
 
-                return methodRuntimeMethodHandle_InvokeMethod;
-            }
-        }
-
-        #endregion
-        
         #endregion
 
         #region Methods - for accessors of types of non-referenced assemblies

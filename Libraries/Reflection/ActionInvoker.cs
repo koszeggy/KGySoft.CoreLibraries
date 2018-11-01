@@ -16,7 +16,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate void AnyAction(object target, object[] arguments);
 
-        internal ActionInvoker(MethodInfo mi)
+        internal ActionInvoker(MethodBase mi)
             : base(mi)
         {
         }
@@ -35,15 +35,15 @@ namespace KGySoft.Reflection
 
         protected override Delegate CreateInvoker()
         {
-            MethodInfo method = (MethodInfo)MemberInfo;
+            var methodBase = (MethodBase)MemberInfo;
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
-            Type declaringType = method.DeclaringType;
-            if (!method.IsStatic && declaringType == null)
+            Type declaringType = methodBase.DeclaringType;
+            if (!methodBase.IsStatic && declaringType == null)
                 throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
 
             // for classes and static methods that have no ref parameters: Lambda expression
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-            if (!hasRefParameters && (method.IsStatic || !declaringType.IsValueType))
+            if (!hasRefParameters && (methodBase.IsStatic || !declaringType.IsValueType) && methodBase is MethodInfo method)
             {
                 ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
                 ParameterExpression parametersParameter = Expression.Parameter(typeof(object[]), "parameters");
@@ -72,7 +72,10 @@ namespace KGySoft.Reflection
             // for struct instance methods or methods with ref/out parameters: Dynamic method
             else
             {
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
+                var options = methodBase is ConstructorInfo ? DynamicMethodOptions.TreatCtorAsMethod : DynamicMethodOptions.None;
+                if (hasRefParameters)
+                    options |= DynamicMethodOptions.HandleByRefParameters;
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(methodBase, options);
                 return dm.CreateDelegate(typeof(AnyAction));
             }
         }

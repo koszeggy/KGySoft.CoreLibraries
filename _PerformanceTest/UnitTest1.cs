@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using KGySoft.Collections;
+using KGySoft.Diagnostics;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
@@ -68,6 +70,50 @@ namespace _PerformanceTest
             //    Iterations = 10000,
             //    Repeat = 5
             //}.DoTest();
+
+
+            ConstructorInfo ctor = typeof(MyClass).GetConstructor(Type.EmptyTypes);
+            var obj = new MyClass();
+
+            new TestOperation
+            {
+                TestOpName = "MethodBase.Invoke",
+                TestOperation = () => ctor.Invoke(obj, new object[0]),
+                Iterations = 1,
+                Repeat = 5,
+                WarmUpTime = 0
+            }.DoTest();
+
+            new TestOperation
+            {
+                TestOpName = "Reflector.InvokeCtor",
+                TestOperation = () => Reflector.InvokeCtor(obj, ctor),
+                Iterations = 1,
+                Repeat = 5,
+                WarmUpTime = 0
+            }.DoTest();
+
+            var invoker = new ActionInvoker(ctor);
+            new TestOperation
+            {
+                TestOpName = "ActionInvoker(ctor)",
+                TestOperation = () => invoker.Invoke(obj),
+                Iterations = 1,
+                Repeat = 5,
+                WarmUpTime = 0
+            }.DoTest();
+
+            Console.WriteLine(obj.IntProp);
+        }
+
+        public class MyClass
+        {
+            public int IntProp { get; set; }
+
+            public MyClass()
+            {
+                IntProp++;
+            }
         }
 
         //private void ByReflector()

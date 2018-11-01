@@ -26,7 +26,7 @@ namespace KGySoft.Reflection
         /// Initializes a new instance of the <see cref="MethodInvoker"/> class.
         /// </summary>
         /// <param name="method">The method to associate with this <see cref="MethodInvoker"/>.</param>
-        protected MethodInvoker(MethodInfo method) :
+        protected MethodInvoker(MethodBase method) :
             base(method, method.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }

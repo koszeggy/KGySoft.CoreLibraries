@@ -1,50 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
+using KGySoft.Reflection;
 
 namespace KGySoft.Collections.ObjectModel
 {
     /// <summary>
     /// Similar to <see cref="Collection{T}"/> but <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods
-    /// have O(1) access if the underlying collection is changed through only the <see cref="QuickLookupCollection{T}"/> class.
+    /// have O(1) access if the underlying collection is changed through only the <see cref="FastLookupCollection{T}"/> class.
     /// </summary>
     /// <remarks>
-    /// <para>The <see cref="QuickLookupCollection{T}"/> class is tolerant with modifying the underlying collection directly but in this case the
+    /// <para>The <see cref="FastLookupCollection{T}"/> class is tolerant with modifying the underlying collection directly but in this case the
     /// cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
     /// where n is the count of the elements in the collection.</para>
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="VirtualCollection{T}" />
     /// <seealso cref="Collection{T}" />
-    public class QuickLookupCollection<T> : VirtualCollection<T>
+    public class FastLookupCollection<T> : VirtualCollection<T>
     {
-        //private Dictionary<int, T> indexToItem = new Dictionary<int, T>();
         private Dictionary<T, CircularList<int>> itemToIndex = new Dictionary<T, CircularList<int>>();
         private CircularList<int> nullToIndex;
 
+        public bool CheckConsistency { get; set; }
+
         /// <summary>
-        /// Initializes an empty instance of the <see cref="QuickLookupCollection{T}"/> class.
+        /// Initializes an empty instance of the <see cref="FastLookupCollection{T}"/> class.
         /// </summary>
-        public QuickLookupCollection()
+        public FastLookupCollection()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="QuickLookupCollection{T}"/> class as a wrapper for the specified <paramref name="list"/>.
+        /// Initializes a new instance of the <see cref="FastLookupCollection{T}"/> class as a wrapper for the specified <paramref name="list"/>.
         /// </summary>
         /// <param name="list">The list that is wrapped by the new collection.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
-        public QuickLookupCollection(IList<T> list) : base(list) => BuildIndexMap();
+        public FastLookupCollection(IList<T> list) : base(list)
+        {
+            BuildIndexMap();
+            CheckConsistency = true;
+        }
 
         private void BuildIndexMap()
         {
-            //indexToItem = new Dictionary<int, T>();
             itemToIndex = new Dictionary<T, CircularList<int>>();
             nullToIndex = null;
             int length = Count;
             for (int i = 0; i < length; i++)
             {
-                T item = Items[i];
+                T item = base.GetItem(i);
                 AddIndex(item, i);
             }
         }
@@ -52,7 +58,10 @@ namespace KGySoft.Collections.ObjectModel
         protected override int GetItemIndex(T item)
         {
             int result = GetFirstIndex(item);
-            if (result < 0 || result < Count && AreEqual(item, Items[result]))
+            if (!CheckConsistency)
+                return result;
+
+            if (result < 0 || result < Count && AreEqual(item, base.GetItem(result)))
                 return result;
 
             // the underlying collection is inconsistent
@@ -60,19 +69,25 @@ namespace KGySoft.Collections.ObjectModel
             return GetFirstIndex(item);
         }
 
-        protected override void SetItem(int index, T item)
+        protected override T GetItem(int index)
         {
-            T original = Items[index];
-
-            // the underlying collection is inconsistent
-            if (!ContainsIndex(item, index))
+            T result = base.GetItem(index);
+            if (CheckConsistency && !ContainsIndex(result, index))
                 BuildIndexMap();
 
-            if (!AreEqual(original, item))
-            {
-                RemoveIndex(original, index);
-                AddIndex(item, index);
-            }
+            return result;
+        }
+
+        protected override void SetItem(int index, T item)
+        {
+            T original = base.GetItem(index);
+
+            if (CheckConsistency && !ContainsIndex(item, index))
+                BuildIndexMap();
+
+            // here we can't ignore consistency because we need to update the maintained indices
+            if (!AreEqual(original, item) && (!RemoveIndex(original, index) || !AddIndex(item, index)))
+                BuildIndexMap();
 
             base.SetItem(index, item);
         }
@@ -81,9 +96,13 @@ namespace KGySoft.Collections.ObjectModel
         {
             base.InsertItem(index, item);
             int length = Count;
+
+            // here we can't ignore consistency because we need to update the maintained indices
+            HashSet<T> adjustedValues = new HashSet<T>();
+            adjustedValues.Initialize(length);
             for (int i = index + 1; i < length; i++)
             {
-                if (!AdjustIndex(Items[i], index, 1))
+                if (!AdjustIndex(base.GetItem(i), index, 1, adjustedValues))
                 {
                     BuildIndexMap();
                     return;
@@ -95,17 +114,23 @@ namespace KGySoft.Collections.ObjectModel
 
         protected override void RemoveItem(int index)
         {
-            T original = Items[index];
+            T original = base.GetItem(index);
             base.RemoveItem(index);
+
+            // here we can't ignore consistency because we need to update the maintained indices
+
             if (!RemoveIndex(original, index))
             {
                 BuildIndexMap();
                 return;
             }
+
             int length = Count;
+            HashSet<T> adjustedValues = new HashSet<T>();
+            adjustedValues.Initialize(length);
             for (int i = index; i < length; i++)
             {
-                if (!AdjustIndex(Items[i], index, -1))
+                if (!AdjustIndex(base.GetItem(i), index, -1, adjustedValues))
                 {
                     BuildIndexMap();
                     return;
@@ -198,8 +223,11 @@ namespace KGySoft.Collections.ObjectModel
             return true;
         }
 
-        private bool AdjustIndex(T item, int startIndex, int diff)
+        private bool AdjustIndex(T item, int startIndex, int diff, HashSet<T> adjustedValues)
         {
+            if (adjustedValues.Contains(item))
+                return true;
+            adjustedValues.Add(item);
             if (item == null)
             {
                 if (nullToIndex == null)
