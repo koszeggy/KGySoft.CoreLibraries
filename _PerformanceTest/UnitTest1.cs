@@ -71,49 +71,33 @@ namespace _PerformanceTest
             //    Repeat = 5
             //}.DoTest();
 
-
-            ConstructorInfo ctor = typeof(MyClass).GetConstructor(Type.EmptyTypes);
-            var obj = new MyClass();
-
+            CheckTestingFramework();
             new TestOperation
             {
-                TestOpName = "MethodBase.Invoke",
-                TestOperation = () => ctor.Invoke(obj, new object[0]),
-                Iterations = 1,
+                RefOpName = "Without capacity",
+                ReferenceOperation = WithoutCapacity,
+                TestOpName = "With capacity",
+                TestOperation = WithCapacity,
+                Iterations = 10000,
                 Repeat = 5,
-                WarmUpTime = 0
             }.DoTest();
 
-            new TestOperation
-            {
-                TestOpName = "Reflector.InvokeCtor",
-                TestOperation = () => Reflector.InvokeCtor(obj, ctor),
-                Iterations = 1,
-                Repeat = 5,
-                WarmUpTime = 0
-            }.DoTest();
-
-            var invoker = new ActionInvoker(ctor);
-            new TestOperation
-            {
-                TestOpName = "ActionInvoker(ctor)",
-                TestOperation = () => invoker.Invoke(obj),
-                Iterations = 1,
-                Repeat = 5,
-                WarmUpTime = 0
-            }.DoTest();
-
-            Console.WriteLine(obj.IntProp);
         }
 
-        public class MyClass
+        private const int size = 65;
+        private void WithoutCapacity()
         {
-            public int IntProp { get; set; }
+            var set = new HashSet<int>();
+            for (int i = 0; i < size; i++)
+                set.Add(i);
+        }
 
-            public MyClass()
-            {
-                IntProp++;
-            }
+        private void WithCapacity()
+        {
+            var set = new HashSet<int>();
+            set.Initialize(size);
+            for (int i = 0; i < size; i++)
+                set.Add(i);
         }
 
         //private void ByReflector()

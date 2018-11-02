@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.Reflection;
@@ -22,12 +24,59 @@ namespace _LibrariesTest.Libraries.Collections.ObjectModel
         [TestMethod]
         public void AddExplicit()
         {
-            var coll = new FastLookupCollection<int> { CheckConsistency = false };
+            var coll = new FastLookupCollection<int>();
             coll.Add(1);
             coll.Add(2);
             coll.Add(1);
             coll.Insert(0, 1);
             AssertConsistency(coll);
+        }
+
+        [TestMethod]
+        public void SetExplicit()
+        {
+            var coll = new FastLookupCollection<int>(new[] { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
+            coll[1] = 1;
+            coll[4] = 2;
+            AssertConsistency(coll);
+        }
+
+        [TestMethod]
+        public void RemoveExplicit()
+        {
+            var coll = new FastLookupCollection<int>(new List<int> { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
+            coll.Remove(1); // first 1
+            coll.RemoveAt(1); // 3
+            coll.Remove(1); // last 1
+            AssertConsistency(coll);
+        }
+
+        [TestMethod]
+        public void AddInner()
+        {
+            var inner = new List<string>();
+            var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
+            inner.Add("a");
+            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            coll.CheckConsistency = true;
+            coll.Insert(0, "b");
+            AssertConsistency(coll);
+        }
+
+        [TestMethod]
+        public void SetInner()
+        {
+            var inner = new List<string>();
+            var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
+            throw new NotImplementedException();
+        }
+
+        [TestMethod]
+        public void RemoveInner()
+        {
+            var inner = new List<string>();
+            var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
+            throw new NotImplementedException();
         }
 
         private void AssertConsistency<T>(FastLookupCollection<T> coll)
@@ -54,7 +103,10 @@ namespace _LibrariesTest.Libraries.Collections.ObjectModel
             var actualNullToIndex = (CircularList<int>)Reflector.GetInstanceFieldByName(coll, "nullToIndex") ?? new CircularList<int>();
             AssertItemsEqual(nullToIndex, actualNullToIndex);
             var actualItemToIndex = (Dictionary<T, CircularList<int>>)Reflector.GetInstanceFieldByName(coll, "itemToIndex");
-            AssertItemsEqual(itemToIndex, actualItemToIndex);
+            AssertItemsEqual(Sorted(itemToIndex), Sorted(actualItemToIndex));
+
+            IEnumerable Sorted(Dictionary<T, CircularList<int>> dict) 
+                => dict.OrderBy(item => item.Key).ToDictionary(item => item.Key, item => item.Value);
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 
 namespace KGySoft.Collections.ObjectModel
@@ -18,6 +20,7 @@ namespace KGySoft.Collections.ObjectModel
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="VirtualCollection{T}" />
     /// <seealso cref="Collection{T}" />
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     public class FastLookupCollection<T> : VirtualCollection<T>
     {
         private Dictionary<T, CircularList<int>> itemToIndex = new Dictionary<T, CircularList<int>>();
@@ -98,8 +101,13 @@ namespace KGySoft.Collections.ObjectModel
             int length = Count;
 
             // here we can't ignore consistency because we need to update the maintained indices
+#if NET35 || NET40 || NET45
             HashSet<T> adjustedValues = new HashSet<T>();
-            adjustedValues.Initialize(length);
+            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
+                adjustedValues.Initialize(length);
+#else
+            HashSet<T> adjustedValues = new HashSet<T>(length);
+#endif
             for (int i = index + 1; i < length; i++)
             {
                 if (!AdjustIndex(base.GetItem(i), index, 1, adjustedValues))
@@ -126,8 +134,13 @@ namespace KGySoft.Collections.ObjectModel
             }
 
             int length = Count;
+#if NET35 || NET40 || NET45
             HashSet<T> adjustedValues = new HashSet<T>();
-            adjustedValues.Initialize(length);
+            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
+                adjustedValues.Initialize(length);
+#else
+            HashSet<T> adjustedValues = new HashSet<T>(length);
+#endif
             for (int i = index; i < length; i++)
             {
                 if (!AdjustIndex(base.GetItem(i), index, -1, adjustedValues))
