@@ -79,6 +79,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Libraries\Collections\ObjectModel\FastLookupCollectionPerformanceTest.cs" />
     <Compile Include="Libraries\Diagnostics\ProfilerPerformanceTest.cs" />
     <Compile Include="Libraries\Resources\ResXResourceManagerPerformanceTest.cs" />
     <Compile Include="Libraries\Serialization\BinarySerializerPerformanceTest.cs" />

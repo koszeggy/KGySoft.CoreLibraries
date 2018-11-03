@@ -66,17 +66,25 @@ namespace _LibrariesTest.Libraries.Collections.ObjectModel
         [TestMethod]
         public void SetInner()
         {
-            var inner = new List<string>();
+            var inner = new List<string> { "1", "2", "3", "2", "1"};
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
-            throw new NotImplementedException();
+            inner[2] = null;
+            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            coll.CheckConsistency = true;
+            coll[2] = "x";
+            AssertConsistency(coll);
         }
 
         [TestMethod]
         public void RemoveInner()
         {
-            var inner = new List<string>();
+            var inner = new List<string> { "1", "2", "3", "2", "1" };
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
-            throw new NotImplementedException();
+            inner.RemoveAt(2);
+            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            coll.CheckConsistency = true;
+            var dummy = coll[2];
+            AssertConsistency(coll);
         }
 
         private void AssertConsistency<T>(FastLookupCollection<T> coll)
