@@ -82,6 +82,7 @@
     <Compile Include="Collections\_Interfaces\ICacheStatistics.cs" />
     <Compile Include="Collections\_Interfaces\IThreadSafeCacheAccessor.cs" />
     <Compile Include="Collections\_doc\NamespaceDoc.cs" />
+    <Compile Include="ComponentModel\_Collections\SortableBindingList2.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\EditableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\EditableObjectBase.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\ModelBase.cs" />
@@ -102,7 +103,7 @@
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndo.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanEdit.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\IValidatingObject.cs" />
-    <Compile Include="ComponentModel\_Collections\SortableBindingList2.cs" />
+    <Compile Include="ComponentModel\_Collections\FastBindingList.cs" />
     <Compile Include="ComponentModel\_Command\PropertyCommandStateUpdater.cs" />
     <Compile Include="ComponentModel\_TypeConverters\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\_Command\CommandState.cs" />
@@ -270,7 +271,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

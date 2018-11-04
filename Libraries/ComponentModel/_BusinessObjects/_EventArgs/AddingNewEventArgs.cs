@@ -2,7 +2,7 @@
 
 namespace KGySoft.ComponentModel
 {
-    /// <summary>Provides data for the <see cref="SortableBindingList2{T}.AddingNew" /> event.</summary>
+    /// <summary>Provides data for the <see cref="FastBindingList{T}.AddingNew" /> event.</summary>
     /// <typeparam name="T">The type of the element to add.</typeparam>
     public class AddingNewEventArgs<T> : EventArgs
     {

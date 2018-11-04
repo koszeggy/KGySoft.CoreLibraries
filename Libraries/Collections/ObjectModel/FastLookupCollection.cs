@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 
@@ -12,20 +13,24 @@ namespace KGySoft.Collections.ObjectModel
     /// have O(1) access if the underlying collection is changed through only the <see cref="FastLookupCollection{T}"/> class.
     /// </summary>
     /// <remarks>
-    /// <para>The <see cref="FastLookupCollection{T}"/> class is tolerant with modifying the underlying collection directly but in this case the
-    /// cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
+    /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection directly but
+    /// when inconsistency is detected, the cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
     /// where n is the count of the elements in the collection.</para>
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="VirtualCollection{T}" />
     /// <seealso cref="Collection{T}" />
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
+    [Serializable]
     public class FastLookupCollection<T> : VirtualCollection<T>
     {
-        private Dictionary<T, CircularList<int>> itemToIndex = new Dictionary<T, CircularList<int>>();
-        private CircularList<int> nullToIndex;
+        [NonSerialized] private Dictionary<T, CircularList<int>> itemToIndex = new Dictionary<T, CircularList<int>>();
+        [NonSerialized] private CircularList<int> nullToIndex;
 
         public bool CheckConsistency { get; set; }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap();
 
         /// <summary>
         /// Initializes an empty instance of the <see cref="FastLookupCollection{T}"/> class.
@@ -38,11 +43,14 @@ namespace KGySoft.Collections.ObjectModel
         /// Initializes a new instance of the <see cref="FastLookupCollection{T}"/> class as a wrapper for the specified <paramref name="list"/>.
         /// </summary>
         /// <param name="list">The list that is wrapped by the new collection.</param>
+        /// <param name="checkConsistency"><see langword="true"/> to keep checking consistency of the wrapped <paramref name="list"/> and the inner storage;
+        /// <see langword="false"/> to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/> if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
-        public FastLookupCollection(IList<T> list) : base(list)
+        public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list)
         {
             BuildIndexMap();
-            CheckConsistency = true;
+            CheckConsistency = checkConsistency;
         }
 
         private void BuildIndexMap()
@@ -56,6 +64,12 @@ namespace KGySoft.Collections.ObjectModel
                 AddIndex(item, i);
             }
         }
+
+        /// <summary>
+        /// Rebuilds the internally stored index mapping. Call if <see cref="CheckConsistency"/> is <see langword="false"/>
+        /// and the internally wrapped list has been changed directly.
+        /// </summary>
+        public void InnerListChanged() => BuildIndexMap();
 
         protected override int GetItemIndex(T item)
         {
