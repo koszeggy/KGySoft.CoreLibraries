@@ -24,8 +24,7 @@ namespace KGySoft.Collections.ObjectModel
     [Serializable]
     public class FastLookupCollection<T> : VirtualCollection<T>
     {
-        [NonSerialized] private Dictionary<T, CircularList<int>> itemToIndex = new Dictionary<T, CircularList<int>>();
-        [NonSerialized] private CircularList<int> nullToIndex;
+        [NonSerialized] private AllowNullDictionary<T, CircularList<int>> itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
 
         public bool CheckConsistency { get; set; }
 
@@ -55,8 +54,8 @@ namespace KGySoft.Collections.ObjectModel
 
         private void BuildIndexMap()
         {
-            itemToIndex = new Dictionary<T, CircularList<int>>();
-            nullToIndex = null;
+            if (itemToIndex.Count > 0)
+                itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
             int length = Count;
             for (int i = 0; i < length; i++)
             {
@@ -167,7 +166,6 @@ namespace KGySoft.Collections.ObjectModel
         protected override void ClearItems()
         {
             base.ClearItems();
-            nullToIndex = null;
             itemToIndex.Clear();
         }
 
@@ -175,28 +173,18 @@ namespace KGySoft.Collections.ObjectModel
             => EqualityComparer<T>.Default.Equals(x, y);
 
         private int GetFirstIndex(T item) 
-            => item == null 
-                ? nullToIndex?[0] ?? -1
-                : itemToIndex.TryGetValue(item, out var indices) ? indices[0] : -1;
+            => itemToIndex.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
 
         private bool ContainsIndex(T item, int index)
-            => item == null
-                ? nullToIndex?.Contains(index) == true
-                : itemToIndex.TryGetValue(item, out var indices) && indices.Contains(index);
+            => itemToIndex.TryGetValue(item, out var indices) && indices.Contains(index);
 
         /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
         private bool AddIndex(T item, int index)
         {
-            CircularList<int> indices;
-            if (item == null)
-                indices = nullToIndex ?? (nullToIndex = new CircularList<int>());
-            else
+            if (!itemToIndex.TryGetValue(item, out CircularList<int> indices))
             {
-                if (!itemToIndex.TryGetValue(item, out indices))
-                {
-                    indices = new CircularList<int>();
-                    itemToIndex[item] = indices;
-                }
+                indices = new CircularList<int>();
+                itemToIndex[item] = indices;
             }
 
             if (indices.Count == 0 || index > indices[indices.Count - 1])
@@ -215,15 +203,6 @@ namespace KGySoft.Collections.ObjectModel
         /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
         private bool RemoveIndex(T item, int index)
         {
-            if (item == null)
-            {
-                if (nullToIndex == null || !RemoveIndex(nullToIndex, index))
-                    return false;
-                if (nullToIndex.Count == 0)
-                    nullToIndex = null;
-                return true;
-            }
-
             if (!itemToIndex.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
                 return false;
             if (indices.Count == 0)
@@ -254,14 +233,6 @@ namespace KGySoft.Collections.ObjectModel
             if (adjustedValues.Contains(item))
                 return true;
             adjustedValues.Add(item);
-            if (item == null)
-            {
-                if (nullToIndex == null)
-                    return false;
-                AdjustIndex(nullToIndex, startIndex, diff);
-                return true;
-            }
-
             if (!itemToIndex.TryGetValue(item, out var indices))
                 return false;
             AdjustIndex(indices, startIndex, diff);

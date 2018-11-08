@@ -68,12 +68,13 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collections\BinarySearchHelper.cs" />
+    <Compile Include="Collections\AllowNullDictionary.cs" />
+    <Compile Include="Collections\CircularList.BinarySearchHelper.cs" />
     <Compile Include="Collections\Cache.cs" />
     <Compile Include="Collections\CacheBehavior.cs" />
     <Compile Include="Collections\CircularList.cs" />
     <Compile Include="Collections\CircularSortedList.cs" />
-    <Compile Include="Collections\ComparableBinarySearchHelper.cs" />
+    <Compile Include="Collections\CircularList.ComparableBinarySearchHelper.cs" />
     <Compile Include="Collections\LockingCollection.cs" />
     <Compile Include="Collections\LockingDictionary.cs" />
     <Compile Include="Collections\LockingList.cs" />
@@ -82,7 +83,7 @@
     <Compile Include="Collections\_Interfaces\ICacheStatistics.cs" />
     <Compile Include="Collections\_Interfaces\IThreadSafeCacheAccessor.cs" />
     <Compile Include="Collections\_doc\NamespaceDoc.cs" />
-    <Compile Include="ComponentModel\_Collections\SortableBindingList2.cs" />
+    <Compile Include="ComponentModel\_Collections\SortableBindingList.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\EditableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\EditableObjectBase.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\ModelBase.cs" />
@@ -94,7 +95,9 @@
     <Compile Include="ComponentModel\_BusinessObjects\_Enums\ValidationSeverity.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Enums\EditableObjectBehavior.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoInternal.cs" />
-    <Compile Include="ComponentModel\_Collections\SortableBindingList.cs" />
+    <Compile Include="ComponentModel\_Collections\SortableBindingList.ItemComparer.cs" />
+    <Compile Include="ComponentModel\_Collections\SortableBindingList.ItemGenericComparer.cs" />
+    <Compile Include="ComponentModel\_Collections\SortableBindingList_Old.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableObjectBase.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_EventArgs\PropertyChangedExtendedEventArgs.cs" />
@@ -271,7 +274,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

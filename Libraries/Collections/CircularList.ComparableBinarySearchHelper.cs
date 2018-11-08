@@ -26,6 +26,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Helper class for performing binary search on a <see cref="CircularList{T}"/>. This class can handles elements as <see cref="IComparable{T}"/> instances.
     /// This class accesses the <see cref="CircularList{T}"/> through its indexer, so it is slower than Array.BinarySearch, so used only when section to search is wrapped.
+    /// Not a nested private class because must have its own generic parameter due to the <see cref="IComparable{T}"/> constraint.
     /// </summary>
     /// <typeparam name="TComparable">Represents a <see cref="IComparable{T}"/> type.</typeparam>
     internal class ComparableBinarySearchHelper<TComparable> : BinarySearchHelper<TComparable> where TComparable : IComparable<TComparable>

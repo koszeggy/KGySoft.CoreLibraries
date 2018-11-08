@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using KGySoft.Collections;
@@ -89,32 +88,24 @@ namespace _LibrariesTest.Libraries.Collections.ObjectModel
 
         private void AssertConsistency<T>(FastLookupCollection<T> coll)
         {
-            var nullToIndex = new CircularList<int>();
-            var itemToIndex = new Dictionary<T, CircularList<int>>();
+            var itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
             for (int i = 0; i < coll.Count; i++)
             {
                 T item = coll[i];
-                if (item == null)
-                    nullToIndex.Add(i);
-                else
+                if (!itemToIndex.TryGetValue(item, out CircularList<int> indices))
                 {
-                    if (!itemToIndex.TryGetValue(item, out var indices))
-                    {
-                        indices = new CircularList<int>();
-                        itemToIndex[item] = indices;
-                    }
-
-                    indices.Add(i);
+                    indices = new CircularList<int>();
+                    itemToIndex[item] = indices;
                 }
+
+                indices.Add(i);
             }
 
-            var actualNullToIndex = (CircularList<int>)Reflector.GetInstanceFieldByName(coll, "nullToIndex") ?? new CircularList<int>();
-            AssertItemsEqual(nullToIndex, actualNullToIndex);
-            var actualItemToIndex = (Dictionary<T, CircularList<int>>)Reflector.GetInstanceFieldByName(coll, "itemToIndex");
+            var actualItemToIndex = (AllowNullDictionary<T, CircularList<int>>)Reflector.GetInstanceFieldByName(coll, "itemToIndex");
             AssertItemsEqual(Sorted(itemToIndex), Sorted(actualItemToIndex));
 
-            IEnumerable Sorted(Dictionary<T, CircularList<int>> dict) 
-                => dict.OrderBy(item => item.Key).ToDictionary(item => item.Key, item => item.Value);
+            IEnumerable Sorted(AllowNullDictionary<T, CircularList<int>> dict) 
+                => new AllowNullDictionary<T, CircularList<int>>(dict.OrderBy(item => item.Key));
         }
     }
 }

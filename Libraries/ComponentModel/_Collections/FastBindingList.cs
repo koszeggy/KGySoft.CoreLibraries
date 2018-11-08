@@ -54,9 +54,9 @@ namespace KGySoft.ComponentModel
         #region Construction
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class using default values.
+        /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class using default settings.
         /// </summary>
-        public FastBindingList() : base(new CircularList<T>()) => Initialize();
+        public FastBindingList() => Initialize();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class with the specified <paramref name="list"/>.
@@ -452,7 +452,7 @@ namespace KGySoft.ComponentModel
         public void ResetBindings() => FireListChanged(ListChangedType.Reset, -1);
 
         // TODO: sorting
-        public void ResetItem(int position) => FireListChanged(ListChangedType.ItemChanged, position);
+        public virtual void ResetItem(int position) => FireListChanged(ListChangedType.ItemChanged, position);
 
         internal /*private protected*/ void FireListChanged(ListChangedType type, int index)
         {

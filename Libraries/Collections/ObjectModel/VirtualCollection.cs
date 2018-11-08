@@ -289,6 +289,9 @@ namespace KGySoft.Collections.ObjectModel
         /// <br/>The base implementation returns the enumerator of the underlying collection.
         /// </summary>
         /// <returns>An <see cref="IEnumerator{T}" /> for the <see cref="VirtualCollection{T}"/>.</returns>
+        /// <remarks>
+        /// <para>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// </remarks>
         public virtual IEnumerator<T> GetEnumerator() => items.GetEnumerator();
 
         /// <summary>
