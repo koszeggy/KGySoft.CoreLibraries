@@ -60,7 +60,7 @@ namespace KGySoft.Collections.ObjectModel
             for (int i = 0; i < length; i++)
             {
                 T item = base.GetItem(i);
-                AddIndex(item, i);
+                AddIndex(itemToIndex, item, i);
             }
         }
 
@@ -68,11 +68,11 @@ namespace KGySoft.Collections.ObjectModel
         /// Rebuilds the internally stored index mapping. Call if <see cref="CheckConsistency"/> is <see langword="false"/>
         /// and the internally wrapped list has been changed directly.
         /// </summary>
-        public void InnerListChanged() => BuildIndexMap();
+        public virtual void InnerListChanged() => BuildIndexMap();
 
         protected override int GetItemIndex(T item)
         {
-            int result = GetFirstIndex(item);
+            int result = GetFirstIndex(itemToIndex, item);
             if (!CheckConsistency)
                 return result;
 
@@ -81,13 +81,13 @@ namespace KGySoft.Collections.ObjectModel
 
             // the underlying collection is inconsistent
             BuildIndexMap();
-            return GetFirstIndex(item);
+            return GetFirstIndex(itemToIndex, item);
         }
 
         protected override T GetItem(int index)
         {
             T result = base.GetItem(index);
-            if (CheckConsistency && !ContainsIndex(result, index))
+            if (CheckConsistency && !ContainsIndex(itemToIndex, result, index))
                 BuildIndexMap();
 
             return result;
@@ -97,11 +97,11 @@ namespace KGySoft.Collections.ObjectModel
         {
             T original = base.GetItem(index);
 
-            if (CheckConsistency && !ContainsIndex(item, index))
+            if (CheckConsistency && !ContainsIndex(itemToIndex, item, index))
                 BuildIndexMap();
 
             // here we can't ignore consistency because we need to update the maintained indices
-            if (!AreEqual(original, item) && (!RemoveIndex(original, index) || !AddIndex(item, index)))
+            if (!AreEqual(original, item) && (!RemoveIndex(itemToIndex, original, index) || !AddIndex(itemToIndex, item, index)))
                 BuildIndexMap();
 
             base.SetItem(index, item);
@@ -128,7 +128,7 @@ namespace KGySoft.Collections.ObjectModel
                     return;
                 }
             }
-            if (!AddIndex(item, index))
+            if (!AddIndex(itemToIndex, item, index))
                 BuildIndexMap();
         }
 
@@ -139,7 +139,7 @@ namespace KGySoft.Collections.ObjectModel
 
             // here we can't ignore consistency because we need to update the maintained indices
 
-            if (!RemoveIndex(original, index))
+            if (!RemoveIndex(itemToIndex, original, index))
             {
                 BuildIndexMap();
                 return;
@@ -169,22 +169,22 @@ namespace KGySoft.Collections.ObjectModel
             itemToIndex.Clear();
         }
 
-        private static bool AreEqual(T x, T y)
+        internal /*private protected*/ static bool AreEqual(T x, T y)
             => EqualityComparer<T>.Default.Equals(x, y);
 
-        private int GetFirstIndex(T item) 
-            => itemToIndex.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
+        internal /*private protected*/ static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item) 
+            => map.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
 
-        private bool ContainsIndex(T item, int index)
-            => itemToIndex.TryGetValue(item, out var indices) && indices.Contains(index);
+        internal /*private protected*/ static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+            => map.TryGetValue(item, out var indices) && indices.Contains(index);
 
         /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
-        private bool AddIndex(T item, int index)
+        internal /*private protected*/ static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
         {
-            if (!itemToIndex.TryGetValue(item, out CircularList<int> indices))
+            if (!map.TryGetValue(item, out CircularList<int> indices))
             {
                 indices = new CircularList<int>();
-                itemToIndex[item] = indices;
+                map[item] = indices;
             }
 
             if (indices.Count == 0 || index > indices[indices.Count - 1])
@@ -201,17 +201,17 @@ namespace KGySoft.Collections.ObjectModel
         }
 
         /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        private bool RemoveIndex(T item, int index)
+        internal /*private protected*/ static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
         {
-            if (!itemToIndex.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
+            if (!map.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
                 return false;
             if (indices.Count == 0)
-                itemToIndex.Remove(item);
+                map.Remove(item);
             return true;
         }
 
         /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        private bool RemoveIndex(CircularList<int> indices, int index)
+        private static bool RemoveIndex(CircularList<int> indices, int index)
         {
             if (indices.Count == 0)
                 return false;

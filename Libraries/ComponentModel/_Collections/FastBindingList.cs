@@ -9,6 +9,7 @@ using KGySoft.Collections.ObjectModel;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
 
+// ReSharper disable RedundantBaseQualifier - not redundant: they are virtual members and we prevent to call possible derived methods
 namespace KGySoft.ComponentModel
 {
     // Compatible with BindingList<T> but allows turning on/off not just list change events but also element change events and provides more flexible overriding.
@@ -135,7 +136,7 @@ namespace KGySoft.ComponentModel
             }
 
             int pos = lastChangeIndex;
-            if (pos < 0 || pos >= Count || !this[pos].Equals(item))
+            if (pos < 0 || pos >= Count || !this[pos].Equals(item)) // unlike in virtual methods reading the indexer is ok here
             {
                 pos = GetItemIndex(item);
                 lastChangeIndex = pos;
@@ -294,6 +295,7 @@ namespace KGySoft.ComponentModel
 
         protected virtual int FindCore(PropertyDescriptor prop, object key)
         {
+            // TODO: Res
             throw new NotSupportedException();
         }
 
@@ -313,21 +315,20 @@ namespace KGySoft.ComponentModel
 
         #region ICollection<T>
 
-        protected override void ClearItems()
+        protected override void SetItem(int index, T item)
         {
-            // TODO: consider sort
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-            EndNew(addNewPos);
 
             if (canRaiseItemChange)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
+                UnhookPropertyChanged(base.GetItem(index));
 
-            base.ClearItems();
-            FireListChanged(ListChangedType.Reset, -1);
+            base.SetItem(index, item);
+
+            if (canRaiseItemChange)
+                HookPropertyChanged(item);
+
+            FireListChanged(ListChangedType.ItemChanged, index);
         }
 
         protected override void InsertItem(int index, T item)
@@ -362,28 +363,28 @@ namespace KGySoft.ComponentModel
 
             if (canRaiseItemChange)
             {
-                UnhookPropertyChanged(this[index]);
+                UnhookPropertyChanged(base.GetItem(index));
             }
 
             base.RemoveItem(index);
             FireListChanged(ListChangedType.ItemDeleted, index);
         }
 
-        protected override void SetItem(int index, T item)
+        protected override void ClearItems()
         {
             // TODO: consider sort
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+            EndNew(addNewPos);
 
             if (canRaiseItemChange)
-                UnhookPropertyChanged(this[index]);
+            {
+                foreach (T item in Items)
+                    UnhookPropertyChanged(item);
+            }
 
-            base.SetItem(index, item);
-
-            if (canRaiseItemChange)
-                HookPropertyChanged(item);
-
-            FireListChanged(ListChangedType.ItemChanged, index);
+            base.ClearItems();
+            FireListChanged(ListChangedType.Reset, -1);
         }
 
         #endregion
