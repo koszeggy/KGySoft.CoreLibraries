@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
@@ -95,14 +96,20 @@ namespace KGySoft.Collections.ObjectModel
 
         protected override void SetItem(int index, T item)
         {
-            T original = base.GetItem(index);
-
             if (CheckConsistency && !ContainsIndex(itemToIndex, item, index))
                 BuildIndexMap();
 
-            // here we can't ignore consistency because we need to update the maintained indices
-            if (!AreEqual(original, item) && (!RemoveIndex(itemToIndex, original, index) || !AddIndex(itemToIndex, item, index)))
+            T original = base.GetItem(index);
+            if (ReferenceEquals(original, item))
+                return;
+
+            // here we can't ignore inconsistency because we need to update the maintained indices
+            if (!RemoveIndex(itemToIndex, original, index) || !AddIndex(itemToIndex, item, index))
+            {
                 BuildIndexMap();
+                RemoveIndex(itemToIndex, original, index);
+                AddIndex(itemToIndex, item, index);
+            }
 
             base.SetItem(index, item);
         }
@@ -113,23 +120,36 @@ namespace KGySoft.Collections.ObjectModel
             int length = Count;
 
             // here we can't ignore consistency because we need to update the maintained indices
-#if NET35 || NET40 || NET45
-            HashSet<T> adjustedValues = new HashSet<T>();
-            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
-                adjustedValues.Initialize(length);
-#else
-            HashSet<T> adjustedValues = new HashSet<T>(length);
-#endif
-            for (int i = index + 1; i < length; i++)
+            if (index + 1 < length)
             {
-                if (!AdjustIndex(base.GetItem(i), index, 1, adjustedValues))
+                HashSet<T> adjustedValues = CreateAdjustSet(length);
+                for (int i = index + 1; i < length; i++)
                 {
-                    BuildIndexMap();
-                    return;
+                    if (!AdjustIndex(itemToIndex, base.GetItem(i), index, 1, adjustedValues))
+                    {
+                        BuildIndexMap();
+                        return;
+                    }
                 }
             }
+
             if (!AddIndex(itemToIndex, item, index))
                 BuildIndexMap();
+        }
+
+#if !NET35 && !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal /*private protected*/ static HashSet<T> CreateAdjustSet(int length)
+        {
+#if NET35 || NET40 || NET45
+            HashSet<T> result = new HashSet<T>();
+            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
+                result.Initialize(length);
+#else
+            HashSet<T> result = new HashSet<T>(length);
+#endif
+            return result;
         }
 
         protected override void RemoveItem(int index)
@@ -137,8 +157,7 @@ namespace KGySoft.Collections.ObjectModel
             T original = base.GetItem(index);
             base.RemoveItem(index);
 
-            // here we can't ignore consistency because we need to update the maintained indices
-
+            // here we can't ignore inconsistency because we need to update the maintained indices
             if (!RemoveIndex(itemToIndex, original, index))
             {
                 BuildIndexMap();
@@ -146,19 +165,16 @@ namespace KGySoft.Collections.ObjectModel
             }
 
             int length = Count;
-#if NET35 || NET40 || NET45
-            HashSet<T> adjustedValues = new HashSet<T>();
-            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
-                adjustedValues.Initialize(length);
-#else
-            HashSet<T> adjustedValues = new HashSet<T>(length);
-#endif
-            for (int i = index; i < length; i++)
+            if (index < length)
             {
-                if (!AdjustIndex(base.GetItem(i), index, -1, adjustedValues))
+                HashSet<T> adjustedValues = CreateAdjustSet(length);
+                for (int i = index; i < length; i++)
                 {
-                    BuildIndexMap();
-                    return;
+                    if (!AdjustIndex(itemToIndex, base.GetItem(i), index, -1, adjustedValues))
+                    {
+                        BuildIndexMap();
+                        return;
+                    }
                 }
             }
         }
@@ -183,7 +199,7 @@ namespace KGySoft.Collections.ObjectModel
         {
             if (!map.TryGetValue(item, out CircularList<int> indices))
             {
-                indices = new CircularList<int>();
+                indices = new CircularList<int>(1);
                 map[item] = indices;
             }
 
@@ -228,18 +244,18 @@ namespace KGySoft.Collections.ObjectModel
             return true;
         }
 
-        private bool AdjustIndex(T item, int startIndex, int diff, HashSet<T> adjustedValues)
+        internal /*private protected*/ static bool AdjustIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int startIndex, int diff, HashSet<T> adjustedValues)
         {
             if (adjustedValues.Contains(item))
                 return true;
             adjustedValues.Add(item);
-            if (!itemToIndex.TryGetValue(item, out var indices))
+            if (!map.TryGetValue(item, out var indices))
                 return false;
             AdjustIndex(indices, startIndex, diff);
             return true;
         }
 
-        private void AdjustIndex(CircularList<int> indices, int startIndex, int diff)
+        private static void AdjustIndex(CircularList<int> indices, int startIndex, int diff)
         {
             int length = indices.Count;
             for (int i = 0; i < length; i++)

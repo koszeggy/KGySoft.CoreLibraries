@@ -259,7 +259,7 @@ namespace KGySoft.ComponentModel
         private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source)
             where TEventArgs : EventArgs
         {
-            if (!state.Enabled)
+            if (disposed || !state.Enabled)
                 return;
 
             ICommand<TEventArgs> cmd = command as ICommand<TEventArgs> ?? new CommandGenericWrapper<TEventArgs>(command);

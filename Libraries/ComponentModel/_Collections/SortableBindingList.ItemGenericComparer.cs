@@ -20,7 +20,7 @@ namespace KGySoft.ComponentModel
             int sign = ascending ? 1 : -1;
 
             if (x.Value == null)
-                return y.Value == null ? 0 : sign;
+                return y.Value == null ? 0 : -sign;
             return sign * ((IComparable<TElement>)x.Value).CompareTo((TElement)y.Value);
         }
     }

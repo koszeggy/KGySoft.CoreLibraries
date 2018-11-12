@@ -36,14 +36,13 @@ namespace KGySoft.ComponentModel
         private bool allowNew;
         private bool allowEdit;
         private bool allowRemove;
-        private int addNewPos = -1; // TODO: move when sort!
+        private int addNewPos = -1;
         private bool raiseItemChangedEvents;
         private bool raiseListChangedEvents;
-
+        [NonSerialized] private bool isAddingNew;
         [NonSerialized] private PropertyDescriptorCollection propertyDescriptors;
         [NonSerialized] private EventHandler<AddingNewEventArgs<T>> addingNewHandler;
         [NonSerialized] private ListChangedEventHandler listChangedHandler;
-        [NonSerialized] private int lastChangeIndex = -1;
 
         /// <summary>
         /// Gets the property descriptors of <typeparamref name="T"/>.
@@ -51,6 +50,8 @@ namespace KGySoft.ComponentModel
         protected PropertyDescriptorCollection PropertyDescriptors
             // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
             => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
+
+        protected bool IsAddingNew => isAddingNew;
 
         #region Construction
 
@@ -107,56 +108,33 @@ namespace KGySoft.ComponentModel
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            // TODO: sort
-            // TODO: item change
             if (!RaiseItemChangedEvents)
                 return;
 
-            if (sender == null || string.IsNullOrEmpty(e?.PropertyName))
-            {
-                // Fire reset event (per INotifyPropertyChanged spec)
-                ResetBindings();
-                return;
-            }
-
-            // The change event is broken should someone pass an item to us that is not
-            // of type T.  Still, if they do so, detect it and ignore.  It is an incorrect
-            // and rare enough occurrence that we do not want to slow the mainline path
-            // with "is" checks.
-            T item;
-
-            try
-            {
-                item = (T)sender;
-            }
-            catch (InvalidCastException)
+            // Invalid sender or property name: simply resetting
+            if (!(sender is T item) || string.IsNullOrEmpty(e?.PropertyName))
             {
                 ResetBindings();
                 return;
             }
 
-            int pos = lastChangeIndex;
-            if (pos < 0 || pos >= Count || !this[pos].Equals(item)) // unlike in virtual methods reading the indexer is ok here
-            {
-                pos = GetItemIndex(item);
-                lastChangeIndex = pos;
-            }
+            // Note: if indices can be different in a derived class that index will be reported
+            int pos = GetItemIndex(item);
 
-            // item removed from the underlying list
-            if (pos == -1)
+            // item was removed but we still receive events
+            if (pos < 0)
             {
                 UnhookPropertyChanged(item);
                 ResetBindings();
             }
 
             PropertyDescriptor pd = e.PropertyName == null ? null : PropertyDescriptors.Find(e.PropertyName, true);
+            ItemPropertyChanged(item, pos, pd);
+            OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, pos, pd));
+        }
 
-            // Create event args.  If there was no matching property descriptor,
-            // we raise the list changed anyway.
-            ListChangedEventArgs args = new ListChangedEventArgs(ListChangedType.ItemChanged, pos, pd);
-
-            // Fire the ItemChanged event
-            OnListChanged(args);
+        protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
+        {
         }
 
         #endregion
@@ -177,15 +155,15 @@ namespace KGySoft.ComponentModel
 
         public T AddNew()
         {
-            // Create new item and add it to list
-            object newItem = AddNewCore();
-
-            // TODO: On EndNew it can be moved to its place (DoSort) - property: AllowSortOnNewAdded, field: sortUpToDate/pending
-            // Record position of new item (to support cancellation later on)
-            addNewPos = (newItem != null) ? GetItemIndex((T)newItem) : -1;
-
-            // Return new item to caller
-            return (T)newItem;
+            isAddingNew = true;
+            try
+            {
+                return AddNewCore();
+            }
+            finally
+            {
+                isAddingNew = false;
+            }
         }
 
         object IBindingList.AddNew() => AddNew();
@@ -333,10 +311,13 @@ namespace KGySoft.ComponentModel
 
         protected override void InsertItem(int index, T item)
         {
-            // TODO: consider sort
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-            EndNew(addNewPos);
+
+            EndNew();
+            if (isAddingNew)
+                addNewPos = index;
+
             base.InsertItem(index, item);
 
             // subscribing even if raising events is turned off now right now so we don't have to go through all items when raising is toggled
@@ -348,23 +329,19 @@ namespace KGySoft.ComponentModel
 
         protected override void RemoveItem(int index)
         {
-            // TODO: consider sort
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
 
-            // even if if remove not allowed we can remove the element being just added and yet uncommitted
+            // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
             {
-                // TODO: rather InvalidOperatonException
+                // TODO: Res (and rather InvalidOperatonException)
                 throw new NotSupportedException();
             }
 
-            EndNew(addNewPos);
-
+            EndNew();
             if (canRaiseItemChange)
-            {
                 UnhookPropertyChanged(base.GetItem(index));
-            }
 
             base.RemoveItem(index);
             FireListChanged(ListChangedType.ItemDeleted, index);
@@ -372,11 +349,10 @@ namespace KGySoft.ComponentModel
 
         protected override void ClearItems()
         {
-            // TODO: consider sort
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
-            EndNew(addNewPos);
 
+            EndNew();
             if (canRaiseItemChange)
             {
                 foreach (T item in Items)
@@ -418,25 +394,27 @@ namespace KGySoft.ComponentModel
 
         public virtual void CancelNew(int itemIndex)
         {
-            // TODO: consider sort
+            // TODO: in comment: indices can have different order in a derived class, must be overridden along with RemoveItem, which is called from this method with the specified index
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
             if (addNewPos < 0 || addNewPos != itemIndex)
                 return;
+
+            // Attention: this is a virtual method, meaning of index can be different in a derived class
             RemoveItem(addNewPos);
-            addNewPos = -1;
         }
 
         public virtual void EndNew(int itemIndex)
         {
-            // TODO: consider sort - see AddNew comment (AllowSortOnNewAdded)
             if (disposed)
                 throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+
+            // inside from this class this should be called to make sure the index is not sorted.
             if (addNewPos >= 0 && addNewPos == itemIndex)
-            {
-                addNewPos = -1;
-            }
+                EndNew();
         }
+
+        protected virtual void EndNew() => addNewPos = -1;
 
         #endregion
 
