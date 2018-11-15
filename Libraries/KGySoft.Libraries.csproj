@@ -97,7 +97,6 @@
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoInternal.cs" />
     <Compile Include="ComponentModel\_Collections\SortableBindingList.ItemComparer.cs" />
     <Compile Include="ComponentModel\_Collections\SortableBindingList.ItemGenericComparer.cs" />
-    <Compile Include="ComponentModel\_Collections\SortableBindingList_Old.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableObjectBase.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_EventArgs\PropertyChangedExtendedEventArgs.cs" />
@@ -274,7 +273,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

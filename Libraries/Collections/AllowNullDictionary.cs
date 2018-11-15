@@ -37,9 +37,15 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     internal class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
+        #region Constants
+
+        private const int defaultCapacity = 4;
+
+        #endregion
+
         #region Fields
 
-        private readonly Dictionary<TKey, TValue> dict = new Dictionary<TKey, TValue>();
+        private readonly Dictionary<TKey, TValue> dict;
 
         private bool hasNullKey;
         private TValue nullValue;
@@ -107,11 +113,13 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        public AllowNullDictionary()
+        public AllowNullDictionary(int capacity) => dict = new Dictionary<TKey, TValue>(capacity);
+
+        public AllowNullDictionary() : this(defaultCapacity)
         {
         }
 
-        public AllowNullDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection)
+        public AllowNullDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : this(((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count).GetValueOrDefault(defaultCapacity))
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);

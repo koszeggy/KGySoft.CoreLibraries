@@ -328,16 +328,16 @@ namespace KGySoft
 
         #endregion
 
-        #region SortableBindingList
+        #region FastBindingList
 
         /// <summary>Property '{0}' of descriptor type '{1}' does not belong to type '{2}'.</summary>
-        internal static string SortableBindingListInvalidProperty(PropertyDescriptor property, Type t) => Get("SortableBindingList_InvalidPropertyFormat", property.Name, property.GetType(), t);
+        internal static string FastBindingListInvalidProperty(PropertyDescriptor property, Type t) => Get("FastBindingList_InvalidPropertyFormat", property.Name, property.GetType(), t);
 
         /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</summary>
-        internal static string SortableBindingCannotAddNew(Type t) => Get("SortableBindingList_CannotAddNewFormat", t);
+        internal static string FastBindingListCannotAddNew(Type t) => Get("FastBindingList_CannotAddNewFormat", t);
 
         /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
-        internal static string SortableBindingListPropertyNotExists(string propertyName, Type type) => Get("SortableBindingList_PropertyNotExistsFormat", propertyName, type);
+        internal static string FastBindingListPropertyNotExists(string propertyName, Type type) => Get("FastBindingList_PropertyNotExistsFormat", propertyName, type);
 
         #endregion
 

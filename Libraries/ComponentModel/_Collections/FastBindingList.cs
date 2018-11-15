@@ -133,6 +133,13 @@ namespace KGySoft.ComponentModel
             OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, pos, pd));
         }
 
+        /// <summary>
+        /// Called when an item contained in the <see cref="FastBindingList{T}"/> changes. Can be used if the binding list is sorted or uses indices.
+        /// <br/>The base implementation does nothing.
+        /// </summary>
+        /// <param name="item">The changed item.</param>
+        /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
+        /// <param name="property">The descriptor of the changed property.</param>
         protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
         {
         }
@@ -143,7 +150,7 @@ namespace KGySoft.ComponentModel
 
         public event EventHandler<AddingNewEventArgs<T>> AddingNew
         {
-            add => addingNewHandler += value; // no need to fire ListChange as in the original version because we don't change AddNew
+            add => addingNewHandler += value; // no need to fire ListChange as in the original version because we don't change AllowNew
             remove => addingNewHandler -= value;
         }
 
@@ -173,7 +180,7 @@ namespace KGySoft.ComponentModel
         {
             var e = new AddingNewEventArgs<T>();
             OnAddingNew(e);
-            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.Construct(typeof(T)) : throw new InvalidOperationException(Res.SortableBindingCannotAddNew(typeof(T)));
+            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.Construct(typeof(T)) : throw new InvalidOperationException(Res.FastBindingListCannotAddNew(typeof(T)));
             Add(newItem);
 
             // Return new item to caller
@@ -224,7 +231,7 @@ namespace KGySoft.ComponentModel
 
         bool IBindingList.SupportsSearching => SupportsSearchingCore;
 
-        protected virtual bool SupportsSearchingCore => false;
+        protected virtual bool SupportsSearchingCore => true;
 
         bool IBindingList.SupportsSorting => SupportsSortingCore;
 
@@ -242,22 +249,40 @@ namespace KGySoft.ComponentModel
 
         protected virtual ListSortDirection SortDirectionCore => default;
 
-        public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
-            => ApplySortCore(property ?? throw new ArgumentNullException(nameof(property), Res.ArgumentNull), direction);
-
         public void ApplySort(ListSortDirection direction)
-            => ApplySortCore(null, direction);
-
-        public void ApplySort(string propertyName, ListSortDirection direction)
         {
-            var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+            ApplySortCore(null, direction);
+        }
+
+        // property cannot be null here
+        public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
             if (property == null)
-                throw new ArgumentException(Res.SortableBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+            if (!PropertyDescriptors.Contains(property))
+                throw new ArgumentException(Res.FastBindingListInvalidProperty(property, typeof(T)), nameof(property));
             ApplySortCore(property, direction);
         }
 
+        public void ApplySort(string propertyName, ListSortDirection direction)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+            PropertyDescriptor property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+            if (property == null)
+                throw new ArgumentException(Res.FastBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+            ApplySortCore(property, direction);
+        }
+
+        // property can be null
         protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction)
         {
+            // TODO: Res
+            throw new NotSupportedException();
         }
 
         public void RemoveSort() => RemoveSortCore();
@@ -266,27 +291,51 @@ namespace KGySoft.ComponentModel
         {
         }
 
-        int IBindingList.Find(PropertyDescriptor prop, object key)
+        // remark: property cannot be null here, to search for the whole element use IndexOf
+        public int Find(PropertyDescriptor property, object key)
         {
-            return FindCore(prop, key);
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+            if (property == null)
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+            if (!PropertyDescriptors.Contains(property))
+                throw new ArgumentException(Res.FastBindingListInvalidProperty(property, typeof(T)), nameof(property));
+            return FindCore(property, key);
         }
 
-        protected virtual int FindCore(PropertyDescriptor prop, object key)
+        public int Find(string propertyName, object key)
         {
-            // TODO: Res
-            throw new NotSupportedException();
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+            var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+            if (property == null)
+                throw new ArgumentException(Res.FastBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+            return FindCore(property, key);
         }
 
-        // TODO: AddIndexCore - for sorting and finding - base does nothing - it uses only the sorted index if can
-        void IBindingList.AddIndex(PropertyDescriptor prop)
+        protected virtual int FindCore(PropertyDescriptor property, object key)
         {
-            // Not supported
+            int length = Count;
+            for (int i = 0; i < length; i++)
+            {
+                // virtual GetItem call is intended here
+                if (Equals(property.GetValue(GetItem(i)), key))
+                    return i;
+            }
+
+            return -1;
         }
 
-        // TODO: RemoveIndexCore - for sorting and finding
-        void IBindingList.RemoveIndex(PropertyDescriptor prop)
+        void IBindingList.AddIndex(PropertyDescriptor property) => AddIndexCore(property);
+
+        protected virtual void AddIndexCore(PropertyDescriptor property)
         {
-            // Not supported
+        }
+
+        void IBindingList.RemoveIndex(PropertyDescriptor property) => RemoveIndexCore(property);
+
+        protected virtual void RemoveIndexCore(PropertyDescriptor property)
+        {
         }
 
         #endregion
@@ -373,7 +422,12 @@ namespace KGySoft.ComponentModel
                 return;
 
             raiseListChangedEvents = false;
-            Clear();
+            if (canRaiseItemChange)
+            {
+                foreach (T item in Items)
+                    UnhookPropertyChanged(item);
+            }
+
             listChangedHandler = null;
             addingNewHandler = null;
             disposed = true;
