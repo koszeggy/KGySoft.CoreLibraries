@@ -87,31 +87,33 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions.cs" />
-    <Compile Include="Libraries\Collections\CacheTest.cs" />
-    <Compile Include="Libraries\Collections\CircularListTest.cs" />
-    <Compile Include="Libraries\Collections\CircularSortedListTest.cs" />
-    <Compile Include="Libraries\Collections\ObjectModel\FastLookupCollectionTest.cs" />
-    <Compile Include="Libraries\Diagnostics\DiagnosticToolsTest.cs" />
-    <Compile Include="Libraries\EnumTest.cs" />
-    <Compile Include="Libraries\Extensions\ByteArrayExtensionsTest.cs" />
-    <Compile Include="Libraries\Extensions\DecimalExtensionsTest.cs" />
-    <Compile Include="Libraries\Extensions\RandomExtensionsTest.cs" />
-    <Compile Include="Libraries\Extensions\TypeExtensionsTest.cs" />
-    <Compile Include="Libraries\Resources\DynamicResourceManagerTest.cs" />
-    <Compile Include="Libraries\Resources\HybridResourceManagerTest.cs" />
-    <Compile Include="Libraries\LanguageTest.cs" />
-    <Compile Include="Libraries\Diagnostics\ProfilerTest.cs" />
-    <Compile Include="Libraries\Resources\ResXResourceSetTest.cs" />
-    <Compile Include="Libraries\Resources\ResXResourceWriterTest.cs" />
-    <Compile Include="Libraries\Resources\ResXDataNodeTest.cs" />
+    <Compile Include="Tests\Collections\CacheTest.cs" />
+    <Compile Include="Tests\Collections\CircularListTest.cs" />
+    <Compile Include="Tests\Collections\CircularSortedListTest.cs" />
+    <Compile Include="Tests\Collections\ObjectModel\FastLookupCollectionTest.cs" />
+    <Compile Include="Tests\ComponentModel\FastBindingListTest.cs" />
+    <Compile Include="Tests\ComponentModel\SortableBindingListTest.cs" />
+    <Compile Include="Tests\Diagnostics\DiagnosticToolsTest.cs" />
+    <Compile Include="Tests\Libraries\EnumTest.cs" />
+    <Compile Include="Tests\Libraries\Extensions\ByteArrayExtensionsTest.cs" />
+    <Compile Include="Tests\Libraries\Extensions\DecimalExtensionsTest.cs" />
+    <Compile Include="Tests\Libraries\Extensions\RandomExtensionsTest.cs" />
+    <Compile Include="Tests\Libraries\Extensions\TypeExtensionsTest.cs" />
+    <Compile Include="Tests\Resources\DynamicResourceManagerTest.cs" />
+    <Compile Include="Tests\Resources\HybridResourceManagerTest.cs" />
+    <Compile Include="Tests\Libraries\LanguageTest.cs" />
+    <Compile Include="Tests\Diagnostics\ProfilerTest.cs" />
+    <Compile Include="Tests\Resources\ResXResourceSetTest.cs" />
+    <Compile Include="Tests\Resources\ResXResourceWriterTest.cs" />
+    <Compile Include="Tests\Resources\ResXDataNodeTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Libraries\Serialization\BinarySerializerTest.cs" />
-    <Compile Include="Libraries\Reflection\ReflectorTest.cs" />
-    <Compile Include="Libraries\Resources\ResXResourceManagerTest.cs" />
-    <Compile Include="Libraries\Resources\ResXResourceReaderTest.cs" />
+    <Compile Include="Tests\Serialization\BinarySerializerTest.cs" />
+    <Compile Include="Tests\Reflection\ReflectorTest.cs" />
+    <Compile Include="Tests\Resources\ResXResourceManagerTest.cs" />
+    <Compile Include="Tests\Resources\ResXResourceReaderTest.cs" />
     <Compile Include="TestBase.cs" />
-    <Compile Include="Libraries\Reflection\TypeResolverTest.cs" />
-    <Compile Include="Libraries\Serialization\XmlSerializerTest.cs" />
+    <Compile Include="Tests\Reflection\TypeResolverTest.cs" />
+    <Compile Include="Tests\Serialization\XmlSerializerTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Drawing\KGySoft.Drawing.csproj">
