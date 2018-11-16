@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.Libraries;
 using KGySoft.Reflection;
@@ -15,20 +12,22 @@ namespace KGySoft.ComponentModel
     // Compatible with BindingList<T> but allows turning on/off not just list change events but also element change events and provides more flexible overriding.
     // Better performance than BindingList<T>, even if child change is enabled because IndexOf is O(1) due to FastLookupCollection<T> base.
     // New features:
-    // - Disposable: removes both incoming (self events) and outgoing (elements PropertyChanged) subscriptions
+    // - Disposable: removes both incoming (self events) and outgoing (elements PropertyChanged) subscriptions. If the collection passed to the ctor is disposable, it also will be disposed.
     // - RaiseListChangedEvents is virtual
     // - RaiseItemChangedEvents
     // - AllowEdit/Remove/New - properties are virtual
+    // - SupportsSearching returns true
+    // - Several ApplySort and Find overloads (sort is not supported by this base class but see SortableBindingList)
     // Changes to BindingList<T>:
     // - AllowEdit/Remove/New - initialized by IsReadOnly
     // - AddNewCore returns T instead of object; throws InvalidOperationException if AllowNew is true but cannot add new item without event or override
+    // - If OnAddingNew does not create an item of T the AddNewCore will not throw an InvalidCastException but creates a compatible element if can or an InvalidOperationException is thrown
     // - Type of AddingNew event is EventHandler<AddingNewEventArgs<T>> instead of AddingNewEventHandler
-    // - If AddingNew does not create an item of T t
-    // - Return value of AllowNew does not depend on whether AddingNew is subscribed. It must be set explicitly if we want to allow new events.
+    // - Subscription change to AddingNew event does not reset the list because return value of AllowNew does not depend on whether AddingNew is subscribed. It must be set explicitly if we want to allow new events.
+    // - IBingindList.ApplySort/Find/RemoveSort are implicit implementations as public methods
     [Serializable]
     public class FastBindingList<T> : FastLookupCollection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
     {
-
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
 
@@ -176,6 +175,7 @@ namespace KGySoft.ComponentModel
         object IBindingList.AddNew() => AddNew();
 
         // Remarks: Can throw InvalidOperationException
+        // Will not throw InvalidCastException as BindingList
         protected virtual T AddNewCore()
         {
             var e = new AddingNewEventArgs<T>();
@@ -427,6 +427,8 @@ namespace KGySoft.ComponentModel
                 foreach (T item in Items)
                     UnhookPropertyChanged(item);
             }
+
+            (Items as IDisposable)?.Dispose();
 
             listChangedHandler = null;
             addingNewHandler = null;

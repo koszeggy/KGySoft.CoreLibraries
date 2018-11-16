@@ -45,6 +45,7 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
         [TestMethod]
         public void ItemChanged()
         {
+            // item property change involves a search for the index of the changed item
             var range = Enumerable.Range(0, 10000).Select(i => new TestItem { IntProp = i });
             // ReSharper disable PossibleMultipleEnumeration - intended to prevent sharing elements
             var collReference = new BindingList<TestItem>(new List<TestItem>(range.ToList()));
