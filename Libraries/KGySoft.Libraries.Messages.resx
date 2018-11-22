@@ -697,7 +697,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="WorkingSet" xml:space="preserve">
     <value>Working Set: {0} bytes</value>
   </data>
-  <data name="ObjectDisposed" xml:space="preserve">
+  <data name="General_ObjectDisposed" xml:space="preserve">
     <value>Cannot access a disposed object.</value>
   </data>
   <data name="InvalidResXReaderPropertyChange" xml:space="preserve">
@@ -825,5 +825,17 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="General_EnumFlagsOutOfRangeFormat" xml:space="preserve">
     <value>Enum instance of '{0}' type must consist of the following flags: {1}.</value>
+  </data>
+  <data name="IBindingList_AddNewDisabled" xml:space="preserve">
+    <value>Cannot add new item to the binding list because AllowNew is false.</value>
+  </data>
+  <data name="IBindingList_RemoveDisabled" xml:space="preserve">
+    <value>Cannot remove item from the binding list because AllowRemove is false.</value>
+  </data>
+  <data name="ObservableBindingList_ReentrancyNotAllowed" xml:space="preserve">
+    <value>Cannot change ObservableBindingList during a CollectionChanged or ListChanged event.</value>
+  </data>
+  <data name="ObservableBindingList_CannotAddNewFormat" xml:space="preserve">
+    <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</value>
   </data>
 </root>

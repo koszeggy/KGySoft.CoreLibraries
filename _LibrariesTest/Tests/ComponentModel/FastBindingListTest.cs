@@ -11,13 +11,6 @@ namespace _LibrariesTest.Tests.ComponentModel
     public class FastBindingListTest : TestBase
     {
         [TestMethod]
-        public void RaiseItemChangedEventsDefault()
-        {
-            Assert.IsFalse(new FastBindingList<int>().RaiseItemChangedEvents);
-            Assert.IsTrue(new FastBindingList<ObservableObjectBase>().RaiseItemChangedEvents);
-        }
-
-        [TestMethod]
         public void AllowNewDefault()
         {
             Assert.IsTrue(new FastBindingList<int>().AllowNew);

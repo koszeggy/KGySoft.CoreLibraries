@@ -40,7 +40,6 @@ namespace KGySoft
         // TODO: all to methods
         internal const string ArgumentInvalidString = nameof(ArgumentInvalidString);
         internal const string KeyNotFound = nameof(KeyNotFound);
-        internal const string ObjectDisposed = nameof(ObjectDisposed);
         internal const string ArgumentEmpty = nameof(ArgumentEmpty);
         internal const string DuplicateKey = nameof(DuplicateKey);
         internal const string ArgumentContainsNull = nameof(ArgumentContainsNull);
@@ -293,6 +292,9 @@ namespace KGySoft
         /// <summary>Specified argument was out of the range of valid values.</summary>
         internal static string ArgumentOutOfRange => Get("General_ArgumentOutOfRange");
 
+        /// <summary>Cannot access a disposed object.</summary>
+        internal static string ObjectDisposed => Get("General_ObjectDisposed");
+
         /// <summary>Destination array is not long enough to copy all the items in the collection. Check array index and length.</summary>
         internal static string CollectionCopyToDestArrayShort => Get("Collection_CopyToDestArrayShort");
 
@@ -301,6 +303,19 @@ namespace KGySoft
 
         /// <summary>Modifying a read-only collection is not supported.</summary>
         internal static string CollectionReadOnlyModifyNotSupported => Get("Collection_ReadOnlyModifyNotSupported");
+
+        /// <summary>Cannot add new item to the binding list because AllowNew is false.</summary>
+        internal static string IBindingListAddNewDisabled => Get("IBindingList_AddNewDisabled");
+
+        /// <summary>Cannot remove item from the binding list because AllowRemove is false.</summary>
+        internal static string IBindingListRemoveDisabled => Get("IBindingList_RemoveDisabled");
+
+        #endregion
+
+        #region ObservableBindingList
+
+        /// <summary>Cannot change ObservableBindingList during a CollectionChanged or ListChanged event.</summary>
+        internal static string ObservableBindingListReentrancyNotAllowed => Get("ObservableBindingList_ReentrancyNotAllowed");
 
         #endregion
 
@@ -338,6 +353,13 @@ namespace KGySoft
 
         /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
         internal static string FastBindingListPropertyNotExists(string propertyName, Type type) => Get("FastBindingList_PropertyNotExistsFormat", propertyName, type);
+
+        #endregion
+
+        #region ObservableBindingList
+
+        /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</summary>
+        internal static string ObservableBindingListCannotAddNew(Type t) => Get("ObservableBindingList_CannotAddNewFormat", t);
 
         #endregion
 

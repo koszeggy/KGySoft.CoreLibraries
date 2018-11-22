@@ -252,7 +252,7 @@ namespace KGySoft.Resources
             ResXResourceSet resx = resxResourceSet;
             ResourceSet compiled = compiledResourceSet;
             if (resx == null || compiled == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             // changing is checked in resx resource set
             return new Enumerator(this, (ResXResourceEnumerator)resx.GetEnumerator(), compiled.GetEnumerator(), ((IResXResourceContainer)resx).Version);
@@ -262,7 +262,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return GetResource(name, false, false, resx.SafeMode);
         }
@@ -271,7 +271,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return GetResource(name, ignoreCase, false, resx.SafeMode);
         }
@@ -280,7 +280,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return (string)GetResource(name, false, true, resx.SafeMode);
         }
@@ -289,7 +289,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return (string)GetResource(name, ignoreCase, true, resx.SafeMode);
         }
@@ -334,7 +334,7 @@ namespace KGySoft.Resources
             ResXResourceSet resx = resxResourceSet;
             ResourceSet compiled = compiledResourceSet;
             if (resx == null || compiled == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             object result = resx.GetResourceInternal(name, ignoreCase, isString, asSafe);
 
@@ -357,7 +357,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.GetMetaInternal(name, ignoreCase, isString, asSafe);
         }
@@ -372,7 +372,7 @@ namespace KGySoft.Resources
             {
                 ResXResourceSet resx = resxResourceSet;
                 if (resx == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
                 return resx.SafeMode;
             }
@@ -380,7 +380,7 @@ namespace KGySoft.Resources
             {
                 ResXResourceSet resx = resxResourceSet;
                 if (resx == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
                 resx.SafeMode = value;
             }
@@ -392,7 +392,7 @@ namespace KGySoft.Resources
             {
                 ResXResourceSet resx = resxResourceSet;
                 if (resx == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return resx.IsModified;
             }
         }
@@ -401,7 +401,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.GetMetadataEnumerator();
         }
@@ -410,7 +410,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.GetAliasEnumerator();
         }
@@ -420,7 +420,7 @@ namespace KGySoft.Resources
             ResXResourceSet resx = resxResourceSet;
             ResourceSet compiled = compiledResourceSet;
             if (resx == null || compiled == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (resx.ContainsResource(name, ignoreCase))
                 return true;
@@ -458,7 +458,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.ContainsMeta(name, ignoreCase);
         }
@@ -467,7 +467,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.GetMetaInternal(name, ignoreCase, false, resx.SafeMode);
         }
@@ -476,7 +476,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return (string)resx.GetMetaInternal(name, ignoreCase, true, resx.SafeMode);
         }
@@ -485,7 +485,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.GetAliasValue(alias);
         }
@@ -494,7 +494,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.SetObject(name, value);
         }
@@ -503,7 +503,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.SetMetaObject(name, value);
         }
@@ -512,7 +512,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.SetAliasValue(alias, assemblyName);
         }
@@ -521,7 +521,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.RemoveObject(name);
         }
@@ -530,7 +530,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.RemoveMetaObject(name);
         }
@@ -539,7 +539,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.RemoveAliasValue(alias);
         }
@@ -548,7 +548,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.Save(fileName, compatibleFormat, forceEmbeddedResources, basePath);
         }
@@ -557,7 +557,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.Save(stream, compatibleFormat, forceEmbeddedResources, basePath);
         }
@@ -566,7 +566,7 @@ namespace KGySoft.Resources
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             resx.Save(textWriter, compatibleFormat, forceEmbeddedResources, basePath);
         }

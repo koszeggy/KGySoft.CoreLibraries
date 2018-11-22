@@ -422,7 +422,7 @@ namespace KGySoft.Resources
             set
             {
                 if (resources == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 safeMode = value;
             }
         }
@@ -469,7 +469,7 @@ namespace KGySoft.Resources
             get
             {
                 if (resources == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return isModified;
             }
         }
@@ -783,7 +783,7 @@ namespace KGySoft.Resources
         {
             var dict = aliases;
             if (dict == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             string result;
             lock (dict)
@@ -858,7 +858,7 @@ namespace KGySoft.Resources
         {
             var dict = aliases;
             if (dict == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (alias == null)
                 throw new ArgumentNullException(nameof(alias), Res.ArgumentNull);
@@ -910,7 +910,7 @@ namespace KGySoft.Resources
         {
             var dict = aliases;
             if (dict == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (alias == null)
                 throw new ArgumentNullException(nameof(alias), Res.ArgumentNull);
@@ -1064,7 +1064,7 @@ namespace KGySoft.Resources
         {
             var syncObj = resources;
             if (syncObj == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             lock (syncObj)
             {
@@ -1079,7 +1079,7 @@ namespace KGySoft.Resources
             var aliases = this.aliases;
 
             if ((resources ?? metadata ?? (object)aliases) == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             // 1. Adding existing aliases (writing them on-demand) - non existing ones will be auto-generated
             lock (aliases)
@@ -1136,7 +1136,7 @@ namespace KGySoft.Resources
         private bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             lock (data)
             {
@@ -1158,7 +1158,7 @@ namespace KGySoft.Resources
         private object GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
@@ -1198,7 +1198,7 @@ namespace KGySoft.Resources
         private void SetValueInternal(string name, object value, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
@@ -1224,7 +1224,7 @@ namespace KGySoft.Resources
         private void RemoveValueInternal(string name, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
         {
             if (data == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);

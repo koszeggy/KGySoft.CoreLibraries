@@ -92,6 +92,7 @@
     <Compile Include="Tests\Collections\CircularSortedListTest.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastLookupCollectionTest.cs" />
     <Compile Include="Tests\ComponentModel\FastBindingListTest.cs" />
+    <Compile Include="Tests\ComponentModel\ObservableBindingListTest.cs" />
     <Compile Include="Tests\ComponentModel\SortableBindingListTest.cs" />
     <Compile Include="Tests\Diagnostics\DiagnosticToolsTest.cs" />
     <Compile Include="Tests\Libraries\EnumTest.cs" />

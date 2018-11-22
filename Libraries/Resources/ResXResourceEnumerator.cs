@@ -171,7 +171,7 @@ namespace KGySoft.Resources
             {
                 var aliases = owner.Aliases;
                 if (aliases == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 wrappedEnumerator = aliases.Select(SelectAlias).GetEnumerator();
                 return;
             }

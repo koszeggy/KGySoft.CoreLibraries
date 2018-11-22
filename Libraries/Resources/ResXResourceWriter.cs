@@ -532,7 +532,7 @@ namespace KGySoft.Resources
                     throw new InvalidOperationException(Res.Get(Res.InvalidResXWriterPropertyChange));
 
                 if (writer == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
                 omitHeader = value;
             }
@@ -575,7 +575,7 @@ namespace KGySoft.Resources
             set
             {
                 if (writer == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 autoGenerateAlias = value;
             }
         }
@@ -589,7 +589,7 @@ namespace KGySoft.Resources
             get
             {
                 if (writer == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
                 if (!initialized)
                     InitializeWriter();
@@ -849,7 +849,7 @@ namespace KGySoft.Resources
         public void Generate()
         {
             if (writer == null)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (hasBeenSaved)
                 throw new InvalidOperationException(Res.Get(Res.ResXResourceWriterSaved));

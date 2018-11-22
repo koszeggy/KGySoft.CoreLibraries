@@ -625,7 +625,7 @@ namespace KGySoft.Resources
                 switch (state)
                 {
                     case States.Disposed:
-                        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
                     default:
                         basePath = value;
                         break;
@@ -671,7 +671,7 @@ namespace KGySoft.Resources
             set
             {
                 if (state == States.Disposed)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 safeMode = value;
             }
         }
@@ -696,7 +696,7 @@ namespace KGySoft.Resources
                         checkHeader = value;
                         break;
                     case States.Disposed:
-                        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
                     default:
                         throw new InvalidOperationException(Res.Get(Res.InvalidResXReaderPropertyChange));
                 }
@@ -731,7 +731,7 @@ namespace KGySoft.Resources
                         allowDuplicatedKeys = value;
                         break;
                     case States.Disposed:
-                        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
                     default:
                         throw new InvalidOperationException(Res.Get(Res.InvalidResXReaderPropertyChange));
                 }
@@ -984,7 +984,7 @@ namespace KGySoft.Resources
                         return new ResXResourceEnumerator(this, mode);
 
                     default:
-                        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 }
             }
         }
@@ -1112,7 +1112,7 @@ namespace KGySoft.Resources
                 case States.Read:
                     return false;
                 default:
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
             }
         }
 

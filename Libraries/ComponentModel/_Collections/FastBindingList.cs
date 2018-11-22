@@ -14,12 +14,13 @@ namespace KGySoft.ComponentModel
     // New features:
     // - Disposable: removes both incoming (self events) and outgoing (elements PropertyChanged) subscriptions. If the collection passed to the ctor is disposable, it also will be disposed.
     // - RaiseListChangedEvents is virtual
-    // - RaiseItemChangedEvents
     // - AllowEdit/Remove/New - properties are virtual
-    // - SupportsSearching returns true
     // - Several ApplySort and Find overloads (sort is not supported by this base class but see SortableBindingList)
     // Changes to BindingList<T>:
     // - AllowEdit/Remove/New - initialized by IsReadOnly
+    // - SupportsSearching returns true
+    // - Calling AddNew when AllowNew is false throws InvalidOperationException
+    // - Calling Remove/Clear when AllowNew is false throws InvalidOperationException (BindingList: throws NotSupportedException on Remove)
     // - AddNewCore returns T instead of object; throws InvalidOperationException if AllowNew is true but cannot add new item without event or override
     // - If OnAddingNew does not create an item of T the AddNewCore will not throw an InvalidCastException but creates a compatible element if can or an InvalidOperationException is thrown
     // - Type of AddingNew event is EventHandler<AddingNewEventArgs<T>> instead of AddingNewEventHandler
@@ -36,7 +37,6 @@ namespace KGySoft.ComponentModel
         private bool allowEdit;
         private bool allowRemove;
         private int addNewPos = -1;
-        private bool raiseItemChangedEvents;
         private bool raiseListChangedEvents;
         [NonSerialized] private bool isAddingNew;
         [NonSerialized] private PropertyDescriptorCollection propertyDescriptors;
@@ -70,14 +70,11 @@ namespace KGySoft.ComponentModel
         {
             // Default: if T is ValueType or has parameterless constructor (but can be turned on and off)
             bool readOnly = Items.IsReadOnly;
-            allowNew = canAddNew && !Items.IsReadOnly;
+            allowNew = canAddNew && !readOnly;
             allowRemove = !readOnly;
             allowEdit = Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
 
             raiseListChangedEvents = true;
-
-            // Default: T is INotifyPropertyChanged. It still can be turned off for better performance/scaling.
-            raiseItemChangedEvents = canRaiseItemChange;
             if (!canRaiseItemChange)
                 return;
 
@@ -107,9 +104,6 @@ namespace KGySoft.ComponentModel
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (!RaiseItemChangedEvents)
-                return;
-
             // Invalid sender or property name: simply resetting
             if (!(sender is T item) || string.IsNullOrEmpty(e?.PropertyName))
             {
@@ -161,6 +155,10 @@ namespace KGySoft.ComponentModel
 
         public T AddNew()
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (!AllowNew)
+                throw new InvalidOperationException(Res.IBindingListAddNewDisabled);
             isAddingNew = true;
             try
             {
@@ -192,6 +190,8 @@ namespace KGySoft.ComponentModel
             get => allowNew;
             set
             {
+                if (disposed)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 if (value == allowNew)
                     return;
                 allowNew = value;
@@ -204,6 +204,8 @@ namespace KGySoft.ComponentModel
             get => allowEdit;
             set
             {
+                if (disposed)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 if (allowEdit == value)
                     return;
                 allowEdit = value;
@@ -211,19 +213,19 @@ namespace KGySoft.ComponentModel
             }
         }
 
-
         public virtual bool AllowRemove
         {
             get => allowRemove;
             set
             {
+                if (disposed)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 if (allowRemove == value)
                     return;
                 allowRemove = value;
                 FireListChanged(ListChangedType.Reset, -1);
             }
         }
-
 
         bool IBindingList.SupportsChangeNotification => SupportsChangeNotificationCore;
 
@@ -252,7 +254,7 @@ namespace KGySoft.ComponentModel
         public void ApplySort(ListSortDirection direction)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             ApplySortCore(null, direction);
         }
 
@@ -260,7 +262,7 @@ namespace KGySoft.ComponentModel
         public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
             if (!PropertyDescriptors.Contains(property))
@@ -271,7 +273,7 @@ namespace KGySoft.ComponentModel
         public void ApplySort(string propertyName, ListSortDirection direction)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             PropertyDescriptor property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
             if (property == null)
                 throw new ArgumentException(Res.FastBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
@@ -295,7 +297,7 @@ namespace KGySoft.ComponentModel
         public int Find(PropertyDescriptor property, object key)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
             if (!PropertyDescriptors.Contains(property))
@@ -306,7 +308,7 @@ namespace KGySoft.ComponentModel
         public int Find(string propertyName, object key)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
             if (property == null)
                 throw new ArgumentException(Res.FastBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
@@ -345,7 +347,7 @@ namespace KGySoft.ComponentModel
         protected override void SetItem(int index, T item)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (canRaiseItemChange)
                 UnhookPropertyChanged(base.GetItem(index));
@@ -361,7 +363,7 @@ namespace KGySoft.ComponentModel
         protected override void InsertItem(int index, T item)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             EndNew();
             if (isAddingNew)
@@ -379,14 +381,11 @@ namespace KGySoft.ComponentModel
         protected override void RemoveItem(int index)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
-            {
-                // TODO: Res (and rather InvalidOperatonException)
-                throw new NotSupportedException();
-            }
+                throw new InvalidOperationException(Res.IBindingListRemoveDisabled);
 
             EndNew();
             if (canRaiseItemChange)
@@ -399,7 +398,14 @@ namespace KGySoft.ComponentModel
         protected override void ClearItems()
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            if (Count == 0)
+                return;
+
+            // even if remove not allowed we can remove the element being just added and yet uncommitted
+            if (!allowRemove && !(addNewPos == 0 && Count == 1))
+                throw new InvalidOperationException(Res.IBindingListRemoveDisabled);
 
             EndNew();
             if (canRaiseItemChange)
@@ -452,7 +458,7 @@ namespace KGySoft.ComponentModel
         {
             // TODO: in comment: indices can have different order in a derived class, must be overridden along with RemoveItem, which is called from this method with the specified index
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (addNewPos < 0 || addNewPos != itemIndex)
                 return;
 
@@ -463,7 +469,7 @@ namespace KGySoft.ComponentModel
         public virtual void EndNew(int itemIndex)
         {
             if (disposed)
-                throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             // inside from this class this should be called to make sure the index is not sorted.
             if (addNewPos >= 0 && addNewPos == itemIndex)
@@ -484,10 +490,19 @@ namespace KGySoft.ComponentModel
 
         protected virtual void OnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
 
-        public void ResetBindings() => FireListChanged(ListChangedType.Reset, -1);
+        public void ResetBindings()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            FireListChanged(ListChangedType.Reset, -1);
+        }
 
-        // TODO: sorting
-        public virtual void ResetItem(int position) => FireListChanged(ListChangedType.ItemChanged, position);
+        public void ResetItem(int position)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            FireListChanged(ListChangedType.ItemChanged, position);
+        }
 
         internal /*private protected*/ void FireListChanged(ListChangedType type, int index)
         {
@@ -505,15 +520,6 @@ namespace KGySoft.ComponentModel
         #endregion
 
         #region IRaiseItemChangedEvents
-
-        // It is for the ListChanged event with ItemChanged type when a property of an element changes. Can be turned off for better performance.
-        // note: gets false if T is not INotifyPropertyChanged or when list change events are turned off
-        // remark: If off, still can come ListChanged with ItemChanged, if an item is replaced by the indexer or when ResetItem is called.
-        public virtual bool RaiseItemChangedEvents
-        {
-            get => raiseItemChangedEvents && canRaiseItemChange && raiseListChangedEvents;
-            set => raiseItemChangedEvents = value;
-        }
 
         bool IRaiseItemChangedEvents.RaisesItemChangedEvents => canRaiseItemChange;
 

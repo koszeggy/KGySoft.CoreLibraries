@@ -508,7 +508,7 @@ namespace KGySoft.Resources
             {
                 var result = base.ResourceSets;
                 if (result == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return result;
             }
             set { base.ResourceSets = value; }
@@ -521,7 +521,7 @@ namespace KGySoft.Resources
             {
                 var result = resourceSets ?? (resourceSets = GetBaseResources());
                 if (result == null)
-                    throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return result;
             }
             set

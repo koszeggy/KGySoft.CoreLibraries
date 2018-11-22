@@ -1140,7 +1140,7 @@ namespace KGySoft.Resources
                 {
                     // otherwise, disposed state is checked by ResXResourceSet
                     if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed)
-                        throw new ObjectDisposedException(null, Res.Get(Res.ObjectDisposed));
+                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
                     compiled = base.InternalGetResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
                 }
 
