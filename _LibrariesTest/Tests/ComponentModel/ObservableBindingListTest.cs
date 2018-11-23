@@ -16,7 +16,10 @@ namespace _LibrariesTest.Tests.ComponentModel
         // - T INotifyPropertyChanged, default ctor: self hook
         // - T INotifyPropertyChanged, IBindingList ctor: delegating item change
         // Below everything also with WinForms app (by embedded ObservableCollection) and WPF app (by embedded BindingList and simple list - see whether both events are captured or just one category)
-        // - Clear: Reset
+        // - Explicit Clear/Set/Add/Remove
+        // - Underlying BindingList Clear/Set/Add/Remove/AllowNew(reset miatt)/AllowRemove/AllowEdit
+        // - Underlying ObservableCollection Clear/Set/Add/Remove
+        // - Item property change
         [TestMethod]
         public void Test()
         {

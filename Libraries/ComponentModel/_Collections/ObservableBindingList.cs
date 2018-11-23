@@ -46,7 +46,6 @@ namespace KGySoft.ComponentModel
         IBindingList, ICancelAddNew, IRaiseItemChangedEvents
     {
         // TODO: for each: Local version, FastBindingList version, embedded list (Old sortable version), Fire events
-        // - SetItem: Local version, FastBindingList version, embedded list (Old sortable version), Fire events
         // - InsertItem: Local version, FastBindingList version, embedded list (Old sortable version), Fire events
         // - RemoveItem: Local version, FastBindingList version, embedded list (Old sortable version), Fire events
 
@@ -249,7 +248,7 @@ namespace KGySoft.ComponentModel
                         throw new NotImplementedException();
                         break;
                     case NotifyCollectionChangedAction.Replace:
-                        throw new NotImplementedException();
+                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, e.NewStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Move:
                         throw new NotImplementedException();
@@ -277,7 +276,7 @@ namespace KGySoft.ComponentModel
                 switch (e.ListChangedType)
                 {
                     case ListChangedType.Reset:
-                        throw new NotImplementedException();
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
                         break;
                     case ListChangedType.ItemAdded:
                         throw new NotImplementedException();
@@ -289,9 +288,12 @@ namespace KGySoft.ComponentModel
                         throw new NotImplementedException();
                         break;
                     case ListChangedType.ItemChanged:
-                        if (!RaiseItemChangedEvents)
+                        if (e.PropertyDescriptor != null && !RaiseItemChangedEvents)
                             return;
-                        throw new NotImplementedException();
+
+                        // note: in case of replace we can't retrieve the old item
+                        T item = e.NewIndex >= 0 && e.NewIndex < Count ? this[e.NewIndex] : default;
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, e.PropertyDescriptor != null ? item : default(T), e.NewIndex));
                         break;
                     case ListChangedType.PropertyDescriptorAdded:
                         throw new NotImplementedException();
@@ -462,10 +464,43 @@ namespace KGySoft.ComponentModel
 
         private void EndNew() => addNewPos = -1;
 
-        /// <summary>
-        /// Called by base class Collection&lt;T&gt; when the list is being cleared;
-        /// raises a CollectionChanged event to any listeners.
-        /// </summary>
+        protected override void SetItem(int index, T item)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            CheckReentrancy();
+
+            T originalItem = this[index];
+            if (HookItemsPropertyChanged)
+                UnhookPropertyChanged(originalItem);
+
+            isExplicitChanging = true;
+            try
+            {
+                base.SetItem(index, item);
+            }
+            finally
+            {
+                isExplicitChanging = false;
+            }
+
+            if (HookItemsPropertyChanged)
+                HookPropertyChanged(item);
+
+            FireItemReplace(originalItem, item, index);
+        }
+
+        protected override void InsertItem(int index, T item)
+        {
+            CheckReentrancy();
+            base.InsertItem(index, item);
+
+            FirePropertyChanged(nameof(Count));
+            FirePropertyChanged(indexerName);
+            OnCollectionChanged(NotifyCollectionChangedAction.Add, item, index);
+        }
+
         protected override void ClearItems()
         {
             if (disposed)
@@ -501,7 +536,7 @@ namespace KGySoft.ComponentModel
             FireCollectionReset(true, false);
         }
 
-        private void FireCollectionReset(bool clearItems, bool listChangeOnly)
+        private void FireItemReplace(object oldItem, object newItem, int index)
         {
             NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
             ListChangedEventHandler handlerListChanged = listChangedHandler;
@@ -509,18 +544,12 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (!listChangeOnly && RaiseCollectionChangedEvents)
-                {
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-                    if (!clearItems)
-                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this.ToList()));
-                }
+                if (RaiseCollectionChangedEvents)
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
                 if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index));
             }
 
-            if (clearItems)
-                FirePropertyChanged(nameof(Count));
             FirePropertyChanged(indexerName);
         }
 
@@ -538,6 +567,25 @@ namespace KGySoft.ComponentModel
                     OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index, pd));
             }
 
+            FirePropertyChanged(indexerName);
+        }
+
+        private void FireCollectionReset(bool countChanged, bool listChangeOnly)
+        {
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                if (!listChangeOnly && RaiseCollectionChangedEvents)
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+                if (RaiseListChangedEvents)
+                    OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+            }
+
+            if (countChanged)
+                FirePropertyChanged(nameof(Count));
             FirePropertyChanged(indexerName);
         }
 
@@ -569,34 +617,6 @@ namespace KGySoft.ComponentModel
             FirePropertyChanged(nameof(Count));
             FirePropertyChanged(indexerName);
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, removedItem, index);
-        }
-
-        /// <summary>
-        /// Called by base class Collection&lt;T&gt; when an item is added to list;
-        /// raises a CollectionChanged event to any listeners.
-        /// </summary>
-        protected override void InsertItem(int index, T item)
-        {
-            CheckReentrancy();
-            base.InsertItem(index, item);
-
-            FirePropertyChanged(nameof(Count));
-            FirePropertyChanged(indexerName);
-            OnCollectionChanged(NotifyCollectionChangedAction.Add, item, index);
-        }
-
-        /// <summary>
-        /// Called by base class Collection&lt;T&gt; when an item is set in list;
-        /// raises a CollectionChanged event to any listeners.
-        /// </summary>
-        protected override void SetItem(int index, T item)
-        {
-            CheckReentrancy();
-            T originalItem = this[index];
-            base.SetItem(index, item);
-
-            FirePropertyChanged(indexerName);
-            OnCollectionChanged(NotifyCollectionChangedAction.Replace, originalItem, item, index);
         }
 
         /// <summary>
@@ -682,14 +702,6 @@ namespace KGySoft.ComponentModel
         //private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index, int oldIndex)
         //{
         //    OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, item, index, oldIndex));
-        //}
-
-        ///// <summary>
-        ///// Helper to raise CollectionChanged event to any listeners
-        ///// </summary>
-        //private void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)
-        //{
-        //    OnCollectionChanged(new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
         //}
 
         ///// <summary>

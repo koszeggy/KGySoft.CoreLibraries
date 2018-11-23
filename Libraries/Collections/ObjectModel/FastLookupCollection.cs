@@ -21,7 +21,6 @@ namespace KGySoft.Collections.ObjectModel
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="VirtualCollection{T}" />
     /// <seealso cref="Collection{T}" />
-    // TODO: IndexDictionary<T> instead of AllowNullDictionary<T, CircularList<int>>, which is IDictionary<T, int> and internally has an AllowNullDictionary<T, int> and AllowNullDictionary<T, CircularList<int>> - if the first one is -1, there is the 2nd one.
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [Serializable]
     public class FastLookupCollection<T> : VirtualCollection<T>
