@@ -168,7 +168,7 @@ namespace KGySoft.Libraries
             private static readonly Random randomForDelegates = new Random();
 
             private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates);
-            private static readonly MethodInfo nextObjectMethod = ((MethodInfo)typeof(RandomExtensions).GetMethod(nameof(NextObject)));
+            private static readonly MethodInfo nextObjectGenMethod = ((MethodInfo)typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(Type), typeof(GenerateObjectSettings) }));
 
             private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
                     new Dictionary<Type, GenerateKnownType>
@@ -440,7 +440,7 @@ namespace KGySoft.Libraries
                     il.Emit(OpCodes.Ldarg, i);
                     il.Emit(OpCodes.Ldsfld, randomField);
                     il.Emit(OpCodes.Ldnull);
-                    il.Emit(OpCodes.Call, nextObjectMethod.MakeGenericMethod(parameterType));
+                    il.Emit(OpCodes.Call, nextObjectGenMethod.MakeGenericMethod(parameterType));
 
                     // ReSharper disable once PossibleNullReferenceException
                     if (parameterType.IsValueType)
@@ -454,7 +454,7 @@ namespace KGySoft.Libraries
                 {
                     il.Emit(OpCodes.Ldsfld, randomField);
                     il.Emit(OpCodes.Ldnull);
-                    il.Emit(OpCodes.Call, nextObjectMethod.MakeGenericMethod(returnType));
+                    il.Emit(OpCodes.Call, nextObjectGenMethod.MakeGenericMethod(returnType));
                 }
 
                 il.Emit(OpCodes.Ret);

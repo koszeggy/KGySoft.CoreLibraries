@@ -295,6 +295,9 @@ namespace KGySoft
         /// <summary>Cannot access a disposed object.</summary>
         internal static string ObjectDisposed => Get("General_ObjectDisposed");
 
+        /// <summary>This operation is not supported.</summary>
+        internal static string NotSupported => Get("General_NotSupported");
+
         /// <summary>Destination array is not long enough to copy all the items in the collection. Check array index and length.</summary>
         internal static string CollectionCopyToDestArrayShort => Get("Collection_CopyToDestArrayShort");
 

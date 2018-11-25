@@ -700,6 +700,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="General_ObjectDisposed" xml:space="preserve">
     <value>Cannot access a disposed object.</value>
   </data>
+  <data name="General_NotSupported" xml:space="preserve">
+    <value>This operation is not supported.</value>
+  </data>
   <data name="InvalidResXReaderPropertyChange" xml:space="preserve">
     <value>Property can be changed only before the enumeration.</value>
   </data>

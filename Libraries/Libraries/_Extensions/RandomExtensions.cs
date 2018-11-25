@@ -1083,6 +1083,28 @@ namespace KGySoft.Libraries
             return (T)ObjectGenerator.GenerateObject(random, typeof(T), settings ?? GenerateObjectSettings.DefaultSettings);
         }
 
+        /// <summary>
+        /// Returns a random object of the specified <paramref name="type"/> or <see langword="null"/>
+        /// if <paramref name="type"/> cannot be instantiated with the provided <paramref name="settings"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="type">The type of the object to be created. If <see cref="GenerateObjectSettings.TryResolveInterfacesAndAbstractTypes"/> property
+        /// in <paramref name="settings"/> is <see langword="true"/>, then it can be also an interface or abstract type;
+        /// however, if no implementation or usable constructor found, then a <see langword="null"/> value will be returned.</param>
+        /// <param name="settings">The settings to use or <see langword="null"/> to use the default settings.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A instance of <paramref name="type"/> or <see langword="null"/> if the type cannot be
+        /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section of the <see cref="NextObject{T}"/> overload for details.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
+        public static object NextObject(this Random random, Type type, GenerateObjectSettings settings = null)
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+            return ObjectGenerator.GenerateObject(random, type, settings ?? GenerateObjectSettings.DefaultSettings);
+        }
+
         #endregion
 
         #region Private Methods
