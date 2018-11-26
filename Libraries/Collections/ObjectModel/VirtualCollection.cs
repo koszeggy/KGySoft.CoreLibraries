@@ -402,6 +402,7 @@ namespace KGySoft.Collections.ObjectModel
             {
                 for (int i = 0; i < length; i++)
                     objectArray[index++] = GetItem(i);
+                return;
             }
 
             throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid), nameof(array));
