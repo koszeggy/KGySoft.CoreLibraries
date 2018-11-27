@@ -559,7 +559,7 @@ namespace KGySoft.ComponentModel
                 return;
 
             base.EndNew(sortDirection == null ? itemIndex : GetBaseIndex(itemIndex));
-            if (sortDirection != null && sortPending)
+            if (sortDirection != null && sortPending && SortOnChange)
                 DoSort();
         }
 
