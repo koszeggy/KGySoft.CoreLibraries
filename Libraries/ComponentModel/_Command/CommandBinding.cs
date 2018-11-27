@@ -129,7 +129,7 @@ namespace KGySoft.ComponentModel
 
         internal CommandBinding(ICommand command, IDictionary<string, object> initialState, bool disposeCommand)
         {
-            this.command = command ?? throw new ArgumentNullException(nameof(command));
+            this.command = command ?? throw new ArgumentNullException(nameof(command), Res.ArgumentNull);
             this.disposeCommand = disposeCommand;
             state = initialState is CommandState s ? s : new CommandState(initialState);
             state.PropertyChanged += State_PropertyChanged;
@@ -164,17 +164,18 @@ namespace KGySoft.ComponentModel
         public ICommandBinding AddSource(object source, string eventName)
         {
             if (source == null)
-                throw new ArgumentNullException(nameof(source));
+                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (eventName == null)
-                throw new ArgumentNullException(nameof(eventName));
+                throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull);
 
-            if (!eventsCache[source.GetType()].TryGetValue(eventName, out EventInfo eventInfo))
-                throw new ArgumentException($@"There is no event '{eventName}' in component '{source}'", nameof(eventName));
+            Type sourceType = source.GetType();
+            if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
+                throw new ArgumentException(Res.CommandBindingMissingEvent(eventName, sourceType), nameof(eventName));
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
             ParameterInfo[] parameters = invokeMethod?.GetParameters();
             if (invokeMethod?.ReturnType != typeof(void) || parameters.Length != 2 || parameters[0].ParameterType != typeof(object) || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
-                throw new ArgumentException($"Event '{eventName}' does not have regular event handler delegate type.");
+                throw new ArgumentException(Res.CommandBindingInvalidEvent(eventName), nameof(eventName));
 
             // already added
             if (sources.TryGetValue(source, out var subscriptions) && subscriptions.ContainsKey(eventInfo))
@@ -223,7 +224,7 @@ namespace KGySoft.ComponentModel
 
         public ICommandBinding AddTarget(object target)
         {
-            targets.Add(target ?? throw new ArgumentNullException(nameof(target)));
+            targets.Add(target ?? throw new ArgumentNullException(nameof(target), Res.ArgumentNull));
             return this;
         }
 

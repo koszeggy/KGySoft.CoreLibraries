@@ -523,7 +523,7 @@ namespace KGySoft.Reflection
                 indexerParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            TrySetPropertyByName(propertyName, type, instance, value, ReflectionWays.Auto, indexerParameters, false);
+            TrySetPropertyByName(propertyName, type, instance, value, ReflectionWays.Auto, indexerParameters, true);
         }
 
         /// <summary>

@@ -805,8 +805,8 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="EnabledMustBeBool" xml:space="preserve">
     <value>'Enabled' state must have a boolean value.</value>
   </data>
-  <data name="PropertyBindingNoPropertyName" xml:space="preserve">
-    <value>The property binding command state does not contain the property name.</value>
+  <data name="Command_PropertyBindingMissingStateFormat" xml:space="preserve">
+    <value>The property binding command state does not contain the expected entry '{0}'.</value>
   </data>
   <data name="FastBindingList_CannotAddNewFormat" xml:space="preserve">
     <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</value>
@@ -840,5 +840,11 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="ObservableBindingList_CannotAddNewFormat" xml:space="preserve">
     <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</value>
+  </data>
+  <data name="CommandBinding_MissingEventFormat" xml:space="preserve">
+    <value>There is no event '{0}' in component '{1}'.</value>
+  </data>
+  <data name="CommandBinding_InvalidEventFormat" xml:space="preserve">
+    <value>Event '{0}' does not have regular event handler delegate type.</value>
   </data>
 </root>

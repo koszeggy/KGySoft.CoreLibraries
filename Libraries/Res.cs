@@ -253,7 +253,6 @@ namespace KGySoft
         internal const string ObservableObjectHasNoDefaultCtor = nameof(ObservableObjectHasNoDefaultCtor);
         internal const string CannotConvertToType = nameof(CannotConvertToType);
         internal const string EnabledMustBeBool = nameof(EnabledMustBeBool);
-        internal const string PropertyBindingNoPropertyName = nameof(PropertyBindingNoPropertyName);
 
         #endregion
 
@@ -343,6 +342,23 @@ namespace KGySoft
 
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string CollectionNongenericValueTypeInvalid(object value, Type type) => Get("Collection_NongenericValueTypeInvalidFormat", value, type);
+
+        #endregion
+
+        #region Command
+
+        /// <summary>The property binding command state does not contain the expected entry '{0}'.</summary>
+        internal static string CommandBindingMissingEvent(string stateName) => Get("Command_PropertyBindingMissingStateFormat", stateName);
+
+        #endregion
+
+        #region CommandBinding
+
+        /// <summary>There is no event '{0}' in type '{1}'.</summary>
+        internal static string CommandBindingMissingEvent(string eventName, Type type) => Get("CommandBinding_MissingEventFormat", eventName, type);
+
+        /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>
+        internal static string CommandBindingInvalidEvent(string eventName) => Get("CommandBinding_InvalidEventFormat", eventName);
 
         #endregion
 
