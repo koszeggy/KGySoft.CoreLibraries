@@ -239,39 +239,88 @@ namespace KGySoft.ComponentModel
 
         private void NotifyCollectionChanged_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            void HookNewItems(IList newItems)
+            {
+                if (newItems == null || !HookItemsPropertyChanged)
+                    return;
+
+                foreach (object newItem in newItems)
+                {
+                    if (newItem is T t)
+                        HookPropertyChanged(t);
+                }
+            }
+
+            void UnhookOldItems(IList oldItems)
+            {
+                if (oldItems == null || !HookItemsPropertyChanged)
+                    return;
+
+                foreach (object oldItem in oldItems)
+                {
+                    if (oldItem is T t)
+                        UnhookPropertyChanged(t);
+                }
+            }
+
             if (isExplicitChanging)
                 return;
 
             if (e.Action.In(NotifyCollectionChangedAction.Add, NotifyCollectionChangedAction.Remove, NotifyCollectionChangedAction.Reset))
                 EndNew();
 
-            if (!RaiseCollectionChangedEvents && !RaiseListChangedEvents)
+            // We can jump out early only if we don't need to maintain item subscriptions
+            if (!HookItemsPropertyChanged && !RaiseCollectionChangedEvents && !RaiseListChangedEvents)
                 return;
 
             using (BlockReentrancy())
             {
-                if (RaiseCollectionChangedEvents)
-                    OnCollectionChanged(e);
-
-                if (!RaiseListChangedEvents || IsDualNotifyCollectionType)
+                FireCollectionChanged(e);
+                if (IsDualNotifyCollectionType)
                     return;
 
                 switch (e.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, e.NewStartingIndex));
+                        if (e.NewItems?.Count > 1)
+                        {
+                            HookNewItems(e.NewItems);
+                            FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                            break;
+                        }
+
+                        if (HookItemsPropertyChanged)
+                            HookPropertyChanged(this[e.NewStartingIndex]);
+                        FireListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, e.NewStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Remove:
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, e.OldStartingIndex));
+                        UnhookOldItems(e.OldItems);
+                        if (e.OldItems?.Count > 1)
+                        {
+                            FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                            break;
+                        }
+
+                        FireListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, e.OldStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Replace:
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, e.NewStartingIndex));
+                        if (!(e.OldItems?.Count == 1 && e.NewItems?.Count == 1 && ReferenceEquals(e.OldItems[0], e.NewItems[0])))
+                        {
+                            UnhookOldItems(e.OldItems);
+                            HookNewItems(e.NewItems);
+                        }
+
+                        if (e.NewStartingIndex == e.OldStartingIndex && e.OldItems?.Count == 1 && e.NewItems?.Count == 1)
+                            FireListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, e.NewStartingIndex));
+                        else
+                            FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
                         break;
                     case NotifyCollectionChangedAction.Move:
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, e.NewStartingIndex, e.OldStartingIndex));
+                        FireListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, e.NewStartingIndex, e.OldStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Reset:
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                        UnhookOldItems(e.OldItems);
+                        FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
                         break;
                 }
             }
@@ -279,6 +328,7 @@ namespace KGySoft.ComponentModel
 
         private void BindingList_ListChanged(object sender, ListChangedEventArgs e)
         {
+            // we don't maintain item subscriptions here because it is the inner IBindingList's task
             if (isExplicitChanging)
                 return;
 
@@ -293,7 +343,7 @@ namespace KGySoft.ComponentModel
             using (BlockReentrancy())
             {
                 if (RaiseListChangedEvents)
-                    OnListChanged(e);
+                    FireListChanged(e);
 
                 if (!RaiseCollectionChangedEvents || IsDualNotifyCollectionType)
                     return;
@@ -301,14 +351,14 @@ namespace KGySoft.ComponentModel
                 switch (e.ListChangedType)
                 {
                     case ListChangedType.ItemAdded:
-                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this[e.NewIndex], e.NewIndex));
+                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this[e.NewIndex], e.NewIndex));
                         break;
                     case ListChangedType.ItemDeleted:
                         // note: after the remove we can't retrieve the old item
-                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, default(T), e.NewIndex));
+                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, default(T), e.NewIndex));
                         break;
                     case ListChangedType.ItemMoved:
-                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, this[e.NewIndex], e.NewIndex, e.OldIndex));
+                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, this[e.NewIndex], e.NewIndex, e.OldIndex));
                         break;
                     case ListChangedType.ItemChanged:
                         if (e.PropertyDescriptor != null && !RaiseItemChangedEvents)
@@ -316,10 +366,10 @@ namespace KGySoft.ComponentModel
 
                         // note: in case of replace we can't retrieve the old item
                         T item = e.NewIndex >= 0 && e.NewIndex < Count ? this[e.NewIndex] : default;
-                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, e.PropertyDescriptor != null ? item : default(T), e.NewIndex));
+                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, e.PropertyDescriptor != null ? item : default(T), e.NewIndex));
                         break;
                     default:
-                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
                         break;
                 }
             }
@@ -496,9 +546,12 @@ namespace KGySoft.ComponentModel
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
+            T originalItem = this[index];
+            if (ReferenceEquals(originalItem, item))
+                return;
+
             CheckReentrancy();
 
-            T originalItem = this[index];
             if (HookItemsPropertyChanged)
                 UnhookPropertyChanged(originalItem);
 
@@ -646,10 +699,8 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (RaiseCollectionChangedEvents)
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
-                if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index));
+                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
+                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index));
             }
 
             FirePropertyChanged(indexerName);
@@ -665,10 +716,8 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (RaiseCollectionChangedEvents)
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, item, index));
-                if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index, pd));
+                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, item, index));
+                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index, pd));
             }
 
             FirePropertyChanged(indexerName);
@@ -682,10 +731,8 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (RaiseCollectionChangedEvents)
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
-                if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, index));
+                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
+                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, index));
             }
 
             FirePropertyChanged(nameof(Count));
@@ -700,10 +747,8 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (RaiseCollectionChangedEvents)
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
-                if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, index));
+                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
+                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, index));
             }
 
             FirePropertyChanged(nameof(Count));
@@ -718,10 +763,8 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (RaiseCollectionChangedEvents)
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, item, newIndex, oldIndex));
-                if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
+                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, item, newIndex, oldIndex));
+                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
             }
 
             FirePropertyChanged(indexerName);
@@ -735,10 +778,9 @@ namespace KGySoft.ComponentModel
                 return;
             using (BlockReentrancy())
             {
-                if (!listChangeOnly && RaiseCollectionChangedEvents)
-                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-                if (RaiseListChangedEvents)
-                    OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                if (!listChangeOnly)
+                    FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+                FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
             }
 
             if (countChanged)
@@ -760,20 +802,38 @@ namespace KGySoft.ComponentModel
             FireItemChanged(position, this[position], null);
         }
 
+        private void FireCollectionChanged(NotifyCollectionChangedEventArgs e)
+        {
+            if (RaiseCollectionChangedEvents)
+                collectionChangedHandler?.Invoke(this, e);
+        }
+
+        private void FireListChanged(ListChangedEventArgs e)
+        {
+            if (RaiseListChangedEvents)
+                listChangedHandler?.Invoke(this, e);
+        }
+
         /// <summary>
-        /// Raises a PropertyChanged event (per <see cref="INotifyPropertyChanged" />).
+        /// Raises the <see cref="PropertyChanged" /> event.
         /// </summary>
+        /// <param name="e">The <see cref="PropertyChangedEventArgs" /> instance containing the event data.</param>
         protected virtual void OnPropertyChanged(PropertyChangedEventArgs e) => propertyChangedHandler?.Invoke(this, e);
 
         /// <summary>
         /// Raises the <see cref="CollectionChanged"/> event.
         /// </summary>
+        /// <param name="e">The <see cref="NotifyCollectionChangedEventArgs" /> instance containing the event data.</param>
         /// <remarks>
         /// When overriding this method, you can call the <see cref="BlockReentrancy"/> to guard against reentrant collection changes.
         /// </remarks>
-        protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) => collectionChangedHandler?.Invoke(this, e);
+        protected virtual void xOnCollectionChanged(NotifyCollectionChangedEventArgs e) => collectionChangedHandler?.Invoke(this, e);
 
-        protected virtual void OnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
+        /// <summary>
+        /// Raises the <see cref="ListChanged" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="ListChangedEventArgs" /> instance containing the event data.</param>
+        protected virtual void xOnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
 
         /// <summary>
         /// Disallow reentrant attempts to change this collection. E.g. a event handler

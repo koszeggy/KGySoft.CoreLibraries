@@ -160,44 +160,46 @@ namespace KGySoft.ComponentModel
         private void DoSort()
         {
             EndNew();
-            int length = Count;
-            bool reset = (sortedToBaseIndex?.Count).GetValueOrDefault() != length;
-            int[] previousBaseToSortedIndex = reset || sortedToBaseIndex == null ? null : new int[length];
-            if (!reset && previousBaseToSortedIndex != null && length > 0 && RaiseListChangedEvents)
-            {
-                for (int i = 0; i < previousBaseToSortedIndex.Length; i++)
-                {
-                    // ReSharper disable once PossibleNullReferenceException - false alarm, we are here if Count was > 0
-                    int baseIndex = sortedToBaseIndex[i].Key;
-                    if (baseIndex >= length)
-                    {
-                        reset = true;
-                        break;
-                    }
+            //int length = Count;
+            //bool reset = (sortedToBaseIndex?.Count).GetValueOrDefault() != length;
+            //int[] previousBaseToSortedIndex = reset || sortedToBaseIndex == null ? null : new int[length];
+            //if (!reset && previousBaseToSortedIndex != null && length > 0 && RaiseListChangedEvents)
+            //{
+            //    for (int i = 0; i < previousBaseToSortedIndex.Length; i++)
+            //    {
+            //        // ReSharper disable once PossibleNullReferenceException - false alarm, we are here if Count was > 0
+            //        int baseIndex = sortedToBaseIndex[i].Key;
+            //        if (baseIndex >= length)
+            //        {
+            //            reset = true;
+            //            break;
+            //        }
 
-                    previousBaseToSortedIndex[baseIndex] = i;
-                }
-            }
+            //        previousBaseToSortedIndex[baseIndex] = i;
+            //    }
+            //}
 
             itemComparer = CreateComparer(sortDirection.GetValueOrDefault() == ListSortDirection.Ascending, sortProperty == null ? typeof(T) : sortProperty.PropertyType);
-            BuildSortedIndexMap(reset);
-            if (reset || !RaiseListChangedEvents)
-                return;
+            BuildSortedIndexMap(true);
+            //BuildSortedIndexMap(reset);
+            //if (reset || !RaiseListChangedEvents)
+            //    return;
 
-            isMoving = true;
-            try
-            {
-                for (int i = 0; i < length; i++)
-                {
-                    int prevIndex = previousBaseToSortedIndex?[sortedToBaseIndex[i].Key] ?? i;
-                    if (prevIndex != i)
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, i, prevIndex));
-                }
-            }
-            finally
-            {
-                isMoving = false;
-            }
+            //isMoving = true;
+            //try
+            //{
+            //    for (int i = 0; i < length; i++)
+            //    {
+            //        int prevIndex = previousBaseToSortedIndex?[sortedToBaseIndex[i].Key] ?? i;
+            //        if (prevIndex != i)
+            //            OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, i, prevIndex));
+            //    }
+            //}
+            //finally
+            //{
+            //    isMoving = false;
+            //}
+            FireListChanged(ListChangedType.Reset, -1);
         }
 
         private void BuildSortedIndexMap(bool reset)
@@ -515,7 +517,8 @@ namespace KGySoft.ComponentModel
             if (isChanging)
                 return;
             base.OnListChanged(e);
-            if (sortDirection != null && (e.ListChangedType == ListChangedType.ItemAdded || (e.ListChangedType == ListChangedType.ItemChanged && e.PropertyDescriptor?.Name == sortProperty?.Name)))
+            if (sortDirection != null && (e.ListChangedType == ListChangedType.ItemAdded
+                || (e.ListChangedType == ListChangedType.ItemChanged && (e.PropertyDescriptor == null || e.PropertyDescriptor?.Name == sortProperty?.Name))))
             {
                 CheckNewItemSorted(e.NewIndex);
                 if (sortOnChange && sortPending && e.NewIndex != addNewPos)

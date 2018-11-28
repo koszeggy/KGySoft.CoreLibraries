@@ -349,8 +349,12 @@ namespace KGySoft.ComponentModel
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
+            T originalItem = base.GetItem(index);
+            if (ReferenceEquals(originalItem, item))
+                return;
+
             if (canRaiseItemChange)
-                UnhookPropertyChanged(base.GetItem(index));
+                UnhookPropertyChanged(originalItem);
 
             base.SetItem(index, item);
 
