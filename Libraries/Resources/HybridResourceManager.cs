@@ -26,7 +26,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -46,7 +46,7 @@ namespace KGySoft.Resources
     /// Just like the <see cref="ResXResourceManager"/> it is an <see cref="IExpandoResourceManager"/> implementation. The replacement and newly added content can be saved into .resx files.</para>
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Expanding compiled resources created by Visual Studio</h1>
     /// <para>You can create compiled resources by Visual Studio and you can dynamically expand them by <see cref="HybridResourceManager"/>. The new and overridden content
     /// will be saved as .resx files. See the following example for a step-by-step guide.
@@ -84,12 +84,12 @@ namespace KGySoft.Resources
     /// </EmbeddedResource>]]></code></item>
     /// <item>In Solution Explorer right click on <c>ConsoleApp1 (unavailable)</c>, Reload ConsoleApp1.csproj</item>
     /// </list></note></item>
-    /// <item>Reference <c>KGySoft.Libraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
+    /// <item>Reference <c>KGySoft.CoreLibraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
     /// </list></para>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Globalization;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     /// 
     /// public class Program
     /// {

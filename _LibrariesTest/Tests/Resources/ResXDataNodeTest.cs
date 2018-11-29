@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System.Text;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

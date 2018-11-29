@@ -19,7 +19,7 @@
 using System;
 using System.Runtime.Serialization;
 using System.Xml;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -54,8 +54,8 @@ namespace KGySoft.Resources
         internal const string ResXNullRefNameWinForms = "System.Resources.ResXNullRef, System.Windows.Forms";
         internal const string ResXFileRefNameWinForms = "System.Resources.ResXFileRef, System.Windows.Forms";
         internal const string ResXDataNodeNameWinForms = "System.Resources.ResXDataNode, System.Windows.Forms";
-        internal const string ResXFileRefNameKGySoft = "KGySoft.Resources.ResXFileRef, KGySoft.Libraries";
-        internal const string ResXNullRefNameKGySoft = "KGySoft.Resources.ResXNullRef, KGySoft.Libraries";
+        internal const string ResXFileRefNameKGySoft = "KGySoft.Resources.ResXFileRef, KGySoft.CoreLibraries";
+        internal const string ResXNullRefNameKGySoft = "KGySoft.Resources.ResXNullRef, KGySoft.CoreLibraries";
         internal const string ResXResourceReaderNameWinForms = "System.Resources.ResXResourceReader, System.Windows.Forms";
         internal const string ResXResourceWriterNameWinForms = "System.Resources.ResXResourceWriter, System.Windows.Forms";
 

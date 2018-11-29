@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 namespace KGySoft.ComponentModel

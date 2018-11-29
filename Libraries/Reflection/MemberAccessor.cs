@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 namespace KGySoft.Reflection
 {

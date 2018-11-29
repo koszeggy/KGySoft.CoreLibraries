@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 #endregion
 

@@ -19,8 +19,7 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 

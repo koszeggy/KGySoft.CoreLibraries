@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 namespace KGySoft.ComponentModel

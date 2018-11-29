@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using KGySoft.Collections;
 using KGySoft.Diagnostics;
-using KGySoft.Libraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

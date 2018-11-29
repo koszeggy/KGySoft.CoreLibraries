@@ -17,7 +17,7 @@
 #region Usings
 
 using System;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 #endregion
 

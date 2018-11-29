@@ -23,7 +23,7 @@ using System.Linq;
 using System.Reflection;
 
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion

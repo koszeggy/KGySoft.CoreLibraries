@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  <PropertyGroup>
+    <!-- The configuration and platform will be used to determine which
+         assemblies to include from solution and project documentation
+         sources -->
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{397f6543-1436-4ab8-aa81-162b4c3542c9}</ProjectGuid>
+    <SHFBSchemaVersion>2017.9.26.0</SHFBSchemaVersion>
+    <!-- AssemblyName, Name, and RootNamespace are not used by SHFB but Visual
+         Studio adds them anyway -->
+    <AssemblyName>Documentation</AssemblyName>
+    <RootNamespace>Documentation</RootNamespace>
+    <Name>Documentation</Name>
+    <!-- SHFB properties -->
+    <OutputPath>HelpOut\</OutputPath>
+    <HtmlHelpName>KGySoft.CoreLibraries</HtmlHelpName>
+    <Language>en-US</Language>
+    <DocumentationSources>
+      <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.dll" />
+      <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.xml" />
+    </DocumentationSources>
+    <HelpFileFormat>HtmlHelp1</HelpFileFormat>
+    <HelpTitle>KGySoft.CoreLibraries Help</HelpTitle>
+    <IndentHtml>False</IndentHtml>
+    <NamingMethod>Guid</NamingMethod>
+    <ProjectSummary>KGy SOFT Libraries</ProjectSummary>
+    <RootNamespaceContainer>False</RootNamespaceContainer>
+    <MissingTags>Summary, Parameter, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
+    <NamespaceSummaries>
+      <NamespaceSummaryItem name="KGySoft.ComponentModel" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.CoreLibraries" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True" />
+    </NamespaceSummaries>
+    <SyntaxFilters>Standard</SyntaxFilters>
+    <CleanIntermediates>True</CleanIntermediates>
+    <ApiFilter>
+    </ApiFilter>
+    <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
+    <FrameworkVersion>.NET Framework 4.5</FrameworkVersion>
+    <KeepLogFile>False</KeepLogFile>
+    <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
+    <CppCommentsFixup>False</CppCommentsFixup>
+    <SdkLinkTarget>Blank</SdkLinkTarget>
+    <PresentationStyle>VS2010</PresentationStyle>
+    <Preliminary>False</Preliminary>
+    <ContentPlacement>AboveNamespaces</ContentPlacement>
+    <WebsiteSdkLinkType>Msdn</WebsiteSdkLinkType>
+    <HtmlSdkLinkType>Msdn</HtmlSdkLinkType>
+    <IncludeFavorites>True</IncludeFavorites>
+    <BinaryTOC>True</BinaryTOC>
+    <ComponentConfigurations>
+      <ComponentConfig id="Code Block Component" enabled="True">
+        <component id="Code Block Component">
+          <basePath value="{@HtmlEncProjectFolder}" />
+          <outputPaths>{@HelpFormatOutputPaths}</outputPaths>
+          <allowMissingSource value="false" />
+          <removeRegionMarkers value="false" />
+          <colorizer syntaxFile="{@SHFBFolder}PresentationStyles\Colorizer\highlight.xml" styleFile="{@SHFBFolder}PresentationStyles\Colorizer\highlight.xsl" stylesheet="{@SHFBFolder}PresentationStyles\Colorizer\highlight.css" scriptFile="{@SHFBFolder}PresentationStyles\Colorizer\highlight.js" language="cs" tabSize="0" numberLines="false" outlining="false" keepSeeTags="false" defaultTitle="true" />
+        </component>
+      </ComponentConfig>
+    </ComponentConfigurations>
+    <PlugInConfigurations />
+    <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
+    <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
+    <HelpFileVersion>1.0.0.0</HelpFileVersion>
+    <MaximumGroupParts>2</MaximumGroupParts>
+    <NamespaceGrouping>False</NamespaceGrouping>
+    <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
+  </PropertyGroup>
+  <!-- There are no properties for these groups.  AnyCPU needs to appear in
+       order for Visual Studio to perform the build.  The others are optional
+       common platform types that may appear. -->
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Win32' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Help\" />
+    <Folder Include="Help\Images\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\Images\ResourceFileProperties_ResXResourceManager.png">
+      <ImageId>ResourceFileProperties_ResXResourceManager</ImageId>
+      <AlternateText>Resource File Properties ResXResource Manager</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewResourcesFile.png">
+      <ImageId>NewResourcesFile</ImageId>
+      <AlternateText>New Resources File</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewConsoleApp.png">
+      <ImageId>NewConsoleApp</ImageId>
+      <AlternateText>New Console App</AlternateText>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\Images\ResourceFileProperties_HybridResourceManager.png">
+      <ImageId>ResourceFileProperties_HybridResourceManager</ImageId>
+      <AlternateText>Resource File Properties Hybrid Resource Manager</AlternateText>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\Images\ResourceFileProperties_DynamicResourceManager.png">
+      <ImageId>ResourceFileProperties_DynamicResourceManager</ImageId>
+      <AlternateText>Resource File Properties Dynamic Resource Manager</AlternateText>
+    </Content>
+    <Content Include="Help\Images\NewClassLibrary.png">
+      <ImageId>NewClassLibrary</ImageId>
+      <AlternateText>New Class Library</AlternateText>
+    </Content>
+    <Content Include="Help\Images\DynamicResourceManager_ExampleResources.png">
+      <ImageId>DynamicResourceManager_ExampleResources</ImageId>
+      <AlternateText>Dynamic Resource Manager Example Resources</AlternateText>
+    </Content>
+  </ItemGroup>
+  <!-- Import the SHFB build targets -->
+  <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />
+</Project>

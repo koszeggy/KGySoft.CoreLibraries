@@ -29,7 +29,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 
@@ -78,7 +78,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Collections;
     /// using System.IO;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     /// 
     /// public class Example
     /// {
@@ -206,7 +206,7 @@ namespace KGySoft.Resources
     /// <h1 class="heading">Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h1>
     /// <para>
     /// If instantiated from a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
-    /// instance, an internal conversion into <see cref="ResXDataNode">KGySoft.Libraries.Resources.ResXDataNode</see> and <see cref="ResXFileRef">KGySoft.Libraries.Resources.ResXFileRef</see> automatically occurs.
+    /// instance, an internal conversion into <see cref="ResXDataNode">KGySoft.Resources.ResXDataNode</see> and <see cref="ResXFileRef">KGySoft.Resources.ResXFileRef</see> automatically occurs.
     /// <note>The compatibility with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
     /// </para>
     /// <para>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
@@ -647,7 +647,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentException"><paramref name="name"/> is a string of zero length.</exception>
         /// <remarks>
         /// <para>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>,
-        /// <see cref="ResXDataNode">KGySoft.Libraries.Resources.ResXDataNode</see> supports non-serializable types, too. See the details in the <strong>Remarks</strong>
+        /// <see cref="ResXDataNode">KGySoft.Resources.ResXDataNode</see> supports non-serializable types, too. See the details in the <strong>Remarks</strong>
         /// section of the <see cref="ResXDataNode"/>.</para>
         /// <para>If <paramref name="value"/> is another <see cref="ResXDataNode"/> instance the new <see cref="ResXDataNode"/> instance will be a copy of it with a possibly new name specified in the <paramref name="name"/> parameter.
         /// A <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> instance is also recognized.

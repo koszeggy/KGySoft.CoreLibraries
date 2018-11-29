@@ -27,7 +27,7 @@ using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 
@@ -43,7 +43,7 @@ namespace KGySoft.Resources
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section to see the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
     /// <para>If <see cref="CompatibleFormat"/> property is <see langword="true"/>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
     /// but by the original <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
@@ -53,7 +53,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Drawing;
     /// using System.IO;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     ///
     /// public class Example
     /// {
@@ -91,11 +91,11 @@ namespace KGySoft.Resources
     /// //   <data name="int" type="System.Int32">
     /// //     <value>42</value>
     /// //   </data>
-    /// //   <assembly alias="KGySoft.Libraries" name="KGySoft.Libraries, Version=3.6.3.1, Culture=neutral, PublicKeyToken=b45eba277439ddfe" />
-    /// //   <data name="null" type="KGySoft.Libraries.Resources.ResXNullRef, KGySoft.Libraries">
+    /// //   <assembly alias="KGySoft.CoreLibraries" name="KGySoft.CoreLibraries, Version=3.6.3.1, Culture=neutral, PublicKeyToken=b45eba277439ddfe" />
+    /// //   <data name="null" type="KGySoft.Resources.ResXNullRef, KGySoft.CoreLibraries">
     /// //     <value />
     /// //   </data>
-    /// //   <data name="file" type="KGySoft.Libraries.Resources.ResXFileRef, KGySoft.Libraries">
+    /// //   <data name="file" type="KGySoft.Resources.ResXFileRef, KGySoft.CoreLibraries">
     /// //     <value>images\Image.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
     /// //   </data>
     /// //   <data name="custom" mimetype="text/kgysoft.net/object.binary.base64">
@@ -190,7 +190,7 @@ namespace KGySoft.Resources
     /// <item><term>Any non-serializable type</term>
     /// <term>As long as the <see cref="BinarySerializationFormatter"/> can serialize the non-serializable type, this implementation supports non-serializable types as well. This works even if <see cref="CompatibleFormat"/> is <see langword="true"/>.</term>
     /// <term>If <see cref="CompatibleFormat"/> is <see langword="true"/> during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
-    /// as long as <c>KGySoft.Libraries</c> assembly can be loaded and <see cref="BinaryFormatter"/> can find the <see cref="AnyObjectSerializerWrapper"/> class.</term></item>
+    /// as long as <c>KGySoft.CoreLibraries</c> assembly can be loaded and <see cref="BinaryFormatter"/> can find the <see cref="AnyObjectSerializerWrapper"/> class.</term></item>
     /// </list></item>
     /// </list>
     /// </para>

@@ -26,7 +26,7 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -48,7 +48,7 @@ namespace KGySoft.Resources
     /// and <see cref="AutoSave"/> properties (see <see cref="AutoAppendOptions"/> and <see cref="AutoSaveOptions"/> enumerations).</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>,
     /// <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para><see cref="DynamicResourceManager"/> combines the functionality of <see cref="ResourceManager"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/>
     /// and extends these with the feature of auto expansion. It can be an ideal choice to use it as a resource manager of an application or a class library
     /// because it gives you freedom (or to the consumer of your library) to choose the strategy. If <see cref="AutoAppend"/> and <see cref="AutoSave"/> functionalities
@@ -93,7 +93,7 @@ namespace KGySoft.Resources
     /// On the other hand, if the unknown resource is requested by the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods, then a <see langword="null"/> value will be added.
     /// <code lang="C#"><![CDATA[
     /// using System;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     ///
     /// class Example
     /// {
@@ -117,8 +117,8 @@ namespace KGySoft.Resources
     ///   <data name="UnknownString">
     ///     <value>[U]UnknownString</value>
     ///   </data>
-    ///   <assembly alias="KGySoft.Libraries" name="KGySoft.Libraries, Version=3.6.3.1, Culture=neutral, PublicKeyToken=b45eba277439ddfe" />
-    ///   <data name="UnknownObject" type="KGySoft.Libraries.Resources.ResXNullRef, KGySoft.Libraries">
+    ///   <assembly alias="KGySoft.CoreLibraries" name="KGySoft.CoreLibraries, Version=3.6.3.1, Culture=neutral, PublicKeyToken=b45eba277439ddfe" />
+    ///   <data name="UnknownObject" type="KGySoft.Resources.ResXNullRef, KGySoft.Libraries">
     ///     <value />
     ///   </data>
     /// </root>]]></code></description></item>
@@ -149,8 +149,8 @@ namespace KGySoft.Resources
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Globalization;
-    /// using KGySoft.Libraries;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Resources;
     ///
     /// class Example
     /// {
@@ -209,8 +209,8 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Globalization;
     /// using System.Resources;
-    /// using KGySoft.Libraries;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Resources;
     ///
     /// // we can tell what the language of the invariant resource is
     /// [assembly: NeutralResourcesLanguage("en")]
@@ -288,7 +288,7 @@ namespace KGySoft.Resources
     /// <description>Enabling the <see cref="AutoSaveOptions.Dispose"/> option makes possible to save changes automatically when the <see cref="DynamicResourceManager"/> is being disposed.
     /// <code lang="C#"><![CDATA[
     /// using System.Globalization;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     ///
     /// class Example
     /// {
@@ -324,8 +324,8 @@ namespace KGySoft.Resources
     /// this class library. The initial content of the file will be the following:
     /// <code lang="C#"><![CDATA[
     /// using System;
-    /// using KGySoft.Libraries;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Resources;
     ///
     /// namespace ClassLibrary1
     /// {
@@ -436,8 +436,8 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Globalization;
     /// using ClassLibrary1;
-    /// using KGySoft.Libraries;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Resources;
     ///
     /// namespace ConsoleApp1
     /// {

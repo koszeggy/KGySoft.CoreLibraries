@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 namespace KGySoft.Serialization
@@ -24,7 +24,7 @@ namespace KGySoft.Serialization
 
             protected static readonly Type[] KnownTypes =
             {
-                typeof(IBinarySerializable) // KGySoft.Libraries
+                typeof(IBinarySerializable) // KGySoft.CoreLibraries
             };
 
             #endregion

@@ -19,7 +19,7 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -887,8 +887,8 @@ namespace _LibrariesTest.Tests.Serialization
 
                 DataAccessMethod.Random, // Microsoft.VisualStudio.QualityTools.UnitTestFramework enum
 
-                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.Libraries enum
-                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.Libraries enum, multiple flags
+                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
+                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
             };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum may not be used in this context.
@@ -900,8 +900,8 @@ namespace _LibrariesTest.Tests.Serialization
             // These values cannot be serialized with system serializer
             referenceObjects = new Enum[]
                 {
-                    BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.Libraries enum, obsolete element
-                    (BinarySerializationOptions)(-1), // KGySoft.Libraries enum, non-existing value
+                    BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.CoreLibraries enum, obsolete element
+                    (BinarySerializationOptions)(-1), // KGySoft.CoreLibraries enum, non-existing value
                 };
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
@@ -1458,7 +1458,7 @@ namespace _LibrariesTest.Tests.Serialization
             };
 
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
-            //SystemSerializeObjects(referenceObjects); // InvalidOperationException: There was an error reflecting type '_LibrariesTest.Libraries.Serialization.XmlSerializerTest.ReadOnlyProperties'. ---> System.NotSupportedException: Cannot serialize member _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties.Cache of type KGySoft.Libraries.Collections.Cache`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], because it implements IDictionary.
+            //SystemSerializeObjects(referenceObjects); // InvalidOperationException: There was an error reflecting type '_LibrariesTest.Libraries.Serialization.XmlSerializerTest.ReadOnlyProperties'. ---> System.NotSupportedException: Cannot serialize member _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties.Cache of type KGySoft.CoreLibraries.Collections.Cache`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], because it implements IDictionary.
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // false for ReadOnlyCollectionWithReadOnlyProperties
@@ -1472,7 +1472,7 @@ namespace _LibrariesTest.Tests.Serialization
                     readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} ))
             };
 
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"_LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"_LibrariesTest.Tests.Serialization.XmlSerializerTest+ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }

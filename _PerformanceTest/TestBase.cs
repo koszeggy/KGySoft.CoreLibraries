@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Linq;
 using System.Text;
+using KGySoft.CoreLibraries;
 
 namespace _PerformanceTest
 {
@@ -8,9 +9,6 @@ namespace _PerformanceTest
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
-
-    using KGySoft.Libraries;
-
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]

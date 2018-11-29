@@ -7,8 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using KGySoft.CoreLibraries;
 using KGySoft.Drawing;
-using KGySoft.Libraries;
 using KGySoft.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

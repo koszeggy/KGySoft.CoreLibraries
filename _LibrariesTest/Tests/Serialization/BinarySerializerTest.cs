@@ -14,7 +14,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Policy;
 using System.Text;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -1530,7 +1530,7 @@ namespace _LibrariesTest.Tests.Serialization
 
                 HandleInheritability.Inheritable, // System.Core enum
 
-                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.Libraries enum
+                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
             };
 
             SystemSerializeObject(referenceObjects);

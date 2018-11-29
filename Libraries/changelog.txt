@@ -6,6 +6,33 @@
 
 2018 - ez majd verzióra átírni
 
+! KGySoft.CoreLibraries namespace:
+==================================
+! Moved here from the KGySoft.Libraries namespace
++ New DateTimeExtensions class
+  + AsUtc method
++ New DictionaryExtensions class
+  + GetValueOrDefault methods
++ New WaitHandleExtensions class (only in .NET 4.5 and above)
+  + WaitOneAsync methods
++ New CharExtensions class
+  + IsNonCharacter method
+  + IsValidCharacter method
+! StringComparerExtensions class: removed (moved to StringExtensions)
+! StringExtensions class:
+  ! GetTokenValue methods are removed
+  + ToEnum method
+  + EqualsAny/IndexOfAny/ContainsAny overloads
+* EnumerableExtensions class
+  + New Shuffle overload: can be used with an already existing Random instance.
+  + New GetRandomElement methods
++ New RandomExtensions class
+  + ... TODO
++ TypeExtensions class
+  + IsDelegate method
+  + IsGenericTypeOf method
+  + IsImplementationOfGenericType method
+
 ! KGySoft.Collections namespace:
 ================================
 ! Moved here from the KGySoft.Libraries.Collections namespace
@@ -32,29 +59,6 @@
 ! KGySoft.Libraries.Diagnostics namespace: Moved to the KGySoft.Diagnostics namespace
 ! KGySoft.Libraries.Reflection namespace: Moved to the KGySoft.Reflection namespace
 ! KGySoft.Libraries.Serialization namespace: Moved to the KGySoft.Serialization namespace
-+ New DateTimeExtensions class
-  + AsUtc method
-+ New DictionaryExtensions class
-  + GetValueOrDefault methods
-+ New WaitHandleExtensions class (only in .NET 4.5 and above)
-  + WaitOneAsync methods
-+ New CharExtensions class
-  + IsNonCharacter method
-  + IsValidCharacter method
-! StringComparerExtensions class: removed (moved to StringExtensions)
-! StringExtensions class:
-  ! GetTokenValue methods are removed
-  + ToEnum method
-  + EqualsAny/IndexOfAny/ContainsAny overloads
-* EnumerableExtensions class
-  + New Shuffle overload: can be used with an already existing Random instance.
-  + New GetRandomElement methods
-+ New RandomExtensions class
-  + ... TODO
-+ TypeExtensions class
-  + IsDelegate method
-  + IsGenericTypeOf method
-  + IsImplementationOfGenericType method
 
 * KGySoft.Serialization namespace:
 ==================================

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Resources;
 using KGySoft;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

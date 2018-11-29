@@ -95,9 +95,9 @@
     <Compile Include="UnitTest1.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Libraries\KGySoft.Libraries.csproj">
+    <ProjectReference Include="..\Libraries\KGySoft.CoreLibraries.csproj">
       <Project>{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}</Project>
-      <Name>KGySoft.Libraries</Name>
+      <Name>KGySoft.CoreLibraries</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

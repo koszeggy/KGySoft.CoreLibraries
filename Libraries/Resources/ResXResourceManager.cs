@@ -29,7 +29,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -47,7 +47,7 @@ namespace KGySoft.Resources
     /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures and it can save the changed contents.</para>
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <h1 class="heading">Example: Using XML resources created by Visual Studio</h1>
     /// <para>You can create XML resource files by Visual Studio and you can use them by <see cref="ResXResourceManager"/>. See the following example for a step-by-step guide.
     /// <list type="number">
@@ -66,13 +66,13 @@ namespace KGySoft.Resources
     /// Do not forget to set <c>Copy if newer</c> for the linked resources as well so they will be copied to the output directory along with the .resx file. Now add some string resources and files if you wish.</item>
     /// <item>To add culture-specific resources you can add further resource files with the same base name, extended by culture names. For example, if the invariant resource is called <c>Resource1.resx</c>, then a
     /// region neutral English resource can be called <c>Resource1.en.resx</c> and the American English resource can be called <c>Resource1.en-US.resx</c>.</item>
-    /// <item>Reference <c>KGySoft.Libraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
+    /// <item>Reference <c>KGySoft.CoreLibraries.dll</c> and paste the following code in <c>Program.cs</c>:</item>
     /// </list></para>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Globalization;
-    /// using KGySoft.Libraries;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Resources;
     /// 
     /// public class Program
     /// {
@@ -143,8 +143,8 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Globalization;
     /// using System.Resources;
-    /// using KGySoft.Libraries;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Resources;
     /// 
     /// // You can put this into AssemblyInfo.cs. Indicates that the invariant (default) resource set uses the American English culture.
     /// // Try commenting out next line and see the differences.

@@ -20,7 +20,7 @@ using System;
 using System.Globalization;
 using System.Resources;
 using System.Threading;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Resources;
 using Microsoft.Win32;
 

@@ -95,14 +95,14 @@
     <Compile Include="Tests\ComponentModel\ObservableBindingListTest.cs" />
     <Compile Include="Tests\ComponentModel\SortableBindingListTest.cs" />
     <Compile Include="Tests\Diagnostics\DiagnosticToolsTest.cs" />
-    <Compile Include="Tests\Libraries\EnumTest.cs" />
-    <Compile Include="Tests\Libraries\Extensions\ByteArrayExtensionsTest.cs" />
-    <Compile Include="Tests\Libraries\Extensions\DecimalExtensionsTest.cs" />
-    <Compile Include="Tests\Libraries\Extensions\RandomExtensionsTest.cs" />
-    <Compile Include="Tests\Libraries\Extensions\TypeExtensionsTest.cs" />
+    <Compile Include="Tests\CoreLibraries\EnumTest.cs" />
+    <Compile Include="Tests\CoreLibraries\Extensions\ByteArrayExtensionsTest.cs" />
+    <Compile Include="Tests\CoreLibraries\Extensions\DecimalExtensionsTest.cs" />
+    <Compile Include="Tests\CoreLibraries\Extensions\RandomExtensionsTest.cs" />
+    <Compile Include="Tests\CoreLibraries\Extensions\TypeExtensionsTest.cs" />
     <Compile Include="Tests\Resources\DynamicResourceManagerTest.cs" />
     <Compile Include="Tests\Resources\HybridResourceManagerTest.cs" />
-    <Compile Include="Tests\Libraries\LanguageTest.cs" />
+    <Compile Include="Tests\CoreLibraries\LanguageTest.cs" />
     <Compile Include="Tests\Diagnostics\ProfilerTest.cs" />
     <Compile Include="Tests\Resources\ResXResourceSetTest.cs" />
     <Compile Include="Tests\Resources\ResXResourceWriterTest.cs" />
@@ -121,9 +121,9 @@
       <Project>{06AEC656-8AE3-409C-AB2E-64C6A3712F8B}</Project>
       <Name>KGySoft.Drawing</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Libraries\KGySoft.Libraries.csproj">
+    <ProjectReference Include="..\Libraries\KGySoft.CoreLibraries.csproj">
       <Project>{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}</Project>
-      <Name>KGySoft.Libraries</Name>
+      <Name>KGySoft.CoreLibraries</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

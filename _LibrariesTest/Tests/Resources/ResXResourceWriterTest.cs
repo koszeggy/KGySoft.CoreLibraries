@@ -11,8 +11,8 @@ using System.Text;
 using System.Windows.Forms;
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
+using KGySoft.CoreLibraries;
 using KGySoft.Drawing;
-using KGySoft.Libraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
@@ -161,10 +161,10 @@ namespace _LibrariesTest.Tests.Resources
 
                 DataAccessMethod.Random, // Microsoft.VisualStudio.QualityTools.UnitTestFramework enum
 
-                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.Libraries enum
-                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.Libraries enum, multiple flags
+                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
+                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
 
-                BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.Libraries enum, obsolete element
+                BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.CoreLibraries enum, obsolete element
                 (BinarySerializationOptions)(-1), // KGySoft.Libraries enum, non-existing value
 
             };

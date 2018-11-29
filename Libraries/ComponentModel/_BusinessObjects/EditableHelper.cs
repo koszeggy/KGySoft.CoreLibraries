@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 namespace KGySoft.ComponentModel
 {

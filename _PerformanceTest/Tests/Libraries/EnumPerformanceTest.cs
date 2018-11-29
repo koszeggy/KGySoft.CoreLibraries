@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest.Tests.Libraries
@@ -72,7 +72,7 @@ namespace _PerformanceTest.Tests.Libraries
                 Enum<TestEnum>.GetNames();
             }
             watch.Stop();
-            Console.WriteLine("KGySoft.Libraries.Enum<{0}>.GetNames(): {1} ms", enumType.Name, watch.ElapsedMilliseconds);
+            Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.GetNames(): {1} ms", enumType.Name, watch.ElapsedMilliseconds);
 
             const TestEnum e = TestEnum.Cica;
             watch.Reset();
@@ -91,7 +91,7 @@ namespace _PerformanceTest.Tests.Libraries
                 Enum<TestEnum>.GetName(e);
             }
             watch.Stop();
-            Console.WriteLine("KGySoft.Libraries.Enum<{0}>.GetName({0}.{1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
+            Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.GetName({0}.{1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
         }
 
         [TestMethod]
@@ -117,7 +117,7 @@ namespace _PerformanceTest.Tests.Libraries
                 Enum<TestEnum>.GetValues();
             }
             watch.Stop();
-            Console.WriteLine("KGySoft.Libraries.Enum<{0}>.GetValues(): {1} ms: ", enumType.Name, watch.ElapsedMilliseconds);
+            Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.GetValues(): {1} ms: ", enumType.Name, watch.ElapsedMilliseconds);
         }
 
         [TestMethod]
@@ -164,7 +164,7 @@ namespace _PerformanceTest.Tests.Libraries
                 Enum<TestEnum>.IsDefined(e);
             }
             watch.Stop();
-            Console.WriteLine("KGySoft.Libraries.Enum<{0}>.IsDefined({0}.{1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
+            Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.IsDefined({0}.{1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
 
             watch.Reset();
             watch.Start();
@@ -173,7 +173,7 @@ namespace _PerformanceTest.Tests.Libraries
                 Enum<TestEnum>.IsDefined(s);
             }
             watch.Stop();
-            Console.WriteLine("KGySoft.Libraries.Enum<{0}>.IsDefined(\"{1}\"): {2} ms", enumType.Name, s, watch.ElapsedMilliseconds);
+            Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.IsDefined(\"{1}\"): {2} ms", enumType.Name, s, watch.ElapsedMilliseconds);
 
             watch.Reset();
             watch.Start();
@@ -182,7 +182,7 @@ namespace _PerformanceTest.Tests.Libraries
                 Enum<TestEnum>.IsDefined(n);
             }
             watch.Stop();
-            Console.WriteLine("KGySoft.Libraries.Enum<{0}>.IsDefined({1}): {2} ms", enumType.Name, n, watch.ElapsedMilliseconds);
+            Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.IsDefined({1}): {2} ms", enumType.Name, n, watch.ElapsedMilliseconds);
         }
 
         [TestMethod]

@@ -25,8 +25,8 @@ using System.Security;
 using System.Threading;
 
 using KGySoft.Annotations;
+using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
-using KGySoft.Libraries;
 
 #endregion
 
@@ -68,7 +68,7 @@ namespace KGySoft.Collections
     /// </remarks>
     /// <threadsafety instance="false">Members of this type are not safe for multi-threaded operations, though a thread-safe accessor can be obtained for the <see cref="Cache{TKey,TValue}"/>
     /// by the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method. To get a thread-safe wrapper for all members use the
-    /// <see cref="DictionaryExtensions.AsThreadSafe">AsThreadSafe</see> extension method instead.
+    /// <see cref="DictionaryExtensions.AsThreadSafe{TKey,TValue}">AsThreadSafe</see> extension method instead.
     /// <note>If a <see cref="Cache{TKey,TValue}"/> instance is wrapped into a <see cref="LockingDictionary{TKey, TValue}"/> instance, then the whole cache will be locked during the time when the item loader delegate is being called.
     /// If that is not desirable consider to use the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method instead with the default arguments and access the cache only via the returned accessor.</note>
     /// </threadsafety>

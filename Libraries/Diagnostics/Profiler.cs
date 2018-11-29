@@ -6,7 +6,7 @@ using System.Linq;
 using System.Security;
 using System.Text;
 using System.Xml.Linq;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 namespace KGySoft.Diagnostics
 {

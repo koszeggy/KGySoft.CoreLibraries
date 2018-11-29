@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 namespace KGySoft.ComponentModel
 {

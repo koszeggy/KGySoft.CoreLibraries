@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Resources;
 using System.Security.Policy;
 using KGySoft;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

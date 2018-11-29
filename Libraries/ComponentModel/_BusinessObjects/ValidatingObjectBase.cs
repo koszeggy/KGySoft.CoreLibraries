@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using KGySoft.Annotations;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 namespace KGySoft.ComponentModel
 {

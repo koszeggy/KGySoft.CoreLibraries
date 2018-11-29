@@ -25,7 +25,7 @@ namespace KGySoft.Serialization
     /// Following example demonstrates the usage of the special constructor version.
     /// <code lang="C#">
     ///using System.IO;
-    ///using KGySoft.Libraries.Serialization;
+    ///using KGySoft.Serialization;
     ///
     ///&#47;/ This is a simple sealed class that will never be derived
     ///public sealed class ExampleSimple: IBinarySerializable
@@ -77,7 +77,7 @@ namespace KGySoft.Serialization
     /// and with versioned content (a.k.a. optional fields):
     /// <code lang="C#">
     ///using System.IO;
-    ///using KGySoft.Libraries.Serialization;
+    ///using KGySoft.Serialization;
     ///
     ///public class SerializableBase: IBinarySerializable
     ///{

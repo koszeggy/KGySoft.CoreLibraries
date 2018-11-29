@@ -19,7 +19,6 @@
 using System;
 using System.Globalization;
 using System.Resources;
-using KGySoft.Libraries;
 
 #endregion
 

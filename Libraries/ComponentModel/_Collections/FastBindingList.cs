@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using KGySoft.Collections.ObjectModel;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 // ReSharper disable RedundantBaseQualifier - not redundant: they are virtual members and we prevent to call possible derived methods

@@ -14,8 +14,6 @@
 
 #endregion
 
-using KGySoft.Libraries;
-
 namespace KGySoft.Resources
 {
     /// <summary>

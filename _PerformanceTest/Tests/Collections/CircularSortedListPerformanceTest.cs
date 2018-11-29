@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

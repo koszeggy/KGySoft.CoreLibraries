@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

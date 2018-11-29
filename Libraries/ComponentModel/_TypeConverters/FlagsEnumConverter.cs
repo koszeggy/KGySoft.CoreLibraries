@@ -20,8 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion

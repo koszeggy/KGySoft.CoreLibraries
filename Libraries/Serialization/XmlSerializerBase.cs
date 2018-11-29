@@ -13,7 +13,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 namespace KGySoft.Serialization

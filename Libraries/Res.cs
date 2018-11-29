@@ -20,7 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using KGySoft.Annotations;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 
@@ -268,7 +268,7 @@ namespace KGySoft
 
         #region Fields
 
-        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.Libraries.Messages", Reflector.KGySoftLibrariesAssembly);
+        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.CoreLibraries.Messages", Reflector.KGySoftLibrariesAssembly);
 
         #endregion
 

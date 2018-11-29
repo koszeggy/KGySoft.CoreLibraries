@@ -8,7 +8,7 @@ using System.Linq;
 using System.Resources;
 using System.Windows.Forms;
 using KGySoft;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;

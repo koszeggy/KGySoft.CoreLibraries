@@ -10,7 +10,7 @@ using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using KGySoft.Collections;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection.WinApi;
 
 namespace KGySoft.Reflection
@@ -1513,9 +1513,9 @@ namespace KGySoft.Reflection
         internal static void InvokeCtor(object instance, ConstructorInfo ctor, params object[] parameters)
         {
             // TODO: the old solution was slow and dangerous.
-            // The new could be new ActionInvoker.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
+            // The new could be in ActionInvoker.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
             // Performance test: MethodBase.Invoke is just 4x slower than an already executed invoker but at the first time invoker is 3000x slower.
-            ctor.Invoke(ctor, parameters);
+            ctor.Invoke(instance, parameters);
         }
 
         #endregion

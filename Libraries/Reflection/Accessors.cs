@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Xml;
-using KGySoft.Libraries;
+using KGySoft.CoreLibraries;
 
 // ReSharper disable InconsistentNaming - Properties are named here: Type_Member. Fields: accessorType_Member
 namespace KGySoft.Reflection

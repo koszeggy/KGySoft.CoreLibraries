@@ -12,9 +12,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
-
+using KGySoft.CoreLibraries;
 using KGySoft.Drawing;
-using KGySoft.Libraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;

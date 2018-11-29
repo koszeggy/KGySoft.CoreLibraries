@@ -33,7 +33,7 @@ namespace KGySoft.Resources
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section to see the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
-    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Libraries.Resources</see> namespace.</note>
+    /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>
     /// <para>A <see cref="ResXResourceSet"/> instance can contain resources, metadata and aliases (unlike the <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a> class, which contains only the resources).
     /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
@@ -46,7 +46,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Collections;
     /// using System.IO;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     /// 
     /// public class Example
     /// {
@@ -119,28 +119,28 @@ namespace KGySoft.Resources
     /// // The example displays the following output:
     /// // ____Resources in .resx:____
     /// // Name: string
-    /// // Value in SafeMode:     Test string (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in SafeMode:     Test string (KGySoft.Resources.ResXDataNode)
     /// // Value in non-SafeMode: Test string (System.String)
     ///
     /// // Name: int
-    /// // Value in SafeMode:     42 (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in SafeMode:     42 (KGySoft.Resources.ResXDataNode)
     /// // Value in non-SafeMode: 42 (System.Int32)
     ///
     /// // Name: color
-    /// // Value in SafeMode:     Red (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in SafeMode:     Red (KGySoft.Resources.ResXDataNode)
     /// // Value in non-SafeMode: Color[Red] (System.Drawing.Color)
     ///
     /// // Name: bytes
-    /// // Value in SafeMode:     VGVzdCBieXRlcw== (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in SafeMode:     VGVzdCBieXRlcw== (KGySoft.Resources.ResXDataNode)
     /// // Value in non-SafeMode: System.Byte[] (System.Byte[])
     ///
     /// // Name: dangerous
-    /// // Value in SafeMode:     YmluYXJ5 (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in SafeMode:     YmluYXJ5 (KGySoft.Resources.ResXDataNode)
     /// // Getting the deserialized value thrown an exception: End of Stream encountered before parsing was completed.
     ///
     /// // ____Metadata in .resx:____
     /// // Name: meta string
-    /// // Value in SafeMode:     Meta String (KGySoft.Libraries.Resources.ResXDataNode)
+    /// // Value in SafeMode:     Meta String (KGySoft.Resources.ResXDataNode)
     /// // Value in non-SafeMode: Meta String (System.String)
     ///
     /// // ____Aliases in .resx:____
@@ -157,7 +157,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.IO;
     /// using System.Text;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     /// 
     /// public class Example
     /// {
@@ -204,7 +204,7 @@ namespace KGySoft.Resources
     /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).
     /// <code lang="C#"><![CDATA[
     /// using System;
-    /// using KGySoft.Libraries.Resources;
+    /// using KGySoft.Resources;
     /// 
     /// public class Example
     /// {
@@ -308,7 +308,7 @@ namespace KGySoft.Resources
     /// }]]>
     /// 
     /// // The example displays the following output:
-    /// // Return type of GetObject in safe mode: KGySoft.Libraries.Resources.ResXDataNode
+    /// // Return type of GetObject in safe mode: KGySoft.Resources.ResXDataNode
     /// // 
     /// // *** Demonstrating SafeMode=true ***
     /// // Resource name 'unknown' does not exist in resource set or SafeMode is off.

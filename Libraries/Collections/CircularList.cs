@@ -23,9 +23,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-
+using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
-using KGySoft.Libraries;
 using KGySoft.Reflection;
 
 #endregion
