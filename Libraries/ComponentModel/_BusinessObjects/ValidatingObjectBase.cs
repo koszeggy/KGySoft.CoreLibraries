@@ -91,7 +91,8 @@ namespace KGySoft.ComponentModel
         /// <returns><see langword="true" /> if changing of the specified <paramref name="propertyName" /> affects the value of the <see cref="ObservableObjectBase.IsModified" /> property; otherwise, <see langword="false" />.</returns>
         protected override bool AffectsModifiedState(string propertyName) => base.AffectsModifiedState(propertyName) && !propertyName.In(nameof(IsValid), nameof(ValidationResults));
 
-        string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, ValidationResults.Errors.Where(e => e.PropertyName == propertyName).Select(e => e.Message));
+        //string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, ValidationResults.Errors.Where(e => e.PropertyName == propertyName).Select(e => e.Message));
+        string IDataErrorInfo.this[string propertyName] => String.Join(Environment.NewLine, ValidationResults[propertyName, ValidationSeverity.Error].Select(e => e.Message));
         string IDataErrorInfo.Error => String.Join(Environment.NewLine, ValidationResults.Errors.Select(e => e.Message));
     }
 }

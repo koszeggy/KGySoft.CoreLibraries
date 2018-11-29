@@ -66,14 +66,16 @@ namespace KGySoft.ComponentModel
             InvalidateCaches();
         }
 
-        /// <summary>
-        /// Gets the validation results for the specified property.
-        /// </summary>
-        /// <param name="propertyName">Name of the property to get the validation results.</param>
-        /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/> to get results of any severities. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns></returns>
-        public ValidationResult[] ForProperty(string propertyName, ValidationSeverity? severity = null) => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
+        ///// <summary>
+        ///// Gets the validation results for the specified property.
+        ///// </summary>
+        ///// <param name="propertyName">Name of the property to get the validation results.</param>
+        ///// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/> to get results of any severities. This parameter is optional.
+        ///// <br/>Default value: <see langword="null"/>.</param>
+        ///// <returns></returns>
+        //public ValidationResult[] ForProperty(string propertyName, ValidationSeverity? severity = null) 
+
+        public ValidationResult[] this[string propertyName, ValidationSeverity? severity = null] => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
 
         /// <summary>
         /// Gets the validation results denoting an error.
