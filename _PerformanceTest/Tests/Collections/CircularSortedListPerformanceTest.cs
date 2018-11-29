@@ -453,10 +453,10 @@ namespace _PerformanceTest.Tests.Collections
         private static CircularSortedList<TKey, TValue> PrepareList<TKey, TValue>(int capacity, int startIndex, int count)
         {
             CircularSortedList<TKey, TValue> result = new CircularSortedList<TKey, TValue>(capacity);
-            var keys = Reflector.GetInstanceFieldByName(result, "keys");
-            Reflector.SetInstanceFieldByName(keys, "startIndex", startIndex);
-            var values = Reflector.GetInstanceFieldByName(result, "values");
-            Reflector.SetInstanceFieldByName(values, "startIndex", startIndex);
+            var keys = Reflector.GetField(result, "keys");
+            Reflector.SetField(keys, "startIndex", startIndex);
+            var values = Reflector.GetField(result, "values");
+            Reflector.SetField(values, "startIndex", startIndex);
 
             Type typeKey = typeof(TKey);
             if (typeKey.IsNullable())

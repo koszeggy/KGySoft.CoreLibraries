@@ -34,7 +34,7 @@ namespace KGySoft.ComponentModel
                 object source = src.Source;
                 propertyValue = source is IPersistableObject persistableSource && persistableSource.TryGetPropertyValue(sourcePropertyName, out propertyValue)
                     || source is ICommandState stateSource && stateSource.TryGetValue(sourcePropertyName, out propertyValue)
-                        ? propertyValue : Reflector.GetInstancePropertyByName(source, sourcePropertyName);
+                        ? propertyValue : Reflector.GetProperty(source, sourcePropertyName);
             }
 
             var formatValue = state.GetValueOrDefault<Func<object, object>>(stateFormatValue);
@@ -50,7 +50,7 @@ namespace KGySoft.ComponentModel
                     stateTarget[targetPropertyName] = propertyValue;
                     break;
                 default:
-                    Reflector.SetInstancePropertyByName(target, targetPropertyName, propertyValue);
+                    Reflector.SetProperty(target, targetPropertyName, propertyValue);
                     break;
             }
         }

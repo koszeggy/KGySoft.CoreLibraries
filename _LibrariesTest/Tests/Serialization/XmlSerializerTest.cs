@@ -1777,7 +1777,7 @@ namespace _LibrariesTest.Tests.Serialization
                 var xElementComp = new XElement("test");
                 KGyXmlSerializer.SerializeContent(xElementComp, obj, options);
                 //Console.WriteLine(xElementComp);
-                deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
+                deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.CreateInstance(type);
                 KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
                 AssertDeepEquals(obj, deserializedObject);
 
@@ -1794,7 +1794,7 @@ namespace _LibrariesTest.Tests.Serialization
                 // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
                 using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true }))
                 {
-                    deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.Construct(type);
+                    deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.CreateInstance(type);
                     reader.Read(); // to node "test"
                     KGyXmlSerializer.DeserializeContent(reader, deserializedObject);
                     reader.ReadEndElement();
@@ -1853,9 +1853,9 @@ namespace _LibrariesTest.Tests.Serialization
                         using (XmlReader itemReader = XmlReader.Create(new StringReader(sbItem.ToString()), new XmlReaderSettings { IgnoreWhitespace = true }))
                         {
                             var itemType = item.GetType();
-                            deserXElement = itemType.IsArray ? item.DeepClone() : Reflector.Construct(itemType);
+                            deserXElement = itemType.IsArray ? item.DeepClone() : Reflector.CreateInstance(itemType);
                             KGyXmlSerializer.DeserializeContent(xItem, deserXElement);
-                            deserReader = itemType.IsArray ? item.DeepClone() : Reflector.Construct(itemType);
+                            deserReader = itemType.IsArray ? item.DeepClone() : Reflector.CreateInstance(itemType);
                             itemReader.Read(); // to node "itemContent"
                             KGyXmlSerializer.DeserializeContent(itemReader, deserReader);
                             itemReader.ReadEndElement();

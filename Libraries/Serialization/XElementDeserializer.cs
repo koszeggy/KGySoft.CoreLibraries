@@ -186,7 +186,7 @@ namespace KGySoft.Serialization
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters() 
-                    ? Reflector.Construct(type) 
+                    ? Reflector.CreateInstance(type) 
                     : throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.Get(Res.NotAnIXmlSerializable, type));
@@ -236,7 +236,7 @@ namespace KGySoft.Serialization
                 }
 
                 var ctor = type.GetConstructor(new[] { keyType, valueType });
-                result = Reflector.Construct(ctor, key, value);
+                result = Reflector.CreateInstance(ctor, key, value);
                 return true;
             }
 
@@ -303,7 +303,7 @@ namespace KGySoft.Serialization
                 }
 
                 result = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                    ? Reflector.Construct(type)
+                    ? Reflector.CreateInstance(type)
                     : throw new ReflectionException(Res.Get(Res.XmlNoDefaultCtor, type)));
 
                 // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)

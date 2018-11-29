@@ -761,7 +761,7 @@ namespace KGySoft.CoreLibraries
                     context.PushMember(nameof(KeyValuePair<_, _>.Value));
                     var value = GenerateObject(args[1], ref context);
                     context.PopMember();
-                    return Reflector.Construct(type, key, value);
+                    return Reflector.CreateInstance(type, key, value);
                 }
 
                 object result;
@@ -852,7 +852,7 @@ namespace KGySoft.CoreLibraries
 
                 Type[] keyValue = GetKeyValueTypes(elementType);
                 IDictionary dictionary = collection as IDictionary;
-                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetPropertyAccessor((PropertyInfo)typeof(IDictionary<,>).MakeGenericType(keyValue).GetDefaultMembers()[0]);
+                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetAccessor((PropertyInfo)typeof(IDictionary<,>).MakeGenericType(keyValue).GetDefaultMembers()[0]);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -894,7 +894,7 @@ namespace KGySoft.CoreLibraries
                     PopulateCollection(initializerCollection, elementType, false, ref context);
                 }
 
-                return ObjectFactory.GetObjectFactory(collectionCtor).Create(initializerCollection);
+                return CreateInstanceAccessor.GetAccessor(collectionCtor).CreateInstance(initializerCollection);
             }
 
             private static object GenerateAnyObject(Type type, ref GeneratorContext context)
@@ -975,7 +975,7 @@ namespace KGySoft.CoreLibraries
                         context.PushMember(property.Name);
                         try
                         {
-                            PropertyAccessor.GetPropertyAccessor(property).Set(obj, GenerateObject(property.PropertyType, ref context));
+                            PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, ref context));
                         }
                         // ReSharper disable once EmptyGeneralCatchClause - we just skip the property if it cannot be set
                         catch
@@ -993,7 +993,7 @@ namespace KGySoft.CoreLibraries
                         context.PushMember(field.Name);
                         try
                         {
-                            FieldAccessor.GetFieldAccessor(field).Set(obj, GenerateObject(field.FieldType, ref context));
+                            FieldAccessor.GetAccessor(field).Set(obj, GenerateObject(field.FieldType, ref context));
                         }
                         // ReSharper disable once EmptyGeneralCatchClause - we just skip the field if it cannot be set
                         catch

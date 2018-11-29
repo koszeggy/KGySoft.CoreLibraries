@@ -243,8 +243,8 @@ namespace KGySoft.Serialization
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
-                object key = Reflector.GetInstancePropertyByName(obj, nameof(KeyValuePair<_,_>.Key));
-                object value = Reflector.GetInstancePropertyByName(obj, nameof(KeyValuePair<_,_>.Value));
+                object key = Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key));
+                object value = Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value));
                 XElement xKey = new XElement(nameof(KeyValuePair<_,_>.Key));
                 XElement xValue = new XElement(nameof(KeyValuePair<_,_>.Value));
                 parent.Add(xKey, xValue);
@@ -367,7 +367,7 @@ namespace KGySoft.Serialization
 
                     if (ctor != null)
                     {
-                        if (Reflector.Construct(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
+                        if (Reflector.CreateInstance(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                         {
                             // ReSharper disable once AssignNullToNotNullAttribute - false alarm: it CAN be null
                             WriteStringValue(converter.ConvertToInvariantString(value), memberElement);

@@ -7,9 +7,9 @@ using System.Reflection.Emit;
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Function invoker for any parameters. Internal, cannot be instantiated from outside.
+    /// Function method accessor for any parameters. Internal, cannot be instantiated from outside.
     /// </summary>
-    internal sealed class FunctionInvoker: MethodInvoker
+    internal sealed class FunctionMethodAccessor : MethodAccessor
     {
         /// <summary>
         /// Represents a non-generic function that can be used for any function methods.
@@ -19,7 +19,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Non-caching internal constructor. Called from cache.
         /// </summary>
-        internal FunctionInvoker(MethodInfo mi)
+        internal FunctionMethodAccessor(MethodInfo mi)
             : base(mi)
         {
         }

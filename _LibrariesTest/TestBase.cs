@@ -109,7 +109,7 @@ namespace _LibrariesTest
                 return false;
 
             if (typeRef == typeof(AnyObjectSerializerWrapper))
-                return CheckDeepEquals(Reflector.GetInstanceFieldByName(reference, "obj"), check, forceEqualityByMembers, errors, checkedObjects);
+                return CheckDeepEquals(Reflector.GetField(reference, "obj"), check, forceEqualityByMembers, errors, checkedObjects);
 
             if (typeRef == typeof(SystemFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
@@ -166,9 +166,9 @@ namespace _LibrariesTest
                     || typeRef == typeof(DictionaryEntry))
                 {
                     string propName = nameof(DictionaryEntry.Key);
-                    bool result = CheckMemberDeepEquals($"{typeRef}.{propName}", Reflector.GetInstancePropertyByName(reference, propName), Reflector.GetInstancePropertyByName(check, propName), forceEqualityByMembers, errors, checkedObjects);
+                    bool result = CheckMemberDeepEquals($"{typeRef}.{propName}", Reflector.GetProperty(reference, propName), Reflector.GetProperty(check, propName), forceEqualityByMembers, errors, checkedObjects);
                     propName = nameof(DictionaryEntry.Value);
-                    result &= CheckMemberDeepEquals($"{typeRef}.{propName}", Reflector.GetInstancePropertyByName(reference, propName), Reflector.GetInstancePropertyByName(check, propName), forceEqualityByMembers, errors, checkedObjects);
+                    result &= CheckMemberDeepEquals($"{typeRef}.{propName}", Reflector.GetProperty(reference, propName), Reflector.GetProperty(check, propName), forceEqualityByMembers, errors, checkedObjects);
 
                     return result;
                 }

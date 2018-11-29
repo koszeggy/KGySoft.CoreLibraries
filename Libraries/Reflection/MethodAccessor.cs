@@ -5,10 +5,10 @@ using System.Reflection;
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Base class of method (action or function) invokation classes.
-    /// Provides static <see cref="GetMethodInvoker"/> method to obtain invoker of any method.
+    /// Base class of method (action or function) invocation classes.
+    /// Provides static <see cref="GetAccessor"/> method to obtain the accessor of any method.
     /// </summary>
-    public abstract class MethodInvoker: MemberAccessor
+    public abstract class MethodAccessor: MemberAccessor
     {
         private Delegate invoker;
 
@@ -23,10 +23,10 @@ namespace KGySoft.Reflection
         protected abstract Delegate CreateInvoker();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MethodInvoker"/> class.
+        /// Initializes a new instance of the <see cref="MethodAccessor"/> class.
         /// </summary>
-        /// <param name="method">The method to associate with this <see cref="MethodInvoker"/>.</param>
-        protected MethodInvoker(MethodBase method) :
+        /// <param name="method">The method to associate with this <see cref="MethodAccessor"/>.</param>
+        protected MethodAccessor(MethodBase method) :
             base(method, method.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -35,16 +35,16 @@ namespace KGySoft.Reflection
         /// Retrieves an invoker for a method based on a <see cref="MethodInfo"/> instance.
         /// </summary>
         /// <param name="method">The <see cref="MethodInfo"/> that contains informations of the method to invoke.</param>
-        /// <returns>Returns a <see cref="MethodInvoker"/> instance that can be used to invoke the method.</returns>
-        public static MethodInvoker GetMethodInvoker(MethodInfo method) 
-            => (MethodInvoker)GetCreateAccessor(method ?? throw new ArgumentNullException(nameof(method), Res.ArgumentNull));
+        /// <returns>Returns a <see cref="MethodAccessor"/> instance that can be used to invoke the method.</returns>
+        public static MethodAccessor GetAccessor(MethodInfo method) 
+            => (MethodAccessor)GetCreateAccessor(method ?? throw new ArgumentNullException(nameof(method), Res.ArgumentNull));
 
         /// <summary>
         /// Non-caching version of invoker creation.
         /// </summary>
-        internal static MethodInvoker CreateMethodInvoker(MethodInfo method) => method.ReturnType == typeof(void) 
-            ? (MethodInvoker)new ActionInvoker(method) 
-            : new FunctionInvoker(method);
+        internal static MethodAccessor CreateAccessor(MethodInfo method) => method.ReturnType == typeof(void) 
+            ? (MethodAccessor)new ActionMethodAccessor(method) 
+            : new FunctionMethodAccessor(method);
 
         /// <summary>
         /// Invokes the method. Return value of <see cref="Void"/>-types methods are null.

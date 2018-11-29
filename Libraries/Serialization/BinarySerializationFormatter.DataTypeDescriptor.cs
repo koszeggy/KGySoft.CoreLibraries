@@ -355,7 +355,7 @@ namespace KGySoft.Serialization
                 switch (CollectionDataType)
                 {
                     case DataTypes.OrderedDictionary:
-                        Reflector.SetInstanceFieldByName(collection, "_readOnly", true);
+                        Reflector.SetField(collection, "_readOnly", true);
                         return collection;
                     default:
                         throw new NotSupportedException(Res.Get(Res.ReadOnlyCollectionNotSupported, ToString()));

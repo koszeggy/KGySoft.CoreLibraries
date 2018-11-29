@@ -224,7 +224,7 @@ namespace KGySoft.ComponentModel
             Type type = GetType();
             if (type.GetDefaultConstructor() == null)
                 throw new InvalidOperationException(Res.Get(Res.ObservableObjectHasNoDefaultCtor, type));
-            ObservableObjectBase clone = (ObservableObjectBase)Reflector.Construct(type);
+            ObservableObjectBase clone = (ObservableObjectBase)Reflector.CreateInstance(type);
             clone.properties = CloneProperties().AsThreadSafe();
             clone.isModified = isModified;
             //clone.propertyChanged = propertyChanged;

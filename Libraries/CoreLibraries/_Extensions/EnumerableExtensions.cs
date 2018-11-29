@@ -331,7 +331,7 @@ namespace KGySoft.CoreLibraries
                     MethodInfo mi = i.GetMethod("Add");
                     if (mi.GetParameters()[0].ParameterType.CanAcceptValue(item))
                     {
-                        MethodInvoker.GetMethodInvoker(mi).Invoke(source, item);
+                        MethodAccessor.GetAccessor(mi).Invoke(source, item);
                         return;
                     }
                 }
@@ -379,7 +379,7 @@ namespace KGySoft.CoreLibraries
                 if (i.IsGenericTypeOf(typeof(ICollection<>)))
                 {
                     MethodInfo mi = i.GetMethod("Clear");
-                    MethodInvoker.GetMethodInvoker(mi).Invoke(source);
+                    MethodAccessor.GetAccessor(mi).Invoke(source);
                     return;
                 }
             }

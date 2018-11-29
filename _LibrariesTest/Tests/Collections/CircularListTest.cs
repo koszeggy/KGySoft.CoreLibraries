@@ -1027,31 +1027,31 @@ namespace _LibrariesTest.Tests.Collections
         {
             const string es = "elementSizeExponent";
             // non-primitive type
-            Assert.AreEqual(0, Reflector.GetStaticFieldByName(typeof(CircularList<string>), es));
+            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<string>), es));
 
             // bool, byte, sbyte: 0
-            Assert.AreEqual(0, Reflector.GetStaticFieldByName(typeof(CircularList<bool>), es));
-            Assert.AreEqual(0, Reflector.GetStaticFieldByName(typeof(CircularList<byte>), es));
-            Assert.AreEqual(0, Reflector.GetStaticFieldByName(typeof(CircularList<sbyte>), es));
+            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<bool>), es));
+            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<byte>), es));
+            Assert.AreEqual(0, Reflector.GetField(typeof(CircularList<sbyte>), es));
 
             // short, ushort, char: 1
-            Assert.AreEqual(1, Reflector.GetStaticFieldByName(typeof(CircularList<short>), es));
-            Assert.AreEqual(1, Reflector.GetStaticFieldByName(typeof(CircularList<ushort>), es));
-            Assert.AreEqual(1, Reflector.GetStaticFieldByName(typeof(CircularList<char>), es));
+            Assert.AreEqual(1, Reflector.GetField(typeof(CircularList<short>), es));
+            Assert.AreEqual(1, Reflector.GetField(typeof(CircularList<ushort>), es));
+            Assert.AreEqual(1, Reflector.GetField(typeof(CircularList<char>), es));
 
             // int, uint, float: 2
-            Assert.AreEqual(2, Reflector.GetStaticFieldByName(typeof(CircularList<int>), es));
-            Assert.AreEqual(2, Reflector.GetStaticFieldByName(typeof(CircularList<uint>), es));
-            Assert.AreEqual(2, Reflector.GetStaticFieldByName(typeof(CircularList<float>), es));
+            Assert.AreEqual(2, Reflector.GetField(typeof(CircularList<int>), es));
+            Assert.AreEqual(2, Reflector.GetField(typeof(CircularList<uint>), es));
+            Assert.AreEqual(2, Reflector.GetField(typeof(CircularList<float>), es));
 
             // long, ulong, double: 3
-            Assert.AreEqual(3, Reflector.GetStaticFieldByName(typeof(CircularList<long>), es));
-            Assert.AreEqual(3, Reflector.GetStaticFieldByName(typeof(CircularList<ulong>), es));
-            Assert.AreEqual(3, Reflector.GetStaticFieldByName(typeof(CircularList<double>), es));
+            Assert.AreEqual(3, Reflector.GetField(typeof(CircularList<long>), es));
+            Assert.AreEqual(3, Reflector.GetField(typeof(CircularList<ulong>), es));
+            Assert.AreEqual(3, Reflector.GetField(typeof(CircularList<double>), es));
 
             // intptr, uintptr: 2 or 3, depending on platform
-            Assert.AreEqual(IntPtr.Size == 4 ? 2 : 3, Reflector.GetStaticFieldByName(typeof(CircularList<IntPtr>), es));
-            Assert.AreEqual(UIntPtr.Size == 4 ? 2 : 3, Reflector.GetStaticFieldByName(typeof(CircularList<UIntPtr>), es));
+            Assert.AreEqual(IntPtr.Size == 4 ? 2 : 3, Reflector.GetField(typeof(CircularList<IntPtr>), es));
+            Assert.AreEqual(UIntPtr.Size == 4 ? 2 : 3, Reflector.GetField(typeof(CircularList<UIntPtr>), es));
         }
 
         [TestMethod]
@@ -1213,7 +1213,7 @@ namespace _LibrariesTest.Tests.Collections
         private static CircularList<T> PrepareList<T>(int capacity, int startIndex, int count)
         {
             CircularList<T> result = new CircularList<T>(capacity);
-            Reflector.SetInstanceFieldByName(result, "startIndex", startIndex);
+            Reflector.SetField(result, "startIndex", startIndex);
             Type type = typeof(T);
             if (type.IsNullable())
                 type = Nullable.GetUnderlyingType(type);

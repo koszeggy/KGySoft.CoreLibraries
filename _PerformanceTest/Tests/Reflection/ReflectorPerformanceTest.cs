@@ -143,7 +143,7 @@ namespace _PerformanceTest.Tests.Reflection
 
             // a new uncached invoker
             MethodInfo mi = t.GetType().GetMethod(methodName);
-            MethodInvoker invokerAction = new ActionInvoker(mi);
+            MethodAccessor invokerAction = new ActionMethodAccessor(mi);
 
             int cacheSize = 1024;
             int iterations = 1000000;
@@ -178,7 +178,7 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                MethodInvoker.GetMethodInvoker(mi).Invoke(t, new object[] { p1, p2 });
+                MethodAccessor.GetAccessor(mi).Invoke(t, new object[] { p1, p2 });
             }
             watch.Stop();
             Console.WriteLine("Re-fetched invoker (MethodInvoker.GetMethodInvoker(MethodInfo).Invoke(intance, ...)): " + watch.ElapsedMilliseconds.ToString());
@@ -221,7 +221,7 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.RunInstanceMethodByName(t, methodName, ReflectionWays.DynamicDelegate, p1, p2);
+                Reflector.RunMethod(t, methodName, ReflectionWays.DynamicDelegate, p1, p2);
                 //Reflector.RunStaticMethodByName(typeof(Test), methodName, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
@@ -233,7 +233,7 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.RunInstanceMethodByName(t, methodName, ReflectionWays.SystemReflection, p1, p2);
+                Reflector.RunMethod(t, methodName, ReflectionWays.SystemReflection, p1, p2);
                 //Reflector.RunStaticMethodByName(typeof(Test), methodName, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
@@ -487,7 +487,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                FieldAccessor.GetFieldAccessor(fi).Set(t, fieldValue);
+                FieldAccessor.GetAccessor(fi).Set(t, fieldValue);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched accessor - set: " + watch.ElapsedMilliseconds.ToString());
@@ -498,7 +498,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                fieldValue = (int)FieldAccessor.GetFieldAccessor(fi).Get(t);
+                fieldValue = (int)FieldAccessor.GetAccessor(fi).Get(t);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched accessor - get: " + watch.ElapsedMilliseconds.ToString());
@@ -573,7 +573,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstanceFieldByName(t, fieldName, fieldValue, ReflectionWays.DynamicDelegate);
+                Reflector.SetField(t, fieldName, fieldValue, ReflectionWays.DynamicDelegate);
                 //Reflector.SetStaticFieldByName(t.GetType(), fieldName, fieldValue, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
@@ -585,7 +585,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                fieldValue = (int)Reflector.GetInstanceFieldByName(t, fieldName, ReflectionWays.DynamicDelegate);
+                fieldValue = (int)Reflector.GetField(t, fieldName, ReflectionWays.DynamicDelegate);
                 //propValue = (int)Reflector.GetStaticFieldByName(t.GetType(), fieldName, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
@@ -597,7 +597,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstanceFieldByName(t, fieldName, fieldValue, ReflectionWays.SystemReflection);
+                Reflector.SetField(t, fieldName, fieldValue, ReflectionWays.SystemReflection);
                 //Reflector.SetStaticFieldByName(t.GetType(), fieldName, fieldValue, ReflectionWays.SystemReflection);
             }
             watch.Stop();
@@ -609,7 +609,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                fieldValue = (int)Reflector.GetInstanceFieldByName(t, fieldName, ReflectionWays.SystemReflection);
+                fieldValue = (int)Reflector.GetField(t, fieldName, ReflectionWays.SystemReflection);
                 //propValue = (int)Reflector.GetStaticFieldByName(t.GetType(), fieldName, ReflectionWays.SystemReflection);
             }
             watch.Stop();
@@ -682,7 +682,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                PropertyAccessor.GetPropertyAccessor(pi).Set(t, propValue);
+                PropertyAccessor.GetAccessor(pi).Set(t, propValue);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched accessor - set: " + watch.ElapsedMilliseconds.ToString());
@@ -693,7 +693,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)PropertyAccessor.GetPropertyAccessor(pi).Get(t);
+                propValue = (int)PropertyAccessor.GetAccessor(pi).Get(t);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched accessor - get: " + watch.ElapsedMilliseconds.ToString());
@@ -768,7 +768,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstancePropertyByName(t, propName, propValue, ReflectionWays.DynamicDelegate);
+                Reflector.SetProperty(t, propName, propValue, ReflectionWays.DynamicDelegate);
                 //Reflector.SetStaticPropertyByName(t.GetType(), propName, propValue, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
@@ -780,7 +780,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)Reflector.GetInstancePropertyByName(t, propName, ReflectionWays.DynamicDelegate);
+                propValue = (int)Reflector.GetProperty(t, propName, ReflectionWays.DynamicDelegate);
                 //propValue = (int)Reflector.GetStaticPropertyByName(t.GetType(), propName, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
@@ -792,7 +792,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstancePropertyByName(t, propName, propValue, ReflectionWays.SystemReflection);
+                Reflector.SetProperty(t, propName, propValue, ReflectionWays.SystemReflection);
                 //Reflector.SetStaticPropertyByName(t.GetType(), propName, propValue, ReflectionWays.SystemReflection);
             }
             watch.Stop();
@@ -804,7 +804,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)Reflector.GetInstancePropertyByName(t, propName, ReflectionWays.SystemReflection);
+                propValue = (int)Reflector.GetProperty(t, propName, ReflectionWays.SystemReflection);
                 //propValue = (int)Reflector.GetStaticPropertyByName(t.GetType(), propName, ReflectionWays.SystemReflection);
             }
             watch.Stop();
@@ -816,7 +816,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstancePropertyByName(t, propName, propValue, ReflectionWays.TypeDescriptor);
+                Reflector.SetProperty(t, propName, propValue, ReflectionWays.TypeDescriptor);
                 // not supported - Reflector.SetStaticPropertyByName(t.GetType(), propName, propValue, ReflectionWays.TypeDescriptor);
             }
             watch.Stop();
@@ -828,7 +828,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)Reflector.GetInstancePropertyByName(t, propName, ReflectionWays.TypeDescriptor);
+                propValue = (int)Reflector.GetProperty(t, propName, ReflectionWays.TypeDescriptor);
                 // not supported - propValue = (int)Reflector.GetStaticPropertyByName(t.GetType(), propName, ReflectionWays.TypeDescriptor);
             }
             watch.Stop();
@@ -900,7 +900,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                PropertyAccessor.GetPropertyAccessor(pi).Set(t, propValue, ind);
+                PropertyAccessor.GetAccessor(pi).Set(t, propValue, ind);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched accessor - set: " + watch.ElapsedMilliseconds.ToString());
@@ -911,7 +911,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)PropertyAccessor.GetPropertyAccessor(pi).Get(t, ind);
+                propValue = (int)PropertyAccessor.GetAccessor(pi).Get(t, ind);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched accessor - get: " + watch.ElapsedMilliseconds.ToString());
@@ -986,7 +986,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstancePropertyByName(t, propName, propValue, ReflectionWays.DynamicDelegate, ind);
+                Reflector.SetProperty(t, propName, propValue, ReflectionWays.DynamicDelegate, ind);
             }
             watch.Stop();
             Console.WriteLine("Reflector.SetProperty - Lambda by name: " + watch.ElapsedMilliseconds.ToString());
@@ -997,7 +997,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)Reflector.GetInstancePropertyByName(t, propName, ReflectionWays.DynamicDelegate, ind);
+                propValue = (int)Reflector.GetProperty(t, propName, ReflectionWays.DynamicDelegate, ind);
             }
             watch.Stop();
             Console.WriteLine("Reflector.GetProperty - Lambda by name: " + watch.ElapsedMilliseconds.ToString());
@@ -1008,7 +1008,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.SetInstancePropertyByName(t, propName, propValue, ReflectionWays.SystemReflection, ind);
+                Reflector.SetProperty(t, propName, propValue, ReflectionWays.SystemReflection, ind);
             }
             watch.Stop();
             Console.WriteLine("Reflector.SetProperty - System.Reflection by name: " + watch.ElapsedMilliseconds.ToString());
@@ -1019,7 +1019,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                propValue = (int)Reflector.GetInstancePropertyByName(t, propName, ReflectionWays.SystemReflection, ind);
+                propValue = (int)Reflector.GetProperty(t, propName, ReflectionWays.SystemReflection, ind);
             }
             watch.Stop();
             Console.WriteLine("Reflector.GetProperty - System.Reflection by name: " + watch.ElapsedMilliseconds.ToString());
@@ -1134,8 +1134,8 @@ Hit rate: 100,00 %
 
             // new uncached accessors
             ConstructorInfo ci = type.GetConstructor(Type.EmptyTypes);
-            ObjectFactory factoryByType = new ObjectFactoryDefault(type);
-            ObjectFactory factoryByCtor = new ObjectFactoryParameterized(ci);
+            CreateInstanceAccessor factoryByType = new DefaultCreateInstanceAccessor(type);
+            CreateInstanceAccessor factoryByCtor = new ParameterizedCreateInstanceAccessor(ci);
             Test t;
 
             const int iterations = 1000000;
@@ -1158,7 +1158,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)factoryByType.Create();
+                t = (Test)factoryByType.CreateInstance();
             }
             watch.Stop();
             Console.WriteLine("Prefetched factory - by type: " + watch.ElapsedMilliseconds.ToString());
@@ -1168,7 +1168,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)factoryByCtor.Create();
+                t = (Test)factoryByCtor.CreateInstance();
             }
             watch.Stop();
             Console.WriteLine("Prefetched factory - by ctor: " + watch.ElapsedMilliseconds.ToString());
@@ -1179,7 +1179,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)ObjectFactory.GetObjectFactory(type).Create();
+                t = (Test)CreateInstanceAccessor.GetAccessor(type).CreateInstance();
             }
             watch.Stop();
             Console.WriteLine("Re-fetched factory - by type: " + watch.ElapsedMilliseconds.ToString());
@@ -1190,7 +1190,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)ObjectFactory.GetObjectFactory(ci).Create();
+                t = (Test)CreateInstanceAccessor.GetAccessor(ci).CreateInstance();
             }
             watch.Stop();
             Console.WriteLine("Re-fetched factory - by ctor: " + watch.ElapsedMilliseconds.ToString());
@@ -1231,7 +1231,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.DynamicDelegate);
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by Type: " + watch.ElapsedMilliseconds.ToString());
@@ -1242,7 +1242,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(ci, ReflectionWays.DynamicDelegate);
+                t = (Test)Reflector.CreateInstance(ci, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1253,7 +1253,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.DynamicDelegate, new object[] { });
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.DynamicDelegate, new object[] { });
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1264,7 +1264,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.SystemReflection);
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.SystemReflection);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by Type (Activator): " + watch.ElapsedMilliseconds.ToString());
@@ -1275,7 +1275,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(ci, ReflectionWays.SystemReflection);
+                t = (Test)Reflector.CreateInstance(ci, ReflectionWays.SystemReflection);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by ConstructorInfo (Invoke): " + watch.ElapsedMilliseconds.ToString());
@@ -1286,7 +1286,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.SystemReflection, new object[] { });
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.SystemReflection, new object[] { });
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by parameters match (Invoke): " + watch.ElapsedMilliseconds.ToString());
@@ -1297,7 +1297,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.TypeDescriptor);
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.TypeDescriptor);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by Type: " + watch.ElapsedMilliseconds.ToString());
@@ -1308,7 +1308,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(ci, ReflectionWays.TypeDescriptor);
+                t = (Test)Reflector.CreateInstance(ci, ReflectionWays.TypeDescriptor);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1319,7 +1319,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.TypeDescriptor, new object[] { });
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.TypeDescriptor, new object[] { });
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1328,7 +1328,7 @@ Hit rate: 100,00 %
             const int p1 = 1;
             const int p2 = 10;
             ci = type.GetConstructor(new Type[] { typeof(int), typeof(int) });
-            factoryByCtor = new ObjectFactoryParameterized(ci);
+            factoryByCtor = new ParameterizedCreateInstanceAccessor(ci);
 
             ResetCache();
             Console.WriteLine("Number of iterations: {0:N0}", iterations);
@@ -1348,7 +1348,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)factoryByCtor.Create(p1, p2);
+                t = (Test)factoryByCtor.CreateInstance(p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Prefetched factory: " + watch.ElapsedMilliseconds.ToString());
@@ -1359,7 +1359,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)ObjectFactory.GetObjectFactory(ci).Create(p1, p2);
+                t = (Test)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched factory: " + watch.ElapsedMilliseconds.ToString());
@@ -1400,7 +1400,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(ci, ReflectionWays.DynamicDelegate, p1, p2);
+                t = (Test)Reflector.CreateInstance(ci, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1411,7 +1411,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.DynamicDelegate, p1, p2);
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1422,7 +1422,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(ci, ReflectionWays.SystemReflection, p1, p2);
+                t = (Test)Reflector.CreateInstance(ci, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1433,7 +1433,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.SystemReflection, p1, p2);
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1444,7 +1444,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(ci, ReflectionWays.TypeDescriptor, p1, p2);
+                t = (Test)Reflector.CreateInstance(ci, ReflectionWays.TypeDescriptor, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1455,7 +1455,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                t = (Test)Reflector.Construct(type, ReflectionWays.TypeDescriptor, p1, p2);
+                t = (Test)Reflector.CreateInstance(type, ReflectionWays.TypeDescriptor, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1466,7 +1466,7 @@ Hit rate: 100,00 %
         {
             // Obtaining information
             Type type = typeof(Point);
-            ObjectFactory factoryByType = new ObjectFactoryDefault(type);
+            CreateInstanceAccessor factoryByType = new DefaultCreateInstanceAccessor(type);
             Point p;
 
             const int iterations = 1000000;
@@ -1489,7 +1489,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)factoryByType.Create();
+                p = (Point)factoryByType.CreateInstance();
             }
             watch.Stop();
             Console.WriteLine("Prefetched factory: " + watch.ElapsedMilliseconds.ToString());
@@ -1500,7 +1500,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)ObjectFactory.GetObjectFactory(type).Create();
+                p = (Point)CreateInstanceAccessor.GetAccessor(type).CreateInstance();
             }
             watch.Stop();
             Console.WriteLine("Re-fetched factory: " + watch.ElapsedMilliseconds.ToString());
@@ -1531,7 +1531,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.DynamicDelegate);
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.DynamicDelegate);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by Type: " + watch.ElapsedMilliseconds.ToString());
@@ -1542,7 +1542,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.DynamicDelegate, new object[] { });
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.DynamicDelegate, new object[] { });
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1553,7 +1553,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.SystemReflection);
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.SystemReflection);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by Type (Activator): " + watch.ElapsedMilliseconds.ToString());
@@ -1564,7 +1564,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.SystemReflection, new object[] { });
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.SystemReflection, new object[] { });
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by parameters match (Activator): " + watch.ElapsedMilliseconds.ToString());
@@ -1575,7 +1575,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.TypeDescriptor);
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.TypeDescriptor);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by Type: " + watch.ElapsedMilliseconds.ToString());
@@ -1586,7 +1586,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.TypeDescriptor, new object[] { });
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.TypeDescriptor, new object[] { });
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1595,7 +1595,7 @@ Hit rate: 100,00 %
             const int p1 = 1;
             const int p2 = 10;
             ConstructorInfo ci = type.GetConstructor(new Type[] { typeof(int), typeof(int) });
-            ObjectFactory factoryByCtor = new ObjectFactoryParameterized(ci);
+            CreateInstanceAccessor factoryByCtor = new ParameterizedCreateInstanceAccessor(ci);
 
             ResetCache();
             Console.WriteLine("Number of iterations: {0:N0}", iterations);
@@ -1615,7 +1615,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)factoryByCtor.Create(p1, p2);
+                p = (Point)factoryByCtor.CreateInstance(p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Prefetched factory: " + watch.ElapsedMilliseconds.ToString());
@@ -1626,7 +1626,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)ObjectFactory.GetObjectFactory(ci).Create(p1, p2);
+                p = (Point)CreateInstanceAccessor.GetAccessor(ci).CreateInstance(p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Re-fetched factory: " + watch.ElapsedMilliseconds.ToString());
@@ -1667,7 +1667,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(ci, ReflectionWays.DynamicDelegate, p1, p2);
+                p = (Point)Reflector.CreateInstance(ci, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1678,7 +1678,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.DynamicDelegate, p1, p2);
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - Lambda by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1689,7 +1689,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(ci, ReflectionWays.SystemReflection, p1, p2);
+                p = (Point)Reflector.CreateInstance(ci, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1700,7 +1700,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.SystemReflection, p1, p2);
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - System.Reflection by parameters match: " + watch.ElapsedMilliseconds.ToString());
@@ -1711,7 +1711,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(ci, ReflectionWays.TypeDescriptor, p1, p2);
+                p = (Point)Reflector.CreateInstance(ci, ReflectionWays.TypeDescriptor, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by ConstructorInfo: " + watch.ElapsedMilliseconds.ToString());
@@ -1722,7 +1722,7 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                p = (Point)Reflector.Construct(type, ReflectionWays.TypeDescriptor, p1, p2);
+                p = (Point)Reflector.CreateInstance(type, ReflectionWays.TypeDescriptor, p1, p2);
             }
             watch.Stop();
             Console.WriteLine("Reflector.Construct - TypeDescriptor by parameters match: " + watch.ElapsedMilliseconds.ToString());

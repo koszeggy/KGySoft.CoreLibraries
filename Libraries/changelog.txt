@@ -83,6 +83,8 @@
 ! KGySoft.Reflection namespace:
 ================================
 ! Moved here from the KGySoft.Libraries.Reflection namespace
+! MethodInvoker has been renamed to MethodAccessor
+! ObjectFactory has been renamed to CreateInstanceAccessor
 
 + KGySoft.Resources namespace:
 ========================================

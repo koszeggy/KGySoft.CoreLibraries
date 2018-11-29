@@ -7,16 +7,16 @@ using System.Reflection.Emit;
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Action invoker for any parameters. Internal, cannot be instantiated from outside.
+    /// Action method accessor invoker for any parameters. Internal, cannot be instantiated from outside.
     /// </summary>
-    internal sealed class ActionInvoker: MethodInvoker
+    internal sealed class ActionMethodAccessor : MethodAccessor
     {
         /// <summary>
         /// Represents a non-generic action that can be used for any action methods.
         /// </summary>
         private delegate void AnyAction(object target, object[] arguments);
 
-        internal ActionInvoker(MethodBase mi)
+        internal ActionMethodAccessor(MethodBase mi)
             : base(mi)
         {
         }

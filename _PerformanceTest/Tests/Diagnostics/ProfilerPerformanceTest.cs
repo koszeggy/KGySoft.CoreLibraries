@@ -236,7 +236,7 @@ namespace _PerformanceTest.Tests.Diagnostics
         {
             Type t = this.GetType();
             MethodInfo mi = t.GetMethod("DoNothing", BindingFlags.Instance | BindingFlags.NonPublic);
-            MethodInvoker invoker = new FunctionInvoker(mi);
+            MethodAccessor invoker = new FunctionMethodAccessor(mi);
             int result = (int)invoker.Invoke(this, null);
             return result;
         }

@@ -178,7 +178,7 @@ namespace KGySoft.ComponentModel
         {
             var e = new AddingNewEventArgs<T>();
             OnAddingNew(e);
-            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.Construct(typeof(T)) : throw new InvalidOperationException(Res.FastBindingListCannotAddNew(typeof(T)));
+            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.FastBindingListCannotAddNew(typeof(T)));
             Add(newItem);
 
             // Return new item to caller

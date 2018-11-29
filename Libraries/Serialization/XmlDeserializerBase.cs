@@ -81,7 +81,7 @@ namespace KGySoft.Serialization
         protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, object initializerCollection, Dictionary<MemberInfo, object> members)
         {
             AdjustInitializerCollection(ref initializerCollection, collectionCtor);
-            object result = Reflector.Construct(collectionCtor, initializerCollection);
+            object result = Reflector.CreateInstance(collectionCtor, initializerCollection);
 
             // restoring fields and properties of the final collection
             foreach (KeyValuePair<MemberInfo, object> member in members)
@@ -221,7 +221,7 @@ namespace KGySoft.Serialization
                 }
 
                 if (ctor != null)
-                    converter = Reflector.Construct(ctor, ctorParams) as TypeConverter;
+                    converter = Reflector.CreateInstance(ctor, ctorParams) as TypeConverter;
             }
 
             if (converter?.CanConvertFrom(Reflector.StringType) != true)

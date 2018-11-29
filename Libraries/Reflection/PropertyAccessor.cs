@@ -6,7 +6,7 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Base class of property and indexer accessor classes.
-    /// Provides static <see cref="GetPropertyAccessor"/> method to obtain invoker of any property or indexer.
+    /// Provides static <see cref="GetAccessor"/> method to obtain invoker of any property or indexer.
     /// </summary>
     public abstract class PropertyAccessor: MemberAccessor
     {
@@ -87,13 +87,13 @@ namespace KGySoft.Reflection
         /// Gets an accessor for the <paramref name="property"/> that provides faster
         /// property access than <see cref="PropertyInfo"/>.
         /// </summary>
-        public static PropertyAccessor GetPropertyAccessor(PropertyInfo property) 
+        public static PropertyAccessor GetAccessor(PropertyInfo property) 
             => (PropertyAccessor)GetCreateAccessor(property ?? throw new ArgumentNullException(nameof(property), Res.ArgumentNull));
 
         /// <summary>
         /// Non-caching version of property accessor creation.
         /// </summary>
-        internal static PropertyAccessor CreatePropertyAccessor(PropertyInfo property)
+        internal static PropertyAccessor CreateAccessor(PropertyInfo property)
         {
             return property.GetIndexParameters().Length == 0
                 ? (PropertyAccessor)new SimplePropertyAccessor(property)

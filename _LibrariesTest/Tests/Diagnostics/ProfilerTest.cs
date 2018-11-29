@@ -21,7 +21,7 @@ namespace _LibrariesTest.Tests.Diagnostics
             const int iteration = 10000;
             using (Profiler.Measure("ProfilerTest.MeasureTest", "FullLength"))
             {
-                MethodInvoker mi = MethodInvoker.GetMethodInvoker(((Func<int>)TestMethod).Method);
+                MethodAccessor mi = MethodAccessor.GetAccessor(((Func<int>)TestMethod).Method);
                 for (int i = 0; i < iteration; i++)
                 {
                     using (Profiler.Measure("ProfilerTest.MeasureTest", "InvokeMethod"))

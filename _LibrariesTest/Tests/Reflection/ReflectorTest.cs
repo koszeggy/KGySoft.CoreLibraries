@@ -269,7 +269,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
             test = new TestClass(0);
@@ -281,7 +281,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
@@ -302,7 +302,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
             TestClass.StaticIntProp = 0;
@@ -314,7 +314,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
@@ -336,7 +336,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
@@ -350,7 +350,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -373,7 +373,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
@@ -387,7 +387,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -411,7 +411,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
@@ -425,7 +425,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            result = Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
@@ -449,7 +449,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
@@ -463,7 +463,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            result = Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
@@ -488,7 +488,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -504,7 +504,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            result = Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -530,7 +530,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -546,7 +546,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            result = Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -573,7 +573,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
             test = new TestStruct(0);
@@ -585,7 +585,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
@@ -606,7 +606,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
             TestStruct.StaticIntProp = 0;
@@ -618,7 +618,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
@@ -640,7 +640,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
@@ -654,7 +654,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -677,7 +677,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
@@ -691,7 +691,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -715,7 +715,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
@@ -729,7 +729,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            result = Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
@@ -753,7 +753,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
@@ -767,7 +767,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            result = Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
@@ -792,7 +792,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(test, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -808,7 +808,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunInstanceMethodByName(test, memberName, parameters);
+            result = Reflector.RunMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -834,7 +834,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Method Invoker...");
             parameters = (object[])args.Clone();
-            result = MethodInvoker.GetMethodInvoker(mi).Invoke(null, parameters);
+            result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -850,13 +850,13 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunStaticMethodByName(testType, memberName, parameters);
+            result = Reflector.RunMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             args = new object[] { "10", null };
-            Reflector.RunStaticMethodByName(typeof(Int32), "TryParse", args);
+            Reflector.RunMethod(typeof(Int32), "TryParse", args);
             Assert.AreEqual(10, args[1]);
         }
 
@@ -879,8 +879,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestClass(0);
             Console.Write("Property Accessor...");
-            PropertyAccessor.GetPropertyAccessor(pi).Set(test, value);
-            result = PropertyAccessor.GetPropertyAccessor(pi).Get(test);
+            PropertyAccessor.GetAccessor(pi).Set(test, value);
+            result = PropertyAccessor.GetAccessor(pi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -891,8 +891,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstancePropertyByName(test, memberName, value);
-            result = Reflector.GetInstancePropertyByName(test, memberName);
+            Reflector.SetProperty(test, memberName, value);
+            result = Reflector.GetProperty(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -911,8 +911,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestClass.StaticIntProp = 0;
             Console.Write("Property Accessor...");
-            PropertyAccessor.GetPropertyAccessor(pi).Set(null, value);
-            result = PropertyAccessor.GetPropertyAccessor(pi).Get(null);
+            PropertyAccessor.GetAccessor(pi).Set(null, value);
+            result = PropertyAccessor.GetAccessor(pi).Get(null);
             Assert.AreEqual(value, result);
 
             TestClass.StaticIntProp = 0;
@@ -923,8 +923,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
-            Reflector.SetStaticPropertyByName(testType, memberName, value);
-            result = Reflector.GetStaticPropertyByName(testType, memberName);
+            Reflector.SetProperty(testType, memberName, value);
+            result = Reflector.GetProperty(testType, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -946,8 +946,8 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Property Accessor...");
             parameters = (object[])args.Clone();
-            PropertyAccessor.GetPropertyAccessor(pi).Set(test, value, parameters);
-            result = PropertyAccessor.GetPropertyAccessor(pi).Get(test, parameters);
+            PropertyAccessor.GetAccessor(pi).Set(test, value, parameters);
+            result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -984,8 +984,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Property Accessor...");
-            PropertyAccessor.GetPropertyAccessor(pi).Set(test, value);
-            result = PropertyAccessor.GetPropertyAccessor(pi).Get(test);
+            PropertyAccessor.GetAccessor(pi).Set(test, value);
+            result = PropertyAccessor.GetAccessor(pi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
@@ -996,8 +996,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstancePropertyByName(test, memberName, value);
-            result = Reflector.GetInstancePropertyByName(test, memberName);
+            Reflector.SetProperty(test, memberName, value);
+            result = Reflector.GetProperty(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1016,8 +1016,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Property Accessor...");
-            PropertyAccessor.GetPropertyAccessor(pi).Set(null, value);
-            result = PropertyAccessor.GetPropertyAccessor(pi).Get(null);
+            PropertyAccessor.GetAccessor(pi).Set(null, value);
+            result = PropertyAccessor.GetAccessor(pi).Get(null);
             Assert.AreEqual(value, result);
 
             TestStruct.StaticIntProp = 0;
@@ -1028,8 +1028,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
-            Reflector.SetStaticPropertyByName(testType, memberName, value);
-            result = Reflector.GetStaticPropertyByName(testType, memberName);
+            Reflector.SetProperty(testType, memberName, value);
+            result = Reflector.GetProperty(testType, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1051,8 +1051,8 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Property Accessor...");
             parameters = (object[])args.Clone();
-            PropertyAccessor.GetPropertyAccessor(pi).Set(test, value, parameters);
-            result = PropertyAccessor.GetPropertyAccessor(pi).Get(test, parameters);
+            PropertyAccessor.GetAccessor(pi).Set(test, value, parameters);
+            result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
@@ -1089,8 +1089,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(test);
+            FieldAccessor.GetAccessor(fi).Set(test, value);
+            result = FieldAccessor.GetAccessor(fi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -1101,8 +1101,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstanceFieldByName(test, memberName, value);
-            result = Reflector.GetInstanceFieldByName(test, memberName);
+            Reflector.SetField(test, memberName, value);
+            result = Reflector.GetField(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1121,8 +1121,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(test);
+            FieldAccessor.GetAccessor(fi).Set(test, value);
+            result = FieldAccessor.GetAccessor(fi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -1133,8 +1133,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstanceFieldByName(test, memberName, value);
-            result = Reflector.GetInstanceFieldByName(test, memberName);
+            Reflector.SetField(test, memberName, value);
+            result = Reflector.GetField(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1153,8 +1153,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestClass.StaticIntProp = 0;
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(null, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(null);
+            FieldAccessor.GetAccessor(fi).Set(null, value);
+            result = FieldAccessor.GetAccessor(fi).Get(null);
             Assert.AreEqual(value, result);
 
             TestClass.StaticIntProp = 0;
@@ -1165,8 +1165,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
-            Reflector.SetStaticFieldByName(testType, memberName, value);
-            result = Reflector.GetStaticFieldByName(testType, memberName);
+            Reflector.SetField(testType, memberName, value);
+            result = Reflector.GetField(testType, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1189,8 +1189,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(test);
+            FieldAccessor.GetAccessor(fi).Set(test, value);
+            result = FieldAccessor.GetAccessor(fi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
@@ -1201,8 +1201,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstanceFieldByName(test, memberName, value);
-            result = Reflector.GetInstanceFieldByName(test, memberName);
+            Reflector.SetField(test, memberName, value);
+            result = Reflector.GetField(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1221,8 +1221,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(test);
+            FieldAccessor.GetAccessor(fi).Set(test, value);
+            result = FieldAccessor.GetAccessor(fi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
@@ -1233,8 +1233,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstanceFieldByName(test, memberName, value);
-            result = Reflector.GetInstanceFieldByName(test, memberName);
+            Reflector.SetField(test, memberName, value);
+            result = Reflector.GetField(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1253,8 +1253,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(test, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(test);
+            FieldAccessor.GetAccessor(fi).Set(test, value);
+            result = FieldAccessor.GetAccessor(fi).Get(test);
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
@@ -1265,8 +1265,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
-            Reflector.SetInstanceFieldByName(test, memberName, value);
-            result = Reflector.GetInstanceFieldByName(test, memberName);
+            Reflector.SetField(test, memberName, value);
+            result = Reflector.GetField(test, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1285,8 +1285,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Field Accessor...");
-            FieldAccessor.GetFieldAccessor(fi).Set(null, value);
-            result = FieldAccessor.GetFieldAccessor(fi).Get(null);
+            FieldAccessor.GetAccessor(fi).Set(null, value);
+            result = FieldAccessor.GetAccessor(fi).Get(null);
             Assert.AreEqual(value, result);
 
             TestStruct.StaticIntProp = 0;
@@ -1297,8 +1297,8 @@ namespace _LibrariesTest.Tests.Reflection
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
-            Reflector.SetStaticFieldByName(testType, memberName, value);
-            result = Reflector.GetStaticFieldByName(testType, memberName);
+            Reflector.SetField(testType, memberName, value);
+            result = Reflector.GetField(testType, memberName);
             Assert.AreEqual(value, result);
         }
 
@@ -1318,11 +1318,11 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(1, Reflector.GetProperty(result, intProp));
 
             Console.Write("Object Factory...");
-            result = ObjectFactory.GetObjectFactory(testType).Create();
+            result = CreateInstanceAccessor.GetAccessor(testType).CreateInstance();
             Assert.AreEqual(1, Reflector.GetProperty(result, intProp));
 
             Console.Write("Reflector...");
-            result = Reflector.Construct(testType);
+            result = Reflector.CreateInstance(testType);
             Assert.AreEqual(1, Reflector.GetProperty(result, intProp));
         }
 
@@ -1342,12 +1342,12 @@ namespace _LibrariesTest.Tests.Reflection
 
             Console.Write("Object Factory...");
             parameters = (object[])args.Clone();
-            result = ObjectFactory.GetObjectFactory(ci).Create(parameters);
+            result = CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
-            result = Reflector.Construct(ci, parameters);
+            result = Reflector.CreateInstance(ci, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
         }
 
@@ -1368,13 +1368,13 @@ namespace _LibrariesTest.Tests.Reflection
 
             Console.Write("Object Factory...");
             parameters = (object[])args.Clone();
-            result = ObjectFactory.GetObjectFactory(ci).Create(parameters);
+            result = CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
-            result = Reflector.Construct(ci, parameters);
+            result = Reflector.CreateInstance(ci, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -1395,11 +1395,11 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(default(TestStruct), result);
 
             Console.Write("Object Factory...");
-            result = ObjectFactory.GetObjectFactory(testType).Create();
+            result = CreateInstanceAccessor.GetAccessor(testType).CreateInstance();
             Assert.AreEqual(default(TestStruct), result);
 
             Console.Write("Reflector...");
-            result = Reflector.Construct(testType);
+            result = Reflector.CreateInstance(testType);
             Assert.AreEqual(default(TestStruct), result);
         }
 
@@ -1419,12 +1419,12 @@ namespace _LibrariesTest.Tests.Reflection
 
             Console.Write("Object Factory...");
             parameters = (object[])args.Clone();
-            result = ObjectFactory.GetObjectFactory(ci).Create(parameters);
+            result = CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
-            result = Reflector.Construct(ci, parameters);
+            result = Reflector.CreateInstance(ci, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
         }
 
@@ -1445,13 +1445,13 @@ namespace _LibrariesTest.Tests.Reflection
 
             Console.Write("Object Factory...");
             parameters = (object[])args.Clone();
-            result = ObjectFactory.GetObjectFactory(ci).Create(parameters);
+            result = CreateInstanceAccessor.GetAccessor(ci).CreateInstance(parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
-            result = Reflector.Construct(ci, parameters);
+            result = Reflector.CreateInstance(ci, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }

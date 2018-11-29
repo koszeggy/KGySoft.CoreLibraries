@@ -500,7 +500,7 @@ namespace KGySoft.ComponentModel
                 return result;
             }
 
-            T newItem = canAddNew ? (T)Reflector.Construct(typeof(T)) : throw new InvalidOperationException(Res.ObservableBindingListCannotAddNew(typeof(T)));
+            T newItem = canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ObservableBindingListCannotAddNew(typeof(T)));
             Add(newItem);
             addNewPos = Count - 1;
             return newItem;

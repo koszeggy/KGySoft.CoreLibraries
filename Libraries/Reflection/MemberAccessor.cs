@@ -96,21 +96,21 @@ namespace KGySoft.Reflection
             // method
             MethodInfo method = member as MethodInfo;
             if (method != null)
-                return MethodInvoker.CreateMethodInvoker(method);
+                return MethodAccessor.CreateAccessor(method);
 
             // property
             PropertyInfo property = member as PropertyInfo;
             if (property != null)
-                return PropertyAccessor.CreatePropertyAccessor(property);
+                return PropertyAccessor.CreateAccessor(property);
 
             // constructor (parameterless/parameterized)
             if (member is Type || member is ConstructorInfo)
-                return ObjectFactory.CreateObjectFactory(member);
+                return CreateInstanceAccessor.CreateAccessor(member);
 
             // field
             FieldInfo field = member as FieldInfo;
             if (field != null)
-                return FieldAccessor.CreateFieldAccessor(field);
+                return FieldAccessor.CreateAccessor(field);
 
             throw new NotSupportedException(Res.Get(Res.NotSupportedMemberType, member.MemberType));
         }

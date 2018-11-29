@@ -596,7 +596,7 @@ namespace _LibrariesTest.Tests.Serialization
             private void OnDeserialized(StreamingContext ctx)
             {
                 //Console.WriteLine("OnDeserialized Helper");
-                Reflector.SetInstanceFieldByName(toDeserialize, "privatePointer", new IntPtr(toDeserialize.Children.Count));
+                Reflector.SetField(toDeserialize, "privatePointer", new IntPtr(toDeserialize.Children.Count));
             }
 
             #region IObjectReference Members
@@ -1356,7 +1356,7 @@ namespace _LibrariesTest.Tests.Serialization
 
                 foreach (SerializationEntry entry in info)
                 {
-                    Reflector.SetInstanceFieldByName(obj, entry.Name, entry.Value);
+                    Reflector.SetField(obj, entry.Name, entry.Value);
                 }
 
                 return obj;

@@ -5,70 +5,70 @@ using System.Reflection;
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Base class of constructor invokation classes.
-    /// Provides static <see cref="GetObjectFactory(System.Reflection.ConstructorInfo)"/> method to obtain invoker of any constructor.
+    /// Base class of instance creation classes.
+    /// Provides static <see cref="GetAccessor(System.Reflection.ConstructorInfo)"/> method to obtain invoker of any constructor.
     /// </summary>
-    public abstract class ObjectFactory: MemberAccessor
+    public abstract class CreateInstanceAccessor : MemberAccessor
     {
-        private Delegate factory;
+        private Delegate initializer;
 
         /// <summary>
         /// The object creation delegate.
         /// </summary>
-        protected Delegate Factory
+        protected Delegate Initializer
         {
             get
             {
-                if (factory == null)
+                if (initializer == null)
                 {
-                    factory = CreateFactory();
+                    initializer = CreateInitializer();
                 }
-                return factory;
+                return initializer;
             }
         }
 
         /// <summary>
         /// When overridden, returns a delegate that creates the associated object instance.
         /// </summary>
-        protected abstract Delegate CreateFactory();
+        protected abstract Delegate CreateInitializer();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ObjectFactory"/> class.
+        /// Initializes a new instance of the <see cref="CreateInstanceAccessor"/> class.
         /// </summary>
         /// <param name="member">Can be a <see cref="Type"/> or a <see cref="ConstructorInfo"/>.</param>
-        protected ObjectFactory(MemberInfo member) :
+        protected CreateInstanceAccessor(MemberInfo member) :
             base(member, (member as ConstructorInfo)?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
 
         /// <summary>
-        /// Retrieves a factory for an object based on a <see cref="Type"/>. Given type must have
+        /// Retrieves an object creation accessor for an object based on a <see cref="Type"/>. Given type must have
         /// a parameterless constructor or type must be <see cref="ValueType"/>.
         /// </summary>
         /// <param name="type"><see cref="Type"/> of the object to create.</param>
         /// <returns>A new instance of <paramref name="type"/>.</returns>
-        public static ObjectFactory GetObjectFactory(Type type) 
-            => (ObjectFactory)GetCreateAccessor(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
+        public static CreateInstanceAccessor GetAccessor(Type type) 
+            => (CreateInstanceAccessor)GetCreateAccessor(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
 
         /// <summary>
         /// Retrieves a factory for an object based on a <see cref="ConstructorInfo"/>.
         /// </summary>
         /// <param name="ctor">The <see cref="ConstructorInfo"/> metadata of the object to create.</param>
         /// <returns>A new instance of the object created by the provided constructor.</returns>
-        public static ObjectFactory GetObjectFactory(ConstructorInfo ctor) 
-            => (ObjectFactory)GetCreateAccessor(ctor ?? throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull));
+        public static CreateInstanceAccessor GetAccessor(ConstructorInfo ctor) 
+            => (CreateInstanceAccessor)GetCreateAccessor(ctor ?? throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull));
 
         /// <summary>
         /// Non-caching version of object factory creation.
         /// </summary>
-        internal static ObjectFactory CreateObjectFactory(MemberInfo member)
+        internal static CreateInstanceAccessor CreateAccessor(MemberInfo member)
         {
             switch (member)
             {
                 case ConstructorInfo ci:
-                    return new ObjectFactoryParameterized(ci);
+                    return new ParameterizedCreateInstanceAccessor(ci);
                 case Type t:
-                    return new ObjectFactoryDefault(t);
+                    return new DefaultCreateInstanceAccessor(t);
                 default:
                     throw new ArgumentException(Res.Get(Res.TypeOrCtorInfoExpected), nameof(member));
             }
@@ -84,6 +84,6 @@ namespace KGySoft.Reflection
         /// but further calls are much more fast.
         /// </note>
         /// </remarks>
-        public abstract object Create(params object[] parameters);
+        public abstract object CreateInstance(params object[] parameters);
     }
 }

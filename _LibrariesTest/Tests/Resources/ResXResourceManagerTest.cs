@@ -457,7 +457,7 @@ namespace _LibrariesTest.Tests.Resources
 #if NET35
             resourceSets = (IDictionary)Reflector.GetInstanceFieldByName(manager, "ResourceSets"); // Hashtable
 #else
-            resourceSets = (IDictionary)Reflector.GetInstancePropertyByName(manager, "ResourceSets"); // Dictionary
+            resourceSets = (IDictionary)Reflector.GetProperty(manager, "ResourceSets"); // Dictionary
 #endif
             int sets = resourceSets.Count;
 
@@ -564,7 +564,7 @@ namespace _LibrariesTest.Tests.Resources
         private ResourceManager CreateResourceManager(string name, CultureInfo neutralLang)
         {
             var result = new ResourceManager(name, GetType().Assembly);
-            Reflector.SetInstanceFieldByName(result, "_neutralResourcesCulture", neutralLang);
+            Reflector.SetField(result, "_neutralResourcesCulture", neutralLang);
             return result;
         }
     }

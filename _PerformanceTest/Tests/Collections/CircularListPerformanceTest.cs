@@ -694,7 +694,7 @@ namespace _PerformanceTest.Tests.Collections
         private static CircularList<T> PrepareList<T>(int capacity, int startIndex, int count)
         {
             CircularList<T> result = new CircularList<T>(capacity);
-            Reflector.SetInstanceFieldByName(result, "startIndex", startIndex);
+            Reflector.SetField(result, "startIndex", startIndex);
             Type type = typeof(T);
             if (type.IsNullable())
                 type = Nullable.GetUnderlyingType(type);

@@ -29,7 +29,7 @@ namespace KGySoft.ComponentModel
         public static PropertyCommandStateUpdater Updater { get; } = new PropertyCommandStateUpdater();
 
         bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object value) 
-            => Reflector.TrySetInstancePropertyByName(commandSource, stateName, value);
+            => Reflector.TrySetProperty(commandSource, stateName, value);
 
         void IDisposable.Dispose()
         {

@@ -10,14 +10,14 @@ namespace KGySoft.Reflection
     /// Object factory for creating new instance of an object via a specified constructor.
     /// Internal, cannot be instantiated from outside.
     /// </summary>
-    internal sealed class ObjectFactoryParameterized: ObjectFactory
+    internal sealed class ParameterizedCreateInstanceAccessor : CreateInstanceAccessor
     {
         /// <summary>
         /// Represents a constructor.
         /// </summary>
         private delegate object Ctor(object[] arguments);
 
-        internal ObjectFactoryParameterized(ConstructorInfo ctor)
+        internal ParameterizedCreateInstanceAccessor(ConstructorInfo ctor)
             : base(ctor)
         {
         }
@@ -26,7 +26,7 @@ namespace KGySoft.Reflection
         /// Creates object initialization delegate. Stored MemberInfo is a Type so it works
         /// also in case of value types where actually there is no parameterless constructor.
         /// </summary>
-        protected override Delegate CreateFactory()
+        protected override Delegate CreateInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
@@ -58,9 +58,9 @@ namespace KGySoft.Reflection
             }
         }
 
-        public override object Create(params object[] parameters)
+        public override object CreateInstance(params object[] parameters)
         {
-            return ((Ctor)Factory)(parameters);
+            return ((Ctor)Initializer)(parameters);
         }
 
     }

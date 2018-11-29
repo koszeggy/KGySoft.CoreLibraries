@@ -300,7 +300,7 @@ namespace KGySoft.CoreLibraries
                 if (i.IsGenericTypeOf(collectionGenType))
                 {
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
-                    return !(bool)PropertyAccessor.GetPropertyAccessor(pi).Get(instance);
+                    return !(bool)PropertyAccessor.GetAccessor(pi).Get(instance);
                 }
             }
 

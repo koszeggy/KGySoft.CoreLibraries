@@ -66,15 +66,15 @@ namespace KGySoft.Serialization
                 if (c != null)
                     Write7BitInt(bw, c.Count);
                 else
-                    Write7BitInt(bw, (int)Reflector.GetInstancePropertyByName(collection, "Count"));
+                    Write7BitInt(bw, (int)Reflector.GetProperty(collection, "Count"));
 
                 // 2.) Capacity
                 if (HasCapacity)
-                    Write7BitInt(bw, (int)Reflector.GetInstancePropertyByName(collection, "Capacity"));
+                    Write7BitInt(bw, (int)Reflector.GetProperty(collection, "Capacity"));
 
                 // 3.) Case sensitivity
                 if (HasCaseInsensitivity)
-                    bw.Write((bool)Reflector.GetInstanceFieldByName(collection, "caseInsensitive"));
+                    bw.Write((bool)Reflector.GetField(collection, "caseInsensitive"));
 
                 // 4.) ReadOnly
                 if (HasReadOnly)
@@ -174,7 +174,7 @@ namespace KGySoft.Serialization
                 if (ctor == null)
                     throw new SerializationException(String.Format("Could not create type {0} because no appropriate constructor found", collectionType));
 
-                object result = Reflector.Construct(ctor, ctorParams.ToArray());
+                object result = Reflector.CreateInstance(ctor, ctorParams.ToArray());
                 if (addToCache)
                     manager.AddObjectToCache(result);
 
@@ -202,20 +202,20 @@ namespace KGySoft.Serialization
                 if (defaultEnumComparer && elementType.IsEnum)
                 {
                     Type comparerType = typeof(EnumComparer<>).MakeGenericType(new Type[] { elementType });
-                    return Reflector.GetStaticPropertyByName(comparerType, "Comparer");
+                    return Reflector.GetProperty(comparerType, "Comparer");
                 }
 
                 // generic equality comparer
                 if (HasEqualityComparer)
                 {
                     Type comparerType = typeof(EqualityComparer<>).MakeGenericType(new Type[] { elementType });
-                    return Reflector.GetStaticPropertyByName(comparerType, "Default");
+                    return Reflector.GetProperty(comparerType, "Default");
                 }
                 // generic relation comparer
                 else
                 {
                     Type comparerType = typeof(Comparer<>).MakeGenericType(new Type[] { elementType });
-                    return Reflector.GetStaticPropertyByName(comparerType, "Default");
+                    return Reflector.GetProperty(comparerType, "Default");
                 }
             }
 
@@ -225,7 +225,7 @@ namespace KGySoft.Serialization
                     return true;
 
                 if (referenceComparer is Comparer && comparer is Comparer)
-                    return Equals(Reflector.GetInstanceFieldByName(referenceComparer, "m_compareInfo"), Reflector.GetInstanceFieldByName(comparer, "m_compareInfo"));
+                    return Equals(Reflector.GetField(referenceComparer, "m_compareInfo"), Reflector.GetField(comparer, "m_compareInfo"));
 
                 return false;
             }
@@ -233,15 +233,15 @@ namespace KGySoft.Serialization
             private object GetComparer(object collection)
             {
                 if (!ComparerFieldName.Contains("."))
-                    return Reflector.GetInstanceFieldByName(collection, ComparerFieldName);
-                return ComparerFieldName.Split('.').Aggregate(collection, Reflector.GetInstanceFieldByName);
+                    return Reflector.GetField(collection, ComparerFieldName);
+                return ComparerFieldName.Split('.').Aggregate(collection, Reflector.GetField);
             }
 
             private void SetComparer(object collection, object comparer)
             {
                 if (!ComparerFieldName.Contains("."))
                 {
-                    Reflector.SetInstanceFieldByName(collection, ComparerFieldName, comparer);
+                    Reflector.SetField(collection, ComparerFieldName, comparer);
                     return;
                 }
 
@@ -249,10 +249,10 @@ namespace KGySoft.Serialization
                 object obj = collection;
                 for (int i = 0; i < chain.Length - 1; i++)
                 {
-                    obj = Reflector.GetInstanceFieldByName(obj, chain[i]);
+                    obj = Reflector.GetField(obj, chain[i]);
                 }
 
-                Reflector.SetInstanceFieldByName(obj, chain[chain.Length - 1], comparer);
+                Reflector.SetField(obj, chain[chain.Length - 1], comparer);
             }
 
             #endregion

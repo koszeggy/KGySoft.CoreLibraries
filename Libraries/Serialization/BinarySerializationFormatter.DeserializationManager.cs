@@ -192,7 +192,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                FieldAccessor.GetFieldAccessor(field).Set(obj, value);
+                FieldAccessor.GetAccessor(field).Set(obj, value);
             }
 
             internal void CheckReferences(SerializationInfo si)
@@ -217,7 +217,7 @@ namespace KGySoft.Serialization
 
                 foreach (KeyValuePair<FieldInfo, object> usage in refUsages)
                 {
-                    FieldAccessor.GetFieldAccessor(usage.Key).Set(usage.Value, realObject);
+                    FieldAccessor.GetAccessor(usage.Key).Set(usage.Value, realObject);
                 }
 
                 objectReferences.Remove(objRef);

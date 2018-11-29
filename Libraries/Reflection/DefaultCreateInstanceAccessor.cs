@@ -7,14 +7,14 @@ namespace KGySoft.Reflection
     /// Object factory for creating new instance of an object with default constructor
     /// or without constructor (for value types). Internal, cannot be instantiated from outside.
     /// </summary>
-    internal sealed class ObjectFactoryDefault: ObjectFactory
+    internal sealed class DefaultCreateInstanceAccessor : CreateInstanceAccessor
     {
         /// <summary>
         /// Represents a default constructor.
         /// </summary>
         private delegate object DefaultCtor();
 
-        internal ObjectFactoryDefault(Type instanceType)
+        internal DefaultCreateInstanceAccessor(Type instanceType)
             : base(instanceType)
         {
         }
@@ -23,7 +23,7 @@ namespace KGySoft.Reflection
         /// Creates object initialization delegate. Stored MemberInfo is a Type so it works
         /// also in case of value types where actually there is no parameterless constructor.
         /// </summary>
-        protected override Delegate CreateFactory()
+        protected override Delegate CreateInitializer()
         {
             NewExpression construct = Expression.New((Type)MemberInfo);
             LambdaExpression lambda = Expression.Lambda<DefaultCtor>(
@@ -31,9 +31,9 @@ namespace KGySoft.Reflection
             return lambda.Compile();
         }
 
-        public override object Create(params object[] parameters)
+        public override object CreateInstance(params object[] parameters)
         {
-            return ((DefaultCtor)Factory)();
+            return ((DefaultCtor)Initializer)();
         }
     }
 }

@@ -106,7 +106,7 @@ namespace KGySoft.Serialization
                 FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)
                 {
-                    info.AddValue(String.Format("{0}:{1}", level.ToString("X", NumberFormatInfo.InvariantInfo), i.ToString("X", NumberFormatInfo.InvariantInfo)), FieldAccessor.GetFieldAccessor(fields[i]).Get(obj), fields[i].FieldType);
+                    info.AddValue(String.Format("{0}:{1}", level.ToString("X", NumberFormatInfo.InvariantInfo), i.ToString("X", NumberFormatInfo.InvariantInfo)), FieldAccessor.GetAccessor(fields[i]).Get(obj), fields[i].FieldType);
                 }
 
                 // marking end of level
@@ -178,7 +178,7 @@ namespace KGySoft.Serialization
                     if (!fields[fieldIndex].FieldType.CanAcceptValue(entry.Value))
                         throw new SerializationException(Res.Get(Res.UnexpectedFieldType, obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
 
-                    FieldAccessor.GetFieldAccessor(fields[fieldIndex++]).Set(obj, entry.Value);
+                    FieldAccessor.GetAccessor(fields[fieldIndex++]).Set(obj, entry.Value);
                 }
                 // end of level found
                 else if (entry.Name == "x" + level.ToString("X", NumberFormatInfo.InvariantInfo))

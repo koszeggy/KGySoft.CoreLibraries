@@ -54,7 +54,7 @@ namespace KGySoft.Reflection
 
 #if NET35 || NET40 || NET45
 
-        private static IDictionary<Type, ActionInvoker> methodHashSet_Initialize;
+        private static IDictionary<Type, ActionMethodAccessor> methodHashSet_Initialize;
 
 #else
 #error make sure not to use this from NET472, where capacity ctor is available
@@ -74,7 +74,7 @@ namespace KGySoft.Reflection
                 if (fieldException_remoteStackTraceString != null)
                     return fieldException_remoteStackTraceString;
 
-                return fieldException_remoteStackTraceString = FieldAccessor.CreateFieldAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic));
+                return fieldException_remoteStackTraceString = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic));
             }
         }
 
@@ -85,7 +85,7 @@ namespace KGySoft.Reflection
                 if (fieldResourceManager_neutralResourcesCulture != null)
                     return fieldResourceManager_neutralResourcesCulture;
 
-                fieldResourceManager_neutralResourcesCulture = FieldAccessor.GetFieldAccessor(typeof(ResourceManager).GetField("_neutralResourcesCulture", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResourceManager_neutralResourcesCulture = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_neutralResourcesCulture", BindingFlags.Instance | BindingFlags.NonPublic));
                 return fieldResourceManager_neutralResourcesCulture;
             }
         }
@@ -98,7 +98,7 @@ namespace KGySoft.Reflection
                 if (fieldResourceManager_resourceSets != null)
                     return fieldResourceManager_resourceSets;
 
-                fieldResourceManager_resourceSets = FieldAccessor.GetFieldAccessor(typeof(ResourceManager).GetField("_resourceSets", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResourceManager_resourceSets = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_resourceSets", BindingFlags.Instance | BindingFlags.NonPublic));
                 return fieldResourceManager_resourceSets;
             }
         }
@@ -114,7 +114,7 @@ namespace KGySoft.Reflection
                 if (fieldXmlException_lineNumber != null)
                     return fieldXmlException_lineNumber;
 
-                return fieldXmlException_lineNumber = FieldAccessor.CreateFieldAccessor(typeof(XmlException).GetField("lineNumber", BindingFlags.Instance | BindingFlags.NonPublic));
+                return fieldXmlException_lineNumber = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("lineNumber", BindingFlags.Instance | BindingFlags.NonPublic));
             }
         }
 
@@ -125,7 +125,7 @@ namespace KGySoft.Reflection
                 if (fieldXmlException_linePosition != null)
                     return fieldXmlException_linePosition;
 
-                return fieldXmlException_linePosition = FieldAccessor.CreateFieldAccessor(typeof(XmlException).GetField("linePosition", BindingFlags.Instance | BindingFlags.NonPublic));
+                return fieldXmlException_linePosition = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("linePosition", BindingFlags.Instance | BindingFlags.NonPublic));
             }
         }
 
@@ -140,10 +140,10 @@ namespace KGySoft.Reflection
         internal static void Initialize<T>(this HashSet<T> hashSet, int capacity)
         {
             if (methodHashSet_Initialize == null)
-                methodHashSet_Initialize = new Dictionary<Type, ActionInvoker>().AsThreadSafe();
-            if (!methodHashSet_Initialize.TryGetValue(typeof(T), out ActionInvoker invoker))
+                methodHashSet_Initialize = new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe();
+            if (!methodHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor invoker))
             {
-                invoker = new ActionInvoker(hashSet.GetType().GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
+                invoker = new ActionMethodAccessor(hashSet.GetType().GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
                 methodHashSet_Initialize[typeof(T)] = invoker;
             }
 
@@ -163,7 +163,7 @@ namespace KGySoft.Reflection
         internal static string ResXFileRef_fileName_Get(object fileRef)
         {
             if (fieldResXFileRef_fileName == null)
-                fieldResXFileRef_fileName = FieldAccessor.CreateFieldAccessor(fileRef.GetType().GetField("fileName", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXFileRef_fileName = FieldAccessor.CreateAccessor(fileRef.GetType().GetField("fileName", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldResXFileRef_fileName.Get(fileRef);
         }
@@ -171,7 +171,7 @@ namespace KGySoft.Reflection
         internal static string ResXFileRef_typeName_Get(object fileRef)
         {
             if (fieldResXFileRef_typeName == null)
-                fieldResXFileRef_typeName = FieldAccessor.CreateFieldAccessor(fileRef.GetType().GetField("typeName", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXFileRef_typeName = FieldAccessor.CreateAccessor(fileRef.GetType().GetField("typeName", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldResXFileRef_typeName.Get(fileRef);
         }
@@ -179,7 +179,7 @@ namespace KGySoft.Reflection
         internal static Encoding ResXFileRef_textFileEncoding_Get(object fileRef)
         {
             if (fieldResXFileRef_textFileEncoding == null)
-                fieldResXFileRef_textFileEncoding = FieldAccessor.CreateFieldAccessor(fileRef.GetType().GetField("textFileEncoding", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXFileRef_textFileEncoding = FieldAccessor.CreateAccessor(fileRef.GetType().GetField("textFileEncoding", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (Encoding)fieldResXFileRef_textFileEncoding.Get(fileRef);
         }
@@ -187,7 +187,7 @@ namespace KGySoft.Reflection
         internal static object ResXDataNode_value_Get(object node)
         {
             if (fieldResXDataNode_value == null)
-                fieldResXDataNode_value = FieldAccessor.CreateFieldAccessor(node.GetType().GetField("value", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXDataNode_value = FieldAccessor.CreateAccessor(node.GetType().GetField("value", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return fieldResXDataNode_value.Get(node);
         }
@@ -195,7 +195,7 @@ namespace KGySoft.Reflection
         internal static string ResXDataNode_comment_Get(object node)
         {
             if (fieldResXDataNode_comment == null)
-                fieldResXDataNode_comment = FieldAccessor.CreateFieldAccessor(node.GetType().GetField("comment", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXDataNode_comment = FieldAccessor.CreateAccessor(node.GetType().GetField("comment", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldResXDataNode_comment.Get(node);
         }
@@ -203,7 +203,7 @@ namespace KGySoft.Reflection
         internal static object ResXDataNode_fileRef_Get(object node)
         {
             if (fieldResXDataNode_fileRef == null)
-                fieldResXDataNode_fileRef = FieldAccessor.CreateFieldAccessor(node.GetType().GetField("fileRef", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXDataNode_fileRef = FieldAccessor.CreateAccessor(node.GetType().GetField("fileRef", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return fieldResXDataNode_fileRef.Get(node);
         }
@@ -211,7 +211,7 @@ namespace KGySoft.Reflection
         internal static object ResXDataNode_nodeInfo_Get(object node)
         {
             if (fieldResXDataNode_nodeInfo == null)
-                fieldResXDataNode_nodeInfo = FieldAccessor.CreateFieldAccessor(node.GetType().GetField("nodeInfo", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldResXDataNode_nodeInfo = FieldAccessor.CreateAccessor(node.GetType().GetField("nodeInfo", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return fieldResXDataNode_nodeInfo.Get(node);
         }
@@ -219,7 +219,7 @@ namespace KGySoft.Reflection
         internal static string DataNodeInfo_Name_Get(object nodeInfo)
         {
             if (fieldDataNodeInfo_Name == null)
-                fieldDataNodeInfo_Name = FieldAccessor.CreateFieldAccessor(nodeInfo.GetType().GetField("Name", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldDataNodeInfo_Name = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Name", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldDataNodeInfo_Name.Get(nodeInfo);
         }
@@ -227,7 +227,7 @@ namespace KGySoft.Reflection
         internal static string DataNodeInfo_Comment_Get(object nodeInfo)
         {
             if (fieldDataNodeInfo_Comment == null)
-                fieldDataNodeInfo_Comment = FieldAccessor.CreateFieldAccessor(nodeInfo.GetType().GetField("Comment", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldDataNodeInfo_Comment = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Comment", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldDataNodeInfo_Comment.Get(nodeInfo);
         }
@@ -235,7 +235,7 @@ namespace KGySoft.Reflection
         internal static string DataNodeInfo_TypeName_Get(object nodeInfo)
         {
             if (fieldDataNodeInfo_TypeName == null)
-                fieldDataNodeInfo_TypeName = FieldAccessor.CreateFieldAccessor(nodeInfo.GetType().GetField("TypeName", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldDataNodeInfo_TypeName = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("TypeName", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldDataNodeInfo_TypeName.Get(nodeInfo);
         }
@@ -243,7 +243,7 @@ namespace KGySoft.Reflection
         internal static string DataNodeInfo_MimeType_Get(object nodeInfo)
         {
             if (fieldDataNodeInfo_MimeType == null)
-                fieldDataNodeInfo_MimeType = FieldAccessor.CreateFieldAccessor(nodeInfo.GetType().GetField("MimeType", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldDataNodeInfo_MimeType = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("MimeType", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldDataNodeInfo_MimeType.Get(nodeInfo);
         }
@@ -251,7 +251,7 @@ namespace KGySoft.Reflection
         internal static string DataNodeInfo_ValueData_Get(object nodeInfo)
         {
             if (fieldDataNodeInfo_ValueData == null)
-                fieldDataNodeInfo_ValueData = FieldAccessor.CreateFieldAccessor(nodeInfo.GetType().GetField("ValueData", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldDataNodeInfo_ValueData = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ValueData", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldDataNodeInfo_ValueData.Get(nodeInfo);
         }
@@ -259,7 +259,7 @@ namespace KGySoft.Reflection
         internal static object DataNodeInfo_ReaderPosition_Get(object nodeInfo)
         {
             if (fieldDataNodeInfo_ReaderPosition == null)
-                fieldDataNodeInfo_ReaderPosition = FieldAccessor.CreateFieldAccessor(nodeInfo.GetType().GetField("ReaderPosition", BindingFlags.Instance | BindingFlags.NonPublic));
+                fieldDataNodeInfo_ReaderPosition = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ReaderPosition", BindingFlags.Instance | BindingFlags.NonPublic));
 
             return (string)fieldDataNodeInfo_ReaderPosition.Get(nodeInfo);
         }
@@ -271,7 +271,7 @@ namespace KGySoft.Reflection
         internal static int Point_X_Get(object point)
         {
             if (propertyPoint_X == null)
-                propertyPoint_X = PropertyAccessor.CreatePropertyAccessor(point.GetType().GetProperty("X"));
+                propertyPoint_X = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("X"));
 
             return (int)propertyPoint_X.Get(point);
         }
@@ -279,7 +279,7 @@ namespace KGySoft.Reflection
         internal static int Point_Y_Get(object point)
         {
             if (propertyPoint_Y == null)
-                propertyPoint_Y = PropertyAccessor.CreatePropertyAccessor(point.GetType().GetProperty("Y"));
+                propertyPoint_Y = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("Y"));
 
             return (int)propertyPoint_Y.Get(point);
         }

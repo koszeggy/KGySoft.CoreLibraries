@@ -374,7 +374,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreSame(manager.GetResourceSet(hu, true, true), manager.GetResourceSet(inv, false, false)); // now hu is proxy, inv is loaded
             Assert.AreSame(manager.GetResourceSet(huRunicHU, true, true), manager.GetResourceSet(huRunic, true, true)); // now huRunicHU is proxy, huRunic is already loaded
 
-            var resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetInstanceFieldByName(manager, "resourceSets");
+            var resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
             Assert.AreEqual(5, resourceSets.Count);
             Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
 

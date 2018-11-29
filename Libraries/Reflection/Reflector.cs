@@ -379,7 +379,7 @@ namespace KGySoft.Reflection
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                PropertyAccessor.GetPropertyAccessor(property).Set(instance, value, indexerParameters);
+                PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParameters);
             }
             else if (way == ReflectionWays.SystemReflection)
             {
@@ -452,7 +452,7 @@ namespace KGySoft.Reflection
             return throwError ? throw new ReflectionException(Res.Get(instance == null ? Res.StaticPropertyDoesNotExist : Res.InstancePropertyDoesNotExist, propertyName, type)) : false;
         }
 
-        internal static bool TrySetInstancePropertyByName(object instance, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto, params object[] indexerParameters)
+        internal static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto, params object[] indexerParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -489,7 +489,7 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static void SetInstancePropertyByName(object instance, string propertyName, object value, ReflectionWays way, params object[] indexerParameters)
+        public static void SetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexerParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -513,7 +513,7 @@ namespace KGySoft.Reflection
         /// <param name="propertyName">The property name to set.</param>
         /// <param name="value">The new desired value of the property to set.</param>
         /// <param name="indexerParameters">Index parameters if the property to set is an indexer.</param>
-        public static void SetInstancePropertyByName(object instance, string propertyName, object value, params object[] indexerParameters)
+        public static void SetProperty(object instance, string propertyName, object value, params object[] indexerParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -541,7 +541,7 @@ namespace KGySoft.Reflection
         /// On components you may want to use the <see cref="ReflectionWays.TypeDescriptor"/> way to trigger property change events and to make possible to roll back
         /// changed values on error.
         /// </param>
-        public static void SetStaticPropertyByName(Type type, string propertyName, object value, ReflectionWays way)
+        public static void SetProperty(Type type, string propertyName, object value, ReflectionWays way)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -560,7 +560,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The type that contains the static the property to set.</param>
         /// <param name="propertyName">The property name to set.</param>
         /// <param name="value">The new desired value of the property to set.</param>
-        public static void SetStaticPropertyByName(Type type, string propertyName, object value)
+        public static void SetProperty(Type type, string propertyName, object value)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -718,7 +718,7 @@ namespace KGySoft.Reflection
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                return PropertyAccessor.GetPropertyAccessor(property).Get(instance, indexerParameters);
+                return PropertyAccessor.GetAccessor(property).Get(instance, indexerParameters);
             }
             else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
             {
@@ -814,7 +814,7 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static object GetInstancePropertyByName(object instance, string propertyName, ReflectionWays way, params object[] indexerParameters)
+        public static object GetProperty(object instance, string propertyName, ReflectionWays way, params object[] indexerParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -838,7 +838,7 @@ namespace KGySoft.Reflection
         /// <param name="propertyName">The property name to set.</param>
         /// <param name="indexerParameters">Index parameters if the property to set is an indexer.</param>
         /// <returns>Returns the value of the property.</returns>
-        public static object GetInstancePropertyByName(object instance, string propertyName, params object[] indexerParameters)
+        public static object GetProperty(object instance, string propertyName, params object[] indexerParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -866,7 +866,7 @@ namespace KGySoft.Reflection
         /// changed values on error.
         /// </param>
         /// <returns>Returns the value of the property.</returns>
-        public static object GetStaticPropertyByName(Type type, string propertyName, ReflectionWays way)
+        public static object GetProperty(Type type, string propertyName, ReflectionWays way)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -884,7 +884,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The type that contains the static the property to set.</param>
         /// <param name="propertyName">The property name to set.</param>
-        public static object GetStaticPropertyByName(Type type, string propertyName)
+        public static object GetProperty(Type type, string propertyName)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
@@ -1050,7 +1050,7 @@ namespace KGySoft.Reflection
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                return MethodInvoker.GetMethodInvoker(method).Invoke(instance, parameters);
+                return MethodAccessor.GetAccessor(method).Invoke(instance, parameters);
             }
             else if (way == ReflectionWays.SystemReflection)
             {
@@ -1190,7 +1190,7 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static object RunInstanceMethodByName(object instance, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
+        public static object RunMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (methodName == null)
                 throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
@@ -1218,9 +1218,9 @@ namespace KGySoft.Reflection
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
-        public static object RunInstanceMethodByName(object instance, string methodName, Type[] genericParameters, params object[] parameters)
+        public static object RunMethod(object instance, string methodName, Type[] genericParameters, params object[] parameters)
         {
-            return RunInstanceMethodByName(instance, methodName, genericParameters, ReflectionWays.Auto, parameters);
+            return RunMethod(instance, methodName, genericParameters, ReflectionWays.Auto, parameters);
         }
 
         /// <summary>
@@ -1247,9 +1247,9 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static object RunInstanceMethodByName(object instance, string methodName, ReflectionWays way, params object[] parameters)
+        public static object RunMethod(object instance, string methodName, ReflectionWays way, params object[] parameters)
         {
-            return RunInstanceMethodByName(instance, methodName, null, way, parameters);
+            return RunMethod(instance, methodName, null, way, parameters);
         }
 
         /// <summary>
@@ -1264,9 +1264,9 @@ namespace KGySoft.Reflection
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
-        public static object RunInstanceMethodByName(object instance, string methodName, params object[] parameters)
+        public static object RunMethod(object instance, string methodName, params object[] parameters)
         {
-            return RunInstanceMethodByName(instance, methodName, null, ReflectionWays.Auto, parameters);
+            return RunMethod(instance, methodName, null, ReflectionWays.Auto, parameters);
         }
 
         /// <summary>
@@ -1288,7 +1288,7 @@ namespace KGySoft.Reflection
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
-        public static object RunStaticMethodByName(Type type, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
+        public static object RunMethod(Type type, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (methodName == null)
                 throw new ArgumentNullException(nameof(methodName), Res.ArgumentNull);
@@ -1315,9 +1315,9 @@ namespace KGySoft.Reflection
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
-        public static object RunStaticMethodByName(Type type, string methodName, Type[] genericParameters, params object[] parameters)
+        public static object RunMethod(Type type, string methodName, Type[] genericParameters, params object[] parameters)
         {
-            return RunStaticMethodByName(type, methodName, genericParameters, ReflectionWays.Auto, parameters);
+            return RunMethod(type, methodName, genericParameters, ReflectionWays.Auto, parameters);
         }
 
         /// <summary>
@@ -1338,9 +1338,9 @@ namespace KGySoft.Reflection
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
-        public static object RunStaticMethodByName(Type type, string methodName, ReflectionWays way, params object[] parameters)
+        public static object RunMethod(Type type, string methodName, ReflectionWays way, params object[] parameters)
         {
-            return RunStaticMethodByName(type, methodName, null, way, parameters);
+            return RunMethod(type, methodName, null, way, parameters);
         }
 
         /// <summary>
@@ -1355,9 +1355,9 @@ namespace KGySoft.Reflection
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
-        public static object RunStaticMethodByName(Type type, string methodName, params object[] parameters)
+        public static object RunMethod(Type type, string methodName, params object[] parameters)
         {
-            return RunStaticMethodByName(type, methodName, null, ReflectionWays.Auto, parameters);
+            return RunMethod(type, methodName, null, ReflectionWays.Auto, parameters);
         }
 
         #endregion
@@ -1374,14 +1374,14 @@ namespace KGySoft.Reflection
         /// </param>
         /// <param name="parameters">Constructor parameters.</param>
         /// <returns>The created instance.</returns>
-        public static object Construct(ConstructorInfo ctor, ReflectionWays way, params object[] parameters)
+        public static object CreateInstance(ConstructorInfo ctor, ReflectionWays way, params object[] parameters)
         {
             if (ctor == null)
                 throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull);
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                return ObjectFactory.GetObjectFactory(ctor).Create(parameters);
+                return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(parameters);
             }
             else if (way == ReflectionWays.SystemReflection)
             {
@@ -1401,21 +1401,21 @@ namespace KGySoft.Reflection
         /// <param name="ctor">Contains the constructor to invoke.</param>
         /// <param name="parameters">Constructor parameters.</param>
         /// <returns>The created instance.</returns>
-        public static object Construct(ConstructorInfo ctor, params object[] parameters)
+        public static object CreateInstance(ConstructorInfo ctor, params object[] parameters)
         {
-            return Construct(ctor, ReflectionWays.Auto, parameters);
+            return CreateInstance(ctor, ReflectionWays.Auto, parameters);
         }
 
         /// <summary>
         /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="Construct(System.Reflection.ConstructorInfo,KGySoft.Reflection.ReflectionWays,object[])"/> overload
+        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
         /// for better performance.
         /// </summary>
         /// <param name="type">Type of the instance to create.</param>
         /// <param name="parameters">Constructor parameters.</param>
         /// <param name="way">Preferred invocation mode.</param>
         /// <returns>The created instance.</returns>
-        public static object Construct(Type type, ReflectionWays way, params object[] parameters)
+        public static object CreateInstance(Type type, ReflectionWays way, params object[] parameters)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
@@ -1425,7 +1425,7 @@ namespace KGySoft.Reflection
 
             // In case of value types no parameterless constructor would be found - redirecting
             if (type.IsValueType && parameters.Length == 0)
-                return Construct(type, way);
+                return CreateInstance(type, way);
 
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -1440,7 +1440,7 @@ namespace KGySoft.Reflection
 
                 try
                 {
-                    return Construct(ctor, way, parameters);
+                    return CreateInstance(ctor, way, parameters);
                 }
                 catch (TargetInvocationException e)
                 {
@@ -1458,9 +1458,9 @@ namespace KGySoft.Reflection
         /// <param name="type">Type of the instance to create.</param>
         /// <param name="parameters">Constructor parameters.</param>
         /// <returns>The created instance.</returns>
-        public static object Construct(Type type, params object[] parameters)
+        public static object CreateInstance(Type type, params object[] parameters)
         {
-            return Construct(type, ReflectionWays.Auto, parameters);
+            return CreateInstance(type, ReflectionWays.Auto, parameters);
         }
 
         /// <summary>
@@ -1476,14 +1476,14 @@ namespace KGySoft.Reflection
         /// TypeDescriptor way is possible but not preferred and uses no service provider.
         /// </param>
         /// <returns>The created instance.</returns>
-        public static object Construct(Type type, ReflectionWays way)
+        public static object CreateInstance(Type type, ReflectionWays way)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             if (way == ReflectionWays.DynamicDelegate)
             {
-                return ObjectFactory.GetObjectFactory(type).Create();
+                return CreateInstanceAccessor.GetAccessor(type).CreateInstance();
             }
             else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
             {
@@ -1502,9 +1502,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">Type of the instance to create.</param>
         /// <returns>The created instance.</returns>
-        public static object Construct(Type type)
+        public static object CreateInstance(Type type)
         {
-            return Construct(type, ReflectionWays.Auto);
+            return CreateInstance(type, ReflectionWays.Auto);
         }
 
         /// <summary>
@@ -1553,7 +1553,7 @@ namespace KGySoft.Reflection
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                FieldAccessor.GetFieldAccessor(field).Set(instance, value);
+                FieldAccessor.GetAccessor(field).Set(instance, value);
             }
             else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
             {
@@ -1628,7 +1628,7 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static void SetInstanceFieldByName(object instance, string fieldName, object value, ReflectionWays way)
+        public static void SetField(object instance, string fieldName, object value, ReflectionWays way)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1649,7 +1649,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">The object instance on which the field should be set.</param>
         /// <param name="fieldName">The field name to set.</param>
         /// <param name="value">The new desired value of the field to set.</param>
-        public static void SetInstanceFieldByName(object instance, string fieldName, object value)
+        public static void SetField(object instance, string fieldName, object value)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1676,7 +1676,7 @@ namespace KGySoft.Reflection
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
         /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
         /// </param>
-        public static void SetStaticFieldByName(Type type, string fieldName, object value, ReflectionWays way)
+        public static void SetField(Type type, string fieldName, object value, ReflectionWays way)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1695,7 +1695,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The type that contains the static the field to set.</param>
         /// <param name="fieldName">The field name to set.</param>
         /// <param name="value">The new desired value of the field to set.</param>
-        public static void SetStaticFieldByName(Type type, string fieldName, object value)
+        public static void SetField(Type type, string fieldName, object value)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1729,7 +1729,7 @@ namespace KGySoft.Reflection
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                return FieldAccessor.GetFieldAccessor(field).Get(instance);
+                return FieldAccessor.GetAccessor(field).Get(instance);
             }
             else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
             {
@@ -1795,7 +1795,7 @@ namespace KGySoft.Reflection
         /// further accesses are faster than the system reflection way.
         /// </param>
         /// <returns>Returns the value of the field.</returns>
-        public static object GetInstanceFieldByName(object instance, string fieldName, ReflectionWays way)
+        public static object GetField(object instance, string fieldName, ReflectionWays way)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1816,7 +1816,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">The object instance on which the field should be set.</param>
         /// <param name="fieldName">The field name to set.</param>
         /// <returns>Returns the value of the field.</returns>
-        public static object GetInstanceFieldByName(object instance, string fieldName)
+        public static object GetField(object instance, string fieldName)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1841,7 +1841,7 @@ namespace KGySoft.Reflection
         /// further accesses are faster than the system reflection way.
         /// </param>
         /// <returns>Returns the value of the field.</returns>
-        public static object GetStaticFieldByName(Type type, string fieldName, ReflectionWays way)
+        public static object GetField(Type type, string fieldName, ReflectionWays way)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1859,7 +1859,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="type">The type that contains the static the field to set.</param>
         /// <param name="fieldName">The field name to set.</param>
-        public static object GetStaticFieldByName(Type type, string fieldName)
+        public static object GetField(Type type, string fieldName)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);

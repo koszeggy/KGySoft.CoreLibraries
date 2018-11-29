@@ -101,7 +101,7 @@ namespace _LibrariesTest.Tests.Collections.ObjectModel
                 indices.Add(i);
             }
 
-            var actualItemToIndex = (AllowNullDictionary<T, CircularList<int>>)Reflector.GetInstanceFieldByName(coll, "itemToIndex");
+            var actualItemToIndex = (AllowNullDictionary<T, CircularList<int>>)Reflector.GetField(coll, "itemToIndex");
             AssertItemsEqual(Sorted(itemToIndex), Sorted(actualItemToIndex));
 
             IEnumerable Sorted(AllowNullDictionary<T, CircularList<int>> dict) 

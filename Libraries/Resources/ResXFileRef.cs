@@ -164,7 +164,7 @@ namespace KGySoft.Resources
                 if (toCreate == typeof(MemoryStream))
                     return memStream;
 
-                return Reflector.Construct(toCreate, ReflectionWays.Auto, memStream);
+                return Reflector.CreateInstance(toCreate, ReflectionWays.Auto, memStream);
             }
 
             #endregion

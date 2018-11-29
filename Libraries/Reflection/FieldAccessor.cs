@@ -182,13 +182,13 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets an accessor for a field.
         /// </summary>
-        public static FieldAccessor GetFieldAccessor(FieldInfo field) 
+        public static FieldAccessor GetAccessor(FieldInfo field) 
             => (FieldAccessor)GetCreateAccessor(field ?? throw new ArgumentNullException(nameof(field), Res.ArgumentNull));
 
         /// <summary>
         /// Creates an accessor for a field.
         /// </summary>
-        internal static FieldAccessor CreateFieldAccessor(FieldInfo field) => new FieldAccessor(field);
+        internal static FieldAccessor CreateAccessor(FieldInfo field) => new FieldAccessor(field);
 
         /// <summary>
         /// Sets the field.

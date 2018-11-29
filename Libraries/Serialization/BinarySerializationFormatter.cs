@@ -1623,8 +1623,8 @@ namespace KGySoft.Serialization
             {
                 foreach (object element in collection)
                 {
-                    WriteElement(bw, Reflector.GetInstancePropertyByName(element, "Key"), keyCollectionDataTypes, keyDataType, collectionKeyType, manager);
-                    WriteElement(bw, Reflector.GetInstancePropertyByName(element, "Value"), valueCollectionDataTypes, valueDataType, collectionValueType, manager);
+                    WriteElement(bw, Reflector.GetProperty(element, "Key"), keyCollectionDataTypes, keyDataType, collectionKeyType, manager);
+                    WriteElement(bw, Reflector.GetProperty(element, "Value"), valueCollectionDataTypes, valueDataType, collectionValueType, manager);
                 }
             }
         }
@@ -1897,8 +1897,8 @@ namespace KGySoft.Serialization
 
         private static void WriteDateTimeOffset(BinaryWriter bw, DateTimeOffset dateTimeOffset)
         {
-            bw.Write(((DateTime)Reflector.GetInstanceFieldByName(dateTimeOffset, "m_dateTime")).Ticks);
-            bw.Write((short)Reflector.GetInstanceFieldByName(dateTimeOffset, "m_offsetMinutes"));
+            bw.Write(((DateTime)Reflector.GetField(dateTimeOffset, "m_dateTime")).Ticks);
+            bw.Write((short)Reflector.GetField(dateTimeOffset, "m_offsetMinutes"));
         }
 
         private static void WriteVersion(BinaryWriter bw, Version version)
@@ -1912,7 +1912,7 @@ namespace KGySoft.Serialization
         private static void WriteUri(BinaryWriter bw, Uri uri)
         {
             bw.Write(uri.IsAbsoluteUri);
-            bw.Write((string)Reflector.RunInstanceMethodByName(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
+            bw.Write((string)Reflector.RunMethod(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
         }
 
         private static void WriteBitArray(BinaryWriter bw, BitArray bitArray)
@@ -1921,7 +1921,7 @@ namespace KGySoft.Serialization
             Write7BitInt(bw, bitArray.Length);
             if (length > 0)
             {
-                int[] value = (int[])Reflector.GetInstanceFieldByName(bitArray, "m_array");
+                int[] value = (int[])Reflector.GetField(bitArray, "m_array");
                 foreach (int i in value)
                 {
                     bw.Write(i);
@@ -2022,7 +2022,7 @@ namespace KGySoft.Serialization
                     {
                         bw.Write(field.Name);
                         Type fieldType = field.FieldType;
-                        object fieldValue = FieldAccessor.GetFieldAccessor(field).Get(data);
+                        object fieldValue = FieldAccessor.GetAccessor(field).Get(data);
                         if (fieldValue != null && fieldType.IsEnum)
                             fieldValue = Convert.ChangeType(fieldValue, Enum.GetUnderlyingType(fieldType));
                         Write(bw, fieldValue, false, manager);
@@ -2361,13 +2361,13 @@ namespace KGySoft.Serialization
             // keyvaluepair, dictionary entry
             if (descriptor.IsSingleElement)
             {
-                object result = Reflector.Construct(descriptor.GetTypeToCreate());
+                object result = Reflector.CreateInstance(descriptor.GetTypeToCreate());
                 if (addToCache)
                     manager.AddObjectToCache(result);
                 object key = ReadElement(br, descriptor, manager, false);
                 object value = descriptor.IsDictionary ? ReadElement(br, descriptor, manager, true) : null;
-                Reflector.SetInstanceFieldByName(result, descriptor.GetFieldNameToSet(false), key);
-                Reflector.SetInstanceFieldByName(result, descriptor.GetFieldNameToSet(true), value);
+                Reflector.SetField(result, descriptor.GetFieldNameToSet(false), key);
+                Reflector.SetField(result, descriptor.GetFieldNameToSet(true), value);
                 //ConstructorInfo ctor = descriptor.GetTypeToCreate().GetConstructor(new Type[] { descriptor.ElementType, descriptor.DictionaryValueType });
                 //result = Reflector.Construct(ctor, key, value);
                 return result;
@@ -2559,8 +2559,8 @@ namespace KGySoft.Serialization
                         return result = new TimeSpan(br.ReadInt64());
                     case DataTypes.DateTimeOffset:
                         result = new DateTimeOffset();
-                        Reflector.SetInstanceFieldByName(result, "m_dateTime", new DateTime(br.ReadInt64()));
-                        Reflector.SetInstanceFieldByName(result, "m_offsetMinutes", br.ReadInt16());
+                        Reflector.SetField(result, "m_dateTime", new DateTime(br.ReadInt64()));
+                        Reflector.SetField(result, "m_offsetMinutes", br.ReadInt16());
                         return result;
                     case DataTypes.DBNull:
                         if (collectionDescriptor != null)
@@ -2630,13 +2630,13 @@ namespace KGySoft.Serialization
                                 value[i] = br.ReadInt32();
                             }
 
-                            Reflector.SetInstanceFieldByName(result, "m_array", value);
+                            Reflector.SetField(result, "m_array", value);
                         }
                         return result;
                     case DataTypes.BitVector32:
                         return result = new BitVector32(br.ReadInt32());
                     case DataTypes.BitVector32Section:
-                        return result = Reflector.Construct(typeof(BitVector32.Section), br.ReadInt16(), br.ReadInt16());
+                        return result = Reflector.CreateInstance(typeof(BitVector32.Section), br.ReadInt16(), br.ReadInt16());
                     case DataTypes.StringBuilder:
                         if (collectionDescriptor != null)
                         {
@@ -3004,7 +3004,7 @@ namespace KGySoft.Serialization
                     throw new SerializationException(Res.Get(Res.MissingISerializableCtor, type));
                 }
 
-                Reflector.RunInstanceMethodByName(ci, "SerializationInvoke", obj, si, Context);
+                Reflector.RunMethod(ci, "SerializationInvoke", obj, si, Context);
             }
             else
             {
@@ -3045,7 +3045,7 @@ namespace KGySoft.Serialization
                     throw new SerializationException(Res.Get(Res.MissingISerializableCtor, type));
                 }
 
-                Reflector.RunInstanceMethodByName(ci, "SerializationInvoke", obj, si, Context);
+                Reflector.RunMethod(ci, "SerializationInvoke", obj, si, Context);
             }
             else
             {

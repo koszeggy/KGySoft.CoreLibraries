@@ -181,15 +181,15 @@
     <Compile Include="Reflection\WinApi\Fusion.cs" />
     <Compile Include="Reflection\WinApi\IAssemblyCache.cs" />
     <Compile Include="Reflection\Accessors.cs" />
-    <Compile Include="Reflection\ActionInvoker.cs" />
+    <Compile Include="Reflection\ActionMethodAccessor.cs" />
     <Compile Include="Reflection\FieldAccessor.cs" />
-    <Compile Include="Reflection\FunctionInvoker.cs" />
+    <Compile Include="Reflection\FunctionMethodAccessor.cs" />
     <Compile Include="Reflection\IndexerAccessor.cs" />
     <Compile Include="Reflection\MemberAccessor.cs" />
-    <Compile Include="Reflection\MethodInvoker.cs" />
-    <Compile Include="Reflection\ObjectFactory.cs" />
-    <Compile Include="Reflection\ObjectFactoryDefault.cs" />
-    <Compile Include="Reflection\ObjectFactoryParameterized.cs" />
+    <Compile Include="Reflection\MethodAccessor.cs" />
+    <Compile Include="Reflection\CreateInstanceAccessor.cs" />
+    <Compile Include="Reflection\DefaultCreateInstanceAccessor.cs" />
+    <Compile Include="Reflection\ParameterizedCreateInstanceAccessor.cs" />
     <Compile Include="Reflection\PropertyAccessor.cs" />
     <Compile Include="Reflection\ReflectionException.cs" />
     <Compile Include="Reflection\Reflector.cs" />
@@ -273,7 +273,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
