@@ -182,9 +182,8 @@ namespace KGySoft.CoreLibraries
             if (targetType.IsNullable())
                 targetType = Nullable.GetUnderlyingType(targetType);
 
-            Type sourceType = obj.GetType();
             // ReSharper disable once PossibleNullReferenceException
-            if (targetType.IsAssignableFrom(sourceType))
+            if (targetType.IsInstanceOfType(obj))
             {
                 value = obj;
                 return true;
@@ -193,26 +192,48 @@ namespace KGySoft.CoreLibraries
             if (culture == null)
                 culture = CultureInfo.InvariantCulture;
 
+            return DoConvert(obj, targetType, culture, out value, ref error, null);
+        }
+
+        private static bool DoConvert(object obj, Type targetType, CultureInfo culture, out object value, ref Exception error, HashSet<(object Instance, Type SourceType, Type TargetType)> failedAttempts)
+        {
+            Type sourceType = obj.GetType();
+            if (failedAttempts?.Contains((obj, sourceType, targetType)) == true)
+            {
+                value = null;
+                return false;
+            }
+
+            Conversion conversion = sourceType.GetConverter(targetType);
+            if (conversion != null && conversion.Invoke(obj, targetType, culture, out value))
+                return true;
+
             // trying parse from string...
-            return obj is string strValue && TryParseFromString(targetType, strValue, culture, out value, ref error)
+            bool result = obj is string strValue && strValue.TryParse(targetType, culture, out value)
                 // ...IConvertible...
                 || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertCovertible(convertible, targetType, culture, out value, ref error)
                 // ...and TypeCovnerter
                 || TryConvertByConverter(obj, targetType, culture, out value, ref error);
-        }
 
-        private static bool TryParseFromString(Type targetType, string value, CultureInfo culture, out object result, ref Exception error)
-        {
-            try
-            {
-                return value.TryParse(targetType, culture, out result);
-            }
-            catch (Exception e)
-            {
-                error = e;
-                result = null;
+            if (result)
+                return true;
+
+            if (failedAttempts == null)
+                failedAttempts = new HashSet<(object, Type, Type)>();
+            failedAttempts.Add((obj, sourceType, targetType));
+
+            // if there are registered converters to the target type, then we try to convert the value for those
+            Type[] sourceTypes = targetType.GetConverterSourceTypes();
+            if (sourceTypes.Length == 0)
                 return false;
+
+            foreach (Type intermediateType in sourceTypes)
+            {
+                if (DoConvert(obj, intermediateType, culture, out object intermediateResult, ref error, failedAttempts) && DoConvert(intermediateResult, targetType, culture, out value, ref error, failedAttempts))
+                    return true;
             }
+
+            return false;
         }
 
         private static bool TryConvertCovertible(IConvertible convertible, Type targetType, CultureInfo culture, out object value, ref Exception error)
@@ -276,6 +297,6 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-        #endregion
+#endregion
     }
 }

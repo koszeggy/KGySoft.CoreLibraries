@@ -132,6 +132,7 @@
     <Compile Include="ComponentModel\_Command\SourceAwareTargetedCommand.cs" />
     <Compile Include="ComponentModel\_TypeDescriptors\DictionaryBasedTypeDescriptor.cs" />
     <Compile Include="ComponentModel\__doc\NamespaceDoc.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Delegates\Conversion.cs" />
     <Compile Include="Diagnostics\CollectionDebugView.cs" />
     <Compile Include="Diagnostics\DiagnosticTools.cs" />
     <Compile Include="Diagnostics\DictionaryDebugView.cs" />
@@ -247,6 +248,8 @@
     <Compile Include="Serialization\XmlSerializerBase.cs" />
     <Compile Include="Serialization\XmlWriterSerializer.cs" />
     <Compile Include="Serialization\_doc\NamespaceDoc.cs" />
+    <Compile Include="System\TupleElementNamesAttribute.cs" />
+    <Compile Include="System\ValueTuple.cs" />
     <Compile Include="_.cs" />
     <None Include="LICENSE" />
     <Compile Include="CoreLibraries\_Extensions\WaitHandleExtensions.cs" />
@@ -273,7 +276,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

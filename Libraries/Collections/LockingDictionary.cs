@@ -186,7 +186,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="LockingDictionary{TKey, TValue}"/> class with a <see cref="Dictionary{TKey,TValue}"/> inside.
         /// </summary>
-        public LockingDictionary() : this(new Dictionary<TKey, TValue>())
+        public LockingDictionary() : this(new Dictionary<TKey, TValue>(1))
         {
         }
 

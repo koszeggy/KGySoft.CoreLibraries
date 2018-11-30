@@ -118,7 +118,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="LockingList{T}"/> with a <see cref="List{T}"/> inside.
         /// </summary>
-        public LockingList() : this(new List<T>())
+        public LockingList() : this(new List<T>(1))
         {
         }
 

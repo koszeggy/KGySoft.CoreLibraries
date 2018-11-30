@@ -39,24 +39,24 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static readonly Type nullableType = typeof(Nullable<>);
-        private static readonly Type enumerableType = typeof(IEnumerable);
-        private static readonly Type enumerableGenType = typeof(IEnumerable<>);
-        private static readonly Type dictionaryType = typeof(IDictionary);
-        private static readonly Type dictionaryGenType = typeof(IDictionary<,>);
-        private static readonly Type collectionGenType = typeof(ICollection<>);
-        private static readonly string collectionGenTypeName = collectionGenType.Name;
+        private static readonly string collectionGenTypeName = Reflector.ICollectionGenType.Name;
 
         private static readonly IThreadSafeCacheAccessor<Type, int> sizeOfCache = new Cache<Type, int>(GetSize).GetThreadSafeAccessor();
         private static readonly HashSet<Type> nativelyParsedTypes =
             new HashSet<Type>
             {
-                typeof(string), typeof(char), typeof(byte), typeof(sbyte),
-                typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
-                typeof(float), typeof(double), typeof(decimal), typeof(bool),
-                typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan),
-                typeof(IntPtr), typeof(UIntPtr)
+                Reflector.StringType, Reflector.CharType, Reflector.ByteType, Reflector.SByteType,
+                Reflector.ShortType, Reflector.UShortType, Reflector.IntType, Reflector.UIntType, Reflector.LongType, Reflector.ULongType,
+                Reflector.FloatType, Reflector.DoubleType, Reflector.DecimalType, Reflector.BoolType,
+                Reflector.DateTimeType, Reflector.DateTimeOffsetType, Reflector.TimeSpanType,
+                Reflector.IntPtrType, Reflector.UIntPtrType
             };
+
+        /// <summary>
+        /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse"/> methods.
+        /// Main key is the target type, the inner one is the source type.
+        /// </summary>
+        private static IDictionary<Type, IDictionary<Type, Conversion>> conversions = new LockingDictionary<Type, IDictionary<Type, Conversion>>();
 
         #endregion
 
@@ -118,7 +118,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The type to check</param>
         /// <returns><see langword="true"/>, if <paramref name="type"/> is a <see cref="Nullable{T}"/> type; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullable(this Type type)
-            => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsGenericTypeOf(nullableType);
+            => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsGenericTypeOf(Reflector.NullableType);
 
         /// <summary>
         /// Determines whether the specified <paramref name="type"/> is an <see cref="Enum">enum</see> and <see cref="FlagsAttribute"/> is defined on it.
@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/> if the specified type is a delegate; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsDelegate(this Type type)
-            => typeof(Delegate).IsAssignableFrom(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
+            => Reflector.DelegateType.IsAssignableFrom(type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull));
 
         /// <summary>
         /// Gets whether the given <paramref name="type"/> is a generic type of the specified <paramref name="genericTypeDefinition"/>.
@@ -203,6 +203,38 @@ namespace KGySoft.CoreLibraries
                 TypeDescriptor.AddAttributes(type, attr);
         }
 
+        /// <summary>
+        /// Registers a <see cref="Conversion"/> from the specified <paramref name="sourceType"/> to the <paramref name="targetType"/>.
+        /// </summary>
+        /// <param name="sourceType">The source <see cref="Type"/> for which the <paramref name="conversion"/> can be called.</param>
+        /// <param name="targetType">The result <see cref="Type"/> that <paramref name="conversion"/> produces.</param>
+        /// <param name="conversion">A <see cref="Conversion"/> delegate, which is able to perform the conversion.</param>
+        /// <remarks>
+        #error itt
+        /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
+        /// method will return the converter defined in <typeparamref name="TConverter"/>.</para>
+        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
+        /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
+        /// after the registering may continue to return the original converter. So make sure you register your custom converters
+        /// at the start of your application.</note></remarks>
+        public static void RegisterConversion(this Type sourceType, Type targetType, Conversion conversion)
+        {
+            if (sourceType == null)
+                throw new ArgumentNullException(nameof(sourceType), Res.ArgumentNull);
+            if (targetType == null)
+                throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
+            if (conversion == null)
+                throw new ArgumentNullException(nameof(conversion), Res.ArgumentNull);
+
+            if (!conversions.TryGetValue(targetType, out var conversionsOfTarget))
+            {
+                conversionsOfTarget = new LockingDictionary<Type, Conversion>();
+                conversions[targetType] = conversionsOfTarget;
+            }
+
+            conversionsOfTarget[sourceType] = conversion;
+        }
+
         #endregion
 
         #region Internal Methods
@@ -225,20 +257,16 @@ namespace KGySoft.CoreLibraries
             if (type.IsArray)
                 return type.GetElementType();
 
-            // not IEnumeratble
-            if (!enumerableType.IsAssignableFrom(type))
+            // not IEnumerable
+            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
                 return null;
 
-            Type genericEnumerableType = type.IsGenericTypeOf(enumerableGenType) ? type : type.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(enumerableGenType));
-            return genericEnumerableType != null
-                ? genericEnumerableType.GetGenericArguments()[0]
-                : (dictionaryType.IsAssignableFrom(type)
-                    ? typeof(DictionaryEntry)
-                    : type == typeof(BitArray)
-                        ? typeof(bool)
-                        : type == typeof(StringCollection)
-                            ? Reflector.StringType
-                            : Reflector.ObjectType);
+            Type genericEnumerableType = type.IsGenericTypeOf(Reflector.IEnumerableGenType) ? type : type.GetInterfaces().FirstOrDefault(i => i.IsGenericTypeOf(Reflector.IEnumerableGenType));
+            return genericEnumerableType != null ? genericEnumerableType.GetGenericArguments()[0]
+                : (Reflector.IDictionaryType.IsAssignableFrom(type) ? Reflector.DictionaryEntryType
+                    : type == Reflector.BitArrayType ? Reflector.BoolType
+                    : type == Reflector.StringCollectionType ? Reflector.StringType
+                    : Reflector.ObjectType);
         }
 
         /// <summary>
@@ -260,11 +288,11 @@ namespace KGySoft.CoreLibraries
             isDictionary = false;
 
             // is IEnumerable
-            if (!enumerableType.IsAssignableFrom(type))
+            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
                 return false;
 
             elementType = type.GetCollectionElementType();
-            isDictionary = dictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(dictionaryGenType);
+            isDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
 
             // Array
             if (type.IsArray)
@@ -291,8 +319,8 @@ namespace KGySoft.CoreLibraries
                         continue;
 
                     // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
-                    if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(typeof(List<>).MakeGenericType(elementType)))
-                        || isDictionary && paramType.IsAssignableFrom(typeof(Dictionary<,>).MakeGenericType(elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { typeof(object), typeof(object) })))
+                    if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(Reflector.ListGenType.MakeGenericType(elementType)))
+                        || isDictionary && paramType.IsAssignableFrom(Reflector.DictionaryGenType.MakeGenericType(elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType })))
                     {
                         collectionCtor = ctor;
                         if (defaultCtor != null)
@@ -312,8 +340,8 @@ namespace KGySoft.CoreLibraries
         /// <returns>True if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/></returns>
         internal static bool IsCollection(this Type type)
         {
-            return typeof(IList).IsAssignableFrom(type) || dictionaryType.IsAssignableFrom(type)
-                || type.GetInterfaces().Any(i => i.Name == collectionGenTypeName && i.IsGenericTypeOf(collectionGenType));
+            return Reflector.IListType.IsAssignableFrom(type) || Reflector.IDictionaryType.IsAssignableFrom(type)
+                || type.GetInterfaces().Any(i => i.Name == collectionGenTypeName && i.IsGenericTypeOf(Reflector.ICollectionGenType));
         }
 
         /// <summary>
@@ -332,16 +360,16 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType, type), nameof(instance));
 
             // not instance is IList test because then type could be even object
-            if (typeof(IList).IsAssignableFrom(type))
+            if (Reflector.IListType.IsAssignableFrom(type))
                 return !((IList)instance).IsReadOnly;
-            if (dictionaryType.IsAssignableFrom(type))
+            if (Reflector.IDictionaryType.IsAssignableFrom(type))
                 return !((IDictionary)instance).IsReadOnly;
 
             foreach (Type i in type.GetInterfaces())
             {
                 if (i.Name != collectionGenTypeName)
                     continue;
-                if (i.IsGenericTypeOf(collectionGenType))
+                if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
                 {
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
                     return !(bool)PropertyAccessor.GetAccessor(pi).Get(instance);
@@ -443,7 +471,7 @@ namespace KGySoft.CoreLibraries
             }
 
             // Emitting the SizeOf OpCode for the type
-            var dm = new DynamicMethod(nameof(GetSize), typeof(uint), Type.EmptyTypes, typeof(TypeExtensions), true);
+            var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
             ILGenerator gen = dm.GetILGenerator();
             gen.Emit(OpCodes.Sizeof, type);
             gen.Emit(OpCodes.Ret);

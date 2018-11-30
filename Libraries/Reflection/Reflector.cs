@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -72,9 +74,26 @@ namespace KGySoft.Reflection
         internal static readonly Type TimeSpanType = typeof(TimeSpan);
         internal static readonly Type DateTimeType = typeof(DateTime);
         internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);
+
         internal static readonly Type EnumType = typeof(Enum);
+        internal static readonly Type DelegateType = typeof(Delegate);
+        internal static readonly Type NullableType = typeof(Nullable<>);
+        internal static readonly Type DictionaryEntryType = typeof(DictionaryEntry);
+
+        // ReSharper disable InconsistentNaming
+        internal static readonly Type IEnumerableType = typeof(IEnumerable);
+        internal static readonly Type IEnumerableGenType = typeof(IEnumerable<>);
+        internal static readonly Type IListType = typeof(IList);
+        internal static readonly Type IDictionaryType = typeof(IDictionary);
+        internal static readonly Type IDictionaryGenType = typeof(IDictionary<,>);
+        internal static readonly Type ICollectionGenType = typeof(ICollection<>);
+        // ReSharper restore InconsistentNaming
 
         internal static readonly Type ByteArrayType = typeof(byte[]);
+        internal static readonly Type ListGenType = typeof(List<>);
+        internal static readonly Type BitArrayType = typeof(BitArray);
+        internal static readonly Type StringCollectionType = typeof(StringCollection);
+        internal static readonly Type DictionaryGenType = typeof(Dictionary<,>);
 
         internal static readonly Type Type = typeof(Type);
         // ReSharper disable once PossibleMistakenCallToGetType.2
