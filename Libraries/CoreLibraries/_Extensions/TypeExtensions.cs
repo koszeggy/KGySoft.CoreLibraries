@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -47,6 +48,15 @@ namespace KGySoft.CoreLibraries
         private static readonly string collectionGenTypeName = collectionGenType.Name;
 
         private static readonly IThreadSafeCacheAccessor<Type, int> sizeOfCache = new Cache<Type, int>(GetSize).GetThreadSafeAccessor();
+        private static readonly HashSet<Type> nativelyParsedTypes =
+            new HashSet<Type>
+            {
+                typeof(string), typeof(char), typeof(byte), typeof(sbyte),
+                typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
+                typeof(float), typeof(double), typeof(decimal), typeof(bool),
+                typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan),
+                typeof(IntPtr), typeof(UIntPtr)
+            };
 
         #endregion
 
@@ -171,9 +181,43 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
+        /// <summary>
+        /// Registers a type converter for a type.
+        /// </summary>
+        /// <typeparam name="TConverter">The <see cref="TypeConverter"/> to be registered.</typeparam>
+        /// <param name="type">The <see cref="Type"/> to be associated with the new <typeparamref name="TConverter"/>.</param>
+        /// <remarks>
+        /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
+        /// method will return the converter defined in <typeparamref name="TConverter"/>.</para>
+        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
+        /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
+        /// after the registering may continue to return the original converter. So make sure you register your custom converters
+        /// at the start of your application.</note></remarks>
+        public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+            TypeConverterAttribute attr = new TypeConverterAttribute(typeof(TConverter));
+
+            if (!TypeDescriptor.GetAttributes(type).Contains(attr))
+                TypeDescriptor.AddAttributes(type, attr);
+        }
+
         #endregion
 
         #region Internal Methods
+
+        /// <summary>
+        /// Gets whether <paramref name="type"/> can be parsed by the Parse methods in the <see cref="StringExtensions"/> class.
+        /// </summary>
+        internal static bool CanBeParsedNatively(this Type type)
+        {
+            return type.IsEnum || nativelyParsedTypes.Contains(type) || type == Reflector.RuntimeType
+#if !NET35 && !NET40
+                || type == Reflector.TypeInfo
+#endif
+                ;
+        }
 
         internal static Type GetCollectionElementType(this Type type)
         {

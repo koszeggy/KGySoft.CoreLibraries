@@ -551,12 +551,12 @@ namespace _LibrariesTest.Tests.Serialization
                 public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) =>
                     value == null ? null :
                     $"{value.GetType()}{Environment.NewLine}{(value is IFormattable formattable ? formattable.ToString(null, culture) : value.ToString())}";
-                public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => Reflector.CanParseNatively(sourceType);
+                public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.CanBeParsedNatively();
                 public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
                 {
                     var parts = ((string)value).Split(new[] {Environment.NewLine}, StringSplitOptions.None);
                     Type type = Reflector.ResolveType(parts[0]);
-                    return Reflector.Parse(type, parts[1], context, culture);
+                    return parts[1].Parse(type, culture);
                 }
             }
 
@@ -829,8 +829,8 @@ namespace _LibrariesTest.Tests.Serialization
         [TestMethod]
         public void SerializeByTypeConverter()
         {
-            Reflector.RegisterTypeConverter<Version, VersionConverter>();
-            Reflector.RegisterTypeConverter<Encoding, EncodingConverter>();
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
+            typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 
             object[] referenceObjects =
             {
@@ -1062,8 +1062,7 @@ namespace _LibrariesTest.Tests.Serialization
         [TestMethod]
         public void SerializeSimpleArrays()
         {
-            Reflector.RegisterTypeConverter<Version, VersionConverter>();
-
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
             IList[] referenceObjects =
                 {
                     new object[0],
@@ -1592,8 +1591,7 @@ namespace _LibrariesTest.Tests.Serialization
         [TestMethod]
         public void SerializeComplexGenericCollections()
         {
-            Reflector.RegisterTypeConverter<Version, VersionConverter>();
-
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
             ICollection[] referenceObjects =
                 {
                     new List<byte>[] { new List<byte>{ 11, 12, 13}, new List<byte>{21, 22} }, // array of lists

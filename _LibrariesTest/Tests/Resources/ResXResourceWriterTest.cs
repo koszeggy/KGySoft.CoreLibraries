@@ -106,7 +106,7 @@ namespace _LibrariesTest.Tests.Resources
             ReadWriteReadResX(path, false, true);
             ReadWriteReadResX(path, true, false);
 
-            Reflector.RegisterTypeConverter<Image, AdvancedImageConverter>();
+            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
             path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);
@@ -344,9 +344,9 @@ namespace _LibrariesTest.Tests.Resources
         [TestMethod]
         public void SerializeByTypeConverter()
         {
-            Reflector.RegisterTypeConverter<Version, VersionConverter>();
-            Reflector.RegisterTypeConverter<Encoding, EncodingConverter>();
-            Reflector.RegisterTypeConverter<Image, AdvancedImageConverter>();
+            typeof(Version).RegisterTypeConverter<VersionConverter>();
+            typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
+            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
             CursorHandle cursor = Images.Information.ToCursorHandle();
 
             object[] referenceObjects =
@@ -469,10 +469,10 @@ namespace _LibrariesTest.Tests.Resources
         [TestMethod]
         public void SerializeGenericTypesWithTypeConverter()
         {
-            Reflector.RegisterTypeConverter<List<byte>, ByteListConverter>();
-            Reflector.RegisterTypeConverter<List<TestEnum>, ByteListConverter>();
-            Reflector.RegisterTypeConverter<HashSet<byte>, ByteListConverter>();
-            Reflector.RegisterTypeConverter<HashSet<TestEnum>, ByteListConverter>();
+            typeof(List<byte>).RegisterTypeConverter<ByteListConverter>();
+            typeof(List<TestEnum>).RegisterTypeConverter<ByteListConverter>();
+            typeof(HashSet<byte>).RegisterTypeConverter<ByteListConverter>();
+            typeof(HashSet<TestEnum>).RegisterTypeConverter<ByteListConverter>();
             IEnumerable[] referenceObjects =
             {
                 new List<int> { 1, 2, 3 }, // no converter - raw

@@ -185,10 +185,10 @@ namespace KGySoft.Serialization
                 type = Nullable.GetUnderlyingType(type);
 
             // a.) If type can be natively parsed, parsing from string
-            if (type != null && Reflector.CanParseNatively(type))
+            if (type != null && type.CanBeParsedNatively())
             {
                 string value = ReadStringValue(reader);
-                result = Reflector.Parse(type, value);
+                result = value.Parse(type);
                 return true;
             }
 

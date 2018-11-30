@@ -199,7 +199,7 @@ namespace KGySoft.Serialization
                 return;
 
             // a.) If type can be natively parsed, simple adding
-            if (Reflector.CanParseNatively(type) && !(obj is Type && ((Type)obj).IsGenericParameter))
+            if (type.CanBeParsedNatively() && !(obj is Type && ((Type)obj).IsGenericParameter))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));

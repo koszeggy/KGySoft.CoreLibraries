@@ -17,10 +17,14 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -34,7 +38,7 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         #region Misc Tools
-        
+
         /// <summary>
         /// Extracts content of a single or double quoted string.
         /// </summary>
@@ -88,6 +92,292 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Parsing
+
+        public static T Parse<T>(this string s, CultureInfo culture = null)
+            => TryParse(s, typeof(T), culture, out object value, out Exception error) && typeof(T).CanAcceptValue(value)
+                ? (T)value
+                : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, typeof(T)), nameof(s), error);
+
+        /// <summary>
+        /// Parses an object from a string value. Firstly, it tries to parse the type natively.
+        /// If type cannot be parsed natively but the type has a type converter that can convert from string,
+        /// then type converter is used.
+        /// </summary>
+        /// <param name="type">Type of the desired result.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/> and <paramref name="type"/> is a reference or nullable type, returns <see langword="null"/>.</param>
+        /// <param name="culture">Appropriate culture needed for number types.</param>
+        /// <returns>The parsed value.</returns>
+        /// <remarks>
+        /// Natively parsed types:
+        /// <list type="bullet">
+        /// <item><description><see cref="System.Enum"/> based types</description></item>
+        /// <item><description><see cref="string"/></description></item>
+        /// <item><description><see cref="char"/></description></item>
+        /// <item><description><see cref="byte"/></description></item>
+        /// <item><description><see cref="sbyte"/></description></item>
+        /// <item><description><see cref="short"/></description></item>
+        /// <item><description><see cref="ushort"/></description></item>
+        /// <item><description><see cref="int"/></description></item>
+        /// <item><description><see cref="uint"/></description></item>
+        /// <item><description><see cref="long"/></description></item>
+        /// <item><description><see cref="ulong"/></description></item>
+        /// <item><description><see cref="float"/></description></item>
+        /// <item><description><see cref="double"/></description></item>
+        /// <item><description><see cref="decimal"/></description></item>
+        /// <item><description><see cref="bool"/></description></item>
+        /// <item><description><see cref="IntPtr"/></description></item>
+        /// <item><description><see cref="UIntPtr"/></description></item>
+        /// <item><description><see cref="Type"/></description></item>
+        /// <item><description><see cref="DateTime"/></description></item>
+        /// <item><description><see cref="DateTimeOffset"/></description></item>
+        /// <item><description><see cref="TimeSpan"/></description></item>
+        /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
+        /// <item><description>Any types that can convert their value from <see cref="string"/> by a <see cref="TypeConverter"/> class.</description></item>
+        /// </list>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
+        public static object Parse(this string s, Type type, CultureInfo culture = null)
+            => TryParse(s, type, culture, out object value, out Exception error) && type.CanAcceptValue(value)
+                ? value
+                : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, type), nameof(s), error);
+
+        public static bool TryParse<T>(this string s, CultureInfo culture, out T value)
+        {
+            value = default;
+            if (!TryParse(s, typeof(T), culture, out object result, out var _) || !typeof(T).CanAcceptValue(result))
+                return false;
+
+            value = (T)result;
+            return true;
+        }
+
+        public static bool TryParse<T>(this string s, out T value) => TryParse(s, null, out value);
+
+        public static bool TryParse(this string s, Type type, out object value) => TryParse(s, type, null, out value, out var _);
+
+        public static bool TryParse(this string s, Type type, CultureInfo culture, out object value) => TryParse(s, type, culture, out value, out var _);
+
+        private static bool TryParse(string s, Type type, CultureInfo culture, out object value, out Exception error)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+
+            error = null;
+            value = null;
+            if (s == null)
+            {
+                if (type.CanAcceptValue(null))
+                    return true;
+
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+            }
+
+            if (type.IsNullable())
+                type = Nullable.GetUnderlyingType(type);
+
+            // ReSharper disable once PossibleNullReferenceException
+            if (type.IsByRef)
+                type = type.GetElementType();
+
+            if (culture == null)
+                culture = CultureInfo.InvariantCulture;
+
+            try
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                if (type.IsEnum)
+                {
+#if NET35 || NET40 || NET45
+                    value = Enum.Parse(type, s);
+                    return true;
+#else
+#error .NET version is not supported. Use non-generic TryParse (available in .NET Core)
+#endif
+                }
+                if (type == Reflector.StringType)
+                {
+                    value = s;
+                    return true;
+                }
+                if (type == Reflector.CharType)
+                {
+                    if (!Char.TryParse(s, out char result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.ByteType)
+                {
+                    if (!Byte.TryParse(s, out byte result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.SByteType)
+                {
+                    if (!SByte.TryParse(s, out sbyte result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.ShortType)
+                {
+                    if (!Int16.TryParse(s, out short result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.UShortType)
+                {
+                    if (!UInt16.TryParse(s, out ushort result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.IntType)
+                {
+                    if (!Int32.TryParse(s, out int result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.UIntType)
+                {
+                    if (!UInt32.TryParse(s, out uint result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.LongType)
+                {
+                    if (!Int64.TryParse(s, out long result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.ULongType)
+                {
+                    if (!UInt64.TryParse(s, out ulong result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.IntPtrType)
+                {
+                    if (!Byte.TryParse(s, out byte result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.IntPtrType)
+                {
+                    if (!Int64.TryParse(s, out long result))
+                        return false;
+                    value = new IntPtr(result);
+                    return true;
+                }
+                if (type == Reflector.UIntPtrType)
+                {
+                    if (!UInt64.TryParse(s, out ulong result))
+                        return false;
+                    value = new UIntPtr(result);
+                    return true;
+                }
+                if (type == Reflector.FloatType)
+                {
+                    if (!Single.TryParse(s, out float result))
+                        return false;
+                    if (result.Equals(0f) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                        result = -0f;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.DoubleType)
+                {
+                    if (!Double.TryParse(s, out double result))
+                        return false;
+                    if (result.Equals(0d) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
+                        result = -0d;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.DecimalType)
+                {
+                    if (!Decimal.TryParse(s, out decimal result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.TimeSpanType)
+                {
+                    if (!TimeSpan.TryParse(s, out TimeSpan result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.BoolType)
+                {
+                    if (s.EqualsAny(StringComparison.OrdinalIgnoreCase, "true", "1"))
+                    {
+                        value = true;
+                        return true;
+                    }
+                    if (s.EqualsAny(StringComparison.OrdinalIgnoreCase, "false", "0"))
+                    {
+                        value = false;
+                        return true;
+                    }
+
+                    return false;
+                }
+                if (type.In(Reflector.Type, Reflector.RuntimeType
+#if !NET35 && !NET40
+                    , Reflector.TypeInfo
+#endif
+                ))
+                {
+                    value = Reflector.ResolveType(s);
+                    return value != null;
+                }
+                if (type == Reflector.DateTimeType)
+                {
+                    DateTimeStyles style = s.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                    if (!DateTime.TryParse(s, culture, style, out DateTime result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+                if (type == Reflector.DateTimeOffsetType)
+                {
+                    DateTimeStyles style = s.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
+                    if (!DateTimeOffset.TryParse(s, culture, style, out DateTimeOffset result))
+                        return false;
+                    value = result;
+                    return true;
+                }
+
+                // TODO: type.(Try)Parse(s, [culture])
+
+                // TODO: registered converter from string
+
+                // Using type converter as a fallback
+                TypeConverter converter = TypeDescriptor.GetConverter(type);
+                if (converter.CanConvertFrom(Reflector.StringType))
+                {
+                    value = converter.ConvertFrom(null, culture, s);
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception e)
+            {
+                error = e;
+                value = null;
+                return false;
+            }
+        }
 
         /// <summary>
         /// Parses separated hex values from a string.
@@ -169,9 +459,9 @@ namespace KGySoft.CoreLibraries
             return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
         }
 
-        #endregion
+#endregion
 
-        #region Comparison
+#region Comparison
 
         /// <summary>
         /// Gets whether the specified string <paramref name="s"/> contains the specified <paramref name="value"/> using the specified <paramref name="comparison"/>.
@@ -341,8 +631,8 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

@@ -53,15 +53,32 @@ namespace KGySoft.Reflection
         internal static readonly object[] EmptyObjects = new object[0];
 
         internal static readonly Type ObjectType = typeof(object);
+        internal static readonly Type BoolType = typeof(bool);
         internal static readonly Type StringType = typeof(string);
+        internal static readonly Type CharType = typeof(char);
+        internal static readonly Type ByteType = typeof(byte);
+        internal static readonly Type SByteType = typeof(sbyte);
+        internal static readonly Type ShortType = typeof(short);
+        internal static readonly Type UShortType = typeof(ushort);
+        internal static readonly Type IntType = typeof(int);
+        internal static readonly Type UIntType = typeof(uint);
+        internal static readonly Type LongType = typeof(long);
+        internal static readonly Type ULongType = typeof(ulong);
+        internal static readonly Type IntPtrType = typeof(IntPtr);
+        internal static readonly Type UIntPtrType = typeof(UIntPtr);
+        internal static readonly Type FloatType = typeof(float);
+        internal static readonly Type DoubleType = typeof(double);
+        internal static readonly Type DecimalType = typeof(decimal);
+        internal static readonly Type TimeSpanType = typeof(TimeSpan);
+        internal static readonly Type DateTimeType = typeof(DateTime);
+        internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);
         internal static readonly Type EnumType = typeof(Enum);
+
         internal static readonly Type ByteArrayType = typeof(byte[]);
-        // TODO: elements of parseableType types
 
         internal static readonly Type Type = typeof(Type);
-        // ReSharper disable PossibleMistakenCallToGetType.2
+        // ReSharper disable once PossibleMistakenCallToGetType.2
         internal static readonly Type RuntimeType = Type.GetType();
-        // ReSharper restore PossibleMistakenCallToGetType.2
 #if !NET35 && !NET40
         internal static readonly Type TypeInfo = typeof(TypeInfo);
 #endif
@@ -71,16 +88,6 @@ namespace KGySoft.Reflection
         internal static readonly Assembly SystemAssembly = typeof(Queue<>).Assembly;
         internal static readonly Assembly SystemCoreAssembly = typeof(HashSet<>).Assembly;
         internal static readonly Assembly KGySoftLibrariesAssembly = typeof(Reflector).Assembly;
-
-        private static readonly HashSet<Type> parseableTypes =
-            new HashSet<Type>
-            {
-                StringType, typeof(char), typeof(byte), typeof(sbyte),
-                typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
-                typeof(float), typeof(double), typeof(decimal), typeof(bool),
-                typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan),
-                typeof(IntPtr), typeof(UIntPtr)
-            };
 
         private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
         private static LockingDictionary<string, Assembly> assemblyCache;
@@ -112,236 +119,6 @@ namespace KGySoft.Reflection
 
         private static LockingDictionary<string, Assembly> AssemblyCache 
             => assemblyCache ?? (assemblyCache = new Cache<string, Assembly>().AsThreadSafe());
-
-        #endregion
-
-        #region Parse from string
-
-        /// <summary>
-        /// Parses an object from a string value. Firstly, it tries to parse the type natively.
-        /// If type cannot be parsed natively but the type has a type converter that can convert from string,
-        /// then type converter is used.
-        /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="value">Value in string format to parse. If value is <see langword="null"/> and <paramref name="type"/> is a reference type, returns <see langword="null"/>.</param>
-        /// <param name="context">An optional context for assigning the value via type converter.</param>
-        /// <param name="culture">Appropriate culture needed for number types.</param>
-        /// <returns>The parsed value.</returns>
-        /// <remarks>
-        /// Natively parsed types:
-        /// <list type="bullet">
-        /// <item><description><see cref="System.Enum"/> based types</description></item>
-        /// <item><description><see cref="string"/></description></item>
-        /// <item><description><see cref="char"/></description></item>
-        /// <item><description><see cref="byte"/></description></item>
-        /// <item><description><see cref="sbyte"/></description></item>
-        /// <item><description><see cref="short"/></description></item>
-        /// <item><description><see cref="ushort"/></description></item>
-        /// <item><description><see cref="int"/></description></item>
-        /// <item><description><see cref="uint"/></description></item>
-        /// <item><description><see cref="long"/></description></item>
-        /// <item><description><see cref="ulong"/></description></item>
-        /// <item><description><see cref="float"/></description></item>
-        /// <item><description><see cref="double"/></description></item>
-        /// <item><description><see cref="decimal"/></description></item>
-        /// <item><description><see cref="bool"/></description></item>
-        /// <item><description><see cref="IntPtr"/></description></item>
-        /// <item><description><see cref="UIntPtr"/></description></item>
-        /// <item><description><see cref="Type"/></description></item>
-        /// <item><description><see cref="DateTime"/></description></item>
-        /// <item><description><see cref="DateTimeOffset"/></description></item>
-        /// <item><description><see cref="TimeSpan"/></description></item>
-        /// <item><description><see cref="Nullable{T}"/> of types above: <c>null</c> or empty value returns <see langword="null"/>; otherwise, <paramref name="value"/> is parsed as the underlying type</description></item>
-        /// <item><description>Any types that can convert their value from <see cref="string"/> by a <see cref="TypeConverter"/> class.</description></item>
-        /// </list>
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="value"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">Parameter <paramref name="value"/> cannot be parsed as <paramref name="type"/></exception>
-        /// <exception cref="FormatException">Parameter <paramref name="value"/> cannot be parsed as <paramref name="type"/></exception>
-        /// <exception cref="ReflectionException">Parameter <paramref name="value"/> cannot be parsed as <see cref="Type"/> -or- no appropriate <see cref="TypeConverter"/> found to convert <paramref name="value"/> from <see cref="string"/> value.</exception>
-        public static object Parse(Type type, string value, ITypeDescriptorContext context, CultureInfo culture)
-        {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
-
-            if (value == null)
-            {
-                if (!type.IsValueType || type.IsNullable())
-                {
-                   if (CanParseNatively(Nullable.GetUnderlyingType(type)))
-                       return null;
-                }
-                else
-                    throw new ArgumentNullException(nameof(value), Res.Get(Res.ParsedValueNull));
-            }
-
-            if (type.IsNullable() && CanParseNatively(Nullable.GetUnderlyingType(type)))
-            {
-                if (String.IsNullOrEmpty(value))
-                    return null;
-
-                return Parse(Nullable.GetUnderlyingType(type), value, context, culture);
-            }
-
-            // ReSharper disable AssignNullToNotNullAttribute
-            // ReSharper disable PossibleNullReferenceException
-            try
-            {
-                if (type.IsByRef)
-                    type = type.GetElementType();
-                if (type.IsEnum)
-                    return Enum.Parse(type, value);
-                if (type == typeof(string))
-                    return value;
-                if (type == typeof(char))
-                    return Char.Parse(value);
-                if (type == typeof(byte))
-                    return Byte.Parse(value, culture);
-                if (type == typeof(sbyte))
-                    return SByte.Parse(value, culture);
-                if (type == typeof(short))
-                    return Int16.Parse(value, culture);
-                if (type == typeof(ushort))
-                    return UInt16.Parse(value, culture);
-                if (type == typeof(int))
-                    return Int32.Parse(value, culture);
-                if (type == typeof(uint))
-                    return UInt32.Parse(value, culture);
-                if (type == typeof(long))
-                    return Int64.Parse(value, culture);
-                if (type == typeof(ulong))
-                    return UInt64.Parse(value, culture);
-                if (type == typeof(IntPtr))
-                    return (IntPtr)Int64.Parse(value, culture);
-                if (type == typeof(UIntPtr))
-                    return (UIntPtr)UInt64.Parse(value, culture);
-                if (type == typeof(float))
-                {
-                    float result = Single.Parse(value, culture);
-                    if (result.Equals(0f)
-                        && (culture == null && value.Trim()[0] == '-'
-                            || culture != null && value.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal)))
-                    {
-                        return -0f;
-                    }
-
-                    return result;
-                }
-                if (type == typeof(double))
-                {
-                    double result = Double.Parse(value, culture);
-                    if (result.Equals(0d) 
-                        && (culture == null && value.Trim()[0] == '-'
-                            || culture != null && value.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal)))
-                    {
-                        return -0d;
-                    }
-                    return result;
-                }
-                if (type == typeof(decimal))
-                    return Decimal.Parse(value, culture);
-                if (type == typeof(TimeSpan))
-#if NET35
-                    return TimeSpan.Parse(value);
-#elif NET40 || NET45
-                    return TimeSpan.Parse(value, culture);
-#else
-#error .NET version is not set or not supported!
-#endif
-
-                if (type == typeof(bool))
-                {
-                    if (value.EqualsAny(StringComparison.OrdinalIgnoreCase, "true", "1"))
-                        return true;
-                    if (value.EqualsAny(StringComparison.OrdinalIgnoreCase, "false", "0"))
-                        return false;
-                    throw new ArgumentException(Res.Get(Res.NotABool, value), nameof(value));
-                }
-                if (type.In(Type, RuntimeType
-#if !NET35 && !NET40
-                    , TypeInfo
-#endif
-                ))
-                {
-                    object result = ResolveType(value);
-                    if (result == null)
-                        throw new ArgumentException(Res.Get(Res.NotAType, value), nameof(value));
-                    return result;
-                }
-                if (type == typeof(DateTime))
-                {
-                    DateTimeStyles style = value.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                    return DateTime.Parse(value, culture, style);
-                }
-                if (type == typeof(DateTimeOffset))
-                {
-                    DateTimeStyles style = value.EndsWith("Z", StringComparison.Ordinal) ? DateTimeStyles.AdjustToUniversal : DateTimeStyles.None;
-                    return DateTimeOffset.Parse(value, culture, style);
-                }
-
-                // Using type converter as a fallback
-                TypeConverter converter = TypeDescriptor.GetConverter(type);
-                if (converter.CanConvertFrom(context, typeof(string)))
-                    return converter.ConvertFrom(context, culture, value);
-
-                throw new NotSupportedException(Res.Get(Res.TypeCannotBeParsed, type));
-            }
-            catch (ArgumentException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw new ArgumentException(Res.Get(Res.ParseError, type, value, e.Message), nameof(value), e);
-            }
-            // ReSharper restore AssignNullToNotNullAttribute
-            // ReSharper restore PossibleNullReferenceException
-        }
-
-        /// <summary>
-        /// Parses an object from a string value without context using invariant culture. In first place tries to parse the type natively.
-        /// If native conversion fails but the type has a type converter that can convert from string,
-        /// then type converter is used.
-        /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="value">Value in string to parse.</param>
-        /// <returns>The parsed value.</returns>
-        /// <remarks>
-        /// Natively parsed types:
-        /// <list type="bullet">
-        /// <item><description><see cref="Enum"/> based types</description></item>
-        /// <item><description><see cref="string"/></description></item>
-        /// <item><description><see cref="char"/></description></item>
-        /// <item><description><see cref="byte"/></description></item>
-        /// <item><description><see cref="sbyte"/></description></item>
-        /// <item><description><see cref="short"/></description></item>
-        /// <item><description><see cref="ushort"/></description></item>
-        /// <item><description><see cref="int"/></description></item>
-        /// <item><description><see cref="uint"/></description></item>
-        /// <item><description><see cref="long"/></description></item>
-        /// <item><description><see cref="ulong"/></description></item>
-        /// <item><description><see cref="float"/></description></item>
-        /// <item><description><see cref="double"/></description></item>
-        /// <item><description><see cref="decimal"/></description></item>
-        /// <item><description><see cref="bool"/></description></item>
-        /// <item><description><see cref="DateTime"/></description></item>
-        /// <item><description><see cref="Type"/></description></item>
-        /// <item><description>Any types that can convert their value from System.String via type converters</description></item>
-        /// </list>
-        /// </remarks>
-        public static object Parse(Type type, string value)
-        {
-            return Parse(type, value, null, CultureInfo.InvariantCulture);
-        }
-
-        internal static bool CanParseNatively(Type type)
-        {
-            return type.IsEnum || parseableTypes.Contains(type) || type == RuntimeType
-#if !NET35 && !NET40
-                || type == TypeInfo
-#endif
-                ;
-        }
 
         #endregion
 
@@ -2381,26 +2158,6 @@ namespace KGySoft.Reflection
                 value = value.Remove(lastArrayIndex);
             }
             return result.Count == 0 ? null : result.ToArray();
-        }
-
-        /// <summary>
-        /// Registers a type converter for a type.
-        /// </summary>
-        /// <typeparam name="T">The type that needs a new converter.</typeparam>
-        /// <typeparam name="TC">The needed <see cref="TypeConverter"/> to register.</typeparam>
-        /// <remarks>
-        /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
-        /// method will return the converter defined in <typeparamref name="TC"/>.</para>
-        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
-        /// has already been called for <typeparamref name="T"/> before registering the new converter, then the further calls
-        /// after the registering may continue to return the original converter. So make sure you register your custom converters
-        /// at the start of your application.</note></remarks>
-        public static void RegisterTypeConverter<T, TC>() where TC: TypeConverter
-        {
-            TypeConverterAttribute attr = new TypeConverterAttribute(typeof(TC));
-
-            if (!TypeDescriptor.GetAttributes(typeof(T)).Contains(attr))
-                TypeDescriptor.AddAttributes(typeof(T), attr);
         }
 
         internal static int SizeOf<T>()

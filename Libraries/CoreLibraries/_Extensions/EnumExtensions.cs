@@ -151,7 +151,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
-        public static bool IsSingleFlag<TEnum>(TEnum value)
+        public static bool IsSingleFlag<TEnum>(this TEnum value)
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.IsSingleFlag(value);
@@ -165,7 +165,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
-        public static IEnumerable<TEnum> GetFlags<TEnum>(TEnum flags, bool onlyDefinedValues)
+        public static IEnumerable<TEnum> GetFlags<TEnum>(this TEnum flags, bool onlyDefinedValues)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.GetFlags(flags, onlyDefinedValues);
@@ -190,7 +190,6 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <returns><c>true</c>, if only a single bit is set in <paramref name="value"/>; otherwise, <c>false</c>.</returns>
-        /// <remarks><note>For better performance use the generic overload (<see cref="IsSingleFlag{TEnum}">IsSingleFlag&lt;TEnum&gt;(TEnum)</see>) whenever it is possible.</note></remarks>
         public static bool IsSingleFlag(this Enum value)
         {
             if (value == null)

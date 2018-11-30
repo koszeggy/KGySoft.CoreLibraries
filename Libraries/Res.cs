@@ -81,7 +81,6 @@ namespace KGySoft
         internal const string TypeOrCtorInfoExpected = nameof(TypeOrCtorInfoExpected);
         internal const string PropertyHasNoGetter = nameof(PropertyHasNoGetter);
         internal const string PropertyHasNoSetter = nameof(PropertyHasNoSetter);
-        internal const string ParsedValueNull = nameof(ParsedValueNull);
         internal const string NotABool = nameof(NotABool);
         internal const string NotAType = nameof(NotAType);
         internal const string TypeCannotBeParsed = nameof(TypeCannotBeParsed);
@@ -251,7 +250,6 @@ namespace KGySoft
         internal const string MissingPropertyReference = nameof(MissingPropertyReference);
         internal const string DoValidationNull = nameof(DoValidationNull);
         internal const string ObservableObjectHasNoDefaultCtor = nameof(ObservableObjectHasNoDefaultCtor);
-        internal const string CannotConvertToType = nameof(CannotConvertToType);
         internal const string EnabledMustBeBool = nameof(EnabledMustBeBool);
 
         #endregion
@@ -375,6 +373,13 @@ namespace KGySoft
 
         #endregion
 
+        #region ObjectExtensions
+
+        /// <summary>The specified argument cannot be converted to type {0}.</summary>
+        internal static string ObjectExtensionsCannotConvertToType(Type type) => Get("ObjectExtensions_CannotConvertToTypeFormat", type);
+
+        #endregion
+
         #region ObservableBindingList
 
         /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</summary>
@@ -382,11 +387,12 @@ namespace KGySoft
 
         #endregion
 
-        private static string FormatValues<TEnum>() where TEnum : struct, IConvertible
-            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd));
+        #region StringExtensions
 
-        private static string FormatFlags<TEnum>() where TEnum : struct, IConvertible
-            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd));
+        /// <summary>The specified string '{0}' cannot be parsed as type {1}.</summary>
+        internal static string StringExtensionsCannotParseAsType(string s, Type type) => Get("StringExtensions_CannotParseAsTypeFormat", s, type);
+
+        #endregion
 
         // TODO: private
         internal static string Get([NotNull]string id)
@@ -404,6 +410,12 @@ namespace KGySoft
         #endregion
 
         #region Private Methods
+
+        private static string FormatValues<TEnum>() where TEnum : struct, IConvertible
+            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd));
+
+        private static string FormatFlags<TEnum>() where TEnum : struct, IConvertible
+            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd));
 
         private static string SafeFormat(string format, object[] args)
         {

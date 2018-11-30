@@ -140,10 +140,16 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        // Default culture: Invariant!
         public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
             => TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
                 ? (TTargetType)result
-                : throw new ArgumentException(Res.Get(Res.CannotConvertToType, typeof(TTargetType)), nameof(obj), error);
+                : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj), error);
+
+        public static object Convert(this object obj, Type targetType, CultureInfo culture = null)
+            => TryConvert(obj, targetType, culture, out object result, out Exception error) && targetType.CanAcceptValue(result)
+                ? result
+                : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(targetType), nameof(obj), error);
 
         public static bool TryConvert<TTargetType>(this object obj, CultureInfo culture, out TTargetType value)
         {
@@ -151,7 +157,7 @@ namespace KGySoft.CoreLibraries
             if (success && typeof(TTargetType).CanAcceptValue(result))
                 value = (TTargetType)result;
             else
-                throw new ArgumentException(Res.Get(Res.CannotConvertToType, typeof(TTargetType)), nameof(obj));
+                throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj));
             return true;
         }
 
@@ -161,7 +167,7 @@ namespace KGySoft.CoreLibraries
 
         public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value) => TryConvert(obj, targetType, culture, out value, out var _);
 
-        public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
+        private static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
         {
             if (targetType == null)
                 throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
@@ -184,6 +190,9 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
+            if (culture == null)
+                culture = CultureInfo.InvariantCulture;
+
             // trying parse from string...
             return obj is string strValue && TryParseFromString(targetType, strValue, culture, out value, ref error)
                 // ...IConvertible...
@@ -194,16 +203,9 @@ namespace KGySoft.CoreLibraries
 
         private static bool TryParseFromString(Type targetType, string value, CultureInfo culture, out object result, ref Exception error)
         {
-            if (!Reflector.CanParseNatively(targetType))
-            {
-                result = null;
-                return false;
-            }
-
             try
             {
-                result = Reflector.Parse(targetType, value, null, culture);
-                return true;
+                return value.TryParse(targetType, culture, out result);
             }
             catch (Exception e)
             {

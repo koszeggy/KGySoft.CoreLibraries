@@ -1328,7 +1328,7 @@ namespace KGySoft.Resources
         private bool CanConvertNatively(bool compatibleFormat)
         {
             Type type = value.GetType();
-            return Reflector.CanParseNatively(type)
+            return type.CanBeParsedNatively()
                    && ((!compatibleFormat
                         || !(type.In(typeof(DBNull), typeof(IntPtr), typeof(UIntPtr), Reflector.RuntimeType)))
                        && (type != Reflector.RuntimeType || !(((Type)value).IsGenericParameter)));
@@ -1469,8 +1469,8 @@ namespace KGySoft.Resources
             }
 
             // 5.) Native type - type converter is slower and will not convert negative zeros, for example.
-            if (Reflector.CanParseNatively(type))
-                return Reflector.Parse(type, dataNodeInfo.ValueData);
+            if (type.CanBeParsedNatively())
+                return dataNodeInfo.ValueData.Parse(type);
 
             // 6.) null
             if (type == typeof(ResXNullRef))

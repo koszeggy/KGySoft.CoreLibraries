@@ -250,12 +250,6 @@ Hit rate: {8:P2}</value>
   <data name="NotSupportedMemberType" xml:space="preserve">
     <value>Member type {0} is not supported.</value>
   </data>
-  <data name="ParsedValueNull" xml:space="preserve">
-    <value>Value is null for a non-nullable type.</value>
-  </data>
-  <data name="ParseError" xml:space="preserve">
-    <value>Could not parse type "{0}" from value "{1}": {2}</value>
-  </data>
   <data name="PropertyHasNoGetter" xml:space="preserve">
     <value>Property has no getter accessor: {0}.{1}</value>
   </data>
@@ -291,9 +285,6 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="StreamCannotWrite" xml:space="preserve">
     <value>Destination stream cannot be written.</value>
-  </data>
-  <data name="TypeCannotBeParsed" xml:space="preserve">
-    <value>Parsing type "{0}" is not supported and appropriate type converter is not found.</value>
   </data>
   <data name="TypeOrCtorInfoExpected" xml:space="preserve">
     <value>Argument must be either Type or ConstructorInfo.</value>
@@ -799,8 +790,11 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="ObservableObjectHasNoDefaultCtor" xml:space="preserve">
     <value>The type has no parameterless constructor and thus cannot be cloned: {0}</value>
   </data>
-  <data name="CannotConvertToType" xml:space="preserve">
-    <value>The specified argument cannot be converted to type {0}</value>
+  <data name="ObjectExtensions_CannotConvertToTypeFormat" xml:space="preserve">
+    <value>The specified argument cannot be converted to type {0}.</value>
+  </data>
+  <data name="StringExtensions_CannotParseAsTypeFormat" xml:space="preserve">
+    <value>The specified string '{0}' cannot be parsed as type {1}.</value>
   </data>
   <data name="EnabledMustBeBool" xml:space="preserve">
     <value>'Enabled' state must have a boolean value.</value>
