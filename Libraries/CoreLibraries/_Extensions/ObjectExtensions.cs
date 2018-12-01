@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -140,25 +141,70 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        // Default culture: Invariant!
+        /// <summary>
+        /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
+        /// </summary>
+        /// <typeparam name="TTargetType">The type of the desired return value.</typeparam>
+        /// <param name="obj">The object to convert.</param>
+        /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An object of <typeparamref name="TTargetType"/>, which is the result of the conversion.</returns>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <typeparamref name="TTargetType"/>.</exception>
+        /// <remarks>
+        /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
+        /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>
+        /// <para>New <see cref="TypeConverter"/> instances can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> <see cref="Type"/> extension method.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
             => TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
                 ? (TTargetType)result
                 : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj), error);
 
+        /// <summary>
+        /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
+        /// </summary>
+        /// <param name="targetType">The type of the desired return value.</param>
+        /// <param name="obj">The object to convert.</param>
+        /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An object of <paramref name="targetType"/>, which is the result of the conversion.</returns>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <paramref name="targetType"/>.</exception>
+        /// <remarks>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static object Convert(this object obj, Type targetType, CultureInfo culture = null)
             => TryConvert(obj, targetType, culture, out object result, out Exception error) && targetType.CanAcceptValue(result)
                 ? result
                 : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(targetType), nameof(obj), error);
 
+        /// <summary>
+        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
+        /// </summary>
+        /// <typeparam name="TTargetType">The type of the desired return value.</typeparam>
+        /// <param name="obj">The object to convert.</param>
+        /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the conversion.</param>
+        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTargetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static bool TryConvert<TTargetType>(this object obj, CultureInfo culture, out TTargetType value)
         {
-            bool success = TryConvert(obj, typeof(TTargetType), culture, out object result);
-            if (success && typeof(TTargetType).CanAcceptValue(result))
+            if (TryConvert(obj, typeof(TTargetType), culture, out object result) && typeof(TTargetType).CanAcceptValue(result))
+            {
                 value = (TTargetType)result;
-            else
-                throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj));
-            return true;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
         public static bool TryConvert<TTargetType>(this object obj, out TTargetType value) => TryConvert(obj, null, out value);
@@ -204,26 +250,29 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            Conversion conversion = sourceType.GetConverter(targetType);
-            if (conversion != null && conversion.Invoke(obj, targetType, culture, out value))
-                return true;
-
-            // trying parse from string...
-            bool result = obj is string strValue && strValue.TryParse(targetType, culture, out value)
+            // direct conversions between the source and target types are used in the first place
+            bool result = sourceType.GetConversion(targetType) is Delegate conversion && TryConvertByRegisteredCovnersion(obj, conversion, targetType, culture, out value, ref error)
+                // if it fails, then trying to parse from string...
+                || obj is string strValue && strValue.TryParse(targetType, culture, out value)
                 // ...IConvertible...
                 || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertCovertible(convertible, targetType, culture, out value, ref error)
                 // ...and TypeCovnerter
-                || TryConvertByConverter(obj, targetType, culture, out value, ref error);
+                || TryConvertByTypeConverter(obj, targetType, culture, out value, ref error);
 
             if (result)
                 return true;
 
             if (failedAttempts == null)
                 failedAttempts = new HashSet<(object, Type, Type)>();
+
+            // if both source and target types are enumerable, trying to convert their types, too
+            if (obj is IEnumerable collection && Reflector.IEnumerableType.IsAssignableFrom(targetType) && TryConvertCollection(collection, targetType, culture, out value, ref error, failedAttempts))
+                return true;
+
             failedAttempts.Add((obj, sourceType, targetType));
 
             // if there are registered converters to the target type, then we try to convert the value for those
-            Type[] sourceTypes = targetType.GetConverterSourceTypes();
+            Type[] sourceTypes = targetType.GetConversionSourceTypes();
             if (sourceTypes.Length == 0)
                 return false;
 
@@ -234,6 +283,29 @@ namespace KGySoft.CoreLibraries
             }
 
             return false;
+        }
+
+        private static bool TryConvertByRegisteredCovnersion(object obj, Delegate conversionDelegate, Type targetType, CultureInfo culture, out object value, ref Exception error)
+        {
+            value = null;
+            try
+            {
+                switch (conversionDelegate)
+                {
+                    case ConversionAttempt conversionAttempt:
+                        return conversionAttempt.Invoke(obj, culture, out value) && targetType.CanAcceptValue(value);
+                    case Conversion conversion:
+                        value = conversion.Invoke(obj, culture);
+                        return targetType.CanAcceptValue(value);
+                    default:
+                        throw new InvalidOperationException("Invalid conversion delegate type");
+                }
+            }
+            catch (Exception e)
+            {
+                error = e;
+                return false;
+            }
         }
 
         private static bool TryConvertCovertible(IConvertible convertible, Type targetType, CultureInfo culture, out object value, ref Exception error)
@@ -258,7 +330,7 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        private static bool TryConvertByConverter(object source, Type targetType, CultureInfo culture, out object value, ref Exception error)
+        private static bool TryConvertByTypeConverter(object source, Type targetType, CultureInfo culture, out object value, ref Exception error)
         {
             value = null;
             Type sourceType = source.GetType();
@@ -297,6 +369,82 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-#endregion
+        private static bool TryConvertCollection(IEnumerable collection, Type targetType, CultureInfo culture, out object value, ref Exception error, HashSet<(object, Type, Type)> failedAttempts)
+        {
+            if (targetType.IsArray)
+                return TryConvertToArray(collection, targetType, culture, out value, ref error, failedAttempts);
+        }
+
+        private static bool TryConvertToArray(IEnumerable sourceCollection, Type targetType, CultureInfo culture, out object value, ref Exception error, HashSet<(object, Type, Type)> failedAttempts)
+        {
+            value = null;
+            Type sourceType = sourceCollection.GetType();
+            int rank = targetType.GetArrayRank();
+            Type targetElementType = targetType.GetElementType();
+            Array targetArray;
+
+            // multi dimension target array is supported only if the source is also an array and has the same dimension
+            if (rank > 1)
+            {
+                if (!(sourceCollection is Array sourceArray) || sourceArray.Rank != rank)
+                    return false;
+
+                int[] lengths = new int[rank];
+                int[] lowerBounds = new int[rank];
+                for (int i = 0; i < rank; i++)
+                {
+                    lengths[i] = sourceArray.GetLength(i);
+                    lowerBounds[i] = sourceArray.GetLowerBound(i);
+                }
+
+                // ReSharper disable once AssignNullToNotNullAttribute - sourceType is an array here
+                targetArray = Array.CreateInstance(sourceType.GetElementType(), lengths, lowerBounds);
+                var indexer = new ArrayIndexer(lengths, lowerBounds);
+                foreach (object sourceItem in sourceArray)
+                {
+                    indexer.MoveNext();
+                    if (!DoConvert(sourceItem, targetElementType, culture, out object targetItem, ref error, failedAttempts))
+                        return false;
+                    targetArray.SetValue(targetItem, indexer.Current);
+                }
+
+                value = targetArray;
+                return true;
+            }
+
+            // single dimension target array below - case 1: source size is known
+            if (sourceCollection is ICollection collection)
+            {
+                // ReSharper disable once AssignNullToNotNullAttribute - target is array in this method
+                targetArray = Array.CreateInstance(targetElementType, collection.Count);
+                int i = 0;
+                foreach (object sourceItem in collection)
+                {
+                    if (!DoConvert(sourceItem, targetElementType, culture, out object targetItem, ref error, failedAttempts))
+                        return false;
+                    targetArray.SetValue(targetItem, i++);
+                }
+
+                value = targetArray;
+                return true;
+            }
+
+            // case 2: source size is not known: using a List
+            IList resultList = (IList)Reflector.CreateInstance(Reflector.ListGenType.MakeGenericType(targetElementType));
+            foreach (object sourceItem in sourceCollection)
+            {
+                if (!DoConvert(sourceItem, targetElementType, culture, out object targetItem, ref error, failedAttempts))
+                    return false;
+                resultList.Add(targetItem);
+            }
+
+            // ReSharper disable once AssignNullToNotNullAttribute - target is array in this method
+            targetArray = Array.CreateInstance(targetElementType, resultList.Count);
+            resultList.CopyTo(targetArray, 0);
+            value = targetArray;
+            return true;
+        }
+
+        #endregion
     }
 }

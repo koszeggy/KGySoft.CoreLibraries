@@ -56,7 +56,7 @@ namespace KGySoft.CoreLibraries
         /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse"/> methods.
         /// Main key is the target type, the inner one is the source type.
         /// </summary>
-        private static IDictionary<Type, IDictionary<Type, Conversion>> conversions = new LockingDictionary<Type, IDictionary<Type, Conversion>>();
+        private static IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
 
         #endregion
 
@@ -204,36 +204,40 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Registers a <see cref="Conversion"/> from the specified <paramref name="sourceType"/> to the <paramref name="targetType"/>.
+        /// Registers a <see cref="ConversionAttempt"/> from the specified <paramref name="sourceType"/> to the <paramref name="targetType"/>.
         /// </summary>
         /// <param name="sourceType">The source <see cref="Type"/> for which the <paramref name="conversion"/> can be called.</param>
         /// <param name="targetType">The result <see cref="Type"/> that <paramref name="conversion"/> produces.</param>
-        /// <param name="conversion">A <see cref="Conversion"/> delegate, which is able to perform the conversion.</param>
+        /// <param name="conversion">A <see cref="ConversionAttempt"/> delegate, which is able to perform the conversion.</param>
         /// <remarks>
-        #error itt
-        /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
-        /// method will return the converter defined in <typeparamref name="TConverter"/>.</para>
-        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
-        /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
-        /// after the registering may continue to return the original converter. So make sure you register your custom converters
-        /// at the start of your application.</note></remarks>
+        /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>
+        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see> <see cref="string"/> extension methods
+        /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
+        /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
+        /// will override the old registered conversion with the new one.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
+        public static void RegisterConversion(this Type sourceType, Type targetType, ConversionAttempt conversion)
+            => DoRegisterConversion(sourceType, targetType, conversion);
+
+        /// <summary>
+        /// Registers a <see cref="ConversionAttempt"/> from the specified <paramref name="sourceType"/> to the <paramref name="targetType"/>.
+        /// </summary>
+        /// <param name="sourceType">The source <see cref="Type"/> for which the <paramref name="conversion"/> can be called.</param>
+        /// <param name="targetType">The result <see cref="Type"/> that <paramref name="conversion"/> produces.</param>
+        /// <param name="conversion">A <see cref="ConversionAttempt"/> delegate, which is able to perform the conversion.</param>
+        /// <remarks>
+        /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>
+        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see> <see cref="string"/> extension methods
+        /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
+        /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
+        /// will override the old registered conversion with the new one.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static void RegisterConversion(this Type sourceType, Type targetType, Conversion conversion)
-        {
-            if (sourceType == null)
-                throw new ArgumentNullException(nameof(sourceType), Res.ArgumentNull);
-            if (targetType == null)
-                throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
-            if (conversion == null)
-                throw new ArgumentNullException(nameof(conversion), Res.ArgumentNull);
-
-            if (!conversions.TryGetValue(targetType, out var conversionsOfTarget))
-            {
-                conversionsOfTarget = new LockingDictionary<Type, Conversion>();
-                conversions[targetType] = conversionsOfTarget;
-            }
-
-            conversionsOfTarget[sourceType] = conversion;
-        }
+            => DoRegisterConversion(sourceType, targetType, conversion);
 
         #endregion
 
@@ -458,9 +462,37 @@ namespace KGySoft.CoreLibraries
 
         internal static int SizeOf(this Type type) => sizeOfCache[type];
 
+        internal static Delegate GetConversion(this Type sourceType, Type targetType)
+            => conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget) && conversionsOfTarget.TryGetValue(sourceType, out Delegate conversion)
+                ? conversion
+                : null;
+
+        internal static Type[] GetConversionSourceTypes(this Type targetType)
+            => conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget)
+                ? conversionsOfTarget.Keys.ToArray()
+                : new Type[0];
+
         #endregion
 
         #region Private Methods
+
+        private static void DoRegisterConversion(Type sourceType, Type targetType, Delegate conversion)
+        {
+            if (sourceType == null)
+                throw new ArgumentNullException(nameof(sourceType), Res.ArgumentNull);
+            if (targetType == null)
+                throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
+            if (conversion == null)
+                throw new ArgumentNullException(nameof(conversion), Res.ArgumentNull);
+
+            if (!conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget))
+            {
+                conversionsOfTarget = new LockingDictionary<Type, Delegate>();
+                conversions[targetType] = conversionsOfTarget;
+            }
+
+            conversionsOfTarget[sourceType] = conversion;
+        }
 
         private static int GetSize(Type type)
         {

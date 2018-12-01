@@ -265,13 +265,6 @@ namespace KGySoft.CoreLibraries
                 }
                 if (type == Reflector.IntPtrType)
                 {
-                    if (!Byte.TryParse(s, out byte result))
-                        return false;
-                    value = result;
-                    return true;
-                }
-                if (type == Reflector.IntPtrType)
-                {
                     if (!Int64.TryParse(s, out long result))
                         return false;
                     value = new IntPtr(result);

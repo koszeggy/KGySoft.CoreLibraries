@@ -19,8 +19,14 @@ namespace System
 
     internal struct ValueTuple<T1, T2> : IEquatable<ValueTuple<T1, T2>>
     {
-        internal T1 Item1;
-        internal T2 Item2;
+        public T1 Item1;
+        public T2 Item2;
+
+        public ValueTuple(T1 item1, T2 item2)
+        {
+            Item1 = item1;
+            Item2 = item2;
+        }
 
         public bool Equals(ValueTuple<T1, T2> other) => EqualityComparer<T1>.Default.Equals(Item1, other.Item1) && EqualityComparer<T2>.Default.Equals(Item2, other.Item2);
         public override bool Equals(object obj) => obj is ValueTuple<T1, T2> tuple && Equals(tuple);
@@ -31,9 +37,16 @@ namespace System
 
     internal struct ValueTuple<T1, T2, T3> : IEquatable<ValueTuple<T1, T2, T3>>
     {
-        internal T1 Item1;
-        internal T2 Item2;
-        internal T3 Item3;
+        public T1 Item1;
+        public T2 Item2;
+        public T3 Item3;
+
+        public ValueTuple(T1 item1, T2 item2, T3 item3)
+        {
+            Item1 = item1;
+            Item2 = item2;
+            Item3 = item3;
+        }
 
         public bool Equals(ValueTuple<T1, T2, T3> other) 
             => EqualityComparer<T1>.Default.Equals(Item1, other.Item1) 
