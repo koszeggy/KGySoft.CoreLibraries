@@ -70,30 +70,52 @@ namespace _LibrariesTest
             #endregion
         }
 
+        /// <summary>
+        /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
+        /// then comparing by public fields/properties is forced for non-primitive types also when Equals is overridden.
+        /// </summary>
         protected static void AssertDeepEquals(object reference, object check, bool forceEqualityByMembers = false)
         {
             var errors = new List<string>();
             AssertResult(CheckDeepEquals(reference, check, forceEqualityByMembers, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
+        /// <summary>
+        /// Asserts whether reference and target collections are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
+        /// then comparing by public fields/properties is forced for non-primitive types also when Equals is overridden.
+        /// </summary>
         protected static void AssertItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers = false)
         {
             var errors = new List<string>();
             AssertResult(CheckItemsEqual(referenceObjects, targetObjects, forceEqualityByMembers, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
+        /// <summary>
+        /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
+        /// </summary>
         protected static void AssertMembersAndItemsEqual(object reference, object check)
         {
             var errors = new List<string>();
             AssertResult(CheckMembersAndItemsEqual(reference, check, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
+        /// <summary>
+        /// Gets whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
+        /// then comparing by public fields/properties is forced for non-primitive types also when Equals is overridden.
+        /// </summary>
         protected static bool DeepEquals(object reference, object check, bool forceEqualityByMembers = false)
             => CheckDeepEquals(reference, check, forceEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
+        /// <summary>
+        /// Gets whether reference and target collections are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
+        /// then comparing by public fields/properties is forced for non-primitive types also when Equals is overridden.
+        /// </summary>
         protected static bool ItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers = false)
             => CheckItemsEqual(referenceObjects, targetObjects, forceEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
+        /// <summary>
+        /// Gets whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
+        /// </summary>
         protected static bool MembersAndItemsEqual(object reference, object check) 
             => CheckMembersAndItemsEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 

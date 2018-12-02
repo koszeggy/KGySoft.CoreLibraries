@@ -32,7 +32,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Contains extension methods for the <see cref="Object"/> type.
     /// </summary>
-    public static class ObjectExtensions
+    public static partial class ObjectExtensions
     {
         #region Methods
 
@@ -159,7 +159,7 @@ namespace KGySoft.CoreLibraries
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
-            => TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
+            => ObjectConverter.TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
                 ? (TTargetType)result
                 : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj), error);
 
@@ -178,7 +178,7 @@ namespace KGySoft.CoreLibraries
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         public static object Convert(this object obj, Type targetType, CultureInfo culture = null)
-            => TryConvert(obj, targetType, culture, out object result, out Exception error) && targetType.CanAcceptValue(result)
+            => ObjectConverter.TryConvert(obj, targetType, culture, out object result, out Exception error) && targetType.CanAcceptValue(result)
                 ? result
                 : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(targetType), nameof(obj), error);
 
@@ -211,239 +211,7 @@ namespace KGySoft.CoreLibraries
 
         public static bool TryConvert(this object obj, Type targetType, out object value) => TryConvert(obj, targetType, null, out value);
 
-        public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value) => TryConvert(obj, targetType, culture, out value, out var _);
-
-        private static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
-        {
-            if (targetType == null)
-                throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
-
-            error = null;
-            if (obj == null || obj is DBNull)
-            {
-                value = null;
-                return targetType.CanAcceptValue(null);
-            }
-
-            if (targetType.IsNullable())
-                targetType = Nullable.GetUnderlyingType(targetType);
-
-            // ReSharper disable once PossibleNullReferenceException
-            if (targetType.IsInstanceOfType(obj))
-            {
-                value = obj;
-                return true;
-            }
-
-            if (culture == null)
-                culture = CultureInfo.InvariantCulture;
-
-            return DoConvert(obj, targetType, culture, out value, ref error, null);
-        }
-
-        private static bool DoConvert(object obj, Type targetType, CultureInfo culture, out object value, ref Exception error, HashSet<(object Instance, Type SourceType, Type TargetType)> failedAttempts)
-        {
-            Type sourceType = obj.GetType();
-            if (failedAttempts?.Contains((obj, sourceType, targetType)) == true)
-            {
-                value = null;
-                return false;
-            }
-
-            // direct conversions between the source and target types are used in the first place
-            bool result = sourceType.GetConversion(targetType) is Delegate conversion && TryConvertByRegisteredCovnersion(obj, conversion, targetType, culture, out value, ref error)
-                // if it fails, then trying to parse from string...
-                || obj is string strValue && strValue.TryParse(targetType, culture, out value)
-                // ...IConvertible...
-                || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertCovertible(convertible, targetType, culture, out value, ref error)
-                // ...and TypeCovnerter
-                || TryConvertByTypeConverter(obj, targetType, culture, out value, ref error);
-
-            if (result)
-                return true;
-
-            if (failedAttempts == null)
-                failedAttempts = new HashSet<(object, Type, Type)>();
-
-            // if both source and target types are enumerable, trying to convert their types, too
-            if (obj is IEnumerable collection && Reflector.IEnumerableType.IsAssignableFrom(targetType) && TryConvertCollection(collection, targetType, culture, out value, ref error, failedAttempts))
-                return true;
-
-            failedAttempts.Add((obj, sourceType, targetType));
-
-            // if there are registered converters to the target type, then we try to convert the value for those
-            Type[] sourceTypes = targetType.GetConversionSourceTypes();
-            if (sourceTypes.Length == 0)
-                return false;
-
-            foreach (Type intermediateType in sourceTypes)
-            {
-                if (DoConvert(obj, intermediateType, culture, out object intermediateResult, ref error, failedAttempts) && DoConvert(intermediateResult, targetType, culture, out value, ref error, failedAttempts))
-                    return true;
-            }
-
-            return false;
-        }
-
-        private static bool TryConvertByRegisteredCovnersion(object obj, Delegate conversionDelegate, Type targetType, CultureInfo culture, out object value, ref Exception error)
-        {
-            value = null;
-            try
-            {
-                switch (conversionDelegate)
-                {
-                    case ConversionAttempt conversionAttempt:
-                        return conversionAttempt.Invoke(obj, culture, out value) && targetType.CanAcceptValue(value);
-                    case Conversion conversion:
-                        value = conversion.Invoke(obj, culture);
-                        return targetType.CanAcceptValue(value);
-                    default:
-                        throw new InvalidOperationException("Invalid conversion delegate type");
-                }
-            }
-            catch (Exception e)
-            {
-                error = e;
-                return false;
-            }
-        }
-
-        private static bool TryConvertCovertible(IConvertible convertible, Type targetType, CultureInfo culture, out object value, ref Exception error)
-        {
-            try
-            {
-                if (targetType.IsEnum)
-                {
-                    value = Enum.ToObject(targetType, convertible);
-                    return true;
-                }
-
-                value = convertible.ToType(targetType, culture);
-                return true;
-
-            }
-            catch (Exception e)
-            {
-                error = e;
-                value = null;
-                return false;
-            }
-        }
-
-        private static bool TryConvertByTypeConverter(object source, Type targetType, CultureInfo culture, out object value, ref Exception error)
-        {
-            value = null;
-            Type sourceType = source.GetType();
-
-            // 1.) by target
-            TypeConverter converter = TypeDescriptor.GetConverter(targetType);
-            if (converter.CanConvertFrom(sourceType))
-            {
-                try
-                {
-                    // ReSharper disable once AssignNullToNotNullAttribute - actually it CAN be null...
-                    value = converter.ConvertFrom(null, culture, source);
-                    return true;
-                }
-                catch (Exception e)
-                {
-                    error = e;
-                }
-            }
-
-            // 2.) by source
-            converter = TypeDescriptor.GetConverter(sourceType);
-            if (converter.CanConvertTo(targetType))
-            {
-                try
-                {
-                    value = converter.ConvertTo(null, culture, source, targetType);
-                }
-                catch (Exception e)
-                {
-                    error = e;
-                    return false;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool TryConvertCollection(IEnumerable collection, Type targetType, CultureInfo culture, out object value, ref Exception error, HashSet<(object, Type, Type)> failedAttempts)
-        {
-            if (targetType.IsArray)
-                return TryConvertToArray(collection, targetType, culture, out value, ref error, failedAttempts);
-        }
-
-        private static bool TryConvertToArray(IEnumerable sourceCollection, Type targetType, CultureInfo culture, out object value, ref Exception error, HashSet<(object, Type, Type)> failedAttempts)
-        {
-            value = null;
-            Type sourceType = sourceCollection.GetType();
-            int rank = targetType.GetArrayRank();
-            Type targetElementType = targetType.GetElementType();
-            Array targetArray;
-
-            // multi dimension target array is supported only if the source is also an array and has the same dimension
-            if (rank > 1)
-            {
-                if (!(sourceCollection is Array sourceArray) || sourceArray.Rank != rank)
-                    return false;
-
-                int[] lengths = new int[rank];
-                int[] lowerBounds = new int[rank];
-                for (int i = 0; i < rank; i++)
-                {
-                    lengths[i] = sourceArray.GetLength(i);
-                    lowerBounds[i] = sourceArray.GetLowerBound(i);
-                }
-
-                // ReSharper disable once AssignNullToNotNullAttribute - sourceType is an array here
-                targetArray = Array.CreateInstance(sourceType.GetElementType(), lengths, lowerBounds);
-                var indexer = new ArrayIndexer(lengths, lowerBounds);
-                foreach (object sourceItem in sourceArray)
-                {
-                    indexer.MoveNext();
-                    if (!DoConvert(sourceItem, targetElementType, culture, out object targetItem, ref error, failedAttempts))
-                        return false;
-                    targetArray.SetValue(targetItem, indexer.Current);
-                }
-
-                value = targetArray;
-                return true;
-            }
-
-            // single dimension target array below - case 1: source size is known
-            if (sourceCollection is ICollection collection)
-            {
-                // ReSharper disable once AssignNullToNotNullAttribute - target is array in this method
-                targetArray = Array.CreateInstance(targetElementType, collection.Count);
-                int i = 0;
-                foreach (object sourceItem in collection)
-                {
-                    if (!DoConvert(sourceItem, targetElementType, culture, out object targetItem, ref error, failedAttempts))
-                        return false;
-                    targetArray.SetValue(targetItem, i++);
-                }
-
-                value = targetArray;
-                return true;
-            }
-
-            // case 2: source size is not known: using a List
-            IList resultList = (IList)Reflector.CreateInstance(Reflector.ListGenType.MakeGenericType(targetElementType));
-            foreach (object sourceItem in sourceCollection)
-            {
-                if (!DoConvert(sourceItem, targetElementType, culture, out object targetItem, ref error, failedAttempts))
-                    return false;
-                resultList.Add(targetItem);
-            }
-
-            // ReSharper disable once AssignNullToNotNullAttribute - target is array in this method
-            targetArray = Array.CreateInstance(targetElementType, resultList.Count);
-            resultList.CopyTo(targetArray, 0);
-            value = targetArray;
-            return true;
-        }
+        public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
 
         #endregion
     }

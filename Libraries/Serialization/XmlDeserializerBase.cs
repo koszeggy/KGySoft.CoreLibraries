@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections;
-#if !NET35
-using System.Collections.Concurrent;
-#endif
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -73,14 +70,9 @@ namespace KGySoft.Serialization
             return true;
         }
 
-        protected static object CreateInitializerCollection(Type collectionElementType, bool isDictionary)
-            => isDictionary
-                ? (collectionElementType.IsGenericType ? Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(collectionElementType.GetGenericArguments())) : new Dictionary<object, object>())
-                : Activator.CreateInstance(typeof(List<>).MakeGenericType(collectionElementType));
-
-        protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, object initializerCollection, Dictionary<MemberInfo, object> members)
+        protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object> members)
         {
-            AdjustInitializerCollection(ref initializerCollection, collectionCtor);
+            initializerCollection = initializerCollection.AdjustInitializerCollection(collectionCtor);
             object result = Reflector.CreateInstance(collectionCtor, initializerCollection);
 
             // restoring fields and properties of the final collection
@@ -293,33 +285,6 @@ namespace KGySoft.Serialization
 
             if (name != XmlSerializer.ElementItem)
                 throw new ArgumentException(Res.Get(Res.XmlItemExpected, name));
-        }
-
-        private static void AdjustInitializerCollection(ref object initializerCollection, ConstructorInfo collectionCtor)
-        {
-            Type collectionType = collectionCtor.DeclaringType;
-
-            // Reverse for Stack
-            if (typeof(Stack).IsAssignableFrom(collectionType) || collectionType.IsImplementationOfGenericType(typeof(Stack<>))
-#if !NET35
-                || collectionType.IsImplementationOfGenericType(typeof(ConcurrentStack<>))
-#endif
-            )
-            {
-                IList list = (IList)initializerCollection;
-                int length = list.Count;
-                int to = length / 2;
-                for (int i = 0; i < to; i++)
-                {
-                    object temp = list[i];
-                    list[i] = list[length - i - 1];
-                    list[length - i - 1] = temp;
-                }
-            }
-
-            // ToArray for array ctor parameter
-            if (collectionCtor.GetParameters()[0].ParameterType.IsArray)
-                initializerCollection = Reflector.RunMethod(initializerCollection, initializerCollection.GetType().GetMethod(nameof(List<_>.ToArray)));
         }
 
         protected static string Unescape(string s)

@@ -102,8 +102,7 @@ namespace KGySoft.Serialization
         /// </summary>
         private static object DeserializeContentByInitializerCollection(XElement parent, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
         {
-            var initializerCollection = CreateInitializerCollection(collectionElementType, isDictionary);
-
+            IEnumerable initializerCollection = collectionElementType.CreateInitializerCollection(isDictionary);
             var members = new Dictionary<MemberInfo, object>();
             DeserializeMembersAndElements(parent, initializerCollection, collectionCtor.DeclaringType, collectionElementType, members);
             return CreateCollectionByInitializerCollection(collectionCtor, initializerCollection, members);

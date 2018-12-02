@@ -279,8 +279,8 @@ namespace KGySoft.CoreLibraries
         /// If default constructor is used the collection still can be read-only or fixed size.
         /// </summary>
         /// <param name="type">The type to check.</param>
-        /// <param name="defaultCtor">The default constructor or <see langword="null"/>. Non-null is returned only the collection can be populated as an IList or generic Collection.</param>
-        /// <param name="collectionCtor">The constructor to be initialized by collection or <see langword="null"/>.</param>
+        /// <param name="defaultCtor">The default constructor or <see langword="null"/>. Non-null is returned only if the collection can be populated as an IList or generic Collection.</param>
+        /// <param name="collectionCtor">The constructor to be initialized by collection or <see langword="null"/>. Can accept list, array or dictionary of element type.</param>
         /// <param name="elementType">The element type. For non-generic collections it is <see cref="object"/>.</param>
         /// <param name="isDictionary"><see langword="true"/> <paramref name="type"/> is a dictionary.</param>
         /// <returns><see langword="true"/> if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
@@ -335,6 +335,15 @@ namespace KGySoft.CoreLibraries
 
             return (defaultCtor != null || type.IsValueType) || collectionCtor != null;
         }
+
+        /// <summary>
+        /// Creates an initializer collection for types for which <see cref="IsSupportedCollectionForReflection"/> returns <see langword="true"/> and returns a non-<see langword="null"/> collection initializer constructor.
+        /// After the collection is populated call <see cref="EnumerableExtensions.AdjustInitializerCollection"/> before calling the constructor.
+        /// </summary>
+        internal static IEnumerable CreateInitializerCollection(this Type collectionElementType, bool isDictionary)
+            => isDictionary
+                ? (IEnumerable)(collectionElementType.IsGenericType ? Reflector.CreateInstance(Reflector.DictionaryGenType.MakeGenericType(collectionElementType.GetGenericArguments())) : new Dictionary<object, object>())
+                : (IEnumerable)Reflector.CreateInstance(Reflector.ListGenType.MakeGenericType(collectionElementType));
 
         /// <summary>
         /// Gets whether given type is a collection type and is capable to add/remove/clear items

@@ -18,6 +18,9 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -385,6 +388,44 @@ namespace KGySoft.CoreLibraries
             }
 
             throw new InvalidOperationException(Res.Get(Res.EnumerableCannotClear, source.GetType().FullName));
+        }
+
+        /// <summary>
+        /// Adjusts the initializer collection created by <see cref="TypeExtensions.CreateInitializerCollection"/> after it is populated before calling the constructor.
+        /// </summary>
+        internal static IEnumerable AdjustInitializerCollection([NoEnumeration]this IEnumerable initializerCollection, ConstructorInfo collectionCtor)
+        {
+            Type collectionType = collectionCtor.DeclaringType;
+
+            // Reverse for Stack
+            if (typeof(Stack).IsAssignableFrom(collectionType) || collectionType.IsImplementationOfGenericType(typeof(Stack<>))
+#if !NET35
+                || collectionType.IsImplementationOfGenericType(typeof(ConcurrentStack<>))
+#endif
+            )
+            {
+                IList list = (IList)initializerCollection;
+                int length = list.Count;
+                int to = length / 2;
+                for (int i = 0; i < to; i++)
+                {
+                    object temp = list[i];
+                    list[i] = list[length - i - 1];
+                    list[length - i - 1] = temp;
+                }
+            }
+
+            // Converting to array for array ctor parameter
+            Type parameterType = collectionCtor.GetParameters()[0].ParameterType;
+            if (!parameterType.IsArray)
+                return initializerCollection;
+
+            ICollection coll = (ICollection)initializerCollection;
+
+            // ReSharper disable once AssignNullToNotNullAttribute - parameter is an array so will be never null
+            Array initializerArray = Array.CreateInstance(parameterType.GetElementType(), coll.Count);
+            coll.CopyTo(initializerArray, 0);
+            return initializerArray;
         }
 
         #endregion
