@@ -28,10 +28,12 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(1.0, 1);
             Test("1", true); // Parse
 
+            // TODO: enumerable to string (if problematic, then do sg - eg ToString)
+
             // Registered conversions
             Throws<ArgumentException>(() => Test(1L, new IntPtr(1)));
             Throws<ArgumentException>(() => Test(1, new IntPtr(1)));
-            typeof(long).RegisterConversion(typeof(IntPtr), (obj, culture) => new IntPtr((long)obj));
+            typeof(long).RegisterConversion(typeof(IntPtr), (obj, type, culture) => new IntPtr((long)obj));
             Test(1L, new IntPtr(1));
             Test(1, new IntPtr(1)); // int -> long -> IntPtr
 

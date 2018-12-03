@@ -73,7 +73,6 @@ namespace KGySoft
         internal const string StreamCannotWrite = nameof(StreamCannotWrite);
         internal const string StreamCannotSeek = nameof(StreamCannotSeek);
         internal const string SeparatorNullOrEmpty = nameof(SeparatorNullOrEmpty);
-        internal const string NotAnInstanceOfType = nameof(NotAnInstanceOfType);
         internal const string SetConstantField = nameof(SetConstantField);
         internal const string NotSupportedMemberType = nameof(NotSupportedMemberType);
         internal const string InvalidMethodBase = nameof(InvalidMethodBase);
@@ -334,6 +333,9 @@ namespace KGySoft
 
         /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
         internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumFlagsOutOfRangeFormat", value.GetType().Name, FormatFlags<TEnum>());
+
+        /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
+        internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string CollectionNongenericKeyTypeInvalid(object key, Type type) => Get("Collection_NongenericKeyTypeInvalidFormat", key, type);

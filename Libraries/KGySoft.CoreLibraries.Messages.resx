@@ -238,8 +238,8 @@ Hit rate: {8:P2}</value>
   <data name="NotABool" xml:space="preserve">
     <value>"{0}" is not a boolean value.</value>
   </data>
-  <data name="NotAnInstanceOfType" xml:space="preserve">
-    <value>Provided object is not an instance of type {0}</value>
+  <data name="General_NotAnInstanceOfTypeFormat" xml:space="preserve">
+    <value>Specified argument is expected to be an instance of type {0}.</value>
   </data>
   <data name="ReturnedTypeInvalid" xml:space="preserve">
     <value>The returned value is not compatible with type {0}</value>

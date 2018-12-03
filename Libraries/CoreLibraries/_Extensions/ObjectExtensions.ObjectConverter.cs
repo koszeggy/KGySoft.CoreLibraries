@@ -16,16 +16,25 @@ namespace KGySoft.CoreLibraries
     {
         private static class ObjectConverter
         {
+            static ObjectConverter()
+            {
+                typeof(KeyValuePair<,>).RegisterConversion(typeof(KeyValuePair<,>), TryConvertKeyValuePair);
+                typeof(DictionaryEntry).RegisterConversion(typeof(KeyValuePair<,>), TryConvertDictionaryEntryToKeyValuePair);
+                typeof(KeyValuePair<,>).RegisterConversion(typeof(DictionaryEntry), ConvertKeyValuePairToDictionaryEntry);
+            }
+
             private struct ConversionContext
             {
                 internal readonly CultureInfo Culture;
                 internal Exception Error;
                 internal HashSet<(object Instance, Type SourceType, Type TargetType)> FailedAttempts;
+                internal Dictionary<(Type SourceType, Type TargetType), Delegate> LastUsedConversion;
 
                 public ConversionContext(CultureInfo culture)
                 {
                     Culture = culture;
 					FailedAttempts = null;
+                    LastUsedConversion = null;
                     Error = null;
                 }
             }
@@ -47,6 +56,12 @@ namespace KGySoft.CoreLibraries
 
             private static bool DoConvert(ref ConversionContext context, object obj, Type targetType, out object value)
             {
+                if (targetType.IsInstanceOfType(obj))
+                {
+                    value = obj;
+                    return true;
+                }
+
                 if (obj == null || obj is DBNull)
                 {
                     value = null;
@@ -56,13 +71,6 @@ namespace KGySoft.CoreLibraries
                 if (targetType.IsNullable())
                     targetType = Nullable.GetUnderlyingType(targetType);
 
-                // ReSharper disable once PossibleNullReferenceException
-                if (targetType.IsInstanceOfType(obj))
-                {
-                    value = obj;
-                    return true;
-                }
-
                 Type sourceType = obj.GetType();
                 if (context.FailedAttempts?.Contains((obj, sourceType, targetType)) == true)
                 {
@@ -71,33 +79,42 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // direct conversions between the source and target types are used in the first place
-                bool result = sourceType.GetConversion(targetType) is Delegate conversion && TryConvertByRegisteredConversion(ref context, obj, conversion, targetType, out value)
+                bool result = TryConvertByRegisteredConversion(ref context, obj, targetType, out value, true)
                     // if it fails, then trying to parse from string...
                     || obj is string strValue && strValue.TryParse(targetType, context.Culture, out value)
-                    // ...IConvertible...
+                    // ...between IConvertibles...
                     || obj is IConvertible convertible && typeof(IConvertible).IsAssignableFrom(targetType) && TryConvertCovertible(ref context, convertible, targetType, out value)
-                    // ...and TypeCovnerter
-                    || TryConvertByTypeConverter(ref context, obj, targetType, out value);
+                    // ...by TypeConverter...
+                    || TryConvertByTypeConverter(ref context, obj, targetType, out value)
+                    // ...or by non-direct conversions between source and target types (by base class/interface/generic type)
+                    || TryConvertByRegisteredConversion(ref context, obj, targetType, out value, false);
 
                 if (result)
                     return true;
-
-                if (context.FailedAttempts == null)
-                    context.FailedAttempts = new HashSet<(object, Type, Type)>();
 
                 // if both source and target types are enumerable, trying to convert their types, too
                 if (obj is IEnumerable collection && Reflector.IEnumerableType.IsAssignableFrom(targetType) && TryConvertCollection(ref context, collection, targetType, out value))
                     return true;
 
+                if (targetType == Reflector.StringType)
+                {
+                    value = obj.ToString();
+                    return true;
+                }
+
+                if (context.FailedAttempts == null)
+                    context.FailedAttempts = new HashSet<(object, Type, Type)>();
                 context.FailedAttempts.Add((obj, sourceType, targetType));
 
                 // if there are registered converters to the target type, then we try to convert the value for those
-                Type[] sourceTypes = targetType.GetConversionSourceTypes();
-                if (sourceTypes.Length == 0)
+                IList<Type> sourceTypes = targetType.GetConversionSourceTypes();
+                if (sourceTypes.Count == 0)
                     return false;
 
                 foreach (Type intermediateType in sourceTypes)
                 {
+                    if (intermediateType.IsAbstract || intermediateType.IsInterface || intermediateType.IsAssignableFrom(targetType))
+                        continue;
                     if (DoConvert(ref context, obj, intermediateType, out object intermediateResult) && DoConvert(ref context, intermediateResult, targetType, out value))
                         return true;
                 }
@@ -105,18 +122,46 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj, Delegate conversionDelegate, Type targetType, out object value)
+            private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj, Type targetType, out object value, bool exactTypeMatch)
             {
+                Type sourceType = obj.GetType();
+                if (context.LastUsedConversion != null && context.LastUsedConversion.TryGetValue((sourceType, targetType), out Delegate conversion) && TryUseConversion(ref context, obj, targetType, conversion, out value))
+                    return true;
+
+                IList<Delegate> conversions = sourceType.GetConversions(targetType, exactTypeMatch);
                 value = null;
+                if (conversions.Count == 0)
+                    return false;
+
+                foreach (Delegate conversionDelegate in conversions)
+                {
+                    if (!TryUseConversion(ref context, obj, targetType, conversionDelegate, out value))
+                        continue;
+
+                    if (context.LastUsedConversion == null)
+                        context.LastUsedConversion = new Dictionary<(Type, Type), Delegate>();
+                    (Type, Type) key = (sourceType, targetType);
+                    if (!context.LastUsedConversion.TryGetValue(key, out Delegate storedConversion) || storedConversion != conversionDelegate)
+                        context.LastUsedConversion[key] = conversionDelegate;
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            private static bool TryUseConversion(ref ConversionContext context, object obj, Type targetType, Delegate conversionDelegate, out object value)
+            {
                 try
                 {
                     switch (conversionDelegate)
                     {
                         case ConversionAttempt conversionAttempt:
-                            return conversionAttempt.Invoke(obj, context.Culture, out value) && targetType.CanAcceptValue(value);
+                            return conversionAttempt.Invoke(obj, targetType, context.Culture, out value) && targetType.CanAcceptValue(value);
                         case Conversion conversion:
-                            value = conversion.Invoke(obj, context.Culture);
-                            return targetType.CanAcceptValue(value);
+                            value = conversion.Invoke(obj, targetType, context.Culture);
+                            bool result = targetType.CanAcceptValue(value);
+                            return result;
                         default:
                             throw new InvalidOperationException("Invalid conversion delegate type");
                     }
@@ -124,6 +169,7 @@ namespace KGySoft.CoreLibraries
                 catch (Exception e)
                 {
                     context.Error = e;
+                    value = null;
                     return false;
                 }
             }
@@ -321,3 +367,4 @@ namespace KGySoft.CoreLibraries
         }
     }
 }
+

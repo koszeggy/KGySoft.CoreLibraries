@@ -167,6 +167,8 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (genericTypeDefinition == null)
                 throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
+            if (!genericTypeDefinition.IsGenericTypeDefinition)
+                return false;
 
             string rootName = genericTypeDefinition.Name;
             if (genericTypeDefinition.IsInterface)
@@ -217,6 +219,14 @@ namespace KGySoft.CoreLibraries
         /// will override the old registered conversion with the new one.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <para><paramref name="sourceType"/> and <paramref name="targetType"/> can be interface, abstract or even a generic type definition.
+        /// Preregistered conversions:
+        /// <list type="bullet">
+        /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
+        /// <item><see cref="KeyValuePair{TKey,TValue}"/> to <see cref="DictionaryEntry"/></item>
+        /// <item><see cref="DictionaryEntry"/> to <see cref="KeyValuePair{TKey,TValue}"/></item>
+        /// </list>
+        /// </para>
         /// </remarks>
         public static void RegisterConversion(this Type sourceType, Type targetType, ConversionAttempt conversion)
             => DoRegisterConversion(sourceType, targetType, conversion);
@@ -235,6 +245,14 @@ namespace KGySoft.CoreLibraries
         /// will override the old registered conversion with the new one.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <para><paramref name="sourceType"/> and <paramref name="targetType"/> can be interface, abstract or even a generic type definition.
+        /// Preregistered conversions:
+        /// <list type="bullet">
+        /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
+        /// <item><see cref="KeyValuePair{TKey,TValue}"/> to <see cref="DictionaryEntry"/></item>
+        /// <item><see cref="DictionaryEntry"/> to <see cref="KeyValuePair{TKey,TValue}"/></item>
+        /// </list>
+        /// </para>
         /// </remarks>
         public static void RegisterConversion(this Type sourceType, Type targetType, Conversion conversion)
             => DoRegisterConversion(sourceType, targetType, conversion);
@@ -370,7 +388,7 @@ namespace KGySoft.CoreLibraries
                 return false;
 
             if (!type.IsInstanceOfType(instance))
-                throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType, type), nameof(instance));
+                throw new ArgumentException(Res.NotAnInstanceOfType(type), nameof(instance));
 
             // not instance is IList test because then type could be even object
             if (Reflector.IListType.IsAssignableFrom(type))
@@ -471,15 +489,50 @@ namespace KGySoft.CoreLibraries
 
         internal static int SizeOf(this Type type) => sizeOfCache[type];
 
-        internal static Delegate GetConversion(this Type sourceType, Type targetType)
-            => conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget) && conversionsOfTarget.TryGetValue(sourceType, out Delegate conversion)
-                ? conversion
-                : null;
+        internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
+        {
+            var result = new List<Delegate>();
 
-        internal static Type[] GetConversionSourceTypes(this Type targetType)
-            => conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget)
-                ? conversionsOfTarget.Keys.ToArray()
-                : new Type[0];
+            // the exact match first
+            if (exactMatch != false && conversions.TryGetValue(targetType, out IDictionary<Type, Delegate> conversionsOfTarget) && conversionsOfTarget.TryGetValue(sourceType, out Delegate conversion))
+                result.Add(conversion);
+
+            if (exactMatch == true)
+                return result;
+
+            // non-exact matches: targets can match generic type, sources can match also interfaces and abstract types
+            foreach (KeyValuePair<Type, IDictionary<Type, Delegate>> conversionsForTarget in conversions)
+            {
+                if (conversionsForTarget.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(conversionsForTarget.Key))
+                {
+                    bool exactTarget = targetType == conversionsForTarget.Key;
+                    foreach (KeyValuePair<Type, Delegate> conversionForSource in conversionsForTarget.Value)
+                    {
+                        if (exactTarget && conversionForSource.Key == sourceType)
+                            continue;
+                        if (conversionForSource.Key.IsAssignableFrom(sourceType) || sourceType.IsImplementationOfGenericType(conversionForSource.Key))
+                            result.Add(conversionForSource.Value);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        internal static IList<Type> GetConversionSourceTypes(this Type targetType)
+        {
+            var result = new List<Type>();
+
+            // adding sources for exact target match
+            if (conversions.TryGetValue(targetType, out var conversionsForTarget))
+                result.AddRange(conversionsForTarget.Keys);
+
+            // adding sources for generic target matches
+            foreach (KeyValuePair<Type, IDictionary<Type, Delegate>> conversionsForGenericTarget in conversions.Where(c => c.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(c.Key)))
+                result.AddRange(conversionsForGenericTarget.Value.Keys);
+
+            return result;
+        }
 
         #endregion
 

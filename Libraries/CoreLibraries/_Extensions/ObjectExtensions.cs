@@ -157,6 +157,8 @@ namespace KGySoft.CoreLibraries
         /// <para>New <see cref="TypeConverter"/> instances can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> <see cref="Type"/> extension method.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <para><typeparamref name="TTargetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
+        /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
         public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
             => ObjectConverter.TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
@@ -176,6 +178,8 @@ namespace KGySoft.CoreLibraries
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
+        /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
         public static object Convert(this object obj, Type targetType, CultureInfo culture = null)
             => ObjectConverter.TryConvert(obj, targetType, culture, out object result, out Exception error) && targetType.CanAcceptValue(result)

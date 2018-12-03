@@ -184,7 +184,7 @@ namespace KGySoft.ComponentModel
         {
             Type enumType = value.GetType();
             if (!enumType.IsEnum)
-                throw new ArgumentException(Res.Get(Res.NotAnInstanceOfType, typeof(Enum)), nameof(value));
+                throw new ArgumentException(Res.NotAnInstanceOfType(Reflector.EnumType), nameof(value));
 
             // Obtaining enum fields by reflection. GetNames/Values could be also used but this way be get also the attributes.
             FieldInfo[] fields = enumType.GetFields(BindingFlags.Static | BindingFlags.Public);
