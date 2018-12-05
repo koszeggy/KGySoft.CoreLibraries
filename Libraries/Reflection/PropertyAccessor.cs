@@ -23,7 +23,7 @@ namespace KGySoft.Reflection
                 if (getter == null)
                 {
                     if (!CanRead)
-                        throw new NotSupportedException(Res.Get(Res.PropertyHasNoGetter, MemberInfo.DeclaringType, MemberInfo));
+                        throw new NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
 
                     getter = CreateGetter();
                 }
@@ -46,7 +46,7 @@ namespace KGySoft.Reflection
                 if (setter == null)
                 {
                     if (!CanWrite)
-                        throw new NotSupportedException(Res.Get(Res.PropertyHasNoSetter, MemberInfo.DeclaringType, MemberInfo));
+                        throw new NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
 
                     setter = CreateSetter();
                 }

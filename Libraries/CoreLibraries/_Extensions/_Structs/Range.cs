@@ -29,7 +29,7 @@ namespace KGySoft.CoreLibraries
         public Range(T lowerBound, T upperBound)
         {
             if (lowerBound.CompareTo(upperBound) > 0)
-                throw new ArgumentOutOfRangeException(nameof(upperBound), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(upperBound), Res.MaxValueLessThanMinValue);
             LowerBound = lowerBound;
             UpperBound = upperBound;
         }

@@ -363,7 +363,7 @@ namespace KGySoft.Resources
                 get
                 {
                     if (state != EnumeratorStates.Enumerating)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                     if (mode == ResXEnumeratorModes.Aliases)
                         return new DictionaryEntry(key, value.ValueInternal);
@@ -379,7 +379,7 @@ namespace KGySoft.Resources
                 get
                 {
                     if (state != EnumeratorStates.Enumerating)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
 
                     return key;
                 }

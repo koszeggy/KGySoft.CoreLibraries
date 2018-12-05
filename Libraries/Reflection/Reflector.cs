@@ -169,10 +169,10 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
 
             if (!property.CanWrite)
-                throw new InvalidOperationException(Res.Get(Res.PropertyHasNoSetter, property.DeclaringType, property.Name));
+                throw new InvalidOperationException(Res.ReflectionPropertyHasNoSetter(property.DeclaringType, property.Name));
             bool isStatic = property.GetSetMethod(true).IsStatic;
             if (instance == null && !isStatic)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
+                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
@@ -182,10 +182,8 @@ namespace KGySoft.Reflection
             {
                 property.SetValue(instance, value, indexerParameters);
             }
-            else// if (way == ReflectionWays.TypeDescriptor)
-            {
-                throw new NotSupportedException(Res.Get(Res.SetPropertyTypeDescriptorNotSupported));
-            }
+            else // if (way == ReflectionWays.TypeDescriptor)
+                throw new NotSupportedException(Res.ReflectionSetPropertyTypeDescriptorNotSupported);
         }
 
         /// <summary>
@@ -209,14 +207,14 @@ namespace KGySoft.Reflection
             if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexerParameters == null || indexerParameters.Length == 0)))
             {
                 if (instance == null)
-                    throw new NotSupportedException(Res.Get(Res.CannotSetStaticPropertyTypeDescriptor));
+                    throw new NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
                 PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
                 if (property != null)
                 {
                     property.SetValue(instance, value);
                     return true;
                 }
-                return throwError ? throw new ReflectionException(Res.Get(Res.CannotSetPropertyTypeDescriptor, propertyName, type.FullName)) : false;
+                return throwError ? throw new ReflectionException(Res.ReflectionPropertyNotFoundTypeDescriptor(propertyName, type)) : false;
             }
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
@@ -246,7 +244,12 @@ namespace KGySoft.Reflection
                 }
             }
 
-            return throwError ? throw new ReflectionException(Res.Get(instance == null ? Res.StaticPropertyDoesNotExist : Res.InstancePropertyDoesNotExist, propertyName, type)) : false;
+            if (!throwError)
+                return false;
+
+            if (instance == null)
+                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type));
+            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
         }
 
         internal static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto, params object[] indexerParameters)
@@ -400,28 +403,26 @@ namespace KGySoft.Reflection
             if (indexerParameters == null)
                 throw new ArgumentNullException(nameof(indexerParameters), Res.ArgumentNull);
             if (indexerParameters.Length == 0)
-                throw new ArgumentException(Res.Get(Res.EmptyIndices), nameof(indexerParameters));
+                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexerParameters));
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.Get(Res.SetIndexerTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
 
             // Arrays
             Array array = instance as Array;
             if (array != null)
             {
                 if (array.Rank != indexerParameters.Length)
-                    throw new ArgumentException(Res.Get(Res.IndexParamsLengthMismatch, array.Rank), nameof(indexerParameters));
+                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexerParameters));
 
-                long[] indices = new long[indexerParameters.Length];
+                int[] indices = new int[indexerParameters.Length];
                 try
                 {
                     for (int i = 0; i < indexerParameters.Length; i++)
-                    {
-                        indices[i] = Convert.ToInt64(indexerParameters[i]);
-                    }
+                        indices[i] = Convert.ToInt32(indexerParameters[i]);
                 }
                 catch (Exception e)
                 {
-                    throw new ArgumentException(Res.Get(Res.IndexParamsTypeMismatch), nameof(indexerParameters), e);
+                    throw new ArgumentException(Res.ReflectionIndexParamsTypeMismatch, nameof(indexerParameters), e);
                 }
                 array.SetValue(value, indices);
                 return;
@@ -460,7 +461,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            throw new ReflectionException(Res.Get(Res.IndexerDoesNotExist, instance.GetType()));
+            throw new ReflectionException(Res.ReflectionIndexerNotFound(type));
         }
 
         /// <summary>
@@ -509,9 +510,9 @@ namespace KGySoft.Reflection
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
             if (!property.CanRead)
-                throw new InvalidOperationException(Res.Get(Res.PropertyHasNoGetter, property.DeclaringType, property.Name));
+                throw new InvalidOperationException(Res.ReflectionPropertyHasNoGetter(property.DeclaringType, property.Name));
             if (instance == null && !property.GetGetMethod(true).IsStatic)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
+                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
@@ -523,7 +524,7 @@ namespace KGySoft.Reflection
             }
             else //if (way == ReflectionWays.TypeDescriptor)
             {
-                throw new NotSupportedException(Res.Get(Res.CannotGetPropertyTypeDescriptor));
+                throw new NotSupportedException(Res.ReflectionGetPropertyTypeDescriptorNotSupported);
             }
         }
 
@@ -539,20 +540,17 @@ namespace KGySoft.Reflection
             return GetProperty(instance, property, ReflectionWays.Auto, null);
         }
 
-        /// <summary>
-        /// Internal implementation of GetInstance/StaticPropertyByName methods
-        /// </summary>
         private static object GetPropertyByName(string propertyName, Type type, object instance, ReflectionWays way, object[] indexerParameters)
         {
             // type descriptor
             if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexerParameters == null || indexerParameters.Length == 0)))
             {
                 if (instance == null)
-                    throw new NotSupportedException(Res.Get(Res.CannotGetStaticPropertyTypeDescriptor));
+                    throw new NotSupportedException(Res.ReflectionCannotGetStaticPropertyTypeDescriptor);
                 PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
                 if (property != null)
                     return property.GetValue(instance);
-                throw new ReflectionException(Res.Get(Res.CannotGetPropertyTypeDescriptor, propertyName, type.FullName));
+                throw new ReflectionException(Res.ReflectionCannotGetPropertyTypeDescriptor(propertyName, type));
             }
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
@@ -584,7 +582,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            throw new ReflectionException(Res.Get(instance == null ? Res.StaticPropertyDoesNotExist : Res.InstancePropertyDoesNotExist, propertyName, type.FullName));
+            if (instance == null)
+                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type));
+            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
         }
 
         /// <summary>
@@ -717,27 +717,25 @@ namespace KGySoft.Reflection
             if (indexerParameters == null)
                 throw new ArgumentNullException(nameof(indexerParameters), Res.ArgumentNull);
             if (indexerParameters.Length == 0)
-                throw new ArgumentException(Res.Get(Res.EmptyIndices), nameof(indexerParameters));
+                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexerParameters));
             if (way == ReflectionWays.TypeDescriptor)
-                throw new NotSupportedException(Res.Get(Res.GetIndexerTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionGetIndexerTypeDescriptorNotSupported);
 
             // Arrays
             Array array = instance as Array;
             if (array != null)
             {
                 if (array.Rank != indexerParameters.Length)
-                    throw new ArgumentException(Res.Get(Res.IndexParamsLengthMismatch, array.Rank), nameof(indexerParameters));
-                long[] indices = new long[indexerParameters.Length];
+                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexerParameters));
+                int[] indices = new int[indexerParameters.Length];
                 try
                 {
                     for (int i = 0; i < indexerParameters.Length; i++)
-                    {
-                        indices[i] = Convert.ToInt64(indexerParameters[i]);
-                    }
+                        indices[i] = Convert.ToInt32(indexerParameters[i]);
                 }
                 catch (Exception e)
                 {
-                    throw new ArgumentException(Res.Get(Res.IndexParamsTypeMismatch), nameof(indexerParameters), e);
+                    throw new ArgumentException(Res.ReflectionIndexParamsTypeMismatch, nameof(indexerParameters), e);
                 }
                 return array.GetValue(indices);
             }
@@ -772,7 +770,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            throw new ReflectionException(Res.Get(Res.IndexerDoesNotExist, instance.GetType()));
+            throw new ReflectionException(Res.ReflectionIndexerNotFound(type));
         }
 
         /// <summary>
@@ -826,22 +824,23 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(method), Res.ArgumentNull);
             bool isStatic = method.IsStatic;
             if (instance == null && !isStatic)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
+                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
 
             // if the method is generic we need the generic arguments and a constructed method with real types
             if (method.IsGenericMethodDefinition)
             {
                 if (genericParameters == null)
-                    throw new ArgumentNullException(nameof(genericParameters), Res.Get(Res.TypeParamsAreNull));
-                else if (genericParameters.Length != method.GetGenericArguments().Length)
-                    throw new ArgumentException(Res.Get(Res.TypeArgsLengthMismatch), nameof(genericParameters));
+                    throw new ArgumentNullException(nameof(genericParameters), Res.ReflectionTypeParamsAreNull);
+                Type[] genArgs = method.GetGenericArguments();
+                if (genericParameters.Length != genArgs.Length)
+                    throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
                 try
                 {
                     method = method.MakeGenericMethod(genericParameters);
                 }
                 catch (Exception e)
                 {
-                    throw new ReflectionException(Res.Get(Res.CannotCreateGenericMethod), e);
+                    throw new ReflectionException(Res.ReflectionCannotCreateGenericMethod, e);
                 }
             }
 
@@ -855,7 +854,7 @@ namespace KGySoft.Reflection
             }
             else// if (way == ReflectionWays.TypeDescriptor)
             {
-                throw new NotSupportedException(Res.Get(Res.InvokeMethodTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionInvokeMethodTypeDescriptorNotSupported);
             }
         }
 
@@ -926,7 +925,7 @@ namespace KGySoft.Reflection
                         Type[] genArgs = mi.GetGenericArguments();
                         if (genericParameters.Length != genArgs.Length)
                         {
-                            lastException = new ArgumentException(Res.Get(Res.TypeArgsLengthMismatch, genArgs.Length), nameof(genericParameters));
+                            lastException = new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
                             continue;
                         }
                         try
@@ -959,7 +958,9 @@ namespace KGySoft.Reflection
             if (lastException != null)
                 throw lastException;
 
-            throw new ReflectionException(Res.Get(instance == null ? Res.StaticMethodDoesNotExist : Res.InstanceMethodDoesNotExist, methodName, type));
+            if (instance == null)
+                throw new ReflectionException(Res.ReflectionStaticMethodNotFound(methodName, type));
+            throw new ReflectionException(Res.ReflectionInstanceMethodNotFound(methodName, type));
         }
 
         /// <summary>
@@ -1246,7 +1247,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            throw new ReflectionException(Res.Get(Res.CtorDoesNotExist, type));
+            throw new ReflectionException(Res.ReflectionCtorNotFound(type));
         }
 
         /// <summary>
@@ -1344,9 +1345,9 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(field), Res.ArgumentNull);
             bool isStatic = field.IsStatic;
             if (instance == null && !isStatic)
-                throw new ArgumentNullException(nameof(instance), Res.Get(Res.InstanceIsNull));
+                throw new ArgumentNullException(nameof(instance), Res.ReflectionInstanceIsNull);
             if (field.IsLiteral)
-                throw new InvalidOperationException(Res.Get(Res.SetConstantField, field.DeclaringType, field.Name));
+                throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(field.DeclaringType, field.Name));
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
@@ -1358,7 +1359,7 @@ namespace KGySoft.Reflection
             }
             else// if (way == ReflectionWays.TypeDescriptor)
             {
-                throw new NotSupportedException(Res.Get(Res.SetFieldTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
             }
         }
 
@@ -1382,7 +1383,7 @@ namespace KGySoft.Reflection
             // type descriptor
             if (way == ReflectionWays.TypeDescriptor)
             {
-                throw new NotSupportedException(Res.Get(Res.SetFieldTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
             }
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
@@ -1400,7 +1401,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            throw new ReflectionException(Res.Get(instance == null ? Res.StaticFieldDoesNotExist : Res.InstanceFieldDoesNotExist, fieldName, type));
+            if (instance == null)
+                throw new ReflectionException(Res.ReflectionStaticFieldDoesNotExist(fieldName, type));
+            throw new ReflectionException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, type));
         }
 
         /// <summary>
@@ -1534,7 +1537,7 @@ namespace KGySoft.Reflection
             }
             else //if (way == ReflectionWays.TypeDescriptor)
             {
-                throw new NotSupportedException(Res.Get(Res.GetFieldTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
             }
         }
 
@@ -1558,7 +1561,7 @@ namespace KGySoft.Reflection
             // type descriptor
             if (way == ReflectionWays.TypeDescriptor)
             {
-                throw new NotSupportedException(Res.Get(Res.SetFieldTypeDescriptorNotSupported));
+                throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
             }
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
@@ -1575,7 +1578,9 @@ namespace KGySoft.Reflection
                 }
             }
 
-            throw new ReflectionException(Res.Get(instance == null ? Res.StaticFieldDoesNotExist : Res.InstanceFieldDoesNotExist, fieldName, type));
+            if (instance == null)
+                throw new ReflectionException(Res.ReflectionStaticFieldDoesNotExist(fieldName, type));
+            throw new ReflectionException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, type));
         }
 
         /// <summary>
@@ -1708,7 +1713,7 @@ namespace KGySoft.Reflection
             if (assemblyName == null)
                 throw new ArgumentNullException(nameof(assemblyName), Res.ArgumentNull);
             if (assemblyName.Length == 0)
-                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(assemblyName));
+                throw new ArgumentException(Res.ArgumentEmpty, nameof(assemblyName));
 
             Assembly result;
             string key = (matchBySimpleName ? "-" : "+") + assemblyName;
@@ -1889,7 +1894,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                throw new ReflectionException(Res.Get(Res.NotAType, typeName), e);
+                throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
             }
 
             if (result != null)
@@ -1913,7 +1918,7 @@ namespace KGySoft.Reflection
                 }
                 catch (Exception e)
                 {
-                    throw new ReflectionException(Res.Get(Res.CannotLoadAssembly, asmName), e);
+                    throw new ReflectionException(Res.ReflectionCannotLoadAssembly(asmName), e);
                 }
 
                 if (assembly == null)
@@ -1970,7 +1975,7 @@ namespace KGySoft.Reflection
             int genericEnd = typeName.LastIndexOf(']');
             int asmNamePos = typeName.IndexOf(',', genericEnd + 1);
             if (asmNamePos >= 0)
-                throw new ArgumentException(Res.Get(Res.TypeWithAssemblyName), nameof(typeName));
+                throw new ArgumentException(Res.ReflectionTypeWithAssemblyName, nameof(typeName));
 
             return ResolveType(assembly, typeName, false, false);
         }
@@ -2007,15 +2012,15 @@ namespace KGySoft.Reflection
                         if (result != null && genTypeParams != null)
                         {
                             if (!result.IsGenericTypeDefinition)
-                                throw new ReflectionException(Res.Get(Res.ParseNotAGenericType, elementTypeName, typeName));
+                                throw new ReflectionException(Res.ReflectionResolveNotAGenericType(elementTypeName, typeName));
                             Type[] genArgs = result.GetGenericArguments();
                             if (genArgs.Length != genTypeParams.Length)
-                                throw new ReflectionException(Res.Get(Res.ParseTypeArgsLengthMismatch, typeName, genArgs));
+                                throw new ReflectionException(Res.ReflectionResolveTypeArgsLengthMismatch(typeName, genArgs.Length));
                             Type[] typeGenParams = new Type[genTypeParams.Length];
                             for (int i = 0; i < genTypeParams.Length; i++)
                             {
                                 if ((typeGenParams[i] = ResolveType(genTypeParams[i], loadPartiallyDefinedAssemblies, matchAssemblyByWeakName)) == null)
-                                    throw new ReflectionException(Res.Get(Res.ParseCannotResolveTypeArg, elementTypeName, typeName));
+                                    throw new ReflectionException(Res.ReflectionCannotResolveTypeArg(elementTypeName, typeName));
                             }
 
                             result = result.MakeGenericType(typeGenParams);
@@ -2048,7 +2053,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                throw new ReflectionException(Res.Get(Res.NotAType, typeName), e);
+                throw new ReflectionException(Res.ReflectionNotAType(typeName), e);
             }
 
             if (result != null)
@@ -2086,7 +2091,7 @@ namespace KGySoft.Reflection
 
             int posEndBracket = value.LastIndexOf(']');
             if (posEndBracket < posBeginBracket)
-                throw new ReflectionException(Res.Get(Res.TypeSyntaxError, value));
+                throw new ReflectionException(Res.ReflectionTypeSyntaxError(value));
             StringBuilder sb = new StringBuilder(value.Substring(posBeginBracket + 1, posEndBracket - posBeginBracket - 1));
 
             const string commaPlaceholder = "<%comma%>";
@@ -2124,7 +2129,7 @@ namespace KGySoft.Reflection
             int posEndBracket = value.LastIndexOf(']');
 
             if (posEndBracket == -1)
-                throw new ReflectionException(Res.Get(Res.TypeSyntaxError, value));
+                throw new ReflectionException(Res.ReflectionTypeSyntaxError(value));
 
             CircularList<int> result = new CircularList<int>();
             int lastArrayIndex = -1;
@@ -2245,7 +2250,7 @@ namespace KGySoft.Reflection
             if (ctor != null)
                 return ctor.Constructor;
 
-            throw new ArgumentException(Res.Get(Res.NotAMember, expression.GetType()), nameof(expression));
+            throw new ArgumentException(Res.ReflectionNotAMember(expression.GetType()), nameof(expression));
         }
 
         /// <summary>
@@ -2286,7 +2291,7 @@ namespace KGySoft.Reflection
             if (methodCall != null)
                 return methodCall.Method;
 
-            throw new ArgumentException(Res.Get(Res.NotAMethod), nameof(expression));
+            throw new ArgumentException(Res.ReflectionNotAMethod, nameof(expression));
         }
 
         /// <summary>

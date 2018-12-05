@@ -67,7 +67,7 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (length < 0)
-                throw new ArgumentOutOfRangeException(nameof(length), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
+                throw new ArgumentOutOfRangeException(nameof(length), Res.ArgumentMustBeGreaterOrEqualThan(0));
             if (length == 0)
                 return new byte[0];
 
@@ -369,7 +369,7 @@ namespace KGySoft.CoreLibraries
                 return minValue;
 
             if (maxValue < minValue)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             ulong range = (ulong)(maxValue - minValue);
             if (inclusiveUpperBound)
@@ -431,7 +431,7 @@ namespace KGySoft.CoreLibraries
                 return minValue;
 
             if (maxValue < minValue)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             ulong range = maxValue - minValue;
             if (inclusiveUpperBound)
@@ -691,7 +691,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
             if (maxValue < minValue)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             if (!Enum<FloatScale>.IsDefined(scale))
                 throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);
@@ -784,13 +784,13 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minLength < 0)
-                throw new ArgumentOutOfRangeException(nameof(minLength), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
+                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterOrEqualThan(0));
             if (maxLength < minLength)
-                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.Get(Res.MaxLengthLessThanMinLength));
+                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
             if (allowedCharacters == null)
                 throw new ArgumentNullException(nameof(allowedCharacters), Res.ArgumentNull);
             if (allowedCharacters.Length == 0)
-                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(allowedCharacters));
+                throw new ArgumentException(Res.ArgumentEmpty, nameof(allowedCharacters));
 
             return GenerateString(random, random.NextInt32(minLength, maxLength, true), allowedCharacters);
         }
@@ -815,9 +815,9 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minLength < 0)
-                throw new ArgumentOutOfRangeException(nameof(minLength), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
+                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterOrEqualThan(0));
             if (maxLength < minLength)
-                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.Get(Res.MaxLengthLessThanMinLength));
+                throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
             if (!Enum<StringCreation>.IsDefined(strategy))
                 throw new ArgumentOutOfRangeException(nameof(strategy), Res.ArgumentOutOfRange);
 
@@ -901,7 +901,7 @@ namespace KGySoft.CoreLibraries
             var minTicks = minValue.GetValueOrDefault(DateTime.MinValue).Ticks;
             var maxTicks = maxValue.GetValueOrDefault(DateTime.MaxValue).Ticks;
             if (maxTicks < minTicks)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             return new DateTime(random.NextInt64(minTicks, maxTicks, true));
         }
@@ -931,7 +931,7 @@ namespace KGySoft.CoreLibraries
             var minDate = minValue.GetValueOrDefault(DateTime.MinValue).Date;
             var maxDate = maxValue.GetValueOrDefault(DateTime.MaxValue).Date;
             if (maxDate < minDate)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             int range = (maxDate - minDate).Days;
             return minDate.AddDays(random.NextInt32(range, true));
@@ -957,7 +957,7 @@ namespace KGySoft.CoreLibraries
             var minDateTime = minValue?.UtcDateTime ?? DateTime.MinValue;
             var maxDateTime = maxValue?.UtcDateTime ?? DateTime.MaxValue;
             if (maxDateTime < minDateTime)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             var result = random.NextDateTime(minDateTime, maxDateTime);
             double diffInMinutes;
@@ -985,7 +985,7 @@ namespace KGySoft.CoreLibraries
             var minTicks = minValue.GetValueOrDefault(TimeSpan.MinValue).Ticks;
             var maxTicks = maxValue.GetValueOrDefault(TimeSpan.MaxValue).Ticks;
             if (maxTicks < minTicks)
-                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.Get(Res.MaxValueLessThanMinValue));
+                throw new ArgumentOutOfRangeException(nameof(maxValue), Res.MaxValueLessThanMinValue);
 
             return new TimeSpan(random.NextInt64(minTicks, maxTicks, true));
         }

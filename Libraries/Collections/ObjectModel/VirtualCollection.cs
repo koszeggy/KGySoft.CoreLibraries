@@ -138,7 +138,7 @@ namespace KGySoft.Collections.ObjectModel
             set
             {
                 if (!CanSetItem)
-                    throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                    throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
                 if (index < 0 || index >= Count)
                     throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
                 SetItem(index, value);
@@ -155,7 +155,7 @@ namespace KGySoft.Collections.ObjectModel
             set
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -195,7 +195,7 @@ namespace KGySoft.Collections.ObjectModel
         public void Add(T item)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             InsertItem(Count, item);
         }
@@ -210,7 +210,7 @@ namespace KGySoft.Collections.ObjectModel
         public void Insert(int index, T item)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             if (index < 0 || index > Count)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
@@ -227,7 +227,7 @@ namespace KGySoft.Collections.ObjectModel
         public bool Remove(T item)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             int index = GetItemIndex(item);
             if (index < 0)
@@ -247,7 +247,7 @@ namespace KGySoft.Collections.ObjectModel
         public void RemoveAt(int index)
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             if (index < 0 || index >= Count)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
@@ -263,7 +263,7 @@ namespace KGySoft.Collections.ObjectModel
         public void Clear()
         {
             if (IsReadOnly)
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             ClearItems();
         }
@@ -311,7 +311,7 @@ namespace KGySoft.Collections.ObjectModel
             if (index < 0 || index > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (array.Length - index < length)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
             for (int i = 0; i < length; i++)
                 array[index++] = GetItem(i);
         }
@@ -382,7 +382,7 @@ namespace KGySoft.Collections.ObjectModel
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Rank != 1)
-                throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
 
             if (array is T[] typedArray)
             {
@@ -394,9 +394,9 @@ namespace KGySoft.Collections.ObjectModel
             if (index < 0 || index > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (array.Length - index < length)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
             if (array.Rank != 1)
-                throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
 
             if (array is object[] objectArray)
             {
@@ -405,7 +405,7 @@ namespace KGySoft.Collections.ObjectModel
                 return;
             }
 
-            throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid), nameof(array));
+            throw new ArgumentException(Res.ICollectionArrayTypeInvalid, nameof(array));
         }
 
         bool IList.Contains(object value) => typeof(T).CanAcceptValue(value) && Contains((T)value);
@@ -415,7 +415,7 @@ namespace KGySoft.Collections.ObjectModel
         int IList.Add(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             T item = (T)value;
             Add(item);
             return GetItemIndex(item);
@@ -424,14 +424,14 @@ namespace KGySoft.Collections.ObjectModel
         void IList.Insert(int index, object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Insert(index, (T)value);
         }
 
         void IList.Remove(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Remove((T)value);
         }
 

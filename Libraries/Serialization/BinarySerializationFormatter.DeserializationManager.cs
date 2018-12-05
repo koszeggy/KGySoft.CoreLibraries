@@ -314,14 +314,14 @@ namespace KGySoft.Serialization
                         }
                         catch (Exception e)
                         {
-                            throw new SerializationException(Res.Get(Res.CannotLoadAssembly, name), e);
+                            throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), e);
                         }
                     }
                 }
 
                 if (result == null)
                 {
-                    throw new SerializationException(Res.Get(Res.CannotLoadAssembly, name));
+                    throw new SerializationException(Res.ReflectionCannotLoadAssembly(name));
                 }
 
                 if (assemblyByNameCache == null)

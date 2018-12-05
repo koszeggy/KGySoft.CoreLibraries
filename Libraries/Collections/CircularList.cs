@@ -144,7 +144,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
             }
@@ -174,7 +174,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (steps < list.size)
                 {
@@ -193,7 +193,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = list.startIndex;
                 steps = 0;
@@ -239,7 +239,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (index == 0 || index > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
             }
@@ -267,7 +267,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (index < list.size)
                 {
@@ -283,7 +283,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = 0;
                 current = default(T);
@@ -332,7 +332,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
             }
@@ -374,7 +374,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (steps < list.size)
                 {
@@ -397,7 +397,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = list.startIndex;
                 steps = 0;
@@ -504,7 +504,7 @@ namespace KGySoft.Collections
                 if (value == items.Length)
                     return;
                 if (value < size)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CapacityTooSmall));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.CircularListCapacityTooSmall);
 
                 if (value > 0)
                 {
@@ -608,7 +608,7 @@ namespace KGySoft.Collections
             set
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -1068,7 +1068,7 @@ namespace KGySoft.Collections
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+                throw new ArgumentException(Res.CircularListInvalidOffsLen);
 
             if (count == 0)
                 return;
@@ -1821,7 +1821,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+                throw new ArgumentException(Res.CircularListInvalidOffsLen);
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
 
@@ -1919,7 +1919,7 @@ namespace KGySoft.Collections
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
             if (array.Length - arrayIndex < size)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
             // Delegating rest error checking to Array.Copy.
             if (size <= 0)
@@ -1955,11 +1955,11 @@ namespace KGySoft.Collections
         public void CopyTo(int index, T[] array, int arrayIndex, int count)
         {
             if (size - index < count)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+                throw new ArgumentException(Res.CircularListInvalidOffsLen);
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length - arrayIndex < count)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
             // Delegating rest error checking to Array.Copy.
             if (size <= 0)
@@ -2006,7 +2006,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+                throw new ArgumentException(Res.CircularListInvalidOffsLen);
 
             int start = startIndex + index;
             int carry = start + count - items.Length;
@@ -2121,7 +2121,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+                throw new ArgumentException(Res.CircularListInvalidOffsLen);
 
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
@@ -2213,7 +2213,7 @@ namespace KGySoft.Collections
             }
 
             if (ver != version)
-                throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
         }
 
         #endregion
@@ -2250,7 +2250,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.Get(Res.InvalidOffsLen));
+                throw new ArgumentException(Res.CircularListInvalidOffsLen);
 
             CircularList<T> result = new CircularList<T>(count) { size = count };
 
@@ -2718,7 +2718,7 @@ namespace KGySoft.Collections
         int IList.Add(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             AddLast((T)value);
             return size - 1;
         }
@@ -2730,14 +2730,14 @@ namespace KGySoft.Collections
         void IList.Insert(int index, object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Insert(index, (T)value);
         }
 
         void IList.Remove(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Remove((T)value);
         }
 
@@ -2755,9 +2755,9 @@ namespace KGySoft.Collections
             if (index < 0 || index > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (array.Length - index < Count)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
             if (array.Rank != 1)
-                throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
 
             if (array is object[] objectArray)
             {
@@ -2765,7 +2765,7 @@ namespace KGySoft.Collections
                     objectArray[index++] = ElementAt(i);
             }
 
-            throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid), nameof(array));
+            throw new ArgumentException(Res.ICollectionArrayTypeInvalid, nameof(array));
         }
 
         #endregion

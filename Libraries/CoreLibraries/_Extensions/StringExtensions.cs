@@ -434,7 +434,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
             if (String.IsNullOrEmpty(separator))
-                throw new ArgumentException(Res.Get(Res.SeparatorNullOrEmpty), nameof(separator));
+                throw new ArgumentException(Res.StringExtensionsSeparatorNullOrEmpty, nameof(separator));
 
             string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
             byte[] result = new byte[values.Length];
@@ -584,7 +584,7 @@ namespace KGySoft.CoreLibraries
             var index = -1;
             foreach (var str in set)
             {
-                int pos = s.IndexOf(str ?? throw new ArgumentException(Res.Get(Res.ArgumentContainsNull), nameof(set)), comparison);
+                int pos = s.IndexOf(str ?? throw new ArgumentException(Res.ArgumentContainsNull, nameof(set)), comparison);
                 if (pos == 0)
                     return 0;
                 if (pos >= 0 && pos < index)
@@ -630,7 +630,7 @@ namespace KGySoft.CoreLibraries
 
             foreach (var str in set)
             {
-                if (s.IndexOf(str ?? throw new ArgumentException(Res.Get(Res.ArgumentContainsNull), nameof(set)), comparison) >= 0)
+                if (s.IndexOf(str ?? throw new ArgumentException(Res.ArgumentContainsNull, nameof(set)), comparison) >= 0)
                     return true;
             }
 

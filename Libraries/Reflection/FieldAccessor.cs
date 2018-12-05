@@ -66,7 +66,7 @@ namespace KGySoft.Reflection
                 if (setter == null)
                 {
                     if (IsConst)
-                        throw new InvalidOperationException(Res.Get(Res.SetConstantField, MemberInfo.DeclaringType, MemberInfo));
+                        throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
                     setter = CreateSetter();
                 }
                 return setter;

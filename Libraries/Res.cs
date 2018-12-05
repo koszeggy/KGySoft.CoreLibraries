@@ -19,6 +19,7 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -37,84 +38,7 @@ namespace KGySoft
 
         #region Internal Constants
 
-        // TODO: all to methods
-        internal const string ArgumentInvalidString = nameof(ArgumentInvalidString);
-        internal const string KeyNotFound = nameof(KeyNotFound);
-        internal const string ArgumentEmpty = nameof(ArgumentEmpty);
-        internal const string DuplicateKey = nameof(DuplicateKey);
-        internal const string ArgumentContainsNull = nameof(ArgumentContainsNull);
-        internal const string ArgumentMustBeGreaterOrEqualThan = nameof(ArgumentMustBeGreaterOrEqualThan);
-        internal const string ArgumentMustBeBetween = nameof(ArgumentMustBeBetween);
-        internal const string MaxValueLessThanMinValue = nameof(MaxValueLessThanMinValue);
-        internal const string MaxLengthLessThanMinLength = nameof(MaxLengthLessThanMinLength);
-        internal const string CollectionEmpty = nameof(CollectionEmpty);
-
-        internal const string NeutralResourceFileNotFoundResX = nameof(NeutralResourceFileNotFoundResX);
-        internal const string NeutralResourceNotFoundCompiled = nameof(NeutralResourceNotFoundCompiled);
-        internal const string NeutralResourceNotFoundHybrid = nameof(NeutralResourceNotFoundHybrid);
-        internal const string ValueContainsIllegalPathCharacters = nameof(ValueContainsIllegalPathCharacters);
-        internal const string TypeParameterIsNotEnum = nameof(TypeParameterIsNotEnum);
-        internal const string ValueCannotBeParsedAsEnum = nameof(ValueCannotBeParsedAsEnum);
-        internal const string EnumerationNotStartedOrFinished = nameof(EnumerationNotStartedOrFinished);
-        internal const string EnumerationCollectionModified = nameof(EnumerationCollectionModified);
-        internal const string ArrayTypeInvalid = nameof(ArrayTypeInvalid);
-        internal const string CacheNullLoaderInvoke = nameof(CacheNullLoaderInvoke);
-        internal const string CacheKeyNotFound = nameof(CacheKeyNotFound);
-        internal const string CacheMinSize = nameof(CacheMinSize);
-        internal const string CacheStatistics = nameof(CacheStatistics);
-        internal const string InvalidOffsLen = nameof(InvalidOffsLen);
-        internal const string ComparerFail = nameof(ComparerFail);
-        internal const string CapacityTooSmall = nameof(CapacityTooSmall);
-        internal const string InsertByIndexNotSupported = nameof(InsertByIndexNotSupported);
-        internal const string InvalidKeyValueType = nameof(InvalidKeyValueType);
-        internal const string EnumerableCannotAdd = nameof(EnumerableCannotAdd);
-        internal const string EnumerableCannotClear = nameof(EnumerableCannotClear);
-        internal const string StreamCannotRead = nameof(StreamCannotRead);
-        internal const string StreamCannotWrite = nameof(StreamCannotWrite);
-        internal const string StreamCannotSeek = nameof(StreamCannotSeek);
-        internal const string SeparatorNullOrEmpty = nameof(SeparatorNullOrEmpty);
-        internal const string SetConstantField = nameof(SetConstantField);
-        internal const string NotSupportedMemberType = nameof(NotSupportedMemberType);
-        internal const string InvalidMethodBase = nameof(InvalidMethodBase);
-        internal const string CannotTreatPropertySetter = nameof(CannotTreatPropertySetter);
-        internal const string TypeOrCtorInfoExpected = nameof(TypeOrCtorInfoExpected);
-        internal const string PropertyHasNoGetter = nameof(PropertyHasNoGetter);
-        internal const string PropertyHasNoSetter = nameof(PropertyHasNoSetter);
-        internal const string NotABool = nameof(NotABool);
-        internal const string NotAType = nameof(NotAType);
-        internal const string TypeCannotBeParsed = nameof(TypeCannotBeParsed);
-        internal const string ParseError = nameof(ParseError);
-        internal const string SetPropertyTypeDescriptorNotSupported = nameof(SetPropertyTypeDescriptorNotSupported);
-        internal const string CannotSetStaticPropertyTypeDescriptor = nameof(CannotSetStaticPropertyTypeDescriptor);
-        internal const string CannotSetPropertyTypeDescriptor = nameof(CannotSetPropertyTypeDescriptor);
-        internal const string InstancePropertyDoesNotExist = nameof(InstancePropertyDoesNotExist);
-        internal const string StaticPropertyDoesNotExist = nameof(StaticPropertyDoesNotExist);
-        internal const string EmptyIndices = nameof(EmptyIndices);
-        internal const string SetIndexerTypeDescriptorNotSupported = nameof(SetIndexerTypeDescriptorNotSupported);
-        internal const string IndexParamsLengthMismatch = nameof(IndexParamsLengthMismatch);
-        internal const string IndexParamsTypeMismatch = nameof(IndexParamsTypeMismatch);
-        internal const string IndexerDoesNotExist = nameof(IndexerDoesNotExist);
-        internal const string InstanceIsNull = nameof(InstanceIsNull);
-        internal const string CannotGetPropertyTypeDescriptor = nameof(CannotGetPropertyTypeDescriptor);
-        internal const string CannotGetStaticPropertyTypeDescriptor = nameof(CannotGetStaticPropertyTypeDescriptor);
-        internal const string GetIndexerTypeDescriptorNotSupported = nameof(GetIndexerTypeDescriptorNotSupported);
-        internal const string TypeParamsAreNull = nameof(TypeParamsAreNull);
-        internal const string TypeArgsLengthMismatch = nameof(TypeArgsLengthMismatch);
-        internal const string CannotCreateGenericMethod = nameof(CannotCreateGenericMethod);
-        internal const string InvokeMethodTypeDescriptorNotSupported = nameof(InvokeMethodTypeDescriptorNotSupported);
-        internal const string InstanceMethodDoesNotExist = nameof(InstanceMethodDoesNotExist);
-        internal const string StaticMethodDoesNotExist = nameof(StaticMethodDoesNotExist);
-        internal const string CtorDoesNotExist = nameof(CtorDoesNotExist);
-        internal const string SetFieldTypeDescriptorNotSupported = nameof(SetFieldTypeDescriptorNotSupported);
-        internal const string InstanceFieldDoesNotExist = nameof(InstanceFieldDoesNotExist);
-        internal const string StaticFieldDoesNotExist = nameof(StaticFieldDoesNotExist);
-        internal const string GetFieldTypeDescriptorNotSupported = nameof(GetFieldTypeDescriptorNotSupported);
-        internal const string ParseNotAGenericType = nameof(ParseNotAGenericType);
-        internal const string ParseTypeArgsLengthMismatch = nameof(ParseTypeArgsLengthMismatch);
-        internal const string ParseCannotResolveTypeArg = nameof(ParseCannotResolveTypeArg);
-        internal const string TypeSyntaxError = nameof(TypeSyntaxError);
-        internal const string NotAMember = nameof(NotAMember);
-        internal const string NotAMethod = nameof(NotAMethod);
+#error TODO: all to methods
         internal const string SerializationNotSupported = nameof(SerializationNotSupported);
         internal const string IEnumerableExpected = nameof(IEnumerableExpected);
         internal const string InvalidStreamData = nameof(InvalidStreamData);
@@ -132,7 +56,6 @@ namespace KGySoft
         internal const string CircularIObjectReference = nameof(CircularIObjectReference);
         internal const string DeserializeUnexpectedId = nameof(DeserializeUnexpectedId);
         internal const string CannotResolveTypeInAssembly = nameof(CannotResolveTypeInAssembly);
-        internal const string CannotLoadAssembly = nameof(CannotLoadAssembly);
         internal const string ValueTypeExpected = nameof(ValueTypeExpected);
         internal const string DataLenghtTooSmall = nameof(DataLenghtTooSmall);
         internal const string UnexpectedSerializationInfoElement = nameof(UnexpectedSerializationInfoElement);
@@ -226,7 +149,6 @@ namespace KGySoft
         internal const string ResXWriterNotSupported = nameof(ResXWriterNotSupported);
         internal const string TypeLoadException = nameof(TypeLoadException);
         internal const string TypeLoadExceptionShort = nameof(TypeLoadExceptionShort);
-        internal const string TypeWithAssemblyName = nameof(TypeWithAssemblyName);
         internal const string NonStringResourceWithType = nameof(NonStringResourceWithType);
         internal const string ConvertFromStringNotSupportedAt = nameof(ConvertFromStringNotSupportedAt);
         internal const string ConvertFromStringNotSupported = nameof(ConvertFromStringNotSupported);
@@ -285,6 +207,15 @@ namespace KGySoft
         /// <summary>Value cannot be null.</summary>
         internal static string ArgumentNull => Get("General_ArgumentNull");
 
+        /// <summary>Value cannot be empty.</summary>
+        internal static string ArgumentEmpty => Get("General_ArgumentEmpty");
+
+        /// <summary>The collection contains no elements.</summary>
+        internal static string CollectionEmpty => Get("General_CollectionEmpty");
+
+        /// <summary>Specified argument contains a null element.</summary>
+        internal static string ArgumentContainsNull => Get("General_ArgumentContainsNull");
+
         /// <summary>Specified argument was out of the range of valid values.</summary>
         internal static string ArgumentOutOfRange => Get("General_ArgumentOutOfRange");
 
@@ -294,14 +225,38 @@ namespace KGySoft
         /// <summary>This operation is not supported.</summary>
         internal static string NotSupported => Get("General_NotSupported");
 
+        /// <summary>Input string contains an invalid value.</summary>
+        internal static string ArgumentInvalidString => Get("General_ArgumentInvalidString");
+
+        /// <summary>Maximum value must be greater than or equal to minimum value.</summary>
+        internal static string MaxValueLessThanMinValue => Get("General_MaxValueLessThanMinValue");
+
+        /// <summary>Maximum length must be greater than or equal to minimum length.</summary>
+        internal static string MaxLengthLessThanMinLength => Get("General_MaxLengthLessThanMinLength");
+
+        /// <summary>Enumeration has either not started or has already finished.</summary>
+        internal static string IEnumeratorEnumerationNotStartedOrFinished => Get("IEnumerator_EnumerationNotStartedOrFinished");
+
+        /// <summary>Collection was modified; enumeration operation may not execute.</summary>
+        internal static string IEnumeratorCollectionModified => Get("IEnumerator_CollectionModified");
+
+        /// <summary>The given key was not present in the dictionary.</summary>
+        internal static string IDictionaryKeyNotFound => Get("IDictionary_KeyNotFound");
+
+        /// <summary>An item with the same key has already been added.</summary>
+        internal static string IDictionaryDuplicateKey => Get("IDictionary_DuplicateKey");
+
         /// <summary>Destination array is not long enough to copy all the items in the collection. Check array index and length.</summary>
-        internal static string CollectionCopyToDestArrayShort => Get("Collection_CopyToDestArrayShort");
+        internal static string ICollectionCopyToDestArrayShort => Get("ICollection_CopyToDestArrayShort");
 
         /// <summary>Only single dimensional arrays are supported for the requested action.</summary>
-        internal static string CollectionCopyToSingleDimArrayOnly => Get("Collection_CopyToSingleDimArrayOnly");
+        internal static string ICollectionCopyToSingleDimArrayOnly => Get("ICollection_CopyToSingleDimArrayOnly");
+
+        /// <summary>Target array type is not compatible with the type of items in the collection.</summary>
+        internal static string ICollectionArrayTypeInvalid => Get("ICollection_ArrayTypeInvalid");
 
         /// <summary>Modifying a read-only collection is not supported.</summary>
-        internal static string CollectionReadOnlyModifyNotSupported => Get("Collection_ReadOnlyModifyNotSupported");
+        internal static string ICollectionReadOnlyModifyNotSupported => Get("ICollection_ReadOnlyModifyNotSupported");
 
         /// <summary>Cannot add new item to the binding list because AllowNew is false.</summary>
         internal static string IBindingListAddNewDisabled => Get("IBindingList_AddNewDisabled");
@@ -311,10 +266,131 @@ namespace KGySoft
 
         #endregion
 
+        #region Cache<TKey, TValue>
+
+        /// <summary>Cache&lt;TKey, TValue&gt; was initialized without an item loader so elements must be added explicitly either by the Add method or by setting the indexer.</summary>
+        internal static string CacheNullLoaderInvoke => Get("Cache_NullLoaderInvoke");
+
+        /// <summary>The given key was not found in the cache.</summary>
+        internal static string CacheKeyNotFound => Get("Cache_KeyNotFound");
+
+        /// <summary>Minimum cache size is 1.</summary>
+        internal static string CacheMinSize => Get("Cache_MinSize");
+
+        #endregion
+
+        #region CircularList<T>
+
+        /// <summary>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</summary>
+        internal static string CircularListInvalidOffsLen => Get("CircularList_InvalidOffsLen");
+
+        /// <summary>Failed to compare two elements in the collection.</summary>
+        internal static string CircularListComparerFail => Get("CircularList_ComparerFail");
+
+        /// <summary>Capacity cannot be less than number of stored elements.</summary>
+        internal static string CircularListCapacityTooSmall => Get("CircularList_CapacityTooSmall");
+
+        #endregion
+
+        #region CircularSortedList<T>
+
+        /// <summary>Adding an element by index is not supported.</summary>
+        internal static string CircularSortedListInsertByIndexNotSupported => Get("CircularSortedList_InsertByIndexNotSupported");
+
+        #endregion
+
+        #region Enum/EnumComparer
+
+        /// <summary>Type parameter is expected to be a System.Enum type.</summary>
+        internal static string EnumTypeParameterInvalid => Get("Enum_TypeParameterInvalid");
+
+        #endregion
+
         #region ObservableBindingList
 
         /// <summary>Cannot change ObservableBindingList during a CollectionChanged or ListChanged event.</summary>
         internal static string ObservableBindingListReentrancyNotAllowed => Get("ObservableBindingList_ReentrancyNotAllowed");
+
+        #endregion
+
+        #region Reflection
+
+        /// <summary>MethodInfo or ConstructorInfo expected.</summary>
+        internal static string ReflectionInvalidMethodBase => Get("Reflection_InvalidMethodBase");
+
+        /// <summary>Cannot treat method as a property setter.</summary>
+        internal static string ReflectionCannotTreatPropertySetter => Get("Reflection_CannotTreatPropertySetter");
+
+        /// <summary>Argument must be either Type or ConstructorInfo.</summary>
+        internal static string ReflectionTypeOrCtorInfoExpected => Get("Reflection_TypeOrCtorInfoExpected");
+
+        /// <summary>Getting property via TypeDescriptor is not supported in this overload of GetProperty method.</summary>
+        internal static string ReflectionGetPropertyTypeDescriptorNotSupported => Get("Reflection_GetPropertyTypeDescriptorNotSupported");
+
+        /// <summary>Setting property via TypeDescriptor is not supported in this overload of SetProperty method.</summary>
+        internal static string ReflectionSetPropertyTypeDescriptorNotSupported => Get("Reflection_SetPropertyTypeDescriptorNotSupported");
+
+        /// <summary>A static property cannot be retrieved via TypeDescriptor.</summary>
+        internal static string ReflectionCannotGetStaticPropertyTypeDescriptor => Get("Reflection_CannotGetStaticPropertyTypeDescriptor");
+
+        /// <summary>A static property cannot be set via TypeDescriptor.</summary>
+        internal static string ReflectionCannotSetStaticPropertyTypeDescriptor => Get("Reflection_CannotSetStaticPropertyTypeDescriptor");
+
+        /// <summary>Indexer parameters are empty.</summary>
+        internal static string ReflectionEmptyIndices => Get("Reflection_EmptyIndices");
+
+        /// <summary>An indexer cannot be retrieved via TypeDescriptor.</summary>
+        internal static string ReflectionGetIndexerTypeDescriptorNotSupported => Get("Reflection_GetIndexerTypeDescriptorNotSupported");
+
+        /// <summary>An indexer cannot be set via TypeDescriptor.</summary>
+        internal static string ReflectionSetIndexerTypeDescriptorNotSupported => Get("Reflection_SetIndexerTypeDescriptorNotSupported");
+
+        /// <summary>Index parameters cannot be converted to integer values.</summary>
+        internal static string ReflectionIndexParamsTypeMismatch => Get("Reflection_IndexParamsTypeMismatch");
+
+        /// <summary>Instance is null for a non-static member.</summary>
+        internal static string ReflectionInstanceIsNull => Get("Reflection_InstanceIsNull");
+
+        /// <summary>Method to invoke is generic but no type parameters are passed.</summary>
+        internal static string ReflectionTypeParamsAreNull => Get("Reflection_TypeParamsAreNull");
+
+        /// <summary>Could not create generic method. For details see inner exception.</summary>
+        internal static string ReflectionCannotCreateGenericMethod => Get("Reflection_CannotCreateGenericMethod");
+
+        /// <summary>Invoking a method via TypeDescriptor is not supported.</summary>
+        internal static string ReflectionInvokeMethodTypeDescriptorNotSupported => Get("Reflection_InvokeMethodTypeDescriptorNotSupported");
+
+        /// <summary>A field cannot be set via TypeDescriptor.</summary>
+        internal static string ReflectionSetFieldTypeDescriptorNotSupported => Get("Reflection_SetFieldTypeDescriptorNotSupported");
+
+        /// <summary>A field cannot be retrieved via TypeDescriptor.</summary>
+        internal static string ReflectionGetFieldTypeDescriptorNotSupported => Get("Reflection_GetFieldTypeDescriptorNotSupported");
+
+        /// <summary>Expression is not a method call.</summary>
+        internal static string ReflectionNotAMethod => Get("Reflection_NotAMethod");
+
+        /// <summary>In this ResolveType overload the type name should not contain the assembly name.</summary>
+        internal static string ReflectionTypeWithAssemblyName => Get("Reflection_TypeWithAssemblyName");
+
+        #endregion
+
+        #region StreamExtensions
+
+        /// <summary>Source stream cannot be read.</summary>
+        internal static string StreamExtensionsStreamCannotRead => Get("StreamExtensions_StreamCannotRead");
+
+        /// <summary>Destination stream cannot be written.</summary>
+        internal static string StreamExtensionsStreamCannotWrite => Get("StreamExtensions_StreamCannotWrite");
+
+        /// <summary>Cannot seek to the beginning of the stream.</summary>
+        internal static string StreamExtensionsStreamCannotSeek => Get("StreamExtensions_StreamCannotSeek");
+
+        #endregion
+
+        #region StringExtensions
+
+        /// <summary>Separator is null or empty.</summary>
+        internal static string StringExtensionsSeparatorNullOrEmpty => Get("StringExtensions_SeparatorNullOrEmpty");
 
         #endregion
 
@@ -328,6 +404,12 @@ namespace KGySoft
 
         #region General
 
+        /// <summary>Specified argument must be greater or equal than {0}.</summary>
+        internal static string ArgumentMustBeGreaterOrEqualThan(object limit) => Get("General_ArgumentMustBeGreaterOrEqualThanFormat", limit);
+
+        /// <summary>Specified argument must be between {0} and {1}.</summary>
+        internal static string ArgumentMustBeBetween(object low, object high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
+
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
         internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatValues<TEnum>());
 
@@ -337,11 +419,35 @@ namespace KGySoft
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
 
-        /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string CollectionNongenericKeyTypeInvalid(object key, Type type) => Get("Collection_NongenericKeyTypeInvalidFormat", key, type);
+        /// <summary>Value "{0}" contains illegal path characters.</summary>
+        internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
 
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string CollectionNongenericValueTypeInvalid(object value, Type type) => Get("Collection_NongenericValueTypeInvalidFormat", value, type);
+        internal static string ICollectionNongenericValueTypeInvalid(object value, Type type) => Get("ICollection_NongenericValueTypeInvalidFormat", value, type);
+
+        /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
+        internal static string IDictionaryNongenericKeyTypeInvalid(object key, Type type) => Get("Collection_NongenericKeyTypeInvalidFormat", key, type);
+
+        #endregion
+
+        #region Cache<TKey, TValue>
+
+        /// <summary>Cache&lt;{0}, {1}&gt; cache statistics:
+        /// <br/>Count: {2}
+        /// <br/>Capacity: {3}
+        /// <br/>Number of writes: {4}
+        /// <br/>Number of reads: {5}
+        /// <br/>Number of cache hits: {6}
+        /// <br/>Number of deletes: {7}
+        /// <br/>Hit rate: {8:P2}</summary>
+        internal static string CacheStatistics(string keyName, string valueName, int count, int capacity, int writes, int reads, int hits, int deletes, float rate) => Get("Cache_StatisticsFormat", keyName, valueName, count, capacity, writes, reads, hits, deletes, rate);
+
+        #endregion
+
+        #region CircularSortedList<T>
+
+        /// <summary>Type of value should be either {0} or DictionaryEntry.</summary>
+        internal static string CircularSortedListInvalidKeyValueType(Type type) => Get("CircularSortedList_InvalidKeyValueTypeFormat", type);
 
         #endregion
 
@@ -359,6 +465,23 @@ namespace KGySoft
 
         /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>
         internal static string CommandBindingInvalidEvent(string eventName) => Get("CommandBinding_InvalidEventFormat", eventName);
+
+        #endregion
+
+        #region Enum
+
+        /// <summary>Value '{0}' cannot be parsed as enumeration type {1}</summary>
+        internal static string EnumValueCannotBeParsedAsEnum(string value, Type enumType) => Get("Enum_ValueCannotBeParsedAsEnumFormat", value, enumType);
+
+        #endregion
+
+        #region EnumerableExtensions
+
+        /// <summary>Cannot add element to type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</summary>
+        internal static string EnumerableExtensionsCannotAdd(Type type) => Get("EnumerableExtensions_CannotAddFormat", type);
+
+        /// <summary>Cannot clear items of type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</summary>
+        internal static string EnumerableExtensionsCannotClear(Type type) => Get("EnumerableExtensions_CannotClearFormat", type);
 
         #endregion
 
@@ -386,6 +509,92 @@ namespace KGySoft
 
         /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</summary>
         internal static string ObservableBindingListCannotAddNew(Type t) => Get("ObservableBindingList_CannotAddNewFormat", t);
+
+        #endregion
+
+        #region Reflection
+
+        /// <summary>The constant field cannot be set: {0}.{1}</summary>
+        internal static string ReflectionCannotSetConstantField(Type type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type, memberName);
+
+        /// <summary>Member type {0} is not supported.</summary>
+        internal static string ReflectionNotSupportedMemberType(MemberTypes memberType) => Get("Reflection_NotSupportedMemberTypeFormat", memberType);
+
+        /// <summary>Property has no getter accessor: {0}.{1}</summary>
+        internal static string ReflectionPropertyHasNoGetter(Type type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type, memberName);
+
+        /// <summary>Property has no setter accessor: {0}.{1}</summary>
+        internal static string ReflectionPropertyHasNoSetter(Type type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type, memberName);
+
+        /// <summary>Value "{0}" cannot be resolved as a System.Type.</summary>
+        internal static string ReflectionNotAType(string value) => Get("Reflection_NotATypeFormat", value);
+
+        /// <summary>Property "{0}" not found and cannot be set via TypeDescriptor on type "{1}".</summary>
+        internal static string ReflectionPropertyNotFoundTypeDescriptor(string propertyName, Type type) => Get("Reflection_PropertyNotFoundTypeDescriptorFormat", propertyName, type);
+
+        /// <summary>No suitable instance property "{0}" found on type "{1}".</summary>
+        internal static string ReflectionInstancePropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_InstancePropertyDoesNotExistFormat", propertyName, type);
+
+        /// <summary>No suitable static property "{0}" found on type "{1}".</summary>
+        internal static string ReflectionStaticPropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_StaticPropertyDoesNotExistFormat", propertyName, type);
+
+        /// <summary>Expected number of array index arguments: {0}.</summary>
+        internal static string ReflectionIndexParamsLengthMismatch(int length) => Get("Reflection_IndexParamsLengthMismatchFormat", length);
+
+        /// <summary>No suitable indexer found on type "{0}" for the passed parameters.</summary>
+        internal static string ReflectionIndexerNotFound(Type type) => Get("Reflection_IndexerNotFoundFormat", type);
+
+        /// <summary>Property "{0}" not found and cannot be retrieved via TypeDescriptor on type "{1}".</summary>
+        internal static string ReflectionCannotGetPropertyTypeDescriptor(string propertyName, Type type) => Get("Reflection_CannotGetPropertyTypeDescriptorFormat", propertyName, type);
+
+        /// <summary>Expected number of type arguments: {0}.</summary>
+        internal static string ReflectionTypeArgsLengthMismatch(int length) => Get("Reflection_TypeArgsLengthMismatchFormat", length);
+
+        /// <summary>No suitable instance method "{0}" found on type "{1}" for the given parameters.</summary>
+        internal static string ReflectionInstanceMethodNotFound(string methodName, Type type) => Get("Reflection_InstanceMethodNotFoundFormat", methodName, type);
+
+        /// <summary>No suitable static method "{0}" found on type "{1}" for the given parameters.</summary>
+        internal static string ReflectionStaticMethodNotFound(string methodName, Type type) => Get("Reflection_StaticMethodNotFoundFormat", methodName, type);
+
+        /// <summary>No suitable constructor found on type "{0}" for the given parameters.</summary>
+        internal static string ReflectionCtorNotFound(Type type) => Get("Reflection_CtorNotFoundFormat", type);
+
+        /// <summary>Instance field "{0}" not found on type "{1}".</summary>
+        internal static string ReflectionInstanceFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_InstanceFieldDoesNotExistFormat", fieldName, type);
+
+        /// <summary>Static field "{0}" not found on type "{1}".</summary>
+        internal static string ReflectionStaticFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_StaticFieldDoesNotExistFormat", fieldName, type);
+
+        /// <summary>"{0}" is not a generic type, however, it is used so in the definition "{1}".</summary>
+        internal static string ReflectionResolveNotAGenericType(string elementTypeName, string typeName) => Get("Reflection_ResolveNotAGenericTypeFormat", elementTypeName, typeName);
+
+        /// <summary>Number of awaited and actual type parameters mismatch in type definition "{0}". Expected number of type arguments: {1}.</summary>
+        internal static string ReflectionResolveTypeArgsLengthMismatch(string typeName, int length) => Get("Reflection_ResolveTypeArgsLengthMismatchFormat", typeName, length);
+
+        /// <summary>Cannot resolve type parameter "{0}" in generic type "{1}".</summary>
+        internal static string ReflectionCannotResolveTypeArg(string elementTypeName, string typeName) => Get("Reflection_CannotResolveTypeArgFormat", elementTypeName, typeName);
+
+        /// <summary>Syntax error in generic/array type: "{0}".</summary>
+        internal static string ReflectionTypeSyntaxError(string typeName) => Get("Reflection_TypeSyntaxErrorFormat", typeName);
+
+        /// <summary>No MemberInfo can be returned from expression type "{0}".</summary>
+        internal static string ReflectionNotAMember(Type type) => Get("Reflection_NotAMemberFormat", type);
+
+        /// <summary>Failed to load assembly by name: "{0}".</summary>
+        internal static string ReflectionCannotLoadAssembly(string name) => Get("Reflection_CannotLoadAssemblyFormat", name);
+
+        #endregion
+
+        #region ResourceManagers
+
+        /// <summary>Resource file not found: {0}</summary>
+        internal static string NeutralResourceFileNotFoundResX(string fileName) => Get("ResXResourceManager_NeutralResourceFileNotFoundResXFormat", fileName);
+
+        /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</summary>
+        internal static string NeutralResourceNotFoundCompiled(string baseNameField, string fileName) => Get("HybridResourceManager_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
+
+        /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</summary>
+        internal static string NeutralResourceNotFoundHybrid(string baseNameField, string assemblyFile, string resxFile) => Get("HybridResourceManager_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
 
         #endregion
 

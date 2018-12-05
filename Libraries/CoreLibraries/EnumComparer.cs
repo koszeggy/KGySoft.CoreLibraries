@@ -64,7 +64,7 @@ namespace KGySoft.CoreLibraries
         {
             // this could be in static ctor but that would throw a TypeInitializationException at unexpected place
             if (!typeof(TEnum).IsEnum)
-                throw new InvalidOperationException(Res.Get(Res.TypeParameterIsNotEnum, typeof(TEnum).FullName));
+                throw new InvalidOperationException(Res.EnumTypeParameterInvalid);
             
 #if !DEBUG
             // this could be in static ctor but will be set only once per type when Comparer is accessed.

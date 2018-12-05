@@ -198,7 +198,7 @@ namespace KGySoft.CoreLibraries
         static Enum()
         {
             if (!typeof(TEnum).IsEnum)
-                throw new InvalidOperationException(Res.Get(Res.TypeParameterIsNotEnum, typeof(TEnum).FullName));
+                throw new InvalidOperationException(Res.EnumTypeParameterInvalid);
 
             underlyingType = Enum.GetUnderlyingType(enumType);
             isFlags = enumType.IsFlagsEnum();
@@ -670,7 +670,7 @@ namespace KGySoft.CoreLibraries
         {
             TEnum result;
             if (!TryParse(value, separator, ignoreCase, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
+                throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value));
 
             return result;
         }
@@ -687,7 +687,7 @@ namespace KGySoft.CoreLibraries
         {
             TEnum result;
             if (!TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
+                throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value));
 
             return result;
         }
@@ -704,7 +704,7 @@ namespace KGySoft.CoreLibraries
         {
             TEnum result;
             if (!TryParse(value, separator, false, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
+                throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value));
 
             return result;
         }
@@ -720,7 +720,7 @@ namespace KGySoft.CoreLibraries
         {
             TEnum result;
             if (!TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result))
-                throw new ArgumentException(Res.Get(Res.ValueCannotBeParsedAsEnum, enumType.Name, value), nameof(value));
+                throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value));
 
             return result;
         }

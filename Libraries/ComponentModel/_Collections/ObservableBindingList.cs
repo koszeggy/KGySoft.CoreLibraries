@@ -660,7 +660,7 @@ namespace KGySoft.ComponentModel
         public void Move(int oldIndex, int newIndex)
         {
             if (Items.IsReadOnly)
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             if (oldIndex < 0 || oldIndex >= Count)
                 throw new ArgumentOutOfRangeException(nameof(oldIndex), Res.ArgumentOutOfRange);
             if (newIndex < 0 || newIndex >= Count)

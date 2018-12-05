@@ -665,7 +665,7 @@ namespace KGySoft.Resources
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
 
             if (name.Length == 0)
-                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(name));
+                throw new ArgumentException(Res.ArgumentEmpty, nameof(name));
 
             this.name = name;
 
@@ -734,7 +734,7 @@ namespace KGySoft.Resources
                 throw new ArgumentNullException(nameof(fileRef), Res.ArgumentNull);
 
             if (name.Length == 0)
-                throw new ArgumentException(Res.Get(Res.ArgumentEmpty), nameof(name));
+                throw new ArgumentException(Res.ArgumentEmpty, nameof(name));
 
             this.name = name;
             this.fileRef = fileRef;

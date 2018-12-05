@@ -114,7 +114,7 @@ namespace KGySoft.CoreLibraries
             {
                 Func<T> func = set[i];
                 if (func == null)
-                    throw new ArgumentException(Res.Get(Res.ArgumentContainsNull), nameof(set));
+                    throw new ArgumentException(Res.ArgumentContainsNull, nameof(set));
                 if (comparer.Equals(item, func.Invoke()))
                     return true;
             }

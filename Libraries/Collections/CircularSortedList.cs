@@ -131,18 +131,18 @@ namespace KGySoft.Collections
 
             public void Insert(int index, TKey item)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             public void RemoveAt(int index)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             public TKey this[int index]
             {
                 get => list.keys[index];
-                set { throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported); }
+                set { throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported); }
             }
 
             #endregion
@@ -151,12 +151,12 @@ namespace KGySoft.Collections
 
             public void Add(TKey item)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             public void Clear()
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             public bool Contains(TKey item)
@@ -171,7 +171,7 @@ namespace KGySoft.Collections
 
             public bool Remove(TKey item)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             public int Count => list.keys.Count;
@@ -203,7 +203,7 @@ namespace KGySoft.Collections
 
             int IList.Add(object value)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             bool IList.Contains(object value)
@@ -222,20 +222,20 @@ namespace KGySoft.Collections
 
             void IList.Insert(int index, object value)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             bool IList.IsFixedSize => true;
 
             void IList.Remove(object value)
             {
-                throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             object IList.this[int index]
             {
                 get => list.keys[index];
-                set { throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported); }
+                set { throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported); }
             }
 
             #endregion
@@ -340,7 +340,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (steps < size)
                 {
@@ -361,7 +361,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return isGeneric ? (object)current : new DictionaryEntry(current.Key, current.Value);
                 }
             }
@@ -373,7 +373,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = list.keys.StartIndex;
                 steps = 0;
@@ -389,7 +389,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return new DictionaryEntry(current.Key, current.Value);
                 }
             }
@@ -399,7 +399,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Key;
                 }
             }
@@ -409,7 +409,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Value;
                 }
             }
@@ -474,7 +474,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (index < size)
                 {
@@ -493,7 +493,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (index == 0 || index > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
             }
@@ -501,7 +501,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = 0;
                 current = default(KeyValuePair<TKey, TValue>);
@@ -588,7 +588,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (steps < size)
                 {
@@ -609,7 +609,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
             }
@@ -621,7 +621,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != list.keys.Version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 index = list.keys.StartIndex;
                 steps = 0;
@@ -935,7 +935,7 @@ namespace KGySoft.Collections
 
             int pos = SearchKeyOptimizedLastOrFirst(key);
             if (pos >= 0)
-                throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
+                throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
 
             pos = ~pos;
             Insert(pos, key, value);
@@ -1254,7 +1254,7 @@ namespace KGySoft.Collections
                 if (index >= 0)
                     return values[index];
 
-                throw new KeyNotFoundException(Res.Get(Res.KeyNotFound));
+                throw new KeyNotFoundException(Res.IDictionaryKeyNotFound);
             }
             set
             {
@@ -1303,7 +1303,7 @@ namespace KGySoft.Collections
 
         void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item)
         {
-            throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported));
+            throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
         /// <summary>
@@ -1321,7 +1321,7 @@ namespace KGySoft.Collections
         KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
         {
             get => ElementAt(index);
-            set { throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported)); }
+            set { throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported); }
         }
 
         #endregion
@@ -1364,7 +1364,7 @@ namespace KGySoft.Collections
 
             int size = keys.Count;
             if ((array.Length - arrayIndex) < size)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
             for (int i = 0; i < size; i++)
             {
@@ -1435,9 +1435,9 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
             if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
             Add((TKey)key, (TValue)value);
         }
 
@@ -1476,7 +1476,7 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
                 return this[(TKey)key];
             }
             set
@@ -1484,9 +1484,9 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
                 if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 this[(TKey)key] = (TValue)value;
             }
         }
@@ -1502,9 +1502,9 @@ namespace KGySoft.Collections
             if (index < 0 || index > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (array.Length - index < Count)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(index));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(index));
             if (array.Rank != 1)
-                throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
 
             int size = keys.Count;
             if (size == 0)
@@ -1535,7 +1535,7 @@ namespace KGySoft.Collections
                 }
             }
 
-            throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
+            throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
         }
 
         bool ICollection.IsSynchronized => false;
@@ -1559,23 +1559,19 @@ namespace KGySoft.Collections
             if (value == null)
                 throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
 
-            if (value is KeyValuePair<TKey, TValue>)
+            if (value is KeyValuePair<TKey, TValue> keyValuePair)
+                return Add(keyValuePair.Key, keyValuePair.Value);
+
+            if (value is DictionaryEntry dictionaryEntry)
             {
-                KeyValuePair<TKey, TValue> elem = (KeyValuePair<TKey, TValue>)value;
-                return Add(elem.Key, elem.Value);
+                if (!typeKey.CanAcceptValue(dictionaryEntry.Key))
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(dictionaryEntry, typeof(TKey)), nameof(value));
+                if (!typeValue.CanAcceptValue(dictionaryEntry.Value))
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(dictionaryEntry, typeof(TValue)), nameof(value));
+                return Add((TKey)dictionaryEntry.Key, (TValue)dictionaryEntry.Value);
             }
 
-            if (value is DictionaryEntry)
-            {
-                DictionaryEntry elem = (DictionaryEntry)value;
-                if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                return Add((TKey)elem.Key, (TValue)elem.Value);
-            }
-
-            throw new ArgumentException(Res.Get(Res.InvalidKeyValueType, typeof(KeyValuePair<TKey, TValue>)), nameof(value));
+            throw new ArgumentException(Res.CircularSortedListInvalidKeyValueType(typeof(KeyValuePair<TKey, TValue>)), nameof(value));
         }
 
         bool IList.Contains(object value)
@@ -1587,9 +1583,9 @@ namespace KGySoft.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 return IndexOf(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value)) >= 0;
             }
 
@@ -1605,9 +1601,9 @@ namespace KGySoft.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 return IndexOf(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value));
             }
 
@@ -1616,7 +1612,7 @@ namespace KGySoft.Collections
 
         void IList.Insert(int index, object value)
         {
-            throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported));
+            throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
         bool IList.IsFixedSize => false;
@@ -1635,9 +1631,9 @@ namespace KGySoft.Collections
             {
                 DictionaryEntry elem = (DictionaryEntry)value;
                 if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value));
             }
         }
@@ -1645,7 +1641,7 @@ namespace KGySoft.Collections
         object IList.this[int index]
         {
             get => ElementAt(index);
-            set { throw new NotSupportedException(Res.Get(Res.InsertByIndexNotSupported)); }
+            set { throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported); }
         }
 
         #endregion

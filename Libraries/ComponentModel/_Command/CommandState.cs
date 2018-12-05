@@ -101,7 +101,7 @@ namespace KGySoft.ComponentModel
             try
             {
                 if (stateProperties.ContainsKey(key))
-                    throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
 
                 stateProperties.Add(key, value);
             }

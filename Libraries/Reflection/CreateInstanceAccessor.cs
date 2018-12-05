@@ -70,7 +70,7 @@ namespace KGySoft.Reflection
                 case Type t:
                     return new DefaultCreateInstanceAccessor(t);
                 default:
-                    throw new ArgumentException(Res.Get(Res.TypeOrCtorInfoExpected), nameof(member));
+                    throw new ArgumentException(Res.ReflectionTypeOrCtorInfoExpected, nameof(member));
             }
         }
 

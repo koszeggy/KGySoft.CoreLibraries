@@ -94,7 +94,7 @@ namespace KGySoft.Collections
 
         public TValue this[[CanBeNull]TKey key]
         {
-            get => key == null ? (hasNullKey ? nullValue : throw new KeyNotFoundException(Res.Get(Res.KeyNotFound))) : dict[key];
+            get => key == null ? (hasNullKey ? nullValue : throw new KeyNotFoundException(Res.IDictionaryKeyNotFound)) : dict[key];
             set
             {
                 if (key == null)
@@ -142,7 +142,7 @@ namespace KGySoft.Collections
             }
 
             if (hasNullKey)
-                throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
+                throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
             hasNullKey = true;
             nullValue = value;
         }

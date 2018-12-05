@@ -84,7 +84,7 @@ namespace KGySoft.Resources
                         case State.EnumeratingCompiled:
                             return compiledEnumerator.Entry;
                         default:
-                            throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                            throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     }
                 }
             }
@@ -100,7 +100,7 @@ namespace KGySoft.Resources
                         case State.EnumeratingCompiled:
                             return compiledEnumerator.Key;
                         default:
-                            throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                            throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     }
                 }
             }
@@ -116,7 +116,7 @@ namespace KGySoft.Resources
                         case State.EnumeratingCompiled:
                             return compiledEnumerator.Value;
                         default:
-                            throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                            throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     }
                 }
             }
@@ -163,7 +163,7 @@ namespace KGySoft.Resources
 
                     case State.EnumeratingCompiled:
                         if (version != resxEnumerator.OwnerVersion)
-                            throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                            throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                         while (compiledEnumerator.MoveNext())
                         {

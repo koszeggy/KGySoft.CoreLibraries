@@ -428,7 +428,7 @@ namespace KGySoft.Resources
                 }
 
                 if (value.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
-                    throw new ArgumentException(Res.Get(Res.ValueContainsIllegalPathCharacters, value));
+                    throw new ArgumentException(Res.ValueContainsIllegalPathCharacters(value));
 
                 if (Path.IsPathRooted(value))
                 {
@@ -1198,7 +1198,7 @@ namespace KGySoft.Resources
                 if (ThrowException && tryParents && !exists && behavior != ResourceSetRetrieval.CreateIfNotExists
                     && Equals(currentCultureInfo, CultureInfo.InvariantCulture))
                 {
-                    throw new MissingManifestResourceException(Res.Get(Res.NeutralResourceFileNotFoundResX, GetResourceFileName(currentCultureInfo)));
+                    throw new MissingManifestResourceException(Res.NeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
                 }
 
                 // a new ResourceSet has been loaded; we're done

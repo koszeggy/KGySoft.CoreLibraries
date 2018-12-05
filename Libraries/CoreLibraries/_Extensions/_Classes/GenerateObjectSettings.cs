@@ -57,7 +57,7 @@ namespace KGySoft.CoreLibraries
         public Range<int> CollectionsLength
         {
             get => collectionsLength;
-            set => collectionsLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
+            set => collectionsLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterOrEqualThan(0));
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace KGySoft.CoreLibraries
         public Range<int> StringsLength
         {
             get => stringsLength;
-            set => stringsLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
+            set => stringsLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterOrEqualThan(0));
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries
         public Range<int> SentencesLength
         {
             get => sentencesLength;
-            set => sentencesLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentMustBeGreaterOrEqualThan, 0));
+            set => sentencesLength = value.LowerBound >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterOrEqualThan(0));
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace KGySoft.CoreLibraries
         public float ChanceOfNull
         {
             get => chanceOfNull;
-            set => chanceOfNull = value >= 0f && value <= 1f ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.ArgumentMustBeBetween, 0f, 1f));
+            set => chanceOfNull = value >= 0f && value <= 1f ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeBetween(0f, 1f));
         }
 
         /// <summary>

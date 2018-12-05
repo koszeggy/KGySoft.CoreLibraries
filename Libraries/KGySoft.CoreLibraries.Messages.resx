@@ -120,40 +120,40 @@
   <data name="General_ArgumentNull" xml:space="preserve">
     <value>Value cannot be null.</value>
   </data>
-  <data name="ArgumentContainsNull" xml:space="preserve">
+  <data name="General_ArgumentContainsNull" xml:space="preserve">
     <value>Specified argument contains a null element.</value>
   </data>
   <data name="General_ArgumentOutOfRange" xml:space="preserve">
     <value>Specified argument was out of the range of valid values.</value>
   </data>
-  <data name="ArgumentMustBeGreaterOrEqualThan" xml:space="preserve">
+  <data name="General_ArgumentMustBeGreaterOrEqualThanFormat" xml:space="preserve">
     <value>Specified argument must be greater or equal than {0}.</value>
   </data>
-  <data name="ArgumentMustBeBetween" xml:space="preserve">
+  <data name="General_ArgumentMustBeBetweenFormat" xml:space="preserve">
     <value>Specified argument must be between {0} and {1}.</value>
   </data>
-  <data name="MaxValueLessThanMinValue" xml:space="preserve">
+  <data name="General_MaxValueLessThanMinValue" xml:space="preserve">
     <value>Maximum value must be greater than or equal to minimum value.</value>
   </data>
-  <data name="MaxLengthLessThanMinLength" xml:space="preserve">
+  <data name="General_MaxLengthLessThanMinLength" xml:space="preserve">
     <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
-  <data name="Collection_CopyToSingleDimArrayOnly" xml:space="preserve">
+  <data name="ICollection_CopyToSingleDimArrayOnly" xml:space="preserve">
     <value>Only single dimensional arrays are supported for the requested action.</value>
   </data>
-  <data name="ArrayTypeInvalid" xml:space="preserve">
+  <data name="ICollection_ArrayTypeInvalid" xml:space="preserve">
     <value>Target array type is not compatible with the type of items in the collection.</value>
   </data>
-  <data name="CacheKeyNotFound" xml:space="preserve">
-    <value>Key was not found in the cache: {0}</value>
+  <data name="Cache_KeyNotFound" xml:space="preserve">
+    <value>The given key was not found in the cache.</value>
   </data>
-  <data name="CacheMinSize" xml:space="preserve">
+  <data name="Cache_MinSize" xml:space="preserve">
     <value>Minimum cache size is 1.</value>
   </data>
-  <data name="CacheNullLoaderInvoke" xml:space="preserve">
+  <data name="Cache_NullLoaderInvoke" xml:space="preserve">
     <value>Cache&lt;TKey, TValue&gt; was initialized without an item loader so elements must be added explicitly either by the Add method or by setting the indexer.</value>
   </data>
-  <data name="CacheStatistics" xml:space="preserve">
+  <data name="Cache_StatisticsFormat" xml:space="preserve">
     <value>Cache&lt;{0}, {1}&gt; cache statistics:
 Count: {2}
 Capacity: {3}
@@ -163,80 +163,77 @@ Number of cache hits: {6}
 Number of deletes: {7}
 Hit rate: {8:P2}</value>
   </data>
-  <data name="CannotSetPropertyTypeDescriptor" xml:space="preserve">
+  <data name="Reflection_PropertyNotFoundTypeDescriptorFormat" xml:space="preserve">
     <value>Property "{0}" not found and cannot be set via TypeDescriptor on type "{1}".</value>
   </data>
-  <data name="CannotSetStaticPropertyTypeDescriptor" xml:space="preserve">
+  <data name="Reflection_CannotSetStaticPropertyTypeDescriptor" xml:space="preserve">
     <value>A static property cannot be set via TypeDescriptor.</value>
   </data>
-  <data name="CannotTreatPropertySetter" xml:space="preserve">
-    <value>Cannot treat method as a property setter</value>
+  <data name="Reflection_CannotTreatPropertySetter" xml:space="preserve">
+    <value>Cannot treat method as a property setter.</value>
   </data>
-  <data name="CapacityTooSmall" xml:space="preserve">
+  <data name="CircularList_CapacityTooSmall" xml:space="preserve">
     <value>Capacity cannot be less than number of stored elements.</value>
   </data>
-  <data name="ComparerFail" xml:space="preserve">
+  <data name="CircularList_ComparerFail" xml:space="preserve">
     <value>Failed to compare two elements in the collection.</value>
   </data>
-  <data name="Collection_CopyToDestArrayShort" xml:space="preserve">
+  <data name="ICollection_CopyToDestArrayShort" xml:space="preserve">
     <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
   </data>
-  <data name="DuplicateKey" xml:space="preserve">
+  <data name="IDictionary_DuplicateKey" xml:space="preserve">
     <value>An item with the same key has already been added.</value>
   </data>
-  <data name="EmptyIndices" xml:space="preserve">
+  <data name="Reflection_EmptyIndices" xml:space="preserve">
     <value>Indexer parameters are empty.</value>
   </data>
-  <data name="EnumerableCannotAdd" xml:space="preserve">
-    <value>Cannot add element "{0}" to type {1} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
+  <data name="EnumerableExtensions_CannotAddFormat" xml:space="preserve">
+    <value>Cannot add element to type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
   </data>
-  <data name="EnumerableCannotClear" xml:space="preserve">
+  <data name="EnumerableExtensions_CannotClearFormat" xml:space="preserve">
     <value>Cannot clear items of type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
   </data>
-  <data name="EnumerationCollectionModified" xml:space="preserve">
+  <data name="IEnumerator_CollectionModified" xml:space="preserve">
     <value>Collection was modified; enumeration operation may not execute.</value>
   </data>
-  <data name="EnumerationNotStartedOrFinished" xml:space="preserve">
+  <data name="IEnumerator_EnumerationNotStartedOrFinished" xml:space="preserve">
     <value>Enumeration has either not started or has already finished.</value>
   </data>
-  <data name="IndexerDoesNotExist" xml:space="preserve">
+  <data name="Reflection_IndexerNotFoundFormat" xml:space="preserve">
     <value>No suitable indexer found on type "{0}" for the passed parameters.</value>
   </data>
-  <data name="IndexParamsLengthMismatch" xml:space="preserve">
+  <data name="Reflection_IndexParamsLengthMismatchFormat" xml:space="preserve">
     <value>Expected number of array index arguments: {0}.</value>
   </data>
-  <data name="IndexParamsTypeMismatch" xml:space="preserve">
+  <data name="Reflection_IndexParamsTypeMismatch" xml:space="preserve">
     <value>Index parameters cannot be converted to integer values.</value>
   </data>
-  <data name="InsertByIndexNotSupported" xml:space="preserve">
+  <data name="CircularSortedList_InsertByIndexNotSupported" xml:space="preserve">
     <value>Adding an element by index is not supported.</value>
   </data>
-  <data name="InvalidKeyValueType" xml:space="preserve">
+  <data name="CircularSortedList_InvalidKeyValueTypeFormat" xml:space="preserve">
     <value>Type of value should be either {0} or DictionaryEntry.</value>
   </data>
-  <data name="InvalidMethodBase" xml:space="preserve">
+  <data name="Reflection_InvalidMethodBase" xml:space="preserve">
     <value>MethodInfo or ConstructorInfo expected.</value>
   </data>
   <data name="DeclaringTypeExpected" xml:space="preserve">
     <value>DeclaringType of the provided member should not be null.</value>
   </data>
-  <data name="InvalidOffsLen" xml:space="preserve">
+  <data name="CircularList_InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
-  <data name="Collection_NongenericKeyTypeInvalidFormat" xml:space="preserve">
+  <data name="IDictionary_NongenericKeyTypeInvalidFormat" xml:space="preserve">
     <value>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>
-  <data name="Collection_NongenericValueTypeInvalidFormat" xml:space="preserve">
+  <data name="ICollection_NongenericValueTypeInvalidFormat" xml:space="preserve">
     <value>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>
-  <data name="KeyNotFound" xml:space="preserve">
+  <data name="IDictionary_KeyNotFound" xml:space="preserve">
     <value>The given key was not present in the dictionary.</value>
   </data>
-  <data name="Collection_ReadOnlyModifyNotSupported" xml:space="preserve">
+  <data name="ICollection_ReadOnlyModifyNotSupported" xml:space="preserve">
     <value>Modifying a read-only collection is not supported.</value>
-  </data>
-  <data name="NotABool" xml:space="preserve">
-    <value>"{0}" is not a boolean value.</value>
   </data>
   <data name="General_NotAnInstanceOfTypeFormat" xml:space="preserve">
     <value>Specified argument is expected to be an instance of type {0}.</value>
@@ -244,130 +241,133 @@ Hit rate: {8:P2}</value>
   <data name="ReturnedTypeInvalid" xml:space="preserve">
     <value>The returned value is not compatible with type {0}</value>
   </data>
-  <data name="NotAType" xml:space="preserve">
-    <value>Value "{0}" cannot be resolved as a System.Type</value>
+  <data name="Reflection_NotATypeFormat" xml:space="preserve">
+    <value>Value "{0}" cannot be resolved as a System.Type.</value>
   </data>
-  <data name="NotSupportedMemberType" xml:space="preserve">
+  <data name="Reflection_NotSupportedMemberTypeFormat" xml:space="preserve">
     <value>Member type {0} is not supported.</value>
   </data>
-  <data name="PropertyHasNoGetter" xml:space="preserve">
+  <data name="Reflection_PropertyHasNoGetterFormat" xml:space="preserve">
     <value>Property has no getter accessor: {0}.{1}</value>
   </data>
-  <data name="PropertyHasNoSetter" xml:space="preserve">
+  <data name="Reflection_PropertyHasNoSetterFormat" xml:space="preserve">
     <value>Property has no setter accessor: {0}.{1}</value>
   </data>
-  <data name="NeutralResourceFileNotFoundResX" xml:space="preserve">
+  <data name="ResXResourceManager_NeutralResourceFileNotFoundResXFormat" xml:space="preserve">
     <value>Resource file not found: {0}</value>
   </data>
-  <data name="NeutralResourceNotFoundCompiled" xml:space="preserve">
+  <data name="HybridResourceManager_NeutralResourceNotFoundCompiledFormat" xml:space="preserve">
     <value>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</value>
   </data>
-  <data name="NeutralResourceNotFoundHybrid" xml:space="preserve">
+  <data name="HybridResourceManager_NeutralResourceNotFoundHybridFormat" xml:space="preserve">
     <value>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</value>
   </data>
-  <data name="SeparatorNullOrEmpty" xml:space="preserve">
+  <data name="StringExtensions_SeparatorNullOrEmpty" xml:space="preserve">
     <value>Separator is null or empty.</value>
   </data>
-  <data name="SetConstantField" xml:space="preserve">
+  <data name="Reflection_CannotSetConstantFieldFormat" xml:space="preserve">
     <value>The constant field cannot be set: {0}.{1}</value>
   </data>
-  <data name="SetIndexerTypeDescriptorNotSupported" xml:space="preserve">
+  <data name="Reflection_SetIndexerTypeDescriptorNotSupported" xml:space="preserve">
     <value>An indexer cannot be set via TypeDescriptor.</value>
   </data>
-  <data name="SetPropertyTypeDescriptorNotSupported" xml:space="preserve">
+  <data name="Reflection_GetPropertyTypeDescriptorNotSupported" xml:space="preserve">
+    <value>Getting property via TypeDescriptor is not supported in this overload of GetProperty method.</value>
+  </data>
+  <data name="Reflection_SetPropertyTypeDescriptorNotSupported" xml:space="preserve">
     <value>Setting property via TypeDescriptor is not supported in this overload of SetProperty method.</value>
   </data>
-  <data name="StreamCannotRead" xml:space="preserve">
+  <data name="StreamExtensions_StreamCannotRead" xml:space="preserve">
     <value>Source stream cannot be read.</value>
   </data>
-  <data name="StreamCannotSeek" xml:space="preserve">
+  <data name="StreamExtensions_StreamCannotSeek" xml:space="preserve">
     <value>Cannot seek to the beginning of the stream.</value>
   </data>
-  <data name="StreamCannotWrite" xml:space="preserve">
+  <data name="StreamExtensions_StreamCannotWrite" xml:space="preserve">
     <value>Destination stream cannot be written.</value>
   </data>
-  <data name="TypeOrCtorInfoExpected" xml:space="preserve">
+  <data name="Reflection_TypeOrCtorInfoExpected" xml:space="preserve">
     <value>Argument must be either Type or ConstructorInfo.</value>
   </data>
-  <data name="TypeParameterIsNotEnum" xml:space="preserve">
-    <value>Type parameter "{0}" is not a System.Enum type.</value>
+  <data name="Enum_TypeParameterInvalid" xml:space="preserve">
+    <value>Type parameter is expected to be a System.Enum type.</value>
   </data>
-  <data name="ValueCannotBeParsedAsEnum" xml:space="preserve">
-    <value>Value cannot be parsed as {0} enumeration: {1}</value>
+  <data name="Enum_ValueCannotBeParsedAsEnumFormat" xml:space="preserve">
+    <value>Value '{0}' cannot be parsed as enumeration type {1}.</value>
   </data>
-  <data name="ValueContainsIllegalPathCharacters" xml:space="preserve">
+  <data name="General_ValueContainsIllegalPathCharactersFormat" xml:space="preserve">
     <value>Value "{0}" contains illegal path characters.</value>
   </data>
-  <data name="CannotCreateGenericMethod" xml:space="preserve">
+  <data name="Reflection_CannotCreateGenericMethod" xml:space="preserve">
     <value>Could not create generic method. For details see inner exception.</value>
   </data>
-  <data name="CannotGetPropertyTypeDescriptor" xml:space="preserve">
+  <data name="Reflection_CannotGetPropertyTypeDescriptorFormat" xml:space="preserve">
     <value>Property "{0}" not found and cannot be retrieved via TypeDescriptor on type "{1}".</value>
   </data>
-  <data name="CannotGetStaticPropertyTypeDescriptor" xml:space="preserve">
+  <data name="Reflection_CannotGetStaticPropertyTypeDescriptor" xml:space="preserve">
     <value>A static property cannot be retrieved via TypeDescriptor.</value>
   </data>
-  <data name="CtorDoesNotExist" xml:space="preserve">
+  <data name="Reflection_CtorNotFoundFormat" xml:space="preserve">
     <value>No suitable constructor found on type "{0}" for the given parameters.</value>
   </data>
-  <data name="GetFieldTypeDescriptorNotSupported" xml:space="preserve">
+  <data name="Reflection_GetFieldTypeDescriptorNotSupported" xml:space="preserve">
     <value>A field cannot be retrieved via TypeDescriptor.</value>
   </data>
-  <data name="GetIndexerTypeDescriptorNotSupported" xml:space="preserve">
+  <data name="Reflection_GetIndexerTypeDescriptorNotSupported" xml:space="preserve">
     <value>An indexer cannot be retrieved via TypeDescriptor.</value>
   </data>
-  <data name="InstanceFieldDoesNotExist" xml:space="preserve">
+  <data name="Reflection_InstanceFieldDoesNotExistFormat" xml:space="preserve">
     <value>Instance field "{0}" not found on type "{1}".</value>
   </data>
-  <data name="InstanceIsNull" xml:space="preserve">
+  <data name="Reflection_InstanceIsNull" xml:space="preserve">
     <value>Instance is null for a non-static member.</value>
   </data>
-  <data name="InstanceMethodDoesNotExist" xml:space="preserve">
+  <data name="Reflection_InstanceMethodNotFoundFormat" xml:space="preserve">
     <value>No suitable instance method "{0}" found on type "{1}" for the given parameters.</value>
   </data>
-  <data name="InstancePropertyDoesNotExist" xml:space="preserve">
+  <data name="Reflection_InstancePropertyDoesNotExistFormat" xml:space="preserve">
     <value>No suitable instance property "{0}" found on type "{1}".</value>
   </data>
   <data name="PropertyValueNotExist" xml:space="preserve">
     <value>No value exists for property '{0}'.</value>
   </data>
-  <data name="InvokeMethodTypeDescriptorNotSupported" xml:space="preserve">
+  <data name="Reflection_InvokeMethodTypeDescriptorNotSupported" xml:space="preserve">
     <value>Invoking a method via TypeDescriptor is not supported.</value>
   </data>
   <data name="SetFieldTypeDescriptorNotSupported" xml:space="preserve">
     <value>A field cannot be set via TypeDescriptor.</value>
   </data>
-  <data name="StaticFieldDoesNotExist" xml:space="preserve">
+  <data name="Reflection_StaticFieldDoesNotExistFormat" xml:space="preserve">
     <value>Static field "{0}" not found on type "{1}".</value>
   </data>
-  <data name="StaticMethodDoesNotExist" xml:space="preserve">
+  <data name="Reflection_StaticMethodNotFoundFormat" xml:space="preserve">
     <value>No suitable static method "{0}" found on type "{1}" for the given parameters.</value>
   </data>
-  <data name="StaticPropertyDoesNotExist" xml:space="preserve">
+  <data name="Reflection_StaticPropertyDoesNotExistFormat" xml:space="preserve">
     <value>No suitable static property "{0}" found on type "{1}".</value>
   </data>
   <data name="TypeArgsLengthMismatch" xml:space="preserve">
     <value>Expected number of type arguments: {0}.</value>
   </data>
-  <data name="TypeParamsAreNull" xml:space="preserve">
+  <data name="Reflection_TypeParamsAreNull" xml:space="preserve">
     <value>Method to invoke is generic but no type parameters are passed.</value>
   </data>
-  <data name="NotAMember" xml:space="preserve">
+  <data name="Reflection_NotAMemberFormat" xml:space="preserve">
     <value>No MemberInfo can be returned from expression type "{0}".</value>
   </data>
-  <data name="NotAMethod" xml:space="preserve">
+  <data name="Reflection_NotAMethod" xml:space="preserve">
     <value>Expression is not a method call.</value>
   </data>
-  <data name="ParseCannotResolveTypeArg" xml:space="preserve">
+  <data name="Reflection_CannotResolveTypeArgFormat" xml:space="preserve">
     <value>Cannot resolve type parameter "{0}" in generic type "{1}".</value>
   </data>
-  <data name="ParseNotAGenericType" xml:space="preserve">
+  <data name="Reflection_ResolveNotAGenericTypeFormat" xml:space="preserve">
     <value>"{0}" is not a generic type, however, it is used so in the definition "{1}".</value>
   </data>
-  <data name="ParseTypeArgsLengthMismatch" xml:space="preserve">
-    <value>Number of awaited and actual type parameters mismatch in type definition "{0}". Expected number of type arguments: {0}.</value>
+  <data name="Reflection_ResolveTypeArgsLengthMismatchFormat" xml:space="preserve">
+    <value>Number of awaited and actual type parameters mismatch in type definition "{0}". Expected number of type arguments: {1}.</value>
   </data>
-  <data name="TypeSyntaxError" xml:space="preserve">
+  <data name="Reflection_TypeSyntaxErrorFormat" xml:space="preserve">
     <value>Syntax error in generic/array type: "{0}".</value>
   </data>
   <data name="CannotDeserializeObject" xml:space="preserve">
@@ -409,7 +409,7 @@ Hit rate: {8:P2}</value>
   <data name="ReadOnlyCollectionNotSupported" xml:space="preserve">
     <value>Creating read-only collection of type "{0}" is not supported. Serialization stream corrupted?</value>
   </data>
-  <data name="CannotLoadAssembly" xml:space="preserve">
+  <data name="Reflection_CannotLoadAssemblyFormat" xml:space="preserve">
     <value>Failed to load assembly by name: "{0}".</value>
   </data>
   <data name="CannotResolveType" xml:space="preserve">
@@ -724,14 +724,14 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="TypeLoadExceptionShort" xml:space="preserve">
     <value>Type "{0}" cannot be resolved.</value>
   </data>
-  <data name="ArgumentEmpty" xml:space="preserve">
+  <data name="General_ArgumentEmpty" xml:space="preserve">
     <value>Value cannot be empty.</value>
   </data>
-  <data name="CollectionEmpty" xml:space="preserve">
+  <data name="General_CollectionEmpty" xml:space="preserve">
     <value>The collection contains no elements.</value>
   </data>
-  <data name="TypeWithAssemblyName" xml:space="preserve">
-    <value>The type name should not contain the assembly name.</value>
+  <data name="Reflection_TypeWithAssemblyName" xml:space="preserve">
+    <value>In this ResolveType overload the type name should not contain the assembly name.</value>
   </data>
   <data name="NonStringResourceWithType" xml:space="preserve">
     <value>Type of resource "{0}" is not string but "{1}" - use GetObject instead.</value>
@@ -760,7 +760,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="SeparatorInvalidDec" xml:space="preserve">
     <value>The separator is empty or contains invalid characters. Decimal digits are not allowed in separator.</value>
   </data>
-  <data name="ArgumentInvalidString" xml:space="preserve">
+  <data name="General_ArgumentInvalidString" xml:space="preserve">
     <value>Input string contains an invalid value.</value>
   </data>
   <data name="HybridResSourceBinary" xml:space="preserve">
@@ -792,9 +792,6 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="ObjectExtensions_CannotConvertToTypeFormat" xml:space="preserve">
     <value>The specified argument cannot be converted to type {0}.</value>
-  </data>
-  <data name="StringExtensions_CannotParseAsTypeFormat" xml:space="preserve">
-    <value>The specified string '{0}' cannot be parsed as type {1}.</value>
   </data>
   <data name="EnabledMustBeBool" xml:space="preserve">
     <value>'Enabled' state must have a boolean value.</value>

@@ -226,13 +226,13 @@ namespace KGySoft.CoreLibraries
             if (source is IList<T> list)
                 return list.Count > 0
                     ? list[random.Next(list.Count)]
-                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
+                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
 
 #if NET45
             if (source is IReadOnlyList<T> readonlyList)
                 return readonlyList.Count > 0
                     ? readonlyList[random.Next(readonlyList.Count)]
-                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
+                    : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
 #elif !(NET35 || NET40)
 #error .NET version is not set or not supported!
 #endif
@@ -240,7 +240,7 @@ namespace KGySoft.CoreLibraries
             using (IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator())
             {
                 if (!shuffledEnumerator.MoveNext())
-                    return defaultIfEmpty ? default(T) : throw new ArgumentException(Res.Get(Res.CollectionEmpty), nameof(source));
+                    return defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
                 return shuffledEnumerator.Current;
             }
         }
@@ -349,7 +349,7 @@ namespace KGySoft.CoreLibraries
 #elif !(NET40 || NET45)
 #error .NET version is not set or not supported!
 #endif
-            throw new NotSupportedException(Res.Get(Res.EnumerableCannotAdd, item ?? "null", source.GetType()));
+            throw new NotSupportedException(Res.EnumerableExtensionsCannotAdd(source.GetType()));
         }
 
         /// <summary>
@@ -387,7 +387,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            throw new InvalidOperationException(Res.Get(Res.EnumerableCannotClear, source.GetType().FullName));
+            throw new InvalidOperationException(Res.EnumerableExtensionsCannotClear(source.GetType()));
         }
 
         /// <summary>

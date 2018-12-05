@@ -112,7 +112,7 @@ namespace KGySoft.Reflection
             if (field != null)
                 return FieldAccessor.CreateAccessor(field);
 
-            throw new NotSupportedException(Res.Get(Res.NotSupportedMemberType, member.MemberType));
+            throw new NotSupportedException(Res.ReflectionNotSupportedMemberType(member.MemberType));
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace KGySoft.Reflection
             MethodInfo method = methodBase as MethodInfo;
             ConstructorInfo ctor = methodBase as ConstructorInfo;
             if (method == null && ctor == null)
-                throw new ArgumentException(Res.Get(Res.InvalidMethodBase), nameof(methodBase));
+                throw new ArgumentException(Res.ReflectionInvalidMethodBase, nameof(methodBase));
 
             bool treatCtorAsMethod = (options & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
             Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? typeof(void) : declaringType;
@@ -324,7 +324,7 @@ namespace KGySoft.Reflection
             {
                 PropertyInfo pi = MemberInfo as PropertyInfo;
                 if (pi == null)
-                    throw new InvalidOperationException(Res.Get(Res.CannotTreatPropertySetter));
+                    throw new InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
                 il.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
                 if (pi.PropertyType.IsValueType)
                     il.Emit(OpCodes.Unbox_Any, pi.PropertyType); // casting value as value type

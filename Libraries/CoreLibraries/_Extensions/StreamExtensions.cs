@@ -47,9 +47,9 @@ namespace KGySoft.CoreLibraries
             if (bufferSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(bufferSize), Res.ArgumentOutOfRange);
             if (!source.CanRead)
-                throw new ArgumentException(Res.Get(Res.StreamCannotRead));
+                throw new ArgumentException(Res.StreamExtensionsStreamCannotRead);
             if (!destination.CanWrite)
-                throw new ArgumentException(Res.Get(Res.StreamCannotWrite));
+                throw new ArgumentException(Res.StreamExtensionsStreamCannotWrite);
 
             byte[] buffer = new byte[bufferSize];
             int read;
@@ -89,7 +89,7 @@ namespace KGySoft.CoreLibraries
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (!s.CanRead)
-                throw new ArgumentException(Res.Get(Res.StreamCannotRead));
+                throw new ArgumentException(Res.StreamExtensionsStreamCannotRead);
 
             MemoryStream ms = s as MemoryStream;
             if (ms != null)
@@ -99,7 +99,7 @@ namespace KGySoft.CoreLibraries
             if (pos != 0L)
             {
                 if (!s.CanSeek)
-                    throw new ArgumentException(Res.Get(Res.StreamCannotSeek));
+                    throw new ArgumentException(Res.StreamExtensionsStreamCannotSeek);
                 s.Seek(0, SeekOrigin.Begin);
             }
 

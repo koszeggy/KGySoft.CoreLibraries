@@ -246,7 +246,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (beforeFirst || (!beforeFirst && current == null))
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     if (isGeneric)
                         return Current;
                     return new DictionaryEntry(current.Key, current.Value);
@@ -258,7 +258,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (beforeFirst || (!beforeFirst && current == null))
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return new DictionaryEntry(current.Key, current.Value);
                 }
             }
@@ -268,7 +268,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (beforeFirst || (!beforeFirst && current == null))
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Key;
                 }
             }
@@ -278,7 +278,7 @@ namespace KGySoft.Collections
                 get
                 {
                     if (beforeFirst || (!beforeFirst && current == null))
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationNotStartedOrFinished));
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current.Value;
                 }
             }
@@ -309,7 +309,7 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 if (version != cache.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                 if (beforeFirst)
                 {
@@ -333,7 +333,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 if (version != cache.version)
-                    throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                    throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
                 beforeFirst = true;
                 current = null;
             }
@@ -379,7 +379,7 @@ namespace KGySoft.Collections
 
             #region Methods
 
-            public override string ToString() => Res.Get(Res.CacheStatistics, typeof(TKey).Name, typeof(TValue).Name, owner.Count, owner.Capacity, Writes, Reads, Hits, Deletes, HitRate);
+            public override string ToString() => Res.CacheStatistics(typeof(TKey).Name, typeof(TValue).Name, owner.Count, owner.Capacity, Writes, Reads, Hits, Deletes, HitRate);
 
             #endregion
         }
@@ -470,7 +470,7 @@ namespace KGySoft.Collections
                 if (arrayIndex < 0 || arrayIndex > array.Length)
                     throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
                 if (array.Length - arrayIndex < Count)
-                    throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
                 for (CacheItem current = owner.first; current != null; current = current.Next)
                 {
@@ -487,7 +487,7 @@ namespace KGySoft.Collections
                 for (CacheItem current = owner.first; current != null; current = current.Next)
                 {
                     if (version != owner.version)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                        throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                     yield return current.Key;
                 }
@@ -497,11 +497,11 @@ namespace KGySoft.Collections
 
             #region Explicitly Implemented Interface Methods
 
-            void ICollection<TKey>.Add(TKey item) => throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+            void ICollection<TKey>.Add(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            void ICollection<TKey>.Clear() => throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+            void ICollection<TKey>.Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            bool ICollection<TKey>.Remove(TKey item) => throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+            bool ICollection<TKey>.Remove(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -519,9 +519,9 @@ namespace KGySoft.Collections
                 if (index < 0 || index > array.Length)
                     throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
                 if (array.Length - index < Count)
-                    throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
                 if (array.Rank != 1)
-                    throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                    throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
 
                 if (array is object[] objectArray)
                 {
@@ -529,7 +529,7 @@ namespace KGySoft.Collections
                         objectArray[index++] = current.Key;
                 }
 
-                throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
+                throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
             }
 
             #endregion
@@ -600,7 +600,7 @@ namespace KGySoft.Collections
                 if (arrayIndex < 0 || arrayIndex > array.Length)
                     throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
                 if (array.Length - arrayIndex < Count)
-                    throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
                 for (CacheItem current = owner.first; current != null; current = current.Next)
                     array[arrayIndex++] = current.Value;
@@ -615,7 +615,7 @@ namespace KGySoft.Collections
                 for (CacheItem current = owner.first; current != null; current = current.Next)
                 {
                     if (version != owner.version)
-                        throw new InvalidOperationException(Res.Get(Res.EnumerationCollectionModified));
+                        throw new InvalidOperationException(Res.IEnumeratorCollectionModified);
 
                     yield return current.Value;
                 }
@@ -625,11 +625,11 @@ namespace KGySoft.Collections
 
             #region Explicitly Implemented Interface Methods
 
-            void ICollection<TValue>.Add(TValue item) => throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+            void ICollection<TValue>.Add(TValue item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            void ICollection<TValue>.Clear() => throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+            void ICollection<TValue>.Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-            bool ICollection<TValue>.Remove(TValue item) => throw new NotSupportedException(Res.CollectionReadOnlyModifyNotSupported);
+            bool ICollection<TValue>.Remove(TValue item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -647,9 +647,9 @@ namespace KGySoft.Collections
                 if (index < 0 || index > array.Length)
                     throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
                 if (array.Length - index < Count)
-                    throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                    throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
                 if (array.Rank != 1)
-                    throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                    throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
 
                 if (array is object[] objectArray)
                 {
@@ -657,7 +657,7 @@ namespace KGySoft.Collections
                         objectArray[index++] = current.Value;
                 }
 
-                throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
+                throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
             }
 
             #endregion
@@ -773,7 +773,7 @@ namespace KGySoft.Collections
         /// <seealso cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func`2,System.Int32,System.Collections.Generic.IEqualityComparer`1)"/>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
         /// <seealso cref="Behavior"/>
-        private static readonly Func<TKey, TValue> nullLoader = key => throw new KeyNotFoundException(Res.Get(Res.CacheNullLoaderInvoke));
+        private static readonly Func<TKey, TValue> nullLoader = key => throw new KeyNotFoundException(Res.CacheNullLoaderInvoke);
 
         // ReSharper disable StaticMemberInGenericType
         private static readonly bool useEnumKeyComparer;
@@ -844,7 +844,7 @@ namespace KGySoft.Collections
             set
             {
                 if (value <= 0)
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.Get(Res.CacheMinSize));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.CacheMinSize);
 
                 if (capacity == value)
                     return;
@@ -1096,7 +1096,7 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
                 return this[(TKey)key];
             }
             set
@@ -1104,9 +1104,9 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
                 if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 this[(TKey)key] = (TValue)value;
             }
         }
@@ -1324,7 +1324,7 @@ namespace KGySoft.Collections
                 version++;
             }
             else
-                throw new KeyNotFoundException(Res.Get(Res.CacheKeyNotFound, key));
+                throw new KeyNotFoundException(Res.CacheKeyNotFound);
         }
 
         /// <summary>
@@ -1456,7 +1456,7 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (cacheStore != null && cacheStore.ContainsKey(key))
-                throw new ArgumentException(Res.Get(Res.DuplicateKey), nameof(key));
+                throw new ArgumentException(Res.IDictionaryDuplicateKey, nameof(key));
 
             Insert(key, value);
         }
@@ -1749,7 +1749,7 @@ namespace KGySoft.Collections
         void ICache.Touch(object key)
         {
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
             Touch((TKey)key);
         }
 
@@ -1760,7 +1760,7 @@ namespace KGySoft.Collections
         void ICache.RefreshValue(object key)
         {
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
             RefreshValue((TKey)key);
         }
 
@@ -1775,7 +1775,7 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
             return GetValueUncached((TKey)key);
         }
 
@@ -1831,7 +1831,7 @@ namespace KGySoft.Collections
             if (arrayIndex < 0 || arrayIndex > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
             if (array.Length - arrayIndex < Count)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
             for (CacheItem current = first; current != null; current = current.Next)
                 array[arrayIndex++] = new KeyValuePair<TKey, TValue>(current.Key, current.Value);
@@ -1879,9 +1879,9 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.CollectionNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
             if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.CollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
 
             Add((TKey)key, (TValue)value);
         }
@@ -1947,9 +1947,9 @@ namespace KGySoft.Collections
             if (index < 0 || index > array.Length)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
             if (array.Length - index < Count)
-                throw new ArgumentException(Res.CollectionCopyToDestArrayShort, nameof(index));
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(index));
             if (array.Rank != 1)
-                throw new ArgumentException(Res.CollectionCopyToSingleDimArrayOnly, nameof(array));
+                throw new ArgumentException(Res.ICollectionCopyToSingleDimArrayOnly, nameof(array));
             if (first == null)
                 return;
 
@@ -1970,7 +1970,7 @@ namespace KGySoft.Collections
                     return;
 
                 default:
-                    throw new ArgumentException(Res.Get(Res.ArrayTypeInvalid));
+                    throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
             }
         }
 
