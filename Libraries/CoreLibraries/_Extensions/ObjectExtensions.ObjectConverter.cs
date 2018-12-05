@@ -23,6 +23,42 @@ namespace KGySoft.CoreLibraries
                 typeof(KeyValuePair<,>).RegisterConversion(typeof(DictionaryEntry), ConvertKeyValuePairToDictionaryEntry);
             }
 
+            private static bool TryConvertKeyValuePair(object obj, Type targetType, CultureInfo culture, out object result)
+            {
+                if (obj.GetType() == targetType)
+                {
+                    result = obj;
+                    return true;
+                }
+
+                Type[] types = targetType.GetGenericArguments();
+                if (!Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key)).TryConvert(types[0], culture, out object key) || !Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value)).TryConvert(types[1], culture, out object value))
+                {
+                    result = null;
+                    return false;
+                }
+
+                result = Reflector.CreateInstance(targetType, key, value);
+                return true;
+            }
+
+            private static bool TryConvertDictionaryEntryToKeyValuePair(object obj, Type targetType, CultureInfo culture, out object result)
+            {
+                var source = (DictionaryEntry)obj;
+                Type[] types = targetType.GetGenericArguments();
+                if (!source.Key.TryConvert(types[0], culture, out object key) || !source.Value.TryConvert(types[1], culture, out object value))
+                {
+                    result = null;
+                    return false;
+                }
+
+                result = Reflector.CreateInstance(targetType, key, value);
+                return true;
+            }
+
+            private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo culture)
+                => new DictionaryEntry(Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key)), Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value)));
+
             private struct ConversionContext
             {
                 internal readonly CultureInfo Culture;
@@ -160,8 +196,7 @@ namespace KGySoft.CoreLibraries
                             return conversionAttempt.Invoke(obj, targetType, context.Culture, out value) && targetType.CanAcceptValue(value);
                         case Conversion conversion:
                             value = conversion.Invoke(obj, targetType, context.Culture);
-                            bool result = targetType.CanAcceptValue(value);
-                            return result;
+                            return targetType.CanAcceptValue(value);
                         default:
                             throw new InvalidOperationException("Invalid conversion delegate type");
                     }

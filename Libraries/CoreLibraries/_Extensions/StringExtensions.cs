@@ -99,16 +99,18 @@ namespace KGySoft.CoreLibraries
                 : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, typeof(T)), nameof(s), error);
 
         /// <summary>
-        /// Parses an object from a string value. Firstly, it tries to parse the type natively.
-        /// If type cannot be parsed natively but the type has a type converter that can convert from string,
-        /// then type converter is used.
+        /// Parses an object from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
         /// </summary>
         /// <param name="type">Type of the desired result.</param>
         /// <param name="s">The string value to parse. If <see langword="null"/> and <paramref name="type"/> is a reference or nullable type, returns <see langword="null"/>.</param>
         /// <param name="culture">Appropriate culture needed for number types.</param>
         /// <returns>The parsed value.</returns>
         /// <remarks>
-        /// Natively parsed types:
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> <see cref="Type"/> extension method.</para>
+        /// <para>Natively parsed types:
         /// <list type="bullet">
         /// <item><description><see cref="System.Enum"/> based types</description></item>
         /// <item><description><see cref="string"/></description></item>
@@ -132,8 +134,9 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="DateTimeOffset"/></description></item>
         /// <item><description><see cref="TimeSpan"/></description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
-        /// <item><description>Any types that can convert their value from <see cref="string"/> by a <see cref="TypeConverter"/> class.</description></item>
+        /// <item><description>Any types with a registered conversion or <see cref="TypeConverter"/> from <see cref="string"/> type.</description></item>
         /// </list>
+        /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
@@ -350,11 +353,21 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                // TODO: type.(Try)Parse(s, [culture])
+                // a registered converter from string
+                switch (Reflector.StringType.GetConversions(type, true).ElementAtOrDefault(0))
+                {
+                    case ConversionAttempt conversionAttempt:
+                        if (conversionAttempt.Invoke(s, type, culture, out value) && type.CanAcceptValue(value))
+                            return true;
+                        break;
+                    case Conversion conversion:
+                        value = conversion.Invoke(s, type, culture);
+                        if (type.CanAcceptValue(value))
+                            return true;
+                        break;
+                }
 
-                // TODO: registered converter from string
-
-                // Using type converter as a fallback
+                // Trying type converter as a fallback
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
                 if (converter.CanConvertFrom(Reflector.StringType))
                 {

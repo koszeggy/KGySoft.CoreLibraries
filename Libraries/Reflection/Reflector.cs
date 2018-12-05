@@ -79,6 +79,7 @@ namespace KGySoft.Reflection
         internal static readonly Type DelegateType = typeof(Delegate);
         internal static readonly Type NullableType = typeof(Nullable<>);
         internal static readonly Type DictionaryEntryType = typeof(DictionaryEntry);
+        internal static readonly Type KeyValuePairType = typeof(KeyValuePair<,>);
 
         // ReSharper disable InconsistentNaming
         internal static readonly Type IEnumerableType = typeof(IEnumerable);

@@ -28,8 +28,6 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(1.0, 1);
             Test("1", true); // Parse
 
-            // TODO: enumerable to string (if problematic, then do sg - eg ToString)
-
             // Registered conversions
             Throws<ArgumentException>(() => Test(1L, new IntPtr(1)));
             Throws<ArgumentException>(() => Test(1, new IntPtr(1)));
@@ -54,6 +52,9 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(new Dictionary<int, string>{{1, "2"}, {3, "4"}}, new ReadOnlyDictionary<string, int>(new Dictionary<string, int> { { "1", 2 }, { "3", 4 } })); // dictionary, by another dictionary
             Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new Hashtable { { 1, "2" }, { 3, "4" } }); // gen -> non-gen
             Test(new Hashtable { { 1, "2" }, { 3, "4" } }, new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }); // non-gen -> gen
+
+            // enumerable to string
+            Test(new List<char> { 'a', 'b', 'c' }, "abc");
         }
     }
 }
