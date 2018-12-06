@@ -80,7 +80,7 @@ namespace KGySoft.Serialization
                 ?? Reflector.ResolveType(typeName, true, true);
 
             if (result == null)
-                throw new SerializationException(Res.Get(Res.CannotResolveTypeInAssembly, typeName, String.IsNullOrEmpty(assemblyName) ? Res.Get(Res.Undefined) : assemblyName));
+                throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
             
             return result;
         }

@@ -275,10 +275,8 @@ namespace KGySoft.Serialization
 
                         // enum
                         if ((dataType & DataTypes.Enum) == DataTypes.Enum)
-                        {
                             return manager.ReadType(br);
-                        }
-                        throw new InvalidOperationException(Res.Get(Res.CannotDecodeDataType, BinarySerializationFormatter.ToString(ElementDataType)));
+                        throw new InvalidOperationException(Res.BinarySerializationCannotDecodeDataType(BinarySerializationFormatter.ToString(ElementDataType)));
                 }
             }
 
@@ -346,7 +344,7 @@ namespace KGySoft.Serialization
                         return typeof(Nullable<>).MakeGenericType((typeof(KeyValuePair<,>).MakeGenericType(ElementType, DictionaryValueType)));
 
                     default:
-                        throw new SerializationException(Res.Get(Res.CannotDecodeCollectionType, BinarySerializationFormatter.ToString(collectionDataType)));
+                        throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(BinarySerializationFormatter.ToString(collectionDataType)));
                 }
             }
 
@@ -358,7 +356,7 @@ namespace KGySoft.Serialization
                         Reflector.SetField(collection, "_readOnly", true);
                         return collection;
                     default:
-                        throw new NotSupportedException(Res.Get(Res.ReadOnlyCollectionNotSupported, ToString()));
+                        throw new NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
                 }
             }
 

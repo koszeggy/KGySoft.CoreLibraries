@@ -368,11 +368,11 @@ namespace KGySoft.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (!type.IsValueType)
-                throw new ArgumentException(Res.Get(Res.ValueTypeExpected), nameof(type));
+                throw new ArgumentException(Res.BinarySerializationValueTypeExpected, nameof(type));
             if (data == null)
                 throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
             if (data.Length < Marshal.SizeOf(type))
-                throw new ArgumentException(Res.Get(Res.DataLenghtTooSmall), nameof(data));
+                throw new ArgumentException(Res.BinarySerializationDataLenghtTooSmall, nameof(data));
 
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
@@ -398,13 +398,13 @@ namespace KGySoft.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (!type.IsValueType)
-                throw new ArgumentException(Res.Get(Res.ValueTypeExpected), nameof(type));
+                throw new ArgumentException(Res.BinarySerializationValueTypeExpected, nameof(type));
             if (data == null)
                 throw new ArgumentNullException(nameof(data), Res.ArgumentNull);
 
             int len = Marshal.SizeOf(type);
             if (data.Length < len)
-                throw new ArgumentException(Res.Get(Res.DataLenghtTooSmall), nameof(data));
+                throw new ArgumentException(Res.BinarySerializationDataLenghtTooSmall, nameof(data));
             if (data.Length - offset < len || offset < 0)
                 throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 
@@ -449,7 +449,7 @@ namespace KGySoft.Serialization
 
             int len = Marshal.SizeOf(typeof(T)) * count;
             if (data.Length < len)
-                throw new ArgumentException(Res.Get(Res.DataLenghtTooSmall), nameof(data));
+                throw new ArgumentException(Res.BinarySerializationDataLenghtTooSmall, nameof(data));
             if (data.Length - offset < len || offset < 0)
                 throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 

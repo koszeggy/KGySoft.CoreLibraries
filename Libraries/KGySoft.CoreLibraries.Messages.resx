@@ -370,86 +370,83 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_TypeSyntaxErrorFormat" xml:space="preserve">
     <value>Syntax error in generic/array type: "{0}".</value>
   </data>
-  <data name="CannotDeserializeObject" xml:space="preserve">
+  <data name="BinarySerialization_CannotDeserializeObjectFormat" xml:space="preserve">
     <value>Cannot deserialize as standalone object: {0}</value>
   </data>
-  <data name="IEnumerableExpected" xml:space="preserve">
-    <value>An IEnumerable type expected but something else found: {0}</value>
+  <data name="BinarySerialization_IEnumerableExpectedFormat" xml:space="preserve">
+    <value>An IEnumerable type expected but {0} found during deserialization.</value>
   </data>
-  <data name="InvalidEnumBase" xml:space="preserve">
+  <data name="BinarySerialization_InvalidEnumBaseFormat" xml:space="preserve">
     <value>Invalid enum base type: {0}. Serialization stream corrupted?</value>
   </data>
-  <data name="InvalidStreamData" xml:space="preserve">
+  <data name="BinarySerialization_InvalidStreamData" xml:space="preserve">
     <value>Invalid stream data.</value>
   </data>
-  <data name="MissingField" xml:space="preserve">
+  <data name="BinarySerialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
-  <data name="MissingFieldBase" xml:space="preserve">
+  <data name="BinarySerialization_MissingFieldBaseFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
-  <data name="MissingISerializableCtor" xml:space="preserve">
+  <data name="BinarySerialization_MissingISerializableCtorFormat" xml:space="preserve">
     <value>Type "{0}" does not have a special constructor to deserialize it as ISerializable</value>
   </data>
-  <data name="ObjectHierarchyChanged" xml:space="preserve">
+  <data name="BinarySerialization_ObjectHierarchyChangedFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
-  <data name="SerializationNotSupported" xml:space="preserve">
+  <data name="BinarySerialization_NotSupportedFormat" xml:space="preserve">
     <value>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</value>
   </data>
-  <data name="SurrogateChangedObject" xml:space="preserve">
+  <data name="BinarySerialization_SurrogateChangedObjectFormat" xml:space="preserve">
     <value>The serialization surrogate has changed the reference of the result object, which is not supported. Object type: {0}</value>
   </data>
-  <data name="CannotDecodeCollectionType" xml:space="preserve">
+  <data name="BinarySerialization_CannotDecodeCollectionTypeFormat" xml:space="preserve">
     <value>Could not decode collection type: {0}. Serialization stream corrupted?</value>
   </data>
-  <data name="CannotDecodeDataType" xml:space="preserve">
+  <data name="BinarySerialization_CannotDecodeDataTypeFormat" xml:space="preserve">
     <value>Could not decode data type: {0}. Serialization stream corrupted?</value>
   </data>
-  <data name="ReadOnlyCollectionNotSupported" xml:space="preserve">
+  <data name="BinarySerialization_ReadOnlyCollectionNotSupportedFormat" xml:space="preserve">
     <value>Creating read-only collection of type "{0}" is not supported. Serialization stream corrupted?</value>
   </data>
   <data name="Reflection_CannotLoadAssemblyFormat" xml:space="preserve">
     <value>Failed to load assembly by name: "{0}".</value>
   </data>
-  <data name="CannotResolveType" xml:space="preserve">
-    <value>Could not resolve type "{0}".</value>
+  <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">
+    <value>Could not resolve type name "{0}".</value>
   </data>
-  <data name="CannotResolveTypeInAssembly" xml:space="preserve">
+  <data name="BinarySerialization_CannotResolveTypeInAssemblyFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in assembly "{1}".</value>
   </data>
-  <data name="CircularIObjectReference" xml:space="preserve">
+  <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has a circular reference to itself.</value>
   </data>
-  <data name="DataLenghtTooSmall" xml:space="preserve">
+  <data name="BinarySerialization_DataLenghtTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
   </data>
-  <data name="DeserializeUnexpectedId" xml:space="preserve">
+  <data name="BinarySerialization_DeserializeUnexpectedId" xml:space="preserve">
     <value>Unexpected id on deserialization. Serialization stream corrupted?</value>
   </data>
-  <data name="MissingFieldSurrogate" xml:space="preserve">
+  <data name="BinarySerialization_MissingFieldSurrogateFormat" xml:space="preserve">
     <value>Number of serializable fields in type "{0}" has been decreased since serialization so cannot deserialize type "{1}".</value>
   </data>
   <data name="NullReference" xml:space="preserve">
     <value>&lt;null&gt;</value>
   </data>
-  <data name="ObjectHierarchyChangedSurrogate" xml:space="preserve">
+  <data name="BinarySerialization_ObjectHierarchyChangedSurrogateFormat" xml:space="preserve">
     <value>Object hierarchy has been changed since serialization of type "{0}".</value>
   </data>
   <data name="Undefined" xml:space="preserve">
     <value>&lt;undefined&gt;</value>
   </data>
-  <data name="UnexpectedFieldType" xml:space="preserve">
+  <data name="BinarySerialization_UnexpectedFieldTypeFormat" xml:space="preserve">
     <value>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</value>
   </data>
-  <data name="UnexpectedSerializationInfoElement" xml:space="preserve">
+  <data name="BinarySerialization_UnexpectedSerializationInfoElementFormat" xml:space="preserve">
     <value>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</value>
   </data>
-  <data name="ValueTypeExpected" xml:space="preserve">
+  <data name="BinarySerialization_ValueTypeExpected" xml:space="preserve">
     <value>Specified type must be a value type.</value>
-  </data>
-  <data name="NotAnIXmlSerializable" xml:space="preserve">
-    <value>Type "{0}" does not implement IXmlSerializable.</value>
   </data>
   <data name="NotAnIXmlSerializable" xml:space="preserve">
     <value>Type "{0}" does not implement IXmlSerializable.</value>

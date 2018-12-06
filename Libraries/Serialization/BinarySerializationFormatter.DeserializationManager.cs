@@ -116,7 +116,7 @@ namespace KGySoft.Serialization
                             ? Reflector.ResolveType(typeName)
                             : Reflector.ResolveType(assembly, typeName);
                     if (type == null)
-                        throw new SerializationException(Res.Get(Res.CannotResolveType, typeName));
+                        throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
                     readTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
                     {
@@ -148,7 +148,7 @@ namespace KGySoft.Serialization
                     return true;
 
                 if (id > cache.Count)
-                    throw new SerializationException(Res.Get(Res.DeserializeUnexpectedId));
+                    throw new SerializationException(Res.BinarySerializationDeserializeUnexpectedId);
                 return false;
             }
 
@@ -205,7 +205,7 @@ namespace KGySoft.Serialization
                 {
                     IObjectReference objRef = entry.Value as IObjectReference;
                     if (objRef != null && objectReferences.ContainsKey(objRef))
-                        throw new SerializationException(Res.Get(Res.CircularIObjectReference));
+                        throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
                 }
             }
 
@@ -254,7 +254,7 @@ namespace KGySoft.Serialization
                 result = Reflector.ResolveType(assembly, typeName);
                 if (result == null)
                 {
-                    throw new SerializationException(Res.Get(Res.CannotResolveTypeInAssembly, typeName, assemblyName));
+                    throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
                 }
 
                 AddTypeToCache(key, result);

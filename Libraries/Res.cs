@@ -24,6 +24,7 @@ using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
+using KGySoft.Serialization;
 
 #endregion
 
@@ -38,31 +39,7 @@ namespace KGySoft
 
         #region Internal Constants
 
-#error TODO: all to methods
-        internal const string SerializationNotSupported = nameof(SerializationNotSupported);
-        internal const string IEnumerableExpected = nameof(IEnumerableExpected);
-        internal const string InvalidStreamData = nameof(InvalidStreamData);
-        internal const string InvalidEnumBase = nameof(InvalidEnumBase);
-        internal const string CannotDeserializeObject = nameof(CannotDeserializeObject);
-        internal const string ObjectHierarchyChanged = nameof(ObjectHierarchyChanged);
-        internal const string MissingField = nameof(MissingField);
-        internal const string MissingFieldBase = nameof(MissingFieldBase);
-        internal const string MissingISerializableCtor = nameof(MissingISerializableCtor);
-        internal const string SurrogateChangedObject = nameof(SurrogateChangedObject);
-        internal const string CannotDecodeDataType = nameof(CannotDecodeDataType);
-        internal const string CannotDecodeCollectionType = nameof(CannotDecodeCollectionType);
-        internal const string ReadOnlyCollectionNotSupported = nameof(ReadOnlyCollectionNotSupported);
-        internal const string CannotResolveType = nameof(CannotResolveType);
-        internal const string CircularIObjectReference = nameof(CircularIObjectReference);
-        internal const string DeserializeUnexpectedId = nameof(DeserializeUnexpectedId);
-        internal const string CannotResolveTypeInAssembly = nameof(CannotResolveTypeInAssembly);
-        internal const string ValueTypeExpected = nameof(ValueTypeExpected);
-        internal const string DataLenghtTooSmall = nameof(DataLenghtTooSmall);
-        internal const string UnexpectedSerializationInfoElement = nameof(UnexpectedSerializationInfoElement);
-        internal const string ObjectHierarchyChangedSurrogate = nameof(ObjectHierarchyChangedSurrogate);
-        internal const string MissingFieldSurrogate = nameof(MissingFieldSurrogate);
-        internal const string UnexpectedFieldType = nameof(UnexpectedFieldType);
-        internal const string Undefined = nameof(Undefined);
+// TODO: all to methods
         internal const string XmlCannotSerialize = nameof(XmlCannotSerialize);
         internal const string XmlRootExpected = nameof(XmlRootExpected);
         internal const string XmlCannotResolveType = nameof(XmlCannotResolveType);
@@ -204,6 +181,9 @@ namespace KGySoft
 
         #region General
 
+        /// <summary>&lt;undefined&gt;</summary>
+        internal static string Undefined => Get("General_Undefined");
+
         /// <summary>Value cannot be null.</summary>
         internal static string ArgumentNull => Get("General_ArgumentNull");
 
@@ -263,6 +243,25 @@ namespace KGySoft
 
         /// <summary>Cannot remove item from the binding list because AllowRemove is false.</summary>
         internal static string IBindingListRemoveDisabled => Get("IBindingList_RemoveDisabled");
+
+        #endregion
+
+        #region BinarySerialization
+
+        /// <summary>Invalid stream data.</summary>
+        internal static string BinarySerializationInvalidStreamData => Get("BinarySerialization_InvalidStreamData");
+
+        /// <summary>Deserialization of an IObjectReference instance has a circular reference to itself.</summary>
+        internal static string BinarySerializationCircularIObjectReference => Get("BinarySerialization_CircularIObjectReference");
+
+        /// <summary>Unexpected id on deserialization. Serialization stream corrupted?</summary>
+        internal static string BinarySerializationDeserializeUnexpectedId => Get("BinarySerialization_DeserializeUnexpectedId");
+
+        /// <summary>Specified type must be a value type.</summary>
+        internal static string BinarySerializationValueTypeExpected => Get("BinarySerialization_ValueTypeExpected");
+
+        /// <summary>Data length is too small.</summary>
+        internal static string BinarySerializationDataLenghtTooSmall => Get("BinarySerialization_DataLenghtTooSmall");
 
         #endregion
 
@@ -430,6 +429,64 @@ namespace KGySoft
 
         #endregion
 
+        #region BinarySerialization
+
+        /// <summary>Serialization of type {0} is not supported with following serialization options: {1}. Try to enable RecursiveSerializationAsFallback flag.</summary>
+        internal static string BinarySerializationNotSupported(Type type, BinarySerializationOptions options) => Get("BinarySerialization_NotSupportedFormat", type, options.ToString<BinarySerializationOptions>());
+
+        /// <summary>An IEnumerable type expected but {0} found during deserialization.</summary>
+        internal static string BinarySerializationIEnumerableExpected(Type type) => Get("BinarySerialization_IEnumerableExpectedFormat", type);
+
+        /// <summary>Invalid enum base type: {0}. Serialization stream corrupted?</summary>
+        internal static string BinarySerializationInvalidEnumBase(string dataType) => Get("BinarySerialization_InvalidEnumBaseFormat", dataType);
+
+        /// <summary>Cannot deserialize as standalone object: {0}</summary>
+        internal static string BinarySerializationCannotDeserializeObject(string dataType) => Get("BinarySerialization_CannotDeserializeObjectFormat", dataType);
+
+        /// <summary>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</summary>
+        internal static string BinarySerializationObjectHierarchyChanged(Type type) => Get("BinarySerialization_ObjectHierarchyChangedFormat", type);
+
+        /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". Use IgnoreObjectChanges option to suppress this exception.</summary>
+        internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type, field);
+
+        /// <summary>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</summary>
+        internal static string BinarySerializationMissingFieldBase(Type type, string field, Type baseType) => Get("BinarySerialization_MissingFieldBaseFormat", type, field, baseType);
+
+        /// <summary>Type "{0}" does not have a special constructor to deserialize it as ISerializable</summary>
+        internal static string BinarySerializationMissingISerializableCtor(Type type) => Get("BinarySerialization_MissingISerializableCtorFormat", type);
+
+        /// <summary>The serialization surrogate has changed the reference of the result object, which is not supported. Object type: {0}</summary>
+        internal static string BinarySerializationSurrogateChangedObject(Type type) => Get("BinarySerialization_SurrogateChangedObjectFormat", type);
+
+        /// <summary>Could not decode data type: {0}. Serialization stream corrupted?</summary>
+        internal static string BinarySerializationCannotDecodeDataType(string dataType) => Get("BinarySerialization_CannotDecodeDataTypeFormat", dataType);
+
+        /// <summary>Could not decode collection type: {0}. Serialization stream corrupted?</summary>
+        internal static string BinarySerializationCannotDecodeCollectionType(string dataType) => Get("BinarySerialization_CannotDecodeCollectionTypeFormat", dataType);
+
+        /// <summary>Creating read-only collection of type "{0}" is not supported. Serialization stream corrupted?</summary>
+        internal static string BinarySerializationReadOnlyCollectionNotSupported(string dataType) => Get("BinarySerialization_ReadOnlyCollectionNotSupportedFormat", dataType);
+
+        /// <summary>Could not resolve type name "{0}".</summary>
+        internal static string BinarySerializationCannotResolveType(string dataType) => Get("BinarySerialization_CannotResolveTypeFormat", dataType);
+
+        /// <summary>Could not resolve type "{0}" in assembly "{1}".</summary>
+        internal static string BinarySerializationCannotResolveTypeInAssembly(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblyFormat", typeName, asmName);
+
+        /// <summary>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</summary>
+        internal static string BinarySerializationUnexpectedSerializationInfoElement(string elementName) => Get("BinarySerialization_UnexpectedSerializationInfoElementFormat", elementName);
+
+        /// <summary>Object hierarchy has been changed since serialization of type "{0}".</summary>
+        internal static string BinarySerializationObjectHierarchyChangedSurrogate(Type type) => Get("BinarySerialization_ObjectHierarchyChangedSurrogateFormat", type);
+
+        /// <summary>Number of serializable fields in type "{0}" has been decreased since serialization so cannot deserialize type "{1}".</summary>
+        internal static string BinarySerializationMissingFieldSurrogate(Type baseType, Type type) => Get("BinarySerialization_MissingFieldSurrogateFormat", baseType, type);
+
+        /// <summary>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</summary>
+        internal static string BinarySerializationUnexpectedFieldType(Type type, object value, Type declaringType, string fieldName) => Get("BinarySerialization_UnexpectedFieldTypeFormat", type, value, declaringType, fieldName);
+
+        #endregion
+
         #region Cache<TKey, TValue>
 
         /// <summary>Cache&lt;{0}, {1}&gt; cache statistics:
@@ -451,14 +508,10 @@ namespace KGySoft
 
         #endregion
 
-        #region Command
+        #region Commands
 
         /// <summary>The property binding command state does not contain the expected entry '{0}'.</summary>
-        internal static string CommandBindingMissingEvent(string stateName) => Get("Command_PropertyBindingMissingStateFormat", stateName);
-
-        #endregion
-
-        #region CommandBinding
+        internal static string CommandBindingMissingState(string stateName) => Get("Command_PropertyBindingMissingStateFormat", stateName);
 
         /// <summary>There is no event '{0}' in type '{1}'.</summary>
         internal static string CommandBindingMissingEvent(string eventName, Type type) => Get("CommandBinding_MissingEventFormat", eventName, type);

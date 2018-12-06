@@ -1013,10 +1013,7 @@ namespace KGySoft.Serialization
                 || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
         }
 
-        private static void ThrowNotSupported(BinarySerializationOptions options, Type type)
-        {
-            throw new NotSupportedException(Res.Get(Res.SerializationNotSupported, type, options.ToString<BinarySerializationOptions>()));
-        }
+        private static void ThrowNotSupported(BinarySerializationOptions options, Type type) => throw new NotSupportedException(Res.BinarySerializationNotSupported(type, options));
 
         /// <summary>
         /// Writes options if needed
@@ -2348,7 +2345,7 @@ namespace KGySoft.Serialization
         private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager)
         {
             if (!descriptor.IsSingleElement && !typeof(IEnumerable).IsAssignableFrom(descriptor.Type))
-                throw new InvalidOperationException(Res.Get(Res.IEnumerableExpected, descriptor.Type));
+                throw new InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
 
             // getting whether the current instance is in cache
             if (descriptor.ParentDescriptor != null && (!descriptor.Type.IsValueType || descriptor.Type.IsNullable()))
@@ -2452,7 +2449,7 @@ namespace KGySoft.Serialization
                 // Check for a corrupted stream. Max 4 * 7 bits are valid
                 if (shift == 35)
                 {
-                    throw new InvalidOperationException(Res.Get(Res.InvalidStreamData));
+                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
                 }
 
                 b = br.ReadByte();
@@ -2475,7 +2472,7 @@ namespace KGySoft.Serialization
                 // Check for a corrupted stream. Max 9 * 7 bits are valid
                 if (shift == 70)
                 {
-                    throw new InvalidOperationException(Res.Get(Res.InvalidStreamData));
+                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
                 }
 
                 b = br.ReadByte();
@@ -2778,11 +2775,11 @@ namespace KGySoft.Serialization
                                     return result = Enum.ToObject(enumType,
                                         is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
                                 default:
-                                    throw new InvalidOperationException(Res.Get(Res.InvalidEnumBase, ToString(dataType & DataTypes.SimpleTypes)));
+                                    throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(ToString(dataType & DataTypes.SimpleTypes)));
                             }
                         }
 
-                        throw new InvalidOperationException(Res.Get(Res.CannotDeserializeObject, ToString(dataType)));
+                        throw new InvalidOperationException(Res.BinarySerializationCannotDeserializeObject(ToString(dataType)));
                 }
             }
             finally
@@ -2927,7 +2924,7 @@ namespace KGySoft.Serialization
                         return;
 
                     if (t.Name != name && (manager.Options & BinarySerializationOptions.IgnoreObjectChanges) == BinarySerializationOptions.None)
-                        throw new SerializationException(Res.Get(Res.ObjectHierarchyChanged, type));
+                        throw new SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
                 }
 
                 // reading fields of current level
@@ -2943,11 +2940,11 @@ namespace KGySoft.Serialization
                         if ((manager.Options & BinarySerializationOptions.IgnoreObjectChanges) == BinarySerializationOptions.None)
                         {
                             if (t == type)
-                                throw new SerializationException(Res.Get(Res.MissingField, type, name));
-                            throw new SerializationException(Res.Get(Res.MissingFieldBase, type, name, t));
+                                throw new SerializationException(Res.BinarySerializationMissingField(type, name));
+                            throw new SerializationException(Res.BinarySerializationMissingFieldBase(type, name, t));
                         }
-                        else
-                            continue;
+
+                        continue;
                     }
 
                     if (field.IsNotSerialized)
@@ -2961,7 +2958,7 @@ namespace KGySoft.Serialization
             if (br.ReadString() != String.Empty)
             {
                 if ((manager.Options & BinarySerializationOptions.IgnoreObjectChanges) == BinarySerializationOptions.None)
-                    throw new SerializationException(Res.Get(Res.ObjectHierarchyChanged, type));
+                    throw new SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
 
                 // skipping fields until the end of the serialized hierarchy
                 do
@@ -3000,9 +2997,7 @@ namespace KGySoft.Serialization
                 // As ISerializable: Invoking serialization constructor
                 ConstructorInfo ci = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(SerializationInfo), typeof(StreamingContext) }, null);
                 if (ci == null)
-                {
-                    throw new SerializationException(Res.Get(Res.MissingISerializableCtor, type));
-                }
+                    throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
                 Reflector.RunMethod(ci, "SerializationInvoke", obj, si, Context);
             }
@@ -3011,7 +3006,7 @@ namespace KGySoft.Serialization
                 // Using surrogate
                 object result = surrogate.SetObjectData(obj, si, Context, selector);
                 if (obj != result)
-                    throw new NotSupportedException(Res.Get(Res.SurrogateChangedObject, type));
+                    throw new NotSupportedException(Res.BinarySerializationSurrogateChangedObject(type));
             }
         }
 
@@ -3041,9 +3036,7 @@ namespace KGySoft.Serialization
                 // As ISerializable: Invoking serialization constructor
                 ConstructorInfo ci = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(SerializationInfo), typeof(StreamingContext) }, null);
                 if (ci == null)
-                {
-                    throw new SerializationException(Res.Get(Res.MissingISerializableCtor, type));
-                }
+                    throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
                 Reflector.RunMethod(ci, "SerializationInvoke", obj, si, Context);
             }
@@ -3052,7 +3045,7 @@ namespace KGySoft.Serialization
                 // Using surrogate
                 object result = surrogate.SetObjectData(obj, si, Context, selector);
                 if (obj != result)
-                    throw new NotSupportedException(Res.Get(Res.SurrogateChangedObject, type));
+                    throw new NotSupportedException(Res.BinarySerializationSurrogateChangedObject(type));
             }
         }
 
@@ -3099,7 +3092,7 @@ namespace KGySoft.Serialization
             }
 
             if (checkFields && elements.Count > 0)
-                throw new SerializationException(Res.Get(Res.MissingField, obj.GetType(), elements.First().Key));
+                throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), elements.First().Key));
         }
 
         /// <summary>

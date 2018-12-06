@@ -139,10 +139,10 @@ namespace KGySoft.Serialization
                 if ((pos = entry.Name.IndexOf(':')) > 0 && pos < entry.Name.Length - 1)
                 {
                     if (!Int32.TryParse(entry.Name.Substring(0, pos), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out level))
-                        throw new SerializationException(Res.Get(Res.UnexpectedSerializationInfoElement, entry.Name));
+                        throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
 
                     if (!Int32.TryParse(entry.Name.Substring(pos + 1), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out fieldIndex))
-                        throw new SerializationException(Res.Get(Res.UnexpectedSerializationInfoElement, entry.Name));
+                        throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
 
                     list.Add(((ulong)level << 32) | (uint)fieldIndex, entry);
                 }
@@ -150,13 +150,11 @@ namespace KGySoft.Serialization
                 else if (entry.Name.Length >= 2 && entry.Name[0] == 'x')
                 {
                     if (!Int32.TryParse(entry.Name.Substring(1), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out level))
-                        throw new SerializationException(Res.Get(Res.UnexpectedSerializationInfoElement, entry.Name));
+                        throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
                     list.Add(((ulong)level << 32) | UInt32.MaxValue, entry);
                 }
                 else
-                {
-                    throw new SerializationException(Res.Get(Res.UnexpectedSerializationInfoElement, entry.Name));
-                }
+                    throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
             }
 
             FieldInfo[] fields = BinarySerializer.GetSerializableFields(type);
@@ -164,19 +162,17 @@ namespace KGySoft.Serialization
             fieldIndex = 0;
             foreach (SerializationEntry entry in list.Values)
             {
-                if (type == typeof(object))
-                {
-                    throw new SerializationException(Res.Get(Res.ObjectHierarchyChangedSurrogate, obj.GetType()));
-                }
+                if (type == Reflector.ObjectType)
+                    throw new SerializationException(Res.BinarySerializationObjectHierarchyChangedSurrogate(obj.GetType()));
 
                 // field found
                 if (entry.Name == level.ToString("X", NumberFormatInfo.InvariantInfo) + ":" + fieldIndex.ToString("X", NumberFormatInfo.InvariantInfo))
                 {
                     if (fieldIndex >= fields.Length)
-                        throw new SerializationException(Res.Get(Res.MissingFieldSurrogate, type, obj.GetType()));
+                        throw new SerializationException(Res.BinarySerializationMissingFieldSurrogate(type, obj.GetType()));
 
                     if (!fields[fieldIndex].FieldType.CanAcceptValue(entry.Value))
-                        throw new SerializationException(Res.Get(Res.UnexpectedFieldType, obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
+                        throw new SerializationException(Res.BinarySerializationUnexpectedFieldType(obj.GetType(), entry.Value, type, fields[fieldIndex].Name));
 
                     FieldAccessor.GetAccessor(fields[fieldIndex++]).Set(obj, entry.Value);
                 }
@@ -189,15 +185,11 @@ namespace KGySoft.Serialization
                     fieldIndex = 0;
                 }
                 else
-                {
-                    throw new SerializationException(Res.Get(Res.UnexpectedSerializationInfoElement, entry.Name));
-                }
+                    throw new SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
             }
 
-            if (type != typeof(object))
-            {
-                throw new SerializationException(Res.Get(Res.ObjectHierarchyChangedSurrogate, obj.GetType()));
-            }
+            if (type != Reflector.ObjectType)
+                throw new SerializationException(Res.BinarySerializationObjectHierarchyChangedSurrogate(obj.GetType()));
 
             return obj;
         }
