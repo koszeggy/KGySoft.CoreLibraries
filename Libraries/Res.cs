@@ -40,46 +40,6 @@ namespace KGySoft
         #region Internal Constants
 
 // TODO: all to methods
-        internal const string XmlCannotSerialize = nameof(XmlCannotSerialize);
-        internal const string XmlRootExpected = nameof(XmlRootExpected);
-        internal const string XmlCannotResolveType = nameof(XmlCannotResolveType);
-        internal const string XmlRootTypeMissing = nameof(XmlRootTypeMissing);
-        internal const string XmlDeserializeNotSupported = nameof(XmlDeserializeNotSupported);
-        internal const string XmlSerializeReadOnlyCollection = nameof(XmlSerializeReadOnlyCollection);
-        internal const string XmlBinarySerializationFailed = nameof(XmlBinarySerializationFailed);
-        internal const string XmlCannotSerializeCollection = nameof(XmlCannotSerializeCollection);
-        internal const string XmlCannotSerializeUnsupportedCollection = nameof(XmlCannotSerializeUnsupportedCollection);
-        internal const string NotAnIXmlSerializable = nameof(NotAnIXmlSerializable);
-        internal const string XmlNoDefaultCtor = nameof(XmlNoDefaultCtor);
-        internal const string XmlPropertyTypeMismatch = nameof(XmlPropertyTypeMismatch);
-        internal const string XmlDeserializeReadOnlyCollection = nameof(XmlDeserializeReadOnlyCollection);
-        internal const string XmlSerializeNonPopulatableCollection = nameof(XmlSerializeNonPopulatableCollection);
-        internal const string XmlPropertyHasNoSetter = nameof(XmlPropertyHasNoSetter);
-        internal const string XmlPropertyHasNoSetterCantSetNull = nameof(XmlPropertyHasNoSetterCantSetNull);
-        internal const string XmlPropertyHasNoSetterGetsNull = nameof(XmlPropertyHasNoSetterGetsNull);
-        internal const string XmlItemExpected = nameof(XmlItemExpected);
-        internal const string XmlCannotDetermineElementType = nameof(XmlCannotDetermineElementType);
-        internal const string XmlNotACollection = nameof(XmlNotACollection);
-        internal const string XmlHasNoProperty = nameof(XmlHasNoProperty);
-        internal const string XmlNoContent = nameof(XmlNoContent);
-        internal const string XmlLengthInvalidType = nameof(XmlLengthInvalidType);
-        internal const string XmlArrayNoLength = nameof(XmlArrayNoLength);
-        internal const string XmlArraySizeMismatch = nameof(XmlArraySizeMismatch);
-        internal const string XmlArrayRankMismatch = nameof(XmlArrayRankMismatch);
-        internal const string XmlArrayDimensionSizeMismatch = nameof(XmlArrayDimensionSizeMismatch);
-        internal const string XmlArrayLowerBoundMismatch = nameof(XmlArrayLowerBoundMismatch);
-        internal const string XmlCrcError = nameof(XmlCrcError);
-        internal const string XmlInconsistentArrayLength = nameof(XmlInconsistentArrayLength);
-        internal const string XmlCrcFormat = nameof(XmlCrcFormat);
-        internal const string XmlMixedArrayFormats = nameof(XmlMixedArrayFormats);
-        internal const string XmlUnexpectedElement = nameof(XmlUnexpectedElement);
-        internal const string XmlKeyValueMissingKey = nameof(XmlKeyValueMissingKey);
-        internal const string XmlKeyValueMissingValue = nameof(XmlKeyValueMissingValue);
-        internal const string XmlMultipleKeys = nameof(XmlMultipleKeys);
-        internal const string XmlMultipleValues = nameof(XmlMultipleValues);
-        internal const string XmlInvalidEscapedContent = nameof(XmlInvalidEscapedContent);
-        internal const string XmlUnexpectedEnd = nameof(XmlUnexpectedEnd);
-        internal const string XmlCircularReference = nameof(XmlCircularReference);
         internal const string ExceptionMessage = nameof(ExceptionMessage);
         internal const string ExceptionMessageNotAvailable = nameof(ExceptionMessageNotAvailable);
         internal const string InnerException = nameof(InnerException);
@@ -393,6 +353,37 @@ namespace KGySoft
 
         #endregion
 
+        #region XmlSerialization
+
+        /// <summary>Type of the root element is not specified.</summary>
+        internal static string XmlSerializationRootTypeMissing => Get("XmlSerialization_RootTypeMissing");
+
+        /// <summary>Array length or dimensions are not specified.</summary>
+        internal static string XmlSerializationArrayNoLength => Get("XmlSerialization_ArrayNoLength");
+
+        /// <summary>Corrupt array data: Bad CRC.</summary>
+        internal static string XmlSerializationCrcError => Get("XmlSerialization_CrcError");
+
+        /// <summary>Mixed compact and non-compact array content found.</summary>
+        internal static string XmlSerializationMixedArrayFormats => Get("XmlSerialization_MixedArrayFormats");
+
+        /// <summary>Key element not found in key/value pair element.</summary>
+        internal static string XmlSerializationKeyValueMissingKey => Get("XmlSerialization_KeyValueMissingKey");
+
+        /// <summary>Value element not found in key/value pair element.</summary>
+        internal static string XmlSerializationKeyValueMissingValue => Get("XmlSerialization_KeyValueMissingValue");
+
+        /// <summary>Multiple Key elements occurred in key-value element.</summary>
+        internal static string XmlSerializationMultipleKeys => Get("XmlSerialization_MultipleKeys");
+
+        /// <summary>Multiple Value elements occurred in key-value element.</summary>
+        internal static string XmlSerializationMultipleValues => Get("XmlSerialization_MultipleValues");
+
+        /// <summary>Unexpected end of XML content.</summary>
+        internal static string XmlSerializationUnexpectedEnd => Get("XmlSerialization_UnexpectedEnd");
+
+        #endregion
+
         #endregion
 
         #endregion
@@ -638,16 +629,19 @@ namespace KGySoft
 
         #endregion
 
-        #region ResourceManagers
+        #region Resources
+
+        /// <summary>Unexpected element: "{0}" at line {1}, position {2}.</summary>
+        internal static string ResourcesUnexpectedElementAt(string elementName, int line, int pos) => Get("Resources_UnexpectedElementAtFormat", elementName, line, pos);
 
         /// <summary>Resource file not found: {0}</summary>
-        internal static string NeutralResourceFileNotFoundResX(string fileName) => Get("ResXResourceManager_NeutralResourceFileNotFoundResXFormat", fileName);
+        internal static string ResourcesNeutralResourceFileNotFoundResX(string fileName) => Get("Resources_NeutralResourceFileNotFoundResXFormat", fileName);
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</summary>
-        internal static string NeutralResourceNotFoundCompiled(string baseNameField, string fileName) => Get("HybridResourceManager_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
+        internal static string ResourcesNeutralResourceNotFoundCompiled(string baseNameField, string fileName) => Get("Resources_NeutralResourceNotFoundCompiledFormat", baseNameField, fileName);
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</summary>
-        internal static string NeutralResourceNotFoundHybrid(string baseNameField, string assemblyFile, string resxFile) => Get("HybridResourceManager_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
+        internal static string ResourcesNeutralResourceNotFoundHybrid(string baseNameField, string assemblyFile, string resxFile) => Get("Resources_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
 
         #endregion
 
@@ -655,6 +649,106 @@ namespace KGySoft
 
         /// <summary>The specified string '{0}' cannot be parsed as type {1}.</summary>
         internal static string StringExtensionsCannotParseAsType(string s, Type type) => Get("StringExtensions_CannotParseAsTypeFormat", s, type);
+
+        #endregion
+
+        #region XmlSerialization
+
+        /// <summary>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</summary>
+        internal static string XmlSerializationSerializingTypeNotSupported(Type type, XmlSerializationOptions options) => Get("XmlSerialization_SerializingTypeNotSupportedFormat", type, options.ToString<XmlSerializationOptions>());
+
+        /// <summary>Root named "object" expected but "{0}" found.</summary>
+        internal static string XmlSerializationRootExpected(string name) => Get("XmlSerialization_RootObjectExpectedFormat", name);
+
+        /// <summary>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</summary>
+        internal static string XmlSerializationCannotResolveType(string typeName) => Get("XmlSerialization_CannotResolveTypeFormat", typeName);
+
+        /// <summary>Deserializing type "{0}" is not supported.</summary>
+        internal static string XmlSerializationDeserializingTypeNotSupported(Type type) => Get("XmlSerialization_DeserializingTypeNotSupportedFormat", type);
+
+        /// <summary>Content serialization of read-only collection type "{0}" is not supported because populating will not work at deserialization.
+        /// If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</summary>
+        internal static string XmlSerializationSerializingReadOnlyCollectionNotSupported(Type type) => Get("XmlSerialization_SerializingReadOnlyCollectionNotSupportedFormat", type);
+
+        /// <summary>Binary serialization of type "{0}" failed with options "{1}": {2}</summary>
+        internal static string XmlSerializationBinarySerializationFailed(Type type, XmlSerializationOptions options, string errorMessage) => Get("XmlSerialization_BinarySerializationFailedFormat", type, options.ToString<XmlSerializationOptions>(), errorMessage);
+
+        /// <summary>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</summary>
+        internal static string XmlSerializationCannotSerializeCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeCollectionFormat", type, options.ToString<XmlSerializationOptions>());
+
+        /// <summary>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.
+        /// To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</summary>
+        internal static string XmlSerializationCannotSerializeUnsupportedCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedCollectionFormat", type, options.ToString<XmlSerializationOptions>());
+
+        /// <summary>Type "{0}" does not implement IXmlSerializable.</summary>
+        internal static string XmlSerializationNotAnIXmlSerializable(Type type) => Get("XmlSerialization_NotAnIXmlSerializableFormat", type);
+
+        /// <summary>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</summary>
+        internal static string XmlSerializationNoDefaultCtor(Type type) => Get("XmlSerialization_NoDefaultCtorFormat", type);
+
+        /// <summary>Property value of "{0}.{1}" is expected to be a type of "{2}" but was "{3}".</summary>
+        internal static string XmlSerializationPropertyTypeMismatch(Type declaringType, string propertyName, Type expectedType, Type actualType) => Get("XmlSerialization_PropertyTypeMismatchFormat", declaringType, propertyName, expectedType, actualType);
+
+        /// <summary>Collection "{0}" is read-only so its content cannot be restored.</summary>
+        internal static string XmlSerializationCannotDeserializeReadOnlyCollection(Type type) => Get("XmlSerialization_CannotDeserializeReadOnlyCollectionFormat", type);
+
+        /// <summary>Content serialization of collection type "{0}" is not supported because it cannot be populated by standard interfaces.
+        /// If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</summary>
+        internal static string XmlSerializationSerializingNonPopulatableCollectionNotSupported(Type type) => Get("XmlSerialization_SerializingNonPopulatableCollectionNotSupportedFormat", type);
+
+        /// <summary>Cannot restore property "{0}" in type "{1}" because it has no setter.</summary>
+        internal static string XmlSerializationPropertyHasNoSetter(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterFormat", propertyName, type);
+
+        /// <summary>Cannot set null to non-null property "{0}" in type "{1}" because it has no setter.</summary>
+        internal static string XmlSerializationPropertyHasNoSetterCantSetNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterCantSetNullFormat", propertyName, type);
+
+        /// <summary>Cannot restore property "{0}" in type "{1}" because it has no setter and it returned null.</summary>
+        internal static string XmlSerializationPropertyHasNoSetterGetsNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterGetsNullFormat", propertyName, type);
+
+        /// <summary>Collection item expected but "{0}" found.</summary>
+        internal static string XmlSerializationItemExpected(string name) => Get("XmlSerialization_ItemExpectedFormat", name);
+
+        /// <summary>Could not determine type of element in collection "{0}".</summary>
+        internal static string XmlSerializationCannotDetermineElementType(Type type) => Get("XmlSerialization_CannotDetermineElementTypeFormat", type);
+
+        /// <summary>Type "{0}" is not a regular collection so items cannot be added to it.</summary>
+        internal static string XmlSerializationNotACollection(Type type) => Get("XmlSerialization_NotACollectionFormat", type);
+
+        /// <summary>Type "{0}" has no public property or field "{1}".</summary>
+        internal static string XmlSerializationHasNoMember(Type type, string name) => Get("XmlSerialization_HasNoMemberFormat", type, name);
+
+        /// <summary>Serialized content of type "{0}" not found.</summary>
+        internal static string XmlSerializationNoContent(Type type) => Get("XmlSerialization_NoContentFormat", type);
+
+        /// <summary>Length attribute should be an integer but "{0}" found.</summary>
+        internal static string XmlSerializationLengthInvalidType(string content) => Get("XmlSerialization_LengthInvalidTypeFormat", content);
+
+        /// <summary>Cannot restore array "{0}" because size does not match. Expected length: "{1}".</summary>
+        internal static string XmlSerializationArraySizeMismatch(Type type, int length) => Get("XmlSerialization_ArraySizeMismatchFormat", type, length);
+
+        /// <summary>Cannot restore array "{0}" because rank does not match. Expected rank: "{1}".</summary>
+        internal static string XmlSerializationArrayRankMismatch(Type type, int rank) => Get("XmlSerialization_ArrayRankMismatchFormat", type, rank);
+
+        /// <summary>Cannot restore array "{0}" because length of the {1}. dimension does not match.</summary>
+        internal static string XmlSerializationArrayDimensionSizeMismatch(Type type, int length) => Get("XmlSerialization_ArrayDimensionSizeMismatchFormat", type, length);
+
+        /// <summary>Cannot restore array "{0}" because lower bound of the {1}. dimension does not match.</summary>
+        internal static string XmlSerializationArrayLowerBoundMismatch(Type type, int dimension) => Get("XmlSerialization_ArrayLowerBoundMismatchFormat", type, dimension);
+
+        /// <summary>Array items length mismatch. Expected items: {0}, found items: {1}.</summary>
+        internal static string XmlSerializationInconsistentArrayLength(int expected, int actual) => Get("XmlSerialization_InconsistentArrayLengthFormat", expected, actual);
+
+        /// <summary>The crc attribute should be a hex value but "{0}" found.</summary>
+        internal static string XmlSerializationCrcHexExpected(string content) => Get("XmlSerialization_CrcHexExpectedFormat", content);
+
+        /// <summary>Unexpected element: "{0}".</summary>
+        internal static string XmlSerializationUnexpectedElement(string elementName) => Get("XmlSerialization_UnexpectedElementFormat", elementName);
+
+        /// <summary>Invalid escaped string content: "{0}".</summary>
+        internal static string XmlSerializationInvalidEscapedContent(string content) => Get("XmlSerialization_InvalidEscapedContentFormat", content);
+
+        /// <summary>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</summary>
+        internal static string XmlSerializationCircularReference(object obj) => Get("XmlSerialization_CircularReferenceFormat", obj);
 
         #endregion
 

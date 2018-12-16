@@ -253,13 +253,13 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_PropertyHasNoSetterFormat" xml:space="preserve">
     <value>Property has no setter accessor: {0}.{1}</value>
   </data>
-  <data name="ResXResourceManager_NeutralResourceFileNotFoundResXFormat" xml:space="preserve">
+  <data name="Resources_NeutralResourceFileNotFoundResXFormat" xml:space="preserve">
     <value>Resource file not found: {0}</value>
   </data>
-  <data name="HybridResourceManager_NeutralResourceNotFoundCompiledFormat" xml:space="preserve">
+  <data name="Resources_NeutralResourceNotFoundCompiledFormat" xml:space="preserve">
     <value>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed.</value>
   </data>
-  <data name="HybridResourceManager_NeutralResourceNotFoundHybridFormat" xml:space="preserve">
+  <data name="Resources_NeutralResourceNotFoundHybridFormat" xml:space="preserve">
     <value>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</value>
   </data>
   <data name="StringExtensions_SeparatorNullOrEmpty" xml:space="preserve">
@@ -448,110 +448,113 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_ValueTypeExpected" xml:space="preserve">
     <value>Specified type must be a value type.</value>
   </data>
-  <data name="NotAnIXmlSerializable" xml:space="preserve">
+  <data name="XmlSerialization_NotAnIXmlSerializableFormat" xml:space="preserve">
     <value>Type "{0}" does not implement IXmlSerializable.</value>
   </data>
-  <data name="XmlNoDefaultCtor" xml:space="preserve">
-    <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the property or is not null after creating the parent object.</value>
+  <data name="XmlSerialization_NoDefaultCtorFormat" xml:space="preserve">
+    <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</value>
   </data>
-  <data name="XmlArrayDimensionSizeMismatch" xml:space="preserve">
+  <data name="XmlSerialization_ArrayDimensionSizeMismatchFormat" xml:space="preserve">
     <value>Cannot restore array "{0}" because length of the {1}. dimension does not match.</value>
   </data>
-  <data name="XmlArrayLowerBoundMismatch" xml:space="preserve">
+  <data name="XmlSerialization_ArrayLowerBoundMismatchFormat" xml:space="preserve">
     <value>Cannot restore array "{0}" because lower bound of the {1}. dimension does not match.</value>
   </data>
-  <data name="XmlPropertyTypeMismatch" xml:space="preserve">
+  <data name="XmlSerialization_PropertyTypeMismatchFormat" xml:space="preserve">
     <value>Property value of "{0}.{1}" is expected to be a type of "{2}" but was "{3}".</value>
   </data>
-  <data name="XmlArrayRankMismatch" xml:space="preserve">
+  <data name="XmlSerialization_ArrayRankMismatchFormat" xml:space="preserve">
     <value>Cannot restore array "{0}" because rank does not match. Expected rank: "{1}".</value>
   </data>
-  <data name="XmlArraySizeMismatch" xml:space="preserve">
+  <data name="XmlSerialization_ArraySizeMismatchFormat" xml:space="preserve">
     <value>Cannot restore array "{0}" because size does not match. Expected length: "{1}".</value>
   </data>
   <data name="XmlBinarySerializationFailed" xml:space="preserve">
     <value>Binary serialization of type "{0}" failed with options "{1}": {2}</value>
   </data>
-  <data name="XmlDeserializeReadOnlyCollection" xml:space="preserve">
+  <data name="XmlSerialization_CannotDeserializeReadOnlyCollectionFormat" xml:space="preserve">
     <value>Collection "{0}" is read-only so its content cannot be restored.</value>
   </data>
-  <data name="XmlCannotDetermineElementType" xml:space="preserve">
+  <data name="XmlSerialization_CannotDetermineElementTypeFormat" xml:space="preserve">
     <value>Could not determine type of element in collection "{0}".</value>
   </data>
-  <data name="XmlCannotResolveType" xml:space="preserve">
+  <data name="XmlSerialization_CannotResolveTypeFormat" xml:space="preserve">
     <value>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</value>
   </data>
-  <data name="XmlCannotSerialize" xml:space="preserve">
+  <data name="XmlSerialization_SerializingTypeNotSupportedFormat" xml:space="preserve">
     <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
   </data>
-  <data name="XmlCannotSerializeCollection" xml:space="preserve">
+  <data name="XmlSerialization_CannotSerializeCollectionFormat" xml:space="preserve">
     <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</value>
   </data>
-  <data name="XmlCannotSerializeUnsupportedCollection" xml:space="preserve">
+  <data name="XmlSerialization_CannotSerializeUnsupportedCollectionFormat" xml:space="preserve">
     <value>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.
 To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</value>
   </data>
   <data name="XmlPropertyHasNoSetterNull" xml:space="preserve">
     <value>Cannot assign null to type "{0}" at property "{1}.{2}" because it has no setter.</value>
   </data>
-  <data name="XmlCrcError" xml:space="preserve">
+  <data name="XmlSerialization_CrcError" xml:space="preserve">
     <value>Corrupt array data: Bad CRC.</value>
   </data>
-  <data name="XmlCrcFormat" xml:space="preserve">
+  <data name="XmlSerialization_CrcHexExpectedFormat" xml:space="preserve">
     <value>The crc attribute should be a hex value but "{0}" found.</value>
   </data>
-  <data name="XmlDeserializeNotSupported" xml:space="preserve">
+  <data name="XmlSerialization_DeserializingTypeNotSupportedFormat" xml:space="preserve">
     <value>Deserializing type "{0}" is not supported.</value>
   </data>
-  <data name="XmlHasNoProperty" xml:space="preserve">
-    <value>Type "{0}" has no property "{1}".</value>
+  <data name="XmlSerialization_HasNoMemberFormat" xml:space="preserve">
+    <value>Type "{0}" has no public property or field "{1}".</value>
   </data>
-  <data name="XmlInconsistentArrayLength" xml:space="preserve">
+  <data name="XmlSerialization_InconsistentArrayLengthFormat" xml:space="preserve">
     <value>Array items length mismatch. Expected items: {0}, found items: {1}.</value>
   </data>
-  <data name="XmlItemExpected" xml:space="preserve">
+  <data name="XmlSerialization_ItemExpectedFormat" xml:space="preserve">
     <value>Collection item expected but "{0}" found.</value>
   </data>
-  <data name="XmlLengthInvalidType" xml:space="preserve">
+  <data name="XmlSerialization_LengthInvalidTypeFormat" xml:space="preserve">
     <value>Length attribute should be an integer but "{0}" found.</value>
   </data>
-  <data name="XmlArrayNoLength" xml:space="preserve">
+  <data name="XmlSerialization_ArrayNoLength" xml:space="preserve">
     <value>Array length or dimensions are not specified.</value>
   </data>
-  <data name="XmlMixedArrayFormats" xml:space="preserve">
+  <data name="XmlSerialization_MixedArrayFormats" xml:space="preserve">
     <value>Mixed compact and non-compact array content found.</value>
   </data>
-  <data name="XmlNoContent" xml:space="preserve">
+  <data name="XmlSerialization_NoContentFormat" xml:space="preserve">
     <value>Serialized content of type "{0}" not found.</value>
   </data>
-  <data name="XmlNotACollection" xml:space="preserve">
+  <data name="XmlSerialization_NotACollectionFormat" xml:space="preserve">
     <value>Type "{0}" is not a regular collection so items cannot be added to it.</value>
   </data>
-  <data name="XmlPropertyHasNoSetter" xml:space="preserve">
+  <data name="XmlSerialization_PropertyHasNoSetterFormat" xml:space="preserve">
     <value>Cannot restore property "{0}" in type "{1}" because it has no setter.</value>
   </data>
-  <data name="XmlPropertyHasNoSetterCantSetNull" xml:space="preserve">
+  <data name="XmlSerialization_PropertyHasNoSetterCantSetNullFormat" xml:space="preserve">
     <value>Cannot set null to non-null property "{0}" in type "{1}" because it has no setter.</value>
   </data>
-  <data name="XmlPropertyHasNoSetterGetsNull" xml:space="preserve">
+  <data name="XmlSerialization_PropertyHasNoSetterGetsNullFormat" xml:space="preserve">
     <value>Cannot restore property "{0}" in type "{1}" because it has no setter and it returned null.</value>
   </data>
-  <data name="XmlRootExpected" xml:space="preserve">
-    <value>Root object expected but "{0}" found.</value>
+  <data name="XmlSerialization_RootObjectExpectedFormat" xml:space="preserve">
+    <value>Root named "object" expected but "{0}" found.</value>
   </data>
-  <data name="XmlRootTypeMissing" xml:space="preserve">
+  <data name="XmlSerialization_RootTypeMissing" xml:space="preserve">
     <value>Type of the root element is not specified.</value>
   </data>
-  <data name="XmlSerializeReadOnlyCollection" xml:space="preserve">
+  <data name="XmlSerialization_SerializingReadOnlyCollectionNotSupportedFormat" xml:space="preserve">
     <value>Content serialization of read-only collection type "{0}" is not supported because populating will not work at deserialization.
 If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</value>
   </data>
-  <data name="XmlSerializeNonPopulatableCollection" xml:space="preserve">
+  <data name="XmlSerialization_SerializingNonPopulatableCollectionNotSupportedFormat" xml:space="preserve">
     <value>Content serialization of collection type "{0}" is not supported because it cannot be populated by standard interfaces.
 If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</value>
   </data>
-  <data name="XmlUnexpectedElement" xml:space="preserve">
+  <data name="Resources_UnexpectedElementAtFormat" xml:space="preserve">
     <value>Unexpected element: "{0}" at line {1}, position {2}.</value>
+  </data>
+  <data name="XmlSerialization_UnexpectedElementFormat" xml:space="preserve">
+    <value>Unexpected element: "{0}".</value>
   </data>
   <data name="DateAndTime" xml:space="preserve">
     <value>Date and Time: </value>
@@ -619,25 +622,25 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Win32ErrorCode" xml:space="preserve">
     <value>Win32 native error code: {0}</value>
   </data>
-  <data name="XmlCircularReference" xml:space="preserve">
+  <data name="XmlSerialization_CircularReferenceFormat" xml:space="preserve">
     <value>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</value>
   </data>
-  <data name="XmlInvalidEscapedContent" xml:space="preserve">
+  <data name="XmlSerialization_InvalidEscapedContentFormat" xml:space="preserve">
     <value>Invalid escaped string content: "{0}".</value>
   </data>
-  <data name="XmlKeyValueMissingKey" xml:space="preserve">
+  <data name="XmlSerialization_KeyValueMissingKey" xml:space="preserve">
     <value>Key element not found in key/value pair element.</value>
   </data>
-  <data name="XmlKeyValueMissingValue" xml:space="preserve">
+  <data name="XmlSerialization_KeyValueMissingValue" xml:space="preserve">
     <value>Value element not found in key/value pair element.</value>
   </data>
-  <data name="XmlMultipleKeys" xml:space="preserve">
+  <data name="XmlSerialization_MultipleKeys" xml:space="preserve">
     <value>Multiple Key elements occurred in key-value element.</value>
   </data>
-  <data name="XmlMultipleValues" xml:space="preserve">
+  <data name="XmlSerialization_MultipleValues" xml:space="preserve">
     <value>Multiple Value elements occurred in key-value element.</value>
   </data>
-  <data name="XmlUnexpectedEnd" xml:space="preserve">
+  <data name="XmlSerialization_UnexpectedEnd" xml:space="preserve">
     <value>Unexpected end of XML content.</value>
   </data>
   <data name="ApplicationDomain" xml:space="preserve">

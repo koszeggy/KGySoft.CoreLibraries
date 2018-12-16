@@ -1260,8 +1260,7 @@ namespace KGySoft.Resources
             {
 #pragma warning disable 252, 253 // reference equality is intended because names are added to NameTable
                 object name = reader.LocalName;
-                if (reader.NodeType == XmlNodeType.EndElement
-                    && (name == ResXCommon.DataStr || name == ResXCommon.MetadataStr))
+                if (reader.NodeType == XmlNodeType.EndElement && (name == ResXCommon.DataStr || name == ResXCommon.MetadataStr))
                 {
                     // we just found </data> or </metadata>
                     finishedReadingDataNode = true;
@@ -1279,7 +1278,7 @@ namespace KGySoft.Resources
                         {
                             line = GetLineNumber(reader);
                             col = GetLinePosition(reader);
-                            throw ResXCommon.CreateXmlException(Res.Get(Res.XmlUnexpectedElement, name, line, col), line, col);
+                            throw ResXCommon.CreateXmlException(Res.ResourcesUnexpectedElementAt(name.ToString(), line, col), line, col);
                         }
                     }
                     else if (reader.NodeType == XmlNodeType.Text)

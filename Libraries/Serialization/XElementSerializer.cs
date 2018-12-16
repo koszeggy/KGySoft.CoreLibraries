@@ -82,9 +82,9 @@ namespace KGySoft.Serialization
                     if (obj is IEnumerable enumerable)
                     {
                         if (!objType.IsCollection())
-                            throw new NotSupportedException(Res.Get(Res.XmlSerializeNonPopulatableCollection, obj.GetType()));
+                            throw new NotSupportedException(Res.XmlSerializationSerializingNonPopulatableCollectionNotSupported(objType));
                         if (!objType.IsReadWriteCollection(obj))
-                            throw new NotSupportedException(Res.Get(Res.XmlSerializeReadOnlyCollection, obj.GetType()));
+                            throw new NotSupportedException(Res.XmlSerializationSerializingReadOnlyCollectionNotSupported(objType));
 
                         SerializeCollection(enumerable, objType.GetCollectionElementType(), false, parent, DesignerSerializationVisibility.Visible);
                         return;
@@ -286,7 +286,7 @@ namespace KGySoft.Serialization
                 }
                 catch (Exception e)
                 {
-                    throw new SerializationException(Res.Get(Res.XmlBinarySerializationFailed, obj.GetType(), Options, e.Message), e);
+                    throw new SerializationException(Res.XmlSerializationBinarySerializationFailed(obj.GetType(), Options, e.Message), e);
                 }
             }
 
@@ -310,8 +310,8 @@ namespace KGySoft.Serialization
                     }
 
                     if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                        throw new SerializationException(Res.Get(Res.XmlCannotSerializeUnsupportedCollection, type, Options));
-                    throw new SerializationException(Res.Get(Res.XmlCannotSerializeCollection, type, Options));
+                        throw new SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(type, Options));
+                    throw new SerializationException(Res.XmlSerializationCannotSerializeCollection(type, Options));
                 }
 
                 // h.) recursive serialization, if enabled
@@ -331,7 +331,7 @@ namespace KGySoft.Serialization
                 UnregisterSerializedObject(obj);
             }
 
-            throw new SerializationException(Res.Get(Res.XmlCannotSerialize, type, Options));
+            throw new SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
         private void SerializeMembers(object obj, XContainer parent)

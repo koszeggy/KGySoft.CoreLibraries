@@ -224,7 +224,7 @@ namespace KGySoft.Serialization
                 return;
 
             if (SerObjects.Contains(obj))
-                throw new ReflectionException(Res.Get(Res.XmlCircularReference, obj));
+                throw new ReflectionException(Res.XmlSerializationCircularReference(obj));
             serObjects.Add(obj);
         }
 

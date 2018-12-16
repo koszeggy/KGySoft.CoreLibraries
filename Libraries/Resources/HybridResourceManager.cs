@@ -1210,11 +1210,11 @@ namespace KGySoft.Resources
                     switch (source)
                     {
                         case ResourceManagerSources.CompiledOnly:
-                            throw new MissingManifestResourceException(Res.NeutralResourceNotFoundCompiled(BaseNameField, MainAssembly.Location));
+                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundCompiled(BaseNameField, MainAssembly.Location));
                         case ResourceManagerSources.ResXOnly:
-                            throw new MissingManifestResourceException(Res.NeutralResourceFileNotFoundResX(resxResources.ResourceFileName));
+                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(resxResources.ResourceFileName));
                         default:
-                            throw new MissingManifestResourceException(Res.NeutralResourceNotFoundHybrid(BaseNameField, MainAssembly.Location, resxResources.ResourceFileName));
+                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundHybrid(BaseNameField, MainAssembly.Location, resxResources.ResourceFileName));
                     }
                 }
             }

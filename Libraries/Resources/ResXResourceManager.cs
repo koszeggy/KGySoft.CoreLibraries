@@ -1198,7 +1198,7 @@ namespace KGySoft.Resources
                 if (ThrowException && tryParents && !exists && behavior != ResourceSetRetrieval.CreateIfNotExists
                     && Equals(currentCultureInfo, CultureInfo.InvariantCulture))
                 {
-                    throw new MissingManifestResourceException(Res.NeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
+                    throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
                 }
 
                 // a new ResourceSet has been loaded; we're done
