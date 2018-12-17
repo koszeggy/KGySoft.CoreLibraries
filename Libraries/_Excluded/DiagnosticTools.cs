@@ -1,3 +1,113 @@
+/*
+  <data name="ExceptionMessage" xml:space="preserve">
+    <value>Exception Message:</value>
+  </data>
+  <data name="ExceptionMessageNotAvailable" xml:space="preserve">
+    <value>Message is not available: {0}</value>
+  </data>
+   <data name="InnerException" xml:space="preserve">
+    <value>&gt;&gt;&gt;&gt; Inner Exception &gt;&gt;&gt;&gt;</value>
+  </data>
+  <data name="InnerExceptionEnd" xml:space="preserve">
+    <value>&lt;&lt;&lt;&lt; End of Inner Exception &lt;&lt;&lt;&lt;</value>
+  </data>
+  <data name="Win32ErrorCode" xml:space="preserve">
+    <value>Win32 native error code: {0}</value>
+  </data>
+  <data name="SystemInformation" xml:space="preserve">
+    <value>System information:</value>
+  </data>
+  <data name="UserInformation" xml:space="preserve">
+    <value>User information:</value>
+  </data>
+  <data name="ExceptionSource" xml:space="preserve">
+    <value>Exception Source:</value>
+  </data>
+  <data name="ExceptionSourceNotAvailable" xml:space="preserve">
+    <value>Source is not available: {0}</value>
+  </data>
+  <data name="ExceptionTargetSite" xml:space="preserve">
+    <value>Exception Target Site:</value>
+  </data>
+  <data name="ExceptionTargetSiteNotAccessible" xml:space="preserve">
+    <value>Cannot not access target site infos: {0}</value>
+  </data>
+  <data name="ExceptionTargetSiteNotAvailable" xml:space="preserve">
+    <value>Target site is not available.</value>
+  </data>
+  <data name="ExceptionType" xml:space="preserve">
+    <value>Exception Type:</value>
+  </data>
+  <data name="ExceptionTypeNotAvailable" xml:space="preserve">
+    <value>Type info is not available: {0}</value>
+  </data>
+  <data name="RemoteStackTrace" xml:space="preserve">
+    <value>---- Remote Stack Trace ----</value>
+  </data>
+  <data name="SourceOffset" xml:space="preserve">
+    <value>{0}: line {1}, col {2}</value>
+  </data>
+  <data name="StackTrace" xml:space="preserve">
+    <value>---- Stack Trace ----</value>
+  </data>
+  <data name="DateAndTime" xml:space="preserve">
+    <value>Date and Time: </value>
+  </data>
+  <data name="ILOffset" xml:space="preserve">
+    <value>, IL {0:#0000}</value>
+  </data>
+  <data name="LocalStackTrace" xml:space="preserve">
+    <value>---- Local Stack Trace ----</value>
+  </data>
+  <data name="NativeOffset" xml:space="preserve">
+    <value>{0}: N {1:#00000}</value>
+  </data>
+  <data name="OperatingSystem" xml:space="preserve">
+    <value>Operating System: </value>
+  </data>
+  <data name="Environment" xml:space="preserve">
+    <value>Environment: {0}-bit</value>
+  </data>
+  <data name="ProcessorCount" xml:space="preserve">
+    <value>Processor Count: </value>
+  </data>
+  <data name="ClrVersion" xml:space="preserve">
+    <value>CLR version: </value>
+  </data>
+  <data name="WorkingSet" xml:space="preserve">
+    <value>Working Set: {0} bytes</value>
+  </data>
+  <data name="CommandLine" xml:space="preserve">
+    <value>Command Line: </value>
+  </data>
+  <data name="ApplicationDomain" xml:space="preserve">
+    <value>Application Domain: </value>
+  </data>
+  <data name="MachineName" xml:space="preserve">
+    <value>Machine Name: </value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>User name: </value>
+  </data>
+  <data name="CurrentUser" xml:space="preserve">
+    <value>Current User: </value>
+  </data>
+  <data name="CannotGetDomain" xml:space="preserve">
+    <value>&lt;Domain is not available&gt;</value>
+  </data>
+  <data name="AssemblyBuildDate" xml:space="preserve">
+    <value>Assembly Build Date: </value>
+  </data>
+  <data name="AssemblyCodebase" xml:space="preserve">
+    <value>Assembly Codebase: </value>
+  </data>
+  <data name="AssemblyFullName" xml:space="preserve">
+    <value>Assembly Full Name: </value>
+  </data>
+  <data name="AssemblyVersion" xml:space="preserve">
+    <value>Assembly Version: </value>
+  </data>
+*/
 using System;
 using System.ComponentModel;
 using System.Diagnostics;

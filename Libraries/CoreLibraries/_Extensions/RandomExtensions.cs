@@ -567,7 +567,7 @@ namespace KGySoft.CoreLibraries
                 || Double.IsNaN(minValue) || Double.IsNaN(maxValue)
                 // or max < min
                 || maxValue < minValue)
-                throw new ArgumentOutOfRangeException(Double.IsNaN(maxValue) || maxValue < minValue ? nameof(maxValue) : nameof(minValue), Res.Get(maxValue < minValue ? Res.MaxValueLessThanMinValue : Res.ArgumentOutOfRange));
+                throw new ArgumentOutOfRangeException(Double.IsNaN(maxValue) || maxValue < minValue ? nameof(maxValue) : nameof(minValue), maxValue < minValue ? Res.MaxValueLessThanMinValue : Res.ArgumentOutOfRange);
 
             if (!Enum<FloatScale>.IsDefined(scale))
                 throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);

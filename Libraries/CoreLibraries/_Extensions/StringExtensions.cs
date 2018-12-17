@@ -416,7 +416,7 @@ namespace KGySoft.CoreLibraries
                 return new byte[0];
 
             if (s.Length % 2 != 0)
-                throw new ArgumentException(Res.SourceLengthNotEven, nameof(s));
+                throw new ArgumentException(Res.StringExtensionsSourceLengthNotEven, nameof(s));
 
             byte[] result = new byte[s.Length >> 1];
             for (int i = 0; i < (s.Length >> 1); i++)

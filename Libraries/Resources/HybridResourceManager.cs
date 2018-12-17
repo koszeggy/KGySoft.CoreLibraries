@@ -760,7 +760,7 @@ namespace KGySoft.Resources
         public virtual void SetObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.Get(Res.HybridResSourceBinary));
+                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // because of create no proxy is returned
             IExpandoResourceSet rs = (IExpandoResourceSet)InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
@@ -788,7 +788,7 @@ namespace KGySoft.Resources
         public virtual void RemoveObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.Get(Res.HybridResSourceBinary));
+                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // forcing expando result is not needed because there is nothing to remove from compiled resources
             IExpandoResourceSet rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSet;
@@ -816,7 +816,7 @@ namespace KGySoft.Resources
         public virtual void SetMetaObject(string name, object value, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.Get(Res.HybridResSourceBinary));
+                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // because of create no proxy is returned
             IExpandoResourceSet rs = (IExpandoResourceSet)InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
@@ -840,7 +840,7 @@ namespace KGySoft.Resources
         public virtual void RemoveMetaObject(string name, CultureInfo culture = null)
         {
             if (source == ResourceManagerSources.CompiledOnly)
-                throw new InvalidOperationException(Res.Get(Res.HybridResSourceBinary));
+                throw new InvalidOperationException(Res.ResourcesHybridResSourceBinary);
 
             // forcing expando result is not needed because there is nothing to remove from compiled resources
             IExpandoResourceSet rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSet;

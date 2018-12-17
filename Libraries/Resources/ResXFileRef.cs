@@ -150,7 +150,7 @@ namespace KGySoft.Resources
                 byte[] buffer;
 
                 if (!File.Exists(fileName))
-                    throw new FileNotFoundException(Res.Get(Res.ResXFileRefFileNotFound, fileName), fileName);
+                    throw new FileNotFoundException(Res.ResourcesFileRefFileNotFound(fileName), fileName);
                 using (FileStream s = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     buffer = new byte[s.Length];

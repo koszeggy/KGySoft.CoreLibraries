@@ -18,8 +18,8 @@ namespace KGySoft.ComponentModel
 
         private static void OnBindPropertyCommand(ICommandSource src, ICommandState state, object target)
         {
-            string sourcePropertyName = state.GetValueOrDefault<string>(stateSourcePropertyName) ?? throw new InvalidOperationException(Res.CommandBindingMissingState(stateSourcePropertyName));
-            string targetPropertyName = state.GetValueOrDefault<string>(stateTargetPropertyName) ?? throw new InvalidOperationException(Res.CommandBindingMissingState(stateTargetPropertyName));
+            string sourcePropertyName = state.GetValueOrDefault<string>(stateSourcePropertyName) ?? throw new InvalidOperationException(Res.ComponentModelMissingState(stateSourcePropertyName));
+            string targetPropertyName = state.GetValueOrDefault<string>(stateTargetPropertyName) ?? throw new InvalidOperationException(Res.ComponentModelMissingState(stateTargetPropertyName));
             object propertyValue = null;
             bool propertyValueObtained = false;
             if (src.EventArgs is PropertyChangedEventArgs e)

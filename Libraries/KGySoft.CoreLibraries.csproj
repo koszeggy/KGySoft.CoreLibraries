@@ -135,7 +135,6 @@
     <Compile Include="CoreLibraries\_Extensions\_Delegates\Conversion.cs" />
     <Compile Include="CoreLibraries\_Extensions\_Delegates\ConversionAttempt.cs" />
     <Compile Include="Diagnostics\CollectionDebugView.cs" />
-    <Compile Include="Diagnostics\DiagnosticTools.cs" />
     <Compile Include="Diagnostics\DictionaryDebugView.cs" />
     <Compile Include="Diagnostics\DictionaryKeyCollectionDebugView.cs" />
     <Compile Include="Diagnostics\DictionaryValueCollectionDebugView.cs" />
@@ -278,7 +277,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

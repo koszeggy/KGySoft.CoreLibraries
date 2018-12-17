@@ -95,7 +95,6 @@
     <Compile Include="Tests\ComponentModel\ObservableBindingListTest.cs" />
     <Compile Include="Tests\ComponentModel\SortableBindingListTest.cs" />
     <Compile Include="Tests\CoreLibraries\Extensions\ObjectExtensionsTest.cs" />
-    <Compile Include="Tests\Diagnostics\DiagnosticToolsTest.cs" />
     <Compile Include="Tests\CoreLibraries\EnumTest.cs" />
     <Compile Include="Tests\CoreLibraries\Extensions\ByteArrayExtensionsTest.cs" />
     <Compile Include="Tests\CoreLibraries\Extensions\DecimalExtensionsTest.cs" />

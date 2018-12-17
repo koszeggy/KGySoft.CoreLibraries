@@ -52,7 +52,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             bool useSeparator = !String.IsNullOrEmpty(separator);
             if (useSeparator && separator.Any(c => c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f'))
-                throw new ArgumentException(Res.Get(Res.SeparatorInvalidHex), nameof(separator));
+                throw new ArgumentException(Res.ByteArrayExtensionsSeparatorInvalidHex, nameof(separator));
 
             StringBuilder result = new StringBuilder(bytes.Length * (2 + (separator ?? String.Empty).Length));
             for (int i = 0; i < bytes.Length; i++)
@@ -124,7 +124,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(separator), Res.ArgumentNull);
 
             if (separator.Length == 0 || separator.Any(c => c >= '0' && c <= '9'))
-                throw new ArgumentException(Res.Get(Res.SeparatorInvalidDec), nameof(separator));
+                throw new ArgumentException(Res.ByteArrayExtensionsSeparatorInvalidDec, nameof(separator));
 
             StringBuilder result = new StringBuilder(bytes.Length * (3 + separator.Length));
             for (int i = 0; i < bytes.Length; i++)

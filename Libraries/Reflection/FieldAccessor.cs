@@ -45,7 +45,7 @@ namespace KGySoft.Reflection
             FieldInfo field = (FieldInfo)MemberInfo;
             Type declaringType = field.DeclaringType;
             if (!field.IsStatic && declaringType == null)
-                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
+                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             MemberExpression member = Expression.Field(
                 field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                 field);
@@ -78,7 +78,7 @@ namespace KGySoft.Reflection
             FieldInfo field = (FieldInfo)MemberInfo;
             Type declaringType = field.DeclaringType;
             if (declaringType == null)
-                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
+                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             // .NET 4.0: Using Expression.Assign (does not work for struct instance fields)
             // http://scmccart.wordpress.com/2009/10/08/c-4-0-exposer-an-evil-dynamicobject/

@@ -43,7 +43,7 @@ namespace KGySoft.ComponentModel
 
         private ValidationResultsCollection Validate()
         {
-            ValidationResultsCollection result = (DoValidation() ?? throw new InvalidOperationException(Res.Get(Res.DoValidationNull))).ToReadOnly();
+            ValidationResultsCollection result = (DoValidation() ?? throw new InvalidOperationException(Res.ComponentModelDoValidationNull)).ToReadOnly();
 
             bool newIsValid = !result.HasErrors;
             bool raiseIsValidChanged = newIsValid != lastIsValid;

@@ -29,7 +29,7 @@ namespace KGySoft.Reflection
             MethodInfo getterMethod = property.GetGetMethod(true);
             Type declaringType = getterMethod.DeclaringType;
             if (declaringType == null)
-                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
+                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             // for classes: Lambda expression
             if (!declaringType.IsValueType)
@@ -68,7 +68,7 @@ namespace KGySoft.Reflection
             MethodInfo setterMethod = property.GetSetMethod(true);
             Type declaringType = setterMethod.DeclaringType;
             if (declaringType == null)
-                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
+                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             // for classes: Lambda expression
             if (!declaringType.IsValueType)

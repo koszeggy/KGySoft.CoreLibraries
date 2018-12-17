@@ -37,88 +37,8 @@ namespace KGySoft
     {
         #region Constants
 
-        #region Internal Constants
-
-// TODO: all to methods
-        internal const string ExceptionMessage = nameof(ExceptionMessage);
-        internal const string ExceptionMessageNotAvailable = nameof(ExceptionMessageNotAvailable);
-        internal const string InnerException = nameof(InnerException);
-        internal const string InnerExceptionEnd = nameof(InnerExceptionEnd);
-        internal const string Win32ErrorCode = nameof(Win32ErrorCode);
-        internal const string SystemInformation = nameof(SystemInformation);
-        internal const string UserInformation = nameof(UserInformation);
-        internal const string ExceptionSource = nameof(ExceptionSource);
-        internal const string ExceptionSourceNotAvailable = nameof(ExceptionSourceNotAvailable);
-        internal const string ExceptionType = nameof(ExceptionType);
-        internal const string ExceptionTypeNotAvailable = nameof(ExceptionTypeNotAvailable);
-        internal const string ExceptionTargetSite = nameof(ExceptionTargetSite);
-        internal const string ExceptionTargetSiteNotAvailable = nameof(ExceptionTargetSiteNotAvailable);
-        internal const string ExceptionTargetSiteNotAccessible = nameof(ExceptionTargetSiteNotAccessible);
-        internal const string RemoteStackTrace = nameof(RemoteStackTrace);
-        internal const string StackTrace = nameof(StackTrace);
-        internal const string LocalStackTrace = nameof(LocalStackTrace);
-        internal const string NativeOffset = nameof(NativeOffset);
-        internal const string SourceOffset = nameof(SourceOffset);
-        internal const string ILOffset = nameof(ILOffset);
-        internal const string DateAndTime = nameof(DateAndTime);
-        internal const string OperatingSystem = nameof(OperatingSystem);
-        internal const string Environment = nameof(Environment);
-        internal const string ProcessorCount = nameof(ProcessorCount);
-        internal const string ClrVersion = nameof(ClrVersion);
-        internal const string WorkingSet = nameof(WorkingSet);
-        internal const string CommandLine = nameof(CommandLine);
-        internal const string ApplicationDomain = nameof(ApplicationDomain);
-        internal const string MachineName = nameof(MachineName);
-        internal const string UserName = nameof(UserName);
-        internal const string CurrentUser = nameof(CurrentUser);
-        internal const string CannotGetDomain = nameof(CannotGetDomain);
-        internal const string AssemblyCodebase = nameof(AssemblyCodebase);
-        internal const string AssemblyFullName = nameof(AssemblyFullName);
-        internal const string AssemblyVersion = nameof(AssemblyVersion);
-        internal const string AssemblyBuildDate = nameof(AssemblyBuildDate);
-        internal const string Uncategorized = nameof(Uncategorized);
-        internal const string InvalidResXReaderPropertyChange = nameof(InvalidResXReaderPropertyChange);
-        internal const string InvalidResXResourceNoName = nameof(InvalidResXResourceNoName);
-        internal const string XmlMissingAttribute = nameof(XmlMissingAttribute);
-        internal const string ResXFileMimeTypeNotSupported = nameof(ResXFileMimeTypeNotSupported);
-        internal const string ResXMimeTypeNotSupported = nameof(ResXMimeTypeNotSupported);
-        internal const string ResXReaderNotSupported = nameof(ResXReaderNotSupported);
-        internal const string ResXWriterNotSupported = nameof(ResXWriterNotSupported);
-        internal const string TypeLoadException = nameof(TypeLoadException);
-        internal const string TypeLoadExceptionShort = nameof(TypeLoadExceptionShort);
-        internal const string NonStringResourceWithType = nameof(NonStringResourceWithType);
-        internal const string ConvertFromStringNotSupportedAt = nameof(ConvertFromStringNotSupportedAt);
-        internal const string ConvertFromStringNotSupported = nameof(ConvertFromStringNotSupported);
-        internal const string ConvertFromByteArrayNotSupportedAt = nameof(ConvertFromByteArrayNotSupportedAt);
-        internal const string ConvertFromByteArrayNotSupported = nameof(ConvertFromByteArrayNotSupported);
-        internal const string InvalidResXWriterPropertyChange = nameof(InvalidResXWriterPropertyChange);
-        internal const string ResXResourceWriterSaved = nameof(ResXResourceWriterSaved);
-        internal const string ResXFileRefFileNotFound = nameof(ResXFileRefFileNotFound);
-        internal const string SeparatorInvalidHex = nameof(SeparatorInvalidHex);
-        internal const string SeparatorInvalidDec = nameof(SeparatorInvalidDec);
-        internal const string HybridResSourceBinary = nameof(HybridResSourceBinary);
-        internal const string InvalidDrmPropertyChange = nameof(InvalidDrmPropertyChange);
-        internal const string SourceLengthNotEven = nameof(SourceLengthNotEven);
-        internal const string CannotGetProperty = nameof(CannotGetProperty);
-        internal const string CannotSetProperty = nameof(CannotSetProperty);
-        internal const string ReturnedTypeInvalid = nameof(ReturnedTypeInvalid);
-        internal const string PropertyValueNotExist = nameof(PropertyValueNotExist);
-        internal const string DeclaringTypeExpected = nameof(DeclaringTypeExpected);
-        internal const string NotEditing = nameof(NotEditing);
-        internal const string MissingPropertyReference = nameof(MissingPropertyReference);
-        internal const string DoValidationNull = nameof(DoValidationNull);
-        internal const string ObservableObjectHasNoDefaultCtor = nameof(ObservableObjectHasNoDefaultCtor);
-        internal const string EnabledMustBeBool = nameof(EnabledMustBeBool);
-
-        #endregion
-
-        #region Private Constants
-
-        private const string nullReference = "NullReference";
         private const string unavailableResource = "Resource ID not found: {0}";
         private const string invalidResource = "Resource text is not valid for {0} arguments: {1}";
-
-        #endregion
 
         #endregion
 
@@ -143,6 +63,9 @@ namespace KGySoft
 
         /// <summary>&lt;undefined&gt;</summary>
         internal static string Undefined => Get("General_Undefined");
+
+        /// <summary>&lt;null&gt;</summary>
+        internal static string NullReference => Get("General_NullReference");
 
         /// <summary>Value cannot be null.</summary>
         internal static string ArgumentNull => Get("General_ArgumentNull");
@@ -198,12 +121,6 @@ namespace KGySoft
         /// <summary>Modifying a read-only collection is not supported.</summary>
         internal static string ICollectionReadOnlyModifyNotSupported => Get("ICollection_ReadOnlyModifyNotSupported");
 
-        /// <summary>Cannot add new item to the binding list because AllowNew is false.</summary>
-        internal static string IBindingListAddNewDisabled => Get("IBindingList_AddNewDisabled");
-
-        /// <summary>Cannot remove item from the binding list because AllowRemove is false.</summary>
-        internal static string IBindingListRemoveDisabled => Get("IBindingList_RemoveDisabled");
-
         #endregion
 
         #region BinarySerialization
@@ -222,6 +139,16 @@ namespace KGySoft
 
         /// <summary>Data length is too small.</summary>
         internal static string BinarySerializationDataLenghtTooSmall => Get("BinarySerialization_DataLenghtTooSmall");
+
+        #endregion
+
+        #region ByteArrayExtensions
+
+        /// <summary>The separator contains invalid characters. Hex digits are not allowed in separator.</summary>
+        internal static string ByteArrayExtensionsSeparatorInvalidHex => Get("ByteArrayExtensions_SeparatorInvalidHex");
+
+        /// <summary>The separator is empty or contains invalid characters. Decimal digits are not allowed in separator.</summary>
+        internal static string ByteArrayExtensionsSeparatorInvalidDec => Get("ByteArrayExtensions_SeparatorInvalidDec");
 
         #endregion
 
@@ -258,6 +185,31 @@ namespace KGySoft
 
         #endregion
 
+        #region ComponentModel
+
+        /// <summary>Cannot add new item to the binding list because AllowNew is false.</summary>
+        internal static string ComponentModelAddNewDisabled => Get("ComponentModel_AddNewDisabled");
+
+        /// <summary>Cannot remove item from the binding list because AllowRemove is false.</summary>
+        internal static string ComponentModelRemoveDisabled => Get("ComponentModel_RemoveDisabled");
+
+        /// <summary>Cannot change ObservableBindingList during a CollectionChanged or ListChanged event.</summary>
+        internal static string ComponentModelReentrancyNotAllowed => Get("ComponentModel_ReentrancyNotAllowed");
+
+        /// <summary>Object is not in editing state.</summary>
+        internal static string ComponentModelNotEditing => Get("ComponentModel_NotEditing");
+
+        /// <summary>&lt;Missing property value&gt;</summary>
+        internal static string ComponentModelMissingPropertyReference => Get("ComponentModel_MissingPropertyReference");
+
+        /// <summary>The DoValidation method returned null.</summary>
+        internal static string ComponentModelDoValidationNull => Get("ComponentModel_DoValidationNull");
+
+        /// <summary>'Enabled' state must have a boolean value.</summary>
+        internal static string ComponentModelEnabledMustBeBool => Get("ComponentModel_EnabledMustBeBool");
+
+        #endregion
+
         #region Enum/EnumComparer
 
         /// <summary>Type parameter is expected to be a System.Enum type.</summary>
@@ -265,10 +217,10 @@ namespace KGySoft
 
         #endregion
 
-        #region ObservableBindingList
+        #region Profiler
 
-        /// <summary>Cannot change ObservableBindingList during a CollectionChanged or ListChanged event.</summary>
-        internal static string ObservableBindingListReentrancyNotAllowed => Get("ObservableBindingList_ReentrancyNotAllowed");
+        /// <summary>&lt;Uncategorized&gt;</summary>
+        internal static string ProfilerUncategorized => Get("Profiler_Uncategorized");
 
         #endregion
 
@@ -331,6 +283,28 @@ namespace KGySoft
         /// <summary>In this ResolveType overload the type name should not contain the assembly name.</summary>
         internal static string ReflectionTypeWithAssemblyName => Get("Reflection_TypeWithAssemblyName");
 
+        /// <summary>DeclaringType of the provided member should not be null.</summary>
+        internal static string ReflectionDeclaringTypeExpected => Get("Reflection_DeclaringTypeExpected");
+
+        #endregion
+
+        #region Resources
+
+        /// <summary>Property can be changed only before the enumeration.</summary>
+        internal static string ResourcesInvalidResXReaderPropertyChange => Get("Resources_InvalidResXReaderPropertyChange");
+
+        /// <summary>Property can be changed only before adding a row or generating any content.</summary>
+        internal static string ResourcesInvalidResXWriterPropertyChange => Get("Resources_InvalidResXWriterPropertyChange");
+
+        /// <summary>Resource writer has already been saved. You may not edit it.</summary>
+        internal static string ResourcesWriterSaved => Get("Resources_WriterSaved");
+
+        /// <summary>This operation is invalid when Source is CompiledOnly.</summary>
+        internal static string ResourcesHybridResSourceBinary => Get("Resources_HybridResSourceBinary");
+
+        /// <summary>Setting this property is invalid when UseLanguageSettings is true.</summary>
+        internal static string ResourcesInvalidDrmPropertyChange => Get("Resources_InvalidDrmPropertyChange");
+
         #endregion
 
         #region StreamExtensions
@@ -350,6 +324,9 @@ namespace KGySoft
 
         /// <summary>Separator is null or empty.</summary>
         internal static string StringExtensionsSeparatorNullOrEmpty => Get("StringExtensions_SeparatorNullOrEmpty");
+
+        /// <summary>Source length must consist of even amount of bytes.</summary>
+        internal static string StringExtensionsSourceLengthNotEven => Get("StringExtensions_SourceLengthNotEven");
 
         #endregion
 
@@ -499,16 +476,43 @@ namespace KGySoft
 
         #endregion
 
-        #region Commands
+        #region ComponentModel
+
+        /// <summary>Property '{0}' of descriptor type '{1}' does not belong to type '{2}'.</summary>
+        internal static string ComponentModelInvalidProperty(PropertyDescriptor property, Type t) => Get("ComponentModel_InvalidPropertyFormat", property.Name, property.GetType(), t);
+
+        /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</summary>
+        internal static string ComponentModelCannotAddNewFastBindingList(Type t) => Get("ComponentModel_CannotAddNewFormatFastBindingListFormat", t);
+
+        /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
+        internal static string ComponentModelPropertyNotExists(string propertyName, Type type) => Get("ComponentModel_PropertyNotExistsFormat", propertyName, type);
+
+        /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</summary>
+        internal static string ComponentModelCannotAddNewObservableBindingList(Type t) => Get("ComponentModel_CannotAddNewObservableBindingListFormat", t);
 
         /// <summary>The property binding command state does not contain the expected entry '{0}'.</summary>
-        internal static string CommandBindingMissingState(string stateName) => Get("Command_PropertyBindingMissingStateFormat", stateName);
+        internal static string ComponentModelMissingState(string stateName) => Get("ComponentModel_MissingStateFormat", stateName);
 
         /// <summary>There is no event '{0}' in type '{1}'.</summary>
-        internal static string CommandBindingMissingEvent(string eventName, Type type) => Get("CommandBinding_MissingEventFormat", eventName, type);
+        internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type);
 
         /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>
-        internal static string CommandBindingInvalidEvent(string eventName) => Get("CommandBinding_InvalidEventFormat", eventName);
+        internal static string ComponentModelInvalidEvent(string eventName) => Get("ComponentModel_InvalidEventFormat", eventName);
+
+        /// <summary>Cannot get property '{0}'.</summary>
+        internal static string ComponentModelCannotGetProperty(string propertyName) => Get("ComponentModel_CannotGetPropertyFormat", propertyName);
+
+        /// <summary>Cannot set property '{0}'.</summary>
+        internal static string ComponentModelCannotSetProperty(string propertyName) => Get("ComponentModel_CannotSetPropertyFormat", propertyName);
+
+        /// <summary>The returned value is not compatible with type {0}</summary>
+        internal static string ComponentModelReturnedTypeInvalid(Type type) => Get("ComponentModel_ReturnedTypeInvalidFormat", type);
+
+        /// <summary>No value exists for property '{0}'.</summary>
+        internal static string ComponentModelPropertyValueNotExist(string propertyName) => Get("ComponentModel_PropertyValueNotExistFormat", propertyName);
+
+        /// <summary>The type has no parameterless constructor and thus cannot be cloned: {0}</summary>
+        internal static string ComponentModelObservableObjectHasNoDefaultCtor(Type type) => Get("ComponentModel_ObservableObjectHasNoDefaultCtorFormat", type);
 
         #endregion
 
@@ -529,30 +533,10 @@ namespace KGySoft
 
         #endregion
 
-        #region FastBindingList
-
-        /// <summary>Property '{0}' of descriptor type '{1}' does not belong to type '{2}'.</summary>
-        internal static string FastBindingListInvalidProperty(PropertyDescriptor property, Type t) => Get("FastBindingList_InvalidPropertyFormat", property.Name, property.GetType(), t);
-
-        /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</summary>
-        internal static string FastBindingListCannotAddNew(Type t) => Get("FastBindingList_CannotAddNewFormat", t);
-
-        /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
-        internal static string FastBindingListPropertyNotExists(string propertyName, Type type) => Get("FastBindingList_PropertyNotExistsFormat", propertyName, type);
-
-        #endregion
-
         #region ObjectExtensions
 
         /// <summary>The specified argument cannot be converted to type {0}.</summary>
         internal static string ObjectExtensionsCannotConvertToType(Type type) => Get("ObjectExtensions_CannotConvertToTypeFormat", type);
-
-        #endregion
-
-        #region ObservableBindingList
-
-        /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</summary>
-        internal static string ObservableBindingListCannotAddNew(Type t) => Get("ObservableBindingList_CannotAddNewFormat", t);
 
         #endregion
 
@@ -642,6 +626,48 @@ namespace KGySoft
 
         /// <summary>Could not find any resources appropriate for the specified culture or the neutral culture. Make sure "{0}" was correctly embedded or linked into assembly "{1}" at compile time, or that all the satellite assemblies required are loadable and fully signed, or that XML resource file exists: {2}</summary>
         internal static string ResourcesNeutralResourceNotFoundHybrid(string baseNameField, string assemblyFile, string resxFile) => Get("Resources_NeutralResourceNotFoundHybridFormat", baseNameField, assemblyFile, resxFile);
+
+        /// <summary>Cannot find a name for the resource at line {0}, position {1}.</summary>
+        internal static string ResourcesNoResXName(int line, int pos) => Get("Resources_NoResXNameFormat", line, pos);
+
+        /// <summary>"{0}" attribute is missing at line {1}, position {2}.</summary>
+        internal static string ResourcesMissingAttribute(string name, int line, int pos) => Get("Resources_MissingAttributeFormat", name, line, pos);
+
+        /// <summary>Unsupported ResX header mime type "{0}" at line {1}, position {2}.</summary>
+        internal static string ResourcesHeaderMimeTypeNotSupported(string mimeType, int line, int pos) => Get("Resources_HeaderMimeTypeNotSupportedFormat", mimeType, line, pos);
+
+        /// <summary>Unsupported mime type "{0}" at line {1}, position {2}.</summary>
+        internal static string ResourcesMimeTypeNotSupported(string mimeType, int line, int pos) => Get("Resources_MimeTypeNotSupportedFormat", mimeType, line, pos);
+
+        /// <summary>Unsupported ResX reader "{0}" at line {1}, position {2}.</summary>
+        internal static string ResourcesResXReaderNotSupported(string reader, int line, int pos) => Get("Resources_ResXReaderNotSupportedFormat", reader, line, pos);
+
+        /// <summary>Unsupported ResX writer "{0}" at line {1}, position {2}.</summary>
+        internal static string ResourcesResXWriterNotSupported(string writer, int line, int pos) => Get("Resources_ResXWriterNotSupportedFormat", writer, line, pos);
+
+        /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</summary>
+        internal static string ResourcesTypeLoadExceptionAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionAtFormat", typeName, line, pos);
+
+        /// <summary>Type "{0}" cannot be resolved.</summary>
+        internal static string ResourcesTypeLoadException(string typeName) => Get("Resources_TypeLoadExceptionFormat", typeName);
+
+        /// <summary>Type of resource "{0}" is not string but "{1}" - use GetObject instead.</summary>
+        internal static string ResourcesNonStringResourceWithType(string name, string typeName) => Get("Resources_NonStringResourceWithTypeFormat", name, typeName);
+
+        /// <summary>Attempting to convert type "{0}" from string on line {1}, position {2} has failed: {3}</summary>
+        internal static string ResourcesConvertFromStringNotSupportedAt(string typeName, int line, int pos, string message) => Get("Resources_ConvertFromStringNotSupportedAtFormat", typeName, line, pos, message);
+
+        /// <summary>Converting from string is not supported by {0}.</summary>
+        internal static string ResourcesConvertFromStringNotSupported(Type converterType) => Get("Resources_ConvertFromStringNotSupportedFormat", converterType);
+
+        /// <summary>Attempting to convert type "{0}" from byte array on line {1}, position {2} has failed: {3}</summary>
+        internal static string ResourcesConvertFromByteArrayNotSupportedAt(string typeName, int line, int pos, string message) => Get("Resources_ConvertFromByteArrayNotSupportedAtFormat", typeName, line, pos, message);
+
+        /// <summary>Converting from byte array is not supported by {0}.</summary>
+        internal static string ResourcesConvertFromByteArrayNotSupported(Type converterType) => Get("Resources_ConvertFromByteArrayNotSupportedFormat", converterType);
+
+        /// <summary>File in ResX file reference cannot be found: {0}. Is base path set correctly?</summary>
+        internal static string ResourcesFileRefFileNotFound(string path) => Get("Resources_FileRefFileNotFoundFormat", path);
 
         #endregion
 
@@ -752,22 +778,20 @@ namespace KGySoft
 
         #endregion
 
-        // TODO: private
-        internal static string Get([NotNull]string id)
+        #endregion
+
+        #region Private Methods
+
+        private static string Get([NotNull]string id)
         {
             return resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
         }
 
-        // TODO: private
-        internal static string Get([NotNull]string id, params object[] args)
+        private static string Get([NotNull]string id, params object[] args)
         {
             string format = Get(id);
             return args == null || args.Length == 0 ? format : SafeFormat(format, args);
         }
-
-        #endregion
-
-        #region Private Methods
 
         private static string FormatValues<TEnum>() where TEnum : struct, IConvertible
             => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd));
@@ -782,7 +806,7 @@ namespace KGySoft
                 int i = Array.IndexOf(args, null);
                 if (i >= 0)
                 {
-                    string nullRef = Get(nullReference);
+                    string nullRef = NullReference;
                     for (; i < args.Length; i++)
                     {
                         if (args[i] == null)

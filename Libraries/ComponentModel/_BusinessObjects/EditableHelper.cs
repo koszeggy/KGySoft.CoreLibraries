@@ -44,7 +44,7 @@ namespace KGySoft.ComponentModel
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
-                    throw new InvalidOperationException(Res.Get(Res.NotEditing));
+                    throw new InvalidOperationException(Res.ComponentModelNotEditing);
                 snapshots.RemoveAt(currentLevel - 1);
             }
             finally
@@ -63,7 +63,7 @@ namespace KGySoft.ComponentModel
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
-                    throw new InvalidOperationException(Res.Get(Res.NotEditing));
+                    throw new InvalidOperationException(Res.ComponentModelNotEditing);
                 var undoable = owner as ICanUndoInternal;
                 undoable?.SuspendUndo();
                 try

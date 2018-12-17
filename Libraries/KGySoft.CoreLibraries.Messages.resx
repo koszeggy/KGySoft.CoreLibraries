@@ -217,7 +217,7 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_InvalidMethodBase" xml:space="preserve">
     <value>MethodInfo or ConstructorInfo expected.</value>
   </data>
-  <data name="DeclaringTypeExpected" xml:space="preserve">
+  <data name="Reflection_DeclaringTypeExpected" xml:space="preserve">
     <value>DeclaringType of the provided member should not be null.</value>
   </data>
   <data name="CircularList_InvalidOffsLen" xml:space="preserve">
@@ -238,7 +238,7 @@ Hit rate: {8:P2}</value>
   <data name="General_NotAnInstanceOfTypeFormat" xml:space="preserve">
     <value>Specified argument is expected to be an instance of type {0}.</value>
   </data>
-  <data name="ReturnedTypeInvalid" xml:space="preserve">
+  <data name="ComponentModel_ReturnedTypeInvalidFormat" xml:space="preserve">
     <value>The returned value is not compatible with type {0}</value>
   </data>
   <data name="Reflection_NotATypeFormat" xml:space="preserve">
@@ -328,13 +328,13 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_InstancePropertyDoesNotExistFormat" xml:space="preserve">
     <value>No suitable instance property "{0}" found on type "{1}".</value>
   </data>
-  <data name="PropertyValueNotExist" xml:space="preserve">
+  <data name="ComponentModel_PropertyValueNotExistFormat" xml:space="preserve">
     <value>No value exists for property '{0}'.</value>
   </data>
   <data name="Reflection_InvokeMethodTypeDescriptorNotSupported" xml:space="preserve">
     <value>Invoking a method via TypeDescriptor is not supported.</value>
   </data>
-  <data name="SetFieldTypeDescriptorNotSupported" xml:space="preserve">
+  <data name="Reflection_SetFieldTypeDescriptorNotSupported" xml:space="preserve">
     <value>A field cannot be set via TypeDescriptor.</value>
   </data>
   <data name="Reflection_StaticFieldDoesNotExistFormat" xml:space="preserve">
@@ -346,7 +346,7 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_StaticPropertyDoesNotExistFormat" xml:space="preserve">
     <value>No suitable static property "{0}" found on type "{1}".</value>
   </data>
-  <data name="TypeArgsLengthMismatch" xml:space="preserve">
+  <data name="Reflection_TypeArgsLengthMismatchFormat" xml:space="preserve">
     <value>Expected number of type arguments: {0}.</value>
   </data>
   <data name="Reflection_TypeParamsAreNull" xml:space="preserve">
@@ -430,13 +430,13 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_MissingFieldSurrogateFormat" xml:space="preserve">
     <value>Number of serializable fields in type "{0}" has been decreased since serialization so cannot deserialize type "{1}".</value>
   </data>
-  <data name="NullReference" xml:space="preserve">
+  <data name="General_NullReference" xml:space="preserve">
     <value>&lt;null&gt;</value>
   </data>
   <data name="BinarySerialization_ObjectHierarchyChangedSurrogateFormat" xml:space="preserve">
     <value>Object hierarchy has been changed since serialization of type "{0}".</value>
   </data>
-  <data name="Undefined" xml:space="preserve">
+  <data name="General_Undefined" xml:space="preserve">
     <value>&lt;undefined&gt;</value>
   </data>
   <data name="BinarySerialization_UnexpectedFieldTypeFormat" xml:space="preserve">
@@ -469,7 +469,7 @@ Hit rate: {8:P2}</value>
   <data name="XmlSerialization_ArraySizeMismatchFormat" xml:space="preserve">
     <value>Cannot restore array "{0}" because size does not match. Expected length: "{1}".</value>
   </data>
-  <data name="XmlBinarySerializationFailed" xml:space="preserve">
+  <data name="XmlSerialization_BinarySerializationFailedFormat" xml:space="preserve">
     <value>Binary serialization of type "{0}" failed with options "{1}": {2}</value>
   </data>
   <data name="XmlSerialization_CannotDeserializeReadOnlyCollectionFormat" xml:space="preserve">
@@ -490,9 +490,6 @@ Hit rate: {8:P2}</value>
   <data name="XmlSerialization_CannotSerializeUnsupportedCollectionFormat" xml:space="preserve">
     <value>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.
 To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</value>
-  </data>
-  <data name="XmlPropertyHasNoSetterNull" xml:space="preserve">
-    <value>Cannot assign null to type "{0}" at property "{1}.{2}" because it has no setter.</value>
   </data>
   <data name="XmlSerialization_CrcError" xml:space="preserve">
     <value>Corrupt array data: Bad CRC.</value>
@@ -556,72 +553,6 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="XmlSerialization_UnexpectedElementFormat" xml:space="preserve">
     <value>Unexpected element: "{0}".</value>
   </data>
-  <data name="DateAndTime" xml:space="preserve">
-    <value>Date and Time: </value>
-  </data>
-  <data name="ExceptionMessage" xml:space="preserve">
-    <value>Exception Message:</value>
-  </data>
-  <data name="ExceptionMessageNotAvailable" xml:space="preserve">
-    <value>Message is not available: {0}</value>
-  </data>
-  <data name="ExceptionSource" xml:space="preserve">
-    <value>Exception Source:</value>
-  </data>
-  <data name="ExceptionSourceNotAvailable" xml:space="preserve">
-    <value>Source is not available: {0}</value>
-  </data>
-  <data name="ExceptionTargetSite" xml:space="preserve">
-    <value>Exception Target Site:</value>
-  </data>
-  <data name="ExceptionTargetSiteNotAccessible" xml:space="preserve">
-    <value>Cannot not access target site infos: {0}</value>
-  </data>
-  <data name="ExceptionTargetSiteNotAvailable" xml:space="preserve">
-    <value>Target site is not available.</value>
-  </data>
-  <data name="ExceptionType" xml:space="preserve">
-    <value>Exception Type:</value>
-  </data>
-  <data name="ExceptionTypeNotAvailable" xml:space="preserve">
-    <value>Type info is not available: {0}</value>
-  </data>
-  <data name="ILOffset" xml:space="preserve">
-    <value>, IL {0:#0000}</value>
-  </data>
-  <data name="InnerException" xml:space="preserve">
-    <value>&gt;&gt;&gt;&gt; Inner Exception &gt;&gt;&gt;&gt;</value>
-  </data>
-  <data name="InnerExceptionEnd" xml:space="preserve">
-    <value>&lt;&lt;&lt;&lt; End of Inner Exception &lt;&lt;&lt;&lt;</value>
-  </data>
-  <data name="LocalStackTrace" xml:space="preserve">
-    <value>---- Local Stack Trace ----</value>
-  </data>
-  <data name="NativeOffset" xml:space="preserve">
-    <value>{0}: N {1:#00000}</value>
-  </data>
-  <data name="OperatingSystem" xml:space="preserve">
-    <value>Operating System: </value>
-  </data>
-  <data name="RemoteStackTrace" xml:space="preserve">
-    <value>---- Remote Stack Trace ----</value>
-  </data>
-  <data name="SourceOffset" xml:space="preserve">
-    <value>{0}: line {1}, col {2}</value>
-  </data>
-  <data name="StackTrace" xml:space="preserve">
-    <value>---- Stack Trace ----</value>
-  </data>
-  <data name="SystemInformation" xml:space="preserve">
-    <value>System information:</value>
-  </data>
-  <data name="UserInformation" xml:space="preserve">
-    <value>User information:</value>
-  </data>
-  <data name="Win32ErrorCode" xml:space="preserve">
-    <value>Win32 native error code: {0}</value>
-  </data>
   <data name="XmlSerialization_CircularReferenceFormat" xml:space="preserve">
     <value>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</value>
   </data>
@@ -643,50 +574,8 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="XmlSerialization_UnexpectedEnd" xml:space="preserve">
     <value>Unexpected end of XML content.</value>
   </data>
-  <data name="ApplicationDomain" xml:space="preserve">
-    <value>Application Domain: </value>
-  </data>
-  <data name="AssemblyBuildDate" xml:space="preserve">
-    <value>Assembly Build Date: </value>
-  </data>
-  <data name="AssemblyCodebase" xml:space="preserve">
-    <value>Assembly Codebase: </value>
-  </data>
-  <data name="AssemblyFullName" xml:space="preserve">
-    <value>Assembly Full Name: </value>
-  </data>
-  <data name="AssemblyVersion" xml:space="preserve">
-    <value>Assembly Version: </value>
-  </data>
-  <data name="CannotGetDomain" xml:space="preserve">
-    <value>&lt;Domain is not available&gt;</value>
-  </data>
-  <data name="ClrVersion" xml:space="preserve">
-    <value>CLR version: </value>
-  </data>
-  <data name="CommandLine" xml:space="preserve">
-    <value>Command Line: </value>
-  </data>
-  <data name="CurrentUser" xml:space="preserve">
-    <value>Current User: </value>
-  </data>
-  <data name="Environment" xml:space="preserve">
-    <value>Environment: {0}-bit</value>
-  </data>
-  <data name="MachineName" xml:space="preserve">
-    <value>Machine Name: </value>
-  </data>
-  <data name="ProcessorCount" xml:space="preserve">
-    <value>Processor Count: </value>
-  </data>
-  <data name="Uncategorized" xml:space="preserve">
+  <data name="Profiler_Uncategorized" xml:space="preserve">
     <value>&lt;Uncategorized&gt;</value>
-  </data>
-  <data name="UserName" xml:space="preserve">
-    <value>User name: </value>
-  </data>
-  <data name="WorkingSet" xml:space="preserve">
-    <value>Working Set: {0} bytes</value>
   </data>
   <data name="General_ObjectDisposed" xml:space="preserve">
     <value>Cannot access a disposed object.</value>
@@ -694,34 +583,34 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="General_NotSupported" xml:space="preserve">
     <value>This operation is not supported.</value>
   </data>
-  <data name="InvalidResXReaderPropertyChange" xml:space="preserve">
+  <data name="Resources_InvalidResXReaderPropertyChange" xml:space="preserve">
     <value>Property can be changed only before the enumeration.</value>
   </data>
-  <data name="InvalidResXWriterPropertyChange" xml:space="preserve">
+  <data name="Resources_InvalidResXWriterPropertyChange" xml:space="preserve">
     <value>Property can be changed only before adding a row or generating any content.</value>
   </data>
-  <data name="InvalidResXResourceNoName" xml:space="preserve">
+  <data name="Resources_NoResXNameFormat" xml:space="preserve">
     <value>Cannot find a name for the resource at line {0}, position {1}.</value>
   </data>
-  <data name="XmlMissingAttribute" xml:space="preserve">
+  <data name="Resources_MissingAttributeFormat" xml:space="preserve">
     <value>"{0}" attribute is missing at line {1}, position {2}.</value>
   </data>
-  <data name="ResXFileMimeTypeNotSupported">
-    <value>Unsupported ResX file mime type "{0}" at line {1}, position {2}.</value>
+  <data name="Resources_HeaderMimeTypeNotSupportedFormat" xml:space="preserve">
+    <value>Unsupported ResX header mime type "{0}" at line {1}, position {2}.</value>
   </data>
-  <data name="ResXMimeTypeNotSupported">
+  <data name="Resources_MimeTypeNotSupportedFormat" xml:space="preserve">
     <value>Unsupported mime type "{0}" at line {1}, position {2}.</value>
   </data>
-  <data name="ResXReaderNotSupported" xml:space="preserve">
+  <data name="Resources_ResXReaderNotSupportedFormat" xml:space="preserve">
     <value>Unsupported ResX reader "{0}" at line {1}, position {2}.</value>
   </data>
-  <data name="ResXWriterNotSupported" xml:space="preserve">
+  <data name="Resources_ResXWriterNotSupportedFormat" xml:space="preserve">
     <value>Unsupported ResX writer "{0}" at line {1}, position {2}.</value>
   </data>
-  <data name="TypeLoadException" xml:space="preserve">
+  <data name="Resources_TypeLoadExceptionAtFormat" xml:space="preserve">
     <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</value>
   </data>
-  <data name="TypeLoadExceptionShort" xml:space="preserve">
+  <data name="Resources_TypeLoadExceptionFormat" xml:space="preserve">
     <value>Type "{0}" cannot be resolved.</value>
   </data>
   <data name="General_ArgumentEmpty" xml:space="preserve">
@@ -733,79 +622,79 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Reflection_TypeWithAssemblyName" xml:space="preserve">
     <value>In this ResolveType overload the type name should not contain the assembly name.</value>
   </data>
-  <data name="NonStringResourceWithType" xml:space="preserve">
+  <data name="Resources_NonStringResourceWithTypeFormat" xml:space="preserve">
     <value>Type of resource "{0}" is not string but "{1}" - use GetObject instead.</value>
   </data>
-  <data name="ConvertFromStringNotSupportedAt" xml:space="preserve">
+  <data name="Resources_ConvertFromStringNotSupportedAtFormat" xml:space="preserve">
     <value>Attempting to convert type "{0}" from string on line {1}, position {2} has failed: {3}</value>
   </data>
-  <data name="ConvertFromStringNotSupported" xml:space="preserve">
+  <data name="Resources_ConvertFromStringNotSupportedFormat" xml:space="preserve">
     <value>Converting from string is not supported by {0}.</value>
   </data>
-  <data name="ConvertFromByteArrayNotSupportedAt" xml:space="preserve">
+  <data name="Resources_ConvertFromByteArrayNotSupportedAtFormat" xml:space="preserve">
     <value>Attempting to convert type "{0}" from byte array on line {1}, position {2} has failed: {3}</value>
   </data>
-  <data name="ConvertFromByteArrayNotSupported" xml:space="preserve">
+  <data name="Resources_ConvertFromByteArrayNotSupportedFormat" xml:space="preserve">
     <value>Converting from byte array is not supported by {0}.</value>
   </data>
-  <data name="ResXResourceWriterSaved" xml:space="preserve">
+  <data name="Resources_WriterSaved" xml:space="preserve">
     <value>Resource writer has already been saved. You may not edit it.</value>
   </data>
-  <data name="ResXFileRefFileNotFound" xml:space="preserve">
-    <value>File in ResX file reference cannot be found: {0}. Is base path correctly set?</value>
+  <data name="Resources_FileRefFileNotFoundFormat" xml:space="preserve">
+    <value>File in ResX file reference cannot be found: {0}. Is base path set correctly?</value>
   </data>
-  <data name="SeparatorInvalidHex" xml:space="preserve">
+  <data name="ByteArrayExtensions_SeparatorInvalidHex" xml:space="preserve">
     <value>The separator contains invalid characters. Hex digits are not allowed in separator.</value>
   </data>
-  <data name="SeparatorInvalidDec" xml:space="preserve">
+  <data name="ByteArrayExtensions_SeparatorInvalidDec" xml:space="preserve">
     <value>The separator is empty or contains invalid characters. Decimal digits are not allowed in separator.</value>
   </data>
   <data name="General_ArgumentInvalidString" xml:space="preserve">
     <value>Input string contains an invalid value.</value>
   </data>
-  <data name="HybridResSourceBinary" xml:space="preserve">
+  <data name="Resources_HybridResSourceBinary" xml:space="preserve">
     <value>This operation is invalid when Source is CompiledOnly.</value>
   </data>
-  <data name="InvalidDrmPropertyChange" xml:space="preserve">
+  <data name="Resources_InvalidDrmPropertyChange" xml:space="preserve">
     <value>Setting this property is invalid when UseLanguageSettings is true.</value>
   </data>
-  <data name="SourceLengthNotEven" xml:space="preserve">
+  <data name="StringExtensions_SourceLengthNotEven" xml:space="preserve">
     <value>Source length must consist of even amount of bytes.</value>
   </data>
-  <data name="CannotGetProperty" xml:space="preserve">
+  <data name="ComponentModel_CannotGetPropertyFormat" xml:space="preserve">
     <value>Cannot get property '{0}'.</value>
   </data>
-  <data name="CannotSetProperty" xml:space="preserve">
+  <data name="ComponentModel_CannotSetPropertyFormat" xml:space="preserve">
     <value>Cannot set property '{0}'.</value>
   </data>
-  <data name="NotEditing" xml:space="preserve">
+  <data name="ComponentModel_NotEditing" xml:space="preserve">
     <value>Object is not in editing state.</value>
   </data>
-  <data name="MissingPropertyReference" xml:space="preserve">
+  <data name="ComponentModel_MissingPropertyReference" xml:space="preserve">
     <value>&lt;Missing property value&gt;</value>
   </data>
-  <data name="DoValidationNull" xml:space="preserve">
+  <data name="ComponentModel_DoValidationNull" xml:space="preserve">
     <value>The DoValidation method returned null.</value>
   </data>
-  <data name="ObservableObjectHasNoDefaultCtor" xml:space="preserve">
+  <data name="ComponentModel_ObservableObjectHasNoDefaultCtorFormat" xml:space="preserve">
     <value>The type has no parameterless constructor and thus cannot be cloned: {0}</value>
   </data>
   <data name="ObjectExtensions_CannotConvertToTypeFormat" xml:space="preserve">
     <value>The specified argument cannot be converted to type {0}.</value>
   </data>
-  <data name="EnabledMustBeBool" xml:space="preserve">
+  <data name="ComponentModel_EnabledMustBeBool" xml:space="preserve">
     <value>'Enabled' state must have a boolean value.</value>
   </data>
-  <data name="Command_PropertyBindingMissingStateFormat" xml:space="preserve">
+  <data name="ComponentModel_MissingStateFormat" xml:space="preserve">
     <value>The property binding command state does not contain the expected entry '{0}'.</value>
   </data>
-  <data name="FastBindingList_CannotAddNewFormat" xml:space="preserve">
+  <data name="ComponentModel_CannotAddNewFormatFastBindingListFormat" xml:space="preserve">
     <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</value>
   </data>
-  <data name="FastBindingList_InvalidPropertyFormat" xml:space="preserve">
+  <data name="ComponentModel_InvalidPropertyFormat" xml:space="preserve">
     <value>Property '{0}' of descriptor type '{1}' does not belong to type '{2}'.</value>
   </data>
-  <data name="FastBindingList_PropertyNotExistsFormat" xml:space="preserve">
+  <data name="ComponentModel_PropertyNotExistsFormat" xml:space="preserve">
     <value>No property descriptor found for property name '{0}' in type '{1}'.</value>
   </data>
   <data name="General_QuoteStart" xml:space="preserve">
@@ -820,22 +709,22 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="General_EnumFlagsOutOfRangeFormat" xml:space="preserve">
     <value>Enum instance of '{0}' type must consist of the following flags: {1}.</value>
   </data>
-  <data name="IBindingList_AddNewDisabled" xml:space="preserve">
+  <data name="ComponentModel_AddNewDisabled" xml:space="preserve">
     <value>Cannot add new item to the binding list because AllowNew is false.</value>
   </data>
-  <data name="IBindingList_RemoveDisabled" xml:space="preserve">
+  <data name="ComponentModel_RemoveDisabled" xml:space="preserve">
     <value>Cannot remove item from the binding list because AllowRemove is false.</value>
   </data>
-  <data name="ObservableBindingList_ReentrancyNotAllowed" xml:space="preserve">
+  <data name="ComponentModel_ReentrancyNotAllowed" xml:space="preserve">
     <value>Cannot change ObservableBindingList during a CollectionChanged or ListChanged event.</value>
   </data>
-  <data name="ObservableBindingList_CannotAddNewFormat" xml:space="preserve">
+  <data name="ComponentModel_CannotAddNewObservableBindingListFormat" xml:space="preserve">
     <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</value>
   </data>
-  <data name="CommandBinding_MissingEventFormat" xml:space="preserve">
+  <data name="ComponentModel_MissingEventFormat" xml:space="preserve">
     <value>There is no event '{0}' in component '{1}'.</value>
   </data>
-  <data name="CommandBinding_InvalidEventFormat" xml:space="preserve">
+  <data name="ComponentModel_InvalidEventFormat" xml:space="preserve">
     <value>Event '{0}' does not have regular event handler delegate type.</value>
   </data>
 </root>

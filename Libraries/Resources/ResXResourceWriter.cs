@@ -510,7 +510,7 @@ namespace KGySoft.Resources
             set
             {
                 if (initialized)
-                    throw new InvalidOperationException(Res.Get(Res.InvalidResXWriterPropertyChange));
+                    throw new InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
                 compatibleFormat = value;
             }
         }
@@ -529,7 +529,7 @@ namespace KGySoft.Resources
             set
             {
                 if (initialized)
-                    throw new InvalidOperationException(Res.Get(Res.InvalidResXWriterPropertyChange));
+                    throw new InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
 
                 if (writer == null)
                     throw new ObjectDisposedException(null, Res.ObjectDisposed);
@@ -551,7 +551,7 @@ namespace KGySoft.Resources
             set
             {
                 if (initialized)
-                    throw new InvalidOperationException(Res.Get(Res.InvalidResXWriterPropertyChange));
+                    throw new InvalidOperationException(Res.ResourcesInvalidResXWriterPropertyChange);
                 basePath = value;
             }
         }
@@ -852,7 +852,7 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             if (hasBeenSaved)
-                throw new InvalidOperationException(Res.Get(Res.ResXResourceWriterSaved));
+                throw new InvalidOperationException(Res.ResourcesWriterSaved);
 
             hasBeenSaved = true;
             if (initialized)
@@ -971,7 +971,7 @@ namespace KGySoft.Resources
         private void AddDataRow(string elementName, string name, string value, string typeWithAlias, string mimeType, string comment)
         {
             if (hasBeenSaved)
-                throw new InvalidOperationException(Res.Get(Res.ResXResourceWriterSaved));
+                throw new InvalidOperationException(Res.ResourcesWriterSaved);
 
             Writer.WriteStartElement(elementName);
             writer.WriteAttributeString(ResXCommon.NameStr, name);

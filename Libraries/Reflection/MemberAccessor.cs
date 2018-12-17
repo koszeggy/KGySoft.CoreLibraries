@@ -200,7 +200,7 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(methodBase), Res.ArgumentNull);
             Type declaringType = methodBase.DeclaringType;
             if (declaringType == null)
-                throw new ArgumentException(Res.Get(Res.DeclaringTypeExpected), nameof(methodBase));
+                throw new ArgumentException(Res.ReflectionDeclaringTypeExpected, nameof(methodBase));
             MethodInfo method = methodBase as MethodInfo;
             ConstructorInfo ctor = methodBase as ConstructorInfo;
             if (method == null && ctor == null)

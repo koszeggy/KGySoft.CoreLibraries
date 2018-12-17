@@ -39,7 +39,7 @@ namespace KGySoft.Reflection
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
             Type declaringType = methodBase.DeclaringType;
             if (!methodBase.IsStatic && declaringType == null)
-                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
+                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             // for classes and static methods that have no ref parameters: Lambda expression
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above

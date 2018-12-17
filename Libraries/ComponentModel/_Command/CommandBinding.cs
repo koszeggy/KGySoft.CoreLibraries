@@ -170,12 +170,12 @@ namespace KGySoft.ComponentModel
 
             Type sourceType = source.GetType();
             if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
-                throw new ArgumentException(Res.CommandBindingMissingEvent(eventName, sourceType), nameof(eventName));
+                throw new ArgumentException(Res.ComponentModelMissingEvent(eventName, sourceType), nameof(eventName));
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
             ParameterInfo[] parameters = invokeMethod?.GetParameters();
             if (invokeMethod?.ReturnType != typeof(void) || parameters.Length != 2 || parameters[0].ParameterType != typeof(object) || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
-                throw new ArgumentException(Res.CommandBindingInvalidEvent(eventName), nameof(eventName));
+                throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
 
             // already added
             if (sources.TryGetValue(source, out var subscriptions) && subscriptions.ContainsKey(eventInfo))

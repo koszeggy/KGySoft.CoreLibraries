@@ -141,7 +141,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (key == nameof(Enabled) && !(value is bool))
-                    throw new ArgumentException(Res.Get(Res.EnabledMustBeBool));
+                    throw new ArgumentException(Res.ComponentModelEnabledMustBeBool);
 
                 bool differs;
                 stateProperties.Lock();

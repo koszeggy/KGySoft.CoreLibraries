@@ -698,7 +698,7 @@ namespace KGySoft.Resources
                     case States.Disposed:
                         throw new ObjectDisposedException(null, Res.ObjectDisposed);
                     default:
-                        throw new InvalidOperationException(Res.Get(Res.InvalidResXReaderPropertyChange));
+                        throw new InvalidOperationException(Res.ResourcesInvalidResXReaderPropertyChange);
                 }
             }
         }
@@ -733,7 +733,7 @@ namespace KGySoft.Resources
                     case States.Disposed:
                         throw new ObjectDisposedException(null, Res.ObjectDisposed);
                     default:
-                        throw new InvalidOperationException(Res.Get(Res.InvalidResXReaderPropertyChange));
+                        throw new InvalidOperationException(Res.ResourcesInvalidResXReaderPropertyChange);
                 }
             }
         }
@@ -1023,7 +1023,7 @@ namespace KGySoft.Resources
             {
                 string resHeaderMimeType = reader.NodeType == XmlNodeType.Element ? reader.ReadElementString() : reader.Value.Trim();
                 if (resHeaderMimeType != ResXCommon.ResMimeType)
-                    throw new NotSupportedException(Res.Get(Res.ResXFileMimeTypeNotSupported, resHeaderMimeType, GetLineNumber(reader), GetLinePosition(reader)));
+                    throw new NotSupportedException(Res.ResourcesHeaderMimeTypeNotSupported(resHeaderMimeType, GetLineNumber(reader), GetLinePosition(reader)));
             }
             else if (name == ResXCommon.ReaderStr || name == ResXCommon.WriterStr)
             {
@@ -1037,12 +1037,12 @@ namespace KGySoft.Resources
                 if (name == ResXCommon.ReaderStr)
                 {
                     if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
-                        throw new NotSupportedException(Res.Get(Res.ResXReaderNotSupported, typeName, GetLineNumber(reader), GetLinePosition(reader)));
+                        throw new NotSupportedException(Res.ResourcesResXReaderNotSupported(typeName, GetLineNumber(reader), GetLinePosition(reader)));
                 }
                 else
                 {
                     if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
-                        throw new NotSupportedException(Res.Get(Res.ResXWriterNotSupported, typeName, GetLineNumber(reader), GetLinePosition(reader)));
+                        throw new NotSupportedException(Res.ResourcesResXWriterNotSupported(typeName, GetLineNumber(reader), GetLinePosition(reader)));
                 }
             }
 #pragma warning restore 252, 253
@@ -1056,7 +1056,7 @@ namespace KGySoft.Resources
             {
                 int line = GetLineNumber(reader);
                 int col = GetLinePosition(reader);
-                throw ResXCommon.CreateXmlException(Res.Get(Res.XmlMissingAttribute, ResXCommon.NameStr, line, col), line, col);
+                throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.NameStr, line, col), line, col);
             }
         }
 
@@ -1240,7 +1240,7 @@ namespace KGySoft.Resources
             int line = GetLineNumber(reader);
             int col = GetLinePosition(reader);
             if (key == null)
-                throw ResXCommon.CreateXmlException(Res.Get(Res.InvalidResXResourceNoName, line, col), line, col);
+                throw ResXCommon.CreateXmlException(Res.ResourcesNoResXName(line, col), line, col);
 
             DataNodeInfo nodeInfo = new DataNodeInfo
             {

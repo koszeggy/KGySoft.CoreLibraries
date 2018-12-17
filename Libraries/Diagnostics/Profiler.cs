@@ -147,7 +147,7 @@ namespace KGySoft.Diagnostics
                 throw new ArgumentNullException(nameof(operation), Res.ArgumentNull);
 
             if (String.IsNullOrEmpty(category))
-                category = Res.Get(Res.Uncategorized);
+                category = Res.ProfilerUncategorized;
 
             string key = category + ":" + operation;
             lock (items)
@@ -182,7 +182,7 @@ namespace KGySoft.Diagnostics
                 throw new ArgumentNullException(nameof(operation));
 
             if (String.IsNullOrEmpty(category))
-                category = Res.Get(Res.Uncategorized);
+                category = Res.ProfilerUncategorized;
 
             string key = category + ":" + operation;
             MeasureItem item;

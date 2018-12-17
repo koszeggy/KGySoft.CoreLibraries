@@ -483,7 +483,7 @@ namespace KGySoft.ComponentModel
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (!AllowNew)
-                throw new InvalidOperationException(Res.IBindingListAddNewDisabled);
+                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
 
             if (Items is IBindingList bindingList)
             {
@@ -500,7 +500,7 @@ namespace KGySoft.ComponentModel
                 return result;
             }
 
-            T newItem = canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ObservableBindingListCannotAddNew(typeof(T)));
+            T newItem = canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewObservableBindingList(typeof(T)));
             Add(newItem);
             addNewPos = Count - 1;
             return newItem;
@@ -603,7 +603,7 @@ namespace KGySoft.ComponentModel
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
-                throw new InvalidOperationException(Res.IBindingListRemoveDisabled);
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             T removedItem = this[index];
@@ -635,7 +635,7 @@ namespace KGySoft.ComponentModel
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos == 0 && Count == 1))
-                throw new InvalidOperationException(Res.IBindingListRemoveDisabled);
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             if (HookItemsPropertyChanged)
@@ -864,7 +864,7 @@ namespace KGySoft.ComponentModel
                 // we can allow changes if there's only one listener
                 if ((collectionChangedHandler?.GetInvocationList().Length ?? 0)
                     + (listChangedHandler?.GetInvocationList().Length ?? 0) > 1)
-                    throw new InvalidOperationException(Res.ObservableBindingListReentrancyNotAllowed);
+                    throw new InvalidOperationException(Res.ComponentModelReentrancyNotAllowed);
             }
         }
 

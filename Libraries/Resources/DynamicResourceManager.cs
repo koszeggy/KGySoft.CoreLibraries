@@ -576,7 +576,7 @@ namespace KGySoft.Resources
             set
             {
                 if (useLanguageSettings)
-                    throw new InvalidOperationException(Res.Get(Res.InvalidDrmPropertyChange));
+                    throw new InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
 
                 if (autoSave == value)
                     return;
@@ -614,7 +614,7 @@ namespace KGySoft.Resources
             set
             {
                 if (useLanguageSettings)
-                    throw new InvalidOperationException(Res.Get(Res.InvalidDrmPropertyChange));
+                    throw new InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
 
                 if (autoAppend == value)
                     return;
@@ -650,7 +650,7 @@ namespace KGySoft.Resources
             set
             {
                 if (useLanguageSettings)
-                    throw new InvalidOperationException(Res.Get(Res.InvalidDrmPropertyChange));
+                    throw new InvalidOperationException(Res.ResourcesInvalidDrmPropertyChange);
 
                 base.Source = value;
             }

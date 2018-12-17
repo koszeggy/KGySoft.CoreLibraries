@@ -29,7 +29,7 @@ namespace KGySoft.Reflection
             MethodInfo method = (MethodInfo)MemberInfo;
             Type declaringType = method.DeclaringType;
             if (!method.IsStatic && declaringType == null)
-                throw new InvalidOperationException(Res.Get(Res.DeclaringTypeExpected));
+                throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
 
             // for classes and static methods that have no ref parameters: Lambda expression

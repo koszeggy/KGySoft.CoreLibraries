@@ -90,7 +90,7 @@ namespace KGySoft.ComponentModel
             #region Methods
 
             public object GetRealObject(StreamingContext context) => Value;
-            public override string ToString() => Res.Get(Res.MissingPropertyReference);
+            public override string ToString() => Res.ComponentModelMissingPropertyReference;
             public override bool Equals(object obj) => obj is MissingPropertyReference;
             public override int GetHashCode() => 0;
 
@@ -223,7 +223,7 @@ namespace KGySoft.ComponentModel
         {
             Type type = GetType();
             if (type.GetDefaultConstructor() == null)
-                throw new InvalidOperationException(Res.Get(Res.ObservableObjectHasNoDefaultCtor, type));
+                throw new InvalidOperationException(Res.ComponentModelObservableObjectHasNoDefaultCtor(type));
             ObservableObjectBase clone = (ObservableObjectBase)Reflector.CreateInstance(type);
             clone.properties = CloneProperties().AsThreadSafe();
             clone.isModified = isModified;
@@ -250,7 +250,7 @@ namespace KGySoft.ComponentModel
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
             if (!CanGetProperty(propertyName))
-                throw new InvalidOperationException(Res.Get(Res.CannotGetProperty, propertyName));
+                throw new InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
             return properties.TryGetValue(propertyName, out value);
         }
 
@@ -354,12 +354,12 @@ namespace KGySoft.ComponentModel
             if (TryGetPropertyValue(propertyName, out object value))
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new InvalidOperationException(Res.Get(Res.ReturnedTypeInvalid, typeof(T)));
+                    throw new InvalidOperationException(Res.ComponentModelReturnedTypeInvalid(typeof(T)));
                 return (T)value;
             }
 
             if (createInitialValue == null)
-                throw new InvalidOperationException(Res.Get(Res.PropertyValueNotExist, propertyName));
+                throw new InvalidOperationException(Res.ComponentModelPropertyValueNotExist(propertyName));
             T result = createInitialValue.Invoke();
             Set(result, false, propertyName);
             return result;
@@ -408,7 +408,7 @@ namespace KGySoft.ComponentModel
                 return ResetProperty(propertyName, invokeChangedEvent);
 
             if (!CanSetProperty(propertyName, value))
-                throw new InvalidOperationException(Res.Get(Res.CannotSetProperty, propertyName));
+                throw new InvalidOperationException(Res.ComponentModelCannotSetProperty(propertyName));
 
             bool exists = properties.TryGetValue(propertyName, out object oldValue);
             if (exists && Equals(value, oldValue))

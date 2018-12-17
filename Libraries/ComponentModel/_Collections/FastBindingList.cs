@@ -158,7 +158,7 @@ namespace KGySoft.ComponentModel
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (!AllowNew)
-                throw new InvalidOperationException(Res.IBindingListAddNewDisabled);
+                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
             isAddingNew = true;
             try
             {
@@ -178,7 +178,7 @@ namespace KGySoft.ComponentModel
         {
             var e = new AddingNewEventArgs<T>();
             OnAddingNew(e);
-            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.FastBindingListCannotAddNew(typeof(T)));
+            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewFastBindingList(typeof(T)));
             Add(newItem);
 
             // Return new item to caller
@@ -266,7 +266,7 @@ namespace KGySoft.ComponentModel
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
             if (!PropertyDescriptors.Contains(property))
-                throw new ArgumentException(Res.FastBindingListInvalidProperty(property, typeof(T)), nameof(property));
+                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
             ApplySortCore(property, direction);
         }
 
@@ -276,7 +276,7 @@ namespace KGySoft.ComponentModel
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
             PropertyDescriptor property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
             if (property == null)
-                throw new ArgumentException(Res.FastBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
             ApplySortCore(property, direction);
         }
 
@@ -301,7 +301,7 @@ namespace KGySoft.ComponentModel
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
             if (!PropertyDescriptors.Contains(property))
-                throw new ArgumentException(Res.FastBindingListInvalidProperty(property, typeof(T)), nameof(property));
+                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
             return FindCore(property, key);
         }
 
@@ -311,7 +311,7 @@ namespace KGySoft.ComponentModel
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
             var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
             if (property == null)
-                throw new ArgumentException(Res.FastBindingListPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
             return FindCore(property, key);
         }
 
@@ -389,7 +389,7 @@ namespace KGySoft.ComponentModel
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
-                throw new InvalidOperationException(Res.IBindingListRemoveDisabled);
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             if (canRaiseItemChange)
@@ -409,7 +409,7 @@ namespace KGySoft.ComponentModel
 
             // even if remove not allowed we can remove the element being just added and yet uncommitted
             if (!allowRemove && !(addNewPos == 0 && Count == 1))
-                throw new InvalidOperationException(Res.IBindingListRemoveDisabled);
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
             if (canRaiseItemChange)
