@@ -282,7 +282,7 @@ namespace KGySoft.CoreLibraries
                 }
                 if (type == Reflector.FloatType)
                 {
-                    if (!Single.TryParse(s, out float result))
+                    if (!Single.TryParse(s, NumberStyles.Float | NumberStyles.AllowThousands, culture, out float result))
                         return false;
                     if (result.Equals(0f) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                         result = -0f;
@@ -291,7 +291,7 @@ namespace KGySoft.CoreLibraries
                 }
                 if (type == Reflector.DoubleType)
                 {
-                    if (!Double.TryParse(s, out double result))
+                    if (!Double.TryParse(s, NumberStyles.Float | NumberStyles.AllowThousands, culture, out double result))
                         return false;
                     if (result.Equals(0d) && s.Trim().StartsWith(culture.NumberFormat.NegativeSign, StringComparison.Ordinal))
                         result = -0d;
@@ -300,7 +300,7 @@ namespace KGySoft.CoreLibraries
                 }
                 if (type == Reflector.DecimalType)
                 {
-                    if (!Decimal.TryParse(s, out decimal result))
+                    if (!Decimal.TryParse(s, NumberStyles.Number, culture, out decimal result))
                         return false;
                     value = result;
                     return true;

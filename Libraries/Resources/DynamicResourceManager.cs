@@ -341,6 +341,7 @@ namespace KGySoft.Resources
     ///             {
     ///                 SafeMode = true,
     ///                 UseLanguageSettings = true,
+    ///                 ThrowException = false,
     ///                 // CompatibleFormat = true // use this if you want to edit the result files with VS resource editor
     ///             };
     ///

@@ -87,7 +87,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Tests\ResTests.cs" />
-    <Compile Include="Tests\UnitTest1.cs" />
     <Compile Include="_Extensions\Extensions.cs" />
     <Compile Include="Tests\Collections\CacheTest.cs" />
     <Compile Include="Tests\Collections\CircularListTest.cs" />

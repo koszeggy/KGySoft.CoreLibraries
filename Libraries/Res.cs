@@ -47,7 +47,8 @@ namespace KGySoft
         private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.CoreLibraries.Messages", Reflector.KGySoftLibrariesAssembly)
         {
             SafeMode = true,
-            UseLanguageSettings = true
+            UseLanguageSettings = true,
+            ThrowException = false // prevents endless loop if Source is ResXOnly and trying to obtain missing resource for MissingManifestResourceException 
         };
 
         #endregion
