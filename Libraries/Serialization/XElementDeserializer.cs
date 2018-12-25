@@ -30,7 +30,7 @@ namespace KGySoft.Serialization
                 throw new ArgumentNullException(nameof(content), Res.ArgumentNull);
 
             if (content.Name.LocalName != XmlSerializer.ElementObject)
-                throw new ArgumentException(Res.XmlSerializationRootExpected(content.Name.LocalName), nameof(content));
+                throw new ArgumentException(Res.XmlSerializationRootObjectExpected(content.Name.LocalName), nameof(content));
 
             if (content.IsEmpty)
                 return null;

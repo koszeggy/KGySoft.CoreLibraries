@@ -658,6 +658,9 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Resources_InvalidDrmPropertyChange" xml:space="preserve">
     <value>Setting this property is invalid when UseLanguageSettings is true.</value>
   </data>
+  <data name="StringExtensions_CannotParseAsTypeFormat" xml:space="preserve">
+    <value>The specified string '{0}' cannot be parsed as type {1}.</value>
+  </data>
   <data name="StringExtensions_SourceLengthNotEven" xml:space="preserve">
     <value>Source length must consist of even amount of bytes.</value>
   </data>
@@ -688,7 +691,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="ComponentModel_MissingStateFormat" xml:space="preserve">
     <value>The property binding command state does not contain the expected entry '{0}'.</value>
   </data>
-  <data name="ComponentModel_CannotAddNewFormatFastBindingListFormat" xml:space="preserve">
+  <data name="ComponentModel_CannotAddNewFastBindingListFormat" xml:space="preserve">
     <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</value>
   </data>
   <data name="ComponentModel_InvalidPropertyFormat" xml:space="preserve">
@@ -706,7 +709,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="General_EnumOutOfRangeFormat" xml:space="preserve">
     <value>Enum instance of '{0}' type must be one of the following values: {1}.</value>
   </data>
-  <data name="General_EnumFlagsOutOfRangeFormat" xml:space="preserve">
+  <data name="General_FlagsEnumOutOfRangeFormat" xml:space="preserve">
     <value>Enum instance of '{0}' type must consist of the following flags: {1}.</value>
   </data>
   <data name="ComponentModel_AddNewDisabled" xml:space="preserve">

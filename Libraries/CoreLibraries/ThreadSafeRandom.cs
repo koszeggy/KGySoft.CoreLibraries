@@ -36,6 +36,25 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class, using a time-dependent seed value.
+        /// </summary>
+        public ThreadSafeRandom()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
+        /// </summary>
+        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence. If a negative number is specified, the absolute value of the number is used.</param>
+        public ThreadSafeRandom(int seed) : base(seed)
+        {
+        }
+
+        #endregion
+
         #region Methods
 
         #region Public Methods

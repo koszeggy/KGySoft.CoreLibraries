@@ -44,7 +44,11 @@ namespace KGySoft
 
         #region Fields
 
-        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.CoreLibraries.Messages", Reflector.KGySoftLibrariesAssembly);
+        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.CoreLibraries.Messages", Reflector.KGySoftLibrariesAssembly)
+        {
+            SafeMode = true,
+            UseLanguageSettings = true
+        };
 
         #endregion
 
@@ -381,7 +385,7 @@ namespace KGySoft
         internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatValues<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
-        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumFlagsOutOfRangeFormat", value.GetType().Name, FormatFlags<TEnum>());
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name, FormatFlags<TEnum>());
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
@@ -393,7 +397,7 @@ namespace KGySoft
         internal static string ICollectionNongenericValueTypeInvalid(object value, Type type) => Get("ICollection_NongenericValueTypeInvalidFormat", value, type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string IDictionaryNongenericKeyTypeInvalid(object key, Type type) => Get("Collection_NongenericKeyTypeInvalidFormat", key, type);
+        internal static string IDictionaryNongenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NongenericKeyTypeInvalidFormat", key, type);
 
         #endregion
 
@@ -482,7 +486,7 @@ namespace KGySoft
         internal static string ComponentModelInvalidProperty(PropertyDescriptor property, Type t) => Get("ComponentModel_InvalidPropertyFormat", property.Name, property.GetType(), t);
 
         /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters. Subscribe the AddingNew event or override the AddNewCore or OnAddingNew methods to create a new item to add.</summary>
-        internal static string ComponentModelCannotAddNewFastBindingList(Type t) => Get("ComponentModel_CannotAddNewFormatFastBindingListFormat", t);
+        internal static string ComponentModelCannotAddNewFastBindingList(Type t) => Get("ComponentModel_CannotAddNewFastBindingListFormat", t);
 
         /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
         internal static string ComponentModelPropertyNotExists(string propertyName, Type type) => Get("ComponentModel_PropertyNotExistsFormat", propertyName, type);
@@ -684,7 +688,7 @@ namespace KGySoft
         internal static string XmlSerializationSerializingTypeNotSupported(Type type, XmlSerializationOptions options) => Get("XmlSerialization_SerializingTypeNotSupportedFormat", type, options.ToString<XmlSerializationOptions>());
 
         /// <summary>Root named "object" expected but "{0}" found.</summary>
-        internal static string XmlSerializationRootExpected(string name) => Get("XmlSerialization_RootObjectExpectedFormat", name);
+        internal static string XmlSerializationRootObjectExpected(string name) => Get("XmlSerialization_RootObjectExpectedFormat", name);
 
         /// <summary>Could not resolve type: "{0}". Maybe fully qualified assembly name is needed at serialization.</summary>
         internal static string XmlSerializationCannotResolveType(string typeName) => Get("XmlSerialization_CannotResolveTypeFormat", typeName);
@@ -782,15 +786,12 @@ namespace KGySoft
 
         #region Private Methods
 
-        private static string Get([NotNull]string id)
-        {
-            return resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
-        }
+        private static string Get([NotNull]string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
 
         private static string Get([NotNull]string id, params object[] args)
         {
             string format = Get(id);
-            return args == null || args.Length == 0 ? format : SafeFormat(format, args);
+            return args == null ? format : SafeFormat(format, args);
         }
 
         private static string FormatValues<TEnum>() where TEnum : struct, IConvertible

@@ -157,7 +157,7 @@ namespace KGySoft
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see kangword="null"/>.</exception>
         public static CultureInfo FormattingLanguage
         {
-            get { return Thread.CurrentThread.CurrentCulture; }
+            get => Thread.CurrentThread.CurrentCulture;
             set
             {
                 CultureInfo orig = Thread.CurrentThread.CurrentCulture;
@@ -185,7 +185,7 @@ namespace KGySoft
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static CultureInfo DisplayLanguage
         {
-            get { return Thread.CurrentThread.CurrentUICulture; }
+            get => Thread.CurrentThread.CurrentUICulture;
             set
             {
                 CultureInfo orig = Thread.CurrentThread.CurrentUICulture;
@@ -209,7 +209,7 @@ namespace KGySoft
         /// </value>
         public static bool CaptureSystemLocaleChange
         {
-            get { return captureSystemLocaleChange; }
+            get => captureSystemLocaleChange;
             set
             {
                 if (captureSystemLocaleChange == value)
@@ -237,7 +237,7 @@ namespace KGySoft
         /// <seealso cref="DynamicResourceManager.Source"/>
         public static ResourceManagerSources DynamicResourceManagersSource
         {
-            get { return dynamicResourceManagersSource; }
+            get => dynamicResourceManagersSource;
             set
             {
                 if (value == dynamicResourceManagersSource)
@@ -261,7 +261,7 @@ namespace KGySoft
         /// <seealso cref="DynamicResourceManager.AutoSaveError"/>
         public static AutoSaveOptions DynamicResourceManagersAutoSave
         {
-            get { return dynamicResourceManagersAutoSave; }
+            get => dynamicResourceManagersAutoSave;
             set
             {
                 if (value == dynamicResourceManagersAutoSave)
@@ -284,7 +284,7 @@ namespace KGySoft
         /// <seealso cref="DynamicResourceManager.AutoAppend"/>
         public static AutoAppendOptions DynamicResourceManagersAutoAppend
         {
-            get { return dynamicResourceManagersAutoAppend; }
+            get => dynamicResourceManagersAutoAppend;
             set
             {
                 if (value == dynamicResourceManagersAutoAppend)
@@ -303,7 +303,7 @@ namespace KGySoft
         /// </summary>
         public static string UntranslatedResourcePrefix
         {
-            get { return untranslatedResourcePrefix; }
+            get => untranslatedResourcePrefix;
             set
             {
                 if (value == null)
@@ -321,7 +321,7 @@ namespace KGySoft
         /// </summary>
         public static string UnknownResourcePrefix
         {
-            get { return unknownResourcePrefix; }
+            get => unknownResourcePrefix;
             set
             {
                 if (value == null)
@@ -355,15 +355,9 @@ namespace KGySoft
             DisplayLanguageChanged?.Invoke(null, e);
         }
 
-        private static void OnDynamicResourceManagersSourceChanged(EventArgs e)
-        {
-            DynamicResourceManagersSourceChanged?.Invoke(null, e);
-        }
+        private static void OnDynamicResourceManagersSourceChanged(EventArgs e) => DynamicResourceManagersSourceChanged?.Invoke(null, e);
 
-        private static void OnDynamicResourceManagersAutoSaveChanged(EventArgs e)
-        {
-            DynamicResourceManagersAutoSaveChanged?.Invoke(null, e);
-        }
+        private static void OnDynamicResourceManagersAutoSaveChanged(EventArgs e) => DynamicResourceManagersAutoSaveChanged?.Invoke(null, e);
 
         #endregion
 

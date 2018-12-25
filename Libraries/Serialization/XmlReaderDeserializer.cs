@@ -30,7 +30,7 @@ namespace KGySoft.Serialization
 
             ReadToNodeType(reader, XmlNodeType.Element);
             if (reader.Name != XmlSerializer.ElementObject)
-                throw new ArgumentException(Res.XmlSerializationRootExpected(reader.Name), nameof(reader));
+                throw new ArgumentException(Res.XmlSerializationRootObjectExpected(reader.Name), nameof(reader));
 
             if (reader.IsEmptyElement)
                 return null;
