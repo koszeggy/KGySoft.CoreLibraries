@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
-using KGySoft.Collections;
-using KGySoft.Diagnostics;
+﻿using System.Collections.Generic;
 using KGySoft.Reflection;
-using KGySoft.Security.Cryptography;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace _PerformanceTest

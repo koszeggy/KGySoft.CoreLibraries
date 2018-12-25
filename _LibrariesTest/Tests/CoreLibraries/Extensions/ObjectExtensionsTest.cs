@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using KGySoft.CoreLibraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -49,7 +47,9 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(new ArrayList { 1, 2, 3 }, new List<int> { 1, 2, 3 }); // non-gen -> gen
 
             Test(new Dictionary<int, string>{{1, "2"}, {3, "4"}}, new Dictionary<string, int> { { "1", 2 }, { "3", 4 } }); // dictionary, populatable
+#if !(NET35 || NET40)
             Test(new Dictionary<int, string>{{1, "2"}, {3, "4"}}, new ReadOnlyDictionary<string, int>(new Dictionary<string, int> { { "1", 2 }, { "3", 4 } })); // dictionary, by another dictionary
+#endif
             Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new Hashtable { { 1, "2" }, { 3, "4" } }); // gen -> non-gen
             Test(new Hashtable { { 1, "2" }, { 3, "4" } }, new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }); // non-gen -> gen
 

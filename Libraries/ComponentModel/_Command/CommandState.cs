@@ -244,7 +244,9 @@ namespace KGySoft.ComponentModel
 
         object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor pd) => this;
 
+#if !NET35
         string ITypedList.GetListName(PropertyDescriptor[] listAccessors) => ToString();
         PropertyDescriptorCollection ITypedList.GetItemProperties(PropertyDescriptor[] listAccessors) => GetProperties();
+#endif
     }
 }

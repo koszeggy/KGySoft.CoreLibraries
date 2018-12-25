@@ -18,7 +18,10 @@ namespace KGySoft.Reflection
 
         #region Field accessors
 
+#if NET35 || NET40
+        private static FieldAccessor fieldException_source;
         private static FieldAccessor fieldException_remoteStackTraceString;
+#endif
         private static FieldAccessor fieldResourceManager_neutralResourcesCulture;
 #if NET40 || NET45
         private static FieldAccessor fieldResourceManager_resourceSets;
@@ -52,10 +55,12 @@ namespace KGySoft.Reflection
 
         #region Method accessors
 
+#if NET35 || NET40
+        private static ActionMethodAccessor methodException_InternalPreserveStackTrace;
+#endif
+
 #if NET35 || NET40 || NET45
-
         private static IDictionary<Type, ActionMethodAccessor> methodHashSet_Initialize;
-
 #else
 #error make sure not to use this from NET472, where capacity ctor is available
 #endif
@@ -67,6 +72,18 @@ namespace KGySoft.Reflection
 
         #region Field accessors
 
+#if NET35 || NET40
+        internal static FieldAccessor Exception_source
+        {
+            get
+            {
+                if (fieldException_source != null)
+                    return fieldException_source;
+
+                return fieldException_source = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic));
+            }
+        }
+
         internal static FieldAccessor Exception_remoteStackTraceString
         {
             get
@@ -77,6 +94,7 @@ namespace KGySoft.Reflection
                 return fieldException_remoteStackTraceString = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic));
             }
         }
+#endif
 
         internal static FieldAccessor ResourceManager_neutralResourcesCulture
         {
@@ -129,11 +147,20 @@ namespace KGySoft.Reflection
             }
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Methods - for accessors of types of referenced assemblies
+#region Methods - for accessors of types of referenced assemblies
+
+#if NET35 || NET40
+        internal static void InternalPreserveStackTrace(this Exception exception)
+        {
+            if (methodException_InternalPreserveStackTrace == null)
+                methodException_InternalPreserveStackTrace = new ActionMethodAccessor(typeof(Exception).GetMethod(nameof(InternalPreserveStackTrace), BindingFlags.Instance | BindingFlags.NonPublic));
+            methodException_InternalPreserveStackTrace.Invoke(exception);
+        }
+#endif
 
 #if NET35 || NET40 || NET45
 
@@ -154,11 +181,11 @@ namespace KGySoft.Reflection
 #error make sure not to use this from NET472, where capacity ctor is available
 #endif
 
-        #endregion
+#endregion
 
-        #region Methods - for accessors of types of non-referenced assemblies
+#region Methods - for accessors of types of non-referenced assemblies
 
-        #region Field accessors
+#region Field accessors
 
         internal static string ResXFileRef_fileName_Get(object fileRef)
         {
@@ -264,9 +291,9 @@ namespace KGySoft.Reflection
             return (string)fieldDataNodeInfo_ReaderPosition.Get(nodeInfo);
         }
 
-        #endregion
+#endregion
 
-        #region Property accessors
+#region Property accessors
 
         internal static int Point_X_Get(object point)
         {
@@ -284,8 +311,8 @@ namespace KGySoft.Reflection
             return (int)propertyPoint_Y.Get(point);
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

@@ -2392,19 +2392,15 @@ namespace KGySoft.Serialization
 #if NET35
                     if (value != null || !descriptor.IsGenericDictionary)
                     {
-#elif !(NET40 || NET45)
-#error .NET version is not set or not supported!
 #endif
-                    ((IDictionary)collection).Add(element, value);
-                    continue;
+                        ((IDictionary)collection).Add(element, value);
+                        continue;
 #if NET35
                     }
 
                     // generic dictionary with null value: calling generic Add because non-generic one may fail under .NET 4
-                    Reflector.RunInstanceMethodByName(collection, "Add", element, value);
+                    Reflector.RunMethod(collection, nameof(IDictionary<_,_>.Add), element, null);
                     continue;
-#elif !(NET40 || NET45)
-#error .NET version is not set or not supported!
 #endif
                 }
 

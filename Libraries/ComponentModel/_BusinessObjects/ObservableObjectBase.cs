@@ -403,7 +403,6 @@ namespace KGySoft.ComponentModel
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
-
             if (MissingProperty.Equals(value))
                 return ResetProperty(propertyName, invokeChangedEvent);
 

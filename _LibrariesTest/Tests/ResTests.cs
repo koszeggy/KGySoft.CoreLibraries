@@ -5,8 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
-using System.Text;
-using System.Threading.Tasks;
 using KGySoft;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -56,7 +54,7 @@ namespace _LibrariesTest.Tests
             PropertyInfo[] properties = typeof(Res).GetProperties(BindingFlags.Static | BindingFlags.NonPublic);
             foreach (PropertyInfo property in properties)
             {
-                string value = property.GetValue(null).ToString();
+                string value = property.GetValue(null, null).ToString();
                 Assert.IsTrue(!value.StartsWith(unavailableResourcePrefix, StringComparison.Ordinal), $"{nameof(Res)}.{property.Name} refers to an undefined resource.");
                 Assert.IsTrue(!value.ContainsAny("{", "}"), $"{nameof(Res)}.{property.Name} refers to a parameterized resource.");
                 obtainedMembers.Add(property.Name);
@@ -103,7 +101,7 @@ namespace _LibrariesTest.Tests
                     uncovered.Add((string)enumerator.Key);
             }
 
-            Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan compiled resources detected:{Environment.NewLine}{String.Join(Environment.NewLine, uncovered)}");
+            Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan compiled resources detected:{Environment.NewLine}{String.Join(Environment.NewLine, uncovered.ToArray())}");
         }
     }
 }

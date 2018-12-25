@@ -1,8 +1,8 @@
 ﻿#if !NET35
+using System.Collections.Concurrent;
 #endif
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;

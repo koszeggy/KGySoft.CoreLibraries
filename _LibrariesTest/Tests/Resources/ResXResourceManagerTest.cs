@@ -455,7 +455,7 @@ namespace _LibrariesTest.Tests.Resources
             // now the hu branch is up-to-date but en-GB has unloaded parents because en actually exists but not loaded
             IDictionary resourceSets;
 #if NET35
-            resourceSets = (IDictionary)Reflector.GetInstanceFieldByName(manager, "ResourceSets"); // Hashtable
+            resourceSets = (IDictionary)Reflector.GetField(manager, "ResourceSets"); // Hashtable
 #else
             resourceSets = (IDictionary)Reflector.GetProperty(manager, "ResourceSets"); // Dictionary
 #endif

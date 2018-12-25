@@ -248,7 +248,9 @@
     <Compile Include="Serialization\XmlSerializerBase.cs" />
     <Compile Include="Serialization\XmlWriterSerializer.cs" />
     <Compile Include="Serialization\_doc\NamespaceDoc.cs" />
-    <Compile Include="System\TupleElementNamesAttribute.cs" />
+    <Compile Include="System\Runtime\CompilerServices\CallerMemberNameAttribute.cs" />
+    <Compile Include="System\Runtime\CompilerServices\TupleElementNamesAttribute.cs" />
+    <Compile Include="System\Runtime\ExceptionServices\ExceptionDispatchInfo.cs" />
     <Compile Include="System\ValueTuple.cs" />
     <Compile Include="_.cs" />
     <Compile Include="CoreLibraries\_Extensions\ObjectExtensions.ObjectConverter.cs" />
@@ -277,7 +279,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

@@ -38,9 +38,9 @@ namespace KGySoft.Collections.ObjectModel
     /// <seealso cref="Collection{T}" />
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [Serializable]
-    public class VirtualCollection<T> : IList<T>, IList,
+    public class VirtualCollection<T> : IList<T>, IList
 #if !(NET35 || NET40)
-        IReadOnlyList<T>
+        , IReadOnlyList<T>
 #endif
     {
         #region Fields

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -10,8 +9,7 @@ using KGySoft.CoreLibraries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 #if !NET35
-# endif
-#if !NET35
+using System.Collections.Concurrent;
 #endif
 
 namespace _LibrariesTest.Tests.CoreLibraries.Extensions

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#if !NET35
 using KGySoft.ComponentModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -31,6 +27,6 @@ namespace _LibrariesTest.Tests.ComponentModel
             Assert.IsFalse(new ObservableBindingList<int>().RaiseItemChangedEvents);
             Assert.IsTrue(new ObservableBindingList<ObservableObjectBase>().RaiseItemChangedEvents);
         }
-
     }
 }
+#endif

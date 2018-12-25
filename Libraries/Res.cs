@@ -795,10 +795,18 @@ namespace KGySoft
         }
 
         private static string FormatValues<TEnum>() where TEnum : struct, IConvertible
-            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd));
+            => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd)
+#if NET35
+                    .ToArray()
+#endif
+            );
 
         private static string FormatFlags<TEnum>() where TEnum : struct, IConvertible
-            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd));
+            => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd)
+#if NET35
+                    .ToArray()
+#endif
+            );
 
         private static string SafeFormat(string format, object[] args)
         {
