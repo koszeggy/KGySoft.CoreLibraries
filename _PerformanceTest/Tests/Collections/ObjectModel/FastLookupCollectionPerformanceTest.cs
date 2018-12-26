@@ -2,14 +2,14 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using KGySoft.Collections.ObjectModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Collections.ObjectModel
 {
-    [TestClass]
+    [TestFixture]
     public class FastLookupCollectionPerformanceTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void TestIndexOf()
         {
             var list = Enumerable.Range(0, 1000).ToList();

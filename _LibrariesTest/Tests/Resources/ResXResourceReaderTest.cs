@@ -5,14 +5,14 @@ using System.Reflection;
 using System.Xml;
 using KGySoft.CoreLibraries;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
+    [TestFixture]
     public class ResXResourceReaderTest: TestBase
     {
-        [TestMethod]
+        [Test]
         public void ParseData()
         {
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
@@ -34,7 +34,7 @@ namespace _LibrariesTest.Tests.Resources
                 reader.Cast<object>().Count()); // duplication is off (not lazy now)
         }
 
-        [TestMethod]
+        [Test]
         public void TestEnumerators()
         {
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
@@ -91,19 +91,19 @@ namespace _LibrariesTest.Tests.Resources
             // normal vs safe mode
             resEnumCached = reader.GetEnumerator();
             resEnumCached.MoveNext();
-            Assert.IsNotInstanceOfType(resEnumCached.Value, typeof(ResXDataNode));
+            Assert.IsNotInstanceOf<ResXDataNode>(resEnumCached.Value);
             reader.SafeMode = true;
-            Assert.IsInstanceOfType(resEnumCached.Value, typeof(ResXDataNode));
+            Assert.IsInstanceOf<ResXDataNode>(resEnumCached.Value);
 
             // however, aliases are always strings
-            Assert.IsInstanceOfType(aliasEnumCached.Value, typeof(string));
-            Assert.IsInstanceOfType(aliasEnumLazy.Value, typeof(string));
+            Assert.IsInstanceOf<string>(aliasEnumCached.Value);
+            Assert.IsInstanceOf<string>(aliasEnumLazy.Value);
             reader.SafeMode = false;
-            Assert.IsInstanceOfType(aliasEnumCached.Value, typeof(string));
-            Assert.IsInstanceOfType(aliasEnumLazy.Value, typeof(string));            
+            Assert.IsInstanceOf<string>(aliasEnumCached.Value);
+            Assert.IsInstanceOf<string>(aliasEnumLazy.Value);            
         }
 
-        [TestMethod]
+        [Test]
         public void TestDataTypes()
         {
             // various types of embedded and referenced data
@@ -126,7 +126,7 @@ namespace _LibrariesTest.Tests.Resources
             }
         }
 
-        [TestMethod]
+        [Test]
         public void TestException()
         {
             string resx = @"<?xml version='1.0' encoding='utf-8'?>

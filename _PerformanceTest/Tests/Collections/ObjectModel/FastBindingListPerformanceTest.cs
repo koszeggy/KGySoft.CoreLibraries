@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using KGySoft.ComponentModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Collections.ObjectModel
 {
-    [TestClass]
+    [TestFixture]
     public class FastBindingListPerformanceTest : TestBase
     {
         private class TestItem : ObservableObjectBase
@@ -15,7 +15,7 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
             public int IntProp { get => Get<int>(); set => Set(value); }
         }
 
-        [TestMethod]
+        [Test]
         public void AddNew()
         {
             var range = Enumerable.Range(0, 10000).Select(i => new TestItem { IntProp = i });
@@ -42,7 +42,7 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
             }.DoTest();
         }
 
-        [TestMethod]
+        [Test]
         public void ItemChanged()
         {
             // item property change involves a search for the index of the changed item

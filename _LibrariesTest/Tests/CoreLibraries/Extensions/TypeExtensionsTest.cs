@@ -6,7 +6,7 @@ using System.Collections.Specialized;
 using System.Reflection;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 #if !NET35
 using System.Collections.Concurrent;
@@ -14,10 +14,10 @@ using System.Collections.Concurrent;
 
 namespace _LibrariesTest.Tests.CoreLibraries.Extensions
 {
-    [TestClass]
+    [TestFixture]
     public class TypeExtensionsTest
     {
-        [TestMethod]
+        [Test]
         public void IsSupportedCollectionForReflectionTest()
         {
             void Test<T>(bool expectedResult, bool expectedDefaultCtor, Type expectedCollCtorParam, Type expectedElementType, bool expectedIsDictionary)

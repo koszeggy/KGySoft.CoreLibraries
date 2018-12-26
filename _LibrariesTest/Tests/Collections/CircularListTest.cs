@@ -5,17 +5,17 @@ using System.Linq;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Collections
 {
     /// <summary>
     /// CircularList Test
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class CircularListTest
     {
-        [TestMethod]
+        [Test]
         public void Construction()
         {
             // default constructor
@@ -31,7 +31,7 @@ namespace _LibrariesTest.Tests.Collections
             new CircularList<int>(new int[] { 1, 2, 3, 4, 5 }.Select(i => i));
         }
 
-        [TestMethod]
+        [Test]
         public void AddLastAndFirst()
         {
             CircularList<int> list = new CircularList<int>();
@@ -54,7 +54,7 @@ namespace _LibrariesTest.Tests.Collections
             }
         }
 
-        [TestMethod]
+        [Test]
         public void Indexer()
         {
             CircularList<int> list = PrepareList<int>(4, 3, 2);
@@ -64,7 +64,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(list[1], 2);
         }
 
-        [TestMethod]
+        [Test]
         public void InsertSimple()
         {
             CircularList<int> list = PrepareList<int>(4, 3, 2);
@@ -80,7 +80,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(1, list[1]);
         }
 
-        [TestMethod]
+        [Test]
         public void InsertShiftUp()
         {
             // shift up, carry -, startIndex 0
@@ -172,7 +172,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void InsertShiftDown()
         {
             // shift down, carry 0, startIndex 4
@@ -248,7 +248,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void InsertIncreaseCapacity()
         {
             // addlast
@@ -300,7 +300,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void InsertRangeSimple()
         {
             CircularList<int> list = PrepareList<int>(10, 0, 2);
@@ -391,7 +391,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void InsertRangeShiftUp()
         {
             CircularList<string> list = PrepareList<string>(8, 1, 3);
@@ -474,7 +474,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void InsertRangeShiftDown()
         {
             CircularList<string> list = PrepareList<string>(8, 4, 4);
@@ -557,7 +557,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void InsertRangeIncreaseCapacity()
         {
             // addlast
@@ -611,7 +611,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveLastAndFirst()
         {
             // normal, non-wrapped list
@@ -639,7 +639,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(3, list[0]);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveDetailed()
         {
             // no wrapping, moving down
@@ -721,7 +721,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(0, list.Count);
         }
 
-        [TestMethod]
+        [Test]
         public void AddRangeLastAndFirst()
         {
             CircularList<int> list = PrepareList<int>(10, 0, 2);
@@ -776,7 +776,7 @@ namespace _LibrariesTest.Tests.Collections
             list.InsertRange(0, toAdd);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveRangeSimple()
         {
             CircularList<int> list = PrepareList<int>(8, 4, 8);
@@ -812,7 +812,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(0, list.Count);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveRangeShiftUp()
         {
             // non-wrapped, remove from middle
@@ -836,7 +836,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(list.SequenceEqual(new int?[] { 0, 5 }));
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveRangeShiftDown()
         {
             // non-wrapped, remove from middle
@@ -861,7 +861,7 @@ namespace _LibrariesTest.Tests.Collections
 
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveAll()
         {
             CircularList<int?> clist = PrepareList<int?>(10, 4, 8);
@@ -892,7 +892,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(clist.SequenceEqual(list));
         }
 
-        [TestMethod]
+        [Test]
         public void Find()
         {
             CircularList<int> list = PrepareList<int>(10, 0, 5);
@@ -973,7 +973,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(-1, list.FindLastIndex(3, 1, i => i == 2)); // searching too few elements
         }
 
-        [TestMethod]
+        [Test]
         public void CopyTo()
         {
             string[] dest = new string[12];
@@ -1014,7 +1014,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(null, dest[10]);
         }
 
-        [TestMethod]
+        [Test]
         public void Enumerator()
         {
             CircularList<string> list = PrepareList<string>(10, 7, 9);
@@ -1022,7 +1022,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(list.SequenceEqual(reference));
         }
 
-        [TestMethod]
+        [Test]
         public void ElementSizeExponent()
         {
             const string es = "elementSizeExponent";
@@ -1054,7 +1054,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(UIntPtr.Size == 4 ? 2 : 3, Reflector.GetField(typeof(CircularList<UIntPtr>), es));
         }
 
-        [TestMethod]
+        [Test]
         public void Reverse()
         {
             // normal reversing
@@ -1094,7 +1094,7 @@ namespace _LibrariesTest.Tests.Collections
         }
 
 
-        [TestMethod]
+        [Test]
         public void Sort()
         {
             // normal sorting
@@ -1159,7 +1159,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(list.SequenceEqual(reference));
         }
 
-        [TestMethod]
+        [Test]
         public void BinarySearch()
         {
             CircularList<string> list = PrepareList<string>(10, 6, 8);
@@ -1180,7 +1180,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(reference.BinarySearch(1, 6, "0", StringComparer.Ordinal), list.BinarySearch(1, 6, "0", StringComparer.Ordinal)); // with IComparer, not found
         }
 
-        [TestMethod]
+        [Test]
         public void GetRangeTest()
         {
             CircularList<string> list = PrepareList<string>(10, 6, 8);
@@ -1191,7 +1191,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(reference.GetRange(1, 6).SequenceEqual(list.GetRange(1, 6))); // both
         }
 
-        [TestMethod]
+        [Test]
         public void NonGenericAccess()
         {
             // adding null to nullable (does not work in .NET 3.5 List)

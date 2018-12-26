@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest
 {
-    [TestClass]
+    [TestFixture]
     public class  UnitTest1 : TestBase
     {
-        [TestMethod]
+        [Test]
         public void TestMethod1()
         {
             //CheckTestingFramework();

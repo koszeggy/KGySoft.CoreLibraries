@@ -2,14 +2,14 @@
 using System.Text;
 using KGySoft.CoreLibraries;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
+    [TestFixture]
     public class ResXDataNodeTest: TestBase
     {
-        [TestMethod]
+        [Test]
         public void FromObject()
         {
             var node = new ResXDataNode("int", 1);
@@ -50,7 +50,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(node.ValueData);
         }
 
-        [TestMethod]
+        [Test]
         public void FromFileRef()
         {
             var node = new ResXDataNode("fileref", new ResXFileRef("path", typeof(string)));
@@ -71,7 +71,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(node.ValueData);
         }
 
-        [TestMethod]
+        [Test]
         public void FromNodeInfo()
         {
             var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");

@@ -4,14 +4,14 @@ using System.Diagnostics;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Collections
 {
-    [TestClass]
+    [TestFixture]
     public class CircularSortedListPerformanceTest
     {
-        [TestMethod]
+        [Test]
         public void PopulateTest()
         {
             const int capacity = 1000;
@@ -148,7 +148,7 @@ namespace _PerformanceTest.Tests.Collections
             // TODO: enum key
         }
 
-        [TestMethod]
+        [Test]
         public void EnumeratingTest()
         {
             const int capacity = 1000;
@@ -295,7 +295,7 @@ namespace _PerformanceTest.Tests.Collections
 
         private enum TestIntEnum { }
         private enum TestUIntEnum : uint { }
-        [TestMethod]
+        [Test]
         public void SearchTest()
         {
             const int capacity = 10000;

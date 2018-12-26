@@ -7,11 +7,11 @@ using System.Reflection;
 using System.Text;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.CoreLibraries.Extensions
 {
-    [TestClass]
+    [TestFixture]
     public class RandomExtensionsTest : TestBase
     {
         private class TestRandom : Random
@@ -62,7 +62,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             public override int Next(int minValue, int maxValue) => nextIntegers == null ? base.Next(minValue, maxValue) : Next();
         }
 
-        [TestMethod]
+        [Test]
         public void NextUInt64Test()
         {
             // full range
@@ -80,7 +80,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Assert.IsTrue(result >= 0 && result < 10);
         }
 
-        [TestMethod]
+        [Test]
         public void NextInt64Test()
         {
             // full range
@@ -98,7 +98,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Assert.IsTrue(result >= -5 && result < 5);
         }
 
-        [TestMethod]
+        [Test]
         public void NextDoubleTest()
         {
             void Test(Random random, double min, double max)
@@ -158,7 +158,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(rnd, 1L << 52, 1L << 53);
         }
 
-        [TestMethod]
+        [Test]
         public void NextFloatTest()
         {
             void Test(Random random, float min, float max)
@@ -190,7 +190,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(rnd, float.NegativeInfinity, float.PositiveInfinity);
         }
 
-        [TestMethod]
+        [Test]
         public void NextDecimalTest()
         {
             var rnd = new Random();
@@ -243,7 +243,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Test(1L << 52, 1L << 53);
         }
 
-        [TestMethod]
+        [Test]
         public void NextDateTimeOffsetTest()
         {
             var rnd = new Random();
@@ -283,7 +283,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             public Recursive Child { get; set; }
         }
 
-        [TestMethod]
+        [Test]
         public void NextObjectTest()
         {
             var rnd = new Random();

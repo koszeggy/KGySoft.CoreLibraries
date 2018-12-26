@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.CoreLibraries
 {
     /// <summary>
     /// Summary description for EnumToolsTest
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class EnumTest : TestBase
     {
         [Flags]
@@ -45,7 +45,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
 
         private enum EmptyEnum { }
 
-        [TestMethod]
+        [Test]
         public void GetNamesValuesTest()
         {
             Type enumType = typeof(TestEnum);
@@ -62,7 +62,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.AreEqual(Enum.GetName(enumType, 1 << 31), Enum<TestIntEnum>.GetName(1 << 31));
         }
 
-        [TestMethod]
+        [Test]
         public void IsDefinedTest()
         {
             Assert.IsTrue(Enum<TestEnum>.IsDefined(TestEnum.Cica));
@@ -84,7 +84,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.IsFalse(Enum<TestIntEnum>.IsDefined(1U << 31)); // 2147483648
         }
 
-        [TestMethod]
+        [Test]
         public void ToStringTest()
         {
             Assert.AreEqual("X", Enum<TestUlongEnum>.ToString(TestUlongEnum.X));
@@ -113,7 +113,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.AreEqual("Simple, Normal, Risky", ie.ToString(EnumFormattingOptions.Auto));
         }
 
-        [TestMethod]
+        [Test]
         public void EnumParseTest()
         {
             Assert.AreEqual(default(EmptyEnum), Enum<EmptyEnum>.Parse("0"));
@@ -148,7 +148,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.AreEqual(ie, Enum<TestIntEnum>.Parse(ie.ToString(EnumFormattingOptions.Auto)));
         }
 
-        [TestMethod]
+        [Test]
         public void EnumComparerTest()
         {
             var c1 = EnumComparer<EmptyEnum>.Comparer;
@@ -192,7 +192,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.AreNotEqual(c3.GetHashCode(v3[0]), c3.GetHashCode(v3[1]));
         }
 
-        [TestMethod]
+        [Test]
         public void GetFlagsTest()
         {
             ulong max = UInt64.MaxValue;
@@ -214,7 +214,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             AssertItemsEqual(new EmptyEnum[0], Enum<EmptyEnum>.GetFlags());
         }
 
-        [TestMethod]
+        [Test]
         public void AllFlagsDefinedTest()
         {
             Assert.IsTrue(Enum<TestEnum>.AllFlagsDefined(TestEnum.Semmi));
@@ -232,7 +232,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.IsFalse(Enum<TestUlongEnum>.AllFlagsDefined(0UL)); // Zero is not defined in TestUlongEnum
         }
 
-        [TestMethod]
+        [Test]
         public void HasFlagTest()
         {
             TestEnum e64 = TestEnum.Alma | TestEnum.Béka;
@@ -258,7 +258,7 @@ namespace _LibrariesTest.Tests.CoreLibraries
             Assert.IsTrue(Enum<TestUlongEnum>.HasFlag(eu64, TestUlongEnum.X)); // Zero -> true
         }
 
-        [TestMethod]
+        [Test]
         public void IsSingleFlagTest()
         {
             Assert.IsFalse(Enum<TestEnum>.IsSingleFlag(TestEnum.Semmi));

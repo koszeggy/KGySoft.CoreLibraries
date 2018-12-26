@@ -5,7 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
 namespace _PerformanceTest.Tests.Serialization
@@ -13,7 +13,7 @@ namespace _PerformanceTest.Tests.Serialization
     /// <summary>
     /// Summary description for BinarySerializerTest
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class XmlSerializerPerformanceTest : TestBase
     {
         public class FullExtraComponent
@@ -123,7 +123,7 @@ namespace _PerformanceTest.Tests.Serialization
             }
         }
 
-        [TestMethod]
+        [Test]
         public void SerializerTest()
         {
             //var x = new byte[] { 1, 2, 3, 4, 5 };

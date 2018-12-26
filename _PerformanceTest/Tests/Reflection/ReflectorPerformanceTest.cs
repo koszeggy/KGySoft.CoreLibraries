@@ -7,14 +7,14 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using KGySoft.Collections;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Reflection
 {
     /// <summary>
     /// Summary description for UnitTest1
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class ReflectorPerformanceTest
     {
         #region Nested Types
@@ -104,8 +104,7 @@ namespace _PerformanceTest.Tests.Reflection
 
         static Cache<MemberInfo, MemberAccessor> GetCache()
         {
-            // this is not a cache anymore
-            return (Cache<MemberInfo, MemberAccessor>)Reflector.GetField(null, typeof(MemberAccessor).GetField("accessorCache", BindingFlags.NonPublic | BindingFlags.Static), ReflectionWays.SystemReflection);
+            return (Cache<MemberInfo, MemberAccessor>)Reflector.GetField(Reflector.GetField(null, typeof(MemberAccessor).GetField("accessorCache", BindingFlags.NonPublic | BindingFlags.Static), ReflectionWays.SystemReflection), "collection");
         }
 
         private static void ResetCache(int size)
@@ -132,7 +131,7 @@ namespace _PerformanceTest.Tests.Reflection
             return cache.Count;
         }
 
-        [TestMethod]
+        [Test]
         public void TestMethodInvoke()
         {
             // Obtaining information            
@@ -421,7 +420,7 @@ Hit rate: 100,00 %
 
         //}
 
-        [TestMethod]
+        [Test]
         public void TestFieldAccess()
         {
             // Obtaining information
@@ -616,7 +615,7 @@ Hit rate: 100,00 %
             Console.WriteLine("Reflector.GetField - System.Reflection by name: " + watch.ElapsedMilliseconds.ToString());
         }
 
-        [TestMethod]
+        [Test]
         public void TestPropertyAccess()
         {
             // Obtaining information
@@ -835,7 +834,7 @@ Hit rate: 100,00 %
             Console.WriteLine("Reflector.GetProperty - TypeDescriptor by name: " + watch.ElapsedMilliseconds.ToString());
         }
 
-        [TestMethod]
+        [Test]
         public void TestIndexerAccess()
         {
             // Obtaining information
@@ -1069,7 +1068,7 @@ Hit rate: 100,00 %
             Console.WriteLine("Reflector.GetIndexer - System.Reflection: " + watch.ElapsedMilliseconds.ToString());
         }
 
-        [TestMethod]
+        [Test]
         public void TestArrayAccess()
         {
             byte[] array = new byte[100];
@@ -1126,7 +1125,7 @@ Hit rate: 100,00 %
 
         }
 
-        [TestMethod]
+        [Test]
         public void TestClassCreation()
         {
             // Obtaining information
@@ -1461,7 +1460,7 @@ Hit rate: 100,00 %
             Console.WriteLine("Reflector.Construct - TypeDescriptor by parameters match: " + watch.ElapsedMilliseconds.ToString());
         }
 
-        [TestMethod]
+        [Test]
         public void TestStructCreation()
         {
             // Obtaining information
@@ -1728,7 +1727,7 @@ Hit rate: 100,00 %
             Console.WriteLine("Reflector.Construct - TypeDescriptor by parameters match: " + watch.ElapsedMilliseconds.ToString());
         }
 
-        [TestMethod]
+        [Test]
         public void TestMemberOf()
         {
             MemberInfo mi;

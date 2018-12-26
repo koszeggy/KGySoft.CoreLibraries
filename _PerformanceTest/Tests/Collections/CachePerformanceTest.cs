@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using KGySoft.Collections;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using _PerformanceTest.Tests.Reflection;
 
 namespace _PerformanceTest.Tests.Collections
@@ -10,19 +10,19 @@ namespace _PerformanceTest.Tests.Collections
     /// In this test out-of-cache retrieval is fast to demonstrate that RemoveLeastRecentUsed behavior is just a little bit slower than RemoveOldest.
     /// See <see cref="ReflectorPerformanceTest.TestMethodInvoke"/> to test a simulation of re-using the most recent elements
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class CachePerformanceTest
     {
         const int capacity = 10000;
         Cache<int, string> testCache;
 
-        [TestInitialize]
+        [SetUp]
         public void ResetCache()
         {
             testCache = new Cache<int, string>(i => i.ToString(), capacity);
         }
 
-        [TestMethod]
+        [Test]
         public void Main()
         {
             var isPrimeCache = new Cache<int, bool>(IsPrime, 2) { Behavior = CacheBehavior.RemoveOldestElement };
@@ -52,7 +52,7 @@ namespace _PerformanceTest.Tests.Collections
             return true;
         }
 
-        [TestMethod]
+        [Test]
         public void PopulateTest()
         {
             const int iterations = 1000;
@@ -78,7 +78,7 @@ Elapsed time: 6444 ms
              */
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveOldestNoDeleteTest()
         {
             const int iterations = 1000000;
@@ -121,7 +121,7 @@ Hit rate: 99,00 %
              */
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveLeastRecentUsedNoDeleteTest()
         {
             const int iterations = 1000000;
@@ -164,7 +164,7 @@ Hit rate: 99,00 %
              */
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveOldestTest()
         {
             const int iterations = 1000000;
@@ -206,7 +206,7 @@ Hit rate: 66,17 %
              */
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveLeastRecentUsed()
         {
             const int iterations = 1000000;

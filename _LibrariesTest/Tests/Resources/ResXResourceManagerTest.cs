@@ -12,14 +12,14 @@ using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
-    [DeploymentItem("Resources", "Resources")]
-    [DeploymentItem("en", "en")]
-    [DeploymentItem("en-US", "en-US")]
+    [TestFixture]
+    //[DeploymentItem("Resources", "Resources")]
+    //[DeploymentItem("en", "en")]
+    //[DeploymentItem("en-US", "en-US")]
     public class ResXResourceManagerTest: TestBase
     {
         private static CultureInfo inv = CultureInfo.InvariantCulture;
@@ -31,7 +31,7 @@ namespace _LibrariesTest.Tests.Resources
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
 
-        [TestMethod]
+        [Test]
         public void GetString()
         {
             var refManager = CreateResourceManager("_LibrariesTest.Resources.TestResourceResX", enUS);
@@ -67,7 +67,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(manager.GetString(resName, en), manager.GetString(resName, enUS));
         }
 
-        [TestMethod]
+        [Test]
         public void GetMetaString()
         {
             var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
@@ -90,7 +90,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(manager.GetMetaString(resName, enUS));
         }
 
-        [TestMethod]
+        [Test]
         public void GetObject()
         {
             var refManager = CreateResourceManager("_LibrariesTest.Resources.TestResourceResX", enUS);
@@ -161,7 +161,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(manager.GetObject(resName, inv));
         }
 
-        [TestMethod]
+        [Test]
         public void SetObjectTest()
         {
             LanguageSettings.DisplayLanguage = enUS;
@@ -192,7 +192,7 @@ namespace _LibrariesTest.Tests.Resources
             Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
         }
 
-        [TestMethod]
+        [Test]
         public void SetMetaTest()
         {
             var manager = new ResXResourceManager("UnknownBaseName");
@@ -212,7 +212,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(manager.GetMetaObject("StringValue", en));
         }
 
-        [TestMethod]
+        [Test]
         public void SetNullAndRemoveTest()
         {
             var manager = new ResXResourceManager("TestResourceResX");
@@ -243,7 +243,7 @@ namespace _LibrariesTest.Tests.Resources
         /// <summary>
         /// This method indirectly tests that ResX reader supports the different types of encodings/object links/etc.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void FormatsTest()
         {
             var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
@@ -258,14 +258,14 @@ namespace _LibrariesTest.Tests.Resources
             // icon by reference
             var reference = refManager.GetObject("TestIcon");
             var check = manager.GetObject("TestIcon");
-            Assert.IsInstanceOfType(reference, typeof(Icon));
+            Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // icon bmp by reference: system manager retrieves it as a png, while resx manager preserves its icon raw format
             reference = refManager.GetObject("TestIconBitmap");
             check = manager.GetObject("TestIconBitmap");
-            Assert.IsInstanceOfType(reference, typeof(Bitmap));
-            Assert.IsInstanceOfType(check, typeof(Bitmap));
+            Assert.IsInstanceOf<Bitmap>(reference);
+            Assert.IsInstanceOf<Bitmap>(check);
             Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
             Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
@@ -273,45 +273,45 @@ namespace _LibrariesTest.Tests.Resources
             // multi-res icon by reference
             reference = refManager.GetObject("TestIconMulti");
             check = manager.GetObject("TestIconMulti");
-            Assert.IsInstanceOfType(reference, typeof(Icon));
+            Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // multi-res icon bmp by reference
             reference = refManager.GetObject("TestIconMultiBitmap"); // single 32*32 png
             check = manager.GetObject("TestIconMultiBitmap"); // icon of 5 images
-            Assert.IsInstanceOfType(reference, typeof(Bitmap));
-            Assert.IsInstanceOfType(check, typeof(Bitmap));
+            Assert.IsInstanceOf<Bitmap>(reference);
+            Assert.IsInstanceOf<Bitmap>(check);
             Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
             Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid);
 
             // byte array by reference
             reference = refManager.GetObject("TestBinFile");
             check = manager.GetObject("TestBinFile");
-            Assert.IsInstanceOfType(reference, typeof(byte[]));
+            Assert.IsInstanceOf<byte[]>(reference);
             AssertDeepEquals(reference, check);
 
             // stream by reference
             reference = refManager.GetObject("TestSound");
             check = manager.GetObject("TestSound");
-            Assert.IsInstanceOfType(reference, typeof(MemoryStream));
+            Assert.IsInstanceOf<MemoryStream>(reference);
             AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 
             // point embedded by type converter
             reference = refManager.GetObject("TestPoint");
             check = manager.GetObject("TestPoint");
-            Assert.IsInstanceOfType(reference, typeof(Point));
+            Assert.IsInstanceOf<Point>(reference);
             Assert.AreEqual(reference, check);
 
             // bmp embedded as bytearray.base64 (created by a ctor from stream): they are visually equal, however different DPIs are stored
             reference = refManager.GetObject("TestImageEmbedded");
             check = manager.GetObject("TestImageEmbedded");
-            Assert.IsInstanceOfType(reference, typeof(Bitmap));
+            Assert.IsInstanceOf<Bitmap>(reference);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
             // any object embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestObjectEmbedded");
             check = manager.GetObject("TestObjectEmbedded");
-            Assert.IsInstanceOfType(reference, typeof(ImageListStreamer));
+            Assert.IsInstanceOf<ImageListStreamer>(reference);
             var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };
             var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
             for (int i = 0; i < il1.Images.Count; i++)
@@ -322,29 +322,29 @@ namespace _LibrariesTest.Tests.Resources
             // icon embedded as bytearray.base64 (created by a ctor from stream)
             reference = refManager.GetObject("TestIconEmbedded");
             check = manager.GetObject("TestIconEmbedded");
-            Assert.IsInstanceOfType(reference, typeof(Icon));
+            Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // stream embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestSoundEmbedded");
             check = manager.GetObject("TestSoundEmbedded");
-            Assert.IsInstanceOfType(reference, typeof(MemoryStream));
+            Assert.IsInstanceOf<MemoryStream>(reference);
             AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 
             // color embedded by type converter without <value> element
             reference = refManager.GetObject("TestColorWithoutValue");
             check = manager.GetObject("TestColorWithoutValue");
-            Assert.IsInstanceOfType(reference, typeof(Color));
+            Assert.IsInstanceOf<Color>(reference);
             Assert.AreEqual(reference, check);
 
             // color embedded by type converter with <value> element
             reference = refManager.GetObject("TestColorData");
             check = manager.GetObject("TestColorData");
-            Assert.IsInstanceOfType(reference, typeof(Color));
+            Assert.IsInstanceOf<Color>(reference);
             Assert.AreEqual(reference, check);
         }
 
-        [TestMethod]
+        [Test]
         public void GetResourceSetTest()
         {
             var refManager = CreateResourceManager("_LibrariesTest.Resources.TestResourceResX", enUS);
@@ -479,7 +479,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreEqual(sets, resourceSets.Count);
         }
 
-        [TestMethod]
+        [Test]
         public void IsModifiedTests()
         {
             var manager = new ResXResourceManager("TestResourceResX");
@@ -493,7 +493,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(manager.IsModified);
         }
 
-        [TestMethod]
+        [Test]
         public void SaveTest()
         {
             var manager = new ResXResourceManager("TestResourceResX");
@@ -506,12 +506,21 @@ namespace _LibrariesTest.Tests.Resources
             manager.GetResourceSet(inv, true, false);
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(false));
-            Assert.IsTrue(manager.SaveAllResources(true));
+            //Assert.IsTrue(manager.SaveAllResources(true, compatibleFormat: true)); // - was OK in MSTest as it supports deployment
+            manager.ReleaseAllResources();
+
+            // adding a new value to a non-existing resource
+            // it will be dirty and can be saved without forcing, then it is not dirty any more
+            manager.SetObject("new value en-GB", 42, enGB);
+            Assert.IsTrue(manager.IsModified);
+            Assert.IsTrue(manager.SaveAllResources(false));
+            Assert.IsFalse(manager.IsModified);
 
             // adding a new value: it will be dirty and saves without forcing, then it is not dirty any more
             manager.SetObject("new value inv", 42, inv);
             Assert.IsTrue(manager.IsModified);
-            Assert.IsTrue(manager.SaveAllResources(false));
+            //Assert.IsTrue(manager.SaveAllResources(false)); // - was OK in MSTest as it supports deployment
+            manager.GetExpandoResourceSet(inv, ResourceSetRetrieval.GetIfAlreadyLoaded).Save(new MemoryStream()); // in NUnit saving into memory so output folder will not change
             Assert.IsFalse(manager.IsModified);
 
             // adding something to a non-loaded resource: it loads the resource and makes it dirty
@@ -519,11 +528,15 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(manager.IsModified);
             Assert.IsNotNull(manager.GetResourceSet(enUS, false, false));
             Assert.IsFalse(manager.SaveResourceSet(inv));
-            Assert.IsTrue(manager.SaveResourceSet(enUS));
+            //Assert.IsTrue(manager.SaveResourceSet(enUS)); // - was OK in MSTest as it supports deployment
+            manager.GetExpandoResourceSet(enUS, ResourceSetRetrieval.GetIfAlreadyLoaded).Save(new MemoryStream()); // in NUnit saving into memory so output folder will not change
             Assert.IsFalse(manager.IsModified);
+
+            // removing added new files
+            Clean(manager, enGB);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationTest()
         {
             var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
@@ -551,7 +564,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(testRes, manager.GetString(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void DisposeTest()
         {
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
@@ -566,6 +579,11 @@ namespace _LibrariesTest.Tests.Resources
             var result = new ResourceManager(name, GetType().Assembly);
             Reflector.SetField(result, "_neutralResourcesCulture", neutralLang);
             return result;
+        }
+
+        private void Clean(ResXResourceManager manager, CultureInfo culture)
+        {
+            File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{manager.BaseName}.{culture.Name}.resx"));
         }
     }
 }

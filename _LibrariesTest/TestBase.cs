@@ -17,8 +17,8 @@ using KGySoft.Drawing;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using NUnit.Framework;
+using Assert = NUnit.Framework.Assert;
 using SystemFileRef = System.Resources.ResXFileRef;
 using SystemDataNode = System.Resources.ResXDataNode;
 
@@ -437,21 +437,25 @@ namespace _LibrariesTest
             return tiffImage;
         }
 
-        protected static void Throws<T>(Action action, string expectedMessageContent = null)
+        protected static void Throws<T>(TestDelegate action, string expectedMessageContent = null)
             where T : Exception
         {
-            try
-            {
-                action.Invoke();
-            }
-            catch (Exception e)
-            {
-                Assert.IsInstanceOfType(e, typeof(T));
-                Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
-                return;
-            }
+            var e = Assert.Throws<T>(action);
+            Assert.IsInstanceOf(typeof(T), e);
+            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
 
-            Assert.Fail("No exception was thrown");
+            //try
+            //{
+            //    action.Invoke();
+            //}
+            //catch (Exception e)
+            //{
+            //    Assert.IsInstanceOf(typeof(T), e);
+            //    Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
+            //    return;
+            //}
+
+            //Assert.Fail("No exception was thrown");
         }
 
         protected static void CheckTestingFramework()
@@ -485,10 +489,13 @@ namespace _LibrariesTest
         }
     }
 
-    [TestClass]
-    public class VersionCheck : TestBase
+    [TestFixture]
+    public class NetVersionCheck : TestBase
     {
-        [TestMethod]
-        public void CheckFrameworkVersion() => CheckTestingFramework();
+        [Test]
+        public void CheckFrameworkVersion()
+        {
+            CheckTestingFramework();
+        }
     }
 }

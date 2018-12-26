@@ -2,14 +2,14 @@
 using System.Globalization;
 using System.Threading;
 using KGySoft;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.CoreLibraries
 {
-    [TestClass]
+    [TestFixture]
     public class LanguageTest
     {
-        [TestMethod]
+        [Test]
         public void TestMethod()
         {
             int threadId = Thread.CurrentThread.ManagedThreadId;

@@ -1,22 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Resources;
 using KGySoft;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
-    [DeploymentItem("Resources", "Resources")]
-    [DeploymentItem("en", "en")]
-    [DeploymentItem("en-US", "en-US")]
+    [TestFixture]
+    //[DeploymentItem("Resources", "Resources")]
+    //[DeploymentItem("en", "en")]
+    //[DeploymentItem("en-US", "en-US")]
     public class HybridResourceManagerTest: TestBase
     {
+        private const string resXBaseName = "TestResourceResX";
+
         private static CultureInfo inv = CultureInfo.InvariantCulture;
 
         private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
@@ -26,10 +29,10 @@ namespace _LibrariesTest.Tests.Resources
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
 
-        [TestMethod]
+        [Test]
         public void GetStringTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
 
             // When a resource exists in both compiled and resx: resx is taken first
             var resName = "TestString";
@@ -86,10 +89,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(compiled);
         }
 
-        [TestMethod]
+        [Test]
         public void GetMetaStringTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             var resName = "TestString";
 
             manager.Source = ResourceManagerSources.CompiledAndResX;
@@ -125,10 +128,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(compiled);
         }
 
-        [TestMethod]
+        [Test]
         public void GetObjectTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
 
             // When a resource exists in both compiled and resx: resx is taken first
             var resName = "TestString";
@@ -206,10 +209,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreSame(hybrid, manager.GetObject(resName, inv)); // returned from cached non-proxy in resourceSets
         }
 
-        [TestMethod]
+        [Test]
         public void GetResourceSetTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
 
             // checking that invariant exists in all strategies and it has the correct type
             manager.Source = ResourceManagerSources.ResXOnly;
@@ -367,7 +370,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreSame(rsInv, rsHU);
         }
 
-        [TestMethod]
+        [Test]
         public void SetObjectTest()
         {
             LanguageSettings.DisplayLanguage = enUS;
@@ -406,7 +409,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(manager.GetString("StringValue"));
         }
 
-        [TestMethod]
+        [Test]
         public void SetMetaTest()
         {
             var manager = new HybridResourceManager(GetType());
@@ -437,10 +440,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(manager.GetMetaString("StringValue"));
         }
 
-        [TestMethod]
+        [Test]
         public void SetNullAndRemoveTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             var resName = "TestString";
             var resEnUs = manager.GetObject(resName, enUS);
 
@@ -451,7 +454,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(manager.GetResourceSet(inv, false, false));
 
             // enUS is hybrid
-            Assert.AreEqual("HybridResourceSet", rsEnUs.GetType().Name);
+            Assert.IsInstanceOf<HybridResourceSet>(rsEnUs);
 
             // if we nullify the resource, it will hide the compiled one and getting the enUS returns the base value from en
             manager.SetObject(resName, null, enUS);
@@ -463,8 +466,8 @@ namespace _LibrariesTest.Tests.Resources
             // but if we remove the resource, the compiled one will be visible
             manager.ReleaseAllResources();
             manager.RemoveObject(resName, enUS);
-            var rsEnUsCompiled = manager.GetObject(resName, enUS);
-            Assert.AreNotEqual(rsEnUs, rsEnUsCompiled);
+            var resEnUsCompiled = manager.GetObject(resName, enUS);
+            Assert.AreNotEqual(resEnUs, resEnUsCompiled);
 
             // it came from the enUS, too: after releasing all, only this has been loaded
             rsEnUs = manager.GetResourceSet(enUS, false, false);
@@ -474,10 +477,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(rsEnUs.GetObject(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void EnumeratorTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             var resName = "TestString";
 
             manager.Source = ResourceManagerSources.CompiledOnly;
@@ -527,10 +530,10 @@ namespace _LibrariesTest.Tests.Resources
             Throws<InvalidOperationException>(() => enumHybrid.MoveNext());
         }
 
-        [TestMethod]
+        [Test]
         public void SaveTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
 
             // empty manager: save all is false even if forcing
             Assert.IsFalse(manager.IsModified);
@@ -540,20 +543,23 @@ namespace _LibrariesTest.Tests.Resources
             manager.GetResourceSet(inv, true, false);
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(false));
-            Assert.IsTrue(manager.SaveAllResources(true));
+            //Assert.IsTrue(manager.SaveAllResources(true)); // - was OK in MSTest as it supports deployment
+            manager.ReleaseAllResources();
 
-            // adding a new value: it will be dirty and saves without forcing, then it is not dirty any more
-            manager.SetObject("new value inv", 42, inv);
+            // adding a new value to a non-existing resource
+            // it will be dirty and can be saved without forcing, then it is not dirty any more
+            manager.SetObject("new value en-GB", 42, enGB);
             Assert.IsTrue(manager.IsModified);
             Assert.IsTrue(manager.SaveAllResources(false));
             Assert.IsFalse(manager.IsModified);
 
-            // adding something to a non-loaded resource: it loads the resource and makes it dirty
+            // adding a new value: it will be dirty and saves without forcing, then it is not dirty any more
             manager.SetObject("new value", 42, enUS);
             Assert.IsTrue(manager.IsModified);
             Assert.IsNotNull(manager.GetResourceSet(enUS, false, false));
             Assert.IsFalse(manager.SaveResourceSet(inv));
-            Assert.IsTrue(manager.SaveResourceSet(enUS));
+            //Assert.IsTrue(manager.SaveResourceSet(enUS)); // - was OK in MSTest as it supports deployment
+            manager.GetExpandoResourceSet(enUS, ResourceSetRetrieval.GetIfAlreadyLoaded).Save(new MemoryStream()); // in NUnit saving into memory so output folder will not change
             Assert.IsFalse(manager.IsModified);
 
             // in compiled only mode save returns always false
@@ -565,14 +571,19 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsFalse(manager.SaveAllResources(true));
             manager.Source = ResourceManagerSources.ResXOnly;
             Assert.IsTrue(manager.IsModified);
-            Assert.IsTrue(manager.SaveResourceSet(inv));
+            //Assert.IsTrue(manager.SaveResourceSet(inv)); // - was OK in MSTest as it supports deployment
+            manager.GetExpandoResourceSet(inv, ResourceSetRetrieval.GetIfAlreadyLoaded).Save(new MemoryStream()); // in NUnit saving into memory so output folder will not change
+            Assert.IsFalse(manager.IsModified);
+
+            // removing added new files
+            Clean(manager, enGB);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationTest()
         {
             var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             var resName = "TestString";
 
             // serializing and de-serializing removes the unchanged resources
@@ -596,21 +607,26 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(testRes, manager.GetString(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void DisposeTest()
         {
-            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             manager.Dispose();
             Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
             Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
 
-            manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             manager.Source = ResourceManagerSources.CompiledOnly;
             manager.Dispose();
             Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
             Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
+        }
+
+        private void Clean(HybridResourceManager manager, CultureInfo culture)
+        {
+            File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{resXBaseName}.{culture.Name}.resx"));
         }
     }
 }

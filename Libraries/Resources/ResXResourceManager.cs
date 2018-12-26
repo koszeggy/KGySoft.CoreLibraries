@@ -1030,7 +1030,7 @@ namespace KGySoft.Resources
                         first = false;
                     }
 
-                    rs.Save(GetResourceFileName((string)enumerator.Key));
+                    rs.Save(GetResourceFileName((string)enumerator.Key), compatibleFormat);
                     result = true;
                 }
             }

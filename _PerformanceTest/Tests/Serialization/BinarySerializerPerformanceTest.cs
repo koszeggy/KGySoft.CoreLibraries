@@ -4,14 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Serialization
 {
     /// <summary>
     /// Summary description for BinarySerializerTest
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class BinarySerializerPerformanceTest
     {
         private static void DoTestBinarySerialize(object x)
@@ -53,7 +53,7 @@ namespace _PerformanceTest.Tests.Serialization
             Console.WriteLine("Size performance: {0:P2}", size1 / raw.Length);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializerTest()
         {
             //var x = new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }; // multidimensional byte array

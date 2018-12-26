@@ -4,16 +4,16 @@ using System.Diagnostics;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Collections
 {
-    [TestClass]
+    [TestFixture]
     public class CircularListPerformanceTest
     {
         const int capacity = 1000;
 
-        [TestMethod]
+        [Test]
         public void PopulateTest()
         {
             List<int> list = new List<int>();
@@ -166,7 +166,7 @@ namespace _PerformanceTest.Tests.Collections
             //insert range
         }
 
-        [TestMethod]
+        [Test]
         public void EnumeratingTest()
         {
             CircularList<int> clist = PrepareList<int>(capacity, 0, capacity);
@@ -307,7 +307,7 @@ namespace _PerformanceTest.Tests.Collections
             Console.WriteLine("Enumerating CircularList via indexer (wrapped): {0} ms", watch.ElapsedMilliseconds);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveTest()
         {
             CircularList<int> clist = PrepareList<int>(capacity, 0, capacity);
@@ -423,7 +423,7 @@ namespace _PerformanceTest.Tests.Collections
 
         private enum TestIntEnum { }
         private enum TestUIntEnum: uint { }
-        [TestMethod]
+        [Test]
         public void SearchTest()
         {
             CircularList<int> clist = PrepareList<int>(capacity, 0, capacity);

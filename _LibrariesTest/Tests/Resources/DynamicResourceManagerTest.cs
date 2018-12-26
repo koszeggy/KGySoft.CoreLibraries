@@ -10,24 +10,26 @@ using KGySoft;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
     /// <summary>
     /// Test of <see cref="DynamicResourceManager"/> class.
     /// </summary>
-    [TestClass]
-    [DeploymentItem("Resources", "Resources")]
-    [DeploymentItem("en", "en")]
-    [DeploymentItem("en-US", "en-US")]
+    [TestFixture]
+    //[DeploymentItem("Resources", "Resources")]
+    //[DeploymentItem("en", "en")]
+    //[DeploymentItem("en-US", "en-US")]
     public class DynamicResourceManagerTest: TestBase
     {
+        private const string resXBaseName = "TestResourceResX";
+
         private class RemoteDrmConsumer : MarshalByRefObject
         {
             internal void UseDrmRemotely(bool useLanguageSettings, CultureInfo testCulture)
             {
-                var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+                var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
                 {
                     AutoAppend = AutoAppendOptions.None,
                     UseLanguageSettings = useLanguageSettings,
@@ -56,15 +58,15 @@ namespace _LibrariesTest.Tests.Resources
 
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
-        private static CultureInfo huRunic; // hu-Runic: neutral under hu
-        private static CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
-        private static CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU
+        private CultureInfo huRunic; // hu-Runic: neutral under hu
+        private CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
+        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU
 
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
-        [ClassInitialize]
-        public static void CreateCustomCultures(TestContext context)
+        [OneTimeSetUp]
+        public void CreateCustomCultures()
         {
             CultureAndRegionInfoBuilder cibHuRunic = new CultureAndRegionInfoBuilder("hu-Runic", CultureAndRegionModifiers.Neutral);
             cibHuRunic.LoadDataFromCultureInfo(hu);
@@ -124,15 +126,22 @@ namespace _LibrariesTest.Tests.Resources
             huRunicHULowland = CultureInfo.GetCultureInfo("hu-Runic-HU-lowland");
         }
 
-        [ClassCleanup]
-        public static void RemoveCustomCultures()
+        [OneTimeTearDown]
+        public void RemoveCustomCultures()
         {
             CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
             CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
             CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
         }
 
-        [TestMethod]
+        [SetUp]
+        [TearDown]
+        public void Cleanup()
+        {
+
+        }
+
+        [Test]
         public void GetUnknownTest()
         {
             // This is a non-existing resource so MissingManifestResourceException should be thrown by default
@@ -200,10 +209,10 @@ namespace _LibrariesTest.Tests.Resources
             Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeNeutralTest()
         {
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastNeutralCulture
@@ -234,10 +243,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeNeutralOnLoadTest()
         {
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastNeutralCulture | AutoAppendOptions.AppendOnLoad
@@ -285,10 +294,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeSpecificTest()
         {
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastSpecificCulture
@@ -313,10 +322,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(custom, manager.GetString(key, huRunicHULowland));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeSpecificOnLoadTest()
         {
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastSpecificCulture | AutoAppendOptions.AppendOnLoad
@@ -358,11 +367,11 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotSame(rshuRunicHu, rshuRunicHULowland);
         }
 
-        [TestMethod]
+        [Test]
         public void NonContinguousProxyTest()
         {
             // now it is like HRM
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.None
@@ -434,13 +443,13 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(rshu.ContainsResource(key));
         }
 
-        [TestMethod]
+        [Test]
         public void AutoSaveTest()
         {
             LanguageSettings.DynamicResourceManagersAutoAppend = AutoAppendOptions.None;
             string key = "testKey";
             string value = "test value";
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoAppend = AutoAppendOptions.None,
             };
@@ -542,12 +551,12 @@ namespace _LibrariesTest.Tests.Resources
             manager.SetObject(key, value, testCulture);
             manager.Dispose(); // save occurs
             Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
-            Assert.IsTrue(File.Exists("Resources\\TestResourceResX.de.resx"));
+            Assert.IsTrue(File.Exists(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, "TestResourceResX.de.resx")));
 
             // Dispose, central
             LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
             LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.Dispose;
-            manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 UseLanguageSettings = true
             };
@@ -557,24 +566,17 @@ namespace _LibrariesTest.Tests.Resources
             LanguageSettings.DisplayLanguage = inv; // save occurs
             manager.Dispose(); // save occurs
             Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
-            Assert.IsTrue(File.Exists("Resources\\TestResourceResX.de-DE.resx"));
+            Assert.IsTrue(File.Exists(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, "TestResourceResX.de-DE.resx")));
 
             // cleaning up the newly created resources
-            File.Delete("Resources\\TestResourceResX.hu.resx");
-            File.Delete("Resources\\TestResourceResX.hu-HU.resx");
-            File.Delete("Resources\\TestResourceResX.hu-Runic.resx");
-            File.Delete("Resources\\TestResourceResX.hu-Runic-HU.resx");
-            File.Delete("Resources\\TestResourceResX.hu-Runic-HU-Lowland.resx");
-            File.Delete("Resources\\TestResourceResX.en-GB.resx");
-            File.Delete("Resources\\TestResourceResX.de.resx");
-            File.Delete("Resources\\TestResourceResX.de-DE.resx");
+            Clean(manager, hu, huHU, huRunic, huRunicHU, huRunicHULowland, enGB, de, deDE);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationTest()
         {
             var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoAppend = AutoAppendOptions.None,
                 AutoSave = AutoSaveOptions.None
@@ -603,10 +605,10 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(testRes, manager.GetString(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void DisposeTest()
         {
-            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
+            var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None
             };
@@ -615,7 +617,7 @@ namespace _LibrariesTest.Tests.Resources
             Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
 
-            manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
+            manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
             manager.Source = ResourceManagerSources.CompiledOnly;
             manager.Dispose();
             Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
@@ -623,5 +625,10 @@ namespace _LibrariesTest.Tests.Resources
             manager.Dispose(); // this will not throw anything
         }
 
+        private void Clean(DynamicResourceManager manager, params CultureInfo[] cultures)
+        {
+            foreach (CultureInfo culture in cultures)
+                File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{resXBaseName}.{culture.Name}.resx"));
+        }
     }
 }
