@@ -506,12 +506,21 @@ namespace _LibrariesTest.Tests.Resources
             manager.GetResourceSet(inv, true, false);
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(false));
-            Assert.IsTrue(manager.SaveAllResources(true));
+            //Assert.IsTrue(manager.SaveAllResources(true, compatibleFormat: true)); // - was OK in MSTest as it supports deployment
+            manager.ReleaseAllResources();
+
+            // adding a new value to a non-existing resource
+            // it will be dirty and can be saved without forcing, then it is not dirty any more
+            manager.SetObject("new value en-GB", 42, enGB);
+            Assert.IsTrue(manager.IsModified);
+            Assert.IsTrue(manager.SaveAllResources(false));
+            Assert.IsFalse(manager.IsModified);
 
             // adding a new value: it will be dirty and saves without forcing, then it is not dirty any more
             manager.SetObject("new value inv", 42, inv);
             Assert.IsTrue(manager.IsModified);
-            Assert.IsTrue(manager.SaveAllResources(false));
+            //Assert.IsTrue(manager.SaveAllResources(false)); // - was OK in MSTest as it supports deployment
+            manager.GetExpandoResourceSet(inv, ResourceSetRetrieval.GetIfAlreadyLoaded).Save(new MemoryStream()); // in NUnit saving into memory so output folder will not change
             Assert.IsFalse(manager.IsModified);
 
             // adding something to a non-loaded resource: it loads the resource and makes it dirty
@@ -519,8 +528,12 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(manager.IsModified);
             Assert.IsNotNull(manager.GetResourceSet(enUS, false, false));
             Assert.IsFalse(manager.SaveResourceSet(inv));
-            Assert.IsTrue(manager.SaveResourceSet(enUS));
+            //Assert.IsTrue(manager.SaveResourceSet(enUS)); // - was OK in MSTest as it supports deployment
+            manager.GetExpandoResourceSet(enUS, ResourceSetRetrieval.GetIfAlreadyLoaded).Save(new MemoryStream()); // in NUnit saving into memory so output folder will not change
             Assert.IsFalse(manager.IsModified);
+
+            // removing added new files
+            Clean(manager, enGB);
         }
 
         [Test]
@@ -566,6 +579,11 @@ namespace _LibrariesTest.Tests.Resources
             var result = new ResourceManager(name, GetType().Assembly);
             Reflector.SetField(result, "_neutralResourcesCulture", neutralLang);
             return result;
+        }
+
+        private void Clean(ResXResourceManager manager, CultureInfo culture)
+        {
+            File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{manager.BaseName}.{culture.Name}.resx"));
         }
     }
 }

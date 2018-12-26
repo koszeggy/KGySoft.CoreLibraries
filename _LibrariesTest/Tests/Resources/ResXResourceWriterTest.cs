@@ -17,6 +17,7 @@ using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 using SystemResXResourceReader = System.Resources.ResXResourceReader;
 
@@ -631,43 +632,46 @@ namespace _LibrariesTest.Tests.Resources
 
         private void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
         {
-            Console.WriteLine("------------------System ResXResourceWriter (Items Count: {0})--------------------", referenceObjects.Length);
-            try
+            using (new TestExecutionContext.IsolatedContext())
             {
-                StringBuilder sb = new StringBuilder();
-                using (SystemResXResourceWriter writer =
+                Console.WriteLine("------------------System ResXResourceWriter (Items Count: {0})--------------------", referenceObjects.Length);
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+                    using (SystemResXResourceWriter writer =
 #if NET35
                     new SystemResXResourceWriter(new StringWriter(sb))
 
 #elif NET40 || NET45
-                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
+                            new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
 #else
 #error Unsupported .NET version
 #endif
-                )
-                {
-                    int i = 0;
-                    foreach (object item in referenceObjects)
+                    )
                     {
-                        writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
+                        int i = 0;
+                        foreach (object item in referenceObjects)
+                        {
+                            writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
+                        }
                     }
-                }
 
-                Console.WriteLine(sb.ToString());
-                List<object> deserializedObjects = new List<object>();
-                using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
-                {
-                    foreach (DictionaryEntry item in reader)
+                    Console.WriteLine(sb.ToString());
+                    List<object> deserializedObjects = new List<object>();
+                    using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
                     {
-                        deserializedObjects.Add(item.Value);
+                        foreach (DictionaryEntry item in reader)
+                        {
+                            deserializedObjects.Add(item.Value);
+                        }
                     }
-                }
 
-                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("System serialization failed: {0}", e);
+                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("System serialization failed: {0}", e);
+                }
             }
         }
 

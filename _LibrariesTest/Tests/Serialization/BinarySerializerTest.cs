@@ -18,6 +18,7 @@ using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace _LibrariesTest.Tests.Serialization
 {
@@ -2552,77 +2553,86 @@ namespace _LibrariesTest.Tests.Serialization
 
         private void SystemSerializeObject(object obj, bool safeCompare = false)
         {
-            Type type = obj.GetType();
-            Console.WriteLine("------------------System BinaryFormatter ({0})--------------------", type);
-            try
+            using (new TestExecutionContext.IsolatedContext())
             {
-                BinaryFormatter bf = new BinaryFormatter();
-                MemoryStream ms = new MemoryStream();
-                bf.Serialize(ms, obj);
-
-                Console.WriteLine("Length: {0}", ms.Length);
-                if (dumpSerContent)
-                    Console.WriteLine(ToRawString(ms.ToArray()));
-
-                ms.Seek(0, SeekOrigin.Begin);
-                object deserializedObject = bf.Deserialize(ms);
-                if (!safeCompare)
-                    AssertDeepEquals(obj, deserializedObject);
-                else
+                Type type = obj.GetType();
+                Console.WriteLine("------------------System BinaryFormatter ({0})--------------------", type);
+                try
                 {
-                    MemoryStream ms2 = new MemoryStream();
-                    bf.Serialize(ms2, deserializedObject);
-                    AssertDeepEquals(ms.ToArray(), ms2.ToArray());
+                    BinaryFormatter bf = new BinaryFormatter();
+                    MemoryStream ms = new MemoryStream();
+                    bf.Serialize(ms, obj);
+
+                    Console.WriteLine("Length: {0}", ms.Length);
+                    if (dumpSerContent)
+                        Console.WriteLine(ToRawString(ms.ToArray()));
+
+                    ms.Seek(0, SeekOrigin.Begin);
+                    object deserializedObject = bf.Deserialize(ms);
+                    if (!safeCompare)
+                        AssertDeepEquals(obj, deserializedObject);
+                    else
+                    {
+                        MemoryStream ms2 = new MemoryStream();
+                        bf.Serialize(ms2, deserializedObject);
+                        AssertDeepEquals(ms.ToArray(), ms2.ToArray());
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("System serialization failed: {0}", e);
+                catch (Exception e)
+                {
+                    Console.WriteLine("System serialization failed: {0}", e);
+                }
             }
         }
 
         private void SystemSerializeObjects(object[] referenceObjects, bool safeCompare = false)
         {
-            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
-            try
+            using (new TestExecutionContext.IsolatedContext())
             {
-                List<object> deserializedObjects = new List<object>();
-                BinaryFormatter bf = new BinaryFormatter();
-                MemoryStream ms = new MemoryStream();
-                foreach (object item in referenceObjects)
+                Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
+                try
                 {
-                    if (item == null)
-                    {
-                        Console.WriteLine("Skipping null");
-                        deserializedObjects.Add(null);
-                        continue;
-                    }
-                    long pos = ms.Position;
-                    bf.Serialize(ms, item);
-                    Console.WriteLine("{0} - length: {1}", item.GetType(), ms.Length - pos);
-                    ms.Seek(pos, SeekOrigin.Begin);
-                    deserializedObjects.Add(bf.Deserialize(ms));
-                }
-                Console.WriteLine("Full length: {0}", ms.Length);
-                if (dumpSerContent)
-                    Console.WriteLine(ToRawString(ms.ToArray()));
-                if (!safeCompare)
-                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-                else
-                {
-                    MemoryStream ms2 = new MemoryStream();
-                    foreach (object item in deserializedObjects)
+                    List<object> deserializedObjects = new List<object>();
+                    BinaryFormatter bf = new BinaryFormatter();
+                    MemoryStream ms = new MemoryStream();
+                    foreach (object item in referenceObjects)
                     {
                         if (item == null)
+                        {
+                            Console.WriteLine("Skipping null");
+                            deserializedObjects.Add(null);
                             continue;
-                        bf.Serialize(ms2, item);
+                        }
+
+                        long pos = ms.Position;
+                        bf.Serialize(ms, item);
+                        Console.WriteLine("{0} - length: {1}", item.GetType(), ms.Length - pos);
+                        ms.Seek(pos, SeekOrigin.Begin);
+                        deserializedObjects.Add(bf.Deserialize(ms));
                     }
-                    AssertDeepEquals(ms.ToArray(), ms2.ToArray());
+
+                    Console.WriteLine("Full length: {0}", ms.Length);
+                    if (dumpSerContent)
+                        Console.WriteLine(ToRawString(ms.ToArray()));
+                    if (!safeCompare)
+                        AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+                    else
+                    {
+                        MemoryStream ms2 = new MemoryStream();
+                        foreach (object item in deserializedObjects)
+                        {
+                            if (item == null)
+                                continue;
+                            bf.Serialize(ms2, item);
+                        }
+
+                        AssertDeepEquals(ms.ToArray(), ms2.ToArray());
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("System serialization failed: {0}", e);
+                catch (Exception e)
+                {
+                    Console.WriteLine("System serialization failed: {0}", e);
+                }
             }
         }
 

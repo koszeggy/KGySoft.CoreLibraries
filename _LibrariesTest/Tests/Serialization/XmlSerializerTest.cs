@@ -23,6 +23,7 @@ using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using KGyXmlSerializer = KGySoft.Serialization.XmlSerializer;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
@@ -1686,57 +1687,65 @@ namespace _LibrariesTest.Tests.Serialization
 
         private void SystemSerializeObject(object obj)
         {
-            Type type = obj.GetType();
-            Console.WriteLine("------------------System XmlSerializer ({0})--------------------", type);
-            try
+            using (new TestExecutionContext.IsolatedContext())
             {
-                SystemXmlSerializer serializer = new SystemXmlSerializer(type);
-                StringBuilder sb = new StringBuilder();
-                using (StringWriter sw = new StringWriter(sb))
+                Type type = obj.GetType();
+                Console.WriteLine("------------------System XmlSerializer ({0})--------------------", type);
+                try
                 {
-                    serializer.Serialize(sw, obj);
+                    SystemXmlSerializer serializer = new SystemXmlSerializer(type);
+                    StringBuilder sb = new StringBuilder();
+                    using (StringWriter sw = new StringWriter(sb))
+                    {
+                        serializer.Serialize(sw, obj);
+                    }
+
+                    Console.WriteLine(sb);
+                    object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
+                    AssertDeepEquals(obj, deserializedObject);
                 }
-                Console.WriteLine(sb);
-                object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
-                AssertDeepEquals(obj, deserializedObject);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("System serialization failed: {0}", e);
+                catch (Exception e)
+                {
+                    Console.WriteLine("System serialization failed: {0}", e);
+                }
             }
         }
 
         private void SystemSerializeObjects(object[] referenceObjects)
         {
-            Console.WriteLine("------------------System XmlSerializer (Items Count: {0})--------------------", referenceObjects.Length);
-            try
+            using (new TestExecutionContext.IsolatedContext())
             {
-                List<object> deserializedObjects = new List<object>();
-                foreach (object item in referenceObjects)
+                Console.WriteLine("------------------System XmlSerializer (Items Count: {0})--------------------", referenceObjects.Length);
+                try
                 {
-                    if (item == null)
+                    List<object> deserializedObjects = new List<object>();
+                    foreach (object item in referenceObjects)
                     {
-                        Console.WriteLine("Skipping null");
-                        deserializedObjects.Add(null);
-                        continue;
+                        if (item == null)
+                        {
+                            Console.WriteLine("Skipping null");
+                            deserializedObjects.Add(null);
+                            continue;
+                        }
+
+                        SystemXmlSerializer serializer = new SystemXmlSerializer(item.GetType());
+                        StringBuilder sb = new StringBuilder();
+                        using (StringWriter sw = new StringWriter(sb))
+                        {
+                            serializer.Serialize(sw, item);
+                        }
+
+                        Console.WriteLine(sb);
+                        Console.WriteLine();
+                        deserializedObjects.Add(serializer.Deserialize(new StringReader(sb.ToString())));
                     }
 
-                    SystemXmlSerializer serializer = new SystemXmlSerializer(item.GetType());
-                    StringBuilder sb = new StringBuilder();
-                    using (StringWriter sw = new StringWriter(sb))
-                    {
-                        serializer.Serialize(sw, item);
-                    }
-
-                    Console.WriteLine(sb);
-                    Console.WriteLine();
-                    deserializedObjects.Add(serializer.Deserialize(new StringReader(sb.ToString())));
+                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
                 }
-                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("System serialization failed: {0}", e);
+                catch (Exception e)
+                {
+                    Console.WriteLine("System serialization failed: {0}", e);
+                }
             }
         }
 
