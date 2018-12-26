@@ -22,7 +22,7 @@ using KGySoft.ComponentModel;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using KGyXmlSerializer = KGySoft.Serialization.XmlSerializer;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
@@ -31,7 +31,7 @@ namespace _LibrariesTest.Tests.Serialization
     /// <summary>
     /// Test for XmlSerializer
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class XmlSerializerTest: TestBase
     {
         // ReSharper disable CoVariantArrayConversion
@@ -630,7 +630,7 @@ namespace _LibrariesTest.Tests.Serialization
 
         #region Test Methods
 
-        [TestMethod]
+        [Test]
         public void SerializeNativelySupportedTypes()
         {
             object[] referenceObjects =
@@ -678,7 +678,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeFloats()
         {
             object[] referenceObjects = 
@@ -714,7 +714,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeChars()
         {
             object[] referenceObjects = 
@@ -749,7 +749,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeStrings()
         {
             string[] referenceObjects = 
@@ -798,7 +798,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeTypes()
         {
             Type[] referenceObjects = 
@@ -826,7 +826,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeByTypeConverter()
         {
             typeof(Version).RegisterTypeConverter<VersionConverter>();
@@ -869,7 +869,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeEnums()
         {
             Enum[] referenceObjects = 
@@ -885,7 +885,7 @@ namespace _LibrariesTest.Tests.Serialization
 
                 HandleInheritability.Inheritable, // System.Core enum
 
-                DataAccessMethod.Random, // Microsoft.VisualStudio.QualityTools.UnitTestFramework enum
+                ActionTargets.Default, // NUnit.Framework enum
 
                 BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
                 BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
@@ -908,7 +908,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeKeyValues()
         {
             ValueType[] referenceObjects =
@@ -939,7 +939,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeComplexTypes()
         {
             object[] referenceObjects =
@@ -971,7 +971,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute); // every element
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeByteArrays()
         {
             IList[] referenceObjects = 
@@ -1028,7 +1028,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// String has variable length and can be null.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeStringArrays()
         {
             IList[] referenceObjects = 
@@ -1059,7 +1059,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSimpleArrays()
         {
             typeof(Version).RegisterTypeConverter<VersionConverter>();
@@ -1116,7 +1116,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Enum types must be described explicitly
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeEnumArrays()
         {
             object[] referenceObjects = 
@@ -1144,7 +1144,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeNullableArrays()
         {
             IList[] referenceObjects = 
@@ -1229,7 +1229,7 @@ namespace _LibrariesTest.Tests.Serialization
         }
 
 
-        [TestMethod]
+        [Test]
         public void IXmlSerializableTest()
         {
             object[] referenceObjects =
@@ -1253,7 +1253,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
         }
 
-        [TestMethod]
+        [Test]
         public void IXmlSerializableCollectionsTest()
         {
             IList<XmlSerializableClass>[] referenceObjects =
@@ -1272,7 +1272,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Arrays of complex types
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeComplexArrays()
         {
             IList[] referenceObjects =
@@ -1331,7 +1331,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Simple generic collections
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeSimpleGenericCollections()
         {
             IEnumerable[] referenceObjects =
@@ -1432,7 +1432,7 @@ namespace _LibrariesTest.Tests.Serialization
 #endif
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeObjectsWithReadonlyProperties()
         {
             object[] referenceObjects =
@@ -1476,7 +1476,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeObjectsWithMemberNameCollision()
         {
             ConflictNameBase[] referenceObjects =
@@ -1503,7 +1503,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.ExcludeFields); // ConflictingCollection
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeBinaryTypeConverterProperties()
         {
             object[] referenceObjects =
@@ -1515,7 +1515,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeFields()
         {
             object[] referenceObjects =
@@ -1529,13 +1529,13 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            Throws<AssertFailedException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type System.Int32: 13 <-> 0");
+            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type System.Int32: 13 <-> 0");
         }
 
         /// <summary>
         /// Simple non-generic collections
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeSimpleNonGenericCollections()
         {
             IEnumerable[] referenceObjects =
@@ -1588,7 +1588,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Complex generic collections
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeComplexGenericCollections()
         {
             typeof(Version).RegisterTypeConverter<VersionConverter>();
@@ -1636,7 +1636,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Custom collections
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeCustomCollections()
         {
             ICollection[] referenceObjects =
@@ -1654,7 +1654,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
         }
 
-        [TestMethod]
+        [Test]
         public void FullExtraComponentSerializationTest()
         {
             FullExtraComponent[] referenceObjects =

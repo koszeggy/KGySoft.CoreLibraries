@@ -10,17 +10,17 @@ using KGySoft;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
     /// <summary>
     /// Test of <see cref="DynamicResourceManager"/> class.
     /// </summary>
-    [TestClass]
-    [DeploymentItem("Resources", "Resources")]
-    [DeploymentItem("en", "en")]
-    [DeploymentItem("en-US", "en-US")]
+    [TestFixture]
+    //[DeploymentItem("Resources", "Resources")]
+    //[DeploymentItem("en", "en")]
+    //[DeploymentItem("en-US", "en-US")]
     public class DynamicResourceManagerTest: TestBase
     {
         private class RemoteDrmConsumer : MarshalByRefObject
@@ -56,15 +56,15 @@ namespace _LibrariesTest.Tests.Resources
 
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
-        private static CultureInfo huRunic; // hu-Runic: neutral under hu
-        private static CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
-        private static CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU
+        private CultureInfo huRunic; // hu-Runic: neutral under hu
+        private CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
+        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU
 
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
-        [ClassInitialize]
-        public static void CreateCustomCultures(TestContext context)
+        [OneTimeSetUp]
+        public void CreateCustomCultures()
         {
             CultureAndRegionInfoBuilder cibHuRunic = new CultureAndRegionInfoBuilder("hu-Runic", CultureAndRegionModifiers.Neutral);
             cibHuRunic.LoadDataFromCultureInfo(hu);
@@ -124,15 +124,15 @@ namespace _LibrariesTest.Tests.Resources
             huRunicHULowland = CultureInfo.GetCultureInfo("hu-Runic-HU-lowland");
         }
 
-        [ClassCleanup]
-        public static void RemoveCustomCultures()
+        [OneTimeTearDown]
+        public void RemoveCustomCultures()
         {
             CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
             CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
             CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
         }
 
-        [TestMethod]
+        [Test]
         public void GetUnknownTest()
         {
             // This is a non-existing resource so MissingManifestResourceException should be thrown by default
@@ -200,7 +200,7 @@ namespace _LibrariesTest.Tests.Resources
             Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeNeutralTest()
         {
             var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
@@ -234,7 +234,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeNeutralOnLoadTest()
         {
             var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
@@ -285,7 +285,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeSpecificTest()
         {
             var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
@@ -313,7 +313,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(custom, manager.GetString(key, huRunicHULowland));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeSpecificOnLoadTest()
         {
             var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")
@@ -358,7 +358,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotSame(rshuRunicHu, rshuRunicHULowland);
         }
 
-        [TestMethod]
+        [Test]
         public void NonContinguousProxyTest()
         {
             // now it is like HRM
@@ -434,7 +434,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(rshu.ContainsResource(key));
         }
 
-        [TestMethod]
+        [Test]
         public void AutoSaveTest()
         {
             LanguageSettings.DynamicResourceManagersAutoAppend = AutoAppendOptions.None;
@@ -570,7 +570,7 @@ namespace _LibrariesTest.Tests.Resources
             File.Delete("Resources\\TestResourceResX.de-DE.resx");
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationTest()
         {
             var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
@@ -603,7 +603,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(testRes, manager.GetString(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void DisposeTest()
         {
             var manager = new DynamicResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX")

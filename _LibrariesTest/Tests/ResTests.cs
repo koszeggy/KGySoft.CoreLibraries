@@ -9,36 +9,36 @@ using KGySoft;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests
 {
-    [TestClass]
+    [TestFixture]
     public class ResTests
     {
         private const string unavailableResourcePrefix = "Resource ID not found";
         private const string invalidResourcePrefix = "Resource text is not valid";
         private static readonly Random random = new Random();
 
-        [ClassInitialize]
-        public static void Initialize(TestContext context)
+        [OneTimeSetUp]
+        public void Initialize()
         {
             LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
         }
 
-        [TestMethod]
+        [Test]
         public void TestUnknownResource()
         {
             Assert.IsTrue(Reflector.RunMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void TestInvalidResource()
         {
             Assert.IsTrue(Reflector.RunMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", new object[0]).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void TestResources()
         {
             var obtainedMembers = new HashSet<string>();

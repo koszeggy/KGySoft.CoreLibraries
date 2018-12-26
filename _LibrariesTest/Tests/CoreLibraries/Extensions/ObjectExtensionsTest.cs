@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.CoreLibraries.Extensions
 {
-    [TestClass]
+    [TestFixture]
     public class ObjectExtensionsTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void ConvertTest()
         {
             void Test<TTarget>(object source, TTarget expectedResult)

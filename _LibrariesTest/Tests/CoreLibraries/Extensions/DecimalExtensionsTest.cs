@@ -1,17 +1,17 @@
 ﻿using System;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.CoreLibraries.Extensions
 {
-    [TestClass]
+    [TestFixture]
     public class DecimalExtensionsTest : TestBase
     {
         private static readonly decimal decimalEpsilon = new decimal(1, 0, 0, false, 28);
         private static readonly double diffTolerance = 1E-10d;
 
-        [TestMethod]
+        [Test]
         public void LogETest()
         {
             TestLogE(1);
@@ -25,7 +25,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             TestLogE(DecimalExtensions.PI);
         }
 
-        [TestMethod]
+        [Test]
         public void Log10Test()
         {
             TestLog10(1);
@@ -39,16 +39,16 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             TestLog10(DecimalExtensions.PI);
         }
 
-        [TestMethod]
+        [Test]
         public void Log2Test() => LogTest(2);
 
-        [TestMethod]
+        [Test]
         public void Log3Test() => LogTest(3);
 
-        [TestMethod]
+        [Test]
         public void Log16Test() => LogTest(16);
 
-        [TestMethod]
+        [Test]
         public void PowETest()
         {
             TestPowE(0);
@@ -68,25 +68,25 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Throws<OverflowException>(() => TestPowE(66.6m));
         }
 
-        [TestMethod]
+        [Test]
         public void Pow05Test() => PowTest(0.5m);
 
-        [TestMethod]
+        [Test]
         public void Pow_05Test() => PowTest(-0.5m);
 
-        [TestMethod]
+        [Test]
         public void Pow2Test() => PowTest(2);
 
-        [TestMethod]
+        [Test]
         public void Pow_2Test() => PowTest(-2);
 
-        [TestMethod]
+        [Test]
         public void Pow3Test() => PowTest(3);
 
-        [TestMethod]
+        [Test]
         public void Pow10Test() => PowTest(10);
 
-        [TestMethod]
+        [Test]
         public void Pow16Test() => PowTest(16);
 
         private void LogTest(decimal @base)
@@ -153,9 +153,9 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             {
                 Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                 if (value < 0 && power != Math.Round(power))
-                    Assert.IsInstanceOfType(e, typeof(ArgumentOutOfRangeException));
+                    Assert.IsInstanceOf(typeof(ArgumentOutOfRangeException), e);
                 else if (doubleResult > (double)decimal.MaxValue || doubleResult < (double)decimal.MinValue)
-                    Assert.IsInstanceOfType(e, typeof(OverflowException));
+                    Assert.IsInstanceOf(typeof(OverflowException), e);
                 else
                     throw;
             }

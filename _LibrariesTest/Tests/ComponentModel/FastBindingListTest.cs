@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using KGySoft;
 using KGySoft.ComponentModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.ComponentModel
 {
-    [TestClass]
+    [TestFixture]
     public class FastBindingListTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void AllowNewDefault()
         {
             Assert.IsTrue(new FastBindingList<int>().AllowNew);
@@ -18,7 +18,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             Assert.IsFalse(new FastBindingList<string>().AllowNew);
         }
 
-        [TestMethod]
+        [Test]
         public void Find()
         {
             var coll = new FastBindingList<KeyValuePair<int, string>> { new KeyValuePair<int, string>(1, "1"), new KeyValuePair<int, string>(2, "2") };

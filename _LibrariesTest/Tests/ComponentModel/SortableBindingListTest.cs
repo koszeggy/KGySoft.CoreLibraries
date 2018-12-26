@@ -7,14 +7,14 @@ using KGySoft;
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.ComponentModel
 {
-    [TestClass]
+    [TestFixture]
     public class SortableBindingListTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void AddExplicit()
         {
             var coll = new SortableBindingList<int>();
@@ -44,7 +44,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             AssertSorted(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void SetExplicit()
         {
             var coll = new SortableBindingList<int>(new[] { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
@@ -68,7 +68,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             AssertSorted(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveExplicit()
         {
             var coll = new SortableBindingList<int>(new List<int> { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
@@ -79,7 +79,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void AddInner()
         {
             var inner = new List<string>();
@@ -92,7 +92,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             // causing inconsistency
             inner.Add("a");
             inner.RemoveAt(0); // making sure inner length does not change; otherwise, inconsistency is detected and fixed in Assert
-            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            Throws<AssertionException>(() => AssertConsistency(coll));
             coll.CheckConsistency = true;
 
             // inconsistency detected and fixed on next insert
@@ -100,7 +100,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void SetInner()
         {
             var inner = new List<string> { "1", "2", "3", "2", "1" };
@@ -109,7 +109,7 @@ namespace _LibrariesTest.Tests.ComponentModel
 
             // causing inconsistency
             inner[2] = null;
-            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            Throws<AssertionException>(() => AssertConsistency(coll));
 
             // inconsistency detected and fixed on next set
             coll.CheckConsistency = true;
@@ -117,7 +117,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveInner()
         {
             var inner = new List<string> { "1", "2", "3", "2", "1" };
@@ -127,7 +127,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             // causing inconsistency
             inner.RemoveAt(2);
             inner.Add("a"); // making sure inner length does not change; otherwise, inconsistency is detected and fixed in Assert
-            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            Throws<AssertionException>(() => AssertConsistency(coll));
 
             // inconsistency detected and fixed on next remove
             coll.CheckConsistency = true;
@@ -135,7 +135,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void Find()
         {
             var coll = new SortableBindingList<KeyValuePair<int, string>> { new KeyValuePair<int, string>(1, "1"), new KeyValuePair<int, string>(2, "2") };

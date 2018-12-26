@@ -16,13 +16,13 @@ using KGySoft.Drawing;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 using SystemResXResourceReader = System.Resources.ResXResourceReader;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
+    [TestFixture]
     public class ResXResourceWriterTest : TestBase
     {
         private class ByteListConverter : TypeConverter
@@ -98,7 +98,7 @@ namespace _LibrariesTest.Tests.Resources
             }
         }
 
-        [TestMethod]
+        [Test]
         public void ReadWriteRead()
         {
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestRes.resx");
@@ -113,7 +113,7 @@ namespace _LibrariesTest.Tests.Resources
             ReadWriteReadResX(path, true, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializePrimitiveTypes()
         {
             object[] referenceObjects =
@@ -146,7 +146,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeEnums()
         {
             Enum[] referenceObjects =
@@ -159,7 +159,7 @@ namespace _LibrariesTest.Tests.Resources
 
                 HandleInheritability.Inheritable, // System.Core enum
 
-                DataAccessMethod.Random, // Microsoft.VisualStudio.QualityTools.UnitTestFramework enum
+                ActionTargets.Default, // NUnit.Framework enum
 
                 BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
                 BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
@@ -173,7 +173,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeFloatingPointNumbers()
         {
             object[] referenceObjects =
@@ -208,7 +208,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeDateAndTime()
         {
             // DateTime(Offset): utc/local, min/max
@@ -229,7 +229,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, true, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeChars()
         {
             object[] referenceObjects =
@@ -270,7 +270,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeStrings()
         {
             string[] referenceObjects =
@@ -315,7 +315,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeTypes()
         {
             Type[] referenceObjects =
@@ -341,7 +341,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeByTypeConverter()
         {
             typeof(Version).RegisterTypeConverter<VersionConverter>();
@@ -384,7 +384,7 @@ namespace _LibrariesTest.Tests.Resources
             cursor.Dispose();
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeByteArrays()
         {
             IList[] referenceObjects =
@@ -408,7 +408,7 @@ namespace _LibrariesTest.Tests.Resources
         /// <summary>
         /// String has variable length and can be null.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeStringArrays()
         {
             Array[] referenceObjects =
@@ -432,7 +432,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSimpleArrays()
         {
             IList[] referenceObjects =
@@ -466,7 +466,7 @@ namespace _LibrariesTest.Tests.Resources
         /// <summary>
         /// Generic types with type converter: the generic type name is dumped into the type attribute
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeGenericTypesWithTypeConverter()
         {
             typeof(List<byte>).RegisterTypeConverter<ByteListConverter>();
@@ -489,7 +489,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeNonSerializableType()
         {
             // - winforms.FileRef/ResXDataNode - valszeg külön teszt, mert az egyenlőség nem fog stimmelni
@@ -503,7 +503,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSpecialTypes()
         {
             // these types will be transformed to their wrapped representations
@@ -535,7 +535,7 @@ namespace _LibrariesTest.Tests.Resources
             KGySerializeObjects(referenceObjects, false);
         }
 
-        [TestMethod]
+        [Test]
         public void TestResXSerializationBinder()
         {
             // The ResXSerializationBinder is used during (de)serialization if there is a typeResolver/typeNameConverter for a BinaryFormatted type

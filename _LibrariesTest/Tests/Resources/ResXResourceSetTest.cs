@@ -10,11 +10,11 @@ using System.Windows.Forms;
 using KGySoft.CoreLibraries;
 using KGySoft.Drawing;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
+    [TestFixture]
     public class ResXResourceSetTest : TestBase
     {
         private enum TestEnum { X }
@@ -28,16 +28,15 @@ namespace _LibrariesTest.Tests.Resources
         /// <summary>
         /// Tests whether the different kinds of objects can be deserialized.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void GetObject()
         {
             var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
             var rs = new ResXResourceSet(path, null);
-            object o;
 
             // string
-            Assert.IsInstanceOfType(o = rs.GetObject("TestString"), typeof(string));
-            Assert.IsInstanceOfType(o = rs.GetMetaObject("TestString"), typeof(string));
+            Assert.IsInstanceOf<string>(rs.GetObject("TestString"));
+            Assert.IsInstanceOf<string>(rs.GetMetaObject("TestString"));
             Assert.AreNotEqual(rs.GetObject("TestString"), rs.GetMetaObject("TestString"));
             Assert.IsTrue(rs.GetString("MultilineString").Contains(Environment.NewLine), "MultilineString should contain the NewLine string");
 
@@ -47,37 +46,37 @@ namespace _LibrariesTest.Tests.Resources
             // 3.: GetFirstResourceSet-be reference equals check
 
             // WinForms.FileRef/string
-            Assert.IsInstanceOfType(o = rs.GetObject("TestTextFile"), typeof(string));
+            Assert.IsInstanceOf<string>(rs.GetObject("TestTextFile"));
 
             // byte array without mime
-            Assert.IsInstanceOfType(o = rs.GetObject("TestBytes"), typeof(byte[]));
+            Assert.IsInstanceOf<byte[]>(rs.GetObject("TestBytes"));
 
             // null stored in the compatible way
             Assert.IsNull(rs.GetObject("TestNull"));
 
             // no mime, parsed from string by type converter
-            Assert.IsInstanceOfType(o = rs.GetObject("TestPoint"), typeof(Point));
+            Assert.IsInstanceOf<Point>(rs.GetObject("TestPoint"));
 
             // mime, deserialized by BinaryFormatter
-            Assert.IsInstanceOfType(o = rs.GetObject("TestObjectEmbedded"), typeof(ImageListStreamer));
+            Assert.IsInstanceOf<ImageListStreamer>(rs.GetObject("TestObjectEmbedded"));
 
             // mime, converted from byte array by type converter
-            Assert.IsInstanceOfType(o = rs.GetObject("TestImageEmbedded"), typeof(Bitmap));
+            Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImageEmbedded"));
 
             // WinForms.FileRef/byte[]
-            Assert.IsInstanceOfType(o = rs.GetObject("TestBinFile"), typeof(byte[]));
+            Assert.IsInstanceOf<byte[]>(rs.GetObject("TestBinFile"));
 
             // WinForms.FileRef/MemoryStream
-            Assert.IsInstanceOfType(o = rs.GetObject("TestSound"), typeof(MemoryStream));
+            Assert.IsInstanceOf<MemoryStream>(rs.GetObject("TestSound"));
 
             // WinForms.FileRef/object created from stream
-            Assert.IsInstanceOfType(o = rs.GetObject("TestImage"), typeof(Bitmap));
+            Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImage"));
         }
 
         /// <summary>
         /// In safe mode, a string value can be always returned.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void GetStringSafe()
         {
             var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
@@ -85,8 +84,8 @@ namespace _LibrariesTest.Tests.Resources
             object o;
 
             // when getting an object, result is always a ResXDataNode regardless of the object is a string
-            Assert.IsInstanceOfType(o = rs.GetObject("TestString"), typeof(ResXDataNode));
-            Assert.IsInstanceOfType(o = rs.GetObject("TestBytes"), typeof(ResXDataNode));
+            Assert.IsInstanceOf<ResXDataNode>(o = rs.GetObject("TestString"));
+            Assert.IsInstanceOf<ResXDataNode>(o = rs.GetObject("TestBytes"));
 
             // for a string, the string value is returned
             Assert.AreEqual("String invariant ResX", rs.GetString("TestString"));
@@ -112,7 +111,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(rs.GetString("TestBinFile").Contains("TestBinFile.bin;System.Byte[], mscorlib"));
         }
 
-        [TestMethod]
+        [Test]
         public void CleanupAndRegenerate()
         {
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
@@ -142,7 +141,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib", StringComparison.Ordinal));
         }
 
-        [TestMethod]
+        [Test]
         public void SetRemoveObject()
         {
             var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
@@ -175,7 +174,7 @@ namespace _LibrariesTest.Tests.Resources
             AssertItemsEqual(rs, rsReloaded);
         }
 
-        [TestMethod]
+        [Test]
         public void SetAlias()
         {
             const string aliasName = "custom alias";
@@ -201,7 +200,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreEqual(asmName, rsReloaded.GetAliasValue(typeof(TestEnum).Assembly.GetName().Name));
         }
 
-        [TestMethod]
+        [Test]
         public void GenerateNodeInfo()
         {
             // in safe mode NodeInfo will be generated from value on GetString
@@ -248,7 +247,7 @@ namespace _LibrariesTest.Tests.Resources
             }
         }
 
-        [TestMethod]
+        [Test]
         public void NonSerializableObject()
         {
             var rs = new ResXResourceSet();
@@ -267,7 +266,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));
         }
 
-        [TestMethod]
+        [Test]
         public void Save()
         {
             var path = Path.GetTempPath();

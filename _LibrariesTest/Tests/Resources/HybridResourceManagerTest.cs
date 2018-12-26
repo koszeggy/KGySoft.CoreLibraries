@@ -7,14 +7,14 @@ using KGySoft;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Resources
 {
-    [TestClass]
-    [DeploymentItem("Resources", "Resources")]
-    [DeploymentItem("en", "en")]
-    [DeploymentItem("en-US", "en-US")]
+    [TestFixture]
+    //[DeploymentItem("Resources", "Resources")]
+    //[DeploymentItem("en", "en")]
+    //[DeploymentItem("en-US", "en-US")]
     public class HybridResourceManagerTest: TestBase
     {
         private static CultureInfo inv = CultureInfo.InvariantCulture;
@@ -26,7 +26,7 @@ namespace _LibrariesTest.Tests.Resources
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
 
-        [TestMethod]
+        [Test]
         public void GetStringTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -86,7 +86,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(compiled);
         }
 
-        [TestMethod]
+        [Test]
         public void GetMetaStringTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -125,7 +125,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNull(compiled);
         }
 
-        [TestMethod]
+        [Test]
         public void GetObjectTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -206,7 +206,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreSame(hybrid, manager.GetObject(resName, inv)); // returned from cached non-proxy in resourceSets
         }
 
-        [TestMethod]
+        [Test]
         public void GetResourceSetTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -367,7 +367,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreSame(rsInv, rsHU);
         }
 
-        [TestMethod]
+        [Test]
         public void SetObjectTest()
         {
             LanguageSettings.DisplayLanguage = enUS;
@@ -406,7 +406,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(manager.GetString("StringValue"));
         }
 
-        [TestMethod]
+        [Test]
         public void SetMetaTest()
         {
             var manager = new HybridResourceManager(GetType());
@@ -437,7 +437,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(manager.GetMetaString("StringValue"));
         }
 
-        [TestMethod]
+        [Test]
         public void SetNullAndRemoveTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -474,7 +474,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsNotNull(rsEnUs.GetObject(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void EnumeratorTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -527,7 +527,7 @@ namespace _LibrariesTest.Tests.Resources
             Throws<InvalidOperationException>(() => enumHybrid.MoveNext());
         }
 
-        [TestMethod]
+        [Test]
         public void SaveTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");
@@ -568,7 +568,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.IsTrue(manager.SaveResourceSet(inv));
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationTest()
         {
             var refManager = new ResourceManager("_LibrariesTest.Resources.TestResourceResX", GetType().Assembly);
@@ -596,7 +596,7 @@ namespace _LibrariesTest.Tests.Resources
             Assert.AreNotEqual(testRes, manager.GetString(resName));
         }
 
-        [TestMethod]
+        [Test]
         public void DisposeTest()
         {
             var manager = new HybridResourceManager("_LibrariesTest.Resources.TestCompiledResource", GetType().Assembly, "TestResourceResX");

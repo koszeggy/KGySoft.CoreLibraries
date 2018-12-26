@@ -17,14 +17,14 @@ using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Serialization
 {
     /// <summary>
     /// Test of <see cref="BinarySerializer"/> class.
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class BinarySerializerTest: TestBase
     {
         private const bool dumpDetails = false;
@@ -1369,7 +1369,7 @@ namespace _LibrariesTest.Tests.Serialization
 
         #region Test Methods
 
-        [TestMethod]
+        [Test]
         public void SerializeSimpleTypes()
         {
             object[] referenceObjects = 
@@ -1424,7 +1424,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeValues()
         {
             object[] referenceObjects = 
@@ -1481,7 +1481,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None); // 165
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeEnums()
         {
             object[] referenceObjects = 
@@ -1543,7 +1543,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeTypes()
         {
             object[] referenceObjects = 
@@ -1562,7 +1562,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeComplexTypes()
         {
             object[] referenceObjects = 
@@ -1608,7 +1608,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeByteArrays()
         {
             object[] referenceObjects = 
@@ -1630,7 +1630,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSimpleArrays()
         {
             object[] referenceObjects = 
@@ -1684,7 +1684,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Enum types must be described explicitly
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeEnumArrays()
         {
             object[] referenceObjects = 
@@ -1712,7 +1712,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// String has variable length and can be null.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeStringArrays()
         {
             object[] referenceObjects = 
@@ -1738,7 +1738,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeComplexArrays()
         {
             //Debugger.Launch();
@@ -1791,7 +1791,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeNullableArrays()
         {
             object[] referenceObjects = 
@@ -1849,7 +1849,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSimpleGenericCollections()
         {
             object[] referenceObjects =
@@ -1919,7 +1919,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSimpleNonGenericCollections()
         {
             object[] referenceObjects =
@@ -1959,7 +1959,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeRecursiveCollections()
         {
             object[] referenceObjects =
@@ -1999,7 +1999,7 @@ namespace _LibrariesTest.Tests.Serialization
         /// <summary>
         /// Test of GetDictionaryValueTypes
         /// </summary>
-        [TestMethod]
+        [Test]
         public void SerializeSupportedDictionaryValues()
         {
             object[] referenceObjects =
@@ -2060,7 +2060,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeComplexGenericCollections()
         {
             object[] referenceObjects =
@@ -2126,7 +2126,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeCache()
         {
             object[] referenceObjects =
@@ -2145,7 +2145,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeMarshalByRefObjects()
         {
             Evidence evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
@@ -2194,7 +2194,7 @@ namespace _LibrariesTest.Tests.Serialization
             }
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationBinderTest()
         {
             object[] referenceObjects =
@@ -2280,7 +2280,7 @@ namespace _LibrariesTest.Tests.Serialization
 #endif
         }
 
-        [TestMethod]
+        [Test]
         public void SerializationSurrogateTest()
         {
             object[] referenceObjects =
@@ -2470,7 +2470,7 @@ namespace _LibrariesTest.Tests.Serialization
             AssertItemsEqual(referenceObjects, result);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeSameValues()
         {
             object one = 1;
@@ -2502,7 +2502,7 @@ namespace _LibrariesTest.Tests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-        [TestMethod]
+        [Test]
         public void SerializeCircularReferences()
         {
             object[] referenceObjects =

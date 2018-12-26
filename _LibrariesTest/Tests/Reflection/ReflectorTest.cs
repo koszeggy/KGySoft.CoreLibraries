@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Reflection;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Reflection
 {
-    [TestClass]
+    [TestFixture]
     public class ReflectorTest
     {
         #region Nested test types
@@ -252,7 +252,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Class method invoke
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceSimpleActionMethodInvoke()
         {
             const string memberName = "TestAction";
@@ -285,7 +285,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void ClassStaticSimpleActionMethodInvoke()
         {
             const string memberName = "StaticTestAction";
@@ -318,7 +318,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceComplexActionMethodInvoke()
         {
             const string memberName = "ComplexTestAction";
@@ -355,7 +355,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassStaticComplexActionMethodInvoke()
         {
             const string memberName = "StaticComplexTestAction";
@@ -392,7 +392,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceSimpleFunctionMethodInvoke()
         {
             const string memberName = "TestFunction";
@@ -430,7 +430,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void ClassStaticSimpleFunctionMethodInvoke()
         {
             const string memberName = "StaticTestFunction";
@@ -468,7 +468,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceComplexFunctionMethodInvoke()
         {
             const string memberName = "ComplexTestFunction";
@@ -510,7 +510,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassStaticComplexFunctionMethodInvoke()
         {
             const string memberName = "StaticComplexTestFunction";
@@ -556,7 +556,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Struct method invoke
 
-        [TestMethod]
+        [Test]
         public void StructInstanceSimpleActionMethodInvoke()
         {
             const string memberName = "TestAction";
@@ -589,7 +589,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void StructStaticSimpleActionMethodInvoke()
         {
             const string memberName = "StaticTestAction";
@@ -622,7 +622,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void StructInstanceComplexActionMethodInvoke()
         {
             const string memberName = "ComplexTestAction";
@@ -659,7 +659,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
         }
 
-        [TestMethod]
+        [Test]
         public void StructStaticComplexActionMethodInvoke()
         {
             const string memberName = "StaticComplexTestAction";
@@ -696,7 +696,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
         }
 
-        [TestMethod]
+        [Test]
         public void StructInstanceSimpleFunctionMethodInvoke()
         {
             const string memberName = "TestFunction";
@@ -734,7 +734,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void StructStaticSimpleFunctionMethodInvoke()
         {
             const string memberName = "StaticTestFunction";
@@ -772,7 +772,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void StructInstanceComplexFunctionMethodInvoke()
         {
             const string memberName = "ComplexTestFunction";
@@ -814,7 +814,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreNotEqual(args[2], parameters[2]);
         }
 
-        [TestMethod]
+        [Test]
         public void StructStaticComplexFunctionMethodInvoke()
         {
             const string memberName = "StaticComplexTestFunction";
@@ -864,7 +864,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Class property access
 
-        [TestMethod]
+        [Test]
         public void ClassInstancePropertyAccess()
         {
             const string memberName = "IntProp";
@@ -896,7 +896,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassStaticPropertyAccess()
         {
             const string memberName = "StaticIntProp";
@@ -928,7 +928,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceIndexerAccess()
         {
             object test = new TestClass(0);
@@ -969,7 +969,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Struct property access
 
-        [TestMethod]
+        [Test]
         public void StructInstancePropertyAccess()
         {
             const string memberName = "IntProp";
@@ -1001,7 +1001,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void StructStaticPropertyAccess()
         {
             const string memberName = "StaticIntProp";
@@ -1033,7 +1033,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void StructInstanceIndexerAccess()
         {
             object test = new TestStruct(0);
@@ -1074,7 +1074,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Class field access
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceReadOnlyValueFieldAccess()
         {
             const string memberName = "readOnlyValueField";
@@ -1106,7 +1106,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassInstanceReadOnlyRefFieldAccess()
         {
             const string memberName = "readOnlyRefField";
@@ -1138,7 +1138,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void ClassStaticFieldAccess()
         {
             const string memberName = "staticIntField";
@@ -1174,7 +1174,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Struct field access
 
-        [TestMethod]
+        [Test]
         public void StructInstanceFieldAccess()
         {
             const string memberName = "intField";
@@ -1206,7 +1206,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void StructInstanceReadOnlyValueFieldAccess()
         {
             const string memberName = "readOnlyValueField";
@@ -1238,7 +1238,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void StructInstanceReadOnlyRefFieldAccess()
         {
             const string memberName = "readOnlyRefField";
@@ -1270,7 +1270,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(value, result);
         }
 
-        [TestMethod]
+        [Test]
         public void StructStaticFieldAccess()
         {
             const string memberName = "staticIntField";
@@ -1306,7 +1306,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Class construction
 
-        [TestMethod]
+        [Test]
         public void ClassConstructionByType()
         {
             Type testType = typeof(TestClass);
@@ -1326,7 +1326,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(1, Reflector.GetProperty(result, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void ClassConstructionByCtorInfo()
         {
             Type testType = typeof(TestClass);
@@ -1351,7 +1351,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void ClassComplexConstructionByCtorInfo()
         {
             Type testType = typeof(TestClass);
@@ -1383,7 +1383,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Struct construction
 
-        [TestMethod]
+        [Test]
         public void StructConstructionByType()
         {
             Type testType = typeof(TestStruct);
@@ -1403,7 +1403,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(default(TestStruct), result);
         }
 
-        [TestMethod]
+        [Test]
         public void StructConstructionByCtorInfo()
         {
             Type testType = typeof(TestStruct);
@@ -1428,7 +1428,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreEqual(args[0], Reflector.GetProperty(result, intProp));
         }
 
-        [TestMethod]
+        [Test]
         public void StructComplexConstructionByCtorInfo()
         {
             Type testType = typeof(TestStruct);
@@ -1460,7 +1460,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region Extensions
 
-        //[TestMethod]
+        //[Test]
         //public void ExtensionsTest()
         //{
         //    Assert.AreEqual(42, typeof(int).Parse("42"));
@@ -1470,7 +1470,7 @@ namespace _LibrariesTest.Tests.Reflection
 
         #region MemberOf
 
-        [TestMethod]
+        [Test]
         public void MemberOfTest()
         {
             MemberInfo methodIntParse = Reflector.MemberOf(() => int.Parse(null, null)); // MethodInfo: int.Parse(string, IFormatProvider)

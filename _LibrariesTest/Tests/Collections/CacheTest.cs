@@ -1,24 +1,24 @@
 ﻿using System;
 using System.Linq;
 using KGySoft.Collections;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Collections
 {
     /// <summary>
     /// Summary description for CacheTest
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class CacheTest
     {
-        [TestMethod]
+        [Test]
         public void SimpleUsage()
         {
             Cache<string, string> cache = new Cache<string, string>(s => s.ToUpperInvariant());
             Assert.AreEqual("ALMA", cache["alma"]);
         }
 
-        [TestMethod]
+        [Test]
         public void CacheFullDropOldest()
         {
             Cache<string, string> cache = new Cache<string, string>(s => s.ToUpperInvariant(), 2) { Behavior = CacheBehavior.RemoveOldestElement };
@@ -37,7 +37,7 @@ namespace _LibrariesTest.Tests.Collections
             Console.WriteLine(cache.GetValueUncached("cica"));
         }
 
-        [TestMethod]
+        [Test]
         public void CacheFullDropLeastRecentUsed()
         {
             Cache<string, string> cache = new Cache<string, string>(s => s.ToUpperInvariant(), 2) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
@@ -54,7 +54,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(2, cache.Values.Count());
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveTest()
         {
             Cache<string, string> cache = new Cache<string, string>(s => s.ToUpperInvariant());
@@ -93,7 +93,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual(1, cache.Values.Count());
         }
 
-        [TestMethod]
+        [Test]
         public void TouchTest()
         {
             Cache<string, string> cache = new Cache<string, string>(s => s.ToUpperInvariant()) { Behavior = CacheBehavior.RemoveOldestElement };
@@ -144,7 +144,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.AreEqual("alma", cache.Last().Key);
         }
 
-        [TestMethod]
+        [Test]
         public void KeysValuesTest()
         {
             Cache<string, string> cache = new Cache<string, string>(s => s.ToUpperInvariant());

@@ -1,17 +1,18 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Collections.ObjectModel
 {
-    [TestClass]
+    [TestFixture]
     public class FastLookupCollectionTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void Construction()
         {
             AssertConsistency(new FastLookupCollection<int>());
@@ -20,7 +21,7 @@ namespace _LibrariesTest.Tests.Collections.ObjectModel
             AssertConsistency(new FastLookupCollection<string>(new List<string>{null, null, "1", "2", "1"}));
         }
 
-        [TestMethod]
+        [Test]
         public void AddExplicit()
         {
             var coll = new FastLookupCollection<int>();
@@ -31,7 +32,7 @@ namespace _LibrariesTest.Tests.Collections.ObjectModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void SetExplicit()
         {
             var coll = new FastLookupCollection<int>(new[] { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
@@ -40,7 +41,7 @@ namespace _LibrariesTest.Tests.Collections.ObjectModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveExplicit()
         {
             var coll = new FastLookupCollection<int>(new List<int> { 1, 2, 3, 2, 1 }) { CheckConsistency = false };
@@ -50,37 +51,38 @@ namespace _LibrariesTest.Tests.Collections.ObjectModel
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void AddInner()
         {
             var inner = new List<string>();
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
             inner.Add("a");
-            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            Throws<AssertionException>(() => AssertConsistency(coll));
+            Console.WriteLine("still runs!");
             coll.CheckConsistency = true;
             coll.Insert(0, "b");
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void SetInner()
         {
             var inner = new List<string> { "1", "2", "3", "2", "1"};
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
             inner[2] = null;
-            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            Throws<AssertionException>(() => AssertConsistency(coll));
             coll.CheckConsistency = true;
             coll[2] = "x";
             AssertConsistency(coll);
         }
 
-        [TestMethod]
+        [Test]
         public void RemoveInner()
         {
             var inner = new List<string> { "1", "2", "3", "2", "1" };
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
             inner.RemoveAt(2);
-            Throws<AssertFailedException>(() => AssertConsistency(coll));
+            Throws<AssertionException>(() => AssertConsistency(coll));
             coll.CheckConsistency = true;
             coll.RemoveAt(0);
             AssertConsistency(coll);

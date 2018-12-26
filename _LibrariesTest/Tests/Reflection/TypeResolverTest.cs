@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Reflection
 {
@@ -9,10 +9,10 @@ namespace _LibrariesTest.Tests.Reflection
     /// Tests for <see cref="Reflector.ResolveType(string,bool,bool)"/> method.
     /// Use non-mscorlib types, otherwise <see cref="Type.GetType(string)"/> resolves the string as well.
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class TypeResolverTest
     {
-        [TestMethod]
+        [Test]
         public void TestAssemblyPartialResolve()
         {
             string asmName = "System.Windows.Forms";
@@ -25,7 +25,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.IsNotNull(Reflector.ResolveAssembly(asmName, true, true) != null);
         }
 
-        [TestMethod]
+        [Test]
         public void TestGeneric()
         {
             string s = "System.Collections.Generic.Dictionary`2[System.String,[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]";
@@ -56,7 +56,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreSame(exp, result);
         }
 
-        [TestMethod]
+        [Test]
         public void TestArrayTypes()
         {
             Type t = typeof(Uri[]);
@@ -84,7 +84,7 @@ namespace _LibrariesTest.Tests.Reflection
             Assert.AreSame(t, result);
         }
 
-        [TestMethod]
+        [Test]
         public void TestArrayGenericTypes()
         {
             Type t = Reflector.ResolveType(typeof(Queue<Uri>[]).ToString());

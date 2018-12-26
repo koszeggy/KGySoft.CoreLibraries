@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using KGySoft.Collections;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Collections
 {
-    [TestClass]
+    [TestFixture]
     public class CircularSortedListTest
     {
-        [TestMethod]
+        [Test]
         public void Construction()
         {
             // default constructor
@@ -22,7 +22,7 @@ namespace _LibrariesTest.Tests.Collections
             Assert.IsTrue(new CircularSortedList<int, int>(dict).SequenceEqual(new SortedList<int, int>(dict)));
         }
 
-        [TestMethod]
+        [Test]
         public void Populate()
         {
             CircularSortedList<int, int> cslist = new CircularSortedList<int, int>();

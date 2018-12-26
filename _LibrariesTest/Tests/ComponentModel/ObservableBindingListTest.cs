@@ -1,13 +1,13 @@
 ﻿#if !NET35
 using KGySoft.ComponentModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.ComponentModel
 {
-    [TestClass]
+    [TestFixture]
     public class ObservableBindingListTest
     {
-        [TestMethod]
+        [Test]
         public void Test()
         {
             // TODO:
@@ -21,7 +21,7 @@ namespace _LibrariesTest.Tests.ComponentModel
             // - Item property change
         }
 
-        [TestMethod]
+        [Test]
         public void RaiseItemChangedEventsDefault()
         {
             Assert.IsFalse(new ObservableBindingList<int>().RaiseItemChangedEvents);

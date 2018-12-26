@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Linq;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.CoreLibraries.Extensions
 {
 
-    [TestClass]
+    [TestFixture]
     public class ByteArrayExtensionsTest : TestBase
     {
-        [TestMethod]
+        [Test]
         public void ToBase64String()
         {
             byte[] bytes = Enumerable.Range(0, 255).Select(i => (byte)i).ToArray();
@@ -26,7 +26,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Assert.IsTrue(result.Contains(Environment.NewLine));
         }
 
-        [TestMethod]
+        [Test]
         public void ToHexString()
         {
             byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();
@@ -95,7 +95,7 @@ namespace _LibrariesTest.Tests.CoreLibraries.Extensions
             Throws<ArgumentException>(() => bytes.ToHexValuesString("a"));
         }
 
-        [TestMethod]
+        [Test]
         public void ToDecimalString()
         {
             byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();

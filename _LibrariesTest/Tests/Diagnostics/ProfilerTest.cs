@@ -1,11 +1,11 @@
 ﻿using System;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _LibrariesTest.Tests.Diagnostics
 {
-    [TestClass]
+    [TestFixture]
     public class ProfilerTest
     {
         private int TestMethod()
@@ -13,7 +13,7 @@ namespace _LibrariesTest.Tests.Diagnostics
             return 0;
         }
 
-        [TestMethod]
+        [Test]
         public void MesureTest()
         {
             Profiler.Enabled = true;
