@@ -3,11 +3,11 @@ using System.Diagnostics;
 using System.Reflection;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Diagnostics
 {
-    [TestClass]
+    [TestFixture]
     public class ProfilerPerformanceTest : TestBase
     {
         /// <summary>
@@ -18,7 +18,7 @@ namespace _PerformanceTest.Tests.Diagnostics
         /// We want to just determinate whether the delagate call or using a disposable measurement class have too large
         /// overload to test micro measurements.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void CompareProfilingWaysCheapOperation()
         {
             const int iterations = 10000000;
@@ -124,7 +124,7 @@ namespace _PerformanceTest.Tests.Diagnostics
         /// Compares the profiling ways of an expensive operation.
         /// There should be no significant difference between the different ways.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void CompareProfilingWaysExpensiveOperation()
         {
             const int iterations = 10000;

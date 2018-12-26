@@ -9,9 +9,9 @@ namespace _PerformanceTest
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass]
+    [TestFixture]
     public abstract class TestBase
     {
         protected abstract class TestOpBase<TDelegate>
@@ -291,8 +291,8 @@ namespace _PerformanceTest
 #endif
         }
 
-        [TestInitialize]
-        public void ClassInit()
+        [SetUp]
+        public void TestInit()
         {
             if (!AdjustCpuUsage)
                 return;
@@ -305,8 +305,8 @@ namespace _PerformanceTest
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
 
-        [TestCleanup]
-        public void ClassCleanup()
+        [TearDown]
+        public void TestCleanup()
         {
             if (!AdjustCpuUsage)
                 return;

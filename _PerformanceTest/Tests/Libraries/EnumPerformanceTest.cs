@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using KGySoft.CoreLibraries;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Libraries
 {
     /// <summary>
     /// Summary description for EnumTest
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class EnumPerformanceTest: TestBase
     {
         private enum TestEnum: long
@@ -43,13 +43,13 @@ namespace _PerformanceTest.Tests.Libraries
             Plusz = Int64.MaxValue,
         }
 
-        [TestInitialize]
+        [SetUp]
         public void ResetCaches()
         {
             Enum<TestEnum>.ClearCaches();
         }
 
-        [TestMethod]
+        [Test]
         public void GetNamesTest()
         {
             const int iterations = 1000000;
@@ -94,7 +94,7 @@ namespace _PerformanceTest.Tests.Libraries
             Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.GetName({0}.{1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
         }
 
-        [TestMethod]
+        [Test]
         public void GetValuesTest()
         {
             const int iterations = 1000000;
@@ -120,7 +120,7 @@ namespace _PerformanceTest.Tests.Libraries
             Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.GetValues(): {1} ms: ", enumType.Name, watch.ElapsedMilliseconds);
         }
 
-        [TestMethod]
+        [Test]
         public void IsDefinedTest()
         {
             const int iterations = 1000000;
@@ -185,13 +185,13 @@ namespace _PerformanceTest.Tests.Libraries
             Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.IsDefined({1}): {2} ms", enumType.Name, n, watch.ElapsedMilliseconds);
         }
 
-        [TestMethod]
+        [Test]
         public void HasFlagTest()
         {
             throw new NotImplementedException("In .NET4 and above: compare to Enum.HasFlag");
         }
 
-        [TestMethod]
+        [Test]
         public void ToStringTest()
         {
             const int iterations = 1000000;
@@ -374,7 +374,7 @@ namespace _PerformanceTest.Tests.Libraries
             Console.WriteLine("{0}.ToString(extension) (flags with FlagsAttribute: {1}): {2} ms", enumType.Name, Enum<TestFlagsEnum>.ToString(f), watch.ElapsedMilliseconds);
         }
 
-        [TestMethod]
+        [Test]
         public void ParseTest()
         {
             const int iterations = 1000000;
@@ -507,7 +507,7 @@ namespace _PerformanceTest.Tests.Libraries
             Console.WriteLine("KGySoft.Enum<{0}>.Parse(\"{1}\") (flags-numbers): {2} ms", enumType.Name, s, watch.ElapsedMilliseconds);
         }
 
-        [TestMethod]
+        [Test]
         public void EnumComparerTest()
         {
             CheckTestingFramework();

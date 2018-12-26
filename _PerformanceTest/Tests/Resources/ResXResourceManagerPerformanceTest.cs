@@ -1,15 +1,15 @@
 ﻿using System.Globalization;
 using System.Resources;
 using KGySoft.Resources;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace _PerformanceTest.Tests.Resources
 {
-    [TestClass]
+    [TestFixture]
     public class ResXResourceManagerPerformanceTest : TestBase
     {
-        [TestMethod]
-        [DeploymentItem("Resources", "Resources")]
+        [Test]
+        //[DeploymentItem("Resources", "Resources")]
         public void GetObject()
         {
             var inv = CultureInfo.InvariantCulture;
