@@ -484,4 +484,11 @@ namespace _LibrariesTest
             }
         }
     }
+
+    [TestClass]
+    public class VersionCheck : TestBase
+    {
+        [TestMethod]
+        public void CheckFrameworkVersion() => CheckTestingFramework();
+    }
 }
