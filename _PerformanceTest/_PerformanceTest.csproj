@@ -19,6 +19,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutputPath>bin\$(Configuration)</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>latest</LangVersion>
     <!--<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>-->
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
@@ -93,6 +94,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PerformanceTest.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastBindingListPerformanceTest.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastLookupCollectionPerformanceTest.cs" />
     <Compile Include="Tests\Diagnostics\ProfilerPerformanceTest.cs" />

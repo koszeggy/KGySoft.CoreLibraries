@@ -271,14 +271,8 @@ namespace _PerformanceTest
         private ProcessPriorityClass origPriority;
         private ThreadPriority origThreadPrio;
 
-        protected int CpuAffinity { get; set; }
-        protected bool AdjustCpuUsage { get; set; }
-
-        protected TestBase()
-        {
-            CpuAffinity = 2;
-            AdjustCpuUsage = true;
-        }
+        protected int CpuAffinity { get; set; } = 2;
+        protected bool AdjustCpuUsage { get; set; } = true;
 
         protected static void CheckTestingFramework()
         {

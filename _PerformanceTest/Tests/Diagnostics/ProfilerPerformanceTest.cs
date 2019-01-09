@@ -32,14 +32,22 @@ namespace _PerformanceTest.Tests.Diagnostics
                     Repeat = 5
                 };
 
-            // 1. DoTest without warmup
-            test.DoTest();
+            //// 1. DoTest without warmup
+            //test.DoTest();
 
-            test.TestName = "DoTest performance with warmup";
-            test.WarmUpTime = 1000;
+            //test.TestName = "DoTest performance with warmup";
+            //test.WarmUpTime = 1000;
 
-            // 2. DoTest with warmup
-            test.DoTest();
+            //// 2. DoTest with warmup
+            //test.DoTest();
+
+            Console.WriteLine("===========PerformanceTest<int>===============");
+            new PerformanceTest<int> { /*Iterations = 10000,*/ WarmUpTime = 0, Repeat = 2 }
+                .AddCase(DoNothing, nameof(DoNothing))
+                .AddCase(DoSomething, nameof(DoSomething))
+                .DoTest();              
+
+            return;
 
             // 3. Direct test
             Console.WriteLine("===========Direct measurement test===============");

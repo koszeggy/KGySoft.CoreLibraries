@@ -31,7 +31,7 @@ using KGySoft.Serialization;
 namespace KGySoft
 {
     /// <summary>
-    /// Contains the IDs of string resources.
+    /// Contains the string resources of the project.
     /// </summary>
     internal static class Res
     {
