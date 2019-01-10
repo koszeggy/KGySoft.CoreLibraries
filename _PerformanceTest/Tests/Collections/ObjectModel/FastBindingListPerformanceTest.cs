@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace _PerformanceTest.Tests.Collections.ObjectModel
 {
     [TestFixture]
-    public class FastBindingListPerformanceTest : TestBase
+    public class FastBindingListPerformanceTest
     {
         private class TestItem : ObservableObjectBase
         {
@@ -23,23 +23,22 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
             var collReference = new BindingList<TestItem>(new List<TestItem>(range.ToList()));
             var collTest = new FastBindingList<TestItem>(new List<TestItem>(range.ToList()));
 
-            new TestOperation
-            {
-                RefOpName = "BindingList.AddNew",
-                ReferenceOperation = () =>
+            new PerformanceTest
+                {
+                    Iterations = 100,
+                    Repeat = 5,
+                }
+                .AddCase(() =>
                 {
                     collReference.AddNew();
                     collReference.RemoveAt(collReference.Count - 1);
-                },
-                TestOpName = "FastBindingList.AddNew",
-                TestOperation = () =>
+                }, "BindingList.AddNew")
+                .AddCase(() =>
                 {
                     collTest.AddNew();
                     collTest.RemoveAt(collTest.Count - 1);
-                },
-                Iterations = 100,
-                Repeat = 5,
-            }.DoTest();
+                }, "FastBindingList.AddNew")
+                .DoTest();
         }
 
         [Test]
@@ -51,25 +50,14 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
             var collReference = new BindingList<TestItem>(new List<TestItem>(range.ToList()));
             var collTest = new FastBindingList<TestItem>(new List<TestItem>(range.ToList()));
             var rnd = new Random(0);
-            const int iterations = 1000;
-            const int repeat = 5;
-
-            new TestOperation
-            {
-                TestOpName = "BindingList.ItemChanged",
-                TestOperation = () => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(),
-                Iterations = iterations,
-                Repeat = repeat
-            }.DoTest();
-
-            rnd = new Random(0);
-            new TestOperation
-            {
-                TestOpName = "FastBindingList.ItemChanged",
-                TestOperation = () => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(),
-                Iterations = iterations,
-                Repeat = repeat
-            }.DoTest();
+            new PerformanceTest
+                {
+                    Iterations = 1000,
+                    Repeat = 5
+                }
+                .AddCase(() => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
+                .AddCase(() => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")
+                .DoTest();
         }
     }
 }

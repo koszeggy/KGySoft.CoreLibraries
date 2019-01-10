@@ -312,7 +312,7 @@ namespace KGySoft.Serialization
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
                     {
-                        SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), true, writer, visibility);
+                        SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), typeNeeded, writer, visibility);
                         return;
                     }
 
@@ -322,7 +322,6 @@ namespace KGySoft.Serialization
                 }
 
                 // h.) recursive serialization of any object, if requested
-                bool hasDefaultCtor = type.CanBeCreatedWithoutParameters();
                 if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
                     // or when it has public properties/fields only
                     || IsTrustedType(type))

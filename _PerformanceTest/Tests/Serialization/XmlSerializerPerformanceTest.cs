@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Text;
+using System.Xml;
 using KGySoft.Serialization;
 using NUnit.Framework;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
@@ -14,7 +17,7 @@ namespace _PerformanceTest.Tests.Serialization
     /// Summary description for BinarySerializerTest
     /// </summary>
     [TestFixture]
-    public class XmlSerializerPerformanceTest : TestBase
+    public class XmlSerializerPerformanceTest
     {
         public class FullExtraComponent
         {
@@ -123,37 +126,46 @@ namespace _PerformanceTest.Tests.Serialization
             }
         }
 
-        [Test]
-        public void SerializerTest()
-        {
-            //var x = new byte[] { 1, 2, 3, 4, 5 };
-            //var x = new int[] { 1, 2, 3, 4, 5 };
-            //var x = 1;
-            //var x = new List<int>(new int[] { 1, 2, 3, 4, 5 });
-            //var x = new HashSet<int> { 1, 2, 3, 4, 5 };
-            //var x = new HashSet<int[]> { new int[] { 1, 2, 3, 4, 5 }, null };
-            //var x = new Collection<int>{ 1, 2, 3, 4, 5 };
-            //var x = new DictionaryEntry(new object(), "alma");
-            var x = new FullExtraComponent(true);
-
-            new TestOperation<string>
+        private static object[] SerializerTestSource =>
+            new object[]
             {
-                TestName = "Complex Object test",
-                RefOpName = "System.XmlSerializer",
-                TestOpName = "KGySoft.XmlSerializer",
-                Iterations = 10000,
-                ReferenceOperation = () =>
+                new byte[] { 1, 2, 3, 4, 5 },
+                new int[] { 1, 2, 3, 4, 5 },
+                1,
+                new List<int>(new int[] { 1, 2, 3, 4, 5 }),
+                new HashSet<int> { 1, 2, 3, 4, 5 },
+                new HashSet<int[]> { new int[] { 1, 2, 3, 4, 5 }, null },
+                new Collection<int>{ 1, 2, 3, 4, 5 },
+                new DictionaryEntry(new object(), "alma"),
+                new FullExtraComponent(true)
+            };
+
+        [TestCaseSource(nameof(SerializerTestSource))]
+        public void SerializerTest(object obj)
+        {
+            new PerformanceTest<string>
                 {
-                    var serializer = new SystemXmlSerializer(x.GetType());
+                    TestName = "XmlSerializer performance test",
+                    Iterations = 1, WarmUpTime = 0, SortBySize = true, DumpResult = true, Repeat = 2 // comment this line for time test and uncomment for size test
+                }
+                .AddCase(() =>
+                {
+                    var serializer = new SystemXmlSerializer(obj.GetType());
                     var sb = new StringBuilder();
-                    using (var sw = new StringWriter(sb))
-                        serializer.Serialize(sw, x);
+                    using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
+                        serializer.Serialize(writer, obj);
                     return sb.ToString();
-                },
-                DumpResult = false,
-                TestOperation = () => XmlSerializer.Serialize(x, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute).ToString(),
-                Repeat = 1
-            }.DoTest();
+                }, "System.XmlSerializer")
+                .AddCase(() =>
+                {
+                    var sb = new StringBuilder();
+                    using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
+                        XmlSerializer.Serialize(writer, obj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute);
+                    return sb.ToString();
+                }, "KGySoft.XmlSerializer by XmlWriter")
+                .AddCase(() => XmlSerializer.Serialize(obj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute).ToString(),
+                    "KGySoft.XmlSerializer by LINQ")
+                .DoTest();
         }
     }
 }

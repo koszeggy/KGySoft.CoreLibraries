@@ -10,7 +10,7 @@ namespace _PerformanceTest.Tests.Libraries
     /// Summary description for EnumTest
     /// </summary>
     [TestFixture]
-    public class EnumPerformanceTest: TestBase
+    public class EnumPerformanceTest
     {
         private enum TestEnum: long
         {
@@ -510,7 +510,7 @@ namespace _PerformanceTest.Tests.Libraries
         [Test]
         public void EnumComparerTest()
         {
-            CheckTestingFramework();
+            PerformanceTest.CheckTestingFramework();
 
             const int iterations = 10000000;
             Type enumType = typeof(TestEnum);

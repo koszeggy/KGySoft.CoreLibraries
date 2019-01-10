@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace _PerformanceTest.Tests.Collections.ObjectModel
 {
     [TestFixture]
-    public class FastLookupCollectionPerformanceTest : TestBase
+    public class FastLookupCollectionPerformanceTest
     {
         [Test]
         public void TestIndexOf()
@@ -15,36 +15,19 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
             var list = Enumerable.Range(0, 1000).ToList();
             var collReference =  new Collection<int>(list);
             var collTest = new FastLookupCollection<int>(list);
-            var rnd = new Random(0);
-            const int iterations = 10000;
-            const int repeat = 5;
+            var collTestNoCheck = new FastLookupCollection<int>(list) { CheckConsistency = false };
+            var rnd = new Random();
 
-            new TestOperation
-            {
-                TestOpName = "Collection.IndexOf",
-                TestOperation = () => collReference.IndexOf(rnd.Next(collReference.Count)),
-                Iterations = iterations,
-                Repeat = repeat
-            }.DoTest();
-
-            rnd = new Random(0);
-            new TestOperation
-            {
-                TestOpName = "FastLookupCollection.IndexOf, Consistency check ON",
-                TestOperation = () => collTest.IndexOf(rnd.Next(collTest.Count)),
-                Iterations = iterations,
-                Repeat = repeat
-            }.DoTest();
-
-            rnd = new Random(0);
-            collTest.CheckConsistency = false;
-            new TestOperation
-            {
-                TestOpName = "FastLookupCollection.IndexOf, Consistency check OFF",
-                TestOperation = () => collTest.IndexOf(rnd.Next(collTest.Count)),
-                Iterations = iterations,
-                Repeat = repeat
-            }.DoTest();
+            new PerformanceTest
+                {
+                    TestTime = 200,
+                    WarmUpTime = 1000,
+                    Repeat = 5,
+                }
+                .AddCase(() => collReference.IndexOf(rnd.Next(collReference.Count)), "Collection.IndexOf")
+                .AddCase(() => collTest.IndexOf(rnd.Next(collTest.Count)), "FastLookupCollection.IndexOf, Consistency check ON")
+                .AddCase(() => collTest.IndexOf(rnd.Next(collTestNoCheck.Count)), "FastLookupCollection.IndexOf, Consistency check OFF")
+                .DoTest();
         }
     }
 }

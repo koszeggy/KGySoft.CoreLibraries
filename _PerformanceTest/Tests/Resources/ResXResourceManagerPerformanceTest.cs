@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace _PerformanceTest.Tests.Resources
 {
     [TestFixture]
-    public class ResXResourceManagerPerformanceTest : TestBase
+    public class ResXResourceManagerPerformanceTest
     {
         [Test]
         //[DeploymentItem("Resources", "Resources")]
@@ -16,24 +16,25 @@ namespace _PerformanceTest.Tests.Resources
             var hu = CultureInfo.GetCultureInfo("hu-HU");
             var refManager = new ResourceManager("_PerformanceTest.Resources.TestResourceResX", GetType().Assembly);
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
-            var test = new TestOperation
+            new PerformanceTest<object>
                 {
-                    TestName = "GetObject Invariant",
-                    RefOpName = "ResourceManager",
-                    TestOpName = "ResXResourceManager",
+                    TestName = "GetObject Invariant Test",
                     Iterations = 1000000,
-                    ReferenceOperation = () => refManager.GetObject("TestString", inv),
-                    TestOperation = () => manager.GetObject("TestString", inv),
                     Repeat = 5
-                };
+                }
+                .AddCase(() => refManager.GetObject("TestString", inv), "ResourceManager")
+                .AddCase(() => manager.GetObject("TestString", inv), "ResXResourceManager")
+                .DoTest();
 
-            test.DoTest();
-
-            test.TestName = "GetObject fallback to invariant";
-            test.ReferenceOperation = () => refManager.GetObject("TestString", hu);
-            test.TestOperation = () => manager.GetObject("TestString", hu);
-
-            test.DoTest();
+            new PerformanceTest<object>
+                {
+                    TestName = "GetObject fallback to invariant",
+                    Iterations = 1000000,
+                    Repeat = 5
+                }
+                .AddCase(() => refManager.GetObject("TestString", hu), "ResourceManager")
+                .AddCase(() => manager.GetObject("TestString", hu), "ResXResourceManager")
+                .DoTest();
 
             // 1. jelenleg a gyári vagy a resx-e a gyorsabb -> inv: 122.83 % - 128.50 %; hu: 127.37 % - 136.73 %
             // 2. a resx-ben mindenképpen overrideolni kell a GetString/Object-et, és beletenni az ortogonalitást. -> inv: 144.92 % - 149.58 %; hu: 151.30 % - 153.41 %

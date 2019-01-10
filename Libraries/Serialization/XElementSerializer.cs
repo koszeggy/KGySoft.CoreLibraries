@@ -305,7 +305,7 @@ namespace KGySoft.Serialization
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
                     {
-                        SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), true, parent, visibility);
+                        SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), typeNeeded, parent, visibility);
                         return;
                     }
 

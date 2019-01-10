@@ -95,6 +95,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PerformanceTest.cs" />
+    <Compile Include="PerformanceTest`1.cs" />
+    <Compile Include="PerformanceTest`2.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastBindingListPerformanceTest.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastLookupCollectionPerformanceTest.cs" />
     <Compile Include="Tests\Diagnostics\ProfilerPerformanceTest.cs" />
@@ -107,7 +109,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tests\Reflection\ReflectorPerformanceTest.cs" />
     <Compile Include="Tests\Serialization\XmlSerializerPerformanceTest.cs" />
-    <Compile Include="TestBase.cs" />
     <Compile Include="UnitTest1.cs" />
   </ItemGroup>
   <ItemGroup>

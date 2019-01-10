@@ -8,46 +8,37 @@ using NUnit.Framework;
 namespace _PerformanceTest.Tests.Diagnostics
 {
     [TestFixture]
-    public class ProfilerPerformanceTest : TestBase
+    public class ProfilerPerformanceTest
     {
         /// <summary>
         /// This test just compares the different profiling methods:
-        /// - The base solution (invoking delegates)
+        /// - PerformanceTest solution (invoking delegates)
         /// - The Profiler's solution (enclosing into using)
         /// - Direct measurement
-        /// We want to just determinate whether the delagate call or using a disposable measurement class have too large
+        /// We want to just determinate whether the delegate call or using a disposable measurement class have too large
         /// overload to test micro measurements.
         /// </summary>
         [Test]
         public void CompareProfilingWaysCheapOperation()
         {
             const int iterations = 10000000;
-            var test = new TestOperation
+
+            // 1. Test without warm up
+            var test = new PerformanceTest<int>
                 {
-                    TestName = "DoTest performance without warmup",
-                    TestOpName = "DoNothing",
-                    TestOperation = () => DoNothing(),
-                    WarmUpTime = 0,
+                    TestName = "DoTest performance without warm up",
                     Iterations = iterations,
-                    Repeat = 5
-                };
+                    WarmUpTime = 0,
+                    Repeat = 5,
+                }
+                .AddCase(DoNothing, nameof(DoNothing));
 
-            //// 1. DoTest without warmup
-            //test.DoTest();
+            test.DoTest();
 
-            //test.TestName = "DoTest performance with warmup";
-            //test.WarmUpTime = 1000;
-
-            //// 2. DoTest with warmup
-            //test.DoTest();
-
-            Console.WriteLine("===========PerformanceTest<int>===============");
-            new PerformanceTest<int> { /*Iterations = 10000,*/ WarmUpTime = 0, Repeat = 2 }
-                .AddCase(DoNothing, nameof(DoNothing))
-                .AddCase(DoSomething, nameof(DoSomething))
-                .DoTest();              
-
-            return;
+            // 2. Test without warm up
+            test.TestName = "DoTest performance with warm up";
+            test.WarmUpTime = 1000;
+            test.DoTest();
 
             // 3. Direct test
             Console.WriteLine("===========Direct measurement test===============");
@@ -136,15 +127,14 @@ namespace _PerformanceTest.Tests.Diagnostics
         public void CompareProfilingWaysExpensiveOperation()
         {
             const int iterations = 10000;
-            var test = new TestOperation
-            {
-                TestName = "DoTest performance without warmup",
-                TestOpName = "DoSomething",
-                TestOperation = () => DoSomething(),
-                WarmUpTime = 0,
-                Iterations = iterations,
-                Repeat = 5
-            };
+            var test = new PerformanceTest<int>
+                {
+                    TestName = "DoTest performance without warm up",
+                    Iterations = iterations,
+                    WarmUpTime = 0,
+                    Repeat = 5,
+                }
+                .AddCase(DoSomething, nameof(DoSomething));
 
             // 1. DoTest without warmup
             test.DoTest();
@@ -232,22 +222,18 @@ namespace _PerformanceTest.Tests.Diagnostics
             Console.WriteLine("In case of a costly operation the DirectTotal < PureTotal < DoTest < DoSomethingCall < TotalWithSubMeasures should have nearly the same value.");
         }
 
-        private int DoNothing()
-        {
-            return 0;
-        }
+        private int DoNothing() => 0;
 
         /// <summary>
-        /// Invoking DoNothing via an especially non-performant way.
+        /// Invoking DoNothing in an especially non-performant way.
         /// </summary>
         private int DoSomething()
         {
-            Type t = this.GetType();
-            MethodInfo mi = t.GetMethod("DoNothing", BindingFlags.Instance | BindingFlags.NonPublic);
+            Type t = GetType();
+            MethodInfo mi = t.GetMethod(nameof(DoNothing), BindingFlags.Instance | BindingFlags.NonPublic);
             MethodAccessor invoker = new FunctionMethodAccessor(mi);
             int result = (int)invoker.Invoke(this, null);
             return result;
         }
-
     }
 }

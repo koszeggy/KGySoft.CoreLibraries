@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace _PerformanceTest
 {
     [TestFixture]
-    public class  UnitTest1 : TestBase
+    public class  UnitTest1
     {
         [Test]
         public void TestMethod1()
@@ -60,34 +60,6 @@ namespace _PerformanceTest
             //    Iterations = 10000,
             //    Repeat = 5
             //}.DoTest();
-
-            CheckTestingFramework();
-            new TestOperation
-            {
-                RefOpName = "Without capacity",
-                ReferenceOperation = WithoutCapacity,
-                TestOpName = "With capacity",
-                TestOperation = WithCapacity,
-                Iterations = 10000,
-                Repeat = 5,
-            }.DoTest();
-
-        }
-
-        private const int size = 65;
-        private void WithoutCapacity()
-        {
-            var set = new HashSet<int>();
-            for (int i = 0; i < size; i++)
-                set.Add(i);
-        }
-
-        private void WithCapacity()
-        {
-            var set = new HashSet<int>();
-            set.Initialize(size);
-            for (int i = 0; i < size; i++)
-                set.Add(i);
         }
 
         //private void ByReflector()
