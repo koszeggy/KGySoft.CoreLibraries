@@ -95,7 +95,7 @@ namespace KGySoft.Collections
         /// <para>The returned collection represents a moment-in-time snapshot of the keys of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
         /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
         /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
-        /// <para>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// <note>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public ICollection<TKey> Keys
         {
@@ -121,7 +121,7 @@ namespace KGySoft.Collections
         /// <para>The returned collection represents a moment-in-time snapshot of the values of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
         /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
         /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
-        /// <para>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// <note>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public ICollection<TValue> Values
         {

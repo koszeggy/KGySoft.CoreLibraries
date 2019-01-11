@@ -69,11 +69,8 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets or sets a threshold value, in milliseconds, to ignore an <see cref="Elapsed"/> event (and thus trying to catch up the timer)
-        /// if the next invoke lates by the given value. Value must not be zero but fractions are allowed.
+        /// if the next invoke is late by the given value. Value must not be zero but fractions are allowed.
         /// </summary>
-        /// <value>
-        /// The ignore elapsed threshold.
-        /// </value>
         /// <remarks>
         /// <note>
         /// If the value of this property is too low (smaller than the execution time of the <see cref="Elapsed"/> event), it may

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using KGySoft.Reflection;
 using NUnit.Framework;
 
@@ -10,56 +12,17 @@ namespace _PerformanceTest
         [Test]
         public void TestMethod1()
         {
-            //CheckTestingFramework();
-            //new TestOperation
-            //{
-            //    RefOpName = "Cast with boxing",
-            //    ReferenceOperation = () => CastNormal<int>(1),
-            //    TestOpName = "Cast with typed ref",
-            //    TestOperation = () => CastTyperef<int>(1),
-            //    Iterations = 10000000,
-            //    Repeat = 5
-            //}.DoTest();
+            var parameter = Expression.Parameter(typeof(long));
+            var dynamicMethod = Expression.Lambda<Func<long, ConsoleColor>>(
+                Expression.Convert(parameter, typeof(ConsoleColor)),
+                parameter);
+            Func<long, ConsoleColor> converter = dynamicMethod.Compile();
 
-            //new TestOperation
-            //{
-            //    TestOpName = "Dynamic on object",
-            //    TestOperation = DynamicOnObject,
-            //    Iterations = 10000,
-            //    Repeat = 5
-            //}.DoTest();
-
-            //new TestOperation
-            //{
-            //    TestOpName = "ExpandoObject",
-            //    TestOperation = ExpandoObject,
-            //    Iterations = 10000,
-            //    Repeat = 5
-            //}.DoTest();
-
-            //new TestOperation
-            //{
-            //    TestOpName = "DynamicObject",
-            //    TestOperation = DynamicObject,
-            //    Iterations = 10000,
-            //    Repeat = 5
-            //}.DoTest();
-
-            //new TestOperation
-            //{
-            //    TestOpName = "Reflector",
-            //    TestOperation = ByReflector,
-            //    Iterations = 10000,
-            //    Repeat = 5
-            //}.DoTest();
-
-            //new TestOperation
-            //{
-            //    TestOpName = "Accessor",
-            //    TestOperation = ByAccessor,
-            //    Iterations = 10000,
-            //    Repeat = 5
-            //}.DoTest();
+            new PerformanceTest<ConsoleColor> { WarmUpTime = 0, Iterations = 10000, Repeat = 3 }
+                .AddCase(() => (ConsoleColor)Enum.ToObject(typeof(ConsoleColor), 0L), "Enum.ToObject")
+                .AddCase(() => (ConsoleColor)(object)(int)0L, "(TEnum)(object)(underlyingPrimitive)longValue")
+                .AddCase(() => converter.Invoke(0L), "ConverterExpression")
+                .DoTest();
         }
 
         //private void ByReflector()

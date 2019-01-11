@@ -175,7 +175,7 @@ namespace KGySoft.Collections
         /// <para>The enumeration represents a moment-in-time snapshot of the contents of the <see cref="LockingCollection{T}"/>. It does not reflect any updates to the collection after <see cref="GetEnumerator">GetEnumerator</see> was called.
         /// The enumerator is safe to use concurrently with reads from and writes to the collection.</para>
         /// <para>This method has an O(n) cost where n is the number of elements in the collection.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public IEnumerator<T> GetEnumerator()
         {

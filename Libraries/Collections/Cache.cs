@@ -1573,7 +1573,7 @@ namespace KGySoft.Collections
         /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
         /// </returns>
         /// <remarks>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => new Enumerator(this, true);
 

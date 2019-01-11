@@ -36,7 +36,7 @@ namespace KGySoft.Resources
                 // or flag 6 is on but any specific is off
                 || ((value & (AutoAppendOptions)(1 << 6)) != 0) && (value & AutoAppendOptions.AppendSpecificCultures) != AutoAppendOptions.AppendSpecificCultures)
             {
-                throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                throw new ArgumentOutOfRangeException(nameof(value), Res.FlagsEnumOutOfRange(value));
             }
         }
 

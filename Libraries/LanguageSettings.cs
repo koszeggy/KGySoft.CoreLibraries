@@ -71,7 +71,7 @@ namespace KGySoft
         #region Public Events
 
         /// <summary>
-        /// Occurs when formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed by setting the
+        /// Occurs when the formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed by setting the
         /// <see cref="FormattingLanguage"/> property. Only the subscriptions from the same thread are invoked.
         /// </summary>
         /// <remarks>
@@ -84,7 +84,7 @@ namespace KGySoft
         public static event EventHandler FormattingLanguageChanged;
 
         /// <summary>
-        /// Occurs when formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed in any <see cref="Thread"/>
+        /// Occurs when the formatting language (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>) has been changed in any <see cref="Thread"/>
         /// by setting <see cref="FormattingLanguage"/> property. The subscribers are invoked from all threads.
         /// </summary>
         /// <remarks>
@@ -99,7 +99,7 @@ namespace KGySoft
         public static event EventHandler FormattingLanguageChangedGlobal;
 
         /// <summary>
-        /// Occurs when display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed by setting the
+        /// Occurs when the display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed by setting the
         /// <see cref="DisplayLanguage"/> property. Only the subscriptions from the same thread are invoked.
         /// </summary>
         /// <remarks>
@@ -112,7 +112,7 @@ namespace KGySoft
         public static event EventHandler DisplayLanguageChanged;
 
         /// <summary>
-        /// Occurs when display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed in any <see cref="Thread"/>
+        /// Occurs when the display language (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>) has been changed in any <see cref="Thread"/>
         /// by setting <see cref="DisplayLanguage"/> property. The subscribers are invoked from all threads.
         /// </summary>
         /// <remarks>
@@ -172,6 +172,7 @@ namespace KGySoft
         /// <summary>
         /// Gets or sets the display language of the current <see cref="Thread"/> (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>).
         /// When set, <see cref="DisplayLanguageChanged"/> and <see cref="DisplayLanguageChangedGlobal"/> events are triggered.
+        /// <br/>Default value: The display culture of the operating system.
         /// </summary>
         /// <remarks>
         /// <para>Display language represents the language of the user interface of the application. This value is used when
@@ -179,9 +180,8 @@ namespace KGySoft
         /// <para>Use this property instead of <see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see> to
         /// keep language changes synchronized in your application.</para>
         /// <para>When this property is set, <see cref="DisplayLanguageChanged"/> and <see cref="DisplayLanguageChangedGlobal"/> events are triggered,
-        /// which makes possible for example to refresh the language of the UI on the fly.</para>
+        /// which makes possible for example to refresh the language of the UI on the fly on language change.</para>
         /// </remarks>
-        /// <value>The display language of the current <see cref="Thread"/>. By default equals to the display of the operating system.</value>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
         public static CultureInfo DisplayLanguage
         {
@@ -202,10 +202,10 @@ namespace KGySoft
         /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
         /// <see cref="FormattingLanguageChanged"/> and <see cref="FormattingLanguageChangedGlobal"/> events
         /// are triggered.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
         /// <see langword="true"/> if system regional settings should be captured; otherwise, <see langword="false"/>.
-        /// Default value is <see langword="false"/>.
         /// </value>
         public static bool CaptureSystemLocaleChange
         {
@@ -229,10 +229,11 @@ namespace KGySoft
         /// <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="ResourceManagerSources.CompiledOnly"/>
         /// </summary>
-        /// <remarks>Considering default value is <see cref="ResourceManagerSources.CompiledOnly"/>, all <see cref="DynamicResourceManager"/> instances, which
+        /// <remarks>Considering that the default value is <see cref="ResourceManagerSources.CompiledOnly"/>, all <see cref="DynamicResourceManager"/> instances, which
         /// use <see cref="DynamicResourceManager.UseLanguageSettings"/> property with <see langword="true"/> value, will work fully compatible with the <see cref="ResourceManager"/>
         /// class by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
-        /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly.</remarks>
+        /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly by setting this property either to
+        /// <see cref="ResourceManagerSources.CompiledAndResX"/> or <see cref="ResourceManagerSources.ResXOnly"/>.</remarks>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.Source"/>
         public static ResourceManagerSources DynamicResourceManagersSource
@@ -244,7 +245,7 @@ namespace KGySoft
                     return;
 
                 if (!value.IsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRange(value));
 
                 dynamicResourceManagersSource = value;
                 OnDynamicResourceManagersSourceChanged(EventArgs.Empty);
@@ -256,6 +257,11 @@ namespace KGySoft
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="AutoSaveOptions.LanguageChange"/>, <see cref="AutoSaveOptions.DomainUnload"/>, <see cref="AutoSaveOptions.SourceChange"/>
         /// </summary>
+        /// <remarks>Considering that the default value of the <see cref="DynamicResourceManagersSource"/> property is <see cref="ResourceManagerSources.CompiledOnly"/>,
+        /// none of the <see cref="DynamicResourceManager"/>, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> property is <see langword="true"/> will
+        /// auto save their content by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
+        /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly by setting the <see cref="DynamicResourceManagersSource"/> property
+        /// either to <see cref="ResourceManagerSources.CompiledAndResX"/> or <see cref="ResourceManagerSources.ResXOnly"/>.</remarks>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoSave"/>
         /// <seealso cref="DynamicResourceManager.AutoSaveError"/>
@@ -268,7 +274,7 @@ namespace KGySoft
                     return;
 
                 if (!value.AllFlagsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.FlagsEnumOutOfRange(value));
 
                 dynamicResourceManagersAutoSave = value;
                 OnDynamicResourceManagersAutoSaveChanged(EventArgs.Empty);
@@ -280,6 +286,11 @@ namespace KGySoft
         /// of the current application domain when their <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// <br/>Default value: <see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendOnLoad"/>
         /// </summary>
+        /// <remarks>Considering that the default value of the <see cref="DynamicResourceManagersSource"/> property is <see cref="ResourceManagerSources.CompiledOnly"/>,
+        /// none of the <see cref="DynamicResourceManager"/>, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> property is <see langword="true"/> will
+        /// auto append their content by default. Therefore, an application, which uses <see cref="DynamicResourceManager"/> instances with centralized settings (maybe indirectly via
+        /// class libraries), must opt-in the dynamic behavior of creating .resx resource files on the fly by setting the <see cref="DynamicResourceManagersSource"/> property
+        /// either to <see cref="ResourceManagerSources.CompiledAndResX"/> or <see cref="ResourceManagerSources.ResXOnly"/>.</remarks>
         /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
         /// <seealso cref="DynamicResourceManager.AutoAppend"/>
         public static AutoAppendOptions DynamicResourceManagersAutoAppend
@@ -304,13 +315,7 @@ namespace KGySoft
         public static string UntranslatedResourcePrefix
         {
             get => untranslatedResourcePrefix;
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
-
-                untranslatedResourcePrefix = value;
-            }
+            set => untranslatedResourcePrefix = value ?? throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
         }
 
         /// <summary>
@@ -322,13 +327,7 @@ namespace KGySoft
         public static string UnknownResourcePrefix
         {
             get => unknownResourcePrefix;
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
-
-                unknownResourcePrefix = value;
-            }
+            set => unknownResourcePrefix = value ?? throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
         }
 
         #endregion

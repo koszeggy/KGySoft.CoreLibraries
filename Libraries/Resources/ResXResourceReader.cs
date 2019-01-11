@@ -851,7 +851,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined name.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
         /// <seealso cref="ResXDataNode"/>
@@ -874,7 +874,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined name.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
         /// <seealso cref="ResXDataNode"/>
@@ -895,7 +895,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined alias.</para>
         /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
         /// <seealso cref="SafeMode"/>

@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 #endregion
@@ -41,30 +42,19 @@ namespace KGySoft.CoreLibraries
         #region Public methods
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> value specified in the <paramref name="value"/> parameter.
         /// </summary>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
-        /// <param name="format">Formatting option.</param>
-        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (", ") separator is used.</param>
+        /// <param name="format">Formatting option. This parameter is optional.
+        /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
+        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
+        /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
-        public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format, string separator)
+        public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto, string separator = DefaultFormatSeparator)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.ToString(value, format, separator);
-        }
-
-        /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
-        /// </summary>
-        /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
-        /// <param name="format">Formatting option.</param>
-        /// <returns>The string representation of <paramref name="value"/>.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
-        public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
-        {
-            return Enum<TEnum>.ToString(value, format, DefaultFormatSeparator);
         }
 
         /// <summary>
@@ -77,20 +67,6 @@ namespace KGySoft.CoreLibraries
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.ToString(value, EnumFormattingOptions.Auto, separator);
-        }
-
-        /// <summary>
-        /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
-        /// </summary>
-        /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
-        /// <returns>The string representation of <paramref name="value"/>.</returns>
-        /// <remarks>
-        /// <note>Always specify the <typeparamref name="TEnum"/> generic argument when use this method; otherwise, the less performant <see cref="Enum.ToString()"/> method will be used.</note>
-        /// </remarks>
-        public static string ToString<TEnum>(this TEnum value)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
-        {
-            return Enum<TEnum>.ToString(value, EnumFormattingOptions.Auto, DefaultFormatSeparator);
         }
 
         /// <summary>
@@ -117,7 +93,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
-        /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in <typeparamref name="TEnum"/>.
+        /// or, when <paramref name="flags"/> is zero, it is checked whether zero is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="flags">A flags enum value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
@@ -163,8 +139,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="flags">A flags enum value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
-        /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.</param>
+        /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.
+        /// When <see langword="false"/>, returns also undefined flags in <paramref name="flags"/>.</param>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <paramref name="flags"/> as distinct values.</returns>
+        /// <remarks>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public static IEnumerable<TEnum> GetFlags<TEnum>(this TEnum flags, bool onlyDefinedValues)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {

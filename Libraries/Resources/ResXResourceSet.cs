@@ -595,7 +595,7 @@ namespace KGySoft.Resources
         /// To obtain an enumerator for the metadata entries instead, use the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method instead.</para>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="O:KGySoft.Resources.ResXResourceSet.GetObject"/>
         /// <seealso cref="O:KGySoft.Resources.ResXResourceSet.GetString"/>
@@ -618,7 +618,7 @@ namespace KGySoft.Resources
         /// To obtain an enumerator for the resources instead, use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="GetMetaObject"/>
         /// <seealso cref="GetMetaString"/>
@@ -641,7 +641,7 @@ namespace KGySoft.Resources
         /// To obtain an enumerator for the resources instead, use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
         /// <para>The <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is always a <see cref="string"/> regardless of the value of the <see cref="SafeMode"/> property.</para>
         /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>
-        /// <para>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="GetAliasValue"/>
         /// <seealso cref="GetEnumerator"/>
