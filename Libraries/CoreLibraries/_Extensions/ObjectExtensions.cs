@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses <see cref="object.Equals(object,object)">Object.Equals</see> method to compare the items.
@@ -68,7 +68,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
@@ -96,7 +96,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="item">The item to search for in the results of <paramref name="set"/>.</param>
         /// <param name="set">The set of delegates, whose results are checked whether they are equal to the specified <paramref name="item"/>.</param>
         /// <typeparam name="T">The type of <paramref name="item"/> and the <paramref name="set"/> elements.</typeparam>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is among the results of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <paramref name="item"/> is among the results of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>This method works similarly to the <c>in</c> operator in SQL and Pascal.</para>
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
@@ -192,7 +192,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TTargetType">The type of the desired return value.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
-        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the conversion.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
         /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTargetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>

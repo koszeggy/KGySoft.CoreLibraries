@@ -158,9 +158,9 @@ namespace KGySoft.Resources
     /// <list type="table">
     /// <listheader><term>Type</term><term>Improvement</term><term>How it is handled by the System version</term></listheader>
     /// <item>
-    /// <term><see langword="null"/> value</term>
-    /// <term>Invalid .resx representations of <see langword="null"/> value is fixed when re-written by <see cref="ResXResourceWriter"/>.
-    /// </term><term>When the System version rewrites such an invalid <see langword="null"/> node, it turns into empty string.</term></item>
+    /// <term><see langword="null"/>&#160;value</term>
+    /// <term>Invalid .resx representations of <see langword="null"/>&#160;value is fixed when re-written by <see cref="ResXResourceWriter"/>.
+    /// </term><term>When the System version rewrites such an invalid <see langword="null"/>&#160;node, it turns into empty string.</term></item>
     /// <item><term>Array of <see cref="sbyte"/></term>
     /// <term>Serializing <see cref="sbyte">sbyte[]</see> type works properly.</term>
     /// <term>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> changes the <see cref="sbyte">sbyte[]</see> types to <see cref="byte">byte[]</see>.</term></item>
@@ -189,7 +189,7 @@ namespace KGySoft.Resources
     /// The problem does not occur on binary serialization because in that case the type name is not dumped into the .resx file but is encoded in the binary stream.</term></item>
     /// <item><term>Any non-serializable type</term>
     /// <term>As long as the <see cref="BinarySerializationFormatter"/> can serialize the non-serializable type, this implementation supports non-serializable types as well. This works even if <see cref="CompatibleFormat"/> is <see langword="true"/>.</term>
-    /// <term>If <see cref="CompatibleFormat"/> is <see langword="true"/> during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
+    /// <term>If <see cref="CompatibleFormat"/> is <see langword="true"/>&#160;during serialization, deserialization works even with <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
     /// as long as <c>KGySoft.CoreLibraries</c> assembly can be loaded and <see cref="BinaryFormatter"/> can find the <see cref="AnyObjectSerializerWrapper"/> class.</term></item>
     /// </list></item>
     /// </list>
@@ -496,7 +496,7 @@ namespace KGySoft.Resources
         /// <list type="bullet">
         /// <item><description>The <c>reader</c> and <c>writer</c> <c>resheader</c> elements.</description></item>
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
-        /// <item><description>The placeholder type of <see langword="null"/> references.</description></item>
+        /// <item><description>The placeholder type of <see langword="null"/>&#160;references.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute): <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> (unless it is a generic type argument).</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, unpaired surrogate <see cref="char"/> values are supported.</description></item>
         /// <item><description>The <c>mimetype</c> and content of binary serialized elements. If <c>CompatibleFormat</c> is <see langword="false"/>, these objects are
@@ -517,7 +517,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether the header should be omitted. If both <see cref="CompatibleFormat"/> and <see cref="OmitHeader"/> are <see langword="true"/>, then
-        /// only the XML comment will be omitted. If <see cref="CompatibleFormat"/> is <see langword="false"/> and <see cref="OmitHeader"/> is <see langword="true"/>, then
+        /// only the XML comment will be omitted. If <see cref="CompatibleFormat"/> is <see langword="false"/>&#160;and <see cref="OmitHeader"/> is <see langword="true"/>, then
         /// the comment, the .resx schema and the <c>&lt;resheader&gt;</c> elements will be omitted, too.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
@@ -562,10 +562,10 @@ namespace KGySoft.Resources
         /// Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If <see>AutoGenerateAlias</see> is <see langword="false"/> the assembly names will be referenced by fully qualified names
+        /// <para>If <see>AutoGenerateAlias</see> is <see langword="false"/>&#160;the assembly names will be referenced by fully qualified names
         /// unless the alias names are explicitly added by <see cref="AddAlias(string,string,bool)"/> method, or when a <see cref="ResXDataNode"/>
         /// added by <see cref="AddResource(ResXDataNode)"/> method already contains an alias.</para>
-        /// <para>If <see>AutoGenerateAlias</see> is <see langword="true"/> the assembly aliases are re-generated, even if a <see cref="ResXDataNode"/>
+        /// <para>If <see>AutoGenerateAlias</see> is <see langword="true"/>&#160;the assembly aliases are re-generated, even if a <see cref="ResXDataNode"/>
         /// already contains an alias. To use explicitly defined names instead of auto generated names use the <see cref="AddAlias(string,string,bool)"/> method.</para>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceWriter"/> instance is already disposed.</exception>
@@ -611,8 +611,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="fileName">The file to send output to.</param>
         /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.</param>
-        /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/> for a <see cref="Type"/>, then the default
-        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/> <see cref="ITypeResolutionService"/> instance.</remarks>
+        /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
+        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> is <see langowrd="null"/>.</exception>
         public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
         {
@@ -628,8 +628,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to send the output to.</param>
         /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.</param>
-        /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/> for a <see cref="Type"/>, then the default
-        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/> <see cref="ITypeResolutionService"/> instance.</remarks>
+        /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
+        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is <see langowrd="null"/>.</exception>
         public ResXResourceWriter(Stream stream, Func<Type, string> typeNameConverter = null)
         {
@@ -642,8 +642,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="textWriter">The <see cref="TextWriter"/> object to send output to.</param>
         /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.</param>
-        /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/> for a <see cref="Type"/>, then the default
-        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/> <see cref="ITypeResolutionService"/> instance.</remarks>
+        /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
+        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="textWriter"/> is <see langowrd="null"/>.</exception>
         public ResXResourceWriter(TextWriter textWriter, Func<Type, string> typeNameConverter = null)
         {
@@ -688,7 +688,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="aliasName">The name of the alias.</param>
         /// <param name="assemblyName">The name of the assembly represented by <paramref name="aliasName"/>.</param>
-        /// <param name="forceWriteImmediately"><see langword="true"/> to write the alias immediately to the .resx file; <see langword="false"/> just to
+        /// <param name="forceWriteImmediately"><see langword="true"/>&#160;to write the alias immediately to the .resx file; <see langword="false"/>&#160;just to
         /// add it to the inner mapping and write it only when it is referenced for the first time.</param>
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, AssemblyName assemblyName, bool forceWriteImmediately = false)
@@ -704,7 +704,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="aliasName">The name of the alias.</param>
         /// <param name="assemblyName">The name of the assembly represented by <paramref name="aliasName"/>.</param>
-        /// <param name="forceWriteImmediately"><see langword="true"/> to write the alias immediately to the .resx file; <see langword="false"/> just to
+        /// <param name="forceWriteImmediately"><see langword="true"/>&#160;to write the alias immediately to the .resx file; <see langword="false"/>&#160;just to
         /// add it to the inner mapping and write it only when it is referenced for the first time.</param>
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, string assemblyName, bool forceWriteImmediately = false)

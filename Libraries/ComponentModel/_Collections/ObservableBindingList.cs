@@ -83,11 +83,11 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets or sets whether <see cref="ListChanged"/> and <see cref="CollectionChanged"/> events are invoked with
         /// <see cref="ListChangedType.ItemChanged"/>/<see cref="NotifyCollectionChangedAction.Replace"/> change type when a property of an item changes.
-        /// <br/>Default value: <see langword="true"/> if <typeparamref name="T"/> implements <see cref="INotifyPropertyChanged"/>; otherwise, <see langword="false"/>.
+        /// <br/>Default value: <see langword="true"/>&#160;if <typeparamref name="T"/> implements <see cref="INotifyPropertyChanged"/>; otherwise, <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>Setting this property to <see langword="false"/> can result in better performance if the underlying list has a poor lookup performance.</para>
-        /// <para>This property returns always <see langword="false"/> if <typeparamref name="T"/> does not implement the <see cref="INotifyPropertyChanged"/> interface.</para>
+        /// <para>Setting this property to <see langword="false"/>&#160;can result in better performance if the underlying list has a poor lookup performance.</para>
+        /// <para>This property returns always <see langword="false"/>&#160;if <typeparamref name="T"/> does not implement the <see cref="INotifyPropertyChanged"/> interface.</para>
         /// <para><see cref="ListChanged"/> is invoked only if <see cref="RaiseListChangedEvents"/> is <see langword="true"/>; and <see cref="CollectionChanged"/> is raised only
         /// if <see cref="RaiseCollectionChangedEvents"/> is <see langword="true"/>.</para>
         /// </remarks>

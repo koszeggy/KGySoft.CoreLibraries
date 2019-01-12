@@ -273,7 +273,7 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item><term>Lazy processing</term>
     /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, the .resx file is processed on demand, during the actual enumeration. The .resx file is processed immediately if
-    /// <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>. If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/> and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
+    /// <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>. If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>&#160;and any enumerator is obtained after getting one, the rest of the .resx file is immediately processed.</description></item>
     /// <item><term>Handling duplicates</term>
     /// <description>If <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, every occurrence of a duplicated name is returned by the enumerators. Otherwise, only the last occurrence of
     /// a name is returned.</description></item>
@@ -710,7 +710,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If an element is defined more than once, and <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>,
         /// then the enumeration returns every occurrence of the entries with identical names.
-        /// If <see cref="AllowDuplicatedKeys"/> is <see langword="false"/> the enumeration returns always the last occurrence of the entries with identical names.</para>
+        /// If <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>&#160;the enumeration returns always the last occurrence of the entries with identical names.</para>
         /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
         /// A lazy enumeration means that the underlying .resx file is read only on demand. It is possible that
         /// not the whole .resx is read if enumeration is canceled. After the first enumeration elements are cached.</para>

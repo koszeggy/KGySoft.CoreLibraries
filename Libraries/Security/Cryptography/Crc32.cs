@@ -156,7 +156,7 @@ namespace KGySoft.Security.Cryptography
         /// Computes the CRC-32 hash value for the specified <see cref="string"/>.
         /// </summary>
         /// <param name="s">The input <see cref="string"/> to compute the hash code for.</param>
-        /// <param name="encoding">An <see cref="Encoding"/> instance to specify the desired byte representation of the specified string, or <see langword="null"/> to use <see cref="Encoding.UTF8"/> encoding. This parameter is optional.
+        /// <param name="encoding">An <see cref="Encoding"/> instance to specify the desired byte representation of the specified string, or <see langword="null"/>&#160;to use <see cref="Encoding.UTF8"/> encoding. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="polynomial">The polynomial to use to calculate the CRC value. This parameter is optional.
         /// <br/>Default value: <see cref="StandardPolynomial"/>.</param>

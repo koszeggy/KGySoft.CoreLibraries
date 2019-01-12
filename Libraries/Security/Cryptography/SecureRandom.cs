@@ -30,7 +30,7 @@ namespace KGySoft.Security.Cryptography
     /// </summary>
     /// <remarks>
     /// <note>Please note that <see cref="SecureRandom"/> class implements the <see cref="IDisposable"/> interface
-    /// so make sure you dispose it (or use it in a <see langword="using"/> block) if not used in a static context.</note>
+    /// so make sure you dispose it (or use it in a <see langword="using"/>&#160;block) if not used in a static context.</note>
     /// </remarks>
     /// <seealso cref="Random" />
     public class SecureRandom : Random, IDisposable
@@ -168,7 +168,7 @@ namespace KGySoft.Security.Cryptography
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
 #if !NET35

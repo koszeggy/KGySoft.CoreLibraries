@@ -1,8 +1,27 @@
-﻿#region Used namespaces
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: EnumComparer.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections.Generic;
+#if DEBUG
 using System.Linq.Expressions;
+#endif
+
 using KGySoft.Collections;
 
 #endregion
@@ -10,25 +29,26 @@ using KGySoft.Collections;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Efficient <see cref="IEqualityComparer{T}"/> and <see cref="IComparer{T}"/> implementation for <see cref="Enum"/> types.
-    /// Can be used for example in <see cref="Dictionary{TKey,TValue}"/>, <see cref="SortedList{TKey,TValue}"/> or <see cref="Cache{TKey,TValue}"/> instances with enum key,
-    /// or as a comparer for <see cref="List{T}.Sort(System.Collections.Generic.IComparer{T})"/> method to sort enum elements.
+    /// Provides an efficient <see cref="IEqualityComparer{T}"/> and <see cref="IComparer{T}"/> implementation for <see cref="Enum"/> types.
+    /// Can be used for example in <see cref="Dictionary{TKey,TValue}"/>, <see cref="SortedList{TKey,TValue}"/> or <see cref="Cache{TKey,TValue}"/> instances with <see langword="enum"/>&#160;key,
+    /// or as a comparer for <see cref="List{T}.Sort(IComparer{T})"><![CDATA[List<T>.Sort(IComparer<T>)]]></see> method to sort <see langword="enum"/>&#160;elements.
     /// </summary>
-    /// <typeparam name="TEnum">Enum type.</typeparam>
+    /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
     /// <remarks>
-    /// Using dictionaries with enum key and finding elements in an enum array works without using <see cref="EnumComparer{TEnum}"/>, too.
-    /// But unlike <see cref="int"/> or the other possible underlying types, enum types does not implement the generic <see cref="IEquatable{T}"/> and
-    /// <see cref="IComparable{T}"/> interfaces. This causes that using an enum as key in a dictionary, for example, will be very ineffective due to heavy boxing and unboxing to and from
-    /// <see cref="object"/> type. This comparer generates the type specific <c>Equals</c>, <c>GetHashCode</c> and <c>CompareTo</c> methods foy any enum type.
+    /// Using dictionaries with <see langword="enum"/>&#160;key and finding elements in an <see langword="enum"/>&#160;array works without using <see cref="EnumComparer{TEnum}"/>, too.
+    /// But unlike <see cref="int"/> or the other possible underlying types, <see langword="enum"/>&#160;types does not implement the generic <see cref="IEquatable{T}"/> and
+    /// <see cref="IComparable{T}"/> interfaces. This causes that using an <see langword="enum"/>&#160;as key in a dictionary, for example, will be very ineffective due to heavy boxing and unboxing to and from
+    /// <see cref="object"/> type. This comparer generates the type specific <see cref="IEqualityComparer{T}.Equals(T,T)"><![CDATA[IEqualityComparer<TEnum>.Equals]]></see>,
+    /// <see cref="IEqualityComparer{T}.GetHashCode(T)"><![CDATA[IEqualityComparer<T>.GetHashCode]]></see> and <see cref="IComparer{T}.Compare"><![CDATA[IComparer<T>.Compare]]></see> methods for any <see langword="enum"/>&#160;type.
     /// </remarks>
     /// <example>
     /// Example for initializing of a <see cref="Dictionary{TKey,TValue}"/> with <see cref="EnumComparer{TEnum}"/>:
     /// <code lang="C#">
-    /// Dictionary&lt;MyEnum, string&gt; myDict = new Dictionary&lt;MyEnum, string&gt;(EnumComparer&lt;MyEnum&gt;.Comparer);
+    /// <![CDATA[Dictionary<MyEnum, string> myDict = new Dictionary<MyEnum, string>(EnumComparer<MyEnum>.Comparer);]]>
     /// </code>
     /// </example>
     [Serializable]
-    public sealed class EnumComparer<TEnum>: IEqualityComparer<TEnum>, IComparer<TEnum>
+    public sealed class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>
     {
         #region Fields
 
@@ -38,6 +58,8 @@ namespace KGySoft.CoreLibraries
         private static Func<TEnum, int> getHashCode;
         private static Func<TEnum, TEnum, int> compare;
 #else
+        // ReSharper disable once StaticMemberInGenericType - TEnum specific value
+        // ReSharper disable once NotAccessedField.Local - used by RecompILer
         private static bool isUnsignedCompare;
 #endif
 
@@ -48,10 +70,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the comparer instance for <typeparamref name="TEnum"/> type.
         /// </summary>
-        public static EnumComparer<TEnum> Comparer
-        {
-            get { return comparer ?? (comparer = new EnumComparer<TEnum>()); }
-        }
+        public static EnumComparer<TEnum> Comparer => comparer ?? (comparer = new EnumComparer<TEnum>());
 
         #endregion
 
@@ -65,7 +84,7 @@ namespace KGySoft.CoreLibraries
             // this could be in static ctor but that would throw a TypeInitializationException at unexpected place
             if (!typeof(TEnum).IsEnum)
                 throw new InvalidOperationException(Res.EnumTypeParameterInvalid);
-            
+
 #if !DEBUG
             // this could be in static ctor but will be set only once per type when Comparer is accessed.
             isUnsignedCompare = Enum.GetUnderlyingType(typeof(TEnum)) == typeof(ulong);
@@ -99,7 +118,8 @@ namespace KGySoft.CoreLibraries
             ParameterExpression objParameter = Expression.Parameter(typeof(TEnum), "obj");
             Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
             UnaryExpression enumCastedToUnderlyingType = Expression.Convert(objParameter, underlyingType);
-            MethodCallExpression getHashCodeCall = Expression.Call(enumCastedToUnderlyingType, underlyingType.GetMethod("GetHashCode"));
+            // ReSharper disable once AssignNullToNotNullAttribute - the constructor ensures TEnum has an underlying enum type
+            MethodCallExpression getHashCodeCall = Expression.Call(enumCastedToUnderlyingType, underlyingType.GetMethod(nameof(Object.GetHashCode)));
 
             return Expression.Lambda<Func<TEnum, int>>(getHashCodeCall, objParameter).Compile();
         }
@@ -112,9 +132,10 @@ namespace KGySoft.CoreLibraries
             Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
             ParameterExpression xParameter = Expression.Parameter(typeof(TEnum), "x");
             ParameterExpression yParameter = Expression.Parameter(typeof(TEnum), "y");
-            UnaryExpression xCastedToUnderlyingType = Expression.Convert(xParameter, underlyingType);
-            UnaryExpression yCastedToUnderlyingType = Expression.Convert(yParameter, underlyingType);
-            MethodCallExpression compareToCall = Expression.Call(xCastedToUnderlyingType, underlyingType.GetMethod("CompareTo", new Type[] { underlyingType }), yCastedToUnderlyingType);
+            UnaryExpression xAsUnderlyingType = Expression.Convert(xParameter, underlyingType);
+            UnaryExpression yAsUnderlyingType = Expression.Convert(yParameter, underlyingType);
+            // ReSharper disable once AssignNullToNotNullAttribute - the constructor ensures TEnum has is a real enum with a comparable underlying type
+            MethodCallExpression compareToCall = Expression.Call(xAsUnderlyingType, underlyingType.GetMethod(nameof(IComparable<_>.CompareTo), new Type[] { underlyingType }), yAsUnderlyingType);
 
             return Expression.Lambda<Func<TEnum, TEnum, int>>(compareToCall, xParameter, yParameter).Compile();
         }
@@ -127,22 +148,17 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Determines whether the specified <paramref name="obj"/> is the same type of <see cref="EnumComparer{TEnum}"/> as the current instance.
         /// </summary>
-        public override bool Equals(object obj)
-        {
-            EnumComparer<TEnum> other = obj as EnumComparer<TEnum>;
-            return (other != null);
-        }
+        /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
+        /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
+        public override bool Equals(object obj) => obj is EnumComparer<TEnum>;
 
         /// <summary>
-        /// Serves as a hash function for a particular type. 
+        /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A hash code for the current <see cref="EnumComparer{TEnum}"/>.
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
         /// </returns>
-        public override int GetHashCode()
-        {
-            return GetType().FullName.GetHashCode();
-        }
+        public override int GetHashCode() => GetType().GetHashCode();
 
         #endregion
 
@@ -154,10 +170,10 @@ namespace KGySoft.CoreLibraries
         /// Determines whether two <typeparamref name="TEnum"/> instances are equal.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/> if the specified enums are equal; otherwise, <see langword="false"/>.
+        /// <see langword="true"/>&#160;if the specified values are equal; otherwise, <see langword="false"/>.
         /// </returns>
-        /// <param name="x">The first enum of type <typeparamref name="TEnum"/> to compare.</param>
-        /// <param name="y">The second enum of type <typeparamref name="TEnum"/> to compare.</param>
+        /// <param name="x">The first <typeparamref name="TEnum"/> value to compare.</param>
+        /// <param name="y">The second <typeparamref name="TEnum"/> value to compare.</param>
         public bool Equals(TEnum x, TEnum y)
         {
 #if DEBUG
@@ -179,7 +195,7 @@ namespace KGySoft.CoreLibraries
         /// A hash code for the specified <typeparamref name="TEnum"/> instance.
         /// </returns>
         /// <param name="obj">The <typeparamref name="TEnum"/> for which a hash code is to be returned.</param>
-        /// <remarks>Returned hash code is not neccessarily equals with own hash code of an anum value but provides a fast and well-spread value.</remarks>
+        /// <remarks>Returned hash code is not necessarily equals with own hash code of an <see langword="enum"/>&#160;value but provides a fast and well-spread value.</remarks>
         public int GetHashCode(TEnum obj)
         {
 #if DEBUG
@@ -219,7 +235,7 @@ namespace KGySoft.CoreLibraries
             return compare(x, y);
 #else
             // replaced to the next code by RecompILer:
-            // return unsignedCompare ? ((ulong)x).CompareTo((ulong)y) : ((long)x).CompareTo((long)y);
+            // return isUnsignedCompare ? ((ulong)x).CompareTo((ulong)y) : ((long)x).CompareTo((long)y);
 
             return 0;
 #endif

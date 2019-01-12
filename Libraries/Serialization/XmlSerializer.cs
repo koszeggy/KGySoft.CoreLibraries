@@ -40,7 +40,7 @@ namespace KGySoft.Serialization
     /// then it will be used for serializing its value (see also <see cref="Reflector.RegisterTypeConverter{T,TC}">Reflector.RegisterTypeConverter</see> method).</description></item>
     /// </list>
     /// </para>
-    /// <para>Basically types with default constructors are supported. However, if a field or property value is not <see langword="null"/> after creating its parent object, then the returned instance is tried to be re-used on deserialization.
+    /// <para>Basically types with default constructors are supported. However, if a field or property value is not <see langword="null"/>&#160;after creating its parent object, then the returned instance is tried to be re-used on deserialization.
     /// <note>Objects without a default constructor can be serialized at root level also by the <see cref="O:KGySoft.Serialization.SerializeContent">SerializeContent</see> methods into an already existing
     /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the method. When deserializing, the result object should be created by the caller, and the content can be deserialized
     /// by the <see cref="O:KGySoft.Serialization.DeserializeContent">DeserializeContent</see> methods.</note>
@@ -53,7 +53,7 @@ namespace KGySoft.Serialization
     /// <para>You can use <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option to enable recursive serialization of every type of objects and collections. A collection type can be serialized if
     /// it implements the <see cref="ICollection{T}"/>, <see cref="IList"/> or <see cref="IDictionary"/> interfaces, and it can be deserialized if it has a default constructor, or an initializer constructor with a single parameter that can accept an <see cref="Array"/>
     /// or <see cref="List{T}"/> instance (non-dictionaries) or a <see cref="Dictionary{TKey,TValue}"/> instance (dictionary collections). Non-collection types must have a parameterless constructor to be able to be deserialized.
-    /// <note>If a field or property returns a non-<see langword="null"/> value on deserialization, then its value is tried to be used so in this case it can be created by its container object using any custom constructor.</note>
+    /// <note>If a field or property returns a non-<see langword="null"/>&#160;value on deserialization, then its value is tried to be used so in this case it can be created by its container object using any custom constructor.</note>
     /// <note type="caution">Enabling the <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option does not guarantee that the deserialized instances will be the same as the original ones.</note>
     /// </para>
     /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
@@ -71,9 +71,9 @@ namespace KGySoft.Serialization
     /// suggesting that <see cref="XmlIncludeAttribute"/> should be defined for all possible derived types. Unfortunately this attribute is applicable only for possible types of properties/fields
     /// but not for collection elements. And in many cases it simply cannot be predefined in advance what derived types will be used at run-time.</description></item>
     /// <item><term>Collections with read-only properties</term><description>Usually collection properties can be read-only. But to be able to use the system serializer we need to define a setter for such properties; otherwise, serialization may fail.
-    /// <see cref="XmlSerializer"/> does not require setter accessor for a collection property if the property is not <see langword="null"/> after initialization and can be populated by using the usual collection interfaces.</description></item>
+    /// <see cref="XmlSerializer"/> does not require setter accessor for a collection property if the property is not <see langword="null"/>&#160;after initialization and can be populated by using the usual collection interfaces.</description></item>
     /// <item><term>Objects without default constructors</term><description>The system serializer requires that the deserialized types have default constructors. On deserializing fields and properties, this <see cref="XmlSerializer"/> implementation tries to use
-    /// the return value of the members. If they are not <see langword="null"/> after creating their container object, then the returned instances will be used instead of creating a new instance.</description></item>
+    /// the return value of the members. If they are not <see langword="null"/>&#160;after creating their container object, then the returned instances will be used instead of creating a new instance.</description></item>
     /// </list>
     /// </para>
     /// </remarks>

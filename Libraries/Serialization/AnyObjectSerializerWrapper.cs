@@ -38,7 +38,7 @@ namespace KGySoft.Serialization
         /// Creates a new instace of <see cref="AnyObjectSerializerWrapper"/> with
         /// the provided object to be serialized.
         /// </summary>
-        /// <param name="obj">The <see cref="object"/> to serialize. Non-serializable, remote objects, and <see langword="null"/> instances are supported, too.</param>
+        /// <param name="obj">The <see cref="object"/> to serialize. Non-serializable, remote objects, and <see langword="null"/>&#160;instances are supported, too.</param>
         /// <param name="useWeakAssemblyBinding">When <see langword="true"/>, the assembly version of types does not need to match on deserialization.
         /// This makes possible to deserialize objects stored in different version of the original assembly.</param>
         public AnyObjectSerializerWrapper(object obj, bool useWeakAssemblyBinding)

@@ -551,7 +551,7 @@ namespace _LibrariesTest.Tests.Resources
             manager.SetObject(key, value, testCulture);
             manager.Dispose(); // save occurs
             Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
-            Assert.IsTrue(File.Exists(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, "TestResourceResX.de.resx")));
+            Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), "TestResourceResX.de.resx")));
 
             // Dispose, central
             LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
@@ -566,7 +566,7 @@ namespace _LibrariesTest.Tests.Resources
             LanguageSettings.DisplayLanguage = inv; // save occurs
             manager.Dispose(); // save occurs
             Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
-            Assert.IsTrue(File.Exists(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, "TestResourceResX.de-DE.resx")));
+            Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), "TestResourceResX.de-DE.resx")));
 
             // cleaning up the newly created resources
             Clean(manager, hu, huHU, huRunic, huRunicHU, huRunicHULowland, enGB, de, deDE);
@@ -628,7 +628,7 @@ namespace _LibrariesTest.Tests.Resources
         private void Clean(DynamicResourceManager manager, params CultureInfo[] cultures)
         {
             foreach (CultureInfo culture in cultures)
-                File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{resXBaseName}.{culture.Name}.resx"));
+                File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
         }
     }
 }

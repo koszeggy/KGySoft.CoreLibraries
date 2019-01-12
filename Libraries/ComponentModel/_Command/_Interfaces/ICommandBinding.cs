@@ -69,7 +69,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Adds the target to this <see cref="ICommandBinding"/> instance. The underlying <see cref="ICommand"/> will be invoked for each added target.
-        /// If no targets are added the command will be invoked with a <see langword="null"/> target.
+        /// If no targets are added the command will be invoked with a <see langword="null"/>&#160;target.
         /// </summary>
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
         ICommandBinding AddTarget(object target);

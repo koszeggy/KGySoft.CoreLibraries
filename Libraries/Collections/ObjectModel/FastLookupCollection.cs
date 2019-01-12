@@ -43,8 +43,8 @@ namespace KGySoft.Collections.ObjectModel
         /// Initializes a new instance of the <see cref="FastLookupCollection{T}"/> class as a wrapper for the specified <paramref name="list"/>.
         /// </summary>
         /// <param name="list">The list that is wrapped by the new collection.</param>
-        /// <param name="checkConsistency"><see langword="true"/> to keep checking consistency of the wrapped <paramref name="list"/> and the inner storage;
-        /// <see langword="false"/> to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/> if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
+        /// <param name="checkConsistency"><see langword="true"/>&#160;to keep checking consistency of the wrapped <paramref name="list"/> and the inner storage;
+        /// <see langword="false"/>&#160;to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/>&#160;if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
         public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list)

@@ -12,7 +12,7 @@ namespace _PerformanceTest
         [Test]
         public void TestMethod1()
         {
-            var parameter = Expression.Parameter(typeof(long));
+            var parameter = Expression.Parameter(typeof(long), "value");
             var dynamicMethod = Expression.Lambda<Func<long, ConsoleColor>>(
                 Expression.Convert(parameter, typeof(ConsoleColor)),
                 parameter);

@@ -583,7 +583,7 @@ namespace _LibrariesTest.Tests.Resources
 
         private void Clean(ResXResourceManager manager, CultureInfo culture)
         {
-            File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{manager.BaseName}.{culture.Name}.resx"));
+            File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{manager.BaseName}.{culture.Name}.resx"));
         }
     }
 }

@@ -19,7 +19,7 @@ namespace KGySoft.Serialization
         /// Gets or sets whether assembly name should be completely omitted on serialization.
         /// </summary>
         /// <value>
-        /// <see langword="true"/> to omit assembly name on serialize; otherwise, <see langword="false"/>.
+        /// <see langword="true"/>&#160;to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
         /// <note>This property exists only in .NET 4 and above.</note>
@@ -36,7 +36,7 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// When <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, suppresses the assembly name on serialization.
-        /// Otherwise, returns <see langword="null"/> for both assembly and type names, indicating, that the original
+        /// Otherwise, returns <see langword="null"/>&#160;for both assembly and type names, indicating, that the original
         /// names should be used.
         /// </summary>
         /// <param name="serializedType">The type of the object the formatter creates a new instance of.</param>

@@ -76,7 +76,7 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Gets whether an item can be set through the <see cref="P:KGySoft.Collections.ObjectModel.VirtualCollection`1.Item(System.Int32)">indexer</see>.
-        /// <br/>The base implementation returns <see langword="true"/> if <see cref="IsReadOnly"/> returns <see langword="false"/> or when the wrapped collection is a one dimensional zero based array of <typeparamref name="T"/>;
+        /// <br/>The base implementation returns <see langword="true"/>&#160;if <see cref="IsReadOnly"/> returns <see langword="false"/>&#160;or when the wrapped collection is a one dimensional zero based array of <typeparamref name="T"/>;
         /// otherwise, returns <see langword="false"/>.
         /// </summary>
         /// <seealso cref="IsReadOnly"/>

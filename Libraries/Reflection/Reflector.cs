@@ -810,7 +810,7 @@ namespace KGySoft.Reflection
         /// </param>
         /// <param name="genericParameters">Generic type parameters if method is generic. For non-generic methods this parameter is omitted.</param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         /// <remarks>
         /// <note>
@@ -871,7 +871,7 @@ namespace KGySoft.Reflection
         /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         /// <remarks>
         /// <note>
@@ -891,7 +891,7 @@ namespace KGySoft.Reflection
         /// contain the object instance on which the method should be called.</param>
         /// <param name="method">The method to invoke.</param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(object instance, MethodInfo method, params object[] parameters)
         {
@@ -980,7 +980,7 @@ namespace KGySoft.Reflection
         /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         /// <remarks>
         /// <note>
@@ -1014,7 +1014,7 @@ namespace KGySoft.Reflection
         /// <param name="methodName">The method name to invoke.</param>
         /// <param name="genericParameters">Generic type parameters if method is generic. For non-generic methods this parameter is omitted.</param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(object instance, string methodName, Type[] genericParameters, params object[] parameters)
         {
@@ -1037,7 +1037,7 @@ namespace KGySoft.Reflection
         /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         /// <remarks>
         /// <note>
@@ -1060,7 +1060,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">The object instance on which the method should be called.</param>
         /// <param name="methodName">The method name to invoke.</param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(object instance, string methodName, params object[] parameters)
         {
@@ -1084,7 +1084,7 @@ namespace KGySoft.Reflection
         /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(Type type, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
@@ -1111,7 +1111,7 @@ namespace KGySoft.Reflection
         /// <param name="methodName">The method name to invoke.</param>
         /// <param name="genericParameters">Generic type parameters if method is generic. For non-generic methods this parameter is omitted.</param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(Type type, string methodName, Type[] genericParameters, params object[] parameters)
         {
@@ -1134,7 +1134,7 @@ namespace KGySoft.Reflection
         /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(Type type, string methodName, ReflectionWays way, params object[] parameters)
         {
@@ -1151,7 +1151,7 @@ namespace KGySoft.Reflection
         /// <param name="type">The type that contains the static the method to call.</param>
         /// <param name="methodName">The method name to invoke.</param>
         /// <param name="parameters">Method parameters.</param>
-        /// <returns>Returns <see langword="null"/> if return type of the method is <see cref="Void"/>, otherwise, returns
+        /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
         /// the return value of the invoked method.</returns>
         public static object RunMethod(Type type, string methodName, params object[] parameters)
         {
@@ -1701,13 +1701,13 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="tryToLoad">If <see langword="false"/>, searches the assembly among the already loaded assemblies. If <see langword="true"/>, tries to load the assembly when it is not already loaded.</param>
-        /// <param name="matchBySimpleName"><see langword="true"/> to ignore version, culture and public key token information differences.</param>
+        /// <param name="matchBySimpleName"><see langword="true"/>&#160;to ignore version, culture and public key token information differences.</param>
         /// <returns>An <see cref="Assembly"/> instance with the loaded assembly.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty.</exception>
-        /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <see langword="true"/> and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
-        /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <see langword="true"/> and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
-        /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <see langword="true"/> and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
+        /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
+        /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
+        /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
         public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
         {
             if (assemblyName == null)
@@ -1853,9 +1853,9 @@ namespace KGySoft.Reflection
         /// Resolves a type definition given in string. When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
         /// </summary>
         /// <param name="typeName">Type declaration in string representation with or without assembly name.</param>
-        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/> to load assemblies with partially defined names; <see langword="false"/> to find partially defined names in already loaded assemblies only.</param>
-        /// <param name="matchAssemblyByWeakName"><see langword="true"/> to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>.</param>
-        /// <returns>The resolved type or <see langword="null"/> when <paramref name="typeName"/> cannot be resolved.</returns>
+        /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/>&#160;to load assemblies with partially defined names; <see langword="false"/>&#160;to find partially defined names in already loaded assemblies only.</param>
+        /// <param name="matchAssemblyByWeakName"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>.</param>
+        /// <returns>The resolved type or <see langword="null"/>&#160;when <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names. When assmebly name is partially defined,
         /// the assembly is attempted to be loaded only when <paramref name="loadPartiallyDefinedAssemblies"/> is <see langword="true"/>.</para>
@@ -1957,7 +1957,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="typeName">Type declaration in string representation.</param>
         /// <param name="assembly">The assembly that may contain the type to retrieve.</param>
-        /// <returns>The resolved type or <see langword="null"/> when <paramref name="typeName"/> cannot be resolved.</returns>
+        /// <returns>The resolved type or <see langword="null"/>&#160;when <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
         /// <para>The generic type parameters can contain assembly part. However, when the main type definition contains assembly part,
         /// an <see cref="ArgumentException"/> will be thrown. For such type names use <see cref="ResolveType(string,bool,bool)"/> overload instead.</para>

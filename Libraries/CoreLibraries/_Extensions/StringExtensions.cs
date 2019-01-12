@@ -104,7 +104,7 @@ namespace KGySoft.CoreLibraries
         /// then the type converter or conversion will be used.
         /// </summary>
         /// <param name="type">Type of the desired result.</param>
-        /// <param name="s">The string value to parse. If <see langword="null"/> and <paramref name="type"/> is a reference or nullable type, returns <see langword="null"/>.</param>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, returns <see langword="null"/>.</param>
         /// <param name="culture">Appropriate culture needed for number types.</param>
         /// <returns>The parsed value.</returns>
         /// <remarks>
@@ -133,7 +133,7 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="DateTime"/></description></item>
         /// <item><description><see cref="DateTimeOffset"/></description></item>
         /// <item><description><see cref="TimeSpan"/></description></item>
-        /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
+        /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/>&#160;or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
         /// <item><description>Any types with a registered conversion or <see cref="TypeConverter"/> from <see cref="string"/> type.</description></item>
         /// </list>
         /// </para>
@@ -452,7 +452,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">The <see cref="string">string</see> to convert.</param>
         /// <param name="definedOnly">If <see langword="true"/>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
         /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
-        /// <returns>A non-<see langword="null"/> value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
+        /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
         public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
@@ -475,7 +475,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">A <see cref="string"/> instance in which <paramref name="value"/> is searched.</param>
         /// <param name="value">The <see cref="string"/> to seek.</param>
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
-        /// <returns><see langword="true"/> if string <paramref name="s"/> contains <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> contains <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="value"/> is <see langword="null"/>.</exception>
@@ -497,7 +497,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns><see langword="true"/> if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         public static bool EqualsAny(this string s, params string[] set)
         {
             int length;
@@ -519,7 +519,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparer">A <see cref="StringComparer"/> that checks the equality.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns><see langword="true"/> if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="comparer"/> is <see langword="null"/>.</exception>
         public static bool EqualsAny(this string s, StringComparer comparer, params string[] set)
         {
@@ -535,7 +535,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns><see langword="true"/> if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> equals any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="comparison"/> is not a defined <see cref="StringComparison"/> value.</exception>
         public static bool EqualsAny(this string s, StringComparison comparison, params string[] set)
         {
@@ -555,7 +555,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
         public static int IndexOfAny(this string s, params string[] set)
             => IndexOfAny(s, StringComparison.Ordinal, set);
 
@@ -571,7 +571,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="comparison"/> is not a defined <see cref="StringComparison"/> value.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
         public static int IndexOfAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
@@ -599,11 +599,11 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">A string array</param>
-        /// <returns><see langword="true"/> if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
         public static bool ContainsAny(this string s, params string[] set)
             => ContainsAny(s, StringComparison.Ordinal, set);
 
@@ -613,12 +613,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">A string array</param>
-        /// <returns><see langword="true"/> if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if string <paramref name="s"/> contains any of the elements of <paramref name="set"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/><paramref name="set"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="comparison"/> is not a defined <see cref="StringComparison"/> value.</exception>
-        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/> element.</exception>
+        /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
         public static bool ContainsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))

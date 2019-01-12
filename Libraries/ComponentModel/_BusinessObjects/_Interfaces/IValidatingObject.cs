@@ -11,7 +11,7 @@ namespace KGySoft.ComponentModel
         /// Gets whether this instance is valid. That is, if <see cref="Validate">Validate</see> method does not return any entries where
         /// the value of <see cref="ValidationResult.Severity"/> is <see cref="ValidationSeverity.Error"/>.
         /// </summary>
-        /// <value><see langword="true"/> if this instance is valid; otherwise, <see langword="false"/>.
+        /// <value><see langword="true"/>&#160;if this instance is valid; otherwise, <see langword="false"/>.
         /// </value>
         bool IsValid { get; }
 

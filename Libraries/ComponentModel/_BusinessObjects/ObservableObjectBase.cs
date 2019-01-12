@@ -201,7 +201,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Sets the modified state of this <see cref="ObservableObjectBase"/> instance represented by the <see cref="IsModified"/> property.
         /// </summary>
-        /// <param name="value"><see langword="true"/> to mark the object as modified; <see langword="false"/> to mark it unmodified.</param>
+        /// <param name="value"><see langword="true"/>&#160;to mark the object as modified; <see langword="false"/>&#160;to mark it unmodified.</param>
         public void SetModified(bool value)
         {
             if (isModified == value)
@@ -393,7 +393,7 @@ namespace KGySoft.ComponentModel
         /// <param name="invokeChangedEvent">If <see langword="true"/>, and the <paramref name="value"/> is different to the previously stored value, then invokes the <see cref="PropertyChanged"/> event.</param>
         /// <param name="propertyName">Name of the property to set. This parameter is optional.
         /// <br/>Default value: The name of the caller member.</param>
-        /// <returns><see langword="true"/> if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="propertyName"/> cannot be set.
         /// <br/>-or-
@@ -427,8 +427,8 @@ namespace KGySoft.ComponentModel
         /// Resets the property of the specified name, meaning, it will be removed from the underlying storage so the getter methods will return the default value again.
         /// </summary>
         /// <param name="propertyName">The name of the property to reset.</param>
-        /// <param name="invokeChangedEvent"><see langword="true"/> to allow raising the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
-        /// <returns><see langword="true"/> if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
+        /// <param name="invokeChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>.</param>
+        /// <returns><see langword="true"/>&#160;if property has been reset (it existed previously); otherwise, <see langword="false"/>.</returns>
         protected bool ResetProperty(string propertyName, bool invokeChangedEvent = true)
         {
             if (propertyName == null)
@@ -449,7 +449,7 @@ namespace KGySoft.ComponentModel
         /// Gets whether the specified property can be get. The base implementation allows to get the actual instance properties in this instance.
         /// </summary>
         /// <param name="propertyName">Name of the property to get.</param>
-        /// <returns><see langword="true"/> if the specified property can be get; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if the specified property can be get; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanGetProperty(string propertyName)
         {
             Dictionary<string, PropertyInfo> props;
@@ -462,7 +462,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="propertyName">Name of the property to set.</param>
         /// <param name="value">The property value to set.</param>
-        /// <returns><see langword="true"/> if the specified property can be set; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if the specified property can be set; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanSetProperty(string propertyName, object value)
         {
             Dictionary<string, PropertyInfo> props = reflectedProperties[GetType()];
@@ -485,14 +485,14 @@ namespace KGySoft.ComponentModel
         /// <br/>The <see cref="ObservableObjectBase"/> implementation excludes the <see cref="IsModified"/> property itself.
         /// </summary>
         /// <param name="propertyName">Name of the changed property.</param>
-        /// <returns><see langword="true"/> if changing of the specified <paramref name="propertyName"/> affects the value of the <see cref="IsModified"/> property; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if changing of the specified <paramref name="propertyName"/> affects the value of the <see cref="IsModified"/> property; otherwise, <see langword="false"/>.</returns>
         protected virtual bool AffectsModifiedState(string propertyName) => propertyName != nameof(IsModified);
 
         /// <summary>
         /// Releases the resources held by this instance.
         /// The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing) => propertyChanged = null;
 
         #endregion

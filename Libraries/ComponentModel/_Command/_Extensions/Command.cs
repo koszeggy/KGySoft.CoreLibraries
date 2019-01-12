@@ -98,8 +98,8 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="command">The command to bind.</param>
         /// <param name="initialState">The initial state of the binding. The state entries will be applied to the sources when they are added to the binding.</param>
-        /// <param name="disposeCommand"><see langword="true"/> to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/> to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
-        /// Use <see langword="true"/> only if the command will not be re-used elsewhere. This parameter is optional.
+        /// <param name="disposeCommand"><see langword="true"/>&#160;to dispose the possibly disposable <paramref name="command"/> when the returned <see cref="ICommandBinding"/> is disposed; <see langword="false"/>&#160;to keep the <paramref name="command"/> alive when the returned <see cref="ICommandBinding"/> is disposed.
+        /// Use <see langword="true"/>&#160;only if the command will not be re-used elsewhere. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
         /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.

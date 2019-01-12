@@ -65,7 +65,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="path">Full path of the file to test.</param>
         /// <param name="postfixSeparator">A postfix between the file name and the numbering.</param>
-        /// <returns>Returns <paramref name="path"/> if that is a non-existing file name. Returns <see langword="null"/> if <paramref name="path"/> denotes a root directory.
+        /// <returns>Returns <paramref name="path"/> if that is a non-existing file name. Returns <see langword="null"/>&#160;if <paramref name="path"/> denotes a root directory.
         /// Otherwise, returns a non-existing file name with a number postfix in the file name part (the extension will not be changed).</returns>
         static public string GetNextFileName(string path, string postfixSeparator)
         {

@@ -49,7 +49,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets whether the <see cref="SortableBindingList{T}"/> should be immediately re-sorted when an item changes or a new item is added.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
-        /// <remarks><para>Setting this property to <see langword="true"/> may cause re-sorting the <see cref="SortableBindingList{T}"/> immediately.</para></remarks>
+        /// <remarks><para>Setting this property to <see langword="true"/>&#160;may cause re-sorting the <see cref="SortableBindingList{T}"/> immediately.</para></remarks>
         public bool SortOnChange
         {
             get => sortOnChange;

@@ -80,7 +80,7 @@ namespace KGySoft.Serialization
     /// <h1 class="heading">Simple types</h1>
     /// Following types are natively supported (with <see cref="BinarySerializationOptions.None"/> option):
     /// <list type="bullet">
-    /// <item><description><see langword="null"/> reference</description></item>
+    /// <item><description><see langword="null"/>&#160;reference</description></item>
     /// <item><description><see cref="object"/></description></item>
     /// <item><description><see cref="DBNull"/></description></item>
     /// <item><description><see cref="bool"/></description></item>
@@ -113,7 +113,7 @@ namespace KGySoft.Serialization
     /// <note>
     /// <list type="bullet">
     /// <item><description>If a non-derived <see cref="object"/> instance is deserialized the reference will not the same as the original object, thus <see cref="object.Equals(object,object)"/> will return
-    /// <see langword="false"/> for the two instances. Using the <c>object</c> type has more meaning in case of a generic collection argument type.</description></item>
+    /// <see langword="false"/>&#160;for the two instances. Using the <c>object</c> type has more meaning in case of a generic collection argument type.</description></item>
     /// <item><description>Serializing <see cref="Enum"/> types will result a longer raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.</description></item>
     /// </list>
     /// </note>

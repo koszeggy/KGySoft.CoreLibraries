@@ -26,7 +26,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">The instance on which the method is invoked</param>
         /// <param name="parameters">Method parameters</param>
-        /// <returns>Returns always <see langword="null"/> because this class represents a method with <see cref="Void"/> return type.</returns>
+        /// <returns>Returns always <see langword="null"/>&#160;because this class represents a method with <see cref="Void"/> return type.</returns>
         public override object Invoke(object instance, params object[] parameters)
         {
             ((AnyAction)Invoker)(instance, parameters);

@@ -28,7 +28,7 @@ using KGySoft.Diagnostics;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a dictionary, which allows <see langword="null"/> as a key.
+    /// Represents a dictionary, which allows <see langword="null"/>&#160;as a key.
     /// </summary>
     /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TValue">The type of the value.</typeparam>

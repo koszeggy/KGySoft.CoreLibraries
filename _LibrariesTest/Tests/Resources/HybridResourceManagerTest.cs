@@ -626,7 +626,7 @@ namespace _LibrariesTest.Tests.Resources
 
         private void Clean(HybridResourceManager manager, CultureInfo culture)
         {
-            File.Delete(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir, $"{resXBaseName}.{culture.Name}.resx"));
+            File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
         }
     }
 }

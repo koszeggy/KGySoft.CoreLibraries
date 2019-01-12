@@ -49,7 +49,7 @@ namespace KGySoft.ComponentModel
         /// <param name="commandSource">The command source, whose state should be applied.</param>
         /// <param name="stateName">Name of the state. The default updater handles it as a property on the <paramref name="commandSource"/>.</param>
         /// <param name="value">The new value of the state to be applied.</param>
-        /// <returns><see langword="true"/> if the state was applied successfully; <see langword="false"/> if other possibly chained updaters or the
+        /// <returns><see langword="true"/>&#160;if the state was applied successfully; <see langword="false"/>&#160;if other possibly chained updaters or the
         /// default updater can try to apply the new state.</returns>
         bool TryUpdateState(object commandSource, string stateName, object value);
 

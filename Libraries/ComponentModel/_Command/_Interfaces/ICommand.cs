@@ -135,7 +135,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="source">An <see cref="ICommandSource"/> object containing information about the source of the command.</param>
         /// <param name="state">An <see cref="ICommandState"/> instance containing the state of the current command binding. The state can be changed during the execution.</param>
-        /// <param name="target">The target of the execution. Can be <see langword="null"/> if the binding contains no targets.</param>
+        /// <param name="target">The target of the execution. Can be <see langword="null"/>&#160;if the binding contains no targets.</param>
         void Execute(ICommandSource source, ICommandState state, object target);
 
         #endregion

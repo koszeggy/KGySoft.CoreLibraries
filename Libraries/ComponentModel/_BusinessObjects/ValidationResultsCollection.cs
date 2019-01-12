@@ -70,7 +70,7 @@ namespace KGySoft.ComponentModel
         ///// Gets the validation results for the specified property.
         ///// </summary>
         ///// <param name="propertyName">Name of the property to get the validation results.</param>
-        ///// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/> to get results of any severities. This parameter is optional.
+        ///// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/>&#160;to get results of any severities. This parameter is optional.
         ///// <br/>Default value: <see langword="null"/>.</param>
         ///// <returns></returns>
         //public ValidationResult[] ForProperty(string propertyName, ValidationSeverity? severity = null) 
@@ -95,19 +95,19 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has errors.
         /// </summary>
-        /// <value><see langword="true"/> if this instance has errors; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/>&#160;if this instance has errors; otherwise, <see langword="false"/>.</value>
         public bool HasErrors => Errors.Length > 0;
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has warnings.
         /// </summary>
-        /// <value><see langword="true"/> if this instance has warnings; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/>&#160;if this instance has warnings; otherwise, <see langword="false"/>.</value>
         public bool HasWarnings => Warnings.Length > 0;
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has information entries.
         /// </summary>
-        /// <value><see langword="true"/> if this instance has information entries; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/>&#160;if this instance has information entries; otherwise, <see langword="false"/>.</value>
         public bool HasInfos => Infos.Length > 0;
 
         /// <summary>

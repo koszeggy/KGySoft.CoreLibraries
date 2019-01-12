@@ -485,7 +485,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="baseName">A root name that is the prefix of the resource files without the extension.</param>
         /// <param name="assembly">The main assembly for the resources. The compiled resource will be searched in this assembly.</param>
-        /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
+        /// <param name="explicitResXBaseFileName">When <see langword="null"/>&#160;the .resx file name will be constructed based on the
         /// <paramref name="baseName"/> parameter; otherwise, the given <see cref="string"/> will be used.
         /// <br/>Default value: <see langword="null"/>.</param>
         public HybridResourceManager(string baseName, Assembly assembly, string explicitResXBaseFileName = null)
@@ -504,7 +504,7 @@ namespace KGySoft.Resources
         /// compiled assemblies and resource XML files based on information from the specified type object.
         /// </summary>
         /// <param name="resourceSource">A type from which the resource manager derives all information for finding resource files.</param>
-        /// <param name="explicitResXBaseFileName">When <see langword="null"/> the .resx file name will be constructed based on the
+        /// <param name="explicitResXBaseFileName">When <see langword="null"/>&#160;the .resx file name will be constructed based on the
         /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used.
         /// <br/>Default value: <see langword="null"/>.</param>
         public HybridResourceManager(Type resourceSource, string explicitResXBaseFileName = null)
@@ -558,15 +558,15 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the resource to retrieve.</param>
         /// <returns>
-        /// The value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
+        /// The value of the resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/> or the current
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/>&#160;or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
@@ -580,15 +580,15 @@ namespace KGySoft.Resources
         /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
         /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <returns>
-        /// The value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
+        /// The value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/> or the current
+        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/>&#160;or the current
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
@@ -600,7 +600,7 @@ namespace KGySoft.Resources
         /// <param name="name">The name of the resource to get.</param>
         /// <returns>
         /// If <see cref="SafeMode"/> is <see langword="true"/>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
-        /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
+        /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -617,7 +617,7 @@ namespace KGySoft.Resources
         /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <returns>
         /// If <see cref="SafeMode"/> is <see langword="true"/>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
-        /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
+        /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -629,14 +629,14 @@ namespace KGySoft.Resources
         /// Retrieves the resource set for a particular culture.
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
-        /// <param name="loadIfExists"><see langword="true"/> to load the resource set, if it has not been loaded yet and the corresponding resource file exists; otherwise, <see langword="false"/>.</param>
-        /// <param name="tryParents"><see langword="true"/> to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/> to bypass the resource fallback process.</param>
+        /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet and the corresponding resource file exists; otherwise, <see langword="false"/>.</param>
+        /// <param name="tryParents"><see langword="true"/>&#160;to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/>&#160;to bypass the resource fallback process.</param>
         /// <returns>
         /// The resource set for the specified culture.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <see langword="true"/> and
+        /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <see langword="true"/>&#160;and
         /// the resource of the neutral culture was not found.</exception>
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
@@ -683,12 +683,12 @@ namespace KGySoft.Resources
         /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is a non-<see langword="string"/> metadata, then
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> metadata, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the metadata.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the metadata is not <see cref="string"/>.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public virtual string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true);
@@ -702,7 +702,7 @@ namespace KGySoft.Resources
         /// Unlike in case of <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.</param>
         /// <returns>
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
-        /// Otherwise, returns the value of the metadata localized for the specified <paramref name="culture"/>, or <see langword="null"/> if <paramref name="name" /> cannot be found in a resource set.
+        /// Otherwise, returns the value of the metadata localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -716,9 +716,9 @@ namespace KGySoft.Resources
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
         /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
         /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
-        /// <param name="tryParents"><see langword="true"/> to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/> to bypass the resource fallback process.
+        /// <param name="tryParents"><see langword="true"/>&#160;to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/>&#160;to bypass the resource fallback process.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>The resource set for the specified culture, or <see langword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,
+        /// <returns>The resource set for the specified culture, or <see langword="null"/>&#160;if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>,
         /// or when <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/> so it cannot return an <see cref="IExpandoResourceSet"/> instance.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -851,14 +851,14 @@ namespace KGySoft.Resources
         /// Saves the resource set of a particular <paramref name="culture" /> if it has been already loaded.
         /// </summary>
         /// <param name="culture">The culture of the resource set to save.</param>
-        /// <param name="force"><see langword="true"/> to save the resource set even if it has not been modified; <see langword="false"/> to save it only if it has been modified.
+        /// <param name="force"><see langword="true"/>&#160;to save the resource set even if it has not been modified; <see langword="false"/>&#160;to save it only if it has been modified.
         /// <br />Default value: <see langword="false"/>.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
         /// <br />Default value: <see langword="false"/>.</param>
         /// <returns>
-        /// <see langword="true"/> if the resource set of the specified <paramref name="culture" /> has been saved;
+        /// <see langword="true"/>&#160;if the resource set of the specified <paramref name="culture" /> has been saved;
         /// otherwise, <see langword="false"/>.
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -875,13 +875,13 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><see langword="true"/> to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets.
+        /// <param name="force"><see langword="true"/>&#160;to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/>&#160;to save only the modified resource sets.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
         /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns><see langword="true"/> if at least one resource set has been saved; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if at least one resource set has been saved; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
         public virtual bool SaveAllResources(bool force = false, bool compatibleFormat = false)
@@ -1271,8 +1271,8 @@ namespace KGySoft.Resources
         /// Provides the implementation for finding a resource set.
         /// </summary>
         /// <param name="culture">The culture object to look for.</param>
-        /// <param name="loadIfExists"><see langword="true"/> to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
-        /// <param name="tryParents"><see langword="true"/> to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
+        /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
+        /// <param name="tryParents"><see langword="true"/>&#160;to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
         /// <returns>
         /// The specified resource set.
         /// </returns>
@@ -1287,7 +1287,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             IDictionary compiledResources = CompiledResourceSets;

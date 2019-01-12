@@ -19,7 +19,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets the property value after the change.
-        /// Can be <see langword="null"/> if the property has been removed and has no value.
+        /// Can be <see langword="null"/>&#160;if the property has been removed and has no value.
         /// </summary>
         public object NewValue { get; }
 

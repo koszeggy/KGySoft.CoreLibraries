@@ -42,12 +42,12 @@ namespace KGySoft.CoreLibraries
         #region Public methods
 
         /// <summary>
-        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/> value specified in the <paramref name="value"/> parameter.
+        /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
         /// </summary>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="format">Formatting option. This parameter is optional.
         /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
-        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
+        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
         /// <br/>Default value: <c>, </c>.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
@@ -61,7 +61,7 @@ namespace KGySoft.CoreLibraries
         /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
         /// </summary>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
-        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/> or is empty, then comma-space (", ") separator is used.</param>
+        /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (", ") separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         public static string ToString<TEnum>(this TEnum value, string separator)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
@@ -73,7 +73,7 @@ namespace KGySoft.CoreLibraries
         /// Retrieves the name of the constant in the specified enumeration that has the specified <paramref name="value"/>.
         /// </summary>
         /// <param name="value">The enum value whose name is required.</param>
-        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/> if no such constant is found.</returns>
+        /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         public static string GetName<TEnum>(this TEnum value)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
@@ -84,7 +84,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
-        /// <returns><see langword="true"/> if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined<TEnum>(this TEnum value)
             where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
         {
@@ -155,7 +155,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the type of the <see langword="enum"/>,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the type of the <see langword="enum"/>.
         /// </summary>
-        /// <param name="flags">The <see langword="enum"/> value.</param>
+        /// <param name="flags">The <see langword="enum"/>&#160;value.</param>
         /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         /// <remarks><note>For better performance use the generic overload (<see cref="AllFlagsDefined{TEnum}">AllFlagsDefined&lt;TEnum&gt;(TEnum)</see>) whenever it is possible.</note></remarks>

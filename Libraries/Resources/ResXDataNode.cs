@@ -903,7 +903,7 @@ namespace KGySoft.Resources
         /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
         /// If this parameter is <see langword="null"/>, tries to use the original base path, if any.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
+        /// <param name="cleanupRawData"><see langword="true"/>&#160;to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>

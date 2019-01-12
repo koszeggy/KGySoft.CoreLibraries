@@ -33,7 +33,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="c"/> is a non-character code point in Unicode.
         /// </summary>
         /// <param name="c">The <see cref="char"/> code point to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="c"/> is a non-character code point in Unicode; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <paramref name="c"/> is a non-character code point in Unicode; otherwise, <see langword="false"/>.</returns>
         public static bool IsNonCharacter(this char c)
             => (c >= 0xFDD0 && c <= 0xFDEF)
             || c >= 0xFFFE;
@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
         /// That is, if <paramref name="c"/> is not a half-surrogate and is not defined as a non-character code point.
         /// </summary>
         /// <param name="c">The <see cref="char"/> code point to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="c"/> is a valid standalone character code point in Unicode.; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <paramref name="c"/> is a valid standalone character code point in Unicode.; otherwise, <see langword="false"/>.</returns>
         public static bool IsValidCharacter(this char c)
             => !Char.IsSurrogate(c) && !IsNonCharacter(c);
 

@@ -197,7 +197,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
-        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// <param name="defaultIfEmpty">If <see langword="true"/>&#160;and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from <paramref name="source"/>.</returns>
@@ -210,7 +210,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to select an element from.</param>
-        /// <param name="defaultIfEmpty">If <see langword="true"/> and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
+        /// <param name="defaultIfEmpty">If <see langword="true"/>&#160;and <paramref name="source"/> is empty, the default value of <typeparamref name="T"/> is returned.
         /// If <see langword="false"/>, and <paramref name="source"/> is empty, an <see cref="ArgumentException"/> will be thrown. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A random element from the <paramref name="source"/>.</returns>
@@ -246,10 +246,10 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/> or empty (has no elements).
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
         /// </summary>
         /// <param name="source">The source to check.</param>
-        /// <returns><see langword="true"/> if the <paramref name="source"/> collection is <see langword="null"/> or empty; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullOrEmpty(this IEnumerable source)
         {
             if (source == null)
@@ -271,10 +271,10 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/> or empty (has no elements).
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
         /// </summary>
         /// <param name="source">The source to check.</param>
-        /// <returns><see langword="true"/> if the <paramref name="source"/> collection is <see langword="null"/> or empty; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)
         {
             if (source == null)

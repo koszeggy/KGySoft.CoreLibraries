@@ -49,7 +49,7 @@ namespace KGySoft.ComponentModel
         /// Gets or sets whether the command is enabled in the current binding.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
-        /// <value><see langword="true"/> if the command enabled and can be executed; otherwise, <see langword="false"/>.</value>
+        /// <value><see langword="true"/>&#160;if the command enabled and can be executed; otherwise, <see langword="false"/>.</value>
         bool Enabled { get; set; }
 
 #if !NET35

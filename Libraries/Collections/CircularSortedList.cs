@@ -75,7 +75,7 @@ namespace KGySoft.Collections
     /// a <see cref="NotSupportedException"/> for <see cref="CircularSortedList{TKey,TValue}"/>, as the position of an element cannot be set directly, it always depends on the comparer implementation.</para>
     /// <para><see cref="CircularSortedList{TKey,TValue}"/> requires a comparer implementation to sort and to perform comparisons.
     /// If comparer is not defined when <see cref="CircularSortedList{TKey,TValue}"/> is instantiated by one of the constructors, the comparer will be chosen automatically.
-    /// When <typeparamref name="TKey"/> is en <see langword="enum"/> type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer"><![CDATA[EnumComparer<TEnum>.Comparer]]></see>.
+    /// When <typeparamref name="TKey"/> is en <see langword="enum"/>&#160;type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer"><![CDATA[EnumComparer<TEnum>.Comparer]]></see>.
     /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen. The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
     /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>. If the key type <typeparamref name="TKey"/> does not implement
     /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
@@ -334,7 +334,7 @@ namespace KGySoft.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
+            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -582,7 +582,7 @@ namespace KGySoft.Collections
             /// Advances the enumerator to the next element of the collection.
             /// </summary>
             /// <returns>
-            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
+            /// <see langword="true"/>&#160;if the enumerator was successfully advanced to the next element; <see langword="false"/>&#160;if the enumerator has passed the end of the collection.
             /// </returns>
             /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
             public bool MoveNext()
@@ -776,7 +776,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
-        /// <para>When <typeparamref name="TKey"/> is en <see langword="enum"/> type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
+        /// <para>When <typeparamref name="TKey"/> is en <see langword="enum"/>&#160;type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
         /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen.
         /// The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
         /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>.
@@ -794,7 +794,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="capacity">The initial number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can contain.</param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can hold before resizing.
@@ -826,7 +826,7 @@ namespace KGySoft.Collections
         /// <para>If the size of the collection can be estimated, specifying the initial capacity eliminates the need to perform a number of resizing operations while adding elements to the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// <para>The capacity can be decreased by calling <see cref="TrimExcess"/> or by setting the <see cref="Capacity"/> property explicitly.
         /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
-        /// <para>When <typeparamref name="TKey"/> is en <see langword="enum"/> type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
+        /// <para>When <typeparamref name="TKey"/> is en <see langword="enum"/>&#160;type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
         /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen.
         /// The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
         /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>.
@@ -843,7 +843,7 @@ namespace KGySoft.Collections
         /// Creates a new instance of <see cref="CircularSortedList{TKey,TValue}"/> with empty capacity, that uses the specified <paramref name="comparer"/>.
         /// </summary>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// </remarks>
@@ -858,7 +858,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey,TValue}"/> whose elements are copied to the new S<see cref="CircularSortedList{TKey,TValue}"/>.</param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> <typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
         /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="dictionary"/> contains one or more duplicate keys.</exception>
         /// <remarks>
@@ -913,7 +913,7 @@ namespace KGySoft.Collections
         /// Adds an element with the provided key and value to the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
         /// <param name="key">The key of the element to add.</param>
-        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/>&#160;for reference and <see cref="Nullable{T}"/> types.</param>
         /// <returns>The zero-based index in the <see cref="CircularSortedList{TKey,TValue}"/> at which the key-value pair has been added.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
@@ -964,10 +964,10 @@ namespace KGySoft.Collections
         /// <summary>
         /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains a specific value.
         /// </summary>
-        /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>. The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
-        /// <returns><see langword="true"/> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>. The value can be <see langword="null"/>&#160;for reference and <see cref="Nullable{T}"/> types.</param>
+        /// <returns><see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         /// </remarks>
@@ -980,10 +980,10 @@ namespace KGySoft.Collections
         /// Searches for the specified value and returns the zero-based index of the first occurrence within the entire <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
         /// <param name="value">The value to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// The value can be <see langword="null"/> for reference and <see cref="Nullable{T}"/> types.</param>
+        /// The value can be <see langword="null"/>&#160;for reference and <see cref="Nullable{T}"/> types.</param>
         /// <returns>The zero-based index of the first occurrence of value within the entire <see cref="CircularSortedList{TKey,TValue}"/>, if found; otherwise, -1.</returns>
         /// <remarks>
-        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/> type,
+        /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="TValue"/> is an <see langword="enum"/>&#160;type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.
         /// <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> checks whether the value type <typeparamref name="TValue"/> implements <see cref="IEquatable{T}"/> and uses
         /// that implementation, if available. If not, <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> uses <see cref="object.Equals(object)">Object.Equals</see>.
@@ -1181,7 +1181,7 @@ namespace KGySoft.Collections
         /// Removes the element with the specified <paramref name="key"/> from the <see cref="CircularSortedList{TKey,TValue}"/>.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.
+        /// <see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key of the element to remove.</param>
         /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
@@ -1202,7 +1202,7 @@ namespace KGySoft.Collections
         /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
         /// </summary>
         /// <returns>
-        /// <see langword="true"/> if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
+        /// <see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
         /// </returns>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
@@ -1210,7 +1210,7 @@ namespace KGySoft.Collections
         /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <remarks>
         /// <para>If the <paramref name="key"/> is not found, then the value parameter gets the appropriate default value for the value type <typeparamref name="TValue"/>;
-        /// for example, zero (0) for integer types, <see langword="false"/> for Boolean types, and <see langword="null"/> for reference types.</para>
+        /// for example, zero (0) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
         /// <para>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         public bool TryGetValue(TKey key, out TValue value)

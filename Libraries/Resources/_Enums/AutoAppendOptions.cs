@@ -45,8 +45,8 @@ namespace KGySoft.Resources
         /// <para>If the resource is requested as a <see cref="string"/>, the newly added
         /// value will be initialized by the requested key, prefixed by the <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see> property.
         /// This new entry can be then merged into other resource sets, too.</para>
-        /// <para>If the resource is requested as an <see cref="object"/>, a <see langword="null"/> value will be added to the resource.
-        /// The <see langword="null"/> value is never merged into the other resource sets because it has a special meaning:
+        /// <para>If the resource is requested as an <see cref="object"/>, a <see langword="null"/>&#160;value will be added to the resource.
+        /// The <see langword="null"/>&#160;value is never merged into the other resource sets because it has a special meaning:
         /// if a resource has a null value, the parent resources are checked for a non-null resource value.</para>
         /// <para>Enabling this flag causes that <see cref="MissingManifestResourceException"/> will never be thrown for non-existing resources.</para>
         /// <para>This option is disabled by default.</para>
@@ -63,7 +63,7 @@ namespace KGySoft.Resources
         /// then with this option the found resource will be added to the <c>en-Runic</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
         /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
-        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>If the found non-<see langword="null"/>&#160;resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is enabled by default.</para>
         /// </summary>
         AppendFirstNeutralCulture = 1 << 1,
@@ -78,7 +78,7 @@ namespace KGySoft.Resources
         /// then with this option the found resource will be added to the <c>en</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
         /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
-        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>If the found non-<see langword="null"/>&#160;resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
         AppendLastNeutralCulture = 1 << 2,
@@ -92,7 +92,7 @@ namespace KGySoft.Resources
         /// then with this option the found resource will be added to the <c>en</c> and <c>en-Runic</c> resource sets.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
         /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
-        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>If the found non-<see langword="null"/>&#160;resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option includes <see cref="AppendFirstNeutralCulture"/> and <see cref="AppendLastNeutralCulture"/> options.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
@@ -107,7 +107,7 @@ namespace KGySoft.Resources
         /// then with this option the found resource will be added to the requested <c>en-Runic-GB-Yorkshire</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
         /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
-        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>If the found non-<see langword="null"/>&#160;resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
         AppendFirstSpecificCulture = 1 << 4,
@@ -122,7 +122,7 @@ namespace KGySoft.Resources
         /// then with this option the found resource will be added to the <c>en-Runic-GB</c> resource set.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
         /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
-        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>If the found non-<see langword="null"/>&#160;resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>
         AppendLastSpecificCulture = 1 << 5,
@@ -136,7 +136,7 @@ namespace KGySoft.Resources
         /// then with this option the found resource will be added to the <c>en-Runic-GB-Yorkshire</c> and <c>en-Runic-GB</c> resource sets.</para>
         /// <para>If the found resource is a <see cref="string"/>, the newly added
         /// value will be prefixed by the <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property.</para>
-        /// <para>If the found non-<see langword="null"/> resource is not a <see cref="string"/>, the found value will be simply copied.</para>
+        /// <para>If the found non-<see langword="null"/>&#160;resource is not a <see cref="string"/>, the found value will be simply copied.</para>
         /// <para>This option includes <see cref="AppendFirstSpecificCulture"/> and <see cref="AppendLastSpecificCulture"/> options.</para>
         /// <para>This option is disabled by default.</para>
         /// </summary>

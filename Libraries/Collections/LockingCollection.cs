@@ -207,7 +207,7 @@ namespace KGySoft.Collections
         /// Determines whether the <see cref="LockingCollection{T}" /> contains a specific value.
         /// </summary>
         /// <param name="item">The object to locate in the <see cref="LockingCollection{T}" />.</param>
-        /// <returns><see langword="true"/> if <paramref name="item" /> is found in the <see cref="LockingCollection{T}" />; otherwise, <see langword="false" />.
+        /// <returns><see langword="true"/>&#160;if <paramref name="item" /> is found in the <see cref="LockingCollection{T}" />; otherwise, <see langword="false" />.
         /// </returns>
         public bool Contains(T item)
         {
@@ -230,7 +230,7 @@ namespace KGySoft.Collections
         /// Removes the first occurrence of a specific object from the <see cref="LockingCollection{T}"/>.
         /// </summary>
         /// <param name="item">The object to remove from the <see cref="LockingCollection{T}"/>.</param>
-        /// <returns><see langword="true"/> if <paramref name="item" /> was successfully removed from the <see cref="LockingCollection{T}" />; otherwise, <see langword="false" />.
+        /// <returns><see langword="true"/>&#160;if <paramref name="item" /> was successfully removed from the <see cref="LockingCollection{T}" />; otherwise, <see langword="false" />.
         /// This method also returns <see langword="false" /> if <paramref name="item" /> is not found in the original <see cref="LockingCollection{T}"/>.
         /// </returns>
         public bool Remove(T item)

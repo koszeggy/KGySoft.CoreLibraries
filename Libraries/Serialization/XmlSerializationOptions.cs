@@ -48,7 +48,7 @@ namespace KGySoft.Serialization
         /// <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
         /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
         /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
-        /// which cannot be retrieved by the public members when the collection is being serialized. However, if a property or field returns a non-<see langword="null"/> instance after the container object is created, then the returned instance is tried to be used on deserialization.
+        /// which cannot be retrieved by the public members when the collection is being serialized. However, if a property or field returns a non-<see langword="null"/>&#160;instance after the container object is created, then the returned instance is tried to be used on deserialization.
         /// This makes possible to deserialize even custom-initialized dictionaries and other objects.</note>
         /// </description></item>
         /// </list>
@@ -108,7 +108,7 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// <para>If enabled, then members without <see cref="DefaultValueAttribute"/> defined, will be treated as if they were decorated by
-        /// <see cref="DefaultValueAttribute"/> with the default value of the property type (<see langword="null"/> for reference types and
+        /// <see cref="DefaultValueAttribute"/> with the default value of the property type (<see langword="null"/>&#160;for reference types and
         /// bitwise zero value of value types).</para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
@@ -165,7 +165,7 @@ namespace KGySoft.Serialization
         /// <note>Public properties with private setter accessor are serializable even without this option.</note>
         /// <note>Read-only collections witch recognizable collection initializer constructor are serializable even without this option.</note>
         /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
-        /// Deserialization will fail if the read-only property returns a <see langword="null"/> value or its content cannot be restored (eg. it has a simple type or is a read-only collection).
+        /// Deserialization will fail if the read-only property returns a <see langword="null"/>&#160;value or its content cannot be restored (eg. it has a simple type or is a read-only collection).
         /// Use this option only if object is serialized only for information (eg. in logs) and deserialization is not necessary.</note>
         /// </para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>

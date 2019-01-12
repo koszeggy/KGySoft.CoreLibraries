@@ -34,7 +34,7 @@ namespace KGySoft.CoreLibraries
         Auto,
 
         /// <summary>
-        /// The <see langword="enum"/> value is forced to be treated as non-flags value. If there is no defined name for the current value, then a number is returned.
+        /// The <see langword="enum"/>&#160;value is forced to be treated as non-flags value. If there is no defined name for the current value, then a number is returned.
         /// This result is always parseable by the <see cref="Enum.Parse(Type,string)">Enum.Parse(Type, string)</see> method as long as used separator is the comma character.
         /// </summary>
         NonFlags,

@@ -66,12 +66,12 @@ namespace KGySoft.ComponentModel
             /// Creates an instance of the enumeration field descriptor class.
             /// </summary>
             /// <param name="componentType">The type of the enumeration.</param>
-            /// <param name="name">The name of the <see langword="enum"/> flag field.</param>
-            /// <param name="flagValue">The value of the <see langword="enum"/> flag.</param>
-            /// <param name="context">The current context or <see langword="null"/> if no context exists.</param>
-            /// <param name="defaultValue">The default value of the <see langword="enum"/> instance specified by the <see cref="DefaultValueAttribute"/> of its property or <see langword="null"/>.</param>
-            /// <param name="valueField">The underlying value field of the <see langword="enum"/> type.</param>
-            /// <param name="attributes">Custom attributes of the <see langword="enum"/> flag field.</param>
+            /// <param name="name">The name of the <see langword="enum"/>&#160;flag field.</param>
+            /// <param name="flagValue">The value of the <see langword="enum"/>&#160;flag.</param>
+            /// <param name="context">The current context or <see langword="null"/>&#160;if no context exists.</param>
+            /// <param name="defaultValue">The default value of the <see langword="enum"/>&#160;instance specified by the <see cref="DefaultValueAttribute"/> of its property or <see langword="null"/>.</param>
+            /// <param name="valueField">The underlying value field of the <see langword="enum"/>&#160;type.</param>
+            /// <param name="attributes">Custom attributes of the <see langword="enum"/>&#160;flag field.</param>
             public EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
                 : base(componentType, name, typeof(bool))
             {
@@ -92,7 +92,7 @@ namespace KGySoft.ComponentModel
             /// Retrieves the value of the <see cref="Enum"/> flag.
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance to retrieve the flag value for.</param>
-            /// <returns><see langword="true"/> if the enumeration field is included to the enumeration; otherwise, <see langword="false"/>.</returns>
+            /// <returns><see langword="true"/>&#160;if the enumeration field is included to the enumeration; otherwise, <see langword="false"/>.</returns>
             public override object GetValue(object component)
                 => (((Enum)component).ToUInt64() & flagValue) != 0UL;
 
@@ -146,7 +146,7 @@ namespace KGySoft.ComponentModel
             #region Private Methods
 
             /// <summary>
-            /// Retrieves the default value of the <see langword="enum"/> flag.
+            /// Retrieves the default value of the <see langword="enum"/>&#160;flag.
             /// </summary>
             private object GetDefaultValue() => (defaultValue & flagValue) != 0UL;
 
@@ -177,7 +177,7 @@ namespace KGySoft.ComponentModel
         /// to show separate enumeration fields.
         /// </summary>
         /// <param name="context">An <see cref="ITypeDescriptorContext" /> that provides a format context. If specified, will be used to determine the <see cref="DefaultValueAttribute"/> of
-        /// the converted <see langword="enum"/>, and to set the <see langword="enum"/> property of the container instance if one of the flags are set.</param>
+        /// the converted <see langword="enum"/>, and to set the <see langword="enum"/>&#160;property of the container instance if one of the flags are set.</param>
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)

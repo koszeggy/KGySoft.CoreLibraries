@@ -76,13 +76,13 @@ namespace KGySoft.Diagnostics
         public static bool AutoSaveResults { get; set; }
 
         /// <summary>
-        /// Gets or sets the output folder of the profiler. When <see langword="null"/> or empty value is assigned,
+        /// Gets or sets the output folder of the profiler. When <see langword="null"/>&#160;or empty value is assigned,
         /// sets the <c>Profiler</c> subdirectory of the executing assembly.
         /// </summary>
         /// <remarks>
         /// <para>Results are dumped only if <see cref="AutoSaveResults"/> property is <see langword="true"/>.</para>
         /// <para>By default, the value of this property is the <c>Profiler</c> subdirectory of the executing assembly.
-        /// When <see langword="null"/> or empty value is assigned, this default value is reset.</para>
+        /// When <see langword="null"/>&#160;or empty value is assigned, this default value is reset.</para>
         /// <para>When the directory does not exist, it will be created automatically. The profiler results are
         /// dumped when the current <see cref="AppDomain"/> is unloaded. This happens typically when the application is closed.</para>
         /// </remarks>
@@ -133,7 +133,7 @@ namespace KGySoft.Diagnostics
         /// measurement result is not found with the given <paramref name="category"/> and <paramref name="operation"/>.
         /// </summary>
         /// <param name="category">The category name of the operation.
-        /// If <see langword="null"/> or empty, looks for an uncategorized operation.</param>
+        /// If <see langword="null"/>&#160;or empty, looks for an uncategorized operation.</param>
         /// <param name="operation">Name of the operation.</param>
         /// <returns>An <see cref="IMeasureItem"/> instance that that contains the measurement results of the required
         /// operation, or <see langword="null"/>, if the measurement result is not found with the given <paramref name="category"/>
@@ -165,12 +165,12 @@ namespace KGySoft.Diagnostics
         #region Public Methods
 
         /// <summary>
-        /// If <see cref="Enabled"/> is <see langword="true"/>, starts a profiling measure. Use in <see langword="using"/> block.
+        /// If <see cref="Enabled"/> is <see langword="true"/>, starts a profiling measure. Use in <see langword="using"/>&#160;block.
         /// </summary>
         /// <param name="category">A category that contains the operation. Can be the name of the caller type, for example.
-        /// If <see langword="null"/> or empty, the measurement will be uncategorized.</param>
+        /// If <see langword="null"/>&#160;or empty, the measurement will be uncategorized.</param>
         /// <param name="operation">Name of the operation.</param>
-        /// <returns>An <see cref="IDisposable"/> instance that should be enclosed into a <see langword="using"/> block.
+        /// <returns>An <see cref="IDisposable"/> instance that should be enclosed into a <see langword="using"/>&#160;block.
         /// When <see cref="Enabled"/> is <see langword="false"/>, this method returns <see langword="null"/>.</returns>
         // todo: remarks example
         public static IDisposable Measure(string category, string operation)

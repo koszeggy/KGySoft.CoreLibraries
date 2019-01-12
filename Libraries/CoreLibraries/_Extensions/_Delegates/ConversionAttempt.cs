@@ -10,6 +10,6 @@ namespace KGySoft.CoreLibraries
     /// <param name="targetType">The desired type of the <paramref name="result"/> parameter if the return value is <see langword="true"/>.</param>
     /// <param name="culture">The used culture for the conversion. If <see langword="null"/>, then the conversion must use culture invariant conversion.</param>
     /// <param name="result">The result if the return value is <see langword="true"/>.</param>
-    /// <returns><see langword="true"/> if the conversion was successful; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/>&#160;if the conversion was successful; otherwise, <see langword="false"/>.</returns>
     public delegate bool ConversionAttempt(object obj, Type targetType, CultureInfo culture, out object result);
 }
