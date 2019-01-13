@@ -28,7 +28,7 @@
     <NamingMethod>Guid</NamingMethod>
     <ProjectSummary>KGy SOFT Libraries</ProjectSummary>
     <RootNamespaceContainer>False</RootNamespaceContainer>
-    <MissingTags>Summary, Parameter, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
+    <MissingTags>Summary, Parameter, Returns, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
     <NamespaceSummaries>
       <NamespaceSummaryItem name="KGySoft.ComponentModel" isDocumented="True" />
       <NamespaceSummaryItem name="KGySoft.CoreLibraries" isDocumented="True" />

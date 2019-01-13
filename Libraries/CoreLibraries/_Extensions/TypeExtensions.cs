@@ -213,7 +213,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="conversion">A <see cref="ConversionAttempt"/> delegate, which is able to perform the conversion.</param>
         /// <remarks>
         /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>
-        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see> <see cref="string"/> extension methods
+        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see>&#160;<see cref="string"/> extension methods
         /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
         /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
         /// will override the old registered conversion with the new one.</para>
@@ -239,7 +239,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="conversion">A <see cref="ConversionAttempt"/> delegate, which is able to perform the conversion.</param>
         /// <remarks>
         /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>
-        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see> <see cref="string"/> extension methods
+        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see>&#160;<see cref="string"/> extension methods
         /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
         /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
         /// will override the old registered conversion with the new one.</para>

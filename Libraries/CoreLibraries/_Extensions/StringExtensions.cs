@@ -66,7 +66,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Repeats a <see cref="string"/> <paramref name="count"/> times.
+        /// Repeats a <see cref="string"/>&#160;<paramref name="count"/> times.
         /// </summary>
         public static string Repeat(this string s, int count)
         {
@@ -108,8 +108,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="culture">Appropriate culture needed for number types.</param>
         /// <returns>The parsed value.</returns>
         /// <remarks>
-        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> <see cref="Type"/> extension methods.</para>
-        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> <see cref="Type"/> extension method.</para>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;<see cref="Type"/> extension method.</para>
         /// <para>Natively parsed types:
         /// <list type="bullet">
         /// <item><description><see cref="System.Enum"/> based types</description></item>
@@ -530,7 +530,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets whether the specified <see cref="string"/> <paramref name="s"/> equals any of the strings in the specified <paramref name="set"/> set using a specific <paramref name="comparison"/>.
+        /// Gets whether the specified <see cref="string"/>&#160;<paramref name="s"/> equals any of the strings in the specified <paramref name="set"/> set using a specific <paramref name="comparison"/>.
         /// </summary>
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
@@ -546,11 +546,11 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets the zero-based index of the first occurrence in the specified <see cref="string"/> <paramref name="s"/> of any of the strings in the specified <paramref name="set"/> by case sensitive ordinal comparison.
+        /// Gets the zero-based index of the first occurrence in the specified <see cref="string"/>&#160;<paramref name="s"/> of any of the strings in the specified <paramref name="set"/> by case sensitive ordinal comparison.
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns>The zero-based index of the first occurrence in the specified <see cref="string"/> <paramref name="s"/> of any of the strings in the specified <paramref name="set"/>,
+        /// <returns>The zero-based index of the first occurrence in the specified <see cref="string"/>&#160;<paramref name="s"/> of any of the strings in the specified <paramref name="set"/>,
         /// or -1 if none of the strings of <paramref name="set"/> are found in <paramref name="s"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
@@ -560,12 +560,12 @@ namespace KGySoft.CoreLibraries
             => IndexOfAny(s, StringComparison.Ordinal, set);
 
         /// <summary>
-        /// Gets the zero-based index of the first occurrence in the specified <see cref="string"/> <paramref name="s"/> of any of the strings in the specified <paramref name="set"/> using a specific <paramref name="comparison"/>.
+        /// Gets the zero-based index of the first occurrence in the specified <see cref="string"/>&#160;<paramref name="s"/> of any of the strings in the specified <paramref name="set"/> using a specific <paramref name="comparison"/>.
         /// </summary>
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>
-        /// <returns>The zero-based index of the first occurrence in the specified <see cref="string"/> <paramref name="s"/> of any of the strings in the specified <paramref name="set"/>,
+        /// <returns>The zero-based index of the first occurrence in the specified <see cref="string"/>&#160;<paramref name="s"/> of any of the strings in the specified <paramref name="set"/>,
         /// or -1 if none of the strings of <paramref name="set"/> are found in <paramref name="s"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>
         /// <br/>-or-
@@ -595,7 +595,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets whether the specified <see cref="string"/> <paramref name="s"/> contains any of the strings in the specified <paramref name="set"/> by case sensitive ordinal comparison.
+        /// Gets whether the specified <see cref="string"/>&#160;<paramref name="s"/> contains any of the strings in the specified <paramref name="set"/> by case sensitive ordinal comparison.
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">A string array</param>
@@ -608,7 +608,7 @@ namespace KGySoft.CoreLibraries
             => ContainsAny(s, StringComparison.Ordinal, set);
 
         /// <summary>
-        /// Gets whether the specified <see cref="string"/> <paramref name="s"/> contains any of the strings in the specified <paramref name="set"/> set using a specific <paramref name="comparison"/>.
+        /// Gets whether the specified <see cref="string"/>&#160;<paramref name="s"/> contains any of the strings in the specified <paramref name="set"/> set using a specific <paramref name="comparison"/>.
         /// </summary>
         /// <param name="comparison">The <see cref="StringComparison"/> to use.</param>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>

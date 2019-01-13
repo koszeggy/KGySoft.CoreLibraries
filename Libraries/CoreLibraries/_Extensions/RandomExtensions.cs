@@ -475,7 +475,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
@@ -497,7 +497,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
         /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
-        /// With <see cref="FloatScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
@@ -525,7 +525,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A double-precision floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
@@ -547,7 +547,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
         /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="double"/> type.</para>
-        /// With <see cref="FloatScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
@@ -657,7 +657,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A decimal floating point number that is greater than or equal to 0.0 and less or equal to <paramref name="maxValue"/>.</returns>
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases.
-        /// With <see cref="FloatScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
@@ -679,7 +679,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
         /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/>.</para>
-        /// With <see cref="FloatScale.ForceLinear"/> <paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
+        /// With <see cref="FloatScale.ForceLinear"/>&#160;<paramref name="scale"/> the result will be always less than <paramref name="maxValue"/>.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>

@@ -1,10 +1,30 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Conversion.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
+
+#endregion
 
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Represents a delegate for a type conversion. A conversion can be registered by the <see cref="TypeExtensions.RegisterConversion(Type,Type,Conversion)">RegisterConversion</see> method.
+    /// Represents a delegate for a type conversion. A conversion can be registered by the <see cref="TypeExtensions.RegisterConversion(Type,Type,Conversion)">RegisterConversion</see> extension method.
     /// </summary>
     /// <param name="obj">The source object to convert.</param>
     /// <param name="targetType">The desired type of the result.</param>

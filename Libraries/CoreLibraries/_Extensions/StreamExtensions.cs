@@ -31,7 +31,7 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         /// <summary>
-        /// Copies the <paramref name="source"/> <see cref="Stream"/> into the <paramref name="destination"/> one.
+        /// Copies the <paramref name="source"/>&#160;<see cref="Stream"/> into the <paramref name="destination"/> one.
         /// Copy begins on the current position of source stream. None of the streams are closed or sought after
         /// the end of the copy progress.
         /// </summary>
@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Copies the <paramref name="source"/> <see cref="Stream"/> into the <paramref name="destination"/> one.
+        /// Copies the <paramref name="source"/>&#160;<see cref="Stream"/> into the <paramref name="destination"/> one.
         /// Copy begins on the current position of source stream. None of the streams are closed or sought after
         /// the end of the copy progress.
         /// </summary>

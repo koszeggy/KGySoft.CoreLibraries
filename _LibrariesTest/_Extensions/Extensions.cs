@@ -24,7 +24,7 @@ namespace _LibrariesTest
         }
 
         /// <summary>
-        /// Creates an <see cref="IEnumerable{T}"/> <see cref="KeyValuePair{TKey,TValue}"/> elements from an <see cref="IDictionaryEnumerator"/>.
+        /// Creates an <see cref="IEnumerable{T}"/>&#160;<see cref="KeyValuePair{TKey,TValue}"/> elements from an <see cref="IDictionaryEnumerator"/>.
         /// </summary>
         /// <typeparam name="TKey">The type of the key elements of the <paramref name="enumerator"/>.</typeparam>
         /// <typeparam name="TValue">The type of the value elements of the <paramref name="enumerator"/>.</typeparam>

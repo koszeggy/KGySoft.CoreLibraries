@@ -494,7 +494,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// The value of the property affects the following differences:
         /// <list type="bullet">
-        /// <item><description>The <c>reader</c> and <c>writer</c> <c>resheader</c> elements.</description></item>
+        /// <item><description>The <c>reader</c> and <c>writer</c>&#160;<c>resheader</c> elements.</description></item>
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
         /// <item><description>The placeholder type of <see langword="null"/>&#160;references.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute): <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> (unless it is a generic type argument).</description></item>

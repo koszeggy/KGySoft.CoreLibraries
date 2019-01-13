@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
         /// Converts the byte array to string of hexadecimal values.
         /// </summary>
         /// <param name="bytes">The byte array to convert.</param>
-        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/>&#160;or empty, the hex stream will be continuous.
+        /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/>&#160;or empty, the hex stream will be continuous. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
@@ -71,10 +71,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">The byte array to convert.</param>
         /// <param name="separator">The separator to use between the hex numbers. If <see langword="null"/>&#160;or empty, the hex stream will be continuous.</param>
         /// <param name="lineLength">Specifies the length of a line in the result not counting the indentation. When 0 or less, the result will not be wrapped to lines.</param>
-        /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
+        /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies. This parameter is optional.
         /// <br/>Default value: <c>0</c></param>
-        /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too.<br/>Default value: <see langword="false"/>.</param>
+        /// <param name="indentChar">The character to be used for the indentation. This parameter is optional.
+        /// <br/>Default value: <c>' '</c> (space)</param>
+        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The string representation, in hex, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> contains hex digits</exception>
@@ -112,7 +114,8 @@ namespace KGySoft.CoreLibraries
         /// Converts the byte array to string of decimal values.
         /// </summary>
         /// <param name="bytes">The byte array to convert.</param>
-        /// <param name="separator">The separator to use between the decimal numbers.<br/>Default value: <c>", "</c> (comma and space)</param>
+        /// <param name="separator">The separator to use between the decimal numbers. This parameter is optional.
+        /// <br/>Default value: <c>", "</c> (comma and space)</param>
         /// <returns>The string representation, in decimal, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> or <paramref name="separator"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> is empty or contains decimal digits</exception>
@@ -143,10 +146,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">The byte array to convert.</param>
         /// <param name="separator">The separator to use between the decimal numbers.</param>
         /// <param name="lineLength">Specifies the length of a line in the result not counting the indentation. When 0 or less, the result will not be wrapped to lines.</param>
-        /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
+        /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies. This parameter is optional.
         /// <br/>Default value: <c>0</c></param>
-        /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too.<br/>Default value: <see langword="false"/>.</param>
+        /// <param name="indentChar">The character to be used for the indentation. This parameter is optional.
+        /// <br/>Default value: <c>' '</c> (space)</param>
+        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The string representation, in decimal, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> or <paramref name="separator"/> is <see langword="null"/></exception>
         /// <exception cref="ArgumentException"><paramref name="separator"/> is empty or contains decimal digits</exception>
@@ -170,12 +175,14 @@ namespace KGySoft.CoreLibraries
         /// Converts the given <paramref name="bytes"/> into a Base64 encoded string.
         /// </summary>
         /// <param name="bytes">The bytes to convert.</param>
-        /// <param name="lineLength">Specifies the length of a line in the result not counting the indentation. When 0 or less, the result will not be wrapped to lines.
-        /// <br/>Default value: <c>0</c></param>
-        /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies.
-        /// <br/>Default value: <c>0</c></param>
-        /// <param name="indentChar">The character to be used for the indentation. <br/>Default value: <c>' '</c> (space)</param>
-        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too.<br/>Default value: <see langword="false"/>.</param>
+        /// <param name="lineLength">Specifies the length of a line in the result not counting the indentation. When 0 or less, the result will not be wrapped to lines. This parameter is optional.
+        /// <br/>Default value: <c>0</c>.</param>
+        /// <param name="indentSize">Size of the indentation. If greater than zero, the new lines will be prefixed with as many <paramref name="indentChar"/> characters as this parameter specifies. This parameter is optional.
+        /// <br/>Default value: <c>0</c>.</param>
+        /// <param name="indentChar">The character to be used for the indentation. This parameter is optional.
+        /// <br/>Default value: <c>' '</c> (space)</param>
+        /// <param name="indentSingleLine">If set to <see langword="true"/>, then a single line result will be indented, too. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>The string representation, in base 64, of the contents of <paramref name="bytes"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/></exception>
         public static string ToBase64String(this byte[] bytes, int lineLength = 0, int indentSize = 0, char indentChar = ' ', bool indentSingleLine = false)
@@ -230,9 +237,7 @@ namespace KGySoft.CoreLibraries
                 {
                     int b;
                     while ((b = compStream.ReadByte()) != -1)
-                    {
                         result.WriteByte((byte)b);
-                    }
                 }
 
                 return result.ToArray();
@@ -244,7 +249,7 @@ namespace KGySoft.CoreLibraries
         #region Encryption
 
         /// <summary>
-        /// Encrypts a byte array with provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector.
+        /// Encrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
@@ -269,16 +274,14 @@ namespace KGySoft.CoreLibraries
             using (MemoryStream encryptedResult = new MemoryStream())
             {
                 using (CryptoStream encryptStream = new CryptoStream(encryptedResult, encryptor, CryptoStreamMode.Write))
-                {
                     encryptStream.Write(bytes, 0, bytes.Length);
-                }
 
                 return encryptedResult.ToArray();
             }
         }
 
         /// <summary>
-        /// Encrypts a byte array with provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
+        /// Encrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
@@ -296,7 +299,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Encrypts a byte array with <see cref="RijndaelManaged"/> algorithm using provided <paramref name="password"/> and <paramref name="salt"/>.
+        /// Encrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="password">Password of encryption.</param>
@@ -305,13 +308,11 @@ namespace KGySoft.CoreLibraries
         public static byte[] Encrypt(this byte[] bytes, string password, string salt)
         {
             using (SymmetricAlgorithm alg = new RijndaelManaged())
-            {
                 return Encrypt(bytes, alg, password, salt);
-            }
         }
 
         /// <summary>
-        /// Encrypts a byte array with provided symmetric <paramref name="algorithm"/>, using a randomly generated key and initialization vector, which are
+        /// Encrypts a byte array by the provided symmetric <paramref name="algorithm"/>, using a randomly generated key and initialization vector, which are
         /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
@@ -329,7 +330,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Encrypts a byte array with <see cref="RijndaelManaged"/> algorithm using a randomly generated key and initialization vector, which are
+        /// Encrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using a randomly generated key and initialization vector, which are
         /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively.
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
@@ -339,13 +340,11 @@ namespace KGySoft.CoreLibraries
         public static byte[] Encrypt(this byte[] bytes, out byte[] key, out byte[] iv)
         {
             using (SymmetricAlgorithm alg = new RijndaelManaged())
-            {
                 return Encrypt(bytes, alg, out key, out iv);
-            }
         }
 
         /// <summary>
-        /// Decrypts a byte array with provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector.
+        /// Decrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector.
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
@@ -382,7 +381,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Decrypts a byte array with <see cref="RijndaelManaged"/> using provided <paramref name="key"/> and initialization vector.
+        /// Decrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using the provided <paramref name="key"/> and initialization vector.
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="key">Key of decryption.</param>
@@ -391,13 +390,11 @@ namespace KGySoft.CoreLibraries
         public static byte[] Decrypt(this byte[] bytes, byte[] key, byte[] iv)
         {
             using (SymmetricAlgorithm alg = new RijndaelManaged())
-            {
                 return Decrypt(bytes, alg, key, iv);
-            }
         }
 
         /// <summary>
-        /// Decrypts a byte array with provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
+        /// Decrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
@@ -410,14 +407,12 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-
             Rfc2898DeriveBytes passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
-
             return Decrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
         }
 
         /// <summary>
-        /// Decrypts a byte array with <see cref="RijndaelManaged"/> algorithm using provided <paramref name="password"/> and <paramref name="salt"/>.
+        /// Decrypts a byte array by the <see cref="RijndaelManaged"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="password">Password of decryption.</param>
@@ -426,9 +421,7 @@ namespace KGySoft.CoreLibraries
         public static byte[] Decrypt(this byte[] bytes, string password, string salt)
         {
             using (SymmetricAlgorithm alg = new RijndaelManaged())
-            {
                 return Decrypt(bytes, alg, password, salt);
-            }
         }
 
         #endregion

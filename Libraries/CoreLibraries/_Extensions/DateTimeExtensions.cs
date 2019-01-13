@@ -33,9 +33,9 @@ namespace KGySoft.CoreLibraries
         /// Converts the specified <paramref name="dateTime"/> correctly to UTC time.
         /// </summary>
         /// <param name="dateTime">The <see cref="DateTime"/> to convert.</param>
-        /// <returns>A <see cref="DateTime"/> instance with <see cref="DateTimeKind.Utc"/> <see cref="DateTime.Kind"/>.</returns>
+        /// <returns>A <see cref="DateTime"/> instance with <see cref="DateTimeKind.Utc"/>&#160;<see cref="DateTime.Kind"/>.</returns>
         /// <remarks>Use this method instead of <see cref="DateTime.ToUniversalTime">DateTime.ToUniversalTime</see> to make sure <see cref="DateTime"/>
-        /// instances with <see cref="DateTimeKind.Unspecified"/> <see cref="DateTime.Kind"/> are not considered as local times before conversion.</remarks>
+        /// instances with <see cref="DateTimeKind.Unspecified"/>&#160;<see cref="DateTime.Kind"/> are not considered as local times before conversion.</remarks>
         public static DateTime AsUtc(this DateTime dateTime)
         {
             switch (dateTime.Kind)

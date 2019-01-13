@@ -25,7 +25,7 @@ using System.Collections.Generic;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="Enum"/> type (<see langword="enum"/>s).
+    /// Contains extension methods for the <see cref="Enum"/> type.
     /// </summary>
     public static class EnumExtensions
     {
@@ -44,6 +44,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="format">Formatting option. This parameter is optional.
         /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
@@ -60,6 +61,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given enum <paramref name="value"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">An <see name="Enum"/> value that has to be converted to <see cref="string"/>.</param>
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (", ") separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
@@ -72,6 +74,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Retrieves the name of the constant in the specified enumeration that has the specified <paramref name="value"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">The enum value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         public static string GetName<TEnum>(this TEnum value)
@@ -83,6 +86,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether <paramref name="value"/> is defined in <typeparamref name="TEnum"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined<TEnum>(this TEnum value)
@@ -95,6 +99,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <typeparamref name="TEnum"/> type,
         /// or, when <paramref name="flags"/> is zero, it is checked whether zero is defined in <typeparamref name="TEnum"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="flags"/>.</typeparam>
         /// <param name="flags">A flags enum value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
@@ -108,6 +113,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether the bits that are set in the <paramref name="flags"/> parameter are set in the specified <paramref name="value"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">An enumeration value of <typeparamref name="TEnum"/> type.</param>
         /// <param name="flags">An unsigned integer value, whose flags should be checked. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
@@ -125,6 +131,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether only a single bit is set in <paramref name="value"/>. It is not checked, whether this flag is defined in <typeparamref name="TEnum"/>.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag<TEnum>(this TEnum value)
@@ -137,6 +144,7 @@ namespace KGySoft.CoreLibraries
         /// Gets an <see cref="IEnumerable{TEnum}"/> enumeration of <paramref name="flags"/>,
         /// where each flags are returned as distinct values.
         /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="flags"/>.</typeparam>
         /// <param name="flags">A flags enum value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <param name="onlyDefinedValues">When <see langword="true"/>, returns only flags, which are defined in <typeparamref name="TEnum"/>.
@@ -152,16 +160,16 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets whether every single bit value in <paramref name="flags"/> are defined in the type of the <see langword="enum"/>,
-        /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the type of the <see langword="enum"/>.
+        /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <see langword="enum"/> type of <paramref name="flags"/>,
+        /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the <see langword="enum"/> type of <paramref name="flags"/>.
         /// </summary>
         /// <param name="flags">The <see langword="enum"/>&#160;value.</param>
         /// <returns><c>true</c>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
-        /// <remarks><note>For better performance use the generic overload (<see cref="AllFlagsDefined{TEnum}">AllFlagsDefined&lt;TEnum&gt;(TEnum)</see>) whenever it is possible.</note></remarks>
+        /// <remarks><note>For better performance use the generic <see cref="AllFlagsDefined{TEnum}">AllFlagsDefined</see> overload whenever it is possible.</note></remarks>
         public static bool AllFlagsDefined(this Enum flags)
         {
-            var enumText = flags?.ToString("F") ?? "0";
+            string enumText = flags?.ToString("F") ?? "0";
             return !(char.IsDigit(enumText[0]) || enumText[0] == '-');
         }
 

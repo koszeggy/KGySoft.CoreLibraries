@@ -34,7 +34,7 @@ namespace KGySoft.ComponentModel
         /// Initializes a new instance of the <see cref="CommandState"/> class from an initial configuration if provided.
         /// </summary>
         /// <param name="initialConfiguration">The initial configuration to use for initializing this <see cref="CommandState"/> instance.</param>
-        /// <exception cref="ArgumentException"><paramref name="initialConfiguration"/> contains a non-<see cref="bool"/> <c>Enabled</c> entry.</exception>
+        /// <exception cref="ArgumentException"><paramref name="initialConfiguration"/> contains a non-<see cref="bool">bool</see>&#160;<c>Enabled</c> entry.</exception>
         public CommandState(IDictionary<string, object> initialConfiguration = null)
         {
             if (initialConfiguration == null)

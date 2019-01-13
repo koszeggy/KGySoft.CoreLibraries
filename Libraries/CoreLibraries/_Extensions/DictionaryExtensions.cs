@@ -38,7 +38,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">The key whose value to get.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
-        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> not found in the <paramref name="dictionary"/>.</returns>
+        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
             if (dictionary == null)
@@ -52,11 +52,11 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValue">The default value to return if <paramref name="key"/> not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
-        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         public static TActualValue GetValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TActualValue defaultValue)
             where TActualValue : TValue
         {
@@ -67,13 +67,14 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/> <paramref name="dictionary"/> for the given key.
+        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/>&#160;<paramref name="dictionary"/> for the given key.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValue">The default value to return if <paramref name="key"/> not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type is not compatible with <typeparamref name="TActualValue"/> This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
-        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
         {
             if (dictionary == null)
@@ -84,7 +85,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Returns a <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.
         /// This only means that if the members are accessed through the returned <see cref="LockingDictionary{TKey,TValue}"/>, then the inner state of the wrapped dictionary remains always consistent and not that all of the multi-threading concerns can be ignored.
-        /// For a <see cref="Cache{TKey,TValue}"/> instance consider to use the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method instead, which not necessarily locks the item loader delegate.
+        /// For a <see cref="Cache{TKey,TValue}"/> instance consider to use the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method instead, which does not necessarily lock the item loader delegate.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingDictionary{TKey,TValue}"/> class for details and some examples.
         /// </summary>
         /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>

@@ -11,7 +11,7 @@ namespace KGySoft.Serialization
     /// </summary>
     /// <remarks>
     /// <para>
-    /// By this interface a class can be serialized into a compact <see cref="byte"/> <see cref="Array"/>. Data in array is not mapped, deserialization is not by
+    /// By this interface a class can be serialized into a compact <see cref="byte"/>&#160;<see cref="Array"/>. Data in array is not mapped, deserialization is not by
     /// retrieving data by name such as in case of system serialization. This can make the data shorter but this solution can be discouraged on very large object graphs
     /// because the whole object has to be written into memory. In case of very large object hierarchies you might consider to implement <see cref="ISerializable"/>
     /// interface instead, which is also supported by <see cref="BinarySerializer"/> and <see cref="BinarySerializationFormatter"/>.

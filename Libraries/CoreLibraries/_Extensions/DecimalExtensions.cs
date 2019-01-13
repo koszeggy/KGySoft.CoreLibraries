@@ -34,24 +34,26 @@ namespace KGySoft.CoreLibraries
         #region Public Constants
 
         /// <summary>
-        /// Represents one possible negative zero value of the <see cref="decimal"/> type. This value is constant.
+        /// Represents one possible negative zero value of the <see cref="decimal"/> type.
         /// </summary>
+        /// <remarks>The value of this constant is <c>-0.0</c>.</remarks>
         public const decimal NegativeZero = -0.0m;
 
         /// <summary>
         /// Represents the natural logarithmic base, specified by the constant, <em>e</em>.
         /// </summary>
         /// <remarks>
-        /// <para>This member is similar to <see cref="Math.E">Math.E</see> but uses <see cref="decimal"/> type instead of <see cref="double"/>.</para>
+        /// <para>This member is similar to <see cref="Math.E">Math.E</see> but has <see cref="decimal"/> type instead of <see cref="double"/>.</para>
         /// <para>The value of this constant is <c>2.7182818284590452353602874714</c>.</para>
         /// </remarks>
         public const decimal E = 2.7182818284590452353602874714m;
 
+        // ReSharper disable once InconsistentNaming
         /// <summary>
         /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, <em>π</em>.
         /// </summary>
         /// <remarks>
-        /// <para>This member is similar to <see cref="Math.PI">Math.PI</see> but uses <see cref="decimal"/> type instead of <see cref="double"/>.</para>
+        /// <para>This member is similar to <see cref="Math.PI">Math.PI</see> but has <see cref="decimal"/> type instead of <see cref="double"/>.</para>
         /// <para>The value of this constant is <c>3.1415926535897932384626433833</c>.</para>
         /// </remarks>
         public const decimal PI = 3.1415926535897932384626433833m;
@@ -59,6 +61,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Represents the smallest positive <see cref="decimal"/> value that is greater than zero.
         /// </summary>
+        /// <remarks>The value of this constant is <c>0.0000000000000000000000000001</c>.</remarks>
         public const decimal Epsilon = 0.0000000000000000000000000001m;
 
         #endregion
@@ -108,7 +111,7 @@ namespace KGySoft.CoreLibraries
         #region Public Methods
 
         /// <summary>
-        /// Returns a culture-invariant <see cref="string"/> representation of the given <see cref="decimal"/> <paramref name="value"/>,
+        /// Returns a culture-invariant <see cref="string"/> representation of the given <see cref="decimal"/>&#160;<paramref name="value"/>,
         /// from which the original value can be parsed without losing any information.
         /// </summary>
         /// <param name="value">A <see cref="decimal"/> value to be converted to <see cref="string"/>.</param>
@@ -124,20 +127,17 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if <paramref name="value"/> represents a negative zero value; otherwise, <see langword="false"/>.</returns>
-        public static bool IsNegativeZero(this decimal value)
-        {
-            return value == 0m && (Decimal.GetBits(value)[3] & 0x80000000) != 0;
-        }
+        public static bool IsNegativeZero(this decimal value) => value == 0m && (Decimal.GetBits(value)[3] & 0x80000000) != 0;
 
         /// <summary>
-        /// Removes the trailing zeros after the decimal sign of the specified <see cref="decimal"/> <paramref name="value"/>.
+        /// Removes the trailing zeros after the decimal sign of the specified <see cref="decimal"/>&#160;<paramref name="value"/>.
         /// </summary>
         /// <param name="value">The value to normalize.</param>
-        /// <returns>The normalized value of the specified <see cref="decimal"/> <paramref name="value"/> containing no trailing zeros after the decimal sign.</returns>
+        /// <returns>The normalized value of the specified <see cref="decimal"/>&#160;<paramref name="value"/> containing no trailing zeros after the decimal sign.</returns>
         public static decimal Normalize(this decimal value) => value / 1.0000000000000000000000000000m;
 
         /// <summary>
-        /// Returns the natural (base <em>e</em>) logarithm of a <see cref="decimal"/> <paramref name="value"/>.
+        /// Returns the natural (base <em>e</em>) logarithm of a <see cref="decimal"/>&#160;<paramref name="value"/>.
         /// </summary>
         /// <param name="value">The value whose logarithm is to be found. Must be greater than zero.</param>
         /// <returns>The natural logarithm of <paramref name="value"/>.</returns>
@@ -159,7 +159,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Returns the base 10 logarithm of a <see cref="decimal"/> <paramref name="value"/>.
+        /// Returns the base 10 logarithm of a <see cref="decimal"/>&#160;<paramref name="value"/>.
         /// </summary>
         /// <param name="value">The value whose logarithm is to be found. Must be greater than zero.</param>
         /// <returns>The base 10 logarithm of <paramref name="value"/>.</returns>
@@ -206,8 +206,8 @@ namespace KGySoft.CoreLibraries
         /// Returns <em>e</em> raised to the specified <paramref name="power"/>.
         /// </summary>
         /// <param name="power">The specified power.</param>
-        /// <returns>The number e raised to the power d. If d equals NaN or PositiveInfinity, that value is returned. If d equals NegativeInfinity, 0 is returned.</returns>
-        /// <exception cref="OverflowException"><paramref name="power"/> is too large for the result to fit in a <see cref="decimal"/> value. The maximum value is about 66.5/</exception>
+        /// <returns>The number <em>e</em> raised to the specified <paramref name="power"/>.</returns>
+        /// <exception cref="OverflowException"><paramref name="power"/> is too large for the result to fit in a <see cref="decimal"/> value.</exception>
         /// <remarks>
         /// <para>This member is similar to <see cref="Math.Exp">Math.Exp</see> but uses <see cref="decimal"/> type instead of <see cref="double"/>.</para>
         /// </remarks>

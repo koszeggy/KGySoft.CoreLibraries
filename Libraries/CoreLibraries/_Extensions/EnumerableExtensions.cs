@@ -42,8 +42,11 @@ namespace KGySoft.CoreLibraries
         #region Public Methods
 
         /// <summary>
-        /// Similarly to <see cref="List{T}.ForEach">List{T}.ForEach</see> processes an action on each element of an enumerable collection.
+        /// Similarly to the <see cref="List{T}.ForEach"><![CDATA[List<T>.ForEach]]></see> method, processes an action on each element of an enumerable collection.
         /// </summary>
+        /// <typeparam name="T">The type of the elements in the enumeration.</typeparam>
+        /// <param name="source">The source enumeration.</param>
+        /// <param name="action">The action to perform on each element.</param>
         /// <returns>Returns the original list making possible to link it into a LINQ chain.</returns>
         public static IEnumerable<T> ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
@@ -156,7 +159,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/>.
+        /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="Random"/> instance.
         /// </summary>
         /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
@@ -228,13 +231,11 @@ namespace KGySoft.CoreLibraries
                     ? list[random.Next(list.Count)]
                     : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
 
-#if NET45
+#if !NET35 && !NET40
             if (source is IReadOnlyList<T> readonlyList)
                 return readonlyList.Count > 0
                     ? readonlyList[random.Next(readonlyList.Count)]
                     : defaultIfEmpty ? default(T) : throw new ArgumentException(Res.CollectionEmpty, nameof(source));
-#elif !(NET35 || NET40)
-#error .NET version is not set or not supported!
 #endif
 
             using (IEnumerator<T> shuffledEnumerator = Shuffle(source, random).GetEnumerator())
@@ -273,6 +274,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
         /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The source to check.</param>
         /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
         public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)

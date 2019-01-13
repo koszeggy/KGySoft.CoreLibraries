@@ -25,7 +25,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Represents a thread-safe pseudo-random number generator.
     /// </summary>
-    /// <seealso cref="System.Random" />
+    /// <seealso cref="Random" />
     public class ThreadSafeRandom : Random
     {
        // NOTE: Starting with .NET 2.0 the different methods do not necessarily rely on the Sample method so we have to overload every public method.
