@@ -33,8 +33,8 @@ using KGySoft.Diagnostics;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent; user needs only to read the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> to retrieve items.
-    /// When a non-existing key is accessed, then item is loaded automatically by the loader function that was passed to the
+    /// Represents a generic cache. If an item loader is specified, then cache expansion is transparent: the user needs only to read the <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see> to retrieve items.
+    /// When a non-existing key is accessed, then the item is loaded automatically by the loader function that was passed to the
     /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
     /// If the cache is full (elements <see cref="Count"/> reaches the <see cref="Capacity"/>) and a new element has to be stored, then
     /// the oldest or least recent used element (depends on the value of <see cref="Behavior"/>) is removed from the cache.
@@ -171,6 +171,33 @@ namespace KGySoft.Collections
     /// }
     /// 
     /// // This code example produces the following output:
+    /// //
+    /// // Cache elements count: 0
+    /// // 
+    /// // Item loading has been invoked for value 13
+    /// // 13 is a prime: True
+    /// // Item loading has been invoked for value 23
+    /// // 23 is a prime: True
+    /// // Item loading has been invoked for value 33
+    /// // 33 is a prime: False
+    /// // Item loading has been invoked for value 43
+    /// // 43 is a prime: True
+    /// // 
+    /// // Cache elements count: 4
+    /// // Cache elements:
+    /// // Key: 13,        Value: True
+    /// // Key: 23,        Value: True
+    /// // Key: 33,        Value: False
+    /// // Key: 43,        Value: True
+    /// // 
+    /// // 13 is a prime: True
+    /// // 
+    /// // Cache elements count: 4
+    /// // Cache elements:
+    /// // Key: 23,        Value: True
+    /// // Key: 33,        Value: False
+    /// // Key: 43,        Value: True
+    /// // Key: 13,        Value: True
     /// // 
     /// // Item loading has been invoked for value 111
     /// // 111 is a prime: False
@@ -827,6 +854,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets the capacity of the cache. If new value is smaller than elements count (value of the <see cref="Count"/> property),
         /// then old or least used elements (depending on <see cref="Behavior"/>) will be removed from <see cref="Cache{TKey,TValue}"/>.
+        /// <br/>Default value: <c>128</c>, if the <see cref="Cache{TKey,TValue}"/> was initialized without specifying a capacity; otherwise, as it was initialized.
         /// </summary>
         /// <remarks>
         /// <para>If new value is smaller than elements count, then cost of setting this property is O(n), where n is the difference of
@@ -861,16 +889,13 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets the cache behavior when cache is full and an element has to be removed.
         /// The cache is full, when <see cref="Count"/> reaches the <see cref="Capacity"/>.
+        /// Default value: <see cref="CacheBehavior.RemoveLeastRecentUsedElement"/>.
         /// </summary>
         /// <remarks>
         /// <para>
         /// When cache is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element
         /// has to be stored, then an element has to be dropped out from the cache. The dropping-out strategy is
-        /// specified by a <see cref="Behavior"/> property. The suggested behavior depends on cache usage. See
-        /// possible behaviors at <see cref="CacheBehavior"/> enumeration.
-        /// </para>
-        /// <para>
-        /// Default value: <see cref="CacheBehavior.RemoveLeastRecentUsedElement"/>.
+        /// specified by this property. The suggested behavior depends on cache usage. See possible behaviors at <see cref="CacheBehavior"/> enumeration.
         /// </para>
         /// <note>
         /// Changing value of this property will not reorganize cache, just switches between the maintaining strategies.
@@ -887,7 +912,7 @@ namespace KGySoft.Collections
             set
             {
                 if (!Enum<CacheBehavior>.IsDefined(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRange(value));
 
                 behavior = value;
             }
@@ -896,7 +921,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets or sets whether adding the first item to the cache or resetting <see cref="Capacity"/> on a non-empty cache should
         /// allocate memory for all cache entries.
-        /// <br/>Default value is <see langword="false"/>.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="Capacity"/> is large (10,000 or bigger), and the cache is not likely to be full, the recommended value is <see langword="false"/>.</para>
@@ -934,7 +959,7 @@ namespace KGySoft.Collections
         /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the keys in the original <see cref="Cache{TKey,TValue}"/>.
         /// Therefore, changes to the <see cref="Cache{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
-        /// <para>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public ICollection<TKey> Keys => keysCollection ?? (keysCollection = new KeysCollection(this));
 
@@ -946,7 +971,7 @@ namespace KGySoft.Collections
         /// <para>The returned <see cref="ICollection{T}"/> is not a static copy; instead, the <see cref="ICollection{T}"/> refers back to the values in the original <see cref="Cache{TKey,TValue}"/>.
         /// Therefore, changes to the <see cref="Cache{TKey,TValue}"/> continue to be reflected in the <see cref="ICollection{T}"/>.</para>
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
-        /// <para>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">Reset</see> method.</para>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public ICollection<TValue> Values => valuesCollection ?? (valuesCollection = new ValuesCollection(this));
 
@@ -1042,8 +1067,8 @@ namespace KGySoft.Collections
         /// When the cache was initialized without an item loader, then getting a non-existing key will throw a <see cref="KeyNotFoundException"/>.</para>
         /// <para>If an item loader was passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>, then
         /// it is transparent whether the returned value of this property was in the cache before retrieving it.
-        /// To test whether a key exists in the cache, use <see cref="ContainsKey">ContainsKey</see> method. To retrieve a key only when it already exists in the cache,
-        /// use <see cref="TryGetValue">TryGetValue</see> method.</para>
+        /// To test whether a key exists in the cache, use the <see cref="ContainsKey">ContainsKey</see> method. To retrieve a key only when it already exists in the cache,
+        /// use the <see cref="TryGetValue">TryGetValue</see> method.</para>
         /// <para>When the <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> equals to <see cref="Capacity"/>) and
         /// a new item is added, an element (depending on <see cref="Behavior"/> property) will be dropped from the cache.</para>
         /// <para>If <see cref="EnsureCapacity"/> is <see langword="true"/>, getting or setting this property approaches an O(1) operation. Otherwise,
@@ -1638,7 +1663,7 @@ namespace KGySoft.Collections
             // extracting from middle
             if (element != first)
                 element.Prev.Next = element.Next;
-            element.Next.Prev = element.Prev; // element.Next is never null because because element is not last
+            element.Next.Prev = element.Prev; // element.Next is never null because element is not last
 
             // adjusting first
             Debug.Assert(first != null, "first is null at InternalTouch");

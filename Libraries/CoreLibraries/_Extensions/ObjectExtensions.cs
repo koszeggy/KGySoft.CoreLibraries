@@ -144,7 +144,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
         /// </summary>
-        /// <typeparam name="TTargetType">The type of the desired return value.</typeparam>
+        /// <typeparam name="TTargetType">The desired type of the return value.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
@@ -168,7 +168,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
         /// </summary>
-        /// <param name="targetType">The type of the desired return value.</param>
+        /// <param name="targetType">The desired type of the return value.</param>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
@@ -189,7 +189,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
         /// </summary>
-        /// <typeparam name="TTargetType">The type of the desired return value.</typeparam>
+        /// <typeparam name="TTargetType">The desired type of the returned <paramref name="value"/>.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
@@ -211,10 +211,47 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
+        /// <summary>
+        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
+        /// </summary>
+        /// <typeparam name="TTargetType">The desired type of the returned <paramref name="value"/>.</typeparam>
+        /// <param name="obj">The object to convert.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTargetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static bool TryConvert<TTargetType>(this object obj, out TTargetType value) => TryConvert(obj, null, out value);
 
+        /// <summary>
+        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
+        /// </summary>
+        /// <param name="obj">The object to convert.</param>
+        /// <param name="targetType">The desired type of the returned <paramref name="value"/>.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static bool TryConvert(this object obj, Type targetType, out object value) => TryConvert(obj, targetType, null, out value);
 
+        /// <summary>
+        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
+        /// </summary>
+        /// <param name="obj">The object to convert.</param>
+        /// <param name="targetType">The desired type of the returned <paramref name="value"/>.</param>
+        /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
+        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <paramref name="targetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// </remarks>
         public static bool TryConvert(this object obj, Type targetType, CultureInfo culture, out object value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
 
         #endregion

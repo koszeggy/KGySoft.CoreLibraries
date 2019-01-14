@@ -234,7 +234,7 @@ namespace KGySoft.CoreLibraries
             internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
             {
                 var context = new GeneratorContext(random, settings);
-                return GenerateObject(type, ref context);
+                return GenerateObject(type, true, ref context);
             }
 
             #endregion
@@ -490,7 +490,7 @@ namespace KGySoft.CoreLibraries
                 string memberName = context.MemberName;
                 if (memberName != null && context.Settings.StringCreation == null)
                 {
-                    if (memberName.ContainsAny(StringComparison.OrdinalIgnoreCase, "name", "address", "city", "country", "county", "author", "title"))
+                    if (memberName.ContainsAny(StringComparison.OrdinalIgnoreCase, "name", "address", "street", "city", "country", "county", "author", "title"))
                         strategy = StringCreation.TitleCaseWord;
                     else if (memberName.ContainsAny(StringComparison.OrdinalIgnoreCase, "description", "info", "comment", "remark", "detail"))
                     {
@@ -700,10 +700,10 @@ namespace KGySoft.CoreLibraries
                 return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length));
             }
 
-            private static object GenerateObject(Type type, ref GeneratorContext context)
+            private static object GenerateObject(Type type, bool allowNull, ref GeneratorContext context)
             {
                 // null
-                if (context.Settings.ChanceOfNull > 0 && type.CanAcceptValue(null) && context.Random.NextDouble() > context.Settings.ChanceOfNull)
+                if (allowNull && context.Settings.ChanceOfNull > 0 && type.CanAcceptValue(null) && context.Random.NextDouble() > context.Settings.ChanceOfNull)
                     return null;
 
                 // nullable
@@ -756,21 +756,26 @@ namespace KGySoft.CoreLibraries
                 {
                     var args = type.GetGenericArguments();
                     context.PushMember(nameof(KeyValuePair<_, _>.Key));
-                    var key = GenerateObject(args[0], ref context);
+                    var key = GenerateObject(args[0], true, ref context);
                     context.PopMember();
                     context.PushMember(nameof(KeyValuePair<_, _>.Value));
-                    var value = GenerateObject(args[1], ref context);
+                    var value = GenerateObject(args[1], true, ref context);
                     context.PopMember();
                     return Reflector.CreateInstance(type, key, value);
                 }
 
+                // 6.) Delegate
+                if (!type.IsAbstract && type.IsDelegate())
+                    return delegatesCache[type];
+
+
                 object result;
 
-                // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
+                // 7.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
                 if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
                     return result;
 
-                // 7.) any object
+                // 8.) any object
                 bool resolveType = false;
                 if (type.IsAbstract || type.IsInterface)
                 {
@@ -791,7 +796,7 @@ namespace KGySoft.CoreLibraries
                         return null;
                 }
 
-                result = GenerateAnyObject(typeToCreate, ref context);
+                result = typeToCreate == type ? InitializeObject(typeToCreate, ref context) : GenerateObject(typeToCreate, false, ref context);
                 if (result != null || !resolveType)
                     return result;
 
@@ -801,12 +806,108 @@ namespace KGySoft.CoreLibraries
                 {
                     foreach (Type candidateType in typeCandidates.Except(new[] { typeToCreate }).Shuffle(context.Random))
                     {
-                        result = GenerateAnyObject(candidateType, ref context);
+                        result = candidateType == type ? InitializeObject(candidateType, ref context) : GenerateObject(candidateType, false, ref context);
                         if (result != null)
                             return result;
                     }
                 }
                 return null;
+            }
+
+            private static object InitializeObject(Type type, ref GeneratorContext context)
+            {
+                if (context.IsGenerating(type))
+                    return null;
+
+                context.PushType(type);
+                try
+                {
+                    object result = null;
+                    if (type.CanBeCreatedWithoutParameters())
+                    {
+                        try
+                        {
+                            result = Activator.CreateInstance(type, true);
+                        }
+                        catch
+                        {
+                            // the constructor threw an exception: skip
+                            return null;
+                        }
+                    }
+                    else if (context.Settings.AllowCreateObjectWithoutConstructor)
+                        result = FormatterServices.GetUninitializedObject(type);
+
+                    if (result != null)
+                        InitializeMembers(result, ref context);
+
+                    return result;
+                }
+                finally
+                {
+                    context.PopType(type);
+                }
+            }
+
+            private static void InitializeMembers(object obj, ref GeneratorContext context)
+            {
+                IList<PropertyInfo> properties = null;
+                IList<FieldInfo> fields = null;
+                Type type = obj.GetType();
+                switch (context.Settings.ObjectInitialization)
+                {
+                    case ObjectInitialization.PublicFieldsAndPropeties:
+                        fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
+                        goto case ObjectInitialization.PublicProperties;
+                    case ObjectInitialization.PublicProperties:
+                        properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && p.CanWrite).ToArray();
+                        break;
+                    case ObjectInitialization.Fields:
+                        var result = new List<FieldInfo>();
+                        for (Type t = type; t != null; t = t.BaseType)
+                            result.AddRange(type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
+                        fields = result;
+                        break;
+                }
+
+                if (properties != null)
+                {
+                    foreach (PropertyInfo property in properties)
+                    {
+                        if (property.GetIndexParameters().Length > 0)
+                            continue;
+
+                        context.PushMember(property.Name);
+                        try
+                        {
+                            PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, true, ref context));
+                        }
+                        // ReSharper disable once EmptyGeneralCatchClause - we just skip the property if it cannot be set
+                        catch
+                        {
+                        }
+
+                        context.PopMember();
+                    }
+                }
+
+                if (fields != null)
+                {
+                    foreach (FieldInfo field in fields)
+                    {
+                        context.PushMember(field.Name);
+                        try
+                        {
+                            FieldAccessor.GetAccessor(field).Set(obj, GenerateObject(field.FieldType, true, ref context));
+                        }
+                        // ReSharper disable once EmptyGeneralCatchClause - we just skip the field if it cannot be set
+                        catch
+                        {
+                        }
+
+                        context.PopMember();
+                    }
+                }
             }
 
             private static Array GenerateArray(Type arrayType, ref GeneratorContext context)
@@ -825,13 +926,13 @@ namespace KGySoft.CoreLibraries
                 {
                     int length = lengths[0];
                     for (int i = 0; i < length; i++)
-                        result.SetValue(GenerateObject(context.Random, elementType, context.Settings), i);
+                        result.SetValue(GenerateObject(elementType, true, ref context), i);
                 }
                 else
                 {
                     var indexer = new ArrayIndexer(lengths);
                     while (indexer.MoveNext())
-                        result.SetValue(GenerateObject(context.Random, elementType, context.Settings), indexer.Current);
+                        result.SetValue(GenerateObject(elementType, true, ref context), indexer.Current);
                 }
 
                 return result;
@@ -845,7 +946,7 @@ namespace KGySoft.CoreLibraries
                 if (!isDictionary)
                 {
                     for (int i = 0; i < count; i++)
-                        collection.Add(GenerateObject(elementType, ref context));
+                        collection.Add(GenerateObject(elementType, true, ref context));
 
                     return;
                 }
@@ -857,13 +958,13 @@ namespace KGySoft.CoreLibraries
                 for (int i = 0; i < count; i++)
                 {
                     context.PushMember(nameof(DictionaryEntry.Key));
-                    var key = GenerateObject(keyValue[0], ref context);
+                    var key = GenerateObject(keyValue[0], true, ref context);
                     context.PopMember();
                     if (key == null)
                         continue;
 
                     context.PushMember(nameof(DictionaryEntry.Value));
-                    var value = GenerateObject(keyValue[1], ref context);
+                    var value = GenerateObject(keyValue[1], true, ref context);
                     context.PopMember();
                     if (dictionary != null)
                     {
@@ -895,114 +996,6 @@ namespace KGySoft.CoreLibraries
                 }
 
                 return CreateInstanceAccessor.GetAccessor(collectionCtor).CreateInstance(initializerCollection);
-            }
-
-            private static object GenerateAnyObject(Type type, ref GeneratorContext context)
-            {
-                // Special case 1: Enum by System.Enum type or an interface. Handling separately to avoid non-existing elements.
-                if (type.IsEnum)
-                    return PickRandomEnum(type, ref context);
-
-                // Special case 2: Known type by interface.
-                if (knownTypes.TryGetValue(type, out var knownGenerator))
-                    return knownGenerator.Invoke(ref context);
-
-                // Special case 3: Delegate
-                if (type.IsDelegate())
-                    return delegatesCache[type];
-
-                if (context.IsGenerating(type))
-                    return null;
-
-                context.PushType(type);
-                try
-                {
-                    object result = null;
-                    if (type.CanBeCreatedWithoutParameters())
-                    {
-                        try
-                        {
-                            result = Activator.CreateInstance(type, true);
-                        }
-                        catch
-                        {
-                            // the constructor threw an exception: skip
-                            return null;
-                        }
-                    }
-                    else if (context.Settings.AllowCreateObjectWithoutConstructor)
-                        result = FormatterServices.GetUninitializedObject(type);
-
-                    if (result != null)
-                        InitializeObject(result, ref context);
-
-                    return result;
-                }
-                finally
-                {
-                    context.PopType(type);
-                }
-            }
-
-            private static void InitializeObject(object obj, ref GeneratorContext context)
-            {
-                IList<PropertyInfo> properties = null;
-                IList<FieldInfo> fields = null;
-                Type type = obj.GetType();
-                switch (context.Settings.ObjectInitialization)
-                {
-                    case ObjectInitialization.PublicFieldsAndPropeties:
-                        fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
-                        goto case ObjectInitialization.PublicProperties;
-                    case ObjectInitialization.PublicProperties:
-                        properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && p.CanWrite).ToArray();
-                        break;
-                    case ObjectInitialization.Fields:
-                        var result = new List<FieldInfo>();
-                        for (Type t = type; t != null; t = t.BaseType)
-                            result.AddRange(type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly));
-                        fields = result;
-                        break;
-                }
-
-                if (properties != null)
-                {
-                    foreach (PropertyInfo property in properties)
-                    {
-                        if (property.GetIndexParameters().Length > 0)
-                            continue;
-
-                        context.PushMember(property.Name);
-                        try
-                        {
-                            PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, ref context));
-                        }
-                        // ReSharper disable once EmptyGeneralCatchClause - we just skip the property if it cannot be set
-                        catch
-                        {
-                        }
-
-                        context.PopMember();
-                    }
-                }
-
-                if (fields != null)
-                {
-                    foreach (FieldInfo field in fields)
-                    {
-                        context.PushMember(field.Name);
-                        try
-                        {
-                            FieldAccessor.GetAccessor(field).Set(obj, GenerateObject(field.FieldType, ref context));
-                        }
-                        // ReSharper disable once EmptyGeneralCatchClause - we just skip the field if it cannot be set
-                        catch
-                        {
-                        }
-
-                        context.PopMember();
-                    }
-                }
             }
 
             private static Type[] GetKeyValueTypes(Type elementType)

@@ -22,7 +22,7 @@
       <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.dll" />
       <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.xml" />
     </DocumentationSources>
-    <HelpFileFormat>HtmlHelp1</HelpFileFormat>
+    <HelpFileFormat>HtmlHelp1, Website</HelpFileFormat>
     <HelpTitle>KGySoft.CoreLibraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>
     <NamingMethod>Guid</NamingMethod>

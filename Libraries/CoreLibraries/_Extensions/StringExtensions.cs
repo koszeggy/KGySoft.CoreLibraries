@@ -17,11 +17,9 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using KGySoft.Reflection;
@@ -42,8 +40,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Extracts content of a single or double quoted string.
         /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
+        /// <param name="s">The string to be extracted from quotes.</param>
+        /// <returns>If <paramref name="s"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="s"/>.</returns>
         public static string RemoveQuotes(this string s)
         {
             if (String.IsNullOrEmpty(s))
@@ -56,8 +54,10 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Converts the passed string to a <see cref="Regex"/> that match wildcard characters (? and *).
+        /// Converts the passed string to a <see cref="Regex"/> that matches wildcard characters (? and *).
         /// </summary>
+        /// <param name="s">The string containing possible wildcard characters.</param>
+        /// <returns>A <see cref="Regex"/> instance that matches the pattern of the given string in <paramref name="s"/>.</returns>
         public static Regex ToWildcardsRegex(this string s)
         {
             if (s == null)
@@ -68,6 +68,11 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Repeats a <see cref="string"/>&#160;<paramref name="count"/> times.
         /// </summary>
+        /// <param name="s">The string to repeat <paramref name="count"/> times.</param>
+        /// <param name="count">The count of repeating <paramref name="s"/>. If 0, an empty string is returned. If 1 the original <paramref name="s"/> is returned.</param>
+        /// <returns><paramref name="s"/> repeated <paramref name="count"/> times.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is less than 0.</exception>
         public static string Repeat(this string s, int count)
         {
             if (s == null)
@@ -93,20 +98,115 @@ namespace KGySoft.CoreLibraries
 
         #region Parsing
 
-        public static T Parse<T>(this string s, CultureInfo culture = null)
-            => TryParse(s, typeof(T), culture, out object value, out Exception error) && typeof(T).CanAcceptValue(value)
-                ? (T)value
-                : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, typeof(T)), nameof(s), error);
+        /// <summary>
+        /// Parses delimited hex values from a string into an array of bytes.
+        /// </summary>
+        /// <param name="s">A string containing delimited hex values.</param>
+        /// <param name="separator">A separator delimiting the hex values. If <see langword="null"/>, then <paramref name="s"/> is parsed as a continuous hex stream.</param>
+        /// <returns>A byte array containing the hex values as bytes.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/>&#160;and <paramref name="s"/> does not consist of event amount of hex digits.</exception>
+        /// <exception cref="FormatException"><paramref name="s"/> is not of the correct format.</exception>
+        /// <exception cref="OverflowException">A value in <paramref name="s"/> does not fit in the range of a <see cref="byte">byte</see> value.</exception>
+        public static byte[] ParseHexBytes(this string s, string separator)
+        {
+            if (s == null)
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+
+            if (string.IsNullOrEmpty(separator))
+                return ParseHexBytes(s);
+
+            string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
+            byte[] result = new byte[values.Length];
+            for (int i = 0; i < values.Length; i++)
+                result[i] = Byte.Parse(values[i].Trim(), NumberStyles.HexNumber);
+
+            return result;
+        }
 
         /// <summary>
-        /// Parses an object from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
-        /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
-        /// then the type converter or conversion will be used.
+        /// Parses a continuous hex stream from a string.
         /// </summary>
-        /// <param name="type">Type of the desired result.</param>
-        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, returns <see langword="null"/>.</param>
-        /// <param name="culture">Appropriate culture needed for number types.</param>
-        /// <returns>The parsed value.</returns>
+        /// <param name="s">A string containing continuous hex values without delimiters.</param>
+        /// <returns>A byte array containing the hex values as bytes.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="s"/> does not consist of event amount of hex digits.</exception>
+        /// <exception cref="FormatException"><paramref name="s"/> is not of the correct format.</exception>
+        /// <exception cref="OverflowException">A value in <paramref name="s"/> does not fit in the range of a <see cref="byte">byte</see> value.</exception>
+        public static byte[] ParseHexBytes(this string s)
+        {
+            if (s == null)
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+
+            if (s.Length == 0)
+                return new byte[0];
+
+            if (s.Length % 2 != 0)
+                throw new ArgumentException(Res.StringExtensionsSourceLengthNotEven, nameof(s));
+
+            byte[] result = new byte[s.Length >> 1];
+            for (int i = 0; i < (s.Length >> 1); i++)
+                result[i] = Byte.Parse(s.Substring(i << 1, 2), NumberStyles.HexNumber);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Parses separated decimal bytes from a string.
+        /// </summary>
+        /// <param name="s">A string containing delimited decimal integer numbers.</param>
+        /// <param name="separator">A separator delimiting the values.</param>
+        /// <returns>A byte array containing the decimal values as bytes.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/>&#160;or empty.</exception>
+        /// <exception cref="FormatException"><paramref name="s"/> is not of the correct format.</exception>
+        /// <exception cref="OverflowException">A value in <paramref name="s"/> does not fit in the range of a <see cref="byte">byte</see> value.</exception>
+        public static byte[] ParseDecimalBytes(this string s, string separator)
+        {
+            if (s == null)
+                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+
+            if (String.IsNullOrEmpty(separator))
+                throw new ArgumentException(Res.StringExtensionsSeparatorNullOrEmpty, nameof(separator));
+
+            string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
+            byte[] result = new byte[values.Length];
+            for (int i = 0; i < values.Length; i++)
+                result[i] = Byte.Parse(values[i].Trim());
+            return result;
+        }
+
+        /// <summary>
+        /// Tries to convert the specified <see cref="string">string</see> to an <see cref="Enum"/> value of <typeparamref name="TEnum"/> type.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see cref="Enum"/>.</typeparam>
+        /// <param name="s">The <see cref="string">string</see> to convert.</param>
+        /// <param name="definedOnly">If <see langword="true"/>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
+        /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
+        /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
+        public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+        {
+            if (s == null)
+                return null;
+
+            if (!Enum<TEnum>.TryParse(s, out TEnum value))
+                return null;
+
+            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
+        }
+
+        /// <summary>
+        /// Parses an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <typeparam name="T">The desired type of the return value.</typeparam>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then returns <see langword="null"/>.</param>
+        /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An object of <typeparamref name="T"/>, which is the result of the parsing.</returns>
         /// <remarks>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
         /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;<see cref="Type"/> extension method.</para>
@@ -134,10 +234,28 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="DateTimeOffset"/></description></item>
         /// <item><description><see cref="TimeSpan"/></description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/>&#160;or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
-        /// <item><description>Any types with a registered conversion or <see cref="TypeConverter"/> from <see cref="string"/> type.</description></item>
         /// </list>
         /// </para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><typeparamref name="T"/> not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
+        public static T Parse<T>(this string s, CultureInfo culture = null)
+            => TryParse(s, typeof(T), culture, out object value, out Exception error) && typeof(T).CanAcceptValue(value)
+                ? (T)value
+                : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, typeof(T)), nameof(s), error);
+
+        /// <summary>
+        /// Parses an object from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> overload for details.
+        /// </summary>
+        /// <returns>An object of <paramref name="type"/>, which is the result of the parsing.</returns>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then returns <see langword="null"/>.</param>
+        /// <param name="type">The desired type of the return value.</param>
+        /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The parsed value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         public static object Parse(this string s, Type type, CultureInfo culture = null)
@@ -145,6 +263,17 @@ namespace KGySoft.CoreLibraries
                 ? value
                 : throw new ArgumentException(Res.StringExtensionsCannotParseAsType(s, type), nameof(s), error);
 
+        /// <summary>
+        /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
+        /// </summary>
+        /// <typeparam name="T">The desired type of the returned <paramref name="value"/>.</typeparam>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         public static bool TryParse<T>(this string s, CultureInfo culture, out T value)
         {
             value = default;
@@ -155,11 +284,42 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
+        /// <summary>
+        /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <typeparamref name="T"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
+        /// </summary>
+        /// <typeparam name="T">The desired type of the returned <paramref name="value"/>.</typeparam>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <typeparamref name="T"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         public static bool TryParse<T>(this string s, out T value) => TryParse(s, null, out value);
 
-        public static bool TryParse(this string s, Type type, out object value) => TryParse(s, type, null, out value, out var _);
-
+        /// <summary>
+        /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
+        /// </summary>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
+        /// <param name="culture">The culture to use for the parsing. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         public static bool TryParse(this string s, Type type, CultureInfo culture, out object value) => TryParse(s, type, culture, out value, out var _);
+
+        /// <summary>
+        /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string"/> value. Firstly, it tries to parse the type natively.
+        /// If <paramref name="type"/> cannot be parsed natively but the type has a <see cref="TypeConverter"/> or a registered conversion that can convert from string,
+        /// then the type converter or conversion will be used.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Parse{T}"/> method for details.
+        /// </summary>
+        /// <param name="s">The string value to parse. If <see langword="null"/>&#160;and <paramref name="type"/> is a reference or nullable type, then <paramref name="value"/> will be <see langword="null"/>.</param>
+        /// <param name="type">The desired type of the returned <paramref name="value"/>.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the parsing.</param>
+        /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        public static bool TryParse(this string s, Type type, out object value) => TryParse(s, type, null, out value, out var _);
 
         private static bool TryParse(string s, Type type, CultureInfo culture, out object value, out Exception error)
         {
@@ -371,6 +531,7 @@ namespace KGySoft.CoreLibraries
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
                 if (converter.CanConvertFrom(Reflector.StringType))
                 {
+                    // ReSharper disable once AssignNullToNotNullAttribute - false alarm, context can be null
                     value = converter.ConvertFrom(null, culture, s);
                     return true;
                 }
@@ -385,89 +546,9 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        /// <summary>
-        /// Parses separated hex values from a string.
-        /// </summary>
-        public static byte[] ParseHexBytes(this string s, string separator)
-        {
-            if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
+        #endregion
 
-            if (string.IsNullOrEmpty(separator))
-                return ParseHexBytes(s);
-
-            string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
-            byte[] result = new byte[values.Length];
-            for (int i = 0; i < values.Length; i++)
-                result[i] = Byte.Parse(values[i].Trim(), NumberStyles.HexNumber);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Parses a continuous hex stream from a string.
-        /// </summary>
-        public static byte[] ParseHexBytes(this string s)
-        {
-            if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
-
-            if (s.Length == 0)
-                return new byte[0];
-
-            if (s.Length % 2 != 0)
-                throw new ArgumentException(Res.StringExtensionsSourceLengthNotEven, nameof(s));
-
-            byte[] result = new byte[s.Length >> 1];
-            for (int i = 0; i < (s.Length >> 1); i++)
-                result[i] = Byte.Parse(s.Substring(i << 1, 2), NumberStyles.HexNumber);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Parses separated decimal bytes from a string.
-        /// </summary>
-        public static byte[] ParseDecimalBytes(this string s, string separator)
-        {
-            if (s == null)
-                throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
-
-            if (String.IsNullOrEmpty(separator))
-                throw new ArgumentException(Res.StringExtensionsSeparatorNullOrEmpty, nameof(separator));
-
-            string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
-            byte[] result = new byte[values.Length];
-            for (int i = 0; i < values.Length; i++)
-            {
-                result[i] = Byte.Parse(values[i].Trim());
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Tries to convert the specified <see cref="string">string</see> to an <see cref="Enum">enum</see> value.
-        /// </summary>
-        /// <typeparam name="TEnum">The type of the <see cref="Enum">enum</see>.</typeparam>
-        /// <param name="s">The <see cref="string">string</see> to convert.</param>
-        /// <param name="definedOnly">If <see langword="true"/>, the result can only be a defined value in the specified <typeparamref name="TEnum"/> type.
-        /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
-        /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
-        public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
-        {
-            if (s == null)
-                return null;
-
-            if (!Enum<TEnum>.TryParse(s, out TEnum value))
-                return null;
-
-            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
-        }
-
-#endregion
-
-#region Comparison
+        #region Comparison
 
         /// <summary>
         /// Gets whether the specified string <paramref name="s"/> contains the specified <paramref name="value"/> using the specified <paramref name="comparison"/>.
@@ -487,7 +568,7 @@ namespace KGySoft.CoreLibraries
             if (value == null)
                 throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
 
             return s.IndexOf(value, comparison) >= 0;
         }
@@ -540,7 +621,7 @@ namespace KGySoft.CoreLibraries
         public static bool EqualsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
 
             return set != null && set.Any(str => String.Equals(s, str, comparison));
         }
@@ -574,12 +655,12 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException"><paramref name="set"/>contains a <see langword="null"/>&#160;element.</exception>
         public static int IndexOfAny(this string s, StringComparison comparison, params string[] set)
         {
-            if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (set == null)
                 throw new ArgumentNullException(nameof(set), Res.ArgumentNull);
+            if (!Enum<StringComparison>.IsDefined(comparison))
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
 
             var index = -1;
             foreach (var str in set)
@@ -622,7 +703,7 @@ namespace KGySoft.CoreLibraries
         public static bool ContainsAny(this string s, StringComparison comparison, params string[] set)
         {
             if (!Enum<StringComparison>.IsDefined(comparison))
-                throw new ArgumentOutOfRangeException(nameof(comparison), Res.ArgumentOutOfRange);
+                throw new ArgumentOutOfRangeException(nameof(comparison), Res.EnumOutOfRange(comparison));
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
             if (set == null)
@@ -637,8 +718,8 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

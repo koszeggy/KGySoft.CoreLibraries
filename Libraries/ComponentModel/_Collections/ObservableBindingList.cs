@@ -23,7 +23,10 @@ namespace KGySoft.ComponentModel
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <seealso cref="ObservableCollection{T}" />
     /// <seealso cref="IBindingList" />
-    // Note: In NET 3.5 this class is not available because it would require to reference System.WindowsBase.dll
+    /// <remarks>
+    /// <note>In NET 3.5 this class is not available because it would require to reference <c>System.WindowsBase.dll</c></note>
+    /// </remarks>
+    // Note: 
     // Changes to ObservableCollection<T>:
     // - PropertyChanged also for other properties
     // - There is no IEnumerable<T> constructor and the IList<T> constructor wraps the original list rather than copying the elements

@@ -91,8 +91,7 @@ namespace KGySoft.CoreLibraries
             if (!s.CanRead)
                 throw new ArgumentException(Res.StreamExtensionsStreamCannotRead);
 
-            MemoryStream ms = s as MemoryStream;
-            if (ms != null)
+            if (s is MemoryStream ms)
                 return ms.ToArray();
 
             long pos = s.Position;

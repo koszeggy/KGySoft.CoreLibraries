@@ -107,14 +107,14 @@ namespace KGySoft.CoreLibraries
             => (sbyte)random.NextBytes(1)[0];
 
         /// <summary>
-        /// Returns a random <see cref="sbyte"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="sbyte"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An 8-bit signed integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static sbyte NextSByte(this Random random, sbyte maxValue, bool inclusiveUpperBound = false)
@@ -129,7 +129,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An 8-bit signed integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static sbyte NextSByte(this Random random, sbyte minValue, sbyte maxValue, bool inclusiveUpperBound = false)
@@ -145,14 +145,14 @@ namespace KGySoft.CoreLibraries
             => random.NextBytes(1)[0];
 
         /// <summary>
-        /// Returns a random <see cref="byte"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="byte"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An 8-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static byte NextByte(this Random random, byte maxValue, bool inclusiveUpperBound = false)
             => (byte)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
@@ -166,7 +166,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An 8-bit unsigned integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static byte NextByte(this Random random, byte minValue, byte maxValue, bool inclusiveUpperBound = false)
@@ -184,14 +184,14 @@ namespace KGySoft.CoreLibraries
             => BitConverter.ToInt16(random.NextBytes(2), 0);
 
         /// <summary>
-        /// Returns a random <see cref="short"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="short"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 16-bit signed integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static short NextInt16(this Random random, short maxValue, bool inclusiveUpperBound = false)
@@ -206,7 +206,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 16-bit signed integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static short NextInt16(this Random random, short minValue, short maxValue, bool inclusiveUpperBound = false)
@@ -222,14 +222,14 @@ namespace KGySoft.CoreLibraries
             => BitConverter.ToUInt16(random.NextBytes(2), 0);
 
         /// <summary>
-        /// Returns a random <see cref="ushort"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="ushort"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 16-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static ushort NextUInt16(this Random random, ushort maxValue, bool inclusiveUpperBound = false)
             => (ushort)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
@@ -243,7 +243,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 16-bit unsigned integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static ushort NextUInt16(this Random random, ushort minValue, ushort maxValue, bool inclusiveUpperBound = false)
@@ -261,14 +261,14 @@ namespace KGySoft.CoreLibraries
             => BitConverter.ToInt32(random.NextBytes(4), 0);
 
         /// <summary>
-        /// Returns a random <see cref="int"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="int"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 32-bit signed integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static int NextInt32(this Random random, int maxValue, bool inclusiveUpperBound = false)
@@ -283,7 +283,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 64-bit signed integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static int NextInt32(this Random random, int minValue, int maxValue, bool inclusiveUpperBound = false)
@@ -299,14 +299,14 @@ namespace KGySoft.CoreLibraries
             => BitConverter.ToUInt32(random.NextBytes(4), 0);
 
         /// <summary>
-        /// Returns a random <see cref="uint"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="uint"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static uint NextUInt32(this Random random, uint maxValue, bool inclusiveUpperBound = false)
             => (uint)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
@@ -320,7 +320,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 32-bit unsigned integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static uint NextUInt32(this Random random, uint minValue, uint maxValue, bool inclusiveUpperBound = false)
@@ -336,14 +336,14 @@ namespace KGySoft.CoreLibraries
             => BitConverter.ToInt64(random.NextBytes(8), 0);
 
         /// <summary>
-        /// Returns a random <see cref="long"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="long"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 64-bit signed integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
         public static long NextInt64(this Random random, long maxValue, bool inclusiveUpperBound = false)
@@ -358,7 +358,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 64-bit signed integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static long NextInt64(this Random random, long minValue, long maxValue, bool inclusiveUpperBound = false)
@@ -399,14 +399,14 @@ namespace KGySoft.CoreLibraries
             => BitConverter.ToUInt64(random.NextBytes(8), 0);
 
         /// <summary>
-        /// Returns a random <see cref="ulong"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="ulong"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static ulong NextUInt64(this Random random, ulong maxValue, bool inclusiveUpperBound = false)
             => random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
@@ -420,7 +420,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="inclusiveUpperBound"><see langword="true"/>&#160;to allow that the generated value is equal to <paramref name="maxValue"/>; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.
-        /// If <paramref name="inclusiveUpperBound"/> if <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
+        /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
         public static ulong NextUInt64(this Random random, ulong minValue, ulong maxValue, bool inclusiveUpperBound = false)
@@ -466,7 +466,7 @@ namespace KGySoft.CoreLibraries
             => (float)random.NextDouble();
 
         /// <summary>
-        /// Returns a random <see cref="float"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="float"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -516,7 +516,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Returns a random <see cref="double"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="double"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -648,7 +648,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Returns a random <see cref="decimal"/> value that is less or equal to the specified maximum.
+        /// Returns a random <see cref="decimal"/> value that is less or equal to the specified <paramref name="maxValue"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="maxValue">The upper bound of the random number returned.</param>
@@ -757,8 +757,10 @@ namespace KGySoft.CoreLibraries
         /// Returns a random <see cref="char"/> value that is within a specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
-        /// <param name="minValue">The inclusive lower bound of the random character returned.</param>
-        /// <param name="maxValue">The inclusive upper bound of the random character returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="minValue">The inclusive lower bound of the random character returned. This parameter is optional.
+        /// <br/>Default value: <see cref="Char.MinValue">Char.MinValue</see>.</param>
+        /// <param name="maxValue">The inclusive upper bound of the random character returned. Must be greater or equal to <paramref name="minValue"/>. This parameter is optional.
+        /// <br/>Default value: <see cref="Char.MaxValue">Char.MaxValue</see>.</param>
         /// <returns>A <see cref="char"/> value that is greater than or equal to <paramref name="minValue"/> and less or equal to <paramref name="maxValue"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
@@ -938,17 +940,16 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Returns a random <see cref="DateTimeOffset"/> that is between the specified range and has only date component.
+        /// Returns a random <see cref="DateTimeOffset"/> that is between the specified range.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="minValue">The inclusive lower bound of the random <see cref="DateTimeOffset"/> returned or <see langword="null"/>&#160;to use <see cref="DateTimeOffset.MinValue">DateTimeOffset.MinValue</see>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="maxValue">The inclusive upper bound of the random <see cref="DateTimeOffset"/> returned or <see langword="null"/>&#160;to use <see cref="DateTimeOffset.MaxValue">DateTimeOffset.MaxValue</see>. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>A <see cref="DateTime"/> value that is in the specified range and has only date component.</returns>
+        /// <returns>A <see cref="DateTimeOffset"/> value that is in the specified range.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
-        /// <remarks>The <see cref="DateTime.Kind"/> property of the generated <see cref="DateTime"/> instances is always <see cref="DateTimeKind.Unspecified"/>.</remarks>
         public static DateTimeOffset NextDateTimeOffset(this Random random, DateTimeOffset? minValue = null, DateTimeOffset? maxValue = null)
         {
             const int maximumOffset = 14 * 60;
@@ -1023,6 +1024,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="security">To create cryptographically secure <see cref="Guid"/> values use a derived type of <see cref="Random"/>,
         /// such as <see cref="SecureRandom"/>, which can be considered as secure, or just call <see cref="Guid.NewGuid">Guid.NewGuid</see> instead.</note>
         /// </remarks>
+        /// <seealso cref="SecureRandom"/>
         public static Guid NextGuid(this Random random)
         {
             if (random == null)
@@ -1039,7 +1041,7 @@ namespace KGySoft.CoreLibraries
         #region Object
 
         /// <summary>
-        /// Returns a random object of type <typeparamref name="T"/> value or <see langword="null"/>
+        /// Returns a random object of type <typeparamref name="T"/> or <see langword="null"/>&#160;
         /// if <typeparamref name="T"/> cannot be instantiated with the provided <paramref name="settings"/>.
         /// </summary>
         /// <typeparam name="T">The type of the object to be created. If <see cref="GenerateObjectSettings.TryResolveInterfacesAndAbstractTypes"/> property
@@ -1048,7 +1050,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="settings">The settings to use or <see langword="null"/>&#160;to use the default settings.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>A instance of <typeparamref name="T"/> or <see langword="null"/>&#160;if the type cannot be
+        /// <returns>An instance of <typeparamref name="T"/> or <see langword="null"/>&#160;if the type cannot be
         /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section for details.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <remarks>
@@ -1057,7 +1059,7 @@ namespace KGySoft.CoreLibraries
         /// <para><typeparamref name="T"/> can be basically any type as long as it has a default constructor or (in case of collections) a constructor with a parameter that can accept a collection.</para>
         /// <para>If <typeparamref name="T"/> is an interface or an abstract class you can set the <see cref="GenerateObjectSettings.TryResolveInterfacesAndAbstractTypes"/> property to
         /// use a random implementation of <typeparamref name="T"/>. If no implementation is found among the loaded assemblies with a proper constructor, then the result will be <see langword="null"/>.</para>
-        /// <para>If <typeparamref name="T"/> a non-sealed class you can set the <see cref="GenerateObjectSettings.AllowDerivedTypesForNonSealedClasses"/> property to
+        /// <para>If <typeparamref name="T"/> is a non-sealed class you can set the <see cref="GenerateObjectSettings.AllowDerivedTypesForNonSealedClasses"/> property to
         /// allow to use a random derived class of <typeparamref name="T"/>.</para>
         /// <para>All types, which can be generated by the <c>Next...</c> methods of the <see cref="RandomExtensions"/> class, are supported.
         /// Some other types have some special handling for better support:
@@ -1070,7 +1072,7 @@ namespace KGySoft.CoreLibraries
         /// <item><term><see cref="Assembly"/></term><description>A random loaded assembly will be picked.</description></item>
         /// <item><term><see cref="Type"/></term><description>A random type will be picked from one of the loaded assemblies.</description></item>
         /// <item><term><see cref="MemberInfo"/> types</term><description>A random member will be picked from one of the types of the loaded assemblies.</description></item>
-        /// <item><term><see cref="Delegate"/> types</term><description>A dynamic method will be created for the specified delegate, which returns random objects both by return value and by the possible <c>out></c> parameters.</description></item>
+        /// <item><term><see cref="Delegate"/> types</term><description>A dynamic method will be created for the specified delegate, which returns random objects both by return value and by the possible <c>out</c> parameters.</description></item>
         /// </list>
         /// <note>The generated delegates do not use the specified <paramref name="random"/> instance because in that case the <paramref name="random"/> instance could
         /// never be reclaimed by the garbage collector. To avoid leaking memory generated delegates use an internal static <see cref="Random"/> instance.</note>
@@ -1084,7 +1086,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Returns a random object of the specified <paramref name="type"/> or <see langword="null"/>
+        /// Returns a random object of the specified <paramref name="type"/> or <see langword="null"/>&#160;
         /// if <paramref name="type"/> cannot be instantiated with the provided <paramref name="settings"/>.
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
@@ -1093,7 +1095,7 @@ namespace KGySoft.CoreLibraries
         /// however, if no implementation or usable constructor found, then a <see langword="null"/>&#160;value will be returned.</param>
         /// <param name="settings">The settings to use or <see langword="null"/>&#160;to use the default settings.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>A instance of <paramref name="type"/> or <see langword="null"/>&#160;if the type cannot be
+        /// <returns>An instance of <paramref name="type"/> or <see langword="null"/>&#160;if the type cannot be
         /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section of the <see cref="NextObject{T}"/> overload for details.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
         public static object NextObject(this Random random, Type type, GenerateObjectSettings settings = null)

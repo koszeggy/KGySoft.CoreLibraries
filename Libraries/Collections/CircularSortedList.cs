@@ -85,7 +85,7 @@ namespace KGySoft.Collections
     /// </remarks>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    [DebuggerDisplay("Count = {Count}; TKey = {typeof(TKey)}; TValue = {typeof(TValue)}")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}")]
     public class CircularSortedList<TKey, TValue> : IDictionary<TKey, TValue>, IList<KeyValuePair<TKey, TValue>>, IDictionary, IList
 #if NET45
         , IReadOnlyDictionary<TKey, TValue>, IReadOnlyList<KeyValuePair<TKey, TValue>>
@@ -100,13 +100,13 @@ namespace KGySoft.Collections
         #region KeysList class
 
         [DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
-        [DebuggerDisplay("Count = {Count}; T = {typeof(T)}")]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}")]
         [Serializable]
         private sealed class KeysList : IList<TKey>, IList
         {
             #region Fields
 
-            private CircularSortedList<TKey, TValue> list;
+            private readonly CircularSortedList<TKey, TValue> list;
 
             [NonSerialized]
             private object syncRoot;
@@ -115,138 +115,72 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            internal KeysList(CircularSortedList<TKey, TValue> owner)
-            {
-                list = owner;
-            }
+            internal KeysList(CircularSortedList<TKey, TValue> owner) => list = owner;
 
             #endregion
 
             #region IList<TKey> Members
 
-            public int IndexOf(TKey item)
-            {
-                return list.IndexOfKey(item);
-            }
-
-            public void Insert(int index, TKey item)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
-            public void RemoveAt(int index)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
+            public int IndexOf(TKey item) => list.IndexOfKey(item);
+            public void Insert(int index, TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void RemoveAt(int index) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             public TKey this[int index]
             {
                 get => list.keys[index];
-                set { throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported); }
+                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             #endregion
 
             #region ICollection<TKey> Members
 
-            public void Add(TKey item)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
-            public void Clear()
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
-            public bool Contains(TKey item)
-            {
-                return list.IndexOfKey(item) >= 0;
-            }
-
-            public void CopyTo(TKey[] array, int arrayIndex)
-            {
-                list.keys.CopyTo(array, arrayIndex);
-            }
-
-            public bool Remove(TKey item)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
+            public void Add(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public bool Contains(TKey item) => list.IndexOfKey(item) >= 0;
+            public void CopyTo(TKey[] array, int arrayIndex) => list.keys.CopyTo(array, arrayIndex);
+            public bool Remove(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             public int Count => list.keys.Count;
-
             public bool IsReadOnly => true;
 
             #endregion
 
             #region IEnumerable<TKey> Members
 
-            public IEnumerator<TKey> GetEnumerator()
-            {
+            public IEnumerator<TKey> GetEnumerator() 
                 // casting to get enumerator as interface
-                return ((IList<TKey>)list.keys).GetEnumerator();
-            }
+                => ((IList<TKey>)list.keys).GetEnumerator();
 
             #endregion
 
             #region IEnumerable Members
 
             IEnumerator IEnumerable.GetEnumerator()
-            {
-                return ((IList<TKey>)list.keys).GetEnumerator();
-            }
+                // casting to get enumerator as interface
+                => ((IList<TKey>)list.keys).GetEnumerator();
 
             #endregion
 
             #region IList Members
 
-            int IList.Add(object value)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
-            bool IList.Contains(object value)
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                return typeKey.CanAcceptValue(value) && Contains((TKey)value);
-            }
-
-            int IList.IndexOf(object value)
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-                return typeKey.CanAcceptValue(value) ? IndexOf((TKey)value) : -1;
-            }
-
-            void IList.Insert(int index, object value)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
+            int IList.Add(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool IList.Contains(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : typeKey.CanAcceptValue(value) && Contains((TKey)value);
+            int IList.IndexOf(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : (typeKey.CanAcceptValue(value) ? IndexOf((TKey)value) : -1);
+            void IList.Insert(int index, object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             bool IList.IsFixedSize => true;
-
-            void IList.Remove(object value)
-            {
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
+            void IList.Remove(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
             object IList.this[int index]
             {
                 get => list.keys[index];
-                set { throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported); }
+                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             }
 
             #endregion
 
             #region ICollection Members
 
-            void ICollection.CopyTo(Array array, int index)
-            {
-                ((ICollection)list.keys).CopyTo(array, index);
-            }
-
+            void ICollection.CopyTo(Array array, int index) => ((ICollection)list.keys).CopyTo(array, index);
             bool ICollection.IsSynchronized => false;
 
             object ICollection.SyncRoot
@@ -384,35 +318,20 @@ namespace KGySoft.Collections
 
             #region IDictionaryEnumerator Members
 
-            DictionaryEntry IDictionaryEnumerator.Entry
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return new DictionaryEntry(current.Key, current.Value);
-                }
-            }
+            DictionaryEntry IDictionaryEnumerator.Entry 
+                => steps == 0 || steps > list.Count 
+                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
+                    : new DictionaryEntry(current.Key, current.Value);
 
-            object IDictionaryEnumerator.Key
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return current.Key;
-                }
-            }
+            object IDictionaryEnumerator.Key 
+                => steps == 0 || steps > list.Count 
+                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
+                    : current.Key;
 
-            object IDictionaryEnumerator.Value
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return current.Value;
-                }
-            }
+            object IDictionaryEnumerator.Value 
+                => steps == 0 || steps > list.Count 
+                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
+                    : current.Value;
 
             #endregion
         }
@@ -488,15 +407,9 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (index == 0 || index > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return current;
-                }
-            }
+            object IEnumerator.Current => index == 0 || index > list.Count 
+                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
+                : current;
 
             public void Reset()
             {
@@ -604,15 +517,10 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return current;
-                }
-            }
+            object IEnumerator.Current 
+                => steps == 0 || steps > list.Count 
+                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
+                    : current;
 
             /// <summary>
             /// Sets the enumerator to its initial position, which is before the first element in the collection.
@@ -641,10 +549,12 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
+        // ReSharper disable StaticMemberInGenericType - they depend on type arguments
         private static readonly bool isEnumKey;
         private static readonly bool isEnumValue;
-        private static Type typeKey;
-        private static Type typeValue;
+        private static readonly Type typeKey;
+        private static readonly Type typeValue;
+        // ReSharper restore StaticMemberInGenericType
 
         #endregion
 
@@ -784,7 +694,7 @@ namespace KGySoft.Collections
         /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
         /// </remarks>
         public CircularSortedList()
-            : this(0, null)
+            : this(0)
         {
         }
 
@@ -794,7 +704,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="capacity">The initial number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can contain.</param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can hold before resizing.
@@ -804,7 +715,7 @@ namespace KGySoft.Collections
         /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
-        public CircularSortedList(int capacity, IComparer<TKey> comparer)
+        public CircularSortedList(int capacity, IComparer<TKey> comparer = null)
         {
             keys = new CircularList<TKey>(capacity);
             values = new CircularList<TValue>(capacity);
@@ -813,30 +724,6 @@ namespace KGySoft.Collections
                 this.comparer = isEnumKey ? (IComparer<TKey>)EnumComparer<TKey>.Comparer : Comparer<TKey>.Default;
             else
                 this.comparer = comparer;
-        }
-
-        /// <summary>
-        /// Creates a new instance of <see cref="CircularSortedList{TKey,TValue}"/>, that is empty, and has the specified initial <paramref name="capacity"/>.
-        /// </summary>
-        /// <param name="capacity">The initial number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can contain.</param>
-        /// <remarks>
-        /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
-        /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can hold before resizing.
-        /// As elements are added to a <see cref="CircularSortedList{TKey,TValue}"/>, the capacity is automatically increased as required by reallocating the array of the internal <see cref="CircularList{T}"/>.</para>
-        /// <para>If the size of the collection can be estimated, specifying the initial capacity eliminates the need to perform a number of resizing operations while adding elements to the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
-        /// <para>The capacity can be decreased by calling <see cref="TrimExcess"/> or by setting the <see cref="Capacity"/> property explicitly.
-        /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
-        /// <para>When <typeparamref name="TKey"/> is en <see langword="enum"/>&#160;type, the comparer will be the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>.
-        /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen.
-        /// The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
-        /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>.
-        /// If the key type <typeparamref name="TKey"/> does not implement
-        /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
-        /// </remarks>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
-        public CircularSortedList(int capacity)
-            : this(capacity, null)
-        {
         }
 
         /// <summary>
@@ -858,7 +745,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="dictionary">The <see cref="IDictionary{TKey,TValue}"/> whose elements are copied to the new S<see cref="CircularSortedList{TKey,TValue}"/>.</param>
         /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types.</param>
+        /// will be used for <see langword="enum"/>&#160;<typeparamref name="TKey"/> types, or <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="dictionary"/> contains one or more duplicate keys.</exception>
         /// <remarks>
@@ -868,37 +756,15 @@ namespace KGySoft.Collections
         /// <para>If the data in <paramref name="dictionary"/> are sorted, this constructor is an O(n) operation, where n is the number of elements in <paramref name="dictionary"/>.
         /// Otherwise it is an O(n*n) operation.</para>
         /// </remarks>
-        public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer)
-            : this((dictionary != null) ? dictionary.Count : 0, comparer)
+        public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey> comparer = null)
+            : this(dictionary?.Count ?? 0, comparer)
         {
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
 
-            // bug in SortedList: this way of initialization would allow duplicate keys:
-            //keys.AddRange(dictionary.Keys);
-            //values.AddRange(dictionary.Values);
-            //Array.Sort(keys.Items, values.Items, this.comparer);
-
+            // this way of initialization is better than the one in SortedList, which would allow duplicate keys
             foreach (KeyValuePair<TKey, TValue> item in dictionary)
-            {
                 Add(item.Key, item.Value);
-            }
-        }
-
-        /// <summary>
-        /// Creates a new instance of <see cref="CircularSortedList{TKey,TValue}"/>, that initializes its elements from the provided <paramref name="dictionary"/>.
-        /// </summary>
-        /// <param name="dictionary">The <see cref="IDictionary{TKey,TValue}"/> whose elements are copied to the new S<see cref="CircularSortedList{TKey,TValue}"/>.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="dictionary"/> contains one or more duplicate keys.</exception>
-        /// <remarks>
-        /// <para>The capacity of the new <see cref="CircularSortedList{TKey,TValue}"/> is set to the number of elements in <paramref name="dictionary"/>, so no resizing takes place while the list is being populated.</para>
-        /// <para>If the data in <paramref name="dictionary"/> are sorted, this constructor is an O(n) operation, where n is the number of elements in <paramref name="dictionary"/>.
-        /// Otherwise it is an O(n*n) operation.</para>
-        /// </remarks>
-        public CircularSortedList(IDictionary<TKey, TValue> dictionary)
-            : this(dictionary, null)
-        {
         }
 
         #endregion
@@ -971,10 +837,7 @@ namespace KGySoft.Collections
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="TValue"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
         /// </remarks>
-        public bool ContainsValue(TValue value)
-        {
-            return values.IndexOf(value) >= 0;
-        }
+        public bool ContainsValue(TValue value) => values.IndexOf(value) >= 0;
 
         /// <summary>
         /// Searches for the specified value and returns the zero-based index of the first occurrence within the entire <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -991,10 +854,7 @@ namespace KGySoft.Collections
         /// <para>This method performs a linear search; therefore, the average execution time is proportional to <see cref="Count"/>. That is, this method is an O(n)
         /// operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
-        public int IndexOfValue(TValue value)
-        {
-            return values.IndexOf(value);
-        }
+        public int IndexOfValue(TValue value) => values.IndexOf(value);
 
         /// <summary>
         /// Sets the capacity to the actual number of elements in the <see cref="CircularSortedList{TKey,TValue}"/>, if that number is less than 90 percent of current capacity.
@@ -1036,10 +896,7 @@ namespace KGySoft.Collections
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/></exception>
-        public KeyValuePair<TKey, TValue> ElementAt(int index)
-        {
-            return new KeyValuePair<TKey, TValue>(keys[index], values[index]);
-        }
+        public KeyValuePair<TKey, TValue> ElementAt(int index) => new KeyValuePair<TKey, TValue>(keys[index], values[index]);
 
         /// <summary>
         /// Returns an enumerator that iterates through the collection in the order of the sorted keys.
@@ -1047,10 +904,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
         /// </returns>
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
+        public Enumerator GetEnumerator() => new Enumerator(this);
 
         #endregion
 
@@ -1142,15 +996,9 @@ namespace KGySoft.Collections
             return EqualityComparer<TValue>.Default.Equals(item.Value, values[index]) ? index : -1;
         }
 
-        private IList<TKey> GetKeys()
-        {
-            return keysList ?? (keysList = new KeysList(this));
-        }
+        private IList<TKey> GetKeys() => keysList ?? (keysList = new KeysList(this));
 
-        private IList<TValue> GetValues()
-        {
-            return valuesList ?? (valuesList = values.AsReadOnly());
-        }
+        private IList<TValue> GetValues() => valuesList ?? (valuesList = values.AsReadOnly());
 
         #endregion
 
@@ -1167,15 +1015,9 @@ namespace KGySoft.Collections
         /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
         /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <remarks>This method is an O(log n) operation, where n is <see cref="Count"/>.</remarks>
-        public bool ContainsKey(TKey key)
-        {
-            return IndexOfKey(key) >= 0;
-        }
+        public bool ContainsKey(TKey key) => IndexOfKey(key) >= 0;
 
-        void IDictionary<TKey, TValue>.Add(TKey key, TValue value)
-        {
-            Add(key, value);
-        }
+        void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => Add(key, value);
 
         /// <summary>
         /// Removes the element with the specified <paramref name="key"/> from the <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -1301,10 +1143,7 @@ namespace KGySoft.Collections
             return EqualityComparer<TValue>.Default.Equals(item.Value, values[index]) ? index : -1;
         }
 
-        void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item)
-        {
-            throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
-        }
+        void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
 
         /// <summary>
         /// Removes the element at the specified index of the <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -1321,17 +1160,14 @@ namespace KGySoft.Collections
         KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
         {
             get => ElementAt(index);
-            set { throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported); }
+            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
         #endregion
 
         #region ICollection<KeyValuePair<TKey,TValue>> Members
 
-        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
-        {
-            Add(item.Key, item.Value);
-        }
+        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 
         /// <summary>
         /// Removes all items from the <see cref="CircularSortedList{TKey,TValue}"/>.
@@ -1349,10 +1185,7 @@ namespace KGySoft.Collections
             values.Clear();
         }
 
-        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
-        {
-            return IndexOf(item) >= 0;
-        }
+        bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => IndexOf(item) >= 0;
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
@@ -1367,9 +1200,7 @@ namespace KGySoft.Collections
                 throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
 
             for (int i = 0; i < size; i++)
-            {
                 array[arrayIndex + i] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
-            }
         }
 
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
@@ -1404,11 +1235,9 @@ namespace KGySoft.Collections
         #region IEnumerable<KeyValuePair<TKey,TValue>> Members
 
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
-        {
-            return keys.StartIndex == 0
+            => keys.StartIndex == 0
                 ? (IEnumerator<KeyValuePair<TKey, TValue>>)new SimpleEnumeratorAsReference(this)
                 : new EnumeratorAsReference(this, true);
-        }
 
         #endregion
 
@@ -1421,10 +1250,7 @@ namespace KGySoft.Collections
         /// An <see cref="T:System.Collections.IEnumerator"/> object that can be used to iterate through the collection.
         /// </returns>
         /// <filterpriority>2</filterpriority>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
 
         #endregion
 
@@ -1448,16 +1274,11 @@ namespace KGySoft.Collections
             return typeKey.CanAcceptValue(key) && ContainsKey((TKey)key);
         }
 
-        IDictionaryEnumerator IDictionary.GetEnumerator()
-        {
-            return new EnumeratorAsReference(this, false);
-        }
-
+        IDictionaryEnumerator IDictionary.GetEnumerator() => new EnumeratorAsReference(this, false);
         bool IDictionary.IsFixedSize => false;
-
         bool IDictionary.IsReadOnly => false;
-
         ICollection IDictionary.Keys => (ICollection)Keys;
+        ICollection IDictionary.Values => (ICollection)Values;
 
         void IDictionary.Remove(object key)
         {
@@ -1466,8 +1287,6 @@ namespace KGySoft.Collections
             if (typeKey.CanAcceptValue(key))
                 Remove((TKey)key);
         }
-
-        ICollection IDictionary.Values => (ICollection)Values;
 
         object IDictionary.this[object key]
         {
@@ -1510,29 +1329,22 @@ namespace KGySoft.Collections
             if (size == 0)
                 return;
 
-            KeyValuePair<TKey, TValue>[] keyValuePairs = array as KeyValuePair<TKey, TValue>[];
-            if (keyValuePairs != null)
+            if (array is KeyValuePair<TKey, TValue>[] keyValuePairs)
             {
                 ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
                 return;
             }
 
-            DictionaryEntry[] dictionaryEntries = array as DictionaryEntry[];
-            if (dictionaryEntries != null)
+            if (array is DictionaryEntry[] dictionaryEntries)
             {
                 for (int i = 0; i < size; i++)
-                {
                     dictionaryEntries[index++] = new DictionaryEntry(keys[i], values[i]);
-                }
             }
 
-            object[] objectArray = array as object[];
-            if (objectArray != null)
+            if (array is object[] objectArray)
             {
                 for (int i = 0; i < size; i++)
-                {
                     objectArray[index++] = new KeyValuePair<TKey, TValue>(keys[i], values[i]);
-                }
             }
 
             throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
@@ -1576,17 +1388,16 @@ namespace KGySoft.Collections
 
         bool IList.Contains(object value)
         {
-            if (value is KeyValuePair<TKey, TValue>)
-                return IndexOf((KeyValuePair<TKey, TValue>)value) >= 0;
+            if (value is KeyValuePair<TKey, TValue> keyValuePair)
+                return IndexOf(keyValuePair) >= 0;
 
-            if (value is DictionaryEntry)
+            if (value is DictionaryEntry entry)
             {
-                DictionaryEntry elem = (DictionaryEntry)value;
-                if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                return IndexOf(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value)) >= 0;
+                if (!typeKey.CanAcceptValue(entry.Key))
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
+                if (!typeValue.CanAcceptValue(entry.Value))
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
+                return IndexOf(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value)) >= 0;
             }
 
             return false;
@@ -1594,63 +1405,55 @@ namespace KGySoft.Collections
 
         int IList.IndexOf(object value)
         {
-            if (value is KeyValuePair<TKey, TValue>)
-                return IndexOf((KeyValuePair<TKey, TValue>)value);
+            if (value is KeyValuePair<TKey, TValue> keyValuePair)
+                return IndexOf(keyValuePair);
 
-            if (value is DictionaryEntry)
+            if (value is DictionaryEntry entry)
             {
-                DictionaryEntry elem = (DictionaryEntry)value;
-                if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                return IndexOf(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value));
+                if (!typeKey.CanAcceptValue(entry.Key))
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
+                if (!typeValue.CanAcceptValue(entry.Value))
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
+                return IndexOf(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value));
             }
 
             return -1;
         }
 
-        void IList.Insert(int index, object value)
-        {
-            throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
-        }
-
+        void IList.Insert(int index, object value) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         bool IList.IsFixedSize => false;
-
         bool IList.IsReadOnly => false;
 
         void IList.Remove(object value)
         {
-            if (value is KeyValuePair<TKey, TValue>)
+            if (value is KeyValuePair<TKey, TValue> keyValuePair)
             {
-                ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove((KeyValuePair<TKey, TValue>)value);
+                ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(keyValuePair);
                 return;
             }
 
-            if (value is DictionaryEntry)
+            if (value is DictionaryEntry entry)
             {
-                DictionaryEntry elem = (DictionaryEntry)value;
-                if (!typeKey.CanAcceptValue(elem.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(value));
-                if (!typeValue.CanAcceptValue(elem.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(new KeyValuePair<TKey, TValue>((TKey)elem.Key, (TValue)elem.Value));
+                if (!typeKey.CanAcceptValue(entry.Key))
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
+                if (!typeValue.CanAcceptValue(entry.Value))
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
+                ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value));
             }
         }
 
         object IList.this[int index]
         {
             get => ElementAt(index);
-            set { throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported); }
+            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
         }
 
         #endregion
 
-#if NET45
+#if !(NET35 || NET40)
         #region IReadOnlyDictionary<TKey,TValue> Members
 
         IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetKeys();
-
         IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetValues();
 
         #endregion
@@ -1660,8 +1463,6 @@ namespace KGySoft.Collections
         KeyValuePair<TKey, TValue> IReadOnlyList<KeyValuePair<TKey, TValue>>.this[int index] => ElementAt(index);
 
         #endregion
-#elif !(NET35 || NET40)
-#error .NET version is not set or not supported!
 #endif
     }
 }

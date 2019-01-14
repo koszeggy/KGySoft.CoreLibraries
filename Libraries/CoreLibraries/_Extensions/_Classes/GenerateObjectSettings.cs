@@ -23,7 +23,7 @@ using System;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Represents the setting for generating an object by the <see cref="RandomExtensions.NextObject{T}">NextObject</see> method.
+    /// Represents the settings for generating an object by the <see cref="O:KGySoft.CoreLibraries.RandomExtensions.NextObject">NextObject</see> extension methods.
     /// </summary>
     public sealed class GenerateObjectSettings
     {
@@ -90,7 +90,7 @@ namespace KGySoft.CoreLibraries
         /// A floating point number between 0.0 and 1.0.
         /// </value>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is smaller than 0.0 or greater than 1.0.</exception>
-        /// <remarks><note>If an object cannot be instantiated by the current settings a <see langword="null"/>&#160;value will be created even if the value of this property is <c>0.0</c>.</note></remarks>
+        /// <remarks><note>If a reference type cannot be instantiated by the current settings a <see langword="null"/>&#160;value will be created even if the value of this property is <c>0.0</c>.</note></remarks>
         public float ChanceOfNull
         {
             get => chanceOfNull;
@@ -137,18 +137,18 @@ namespace KGySoft.CoreLibraries
         public bool AllowNegativeValues { get; set; }
 
         /// <summary>
-        /// Gets or sets whether past date and time values should be used when generating <see cref="DateTime"/> and <see cref="DateTimeOffset"/> instances.
+        /// Gets or sets whether past date and time values should be produced when generating <see cref="DateTime"/> and <see cref="DateTimeOffset"/> instances.
         /// <br/>Default value: <see langword="null"/>.
         /// </summary>
         /// <value>
         /// <see langword="true"/>: Use past date and time values only.
-        /// <see langword="false"/>: Use future date and time values only.
-        /// <see langword="null"/>: Allow both past and future date and time values.
+        /// <br/><see langword="false"/>: Use future date and time values only.
+        /// <br/><see langword="null"/>: Allow both past and future date and time values.
         /// </value>
         public bool? PastDateTimes { get; set; }
 
         /// <summary>
-        /// Gets or sets whether close date and time values (current date plus-minus 100 years) should be used when generating <see cref="DateTime"/> and <see cref="DateTimeOffset"/> values.
+        /// Gets or sets whether close date and time values (current date plus-minus 100 years) should be produced when generating <see cref="DateTime"/> and <see cref="DateTimeOffset"/> values.
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         public bool CloseDateTimes { get; set; } = true;

@@ -662,7 +662,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>The specified string '{0}' cannot be parsed as type {1}.</value>
   </data>
   <data name="StringExtensions_SourceLengthNotEven" xml:space="preserve">
-    <value>Source length must consist of even amount of bytes.</value>
+    <value>Source length must consist of even amount of hex digits.</value>
   </data>
   <data name="ComponentModel_CannotGetPropertyFormat" xml:space="preserve">
     <value>Cannot get property '{0}'.</value>

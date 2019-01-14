@@ -25,7 +25,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents a command, which can be used to create a binding between an event of one or more sources and zero or more target objects. Can be used easily to bind
     /// events with targets with any technology, even in Windows Forms environment or without any UI.
-    /// See the <strong>Remarks</strong> section for details.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>Unlike the <see cref="System.Windows.Input.ICommand">System.Windows.Input.ICommand</see> type, this <see cref="ICommand"/> represents a stateless

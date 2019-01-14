@@ -19,7 +19,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -56,7 +55,7 @@ namespace KGySoft.CoreLibraries
         /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse"/> methods.
         /// Main key is the target type, the inner one is the source type.
         /// </summary>
-        private static IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
+        private static readonly IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
 
         #endregion
 
@@ -68,6 +67,15 @@ namespace KGySoft.CoreLibraries
         /// Checks whether a <paramref name="value"/> can be an instance of <paramref name="type"/> when, for example,
         /// <paramref name="value"/> is passed to a method with <paramref name="type"/> parameter type.
         /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <param name="value">The value, whose compatibility with the <paramref name="type"/> is checked.</param>
+        /// <returns><see langword="true"/> if <paramref name="value"/> can be an instance of <paramref name="type"/>; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <para><paramref name="type"/> can be a <see cref="Nullable{T}"/> type.</para>
+        /// <para>If <paramref name="type"/> is passed by reference, then the element type is checked.</para>
+        /// <para>If either <paramref name="type"/> or <paramref name="value"/> is <see langword="enum"/>, then its underlying type is also accepted because both can be unboxed from an <see cref="object"/> without casting errors.</para>
+        /// </remarks>
         public static bool CanAcceptValue(this Type type, object value)
         {
             if (type == null)
@@ -91,6 +99,7 @@ namespace KGySoft.CoreLibraries
                 return true;
 
             // if parameter is passed by reference (ref, out modifiers) the element type must be checked
+            // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType call above
             if (type.IsByRef)
             {
                 type = type.GetElementType();
@@ -106,6 +115,7 @@ namespace KGySoft.CoreLibraries
             // type is an enum but instance is not: when boxing or unboxing, enums are compatible with their underlying type
             // base type is checked because when type == Enum, the AssignableFrom will tell the truth
             // immediate return is ok because object and same types are checked above, other relationship is not possible
+            // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType and type.GetElementType calls above
             if (type.BaseType == Reflector.EnumType)
                 return instanceType == Enum.GetUnderlyingType(type);
 
@@ -125,7 +135,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="type"/> is a flags <see cref="Enum">enum</see>; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="System.ArgumentNullException">type</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool IsFlagsEnum(this Type type)
             => (type ?? throw new ArgumentNullException(nameof(type), Res.ArgumentNull)).IsEnum && type.IsDefined(typeof(FlagsAttribute), false);
 
@@ -206,14 +216,14 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Registers a <see cref="ConversionAttempt"/> from the specified <paramref name="sourceType"/> to the <paramref name="targetType"/>.
+        /// Registers a <see cref="ConversionAttempt"/> from the specified <paramref name="sourceType"/> to <paramref name="targetType"/>.
         /// </summary>
         /// <param name="sourceType">The source <see cref="Type"/> for which the <paramref name="conversion"/> can be called.</param>
         /// <param name="targetType">The result <see cref="Type"/> that <paramref name="conversion"/> produces.</param>
         /// <param name="conversion">A <see cref="ConversionAttempt"/> delegate, which is able to perform the conversion.</param>
         /// <remarks>
-        /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>
-        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see>&#160;<see cref="string"/> extension methods
+        /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>&#160;<see cref="object"/>
+        /// extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see>&#160;<see cref="string"/> extension methods
         /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
         /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
         /// will override the old registered conversion with the new one.</para>
@@ -232,14 +242,14 @@ namespace KGySoft.CoreLibraries
             => DoRegisterConversion(sourceType, targetType, conversion);
 
         /// <summary>
-        /// Registers a <see cref="ConversionAttempt"/> from the specified <paramref name="sourceType"/> to the <paramref name="targetType"/>.
+        /// Registers a <see cref="Conversion"/> from the specified <paramref name="sourceType"/> to <paramref name="targetType"/>.
         /// </summary>
         /// <param name="sourceType">The source <see cref="Type"/> for which the <paramref name="conversion"/> can be called.</param>
         /// <param name="targetType">The result <see cref="Type"/> that <paramref name="conversion"/> produces.</param>
-        /// <param name="conversion">A <see cref="ConversionAttempt"/> delegate, which is able to perform the conversion.</param>
+        /// <param name="conversion">A <see cref="Conversion"/> delegate, which is able to perform the conversion.</param>
         /// <remarks>
-        /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>
-        /// <see cref="object"/> extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see>&#160;<see cref="string"/> extension methods
+        /// <para>After calling this method the <see cref="O:KGySoft.CoreLibraries.ObjectExtensions.Convert">Convert</see>/<see cref="O:KGySoft.CoreLibraries.ObjectExtensions.TryConvert">TryConvert</see>&#160;<see cref="object"/>
+        /// extension methods and <see cref="O:KGySoft.CoreLibraries.StringExtensions.Parse">Parse</see>/<see cref="O:KGySoft.CoreLibraries.StringExtensions.TryParse">TryParse</see>&#160;<see cref="string"/> extension methods
         /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
         /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
         /// will override the old registered conversion with the new one.</para>
@@ -310,7 +320,7 @@ namespace KGySoft.CoreLibraries
             isDictionary = false;
 
             // is IEnumerable
-            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
+            if (!Reflector.IEnumerableType.IsAssignableFrom(type) || type.IsAbstract)
                 return false;
 
             elementType = type.GetCollectionElementType();
@@ -570,7 +580,7 @@ namespace KGySoft.CoreLibraries
             gen.Emit(OpCodes.Sizeof, type);
             gen.Emit(OpCodes.Ret);
             var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
-            return checked((int)method.Invoke());
+            return (int)method.Invoke();
         }
 
         #endregion

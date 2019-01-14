@@ -34,8 +34,9 @@ namespace KGySoft.Collections
     /// <summary>
     /// Implements an <see cref="IList{T}"/> where inserting/removing at the beginning/end position are O(1) operations.
     /// <see cref="CircularList{T}"/> is fully compatible with <see cref="List{T}"/> but has a better performance in several cases.
-    /// See the <strong>Remarks</strong> section for details.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
     /// <para>Circularity means a dynamic start/end position in the internal store. If inserting/removing elements is required typically
     /// at the first/last position, then using <see cref="CircularList{T}"/> could be a good choice because these operations have an O(1) cost. Inserting/removing at
@@ -69,10 +70,8 @@ namespace KGySoft.Collections
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     [Serializable]
     public sealed class CircularList<T> : IList<T>, IList
-#if NET45
+#if !(NET35 || NET40)
         , IReadOnlyList<T>
-#elif !(NET35 || NET40)
-#error .NET version is not set or not supported!
 #endif
     {
         // ReSharper disable ParameterHidesMember
@@ -773,6 +772,10 @@ namespace KGySoft.Collections
         /// Adds a <paramref name="collection"/> to the end of the <see cref="CircularList{T}"/>.
         /// </summary>
         /// <param name="collection">The collection to add to the <see cref="CircularList{T}"/>.</param>
+        /// <remarks>
+        /// <para>If the length of the <see cref="CircularList{T}"/> is n and the length of the collection to insert is m, then this method has O(m) cost.</para>
+        /// <para>If capacity increase is needed (considering actual list size) the cost is O(Max(n, m)).</para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
         public void AddRange(IEnumerable<T> collection)
         {
@@ -1174,7 +1177,7 @@ namespace KGySoft.Collections
         /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
         /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
         /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the list to 0 as well, call the <see cref="Reset"/> method instead, which is an O(1) operation.
-        /// Calling <see cref="TrimExcess"/> after <see cref="Clear">Clear</see> also resets the list, though <see cref="Clear">Clear</see> has more cost.</para>
+        /// Calling <see cref="TrimExcess">TrimExcess</see> after <see cref="Clear">Clear</see> also resets the list, though <see cref="Clear">Clear</see> has more cost.</para>
         /// </remarks>
         public void Clear()
         {
@@ -1198,8 +1201,8 @@ namespace KGySoft.Collections
         /// The cost of reallocating and copying a large list can be considerable, however, so the <see cref="TrimExcess">TrimExcess</see> method does nothing if the list is
         /// at more than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
         /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para>To reset a list to its initial state, call the <see cref="Reset"/> method. Calling the <see cref="Clear"/> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
-        /// <see cref="Reset"/> method is an O(1) operation, while <see cref="Clear"/> is an O(n) operation. Trimming an empty list sets the capacity of the list to 0.</para>
+        /// <para>To reset a list to its initial state, call the <see cref="Reset">Reset</see> method. Calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
+        /// <see cref="Reset">Reset</see> method is an O(1) operation, while <see cref="Clear">Clear</see> is an O(n) operation. Trimming an empty list sets the capacity of the list to 0.</para>
         /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
         /// </remarks>
         public void TrimExcess()
@@ -1215,7 +1218,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para><see cref="Count"/> and <see cref="Capacity"/> are set to 0, and references to other objects from elements of the collection are also released.</para>
         /// <para>This method is an O(1) operation.</para>
-        /// <para>Calling <see cref="Clear"/> and then <see cref="TrimExcess"/> methods also resets the list, though <see cref="Clear"/> is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para>Calling <see cref="Clear">Clear</see> and then <see cref="TrimExcess">TrimExcess</see> methods also resets the list, though <see cref="Clear">Clear</see> is an O(n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         public void Reset()
         {
@@ -1707,7 +1710,7 @@ namespace KGySoft.Collections
         /// Retrieves all the elements that match the conditions defined by the specified predicate.
         /// </summary>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
-        /// <returns>An <see cref="CircularList{T}"/> containing all the elements that match the conditions defined by the specified predicate, if found;
+        /// <returns>A <see cref="CircularList{T}"/> containing all the elements that match the conditions defined by the specified predicate, if found;
         /// otherwise, an empty <see cref="CircularList{T}"/>.</returns>
         /// <remarks>This method is an O(n) operation.</remarks>
         public CircularList<T> FindAll(Predicate<T> match)
@@ -1768,12 +1771,12 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>The <paramref name="comparer"/> customizes how the elements are compared. For example, you can use a <see cref="CaseInsensitiveComparer"/> instance as the comparer to perform case-insensitive string searches.</para>
         /// <para>If <paramref name="comparer"/> is provided, the elements of the list are compared to the specified value using the specified <see cref="IComparer{T}"/> implementation.</para>
-        /// <para>If comparer is <see langword="null"/>, then if <typeparamref name="T"/> is an <see langword="enum"/>, this method uses
-        /// the <see cref="EnumComparer{TEnum}.Comparer"/>; otherwise, the default comparer <see cref="Comparer{T}.Default"/> for type <typeparamref name="T"/> to
-        /// determine the order of list elements. The <see cref="Comparer{T}.Default"/> property checks whether type <typeparamref name="T"/> implements
-        /// the <see cref="IComparable{T}"/> generic interface and uses that implementation, if available. If not, <see cref="Comparer{T}.Default"/> checks whether
-        /// type <typeparamref name="T"/> implements the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either
-        /// interface, <see cref="Comparer{T}.Default"/> throws an <see cref="InvalidOperationException"/>.</para>
+        /// <para>If comparer is <see langword="null"/>, then if <typeparamref name="T"/> is an <see langword="enum"/>, this method uses the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>; otherwise,
+        /// the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> for type <typeparamref name="T"/> to determine the order of list elements.
+        /// The <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> property checks whether type <typeparamref name="T"/> implements the <see cref="IComparable{T}"/> generic interface
+        /// and uses that implementation, if available. If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether type <typeparamref name="T"/> implements
+        /// the <see cref="IComparable"/> interface. If type <typeparamref name="T"/> does not implement either interface, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see>
+        /// throws an <see cref="InvalidOperationException"/>.</para>
         /// <para>The list must already be sorted according to the comparer implementation; otherwise, the result is incorrect.</para>
         /// <para>If comparer is <see langword="null"/>, comparing <see langword="null"/>&#160;with any reference type is allowed and does not generate an exception when using the <see cref="IComparable{T}"/> generic interface. When sorting, <see langword="null"/>&#160;is considered to be less than any other object.</para>
         /// <para>If the list contains more than one element with the same value, the method returns only one of the occurrences, and it might return any one of the occurrences, not necessarily the first one.</para>
@@ -1945,13 +1948,9 @@ namespace KGySoft.Collections
         /// <br/>-or-<br/>
         /// <paramref name="count"/> is less than 0.
         /// </exception>
-        /// <exception cref="ArgumentException"><paramref name="array"/> is multidimensional.
+        /// <exception cref="ArgumentException"><paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
         /// <br/>-or-<br/>
-        /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
-        /// <br/>-or-<br/>
-        /// Type <typeparamref name="T"/> cannot be cast automatically to the type of the destination <paramref name="array"/>.</exception>
+        /// The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(int index, T[] array, int arrayIndex, int count)
         {
             if (size - index < count)
@@ -2054,7 +2053,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Sorts the elements in the entire <see cref="CircularList{T}"/> using the specified <paramref name="comparer"/>.
         /// </summary>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>&#160;
         /// to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
         /// <exception cref="ArgumentException">The implementation of <paramref name="comparer"/> caused an error during the sort.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and the default comparer <see cref="Comparer{T}.Default"/>
@@ -2096,7 +2095,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="index">The zero-based starting index of the range to sort.</param>
         /// <param name="count">The length of the range to sort.</param>
-        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/>&#160;
         /// to use the default comparer <see cref="Comparer{T}.Default"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than 0.
         /// <br/>-or-<br/><paramref name="count"/> is less than 0.</exception>
