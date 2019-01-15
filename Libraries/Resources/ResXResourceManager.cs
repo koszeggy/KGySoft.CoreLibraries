@@ -881,10 +881,10 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method: the subsequent <see cref="GetObject(string, CultureInfo)">GetObject</see> calls
-        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
+        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null"/>&#160;if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
         /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> and <see cref="GetResourceSet">GetResourceSet</see> methods will return the resources with
-        /// <see langword="null" /> value.</para>
+        /// <see langword="null"/>&#160;value.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
@@ -926,7 +926,7 @@ namespace KGySoft.Resources
         /// If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveMetaObject">RemoveMetaObject</see> method: the subsequent <see cref="GetMetaObject">GetMetaObject</see> calls
         /// with the same <paramref name="culture" /> will return <see langword="null" />.
-        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null" /> value.
+        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null"/>&#160;value.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>

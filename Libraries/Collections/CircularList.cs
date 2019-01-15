@@ -66,6 +66,7 @@ namespace KGySoft.Collections
     /// interface, the <see cref="CircularList{T}"/> returns a reference type to avoid boxing and to provide a better performance.
     /// </para>
     /// </remarks>
+    /// <div style="display:none"><example/></div>
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     [Serializable]

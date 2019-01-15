@@ -206,7 +206,7 @@ namespace KGySoft.Collections
         /// Determines whether the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="LockingDictionary{TKey,TValue}" />.</param>
-        /// <returns><see langword="true" /> if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true" />&#160;if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
         public bool ContainsKey(TKey key)
         {
             Lock();
@@ -242,8 +242,8 @@ namespace KGySoft.Collections
         /// Removes the element with the specified key from the <see cref="LockingDictionary{TKey,TValue}" />.
         /// </summary>
         /// <param name="key">The key of the element to remove.</param>
-        /// <returns><see langword="true" /> if the element is successfully removed; otherwise, <see langword="false" />.
-        /// This method also returns <see langword="false" /> if <paramref name="key" /> was not found in the original <see cref="LockingDictionary{TKey,TValue}" />.
+        /// <returns><see langword="true" />&#160;if the element is successfully removed; otherwise, <see langword="false" />.
+        /// This method also returns <see langword="false" />&#160;if <paramref name="key" /> was not found in the original <see cref="LockingDictionary{TKey,TValue}" />.
         /// </returns>
         public bool Remove(TKey key)
         {
@@ -264,7 +264,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key whose value to get.</param>
         /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the key is found; otherwise, the default value for the type of the <paramref name="value" /> parameter.
         /// This parameter is passed uninitialized.</param>
-        /// <returns><see langword="true" /> if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key; otherwise, <see langword="false" />.</returns>
+        /// <returns><see langword="true" />&#160;if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key; otherwise, <see langword="false" />.</returns>
         public bool TryGetValue(TKey key, out TValue value)
         {
             Lock();

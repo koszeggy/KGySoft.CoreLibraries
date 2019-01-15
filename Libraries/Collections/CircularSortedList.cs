@@ -1,10 +1,27 @@
-﻿#region Used namespaces
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: CircularSortedList.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
@@ -12,17 +29,19 @@ using KGySoft.Diagnostics;
 
 namespace KGySoft.Collections
 {
-
     /// <summary>
     /// Represents a dictionary of key/value pairs that are sorted by key based on the associated <see cref="IComparer{T}"/> implementation.
     /// The dictionary behaves as list as well, as it has a direct indexed access to the elements through <see cref="Keys"/> and <see cref="Values"/> properties or by the <see cref="ElementAt"/> method.
     /// <see cref="CircularSortedList{TKey,TValue}"/> is fully compatible with <see cref="SortedList{TKey,TValue}"/>, but is generally faster than that.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <typeparam name="TKey">Type of the keys stored in the sorted list.</typeparam>
+    /// <typeparam name="TValue">Type of the values stored in the sorted list.</typeparam>
     /// <remarks>
     /// <para>
     /// The <see cref="CircularSortedList{TKey,TValue}"/> generic class is an array of key/value pairs with O(log n) retrieval,
-    /// where n is the number of elements in the dictionary. In this, it is similar to the <see cref="SortedList{TKey,TValue}"/> and <see cref="SortedDictionary{TKey,TValue}"/> generic classes.
-    /// These three classes have similar object models, and all have O(log n) retrieval. Where the three classes differ is in memory use and speed of insertion and removal:
+    /// where n is the number of elements in the dictionary. In that regard it is similar to the <see cref="SortedList{TKey,TValue}"/> and <see cref="SortedDictionary{TKey,TValue}"/> generic classes.
+    /// These three classes serve a similar purpose, and all have O(log n) retrieval. Where the three classes differ is in memory use and speed of insertion and removal:
     /// <list type="table">
     /// <listheader><term>Collection type</term><description>Behavior</description></listheader>
     /// <item><term><see cref="SortedDictionary{TKey,TValue}"/></term>
@@ -32,34 +51,34 @@ namespace KGySoft.Collections
     /// child nodes and wraps a <see cref="KeyValuePair{TKey,TValue}"/> of the element to be stored. (A node is similar to <see cref="LinkedListNode{T}"/> instances in a <see cref="LinkedList{T}"/>).
     /// This sorted dictionary variant consumes the most memory.</item>
     /// <item><em>Insertion and removal:</em> These operations have generally O(log n) cost at any position, which is the best of any sorted dictionary variants, though
-    /// due to the slower navigation among nodes, the advantage of cost outperforms the other sorted dictionaries only in case of many elements (> 100)</item>
+    /// due to the slower navigation among nodes, the better general cost starts to outperform the other sorted dictionaries only in case of many elements (hundreds or thousands of elements).</item>
     /// <item><em>Populating from sorted data:</em> Adding a new element is always an O(log n) operation. Though when populating from sorted data, the tree always needed
     /// to be re-balanced, so it has worse performance than populating from random data.</item>
-    /// <item><em>Enumerating the collection:</em> Considering that navigating among nodes is slower than array access, this sorted dictionary variant has the worse enumeration performance.</item>
+    /// <item><em>Enumerating the collection:</em> Considering that navigating among nodes is slower than array access, this sorted dictionary variant has the worst enumeration performance.</item>
     /// </list>
     /// </description></item>
     /// <item><term><see cref="SortedList{TKey,TValue}"/></term>
     /// <description>
     /// <list type="bullet">
-    /// <item><em>Store model and memory:</em> Keys and values are stored in a separated array, which is the most compact storage form among the sorted dictionaries.</item>
+    /// <item><em>Store model and memory:</em> Keys and values are stored in separated arrays, which is the most compact storage form among the sorted dictionaries.</item>
     /// <item><em>Insertion and removal:</em> Position of the element is searched with binary search in the array, which in an O(log n) operation.
     /// Insertion/removal at the last position has a constant additional cost, so inserting/removing at the and has O(log n) cost, otherwise O(n) cost.</item>
     /// <item><em>Populating from sorted data:</em> Since position of the elements are always checked, adding a new element to the end has always O(log n) cost, though it is faster than in case of a <see cref="SortedDictionary{TKey,TValue}"/>.
     /// Though, populating from a reverse ordered data has the worst possible performance, because every already existing elements have to be shifted in the underlying arrays.</item>
-    /// <item><em>Enumerating the collection:</em> Really fast, it is actually an iteration of an array.</item>
+    /// <item><em>Enumerating the collection:</em> Really fast, it is actually a traversal of arrays.</item>
     /// </list>
     /// </description></item>
     /// <item><term><see cref="CircularSortedList{TKey,TValue}"/></term>
     /// <description>
     /// <list type="bullet">
-    /// <item><em>Store model and memory:</em> Keys and values are stored in a separated <see cref="CircularList{TKey}"/>, which is a wrapper class around an array. This is a minimal overhead
+    /// <item><em>Store model and memory:</em> Keys and values are stored in separated <see cref="CircularList{TKey}"/> instances, which is a wrapper class around an array. This is a minimal overhead
     /// compared to the <see cref="SortedList{TKey,TValue}"/> class.</item>
     /// <item><em>Insertion and removal:</em> When inserting a new element, first of all it is checked, whether it comes to the last or first position. Due to the underlying <see cref="CircularList{T}"/>,
-    /// inserting at the first/last position are O(1) operations. Removing an element from the last/first position by the <see cref="Remove"/> method has an O(log n) cost, because the item is found by binary search.
-    /// However, removing the first or last element by the <see cref="RemoveAt"/> method is an O(1) operation. When an element is inserted/removed
+    /// inserting at the first/last position are O(1) operations. Removing an element from the last/first position by the <see cref="Remove">Remove</see> method has an O(log n) cost, because the item is found by binary search.
+    /// However, removing the first or last element by the <see cref="RemoveAt">RemoveAt</see> method is an O(1) operation. When an element is inserted/removed
     /// at any other position, it has generally O(n) cost, though the <see cref="CircularSortedList{TKey,TValue}"/> is designed so, that in worst case no more than half of the elements will be moved.</item>
     /// <item><em>Populating from sorted data:</em> Inserting element to the end of to the first position is O(1) cost, so it is faster than any other sorted dictionary types, even if populating from reverse ordered data.</item>
-    /// <item><em>Enumerating the collection:</em> Really fast, it is actually an iteration of an array.</item>
+    /// <item><em>Enumerating the collection:</em> Really fast, it is actually a traversal of arrays.</item>
     /// </list>
     /// </description></item>
     /// </list>
@@ -80,7 +99,7 @@ namespace KGySoft.Collections
     /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>. If the key type <typeparamref name="TKey"/> does not implement
     /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
     /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements the <see cref="CircularSortedList{TKey,TValue}"/> can hold. As elements are added to a <see cref="CircularSortedList{TKey,TValue}"/>,
-    /// the capacity is automatically increased as required by reallocating the internal array. The capacity can be decreased by calling <see cref="TrimExcess"/> or by setting the <see cref="Capacity"/> property explicitly.
+    /// the capacity is automatically increased as required by reallocating the internal array. The capacity can be decreased by calling <see cref="TrimExcess">TrimExcess</see> or by setting the <see cref="Capacity"/> property explicitly.
     /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
     /// </remarks>
     [Serializable]
@@ -92,6 +111,7 @@ namespace KGySoft.Collections
 #elif !(NET35 || NET40)
 #error .NET version is not set or not supported!
 #endif
+
     {
         #region Nested types
 
@@ -113,74 +133,20 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region Constructors
+            #region Properties and Indexers
 
-            internal KeysList(CircularSortedList<TKey, TValue> owner) => list = owner;
+            #region Properties
 
-            #endregion
+            #region Public Properties
 
-            #region IList<TKey> Members
-
-            public int IndexOf(TKey item) => list.IndexOfKey(item);
-            public void Insert(int index, TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            public void RemoveAt(int index) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
-            public TKey this[int index]
-            {
-                get => list.keys[index];
-                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
-            #endregion
-
-            #region ICollection<TKey> Members
-
-            public void Add(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            public void Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            public bool Contains(TKey item) => list.IndexOfKey(item) >= 0;
-            public void CopyTo(TKey[] array, int arrayIndex) => list.keys.CopyTo(array, arrayIndex);
-            public bool Remove(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             public int Count => list.keys.Count;
             public bool IsReadOnly => true;
 
             #endregion
 
-            #region IEnumerable<TKey> Members
+            #region Explicitly Implemented Interface Properties
 
-            public IEnumerator<TKey> GetEnumerator() 
-                // casting to get enumerator as interface
-                => ((IList<TKey>)list.keys).GetEnumerator();
-
-            #endregion
-
-            #region IEnumerable Members
-
-            IEnumerator IEnumerable.GetEnumerator()
-                // casting to get enumerator as interface
-                => ((IList<TKey>)list.keys).GetEnumerator();
-
-            #endregion
-
-            #region IList Members
-
-            int IList.Add(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            bool IList.Contains(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : typeKey.CanAcceptValue(value) && Contains((TKey)value);
-            int IList.IndexOf(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : (typeKey.CanAcceptValue(value) ? IndexOf((TKey)value) : -1);
-            void IList.Insert(int index, object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
             bool IList.IsFixedSize => true;
-            void IList.Remove(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
-            object IList.this[int index]
-            {
-                get => list.keys[index];
-                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            }
-
-            #endregion
-
-            #region ICollection Members
-
-            void ICollection.CopyTo(Array array, int index) => ((ICollection)list.keys).CopyTo(array, index);
             bool ICollection.IsSynchronized => false;
 
             object ICollection.SyncRoot
@@ -192,6 +158,76 @@ namespace KGySoft.Collections
                     return syncRoot;
                 }
             }
+
+            #endregion
+
+            #endregion
+
+            #region Indexers
+
+            #region Public Indexers
+
+            public TKey this[int index]
+            {
+                get => list.keys[index];
+                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            }
+
+            #endregion
+
+            #region Explicitly Implemented Interface Indexers
+
+            object IList.this[int index]
+            {
+                get => list.keys[index];
+                set => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            }
+
+            #endregion
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal KeysList(CircularSortedList<TKey, TValue> owner) => list = owner;
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public int IndexOf(TKey item) => list.IndexOfKey(item);
+            public void Insert(int index, TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void RemoveAt(int index) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void Add(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public void Clear() => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            public bool Contains(TKey item) => list.IndexOfKey(item) >= 0;
+            public void CopyTo(TKey[] array, int arrayIndex) => list.keys.CopyTo(array, arrayIndex);
+            public bool Remove(TKey item) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+            public IEnumerator<TKey> GetEnumerator()
+                // casting to get enumerator as interface
+                => ((IList<TKey>)list.keys).GetEnumerator();
+
+            #endregion
+
+            #region Explicitly Implemented Interface Methods
+
+            IEnumerator IEnumerable.GetEnumerator()
+                // casting to get enumerator as interface
+                => ((IList<TKey>)list.keys).GetEnumerator();
+
+            int IList.Add(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            bool IList.Contains(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : typeKey.CanAcceptValue(value) && Contains((TKey)value);
+            int IList.IndexOf(object value) => value == null ? throw new ArgumentNullException(nameof(value)) : (typeKey.CanAcceptValue(value) ? IndexOf((TKey)value) : -1);
+            void IList.Insert(int index, object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void IList.Remove(object value) => throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            void ICollection.CopyTo(Array array, int index) => ((ICollection)list.keys).CopyTo(array, index);
+
+            #endregion
 
             #endregion
         }
@@ -226,6 +262,48 @@ namespace KGySoft.Collections
 
             #endregion
 
+            #region Properties
+
+            #region Public Properties
+
+            /// <summary>
+            /// Gets the element at the current position of the enumerator.
+            /// </summary>
+            public KeyValuePair<TKey, TValue> Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (steps == 0 || steps > list.Count)
+                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return isGeneric ? (object)current : new DictionaryEntry(current.Key, current.Value);
+                }
+            }
+
+            DictionaryEntry IDictionaryEnumerator.Entry
+                => steps == 0 || steps > list.Count
+                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
+                : new DictionaryEntry(current.Key, current.Value);
+
+            object IDictionaryEnumerator.Key
+                => steps == 0 || steps > list.Count
+                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
+                : current.Key;
+
+            object IDictionaryEnumerator.Value
+                => steps == 0 || steps > list.Count
+                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
+                : current.Value;
+
+            #endregion
+
+            #endregion
+
             #region Constructors
 
             internal EnumeratorAsReference(CircularSortedList<TKey, TValue> list, bool isGeneric)
@@ -242,16 +320,7 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerator<T> Members
-
-            /// <summary>
-            /// Gets the element at the current position of the enumerator.
-            /// </summary>
-            public KeyValuePair<TKey, TValue> Current => current;
-
-            #endregion
-
-            #region IDisposable Members
+            #region Methods
 
             /// <summary>
             /// Releases the enumerator
@@ -259,10 +328,6 @@ namespace KGySoft.Collections
             public void Dispose()
             {
             }
-
-            #endregion
-
-            #region IEnumerator Members
 
             /// <summary>
             /// Advances the enumerator to the next element of the collection.
@@ -290,16 +355,6 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if (steps == 0 || steps > list.Count)
-                        throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return isGeneric ? (object)current : new DictionaryEntry(current.Key, current.Value);
-                }
-            }
-
             /// <summary>
             /// Sets the enumerator to its initial position, which is before the first element in the collection.
             /// </summary>
@@ -313,25 +368,6 @@ namespace KGySoft.Collections
                 steps = 0;
                 current = default(KeyValuePair<TKey, TValue>);
             }
-
-            #endregion
-
-            #region IDictionaryEnumerator Members
-
-            DictionaryEntry IDictionaryEnumerator.Entry 
-                => steps == 0 || steps > list.Count 
-                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
-                    : new DictionaryEntry(current.Key, current.Value);
-
-            object IDictionaryEnumerator.Key 
-                => steps == 0 || steps > list.Count 
-                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
-                    : current.Key;
-
-            object IDictionaryEnumerator.Value 
-                => steps == 0 || steps > list.Count 
-                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
-                    : current.Value;
 
             #endregion
         }
@@ -361,6 +397,24 @@ namespace KGySoft.Collections
 
             #endregion
 
+            #region Properties
+
+            #region Public Properties
+
+            public KeyValuePair<TKey, TValue> Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current => index == 0 || index > list.Count
+                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
+                : current;
+
+            #endregion
+
+            #endregion
+
             #region Constructors
 
             internal SimpleEnumeratorAsReference(CircularSortedList<TKey, TValue> list)
@@ -374,21 +428,11 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerator<T> Members
-
-            public KeyValuePair<TKey, TValue> Current => current;
-
-            #endregion
-
-            #region IDisposable Members
+            #region Methods
 
             public void Dispose()
             {
             }
-
-            #endregion
-
-            #region IEnumerator Members
 
             public bool MoveNext()
             {
@@ -406,10 +450,6 @@ namespace KGySoft.Collections
                 current = default(KeyValuePair<TKey, TValue>);
                 return false;
             }
-
-            object IEnumerator.Current => index == 0 || index > list.Count 
-                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
-                : current;
 
             public void Reset()
             {
@@ -452,6 +492,28 @@ namespace KGySoft.Collections
 
             #endregion
 
+            #region Properties
+
+            #region Public Properties
+
+            /// <summary>
+            /// Gets the element at the current position of the enumerator.
+            /// </summary>
+            public KeyValuePair<TKey, TValue> Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+                => steps == 0 || steps > list.Count
+                ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished)
+                : current;
+
+            #endregion
+
+            #endregion
+
             #region Constructors
 
             internal Enumerator(CircularSortedList<TKey, TValue> list)
@@ -469,16 +531,7 @@ namespace KGySoft.Collections
 
             #endregion
 
-            #region IEnumerator<T> Members
-
-            /// <summary>
-            /// Gets the element at the current position of the enumerator.
-            /// </summary>
-            public KeyValuePair<TKey, TValue> Current => current;
-
-            #endregion
-
-            #region IDisposable Members
+            #region Methods
 
             /// <summary>
             /// Releases the enumerator
@@ -486,10 +539,6 @@ namespace KGySoft.Collections
             public void Dispose()
             {
             }
-
-            #endregion
-
-            #region IEnumerator Members
 
             /// <summary>
             /// Advances the enumerator to the next element of the collection.
@@ -516,11 +565,6 @@ namespace KGySoft.Collections
                 current = default(KeyValuePair<TKey, TValue>);
                 return false;
             }
-
-            object IEnumerator.Current 
-                => steps == 0 || steps > list.Count 
-                    ? throw new InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished) 
-                    : current;
 
             /// <summary>
             /// Sets the enumerator to its initial position, which is before the first element in the collection.
@@ -566,10 +610,8 @@ namespace KGySoft.Collections
 
         [NonSerialized]
         private IList<TKey> keysList;
-
         [NonSerialized]
         private IList<TValue> valuesList;
-
         [NonSerialized]
         private object syncRoot;
 
@@ -577,7 +619,11 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Properties and Indexers
+
         #region Properties
+
+        #region Public Properties
 
         /// <summary>
         /// Gets or sets the actual size of the internal storage of held elements.
@@ -586,11 +632,11 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>Capacity is the number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can store before resizing is required, whereas
         /// <see cref="Count"/> is the number of elements that are actually in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
-        /// <para>Capacity is always greater than or equal to <see cref="Count"/>. If <see cref="Count"/> exceeds Capacity while adding elements,
+        /// <para>Capacity is always greater than or equal to <see cref="Count"/>. If <see cref="Count"/> exceeds <see cref="Capacity"/> while adding elements,
         /// the capacity is increased by automatically reallocating the internal <see cref="CircularList{T}"/> before copying the old elements and adding the new elements.</para>
         /// <para>If the capacity is significantly larger than the count and you want to reduce the memory used by the <see cref="CircularSortedList{TKey,TValue}"/>,
-        /// you can decrease capacity by calling the <see cref="TrimExcess"/> method or by setting the Capacity property explicitly.
-        /// When the value of Capacity is set explicitly, the array in the internal <see cref="CircularList{T}"/> is also reallocated to accommodate the specified capacity,
+        /// you can decrease capacity by calling the <see cref="TrimExcess">TrimExcess</see> method or by setting the <see cref="Capacity"/> property explicitly.
+        /// When the value of <see cref="Capacity"/> is set explicitly, the array in the internal <see cref="CircularList{T}"/> is also reallocated to accommodate the specified capacity,
         /// and all the elements are copied.</para>
         /// <para>Retrieving the value of this property is an O(1) operation; setting the property is an O(n) operation, where n is the new capacity.</para>
         /// </remarks>
@@ -615,12 +661,13 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>The order of the keys in the <see cref="IList{T}"/> is the same as the order in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// <para>The returned <see cref="IList{T}"/> is not a static copy; instead, the <see cref="IList{T}"/> refers back to the keys in the original <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// Therefore, changes to the <see cref="CircularSortedList{TKey,TValue}"/> continue to be reflected in the <see cref="IList{T}"/>.</para>
-        /// <para>The collection returned by the Keys property provides an efficient way to retrieve keys by index. It is not necessary to regenerate the list when the
-        /// property is accessed, because the list is just a wrapper for the internal <see cref="CircularList{T}"/> of keys. The following code shows the use of the Keys property for indexed
+        /// Therefore, changes to the <see cref="CircularSortedList{TKey,TValue}"/> continue to be reflected in the returned <see cref="IList{T}"/>.</para>
+        /// <para>The collection returned by the <see cref="Keys"/> property provides an efficient way to retrieve keys by index. It is not necessary to regenerate the list when the
+        /// property is accessed, because the list is just a wrapper for the internal <see cref="CircularList{T}"/> of keys. The following code shows the use of the <see cref="Keys"/> property for indexed
         /// retrieval of keys from a sorted list of elements with string keys:</para>
         /// <code lang="C#">string v = mySortedList.Keys[3];</code>
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
+        /// <note>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public IList<TKey> Keys => GetKeys();
 
@@ -630,12 +677,13 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>The order of the values in the <see cref="IList{T}"/> is the same as the order in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// <para>The returned <see cref="IList{T}"/> is not a static copy; instead, the <see cref="IList{T}"/> refers back to the values in the original <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// Therefore, changes to the <see cref="CircularSortedList{TKey,TValue}"/> continue to be reflected in the <see cref="IList{T}"/>.</para>
-        /// <para>The collection returned by the Values property provides an efficient way to retrieve keys by index. It is not necessary to regenerate the list when the
-        /// property is accessed, because the list is just a wrapper for the internal <see cref="CircularList{T}"/> of values. The following code shows the use of the Values property for indexed
+        /// Therefore, changes to the <see cref="CircularSortedList{TKey,TValue}"/> continue to be reflected in the returned <see cref="IList{T}"/>.</para>
+        /// <para>The collection returned by the <see cref="Values"/> property provides an efficient way to retrieve keys by index. It is not necessary to regenerate the list when the
+        /// property is accessed, because the list is just a wrapper for the internal <see cref="CircularList{T}"/> of values. The following code shows the use of the <see cref="Values"/> property for indexed
         /// retrieval of values from a sorted list of elements with string values:</para>
         /// <code lang="C#">string v = mySortedList.Values[3];</code>
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
+        /// <note>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public IList<TValue> Values => GetValues();
 
@@ -644,12 +692,12 @@ namespace KGySoft.Collections
         /// </summary>
         /// <remarks>
         /// <para><see cref="CircularSortedList{TKey,TValue}"/> implements both <see cref="IDictionary{TKey,TValue}"/>
-        /// and <see cref="IList{T}"/> interfaces. This means, for example, that two kind of indexers are available
+        /// and <see cref="IList{T}"/> interfaces. This means, for example, that two indexers are available
         /// for it: <see cref="P:System.Collections.Generic.IDictionary`2.Item(`0)">IDictionary&lt;TKey,TValue&gt;.Item[TKey]</see> and
         /// <see cref="P:System.Collections.Generic.IList`1.Item(System.Int32)">IList&lt;T&gt;.Item[int]</see>. Latter is
         /// implemented as explicit interface implementation to avoid ambiguity when <typeparamref name="TKey"/> is <see cref="int">int</see>,
         /// so the <see cref="CircularSortedList{TKey,TValue}"/> should be cast to <see cref="IList{T}"/> when the list indexer
-        /// is used. Alternatively, the AsList property can be used to use the indexer (and other members) of <see cref="IList{T}"/> interface
+        /// is used. Alternatively, the <see cref="AsList"/> property can be used to use the indexer (and other members) of <see cref="IList{T}"/> interface
         /// as it is demonstrated in the example below.
         /// </para>
         /// <para>This property is an O(1) operation.</para>
@@ -662,6 +710,143 @@ namespace KGySoft.Collections
         /// </example>
         /// </remarks>
         public IList<KeyValuePair<TKey, TValue>> AsList => this;
+
+        /// <summary>
+        /// Gets the number of key/value pairs contained in the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// </summary>
+        /// <returns>
+        /// The number of key/value pairs contained in the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// </returns>
+        public int Count => keys.Count;
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        ICollection<TKey> IDictionary<TKey, TValue>.Keys => GetKeys();
+        ICollection<TValue> IDictionary<TKey, TValue>.Values => GetValues();
+        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
+        bool IDictionary.IsFixedSize => false;
+        bool IDictionary.IsReadOnly => false;
+        ICollection IDictionary.Keys => (ICollection)Keys;
+        ICollection IDictionary.Values => (ICollection)Values;
+        bool ICollection.IsSynchronized => false;
+
+        object ICollection.SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
+                return syncRoot;
+            }
+        }
+
+        bool IList.IsFixedSize => false;
+        bool IList.IsReadOnly => false;
+
+#if !(NET35 || NET40)
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetKeys();
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetValues();
+#endif
+
+        #endregion
+
+        #endregion
+
+        #region Indexers
+
+        #region Public Indexers
+
+        /// <summary>
+        /// Gets or sets the value associated with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <returns>
+        /// The element with the specified <paramref name="key"/>.
+        /// </returns>
+        /// <param name="key">The key of the value to get or set.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <exception cref="KeyNotFoundException">The property is retrieved and <paramref name="key"/> is not found.</exception>
+        /// <remarks>
+        /// <para>A key cannot be <see langword="null"/>, but a value can be, if the type of values in the list, <typeparamref name="TValue"/>, is a reference or <see cref="Nullable{T}"/> type.</para>
+        /// <para>If the <paramref name="key"/> is not found when a value is being retrieved, <see cref="KeyNotFoundException"/> is thrown.
+        /// If the key is not found when a value is being set, the key and value are added.</para>
+        /// <para>You can also use this property to add new elements by setting the value of a key that does not exist in the <see cref="CircularSortedList{TKey,TValue}"/>, for example:
+        /// <code lang="C#">myCollection["myNonexistentKey"] = myValue;</code>
+        /// However, if the specified key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>, setting this property
+        /// overwrites the old value. In contrast, the <see cref="Add">Add</see> method throws an <see cref="ArgumentException"/>, when <paramref name="key"/> already exists in the collection.</para>
+        /// <para>Retrieving the value of this property is an O(log n) operation, where n is <see cref="Count"/>. Setting the property is an O(1) operation if the <paramref name="key"/>
+        /// is at the first or last position. Otherwise, setting this property is an O(log n) operation, if the <paramref name="key"/> already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// If the <paramref name="key"/> is not in the list, and the new element is not at the first or last position, setting the property is an O(n) operation. If insertion causes a resize, the operation is O(n).</para>
+        /// </remarks>
+        public TValue this[TKey key]
+        {
+            get
+            {
+                int index = IndexOfKey(key);
+                if (index >= 0)
+                    return values[index];
+
+                throw new KeyNotFoundException(Res.IDictionaryKeyNotFound);
+            }
+            set
+            {
+                if (key == null)
+                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+
+                int index = SearchKeyOptimizedLastOrFirst(key);
+                if (index >= 0)
+                    values[index] = value;
+                else
+                    Insert(~index, key, value);
+            }
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Indexers
+
+        KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
+        {
+            get => ElementAt(index);
+            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+        }
+
+        object IDictionary.this[object key]
+        {
+            get
+            {
+                if (key == null)
+                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                if (!typeKey.CanAcceptValue(key))
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                return this[(TKey)key];
+            }
+            set
+            {
+                if (key == null)
+                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+                if (!typeKey.CanAcceptValue(key))
+                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                if (!typeValue.CanAcceptValue(value))
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                this[(TKey)key] = (TValue)value;
+            }
+        }
+
+        object IList.this[int index]
+        {
+            get => ElementAt(index);
+            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
+        }
+
+#if !(NET35 || NET40)
+        KeyValuePair<TKey, TValue> IReadOnlyList<KeyValuePair<TKey, TValue>>.this[int index] => ElementAt(index);
+#endif
+
+        #endregion
+
+        #endregion
 
         #endregion
 
@@ -711,7 +896,7 @@ namespace KGySoft.Collections
         /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements that the <see cref="CircularSortedList{TKey,TValue}"/> can hold before resizing.
         /// As elements are added to a <see cref="CircularSortedList{TKey,TValue}"/>, the capacity is automatically increased as required by reallocating the array of the internal <see cref="CircularList{T}"/>.</para>
         /// <para>If the size of the collection can be estimated, specifying the initial capacity eliminates the need to perform a number of resizing operations while adding elements to the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
-        /// <para>The capacity can be decreased by calling <see cref="TrimExcess"/> or by setting the <see cref="Capacity"/> property explicitly.
+        /// <para>The capacity can be decreased by calling <see cref="TrimExcess">TrimExcess</see> or by setting the <see cref="Capacity"/> property explicitly.
         /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
@@ -785,10 +970,11 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
         /// <remarks>
         /// <para>A key cannot be <see langword="null"/>, but a value can be, if the type of values in the sorted list, <typeparamref name="TValue"/>, is a reference or <see cref="Nullable{T}"/> type.</para>
-        /// <para>You can also use the <see cref="P:KGySoft.Collections.CircularSortedList`2.Item(`0)"/> property to add new elements by setting the value of a
-        /// key that does not exist in the <see cref="CircularSortedList{TKey,TValue}"/>; for example, <code>myCollection["myNonexistentKey"] = myValue</code>.
-        /// However, if the specified key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>, setting the <see cref="P:KGySoft.Collections.CircularSortedList`2.Item(`0)"/> property
-        /// overwrites the old value. In contrast, the Add method does not modify existing elements.</para>
+        /// <para>You can also use the <see cref="P:KGySoft.Collections.CircularSortedList`2.Item(`0)">indexer</see> to add new elements by setting the value of a
+        /// key that does not exist in the <see cref="CircularSortedList{TKey,TValue}"/>. for example:
+        /// <code lang="C#"><![CDATA[myCollection["myNonexistentKey"] = myValue;]]></code>
+        /// However, if the specified key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>, setting the <see cref="P:KGySoft.Collections.CircularSortedList`2.Item(`0)">indexer</see>
+        /// overwrites the old value. In contrast, the <see cref="Add">Add</see> method does not modify existing elements.</para>
         /// <para>If <see cref="Count"/> already equals <see cref="Capacity"/>, the capacity of the <see cref="CircularSortedList{TKey,TValue}"/> is increased by
         /// automatically reallocating the array in internal <see cref="CircularList{T}"/>, and the existing elements are copied to the new array before the new element is added.</para>
         /// <para>This method is an O(n) operation for unsorted data, where n is <see cref="Count"/>. It is an O(1) operation if the new element is added at the end or the head of the list.
@@ -864,9 +1050,9 @@ namespace KGySoft.Collections
         /// copying a large <see cref="CircularSortedList{TKey,TValue}"/> can be considerable, however, so the TrimExcess method does nothing if the list is at more
         /// than 90 percent of capacity. This avoids incurring a large reallocation cost for a relatively small gain.</para>
         /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para>To reset a <see cref="CircularSortedList{TKey,TValue}"/> to its initial state, call the <see cref="Reset"/> method. Calling the <see cref="Clear"/> and TrimExcess methods has the same effect; however,
-        /// <see cref="Reset"/> method is an O(1) operation, while <see cref="Clear"/> is an O(n) operation. Trimming an empty <see cref="CircularSortedList{TKey,TValue}"/> sets the capacity of the list to 0.</para>
-        /// <para>The capacity can also be set using the Capacity property.</para>
+        /// <para>To reset a <see cref="CircularSortedList{TKey,TValue}"/> to its initial state, call the <see cref="Reset">Reset</see> method. Calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods has the same effect; however,
+        /// <see cref="Reset">Reset</see> method is an O(1) operation, while <see cref="Clear">Clear</see>> is an O(n) operation. Trimming an empty <see cref="CircularSortedList{TKey,TValue}"/> sets the capacity of the list to 0.</para>
+        /// <para>The capacity can also be set using the <see cref="Capacity"/> property.</para>
         /// </remarks>
         public void TrimExcess()
         {
@@ -880,8 +1066,8 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para><see cref="Count"/> and <see cref="Capacity"/> are set to 0, and references to other objects from elements of the collection are also released.</para>
         /// <para>This method is an O(1) operation.</para>
-        /// <para>Calling <see cref="Clear"/> and then <see cref="TrimExcess"/> methods also resets the <see cref="CircularSortedList{TKey,TValue}"/>, though
-        /// <see cref="Clear"/> is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para>Calling <see cref="Clear">Clear</see> and then <see cref="TrimExcess">TrimExcess</see> methods also resets the <see cref="CircularSortedList{TKey,TValue}"/>, though
+        /// <see cref="Clear">Clear</see> is an O(n) operation, where n is <see cref="Count"/>.</para>
         /// </remarks>
         public void Reset()
         {
@@ -904,7 +1090,98 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
         /// </returns>
+        /// <remarks>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
         public Enumerator GetEnumerator() => new Enumerator(this);
+
+        /// <summary>
+        /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>, if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the <paramref name="key"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <remarks>This method is an O(log n) operation, where n is <see cref="Count"/>.</remarks>
+        public bool ContainsKey(TKey key) => IndexOfKey(key) >= 0;
+
+        /// <summary>
+        /// Removes the element with the specified <paramref name="key"/> from the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="key">The key of the element to remove.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <remarks>This method performs a binary search; however, the elements are moved up to fill in the open spot.
+        /// So this method is an O(log n) operation, when the first or last element is removed; otherwise, O(n), where n is <see cref="Count"/>.
+        /// If it is known that the first or last element should be removed, use <see cref="RemoveAt"/> instead, which is an O(1) operation in this case.</remarks>
+        public bool Remove(TKey key)
+        {
+            int index = IndexOfKey(key);
+            if (index < 0)
+                return false;
+
+            RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
+        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <para>If the <paramref name="key"/> is not found, then the value parameter gets the appropriate default value for the value type <typeparamref name="TValue"/>;
+        /// for example, zero (0) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
+        /// <para>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</para>
+        /// </remarks>
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            int index = IndexOfKey(key);
+            if (index >= 0)
+            {
+                value = values[index];
+                return true;
+            }
+
+            value = default(TValue);
+            return false;
+        }
+
+        /// <summary>
+        /// Removes the element at the specified index of the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the item to remove.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
+        /// <remarks>When the first or the last element is removed, this method is an O(1) operation; otherwise, an O(n) operation, where n is <see cref="Count"/>.</remarks>
+        public void RemoveAt(int index)
+        {
+            keys.RemoveAt(index);
+            values.RemoveAt(index);
+        }
+
+        /// <summary>
+        /// Removes all items from the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
+        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
+        /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the <see cref="CircularSortedList{TKey,TValue}"/> to 0 as well,
+        /// call the <see cref="Reset">Reset</see> method instead, which is an O(1) operation.
+        /// Calling <see cref="TrimExcess">TrimExcess</see> after <see cref="Clear">Clear</see> also resets the list, though <see cref="Clear">Clear</see> has more cost.</para>
+        /// </remarks>
+        public void Clear()
+        {
+            keys.Clear();
+            values.Clear();
+        }
 
         #endregion
 
@@ -1002,134 +1279,9 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #endregion
-
-        #region IDictionary<TKey,TValue> Members
-
-        /// <summary>
-        /// Determines whether the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/>, if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the <paramref name="key"/>; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="key">The key to locate in the <see cref="CircularSortedList{TKey,TValue}"/>.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <remarks>This method is an O(log n) operation, where n is <see cref="Count"/>.</remarks>
-        public bool ContainsKey(TKey key) => IndexOfKey(key) >= 0;
+        #region Explicitly Implemented Interface Methods
 
         void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => Add(key, value);
-
-        /// <summary>
-        /// Removes the element with the specified <paramref name="key"/> from the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/>&#160;if the element is successfully removed; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="key">The key of the element to remove.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <remarks>This method performs a binary search; however, the elements are moved up to fill in the open spot.
-        /// So this method is an O(log n) operation, when the first or last element is removed; otherwise, O(n), where n is <see cref="Count"/>.
-        /// If it is known that the first or last element should be removed, use <see cref="RemoveAt"/> instead, which is an O(1) operation in this case.</remarks>
-        public bool Remove(TKey key)
-        {
-            int index = IndexOfKey(key);
-            if (index < 0)
-                return false;
-
-            RemoveAt(index);
-            return true;
-        }
-
-        /// <summary>
-        /// Gets the <paramref name="value"/> associated with the specified <paramref name="key"/>.
-        /// </summary>
-        /// <returns>
-        /// <see langword="true"/>&#160;if the <see cref="CircularSortedList{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.
-        /// </returns>
-        /// <param name="key">The key whose value to get.</param>
-        /// <param name="value">When this method returns, the value associated with the specified <paramref name="key"/>, if the <paramref name="key"/> is found;
-        /// otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter is passed uninitialized.</param>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <remarks>
-        /// <para>If the <paramref name="key"/> is not found, then the value parameter gets the appropriate default value for the value type <typeparamref name="TValue"/>;
-        /// for example, zero (0) for integer types, <see langword="false"/>&#160;for Boolean types, and <see langword="null"/>&#160;for reference types.</para>
-        /// <para>This method performs a binary search; therefore, this method is an O(log n) operation, where n is <see cref="Count"/>.</para>
-        /// </remarks>
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            int index = IndexOfKey(key);
-            if (index >= 0)
-            {
-                value = values[index];
-                return true;
-            }
-
-            value = default(TValue);
-            return false;
-        }
-
-        /// <summary>
-        /// Gets or sets the value associated with the specified <paramref name="key"/>.
-        /// </summary>
-        /// <returns>
-        /// The element with the specified <paramref name="key"/>.
-        /// </returns>
-        /// <param name="key">The key of the value to get or set.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <exception cref="KeyNotFoundException">The property is retrieved and <paramref name="key"/> is not found.</exception>
-        /// <remarks>
-        /// <para>A key cannot be <see langword="null"/>, but a value can be, if the type of values in the list, <typeparamref name="TValue"/>, is a reference or <see cref="Nullable{T}"/> type.</para>
-        /// <para>If the <paramref name="key"/> is not found when a value is being retrieved, <see cref="KeyNotFoundException"/> is thrown.
-        /// If the key is not found when a value is being set, the key and value are added.</para>
-        /// <para>You can also use this property to add new elements by setting the value of a key that does not exist in the <see cref="CircularSortedList{TKey,TValue}"/>; for example,
-        /// <code>myCollection["myNonexistentKey"] = myValue</code>. However, if the specified key already exists in the <see cref="CircularSortedList{TKey,TValue}"/>, setting this property
-        /// overwrites the old value. In contrast, the <see cref="Add"/> throws an <see cref="ArgumentException"/>, when <paramref name="key"/> already exists in the collection.</para>
-        /// <para>Retrieving the value of this property is an O(log n) operation, where n is <see cref="Count"/>. Setting the property is an O(1) operation if the <paramref name="key"/>
-        /// is at the first or last position. Otherwise, setting this property is an O(log n) operation, if the <paramref name="key"/> already exists in the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// If the <paramref name="key"/> is not in the list, and the new element is not at the first or last position, setting the property is an O(n) operation. If insertion causes a resize, the operation is O(n).</para>
-        /// </remarks>
-        public TValue this[TKey key]
-        {
-            get
-            {
-                int index = IndexOfKey(key);
-                if (index >= 0)
-                    return values[index];
-
-                throw new KeyNotFoundException(Res.IDictionaryKeyNotFound);
-            }
-            set
-            {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-
-                int index = SearchKeyOptimizedLastOrFirst(key);
-                if (index >= 0)
-                    values[index] = value;
-                else
-                    Insert(~index, key, value);
-            }
-        }
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}"/> containing the keys of the <see cref="IDictionary{TKey,TValue}"/>.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="ICollection{T}"/> containing the keys of the object that implements <see cref="IDictionary{TKey,TValue}"/>.
-        /// </returns>
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys => GetKeys();
-
-        /// <summary>
-        /// Gets an <see cref="ICollection{T}"/> containing the values in the <see cref="IDictionary{TKey,TValue}"/>.
-        /// </summary>
-        /// <returns>
-        /// An <see cref="ICollection{T}"/> containing the values in the object that implements <see cref="IDictionary{TKey,TValue}"/>.
-        /// </returns>
-        ICollection<TValue> IDictionary<TKey, TValue>.Values => GetValues();
-
-        #endregion
-
-        #region IList<KeyValuePair<TKey,TValue>> Members
 
         int IList<KeyValuePair<TKey, TValue>>.IndexOf(KeyValuePair<TKey, TValue> item)
         {
@@ -1144,47 +1296,7 @@ namespace KGySoft.Collections
         }
 
         void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
-
-        /// <summary>
-        /// Removes the element at the specified index of the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// </summary>
-        /// <param name="index">The zero-based index of the item to remove.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularSortedList{TKey,TValue}"/>.</exception>
-        /// <remarks>When the first or the last element is removed, this method is an O(1) operation; otherwise, an O(n) operation, where n is <see cref="Count"/>.</remarks>
-        public void RemoveAt(int index)
-        {
-            keys.RemoveAt(index);
-            values.RemoveAt(index);
-        }
-
-        KeyValuePair<TKey, TValue> IList<KeyValuePair<TKey, TValue>>.this[int index]
-        {
-            get => ElementAt(index);
-            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
-        }
-
-        #endregion
-
-        #region ICollection<KeyValuePair<TKey,TValue>> Members
-
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
-
-        /// <summary>
-        /// Removes all items from the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para><see cref="Count"/> is set to 0, and references to other objects from elements of the collection are also released.</para>
-        /// <para>This method is an O(n) operation, where n is <see cref="Count"/>.</para>
-        /// <para><see cref="Capacity"/> remains unchanged. To reset the capacity of the <see cref="CircularSortedList{TKey,TValue}"/> to 0 as well,
-        /// call the <see cref="Reset"/> method instead, which is an O(1) operation.
-        /// Calling <see cref="TrimExcess"/> after Clear also resets the list, though Clear has more cost.</para>
-        /// </remarks>
-        public void Clear()
-        {
-            keys.Clear();
-            values.Clear();
-        }
-
         bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => IndexOf(item) >= 0;
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
@@ -1210,8 +1322,8 @@ namespace KGySoft.Collections
                 return false;
 
             bool equals = isEnumValue
-                ? EnumComparer<TValue>.Comparer.Equals(item.Value, values[index])
-                : EqualityComparer<TValue>.Default.Equals(item.Value, values[index]);
+                    ? EnumComparer<TValue>.Comparer.Equals(item.Value, values[index])
+                    : EqualityComparer<TValue>.Default.Equals(item.Value, values[index]);
 
             if (!equals)
                 return false;
@@ -1220,28 +1332,10 @@ namespace KGySoft.Collections
             return true;
         }
 
-        /// <summary>
-        /// Gets the number of key/value pairs contained in the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// </summary>
-        /// <returns>
-        /// The number of key/value pairs contained in the <see cref="CircularSortedList{TKey,TValue}"/>.
-        /// </returns>
-        public int Count => keys.Count;
-
-        bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
-
-        #endregion
-
-        #region IEnumerable<KeyValuePair<TKey,TValue>> Members
-
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
             => keys.StartIndex == 0
                 ? (IEnumerator<KeyValuePair<TKey, TValue>>)new SimpleEnumeratorAsReference(this)
                 : new EnumeratorAsReference(this, true);
-
-        #endregion
-
-        #region IEnumerable Members
 
         /// <summary>
         /// Returns an enumerator that iterates through a collection.
@@ -1251,10 +1345,6 @@ namespace KGySoft.Collections
         /// </returns>
         /// <filterpriority>2</filterpriority>
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
-
-        #endregion
-
-        #region IDictionary Members
 
         void IDictionary.Add(object key, object value)
         {
@@ -1275,10 +1365,6 @@ namespace KGySoft.Collections
         }
 
         IDictionaryEnumerator IDictionary.GetEnumerator() => new EnumeratorAsReference(this, false);
-        bool IDictionary.IsFixedSize => false;
-        bool IDictionary.IsReadOnly => false;
-        ICollection IDictionary.Keys => (ICollection)Keys;
-        ICollection IDictionary.Values => (ICollection)Values;
 
         void IDictionary.Remove(object key)
         {
@@ -1287,32 +1373,6 @@ namespace KGySoft.Collections
             if (typeKey.CanAcceptValue(key))
                 Remove((TKey)key);
         }
-
-        object IDictionary.this[object key]
-        {
-            get
-            {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
-                return this[(TKey)key];
-            }
-            set
-            {
-                if (key == null)
-                    throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-                if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
-                if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
-                this[(TKey)key] = (TValue)value;
-            }
-        }
-
-        #endregion
-
-        #region ICollection Members
 
         void ICollection.CopyTo(Array array, int index)
         {
@@ -1349,22 +1409,6 @@ namespace KGySoft.Collections
 
             throw new ArgumentException(Res.ICollectionArrayTypeInvalid);
         }
-
-        bool ICollection.IsSynchronized => false;
-
-        object ICollection.SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                return syncRoot;
-            }
-        }
-
-        #endregion
-
-        #region IList Members
 
         int IList.Add(object value)
         {
@@ -1421,8 +1465,6 @@ namespace KGySoft.Collections
         }
 
         void IList.Insert(int index, object value) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
-        bool IList.IsFixedSize => false;
-        bool IList.IsReadOnly => false;
 
         void IList.Remove(object value)
         {
@@ -1442,27 +1484,8 @@ namespace KGySoft.Collections
             }
         }
 
-        object IList.this[int index]
-        {
-            get => ElementAt(index);
-            set => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
-        }
-
         #endregion
 
-#if !(NET35 || NET40)
-        #region IReadOnlyDictionary<TKey,TValue> Members
-
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetKeys();
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetValues();
-
         #endregion
-
-        #region IReadOnlyList<KeyValuePair<TKey,TValue>> Members
-
-        KeyValuePair<TKey, TValue> IReadOnlyList<KeyValuePair<TKey, TValue>>.this[int index] => ElementAt(index);
-
-        #endregion
-#endif
     }
 }

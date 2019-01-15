@@ -231,7 +231,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="item">The object to remove from the <see cref="LockingCollection{T}"/>.</param>
         /// <returns><see langword="true"/>&#160;if <paramref name="item" /> was successfully removed from the <see cref="LockingCollection{T}" />; otherwise, <see langword="false" />.
-        /// This method also returns <see langword="false" /> if <paramref name="item" /> is not found in the original <see cref="LockingCollection{T}"/>.
+        /// This method also returns <see langword="false" />&#160;if <paramref name="item" /> is not found in the original <see cref="LockingCollection{T}"/>.
         /// </returns>
         public bool Remove(T item)
         {

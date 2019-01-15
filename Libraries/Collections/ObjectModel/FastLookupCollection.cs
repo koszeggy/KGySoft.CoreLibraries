@@ -27,13 +27,22 @@ namespace KGySoft.Collections.ObjectModel
     {
         [NonSerialized] private AllowNullDictionary<T, CircularList<int>> itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
 
+        /// <summary>
+        /// Gets or sets whether consistency of the stored items should be checked when items are get or set in the collection.
+        /// <br/>Default value: <see langword="false"/>, if the <see cref="FastLookupCollection{T}"/> was initialized by the default constructor; otherwise, as it was requested.
+        /// </summary>
+        /// <remarks>
+        /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection directly but
+        /// when inconsistency is detected, the cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
+        /// where n is the count of the elements in the collection.</para>
+        /// </remarks>
         public bool CheckConsistency { get; set; }
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext ctx) => BuildIndexMap();
 
         /// <summary>
-        /// Initializes an empty instance of the <see cref="FastLookupCollection{T}"/> class.
+        /// Initializes an empty instance of the <see cref="FastLookupCollection{T}"/> class  with a <see cref="CircularList{T}"/> internally.
         /// </summary>
         public FastLookupCollection()
         {
@@ -66,11 +75,22 @@ namespace KGySoft.Collections.ObjectModel
         }
 
         /// <summary>
-        /// Rebuilds the internally stored index mapping. Call if <see cref="CheckConsistency"/> is <see langword="false"/>
+        /// Rebuilds the internally stored index mapping. Call if <see cref="CheckConsistency"/> is <see langword="false"/>&#160;
         /// and the internally wrapped list has been changed directly.
         /// </summary>
         public virtual void InnerListChanged() => BuildIndexMap();
 
+        /// <summary>
+        /// Gets the zero-based index of the first of the specified <paramref name="item" /> within the <see cref="FastLookupCollection{T}"/>.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="FastLookupCollection{T}"/>. The value can be <see langword="null"/>&#160;for reference types.</param>
+        /// <returns>
+        /// The zero-based index of the found occurrence of <paramref name="item" /> within the <see cref="FastLookupCollection{T}"/>, if found; otherwise, <c>-1</c>.
+        /// </returns>
+        /// <remarks>
+        /// <para>In <see cref="FastLookupCollection{T}"/> this method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
+        /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
+        /// </remarks>
         protected override int GetItemIndex(T item)
         {
             int result = GetFirstIndex(itemToIndex, item);
@@ -85,6 +105,14 @@ namespace KGySoft.Collections.ObjectModel
             return GetFirstIndex(itemToIndex, item);
         }
 
+        /// <summary>
+        /// Gets the element at the specified <paramref name="index" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get.</param>
+        /// <remarks>
+        /// <para>This method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
+        /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
+        /// </remarks>
         protected override T GetItem(int index)
         {
             T result = base.GetItem(index);
@@ -94,6 +122,15 @@ namespace KGySoft.Collections.ObjectModel
             return result;
         }
 
+        /// <summary>
+        /// Replaces the <paramref name="item" /> at the specified <paramref name="index" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to replace.</param>
+        /// <param name="item">The new value for the element at the specified index.</param>
+        /// <remarks>
+        /// <para>This method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
+        /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>
+        /// </remarks>
         protected override void SetItem(int index, T item)
         {
             if (CheckConsistency && !ContainsIndex(itemToIndex, item, index))
@@ -114,6 +151,11 @@ namespace KGySoft.Collections.ObjectModel
             base.SetItem(index, item);
         }
 
+        /// <summary>
+        /// Inserts an element into the <see cref="FastLookupCollection{T}"/> at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
+        /// <param name="item">The object to insert.</param>
         protected override void InsertItem(int index, T item)
         {
             base.InsertItem(index, item);
@@ -152,6 +194,10 @@ namespace KGySoft.Collections.ObjectModel
             return result;
         }
 
+        /// <summary>
+        /// Removes the element at the specified <paramref name="index" /> of the <see cref="FastLookupCollection{T}" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to remove.</param>
         protected override void RemoveItem(int index)
         {
             T original = base.GetItem(index);
@@ -179,6 +225,9 @@ namespace KGySoft.Collections.ObjectModel
             }
         }
 
+        /// <summary>
+        /// Removes all elements from the <see cref="FastLookupCollection{T}" />.
+        /// </summary>
         protected override void ClearItems()
         {
             base.ClearItems();

@@ -150,9 +150,9 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// As a result, the subsequent <see cref="GetObject">GetObject</see> calls
-        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
+        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null"/>&#160;if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
-        /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the resources with <see langword="null" /> value.</para>
+        /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the resources with <see langword="null"/>&#160;value.</para>
         /// <para>If the current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and you want to remove
         /// the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject">RemoveObject</see> method.</para>
         /// </remarks>
@@ -237,7 +237,7 @@ namespace KGySoft.Resources
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveMetaObject">RemoveMetaObject</see> method: the subsequent <see cref="GetMetaObject">GetMetaObject</see> calls
         /// with the same <paramref name="culture" /> will return <see langword="null" />.
-        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null" /> value.</para>
+        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null"/>&#160;value.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>

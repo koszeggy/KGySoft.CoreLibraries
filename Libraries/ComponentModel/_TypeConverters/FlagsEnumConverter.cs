@@ -123,7 +123,7 @@ namespace KGySoft.ComponentModel
             /// Returns whether the value of this property can persist.
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance with the property that is to be examined for persistence.</param>
-            /// <returns><see langword="true" /> if the value of the property can persist; otherwise, <see langword="false" />.</returns>
+            /// <returns><see langword="true"/>&#160;if the value of the property can persist; otherwise, <see langword="false" />.</returns>
             public override bool ShouldSerializeValue(object component) =>
                 // ReSharper disable once AssignNullToNotNullAttribute
                 !Equals(GetValue(component), GetDefaultValue());
@@ -138,7 +138,7 @@ namespace KGySoft.ComponentModel
             /// Returns whether resetting the component changes the value of the component.
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance to test for reset capability.</param>
-            /// <returns><see langword="true" /> if resetting the component changes the value of the component; otherwise, <see langword="false" />.</returns>
+            /// <returns><see langword="true"/>&#160;if resetting the component changes the value of the component; otherwise, <see langword="false" />.</returns>
             public override bool CanResetValue(object component) => ShouldSerializeValue(component);
 
             #endregion

@@ -680,7 +680,7 @@ namespace KGySoft.Resources
         /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture" /> property.
         /// Unlike in case of <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.</param>
         /// <returns>
-        /// The value of the metadata of the specified culture, or <see langword="null" /> if <paramref name="name" /> cannot be found in a resource set.
+        /// The value of the metadata of the specified culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> metadata, then
@@ -749,9 +749,9 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// As a result, the subsequent <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> calls
-        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null" /> if
+        /// with the same <paramref name="culture" /> will fall back to the parent culture, or will return <see langword="null"/>&#160;if
         /// <paramref name="name" /> is not found in any parent cultures. However, enumerating the result set returned by
-        /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> and <see cref="GetResourceSet">GetResourceSet</see> methods will return the resources with <see langword="null" /> value.</para>
+        /// <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> and <see cref="GetResourceSet">GetResourceSet</see> methods will return the resources with <see langword="null"/>&#160;value.</para>
         /// <para>If you want to remove the user-defined ResX content and reset the original resource defined in the binary resource set (if any), use the <see cref="RemoveObject">RemoveObject</see> method.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
@@ -778,7 +778,7 @@ namespace KGySoft.Resources
         /// <para>If there is a binary resource defined for <paramref name="name" /> and <paramref name="culture" />,
         /// then after this call the originally defined value will be returned by <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> method from the binary resources.
         /// If you want to force hiding the binary resource and make <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> to default to the parent <see cref="CultureInfo" /> of the specified <paramref name="culture" />,
-        /// then use the <see cref="SetObject">SetObject</see> method with a <see langword="null" /> value.</para>
+        /// then use the <see cref="SetObject">SetObject</see> method with a <see langword="null"/>&#160;value.</para>
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
         /// </remarks>
@@ -808,7 +808,7 @@ namespace KGySoft.Resources
         /// If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveMetaObject">RemoveMetaObject</see> method: the subsequent <see cref="GetMetaObject">GetMetaObject</see> calls
         /// with the same <paramref name="culture" /> will return <see langword="null" />.
-        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null" /> value.
+        /// However, enumerating the result set returned by <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method will return the meta objects with <see langword="null"/>&#160;value.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
