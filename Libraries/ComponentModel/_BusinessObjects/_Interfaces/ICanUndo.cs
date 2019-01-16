@@ -1,4 +1,18 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ICanUndo.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -7,12 +21,18 @@ namespace KGySoft.ComponentModel
     /// </summary>
     public interface ICanUndo
     {
+        #region Properties
+
         /// <summary>
         /// Gets whether there are changes to undo.
         /// </summary>
         /// <value><see langword="true"/>, if there are changes to undo; otherwise, <see langword="false"/>.
         /// </value>
         bool CanUndo { get; }
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Tries to perform one undo step.
@@ -30,5 +50,7 @@ namespace KGySoft.ComponentModel
         /// Clears the undo history without performing any undo.
         /// </summary>
         void ClearUndoHistory();
+
+        #endregion
     }
 }

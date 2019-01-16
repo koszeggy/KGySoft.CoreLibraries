@@ -1,4 +1,18 @@
-﻿using System.ComponentModel;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: IValidatingObject.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -7,9 +21,11 @@ namespace KGySoft.ComponentModel
     /// </summary>
     public interface IValidatingObject
     {
+        #region Properties
+
         /// <summary>
-        /// Gets whether this instance is valid. That is, if <see cref="Validate">Validate</see> method does not return any entries where
-        /// the value of <see cref="ValidationResult.Severity"/> is <see cref="ValidationSeverity.Error"/>.
+        /// Gets whether this instance is valid. That is, if the <see cref="ValidationResults"/> property does not return any entry where
+        /// the <see cref="ValidationResult.Severity"/> property is <see cref="ValidationSeverity.Error"/>.
         /// </summary>
         /// <value><see langword="true"/>&#160;if this instance is valid; otherwise, <see langword="false"/>.
         /// </value>
@@ -19,5 +35,7 @@ namespace KGySoft.ComponentModel
         /// Gets the validation results for this instance.
         /// </summary>
         ValidationResultsCollection ValidationResults { get; }
+
+        #endregion
     }
 }

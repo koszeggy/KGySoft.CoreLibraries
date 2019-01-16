@@ -100,7 +100,7 @@
     <Compile Include="ComponentModel\_BusinessObjects\UndoableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableObjectBase.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_EventArgs\PropertyChangedExtendedEventArgs.cs" />
-    <Compile Include="ComponentModel\_BusinessObjects\_Extensions\EventArgsExtensions.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Extensions\PropertyChangedEventArgsExtensions.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoRedo.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndo.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanEdit.cs" />

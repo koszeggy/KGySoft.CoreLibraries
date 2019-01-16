@@ -201,8 +201,8 @@ namespace KGySoft.Collections.ObjectModel
         }
 
         /// <summary>
-        /// Inserts an element into the <see cref="VirtualCollection{T}"/> at the specified <paramref name="index"/>.</summary>
-        /// <br/>Calls the overridable <see cref="InsertItem">InsertItem</see> method.
+        /// Inserts an element into the <see cref="VirtualCollection{T}"/> at the specified <paramref name="index"/>.
+        /// <br/>Calls the overridable <see cref="InsertItem">InsertItem</see> method.</summary>
         /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
         /// <param name="item">The object to insert.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than zero, or greater than <see cref="Count"/>.</exception>
@@ -220,9 +220,9 @@ namespace KGySoft.Collections.ObjectModel
 
         /// <summary>
         /// Removes one occurrence of a specific object from the <see cref="VirtualCollection{T}"/>.
-        /// <br/>The base implementation removes the first occurrence.
         /// <br/>Calls the overridable <see cref="GetItemIndex">GetItemIndex</see> and <see cref="RemoveItem">RemoveItem</see> methods.
         /// </summary>
+        /// <param name="item">The object to remove from the <see cref="VirtualCollection{T}"/>.</param>
         /// <exception cref="NotSupportedException"><see cref="IsReadOnly"/> returns <see langword="true"/>.</exception>
         public bool Remove(T item)
         {
@@ -290,7 +290,7 @@ namespace KGySoft.Collections.ObjectModel
         /// </summary>
         /// <returns>An <see cref="IEnumerator{T}" /> for the <see cref="VirtualCollection{T}"/>.</returns>
         /// <remarks>
-        /// <note>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then returned enumerator supports the <see cref="IEnumerator.Reset">Reset</see> method.</note>
+        /// <note>If the <see cref="VirtualCollection{T}"/> was instantiated by the default constructor, then returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method; otherwise, it depends on the wrapped collection.</note>
         /// </remarks>
         public virtual IEnumerator<T> GetEnumerator() => items.GetEnumerator();
 

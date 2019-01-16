@@ -42,15 +42,17 @@ namespace KGySoft.ComponentModel
         bool TryGetPropertyValue(string propertyName, out object value);
 
         /// <summary>
-        /// Gets the specified property if it exists in the inner storage and has the correct value; otherwise, returns <paramref name="defaultValue"/>.
+        /// Gets the specified property if it exists in the inner storage and has a compatibly type with <typeparamref name="T"/>; otherwise, returns <paramref name="defaultValue"/>.
         /// </summary>
+        /// <typeparam name="T">Type of the property to return.</typeparam>
         /// <param name="propertyName">The name of the property to get.</param>
-        /// <param name="defaultValue">The default value to return if property does not exist or has an incompatible type with <typeparamref name="T"/>.</param>
+        /// <param name="defaultValue">The default value to return if property does not exist or has an incompatible type with <typeparamref name="T"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="T"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="T"/>.</param>
         /// <exception cref="InvalidOperationException">Cannot get the property.</exception>
         T GetPropertyOrDefault<T>(string propertyName, T defaultValue = default);
 
         /// <summary>
-        /// Sets the property with specified <paramref name="value"/>.
+        /// Sets the property to specified <paramref name="value"/>.
         /// </summary>
         /// <param name="propertyName">The name of the property to set.</param>
         /// <param name="value">The value to set.</param>
@@ -61,7 +63,7 @@ namespace KGySoft.ComponentModel
         bool SetProperty(string propertyName, object value, bool triggerChangedEvent = true);
 
         /// <summary>
-        /// Resets the property with specified property, meaning, it will be removed from the underlying storage so the property getters will return the default value again and <see cref="TryGetPropertyValue">TryGetPropertyValue</see> will return <see langword="false"/>.
+        /// Resets the property of the specified <paramref name="propertyName"/>, meaning, it will be removed from the underlying storage so the property getters will return the default value again and <see cref="TryGetPropertyValue">TryGetPropertyValue</see> will return <see langword="false"/>.
         /// </summary>
         /// <param name="propertyName">The name of the property to reset.</param>
         /// <param name="triggerChangedEvent"><see langword="true"/>&#160;to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.

@@ -1,11 +1,32 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FastLookupCollection.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Collections.ObjectModel
 {
@@ -25,11 +46,17 @@ namespace KGySoft.Collections.ObjectModel
     [Serializable]
     public class FastLookupCollection<T> : VirtualCollection<T>
     {
+        #region Fields
+
         [NonSerialized] private AllowNullDictionary<T, CircularList<int>> itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// Gets or sets whether consistency of the stored items should be checked when items are get or set in the collection.
-        /// <br/>Default value: <see langword="false"/>, if the <see cref="FastLookupCollection{T}"/> was initialized by the default constructor; otherwise, as it was requested.
+        /// <br/>Default value: <see langword="false"/>, if the <see cref="FastLookupCollection{T}"/> was initialized by the default constructor; otherwise, as it was specified.
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection directly but
@@ -38,8 +65,9 @@ namespace KGySoft.Collections.ObjectModel
         /// </remarks>
         public bool CheckConsistency { get; set; }
 
-        [OnDeserialized]
-        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap();
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         /// Initializes an empty instance of the <see cref="FastLookupCollection{T}"/> class  with a <see cref="CircularList{T}"/> internally.
@@ -62,23 +90,131 @@ namespace KGySoft.Collections.ObjectModel
             CheckConsistency = checkConsistency;
         }
 
-        private void BuildIndexMap()
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        #region Internal Methods
+
+#if !NET35 && !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        internal /*private protected*/ static HashSet<T> CreateAdjustSet(int length)
         {
-            if (itemToIndex.Count > 0)
-                itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
-            int length = Count;
+#if NET35 || NET40 || NET45
+            HashSet<T> result = new HashSet<T>();
+            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
+                result.Initialize(length);
+#else
+            HashSet<T> result = new HashSet<T>(length);
+#endif
+
+            return result;
+        }
+
+        internal /*private protected*/ static bool AreEqual(T x, T y)
+            => EqualityComparer<T>.Default.Equals(x, y);
+
+        internal /*private protected*/ static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item)
+            => map.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
+
+        internal /*private protected*/ static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+            => map.TryGetValue(item, out var indices) && indices.Contains(index);
+
+        /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
+        internal /*private protected*/ static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+        {
+            if (!map.TryGetValue(item, out CircularList<int> indices))
+            {
+                indices = new CircularList<int>(1);
+                map[item] = indices;
+            }
+
+            if (indices.Count == 0 || index > indices[indices.Count - 1])
+            {
+                indices.AddLast(index);
+                return true;
+            }
+
+            var pos = indices.BinarySearch(index);
+            if (pos >= 0)
+                return false;
+            indices.Insert(~pos, index);
+            return true;
+        }
+
+        /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
+        internal /*private protected*/ static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+        {
+            if (!map.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
+                return false;
+            if (indices.Count == 0)
+                map.Remove(item);
+            return true;
+        }
+
+        internal /*private protected*/ static bool AdjustIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int startIndex, int diff, HashSet<T> adjustedValues)
+        {
+            if (adjustedValues.Contains(item))
+                return true;
+            adjustedValues.Add(item);
+            if (!map.TryGetValue(item, out var indices))
+                return false;
+            AdjustIndex(indices, startIndex, diff);
+            return true;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
+        private static bool RemoveIndex(CircularList<int> indices, int index)
+        {
+            if (indices.Count == 0)
+                return false;
+            if (indices[0] == index)
+            {
+                indices.RemoveFirst();
+                return true;
+            }
+
+            int pos = indices.BinarySearch(index);
+            if (pos < 0)
+                return false;
+            indices.RemoveAt(pos);
+            return true;
+        }
+
+        private static void AdjustIndex(CircularList<int> indices, int startIndex, int diff)
+        {
+            int length = indices.Count;
             for (int i = 0; i < length; i++)
             {
-                T item = base.GetItem(i);
-                AddIndex(itemToIndex, item, i);
+                if (indices[i] >= startIndex)
+                    indices[i] += diff;
             }
         }
 
+        #endregion
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
+
         /// <summary>
         /// Rebuilds the internally stored index mapping. Call if <see cref="CheckConsistency"/> is <see langword="false"/>&#160;
-        /// and the internally wrapped list has been changed directly.
+        /// and the internally wrapped list has been changed explicitly.
         /// </summary>
         public virtual void InnerListChanged() => BuildIndexMap();
+
+        #endregion
+
+        #region Protected Methods
 
         /// <summary>
         /// Gets the zero-based index of the first of the specified <paramref name="item" /> within the <see cref="FastLookupCollection{T}"/>.
@@ -179,21 +315,6 @@ namespace KGySoft.Collections.ObjectModel
                 BuildIndexMap();
         }
 
-#if !NET35 && !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        internal /*private protected*/ static HashSet<T> CreateAdjustSet(int length)
-        {
-#if NET35 || NET40 || NET45
-            HashSet<T> result = new HashSet<T>();
-            if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
-                result.Initialize(length);
-#else
-            HashSet<T> result = new HashSet<T>(length);
-#endif
-            return result;
-        }
-
         /// <summary>
         /// Removes the element at the specified <paramref name="index" /> of the <see cref="FastLookupCollection{T}" />.
         /// </summary>
@@ -234,84 +355,29 @@ namespace KGySoft.Collections.ObjectModel
             itemToIndex.Clear();
         }
 
-        internal /*private protected*/ static bool AreEqual(T x, T y)
-            => EqualityComparer<T>.Default.Equals(x, y);
+        #endregion
 
-        internal /*private protected*/ static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item) 
-            => map.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
+        #region Private Methods
 
-        internal /*private protected*/ static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
-            => map.TryGetValue(item, out var indices) && indices.Contains(index);
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap();
 
-        /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
-        internal /*private protected*/ static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+        private void BuildIndexMap()
         {
-            if (!map.TryGetValue(item, out CircularList<int> indices))
-            {
-                indices = new CircularList<int>(1);
-                map[item] = indices;
-            }
-
-            if (indices.Count == 0 || index > indices[indices.Count - 1])
-            {
-                indices.AddLast(index);
-                return true;
-            }
-
-            var pos = indices.BinarySearch(index);
-            if (pos >= 0)
-                return false;
-            indices.Insert(~pos, index);
-            return true;
-        }
-
-        /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        internal /*private protected*/ static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
-        {
-            if (!map.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
-                return false;
-            if (indices.Count == 0)
-                map.Remove(item);
-            return true;
-        }
-
-        /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        private static bool RemoveIndex(CircularList<int> indices, int index)
-        {
-            if (indices.Count == 0)
-                return false;
-            if (indices[0] == index)
-            {
-                indices.RemoveFirst();
-                return true;
-            }
-
-            int pos = indices.BinarySearch(index);
-            if (pos < 0)
-                return false;
-            indices.RemoveAt(pos);
-            return true;
-        }
-
-        internal /*private protected*/ static bool AdjustIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int startIndex, int diff, HashSet<T> adjustedValues)
-        {
-            if (adjustedValues.Contains(item))
-                return true;
-            adjustedValues.Add(item);
-            if (!map.TryGetValue(item, out var indices))
-                return false;
-            AdjustIndex(indices, startIndex, diff);
-            return true;
-        }
-
-        private static void AdjustIndex(CircularList<int> indices, int startIndex, int diff)
-        {
-            int length = indices.Count;
+            if (itemToIndex.Count > 0)
+                itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
+            int length = Count;
             for (int i = 0; i < length; i++)
             {
-                if (indices[i] >= startIndex)
-                    indices[i] += diff;
+                T item = base.GetItem(i);
+                AddIndex(itemToIndex, item, i);
             }
         }
+
+        #endregion
+
+        #endregion
+
+        #endregion
     }
 }

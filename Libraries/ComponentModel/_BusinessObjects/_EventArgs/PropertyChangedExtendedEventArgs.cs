@@ -1,4 +1,24 @@
-﻿using System.ComponentModel;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: PropertyChangedExtendedEventArgs.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System.ComponentModel;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -9,9 +29,11 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="PropertyChangedEventArgs" />
     /// <remarks><note>The <see cref="ObservableObjectBase.PropertyChanged">ObservableObjectBase.PropertyChanged</see> event uses the <see cref="PropertyChangedEventHandler"/> delegate in order to consumers, which rely on the conventional property
     /// changed notifications can use it in a compatible way. To get the old value in an event handler you can cast the argument to <see cref="PropertyChangedExtendedEventArgs"/>
-    /// or call the <see cref="PropertyChangedEventArgsExtensions.TryGetPropertyValue">TryGetPropertyValue</see> extension method on it.</note></remarks>
+    /// or call the <see cref="PropertyChangedEventArgsExtensions.TryGetOldPropertyValue">TryGetOldPropertyValue</see> extension method on it.</note></remarks>
     public class PropertyChangedExtendedEventArgs : PropertyChangedEventArgs
     {
+        #region Properties
+
         /// <summary>
         /// Gets the property value before the change.
         /// </summary>
@@ -22,6 +44,10 @@ namespace KGySoft.ComponentModel
         /// Can be <see langword="null"/>&#160;if the property has been removed and has no value.
         /// </summary>
         public object NewValue { get; }
+
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyChangedExtendedEventArgs"/> class.
@@ -34,5 +60,7 @@ namespace KGySoft.ComponentModel
             OldValue = oldValue;
             NewValue = newValue;
         }
+
+        #endregion
     }
 }
