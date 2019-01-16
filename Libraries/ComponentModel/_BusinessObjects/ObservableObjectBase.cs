@@ -35,14 +35,15 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a base class for component model classes, which can notify their consumer about property changes.
-    /// <br/>See the <strong>Remarks</strong> section for details.
+    /// <br/>See the <strong>Remarks</strong> section for details and examples.
     /// </summary>
     /// <remarks>
     /// <para>Implementers can use the <see cref="Get{T}(T,string)">Get</see> and <see cref="Set">Set</see> methods in the property accessors to manage event raising automatically.</para>
     /// <para>Consumers can subscribe the <see cref="PropertyChanged"/> event to get notification about the property changes.</para>
     /// <para>Accessing properties can be fine tuned by overriding the <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods. By default they allow
     /// accessing the instance properties in the implementer class.
-    /// <note>To be able to validate property values consider to use the <see cref="ValidatingObjectBase"/> class.</note>
+    /// <note type="inherit">Do not use <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods for property validation.
+    /// To be able to validate property values consider to use the <see cref="ValidatingObjectBase"/> class.</note>
     /// </para>
     /// <example>
     /// The following example shows a possible implementation of a derived class.
@@ -213,13 +214,15 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Creates a new object that is a copy of the current instance.
-        /// The base implementation clones the internal property storage, the <see cref="IsModified" /> property and the subscribers of the <see cref="PropertyChanged"/> event.
-        /// In order to release the old or the cloned instance call the <see cref="Dispose()">Dispose</see> method to clear the subscriptions of the <see cref="PropertyChanged"/> event.
+        /// <br/>The base implementation clones the internal property storage, the <see cref="IsModified" /> property and if <paramref name="clonePropertyChanged"/> is <see langword="true"/>, then also the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
+        /// <param name="clonePropertyChanged"><see langword="true"/>&#160;to clone also the subscribers of the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>
         /// A new object that is a copy of this instance.
         /// </returns>
-        public virtual object Clone()
+        // ReSharper disable once MethodOverloadWithOptionalParameter - false alarm, the "overload" is an explicit interface implementation
+        public virtual ObservableObjectBase Clone(bool clonePropertyChanged = false)
         {
             Type type = GetType();
             if (type.GetDefaultConstructor() == null)
@@ -227,13 +230,12 @@ namespace KGySoft.ComponentModel
             ObservableObjectBase clone = (ObservableObjectBase)Reflector.CreateInstance(type);
             clone.properties = CloneProperties().AsThreadSafe();
             clone.isModified = isModified;
-            //clone.propertyChanged = propertyChanged;
+            clone.propertyChanged = clonePropertyChanged ? propertyChanged : null;
             return clone;
         }
 
         /// <summary>
         /// Releases the resources held by this instance.
-        /// The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
         public void Dispose()
         {
@@ -446,19 +448,20 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Gets whether the specified property can be get. The base implementation allows to get the actual instance properties in this instance.
+        /// Gets whether the specified property can be get.
+        /// <br/>The base implementation allows to get the actual instance properties in this instance.
         /// </summary>
         /// <param name="propertyName">Name of the property to get.</param>
         /// <returns><see langword="true"/>&#160;if the specified property can be get; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanGetProperty(string propertyName)
         {
-            Dictionary<string, PropertyInfo> props;
-            props = reflectedProperties[GetType()];
+            Dictionary<string, PropertyInfo> props = reflectedProperties[GetType()];
             return props.ContainsKey(propertyName);
         }
 
         /// <summary>
-        /// Gets whether the specified property can be set. The base implementation allows to set the actual instance properties in this instance if the specified <paramref name="value"/> is compatible with the property type.
+        /// Gets whether the specified property can be set.
+        /// <br/>The base implementation allows to set the actual instance properties in this instance if the specified <paramref name="value"/> is compatible with the property type.
         /// </summary>
         /// <param name="propertyName">Name of the property to set.</param>
         /// <param name="value">The property value to set.</param>
@@ -490,7 +493,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Releases the resources held by this instance.
-        /// The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
+        /// <br/>The base implementation removes the subscribers of the <see cref="PropertyChanged"/> event.
         /// </summary>
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing) => propertyChanged = null;
@@ -510,6 +513,12 @@ namespace KGySoft.ComponentModel
             if (suspendCounter <= 0)
                 propertyChanged?.Invoke(this, e);
         }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        object ICloneable.Clone() => Clone();
 
         #endregion
 

@@ -35,13 +35,12 @@ namespace KGySoft.ComponentModel
         #region Properties
 
         /// <summary>
-        /// Gets the property value before the change.
+        /// Gets the property value before the change or <see cref="ObservableObjectBase.MissingProperty"/> if no previous value was stored for the property before the change.
         /// </summary>
         public object OldValue { get; }
 
         /// <summary>
-        /// Gets the property value after the change.
-        /// Can be <see langword="null"/>&#160;if the property has been removed and has no value.
+        /// Gets the property value after the change or <see cref="ObservableObjectBase.MissingProperty"/> the property has been just been reset and no value is stored for it.
         /// </summary>
         public object NewValue { get; }
 

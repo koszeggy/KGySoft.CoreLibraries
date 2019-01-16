@@ -1,8 +1,28 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: EditableHelper.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -28,6 +48,8 @@ namespace KGySoft.ComponentModel
         #endregion
 
         #region Methods
+
+        #region Public Methods
 
         public void BeginNewEdit()
         {
@@ -140,6 +162,8 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
+        #region Internal Methods
+
         internal void BeginEdit(EditableObjectBehavior behavior)
         {
             switch (behavior)
@@ -191,5 +215,9 @@ namespace KGySoft.ComponentModel
                     throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
             }
         }
+
+        #endregion
+
+        #endregion
     }
 }

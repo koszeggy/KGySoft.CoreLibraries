@@ -25,7 +25,8 @@ using System.Linq;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Provides a base class for component model classes, which provide a public access to their internal property storage located int the <see cref="ObservableObjectBase"/> by implementing the <see cref="IPersistableObject"/> interface.
+    /// Provides a base class for component model classes, which provide a public access to their internal property storage located in the <see cref="ObservableObjectBase"/> base class
+    /// by implementing also the <see cref="IPersistableObject"/> interface.
     /// <br/>For details see the <strong>Remarks</strong> section.
     /// </summary>
     /// <remarks>
@@ -34,7 +35,7 @@ namespace KGySoft.ComponentModel
     /// <see cref="IPersistableObject.SetProperties">SetProperties</see> methods.</para>
     /// <para>The <see cref="IPersistableObject"/> also provides some concurrent-proof operations if the instance is accessed from multiple threads. See the <see cref="IPersistableObject.TryGetPropertyValue">TryGetPropertyValue</see>,
     /// <see cref="IPersistableObject.GetPropertyOrDefault{T}">GetPropertyOrDefault</see> and <see cref="IPersistableObject.TryReplaceProperty">TryReplaceProperty</see> methods.</para>
-    /// <note type="implementation">For an example see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
+    /// <note type="inherit">For an example see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
     /// The same applies also for the <see cref="PersistableObjectBase"/> class in terms of implementation.</note>
     /// </remarks>
     /// <threadsafety instance="true"/>

@@ -1,33 +1,74 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: UndoableHelper.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Threading;
+
 using KGySoft.Collections;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
     internal class UndoableHelper : ICanUndoRedo, ICanUndoInternal
     {
+        #region UndoEntry struct
+
         private struct UndoEntry
         {
+            #region Fields
+
             internal object From;
             internal object To;
+
+            #endregion
         }
+
+        #endregion
+
+        #region Constants
 
         private const int defaultUndoCapacity = 20;
 
+        #endregion
+
+        #region Fields
+
         private readonly CircularList<KeyValuePair<string, UndoEntry>> undoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
         private readonly CircularList<KeyValuePair<string, UndoEntry>> redoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
+        private readonly ObservableObjectBase owner;
 
         private int undoCapacity = defaultUndoCapacity;
         private int suspendCounter;
 
-        private readonly ObservableObjectBase owner;
+        #endregion
 
-        internal UndoableHelper(ObservableObjectBase owner) => this.owner = owner;
+        #region Properties
+
+        #region Public Properties
 
         public bool CanUndo => undoSteps.Count > 0;
         public bool CanRedo => redoSteps.Count > 0;
+
+        #endregion
+
+        #region Internal Properties
 
         internal int UndoCapacity
         {
@@ -60,8 +101,36 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        internal UndoableHelper(ObservableObjectBase owner) => this.owner = owner;
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
         public void SuspendUndo() => Interlocked.Increment(ref suspendCounter);
         public void ResumeUndo() => Interlocked.Decrement(ref suspendCounter);
+        public bool TryUndo() => ApplyStep(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
+        public bool TryRedo() => ApplyStep(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
+        public void UndoAll() => ApplyAll(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
+        public void RedoAll() => ApplyAll(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
+
+        public void ClearUndoHistory()
+        {
+            ClearSteps(redoSteps, nameof(ICanUndoRedo.CanRedo));
+            ClearSteps(undoSteps, nameof(ICanUndo.CanUndo));
+        }
+
+        #endregion
+
+        #region Internal Methods
 
         internal void HandlePropertyChanged(PropertyChangedExtendedEventArgs e)
         {
@@ -74,6 +143,10 @@ namespace KGySoft.ComponentModel
             ClearSteps(redoSteps, nameof(CanRedo));
             AddUndoStep(new KeyValuePair<string, UndoEntry>(e.PropertyName, new UndoEntry { From = e.NewValue, To = e.OldValue }));
         }
+
+        #endregion
+
+        #region Private Methods
 
         private void ClearSteps(CircularList<KeyValuePair<string, UndoEntry>> storage, string canUndoRedoName)
         {
@@ -163,15 +236,8 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        public void ClearUndoHistory()
-        {
-            ClearSteps(redoSteps, nameof(ICanUndoRedo.CanRedo));
-            ClearSteps(undoSteps, nameof(ICanUndo.CanUndo));
-        }
+        #endregion
 
-        public bool TryUndo() => ApplyStep(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
-        public bool TryRedo() => ApplyStep(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
-        public void UndoAll() => ApplyAll(undoSteps, nameof(ICanUndo.CanUndo), redoSteps, nameof(ICanUndoRedo.CanRedo));
-        public void RedoAll() => ApplyAll(redoSteps, nameof(ICanUndoRedo.CanRedo), undoSteps, nameof(ICanUndo.CanUndo));
+        #endregion
     }
 }
