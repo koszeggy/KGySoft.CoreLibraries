@@ -25,7 +25,7 @@ namespace KGySoft.ComponentModel
         #region Properties
 
         /// <summary>
-        /// Gets the editing level. That is, the number of <see cref="BeginNewEdit">BeginNewEdit</see> calls without a corresponding <see cref="CommitLastEdit">CommitLastEdit</see> or <see cref="RevertLastEdit">RevertLastEdit</see> call.
+        /// Gets the editing level. That is, the number of <see cref="BeginNewEdit">BeginNewEdit</see> calls without a corresponding <see cref="CommitLastEdit">CommitLastEdit</see> or <see cref="RevertLastEdit">RevertLastEdit</see> calls.
         /// </summary>
         int EditLevel { get; }
 

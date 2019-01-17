@@ -1,6 +1,27 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ValidationResult.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Diagnostics;
+
 using KGySoft.CoreLibraries;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -10,6 +31,8 @@ namespace KGySoft.ComponentModel
     [DebuggerDisplay("{" + nameof(Severity) + "}: {" + nameof(PropertyName) + "} - {" + nameof(Message) + "}")]
     public class ValidationResult
     {
+        #region Properties
+
         /// <summary>
         /// Gets the name of the property for this <see cref="ValidationResult"/>.
         /// </summary>
@@ -24,6 +47,10 @@ namespace KGySoft.ComponentModel
         /// Gets the severity of this <see cref="ValidationResult"/>.
         /// </summary>
         public ValidationSeverity Severity { get; }
+
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ValidationResult"/> class.
@@ -41,6 +68,10 @@ namespace KGySoft.ComponentModel
             Severity = severity;
         }
 
+        #endregion
+
+        #region Methods
+
         /// <summary>
         /// Returns a <see cref="string" /> that represents this instance.
         /// </summary>
@@ -56,14 +87,16 @@ namespace KGySoft.ComponentModel
         /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object obj)
             => obj is ValidationResult other &&
-                PropertyName == other.PropertyName &&
-                Message == other.Message &&
-                Severity == other.Severity;
+            PropertyName == other.PropertyName &&
+            Message == other.Message &&
+            Severity == other.Severity;
 
         /// <summary>
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>A hash code for this instance.</returns>
         public override int GetHashCode() => ((int)Severity | (PropertyName.GetHashCode() & 0b11111111_11111100) << 16) | Message.GetHashCode();
+
+        #endregion
     }
 }

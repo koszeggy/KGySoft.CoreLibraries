@@ -254,6 +254,7 @@
     <Compile Include="System\ValueTuple.cs" />
     <Compile Include="_.cs" />
     <Compile Include="CoreLibraries\_Extensions\ObjectExtensions.ObjectConverter.cs" />
+    <None Include="ComponentModel\BusinessObjects.cd" />
     <None Include="LICENSE" />
     <Compile Include="CoreLibraries\_Extensions\WaitHandleExtensions.cs" />
     <Compile Include="CoreLibraries\_Extensions\_Enums\FloatScale.cs" />
@@ -279,7 +280,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

@@ -43,12 +43,12 @@ namespace KGySoft.ComponentModel
     /// <para>Accessing properties can be fine tuned by overriding the <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods. By default they allow
     /// accessing the instance properties in the implementer class.
     /// <note type="inherit">Do not use <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods for property validation.
-    /// To be able to validate property values consider to use the <see cref="ValidatingObjectBase"/> class.</note>
+    /// To be able to validate property values consider to use the <see cref="ValidatingObjectBase"/> or <see cref="ModelBase"/> classes.</note>
     /// </para>
     /// <example>
     /// The following example shows a possible implementation of a derived class.
     /// <code lang="C#"><![CDATA[
-    /// class MyModel : ObservableObjectBase
+    /// public class MyModel : ObservableObjectBase
     /// {
     ///     // A simple integer property (with zero default value). Until the property is set no value is stored internally.
     ///     public int IntProperty { get => Get<int>(); set => Set(value); }
@@ -62,7 +62,7 @@ namespace KGySoft.ComponentModel
     ///     public MyComplexType ComplexProperty { get => Get(() => new MyComplexType()); set => Set(value); }
     /// 
     ///     // You can use regular properties to prevent raising the events and not to store the value in the internal storage.
-    ///     // The OnPropertyChanged method still can be called to raise the PropertyChanged event.
+    ///     // The OnPropertyChanged method still can be called explicitly to raise the PropertyChanged event.
     ///     public int UntrackedProperty { get; set; }
     /// }
     /// ]]></code>

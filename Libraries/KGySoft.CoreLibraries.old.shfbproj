@@ -22,7 +22,7 @@
       <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.dll" />
       <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.xml" />
     </DocumentationSources>
-    <HelpFileFormat>HtmlHelp1, Website</HelpFileFormat>
+    <HelpFileFormat>HtmlHelp1</HelpFileFormat>
     <HelpTitle>KGySoft.CoreLibraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>
     <NamingMethod>Guid</NamingMethod>
@@ -106,14 +106,10 @@
       <ImageId>NewConsoleApp</ImageId>
       <AlternateText>New Console App</AlternateText>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Help\Images\ResourceFileProperties_HybridResourceManager.png">
       <ImageId>ResourceFileProperties_HybridResourceManager</ImageId>
       <AlternateText>Resource File Properties Hybrid Resource Manager</AlternateText>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Help\Images\ResourceFileProperties_DynamicResourceManager.png">
       <ImageId>ResourceFileProperties_DynamicResourceManager</ImageId>
       <AlternateText>Resource File Properties Dynamic Resource Manager</AlternateText>
@@ -125,6 +121,10 @@
     <Content Include="Help\Images\DynamicResourceManager_ExampleResources.png">
       <ImageId>DynamicResourceManager_ExampleResources</ImageId>
       <AlternateText>Dynamic Resource Manager Example Resources</AlternateText>
+    </Content>
+    <Content Include="Help\Images\ComponentModel_BusinessObjects.png">
+      <ImageId>ComponentModel_BusinessObjects</ImageId>
+      <AlternateText>Class diagram of business object base classes and interfaces</AlternateText>
     </Content>
   </ItemGroup>
   <!-- Import the SHFB build targets -->

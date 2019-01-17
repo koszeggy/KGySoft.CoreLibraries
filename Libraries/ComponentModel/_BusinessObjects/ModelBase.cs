@@ -124,11 +124,11 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Gets how the object should behave if treated as an <see cref="IEditableObject"/>.
-        /// <br/>The base implementation returns <see cref="ComponentModel.EditableObjectBehavior.NestingDisabled"/>.
+        /// <br/>The base implementation returns <see cref="ComponentModel.EditableObjectBehavior.DisableNesting"/>.
         /// </summary>
         /// <seealso cref="ComponentModel.EditableObjectBehavior"/>
         /// <seealso cref="IEditableObject"/>
-        protected virtual EditableObjectBehavior EditableObjectBehavior => EditableObjectBehavior.NestingDisabled;
+        protected virtual EditableObjectBehavior EditableObjectBehavior => EditableObjectBehavior.DisableNesting;
 
         /// <summary>
         /// Raises the <see cref="ObservableObjectBase.PropertyChanged" /> event.

@@ -35,7 +35,7 @@ namespace KGySoft.ComponentModel
     /// <see cref="IPersistableObject.SetProperties">SetProperties</see> methods.</para>
     /// <para>The <see cref="IPersistableObject"/> also provides some concurrent-proof operations if the instance is accessed from multiple threads. See the <see cref="IPersistableObject.TryGetPropertyValue">TryGetPropertyValue</see>,
     /// <see cref="IPersistableObject.GetPropertyOrDefault{T}">GetPropertyOrDefault</see> and <see cref="IPersistableObject.TryReplaceProperty">TryReplaceProperty</see> methods.</para>
-    /// <note type="inherit">For an example see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
+    /// <note type="implement">For an example see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
     /// The same applies also for the <see cref="PersistableObjectBase"/> class in terms of implementation.</note>
     /// </remarks>
     /// <threadsafety instance="true"/>

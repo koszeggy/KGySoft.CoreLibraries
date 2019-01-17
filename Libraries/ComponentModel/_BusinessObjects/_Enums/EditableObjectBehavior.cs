@@ -29,21 +29,22 @@ namespace KGySoft.ComponentModel
     public enum EditableObjectBehavior
     {
         /// <summary>
-        /// <see cref="IEditableObject.EndEdit">EndEdit</see> and <see cref="IEditableObject.CancelEdit">CancelEdit</see> calls ignore possible multiple
-        /// <see cref="IEditableObject.BeginEdit">BeginEdit</see> calls and commit/revert all of the previous changes. Tolerates also no <see cref="IEditableObject.BeginEdit">BeginEdit</see>
-        /// call at all before committing/canceling. <see cref="ICanEdit.EditLevel"/> will be 0 after an <see cref="IEditableObject.EndEdit">EndEdit</see> or <see cref="IEditableObject.CancelEdit">CancelEdit</see> call.
-        /// </summary>
-        NestingDisabled,
-
-        /// <summary>
-        /// Number of <see cref="IEditableObject.EndEdit">EndEdit</see> and <see cref="IEditableObject.CancelEdit">CancelEdit</see> calls must equal to previous <see cref="IEditableObject.BeginEdit">BeginEdit</see> calls;
-        /// otherwise an <see cref="InvalidOperationException"/> will be thrown.
-        /// </summary>
-        NestingAllowed,
-
-        /// <summary>
         /// <see cref="IEditableObject"/> methods are ignored, the object must be used as an <see cref="ICanEdit"/> implementation to utilize editing features.
         /// </summary>
-        Disabled
+        Disabled,
+
+        /// <summary>
+        /// <see cref="IEditableObject.EndEdit">IEditableObject.EndEdit</see> and <see cref="IEditableObject.CancelEdit">IEditableObject.CancelEdit</see> calls ignore possible multiple
+        /// <see cref="IEditableObject.BeginEdit">IEditableObject.BeginEdit</see> calls and commit/revert all of the previous changes.
+        /// <see cref="ICanEdit.EditLevel"/> will be 0 after an <see cref="IEditableObject.EndEdit">IEditableObject.EndEdit</see> or <see cref="IEditableObject.CancelEdit">IEditableObject.CancelEdit</see> call.
+        /// </summary>
+        DisableNesting,
+
+        /// <summary>
+        /// Number of <see cref="IEditableObject.EndEdit">IEditableObject.EndEdit</see> and <see cref="IEditableObject.CancelEdit">IEditableObject.CancelEdit</see> calls must equal to previous <see cref="IEditableObject.BeginEdit">IEditableObject.BeginEdit</see> calls;
+        /// otherwise, an <see cref="InvalidOperationException"/> will be thrown.
+        /// </summary>
+        AllowNesting
+
     }
 }

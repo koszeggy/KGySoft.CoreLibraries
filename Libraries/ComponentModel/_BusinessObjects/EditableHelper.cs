@@ -168,11 +168,11 @@ namespace KGySoft.ComponentModel
         {
             switch (behavior)
             {
-                case EditableObjectBehavior.NestingDisabled:
+                case EditableObjectBehavior.DisableNesting:
                     if (EditLevel == 0)
                         BeginNewEdit();
                     break;
-                case EditableObjectBehavior.NestingAllowed:
+                case EditableObjectBehavior.AllowNesting:
                     BeginNewEdit();
                     break;
                 case EditableObjectBehavior.Disabled:
@@ -186,10 +186,10 @@ namespace KGySoft.ComponentModel
         {
             switch (behavior)
             {
-                case EditableObjectBehavior.NestingDisabled:
+                case EditableObjectBehavior.DisableNesting:
                     TryCommitAllEdits();
                     break;
-                case EditableObjectBehavior.NestingAllowed:
+                case EditableObjectBehavior.AllowNesting:
                     CommitLastEdit();
                     break;
                 case EditableObjectBehavior.Disabled:
@@ -203,10 +203,10 @@ namespace KGySoft.ComponentModel
         {
             switch (behavior)
             {
-                case EditableObjectBehavior.NestingDisabled:
+                case EditableObjectBehavior.DisableNesting:
                     TryRevertAllEdits();
                     break;
-                case EditableObjectBehavior.NestingAllowed:
+                case EditableObjectBehavior.AllowNesting:
                     RevertLastEdit();
                     break;
                 case EditableObjectBehavior.Disabled:
