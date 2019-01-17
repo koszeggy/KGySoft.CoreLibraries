@@ -95,18 +95,34 @@ namespace KGySoft.CoreLibraries
                 return ms.ToArray();
 
             long pos = s.Position;
-            if (pos != 0L)
+            try
             {
-                if (!s.CanSeek)
-                    throw new ArgumentException(Res.StreamExtensionsStreamCannotSeek);
-                s.Seek(0, SeekOrigin.Begin);
-            }
+                if (pos != 0L)
+                {
+                    if (!s.CanSeek)
+                        throw new ArgumentException(Res.StreamExtensionsStreamCannotSeek);
+                    s.Seek(0, SeekOrigin.Begin);
+                }
 
-            byte[] result = new byte[s.Length];
-            s.Read(result, 0, result.Length);
-            if (s.CanSeek)
-                s.Seek(pos, SeekOrigin.Begin);
-            return result;
+                byte[] result = new byte[s.Length];
+                int len = s.Read(result, 0, result.Length);
+
+                // we could read the whole stream
+                if (len == s.Length)
+                    return result;
+
+                // we use the buffer with the first fragment and continue reading
+                ms = new MemoryStream(result) { Position = len };
+                CopyTo(s, ms);
+
+                // if the stream still reports the same length we return its internal buffer to prevent duplicating the array in memory; otherwise, returning a new array
+                return ms.Length == s.Length ? ms.GetBuffer() : ms.ToArray();
+            }
+            finally
+            {
+                if (s.CanSeek)
+                    s.Seek(pos, SeekOrigin.Begin);
+            }
         }
 
         #endregion
