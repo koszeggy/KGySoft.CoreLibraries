@@ -29,11 +29,11 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a link to an external resource.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
-    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXFileRef</a> section to see the differences.</note>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXFileRef</a> section for the differences.</note>
     /// <para>The <see cref="ResXFileRef"/> class is used to include references to files in an XML resource (.resx) file.
     /// A <see cref="ResXFileRef"/> object represents a link to an external resource in an XML resource (.resx) file.
     /// You can add a <see cref="ResXFileRef"/> object to a .resx file programmatically by one of the following options:

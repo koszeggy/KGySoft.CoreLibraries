@@ -360,7 +360,7 @@ namespace KGySoft.Collections.ObjectModel
         protected virtual void InsertItem(int index, T item) => items.Insert(index, item);
 
         /// <summary>
-        /// Removes the element at the specified <paramref name="index"/> of the <see cref="VirtualCollection{T}"/>.
+        /// Removes the element at the specified <paramref name="index"/> from the <see cref="VirtualCollection{T}"/>.
         /// <br/>The base implementation calls the <see cref="IList{T}.RemoveAt">RemoveAt</see> method of the underlying collection.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>

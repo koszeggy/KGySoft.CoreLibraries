@@ -1,36 +1,96 @@
-﻿using System;
-using System.Collections;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FastBindingList.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
-// ReSharper disable RedundantBaseQualifier - not redundant: they are virtual members and we prevent to call possible derived methods
+#endregion
+
 namespace KGySoft.ComponentModel
 {
-    // Compatible with BindingList<T> but allows turning on/off not just list change events but also element change events and provides more flexible overriding.
-    // Better performance than BindingList<T>, even if child change is enabled because IndexOf is O(1) due to FastLookupCollection<T> base.
-    // New features:
-    // - Disposable: removes both incoming (self events) and outgoing (elements PropertyChanged) subscriptions. If the collection passed to the ctor is disposable, it also will be disposed.
-    // - RaiseListChangedEvents is virtual
-    // - AllowEdit/Remove/New - properties are virtual
-    // - Several ApplySort and Find overloads (sort is not supported by this base class but see SortableBindingList)
-    // Changes to BindingList<T>:
-    // - AllowEdit/Remove/New - initialized by IsReadOnly
-    // - SupportsSearching returns true
-    // - Calling AddNew when AllowNew is false throws InvalidOperationException
-    // - Calling Remove/Clear when AllowNew is false throws InvalidOperationException (BindingList: throws NotSupportedException on Remove)
-    // - AddNewCore returns T instead of object; throws InvalidOperationException if AllowNew is true but cannot add new item without event or override
-    // - If OnAddingNew does not create an item of T the AddNewCore will not throw an InvalidCastException but creates a compatible element if can or an InvalidOperationException is thrown
-    // - Type of AddingNew event is EventHandler<AddingNewEventArgs<T>> instead of AddingNewEventHandler
-    // - Subscription change to AddingNew event does not reset the list because return value of AllowNew does not depend on whether AddingNew is subscribed. It must be set explicitly if we want to allow new events.
-    // - IBingindList.ApplySort/Find/RemoveSort are implicit implementations as public methods
+    /// <summary>
+    /// Provides a generic list that is able to notify its consumer about changes and supports data binding.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <see cref="BindingList{T}"/> class.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the list.</typeparam>
+    /// <remarks>
+    /// <note><see cref="FastBindingList{T}"/> is compatible with <see cref="BindingList{T}"/> but has a better performance than that because element lookup
+    /// in <see cref="FastBindingList{T}"/> is an O(1) operation. In contrast, element lookup in <see cref="BindingList{T}"/> is an O(n) operation, which makes
+    /// <see cref="BindingList{T}.AddNew"><![CDATA[BindingList<T>.AddNew]]></see> and <see cref="BindingList{T}.ListChanged"><![CDATA[BindingList<T>.ListChanged]]> invocation (when an element is changed)
+    /// slow because they call the <see cref="Collection{T}.IndexOf"><![CDATA[Collection{T}.IndexOf]]></see> method to determine the position of the added or changed element.</see>
+    /// </note>
+    /// <h1 class="heading">Comparison with <see cref="BindingList{T}"/></h1>
+    /// <para><strong>Incompatibility</strong> with <see cref="BindingList{T}"/>:
+    /// <list type="bullet">
+    /// <item><see cref="BindingList{T}"/> is derived from <see cref="Collection{T}"/>, whereas <see cref="FastBindingList{T}"/> is derived from <see cref="FastLookupCollection{T}"/>, which is derived from <see cref="VirtualCollection{T}"/>.
+    /// Both type implement the <see cref="IList{T}"/> interface though.</item>
+    /// <item><see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event has <see cref="AddingNewEventHandler"/> type, which uses <see cref="AddingNewEventArgs"/>,
+    /// whereas the <see cref="AddingNew"/> event has <see cref="EventHandler{T}"/> type where <em>T</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
+    /// that the latter is generic.</item>
+    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowRemove"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only.
+    /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="true"/>&#160;by default.</item>
+    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only, or <typeparamref name="T"/> is not a value type and has no parameterless constructor.
+    /// The return value of <see cref="AllowNew"/> does not change when <see cref="AddingNew"/> event is subscribed and setting <see cref="AllowNew"/> does not reset the list.
+    /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="false"/>&#160;if <typeparamref name="T"/> is not a primitive type and has no public parameterless constructor.
+    /// However, return value of <see cref="BindingList{T}.AllowNew"><![CDATA[BindingList<T>.AllowNew]]></see> can change when <see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event is subscribed,
+    /// and setting the <see cref="BindingList{T}.AllowNew"><![CDATA[BindingList<T>.AllowNew]]></see> property resets the list.</item>
+    /// <item>Calling <see cref="AddNew">AddNew</see> throws <see cref="InvalidOperationException"/> if <see cref="AllowNew"/> is <see langword="false"/>.</item>
+    /// <item>Calling <see cref="VirtualCollection{T}.Remove">Remove</see> or <see cref="VirtualCollection{T}.Clear">Clear</see> throws <see cref="InvalidOperationException"/> if <see cref="AllowRemove"/> is <see langword="false"/>.</item>
+    /// <item><see cref="AddNewCore">AddNewCore</see> returns <typeparamref name="T"/> instead of <see cref="object">object</see>.</item>
+    /// <item>If <see cref="AddNewCore">AddNewCore</see> is called for a <typeparamref name="T"/> type, which cannot be instantiated automatically and the <see cref="AddingNew"/> event is not subscribed or returns <see langword="null"/>,
+    /// then <see cref="InvalidOperationException"/> will be thrown. In contrast, <see cref="BindingList{T}.AddNewCore"><![CDATA[BindingList<T>.AddNewCore]]></see> can throw an <see cref="InvalidCastException"/> or <see cref="NotSupportedException"/>.</item>
+    /// </list>
+    /// </para>
+    /// <para><strong>New features and improvements</strong> compared to <see cref="BindingList{T}"/>:
+    /// <list type="bullet">
+    /// <item><term>Disposable</term><description>The <see cref="FastBindingList{T}"/> implements the <see cref="IDisposable"/> interface. When an instance is disposed, then both
+    /// incoming and outgoing event subscriptions (self events and <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the elements) are removed. If the wrapped collection passed
+    /// to the constructor is disposable, then it will also be disposed. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</description></item>
+    /// <item><term>Overridable properties</term><description>In <see cref="FastBindingList{T}"/> <see cref="AllowNew"/>, <see cref="AllowRemove"/>, <see cref="AllowEdit"/>
+    /// and <see cref="RaiseListChangedEvents"/> properties are virtual.</description></item>
+    /// <item><term>Find support</term><description>In <see cref="FastBindingList{T}"/> the <see cref="IBindingList.Find">IBindingList.Find</see> method is supported.
+    /// In <see cref="BindingList{T}"/> this throws a <see cref="NotSupportedException"/>.</description></item>
+    /// <item><term>Public members for finding and sorting</term><description><see cref="FastBindingList{T}"/> offers several public <see cref="O:KGySoft.ComponentModel.FastBindingList`1.Find">Find</see>
+    /// and <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads. <see cref="RemoveSort">RemoveSort</see> method and <see cref="IsSorted"/>/<see cref="SortProperty"/> properties are also public instead of explicit interface implementation.</description></item>
+    /// <item><term>New virtual members</term><description><see cref="AddIndexCore">AddIndexCore</see> and <see cref="RemoveIndexCore">RemoveIndexCore</see> methods can be overridden to implement <see cref="IBindingList.AddNew">IBindingList.AddNew</see> and <see cref="IBindingList.RemoveIndex">IBindingList.RemoveIndex</see> calls.</description></item>
+    /// </list>
+    /// </para>
+    /// <note type="tip"><see cref="FastBindingList{T}"/> does not implement sorting. See <see cref="SortableBindingList{T}"/> for an <see cref="IBindingList"/> implementation with sorting support.</note>
+    /// </remarks>
     [Serializable]
     public class FastBindingList<T> : FastLookupCollection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
     {
+        #region Fields
+
+        #region Static Fields
+
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
+
+        #endregion
+
+        #region Instance Fields
 
         private bool disposed;
         private bool allowNew;
@@ -43,6 +103,126 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private EventHandler<AddingNewEventArgs<T>> addingNewHandler;
         [NonSerialized] private ListChangedEventHandler listChangedHandler;
 
+        #endregion
+
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// Occurs when a new item is added to the list by the <see cref="AddNew">AddNew</see> method.
+        /// </summary>
+        /// <remarks>
+        /// By handling this event a custom item creation of <typeparamref name="T"/> can be provided.
+        /// </remarks>
+        public event EventHandler<AddingNewEventArgs<T>> AddingNew
+        {
+            add => addingNewHandler += value; // no need to fire ListChange as in the original version because we don't change AllowNew
+            remove => addingNewHandler -= value;
+        }
+
+        /// <summary>
+        /// Occurs when the list or an item in the list changes.
+        /// </summary>
+        public event ListChangedEventHandler ListChanged
+        {
+            add => listChangedHandler += value;
+            remove => listChangedHandler -= value;
+        }
+
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets or sets whether new items can be added to the list by the <see cref="AddNew">AddNew</see> method.
+        /// <br/>Default value: <see langword="true"/>&#160;if the wrapped list is not read-only and <typeparamref name="T"/> is a value type or has a parameterless constructor; otherwise, <see langword="false"/>.
+        /// </summary>
+        public virtual bool AllowNew
+        {
+            get => allowNew;
+            set
+            {
+                if (disposed)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                if (value == allowNew)
+                    return;
+                allowNew = value;
+                FireListChanged(ListChangedType.Reset, -1);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether item properties can be edited in the list.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        public virtual bool AllowEdit
+        {
+            get => allowEdit;
+            set
+            {
+                if (disposed)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                if (allowEdit == value)
+                    return;
+                allowEdit = value;
+                FireListChanged(ListChangedType.Reset, -1);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether items can be removed from the list by the <see cref="VirtualCollection{T}.Remove">Remove</see> or <see cref="VirtualCollection{T}.RemoveAt">RemoveAt</see> methods.
+        /// <br/>Default value: <see langword="true"/>&#160;if the wrapped list is not read-only; otherwise, <see langword="false"/>.
+        /// </summary>
+        public virtual bool AllowRemove
+        {
+            get => allowRemove;
+            set
+            {
+                if (disposed)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                if (allowRemove == value)
+                    return;
+                allowRemove = value;
+                FireListChanged(ListChangedType.Reset, -1);
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the items in the list are sorted.
+        /// </summary>
+        /// <remarks>This property returns the value of the overridable <see cref="IsSortedCore"/> property.</remarks>
+        public bool IsSorted => IsSortedCore;
+
+        /// <summary>
+        /// Gets a <see cref="PropertyDescriptor" /> that is being used for sorting. Returns <see langword="null"/> if the list is not sorted or
+        /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
+        /// </summary>
+        /// <remarks>This property returns the value of the overridable <see cref="SortPropertyCore"/> property.</remarks>
+        public PropertyDescriptor SortProperty => SortPropertyCore;
+
+        /// <summary>
+        /// Gets or sets whether adding or removing items within the list raises <see cref="ListChanged"/> events.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        public virtual bool RaiseListChangedEvents
+        {
+            get => raiseListChangedEvents;
+            set => raiseListChangedEvents = value;
+        }
+
+        #endregion
+
+        #region Internal Properties
+
+        internal /*private protected*/ bool IsAddingNew => isAddingNew;
+
+        #endregion
+
+        #region Protected Properties
+
         /// <summary>
         /// Gets the property descriptors of <typeparamref name="T"/>.
         /// </summary>
@@ -50,9 +230,62 @@ namespace KGySoft.ComponentModel
             // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
             => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
 
-        protected bool IsAddingNew => isAddingNew;
+        /// <summary>
+        /// Gets whether <see cref="ListChanged"/> events are enabled.
+        /// <br/>The base implementation returns <see langword="true"/>.
+        /// </summary>
+        protected virtual bool SupportsChangeNotificationCore => true;
 
-        #region Construction
+        /// <summary>
+        /// Gets whether the list supports searching.
+        /// <br/>The base implementation returns <see langword="true"/>.
+        /// </summary>
+        protected virtual bool SupportsSearchingCore => true;
+
+        /// <summary>
+        /// Gets whether the list supports sorting.
+        /// <br/>The base implementation returns <see langword="false"/>.
+        /// </summary>
+        protected virtual bool SupportsSortingCore => false;
+
+        /// <summary>
+        /// Gets whether the list is sorted.
+        /// <br/>The base implementation returns <see langword="false"/>.
+        /// </summary>
+        protected virtual bool IsSortedCore => false;
+
+        /// <summary>
+        /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/>&#160;if the list is not sorted or
+        /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
+        /// <br/>The base implementation returns always <see langword="null"/>.
+        /// </summary>
+        protected virtual PropertyDescriptor SortPropertyCore => null;
+
+        /// <summary>
+        /// Gets the direction the list is sorted.
+        /// <br/>The base implementation returns <see cref="ListSortDirection.Ascending"/>.
+        /// </summary>
+        protected virtual ListSortDirection SortDirectionCore => default;
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        bool IBindingList.SupportsChangeNotification => SupportsChangeNotificationCore;
+
+        bool IBindingList.SupportsSearching => SupportsSearchingCore;
+
+        bool IBindingList.SupportsSorting => SupportsSortingCore;
+
+        ListSortDirection IBindingList.SortDirection => SortDirectionCore;
+
+        bool IRaiseItemChangedEvents.RaisesItemChangedEvents => canRaiseItemChange;
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class using default settings.
@@ -63,7 +296,10 @@ namespace KGySoft.ComponentModel
         /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class with the specified <paramref name="list"/>.
         /// </summary>
         /// <param name="list">An <see cref="IList{T}" /> of items to be contained in the <see cref="FastBindingList{T}" />.</param>
-        /// TODO: remark: do not wrap another binding list or observable collection as their events are not captured here. To capture and generate events for both wrapped and self list operations use ObservableBindingList instead.
+        /// <remarks>
+        /// <note>Do not wrap another <see cref="IBindingList"/> or <see cref="ObservableCollection{T}"/> as their events are not captured here.
+        /// To capture and generate events for both wrapped and self list operations use <see cref="ObservableBindingList{T}"/> instead.</note>
+        /// </remarks>
         public FastBindingList(IList<T> list) : base(list) => Initialize();
 
         private void Initialize()
@@ -72,7 +308,7 @@ namespace KGySoft.ComponentModel
             bool readOnly = Items.IsReadOnly;
             allowNew = canAddNew && !readOnly;
             allowRemove = !readOnly;
-            allowEdit = Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
+            allowEdit = true; //Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
 
             raiseListChangedEvents = true;
             if (!canRaiseItemChange)
@@ -84,7 +320,486 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region PropertyChange
+        #region Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Adds a new item to the collection.
+        /// </summary>
+        /// <returns>The item added to the list.</returns>
+        /// <remarks>
+        /// <para>To customize the behavior either subscribe the <see cref="AddingNew"/> event or override the <see cref="AddNewCore">AddNewCore</see> method in a derived class.</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">The <see cref="AllowNew"/> property returns <see langword="false"/>
+        /// <br/>-or-
+        /// <br/><see cref="AddingNew"/> is not subscribed or returned <see langword="null"/>, and <typeparamref name="T"/> is not a value type
+        /// or has no parameterless constructor.</exception>
+        public T AddNew()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (!AllowNew)
+                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
+            isAddingNew = true;
+            try
+            {
+                return AddNewCore();
+            }
+            finally
+            {
+                isAddingNew = false;
+            }
+        }
+
+        /// <summary>
+        /// Sorts the list by the values of <typeparamref name="T"/> rather than one of its properties based on the specified <paramref name="direction"/>.
+        /// </summary>
+        /// <param name="direction">The desired direction of the sort.</param>
+        /// <exception cref="NotSupportedException"><see cref="SupportsSortingCore"/> returns <see langword="false"/>.</exception>
+        /// <remarks>
+        /// <para>To customize the behavior override the <see cref="ApplySortCore">ApplySortCore</see> method in a derived class.</para>
+        /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
+        public void ApplySort(ListSortDirection direction)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            ApplySortCore(null, direction);
+        }
+
+        /// <summary>
+        /// Sorts the list based on the specified <paramref name="property"/> and <paramref name="direction"/>.
+        /// </summary>
+        /// <param name="property">A <see cref="PropertyDescriptor"/> instance to sort by.</param>
+        /// <param name="direction">The desired direction of the sort.</param>
+        /// <exception cref="NotSupportedException"><see cref="SupportsSortingCore"/> returns <see langword="false"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="property"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="property"/> is not a property of <typeparamref name="T"/>.</exception>
+        /// <remarks>
+        /// <para>To customize the behavior override the <see cref="ApplySortCore">ApplySortCore</see> method in a derived class.</para>
+        /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// <note>In this overload <paramref name="property"/> cannot be <see langword="null"/>. To sort by the values of <typeparamref name="T"/> rather than one of its properties use the <see cref="ApplySort(ListSortDirection)"/> overload.</note>
+        /// </remarks>
+        public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (property == null)
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+            if (!PropertyDescriptors.Contains(property))
+                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
+            ApplySortCore(property, direction);
+        }
+
+        /// <summary>
+        /// Sorts the list based on the specified <paramref name="propertyName"/> and <paramref name="direction"/>.
+        /// </summary>
+        /// <param name="propertyName">A property name of <typeparamref name="T"/> to sort by.</param>
+        /// <param name="direction">The desired direction of the sort.</param>
+        /// <exception cref="NotSupportedException"><see cref="SupportsSortingCore"/> returns <see langword="false"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="propertyName"/> has no corresponding <see cref="PropertyDescriptor"/> in <typeparamref name="T"/>.</exception>
+        /// <remarks>
+        /// <para>To customize the behavior override the <see cref="ApplySortCore">ApplySortCore</see> method in a derived class.</para>
+        /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// <note>In this overload a property must be specified. To sort by the values of <typeparamref name="T"/> rather than one of its properties use the <see cref="ApplySort(ListSortDirection)"/> overload.</note>
+        /// </remarks>
+        public void ApplySort(string propertyName, ListSortDirection direction)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            PropertyDescriptor property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+            if (property == null)
+                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+            ApplySortCore(property, direction);
+        }
+
+        /// <summary>
+        /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort"/> overloads.
+        /// </summary>
+        /// <remarks>
+        /// <remarks>
+        /// <para>To customize the behavior override the <see cref="RemoveSortCore">RemoveSortCore</see> method in a derived class.</para>
+        /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
+        /// </remarks>
+        public void RemoveSort() => RemoveSortCore();
+
+        /// <summary>
+        /// Searches for the index of the item that has the specified property descriptor with the specified value.
+        /// </summary>
+        /// <param name="property">The <see cref="PropertyDescriptor" /> to search on.</param>
+        /// <param name="key">The value of the <paramref name="property" /> parameter to search for.</param>
+        /// <returns>The zero-based index of the item that matches the property descriptor and contains the specified value.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="property"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="property"/> is not a property of <typeparamref name="T"/>.</exception>
+        /// <remarks>
+        /// <para>To customize the behavior override the <see cref="FindCore">FindCore</see> method in a derived class.</para>
+        /// <note><paramref name="property"/> cannot be <see langword="null"/>. To search by the whole value of <typeparamref name="T"/> rather than by one of its properties
+        /// use the <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> method.</note>
+        /// </remarks>
+        public int Find(PropertyDescriptor property, object key)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (property == null)
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+            if (!PropertyDescriptors.Contains(property))
+                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
+            return FindCore(property, key);
+        }
+
+        /// <summary>
+        /// Searches for the index of the item that has the specified property descriptor with the specified value.
+        /// </summary>
+        /// <param name="propertyName">A property name of <typeparamref name="T"/> to search on.</param>
+        /// <param name="key">The value of the specified property to search for.</param>
+        /// <returns>The zero-based index of the item that matches the property descriptor and contains the specified value.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="propertyName"/> has no corresponding <see cref="PropertyDescriptor"/> in <typeparamref name="T"/>.</exception>
+        /// <remarks>
+        /// <para>To customize the behavior override the <see cref="FindCore">FindCore</see> method in a derived class.</para>
+        /// <note><paramref name="propertyName"/> cannot be <see langword="null"/>. To search by the whole value of <typeparamref name="T"/> rather than by one of its properties
+        /// use the <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> method.</note>
+        /// </remarks>
+        public int Find(string propertyName, object key)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
+            if (property == null)
+                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
+            return FindCore(property, key);
+        }
+
+        /// <summary>
+        /// Clears the list and removes both incoming and outgoing subscriptions.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Discards a pending new item added by the <see cref="AddNew">AddNew</see> method.
+        /// </summary>
+        /// <param name="itemIndex">The index of the item that was previously added to the collection.</param>
+        public virtual void CancelNew(int itemIndex)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (addNewPos < 0 || addNewPos != itemIndex)
+                return;
+
+            // Attention: this is a virtual method, meaning of index can be different in a derived class
+            RemoveItem(addNewPos);
+        }
+
+        /// <summary>
+        /// Commits a pending new item added by the <see cref="AddNew">AddNew</see> method.
+        /// </summary>
+        /// <param name="itemIndex">The index of the item that was previously added to the collection.</param>
+        public virtual void EndNew(int itemIndex)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            // inside from this class this should be called to make sure the index is not sorted.
+            if (addNewPos >= 0 && addNewPos == itemIndex)
+                EndNew();
+        }
+
+        /// <summary>
+        /// Raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.Reset"/>.
+        /// </summary>
+        public void ResetBindings()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            FireListChanged(ListChangedType.Reset, -1);
+        }
+
+        /// <summary>
+        /// Raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/> at the specified <paramref name="position"/>.
+        /// </summary>
+        public void ResetItem(int position)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            FireListChanged(ListChangedType.ItemChanged, position);
+        }
+
+        #endregion
+
+        #region Internal Methods
+
+        internal /*private protected*/ void FireListChanged(ListChangedType type, int index)
+        {
+            if (!raiseListChangedEvents)
+                return;
+            OnListChanged(new ListChangedEventArgs(type, index));
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// Called when an item contained in the <see cref="FastBindingList{T}"/> changes. Can be used if the binding list is sorted or uses indices.
+        /// <br/>The base implementation does nothing.
+        /// </summary>
+        /// <param name="item">The changed item.</param>
+        /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
+        /// <param name="property">The descriptor of the changed property.</param>
+        protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
+        {
+        }
+
+        /// <summary>
+        /// Raises the <see cref="AddingNew" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="AddingNewEventArgs{T}" /> instance containing the event data.</param>
+        protected virtual void OnAddingNew(AddingNewEventArgs<T> e) => addingNewHandler?.Invoke(this, e);
+
+        /// <summary>
+        /// Adds a new item to the collection.
+        /// </summary>
+        /// <returns>The item that was added to the collection.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="AddingNew"/> is not subscribed or returned <see langword="null"/>, and <typeparamref name="T"/> is not a value type
+        /// or has no parameterless constructor.</exception>
+        /// <remarks>
+        /// <para>This is the overridable implementation of the <see cref="AddNew">AddNew</see> method. The base implementation raises the <see cref="AddingNew"/> event. If is not
+        /// handled or returns <see langword="null"/>, then tries to create a new instance of <typeparamref name="T"/> and adds it to the end of the list.</para>
+        /// </remarks>
+        protected virtual T AddNewCore()
+        {
+            var e = new AddingNewEventArgs<T>();
+            OnAddingNew(e);
+            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewFastBindingList(typeof(T)));
+            Add(newItem);
+
+            // Return new item to caller
+            return newItem;
+        }
+
+        /// <summary>
+        /// In overridden a derived class, sorts the items of the list.
+        /// <br/>The base implementation throws a <see cref="NotSupportedException"/>.
+        /// </summary>
+        /// <param name="property">A <see cref="PropertyDescriptor"/> that specifies the property to sort on. If <see langword="null"/>, then the list will be sorted
+        /// by the values of <typeparamref name="T"/> rather than one of its properties.</param>
+        /// <param name="direction">The desired direction of the sort.</param>
+        /// <exception cref="NotSupportedException"><see cref="SupportsSortingCore"/> returns <see langword="false"/>.</exception>
+        /// <remarks>
+        /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
+        protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction) => throw new NotSupportedException(Res.NotSupported);
+
+        /// <summary>
+        /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort"/> overloads.
+        /// <br/>The base implementation throws a <see cref="NotSupportedException"/>.
+        /// </summary>
+        /// <exception cref="NotSupportedException"><see cref="SupportsSortingCore"/> returns <see langword="false"/>.</exception>
+        /// <remarks>
+        /// <note><see cref="FastBindingList{T}"/> throws a <see cref="NotSupportedException"/> for this method. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
+        protected virtual void RemoveSortCore() => throw new NotSupportedException(Res.NotSupported);
+
+        /// <summary>
+        /// Searches for the index of the item that has the specified property descriptor with the specified value.
+        /// <br/>The base implementation performs a linear search on the items.
+        /// </summary>
+        /// <param name="property">A <see cref="PropertyDescriptor"/> that specifies the property to search for.</param>
+        /// <param name="key">The value of <paramref name="property"/> to match.</param>
+        /// <remarks>
+        /// <note><see cref="FastBindingList{T}"/> performs a linear search for this method. <see cref="SortableBindingList{T}"/> is able to perform a binary search if
+        /// <paramref name="property"/> equals <see cref="SortProperty"/>.</note>
+        /// </remarks>
+        protected virtual int FindCore(PropertyDescriptor property, object key)
+        {
+            int length = Count;
+            for (int i = 0; i < length; i++)
+            {
+                // virtual GetItem call is intended here
+                if (Equals(property.GetValue(GetItem(i)), key))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// In a derived class adds the <see cref="PropertyDescriptors"/> to the indexes used for searching.
+        /// <br/>The base implementation does nothing.
+        /// </summary>
+        /// <param name="property">The property to add to the indexes used for searching.</param>
+        protected virtual void AddIndexCore(PropertyDescriptor property)
+        {
+        }
+
+        /// <summary>
+        /// In a derived class removes the <see cref="PropertyDescriptors"/> from the indexes used for searching.
+        /// <br/>The base implementation does nothing.
+        /// </summary>
+        /// <param name="property">The property to remove from the indexes used for searching.</param>
+        protected virtual void RemoveIndexCore(PropertyDescriptor property)
+        {
+        }
+
+        /// <summary>
+        /// Replaces the <paramref name="item" /> at the specified <paramref name="index" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to replace.</param>
+        /// <param name="item">The new value for the element at the specified index.</param>
+        /// <remarks>
+        /// <para>After the item is set, <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/> is raised indicating the index of the item that was set.</para>
+        /// </remarks>
+        protected override void SetItem(int index, T item)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            // ReSharper disable once RedundantBaseQualifier - not redundant: it is a virtual member and we prevent to call a possible derived method
+            T originalItem = base.GetItem(index);
+            if (ReferenceEquals(originalItem, item))
+                return;
+
+            if (canRaiseItemChange)
+                UnhookPropertyChanged(originalItem);
+
+            base.SetItem(index, item);
+
+            if (canRaiseItemChange)
+                HookPropertyChanged(item);
+
+            FireListChanged(ListChangedType.ItemChanged, index);
+        }
+
+        /// <summary>
+        /// Inserts an element into the <see cref="FastBindingList{T}" /> at the specified <paramref name="index" />.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
+        /// <param name="item">The object to insert.</param>
+        /// <remarks>
+        /// <para><see cref="InsertItem">InsertItem</see> performs the following operations:
+        /// <list type="number">
+        /// <item>Calls <see cref="EndNew(int)">EndNew</see> to commit the last possible uncommitted item added by the <see cref="AddNew">AddNew</see> method.</item>
+        /// <item>Inserts the item at the specified index.</item>
+        /// <item>Raises a <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/> indicating the index of the item that was inserted.</item>
+        /// </list>
+        /// </para>
+        /// </remarks>
+        protected override void InsertItem(int index, T item)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            EndNew();
+            if (isAddingNew)
+                addNewPos = index;
+
+            base.InsertItem(index, item);
+
+            // subscribing even if raising events is turned off now right now so we don't have to go through all items when raising is toggled
+            if (canRaiseItemChange)
+                HookPropertyChanged(item);
+
+            FireListChanged(ListChangedType.ItemAdded, index);
+        }
+
+        /// <summary>
+        /// Removes the element at the specified <paramref name="index" /> from the <see cref="FastBindingList{T}" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to remove.</param>
+        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/> and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
+        /// <remarks>
+        /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>.</para>
+        /// </remarks>
+        protected override void RemoveItem(int index)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            // even if remove not allowed we can remove the element being just added and yet uncommitted
+            if (!AllowRemove && !(addNewPos >= 0 && addNewPos == index))
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+
+            EndNew();
+            if (canRaiseItemChange)
+                // ReSharper disable once RedundantBaseQualifier - not redundant: it is a virtual member and we prevent to call a possible derived method
+                UnhookPropertyChanged(base.GetItem(index));
+
+            base.RemoveItem(index);
+            FireListChanged(ListChangedType.ItemDeleted, index);
+        }
+
+        /// <summary>
+        /// Removes all elements from the <see cref="FastBindingList{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.Reset"/>.</para>
+        /// </remarks>
+        protected override void ClearItems()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            if (Count == 0)
+                return;
+
+            // even if remove not allowed we can remove the element being just added and yet uncommitted
+            if (!AllowRemove && !(addNewPos == 0 && Count == 1))
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+
+            EndNew();
+            if (canRaiseItemChange)
+            {
+                foreach (T item in Items)
+                    UnhookPropertyChanged(item);
+            }
+
+            base.ClearItems();
+            FireListChanged(ListChangedType.Reset, -1);
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing || disposed)
+                return;
+
+            raiseListChangedEvents = false;
+            if (canRaiseItemChange)
+            {
+                foreach (T item in Items)
+                    UnhookPropertyChanged(item);
+            }
+
+            (Items as IDisposable)?.Dispose();
+            listChangedHandler = null;
+            addingNewHandler = null;
+            disposed = true;
+        }
+
+        /// <summary>
+        /// Commits a pending new item of any position added by the <see cref="AddNew">AddNew</see> method.
+        /// </summary>
+        protected virtual void EndNew() => addNewPos = -1;
+
+        /// <summary>
+        /// Raises the <see cref="ListChanged" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="ListChangedEventArgs" /> instance containing the event data.</param>
+        protected virtual void OnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
+
+        #endregion
+
+        #region Private Methods
 
         private void HookPropertyChanged(T item)
         {
@@ -101,6 +816,10 @@ namespace KGySoft.ComponentModel
 
             notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
         }
+
+        #endregion
+
+        #region Event handlers
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -126,406 +845,17 @@ namespace KGySoft.ComponentModel
             OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, pos, pd));
         }
 
-        /// <summary>
-        /// Called when an item contained in the <see cref="FastBindingList{T}"/> changes. Can be used if the binding list is sorted or uses indices.
-        /// <br/>The base implementation does nothing.
-        /// </summary>
-        /// <param name="item">The changed item.</param>
-        /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
-        /// <param name="property">The descriptor of the changed property.</param>
-        protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
-        {
-        }
-
         #endregion
 
-        #region AddingNew event
-
-        public event EventHandler<AddingNewEventArgs<T>> AddingNew
-        {
-            add => addingNewHandler += value; // no need to fire ListChange as in the original version because we don't change AllowNew
-            remove => addingNewHandler -= value;
-        }
-
-        protected virtual void OnAddingNew(AddingNewEventArgs<T> e) => addingNewHandler?.Invoke(this, e);
-
-        #endregion
-
-        #region IBindingList interface
-
-        public T AddNew()
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (!AllowNew)
-                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
-            isAddingNew = true;
-            try
-            {
-                return AddNewCore();
-            }
-            finally
-            {
-                isAddingNew = false;
-            }
-        }
+        #region Explicitly Implemented Interface Methods
 
         object IBindingList.AddNew() => AddNew();
 
-        // Remarks: Can throw InvalidOperationException
-        // Will not throw InvalidCastException as BindingList
-        protected virtual T AddNewCore()
-        {
-            var e = new AddingNewEventArgs<T>();
-            OnAddingNew(e);
-            T newItem = e.NewObject is T t ? t : canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewFastBindingList(typeof(T)));
-            Add(newItem);
-
-            // Return new item to caller
-            return newItem;
-        }
-
-        public virtual bool AllowNew
-        {
-            get => allowNew;
-            set
-            {
-                if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
-                if (value == allowNew)
-                    return;
-                allowNew = value;
-                FireListChanged(ListChangedType.Reset, -1);
-            }
-        }
-
-        public virtual bool AllowEdit
-        {
-            get => allowEdit;
-            set
-            {
-                if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
-                if (allowEdit == value)
-                    return;
-                allowEdit = value;
-                FireListChanged(ListChangedType.Reset, -1);
-            }
-        }
-
-        public virtual bool AllowRemove
-        {
-            get => allowRemove;
-            set
-            {
-                if (disposed)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
-                if (allowRemove == value)
-                    return;
-                allowRemove = value;
-                FireListChanged(ListChangedType.Reset, -1);
-            }
-        }
-
-        bool IBindingList.SupportsChangeNotification => SupportsChangeNotificationCore;
-
-        protected virtual bool SupportsChangeNotificationCore => true;
-
-        bool IBindingList.SupportsSearching => SupportsSearchingCore;
-
-        protected virtual bool SupportsSearchingCore => true;
-
-        bool IBindingList.SupportsSorting => SupportsSortingCore;
-
-        protected virtual bool SupportsSortingCore => false;
-
-        public bool IsSorted => IsSortedCore;
-
-        protected virtual bool IsSortedCore => false;
-
-        public PropertyDescriptor SortProperty => SortPropertyCore;
-
-        protected virtual PropertyDescriptor SortPropertyCore => null;
-
-        ListSortDirection IBindingList.SortDirection => SortDirectionCore;
-
-        protected virtual ListSortDirection SortDirectionCore => default;
-
-        public void ApplySort(ListSortDirection direction)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            ApplySortCore(null, direction);
-        }
-
-        // property cannot be null here
-        public void ApplySort(PropertyDescriptor property, ListSortDirection direction)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
-            if (!PropertyDescriptors.Contains(property))
-                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
-            ApplySortCore(property, direction);
-        }
-
-        public void ApplySort(string propertyName, ListSortDirection direction)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            PropertyDescriptor property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
-            if (property == null)
-                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
-            ApplySortCore(property, direction);
-        }
-
-        // property can be null
-        protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction)
-        {
-            // TODO: Res
-            throw new NotSupportedException();
-        }
-
-        public void RemoveSort() => RemoveSortCore();
-
-        protected virtual void RemoveSortCore()
-        {
-        }
-
-        // remark: property cannot be null here, to search for the whole element use IndexOf
-        public int Find(PropertyDescriptor property, object key)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (property == null)
-                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
-            if (!PropertyDescriptors.Contains(property))
-                throw new ArgumentException(Res.ComponentModelInvalidProperty(property, typeof(T)), nameof(property));
-            return FindCore(property, key);
-        }
-
-        public int Find(string propertyName, object key)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            var property = PropertyDescriptors[propertyName ?? throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull)];
-            if (property == null)
-                throw new ArgumentException(Res.ComponentModelPropertyNotExists(propertyName, typeof(T)), nameof(propertyName));
-            return FindCore(property, key);
-        }
-
-        protected virtual int FindCore(PropertyDescriptor property, object key)
-        {
-            int length = Count;
-            for (int i = 0; i < length; i++)
-            {
-                // virtual GetItem call is intended here
-                if (Equals(property.GetValue(GetItem(i)), key))
-                    return i;
-            }
-
-            return -1;
-        }
-
         void IBindingList.AddIndex(PropertyDescriptor property) => AddIndexCore(property);
-
-        protected virtual void AddIndexCore(PropertyDescriptor property)
-        {
-        }
 
         void IBindingList.RemoveIndex(PropertyDescriptor property) => RemoveIndexCore(property);
 
-        protected virtual void RemoveIndexCore(PropertyDescriptor property)
-        {
-        }
-
         #endregion
-
-        #region ICollection<T>
-
-        protected override void SetItem(int index, T item)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            T originalItem = base.GetItem(index);
-            if (ReferenceEquals(originalItem, item))
-                return;
-
-            if (canRaiseItemChange)
-                UnhookPropertyChanged(originalItem);
-
-            base.SetItem(index, item);
-
-            if (canRaiseItemChange)
-                HookPropertyChanged(item);
-
-            FireListChanged(ListChangedType.ItemChanged, index);
-        }
-
-        protected override void InsertItem(int index, T item)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            EndNew();
-            if (isAddingNew)
-                addNewPos = index;
-
-            base.InsertItem(index, item);
-
-            // subscribing even if raising events is turned off now right now so we don't have to go through all items when raising is toggled
-            if (canRaiseItemChange)
-                HookPropertyChanged(item);
-
-            FireListChanged(ListChangedType.ItemAdded, index);
-        }
-
-        protected override void RemoveItem(int index)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            // even if remove not allowed we can remove the element being just added and yet uncommitted
-            if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
-
-            EndNew();
-            if (canRaiseItemChange)
-                UnhookPropertyChanged(base.GetItem(index));
-
-            base.RemoveItem(index);
-            FireListChanged(ListChangedType.ItemDeleted, index);
-        }
-
-        protected override void ClearItems()
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            if (Count == 0)
-                return;
-
-            // even if remove not allowed we can remove the element being just added and yet uncommitted
-            if (!allowRemove && !(addNewPos == 0 && Count == 1))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
-
-            EndNew();
-            if (canRaiseItemChange)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
-
-            base.ClearItems();
-            FireListChanged(ListChangedType.Reset, -1);
-        }
-
-        #endregion
-
-        #region IDisposable
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposing || disposed)
-                return;
-
-            raiseListChangedEvents = false;
-            if (canRaiseItemChange)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
-
-            (Items as IDisposable)?.Dispose();
-
-            listChangedHandler = null;
-            addingNewHandler = null;
-            disposed = true;
-        }
-
-        /// <summary>
-        /// Clears the list and removes both incoming and outgoing subscriptions.
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion
-
-        #region ICancelAddNew
-
-        public virtual void CancelNew(int itemIndex)
-        {
-            // TODO: in comment: indices can have different order in a derived class, must be overridden along with RemoveItem, which is called from this method with the specified index
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (addNewPos < 0 || addNewPos != itemIndex)
-                return;
-
-            // Attention: this is a virtual method, meaning of index can be different in a derived class
-            RemoveItem(addNewPos);
-        }
-
-        public virtual void EndNew(int itemIndex)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            // inside from this class this should be called to make sure the index is not sorted.
-            if (addNewPos >= 0 && addNewPos == itemIndex)
-                EndNew();
-        }
-
-        protected virtual void EndNew() => addNewPos = -1;
-
-        #endregion
-
-        #region ListChanged event
-
-        public event ListChangedEventHandler ListChanged
-        {
-            add => listChangedHandler += value;
-            remove => listChangedHandler -= value;
-        }
-
-        protected virtual void OnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
-
-        public void ResetBindings()
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            FireListChanged(ListChangedType.Reset, -1);
-        }
-
-        public void ResetItem(int position)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            FireListChanged(ListChangedType.ItemChanged, position);
-        }
-
-        internal /*private protected*/ void FireListChanged(ListChangedType type, int index)
-        {
-            if (!raiseListChangedEvents)
-                return;
-            OnListChanged(new ListChangedEventArgs(type, index));
-        }
-
-        public virtual bool RaiseListChangedEvents
-        {
-            get => raiseListChangedEvents;
-            set => raiseListChangedEvents = value;
-        }
-
-        #endregion
-
-        #region IRaiseItemChangedEvents
-
-        bool IRaiseItemChangedEvents.RaisesItemChangedEvents => canRaiseItemChange;
 
         #endregion
     }

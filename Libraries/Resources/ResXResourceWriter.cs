@@ -37,11 +37,11 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
-    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section to see the differences.</note>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceWriter</a> section for the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>

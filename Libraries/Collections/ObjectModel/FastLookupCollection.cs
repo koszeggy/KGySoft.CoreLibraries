@@ -316,7 +316,7 @@ namespace KGySoft.Collections.ObjectModel
         }
 
         /// <summary>
-        /// Removes the element at the specified <paramref name="index" /> of the <see cref="FastLookupCollection{T}" />.
+        /// Removes the element at the specified <paramref name="index" /> from the <see cref="FastLookupCollection{T}" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
         protected override void RemoveItem(int index)

@@ -95,8 +95,8 @@
     <Compile Include="ComponentModel\_BusinessObjects\_Enums\ValidationSeverity.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Enums\EditableObjectBehavior.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoInternal.cs" />
-    <Compile Include="ComponentModel\_Collections\SortableBindingList.ItemComparer.cs" />
-    <Compile Include="ComponentModel\_Collections\SortableBindingList.ItemGenericComparer.cs" />
+    <Compile Include="ComponentModel\_Collections\ItemComparer.cs" />
+    <Compile Include="ComponentModel\_Collections\ItemGenericComparer.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableHelper.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\UndoableObjectBase.cs" />
     <Compile Include="ComponentModel\_BusinessObjects\_EventArgs\PropertyChangedExtendedEventArgs.cs" />

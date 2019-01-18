@@ -160,6 +160,7 @@ namespace KGySoft.ComponentModel
         private void DoSort()
         {
             EndNew();
+            // TODO: by a UseMovedOnSort whether to use ItemMoved for items instead of Reset
             //int length = Count;
             //bool reset = (sortedToBaseIndex?.Count).GetValueOrDefault() != length;
             //int[] previousBaseToSortedIndex = reset || sortedToBaseIndex == null ? null : new int[length];

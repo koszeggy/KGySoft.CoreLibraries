@@ -102,6 +102,7 @@ namespace KGySoft
         /// <summary>Maximum length must be greater than or equal to minimum length.</summary>
         internal static string MaxLengthLessThanMinLength => Get("General_MaxLengthLessThanMinLength");
 
+        // ReSharper disable InconsistentNaming
         /// <summary>Enumeration has either not started or has already finished.</summary>
         internal static string IEnumeratorEnumerationNotStartedOrFinished => Get("IEnumerator_EnumerationNotStartedOrFinished");
 
@@ -125,6 +126,7 @@ namespace KGySoft
 
         /// <summary>Modifying a read-only collection is not supported.</summary>
         internal static string ICollectionReadOnlyModifyNotSupported => Get("ICollection_ReadOnlyModifyNotSupported");
+        // ReSharper restore InconsistentNaming
 
         #endregion
 
@@ -320,9 +322,6 @@ namespace KGySoft
         /// <summary>Destination stream cannot be written.</summary>
         internal static string StreamExtensionsStreamCannotWrite => Get("StreamExtensions_StreamCannotWrite");
 
-        /// <summary>Cannot seek to the beginning of the stream.</summary>
-        internal static string StreamExtensionsStreamCannotSeek => Get("StreamExtensions_StreamCannotSeek");
-
         #endregion
 
         #region StringExtensions
@@ -394,11 +393,13 @@ namespace KGySoft
         /// <summary>Value "{0}" contains illegal path characters.</summary>
         internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
 
+        // ReSharper disable InconsistentNaming
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string ICollectionNongenericValueTypeInvalid(object value, Type type) => Get("ICollection_NongenericValueTypeInvalidFormat", value, type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
         internal static string IDictionaryNongenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NongenericKeyTypeInvalidFormat", key, type);
+        // ReSharper restore InconsistentNaming
 
         #endregion
 

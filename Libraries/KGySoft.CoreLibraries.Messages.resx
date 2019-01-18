@@ -280,9 +280,6 @@ Hit rate: {8:P2}</value>
   <data name="StreamExtensions_StreamCannotRead" xml:space="preserve">
     <value>Source stream cannot be read.</value>
   </data>
-  <data name="StreamExtensions_StreamCannotSeek" xml:space="preserve">
-    <value>Cannot seek to the beginning of the stream.</value>
-  </data>
   <data name="StreamExtensions_StreamCannotWrite" xml:space="preserve">
     <value>Destination stream cannot be written.</value>
   </data>

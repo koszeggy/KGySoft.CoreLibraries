@@ -39,7 +39,7 @@ namespace KGySoft.Resources
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
     /// New elements can be added as well, which can be saved into the <c>.resx</c> files.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <see cref="ResourceManager"/> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <see cref="ResourceManager"/> class.
     /// </summary>
     /// <remarks>
     /// <para><see cref="ResXResourceManager"/> class is derived from <see cref="ResourceManager"/> so it can be used the same way.

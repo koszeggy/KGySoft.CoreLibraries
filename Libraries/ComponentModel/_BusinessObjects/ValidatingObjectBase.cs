@@ -53,7 +53,7 @@ namespace KGySoft.ComponentModel
     /// <br/><see cref="ValidatingObjectBase"/> implements also the <see cref="IDataErrorInfo">System.ComponentModel.IDataErrorInfo</see> interface, which is the oldest standard way in .NET to support validation, therefore it is
     /// supported by most frameworks. <see cref="IDataErrorInfo"/> is able to report errors only, so if warnings and validation infos should also be displayed by a UI, then the object should be accessed via the <see cref="IValidatingObject"/> interface.</para>
     /// <example>
-    /// The following example shows how to implement validation:
+    /// The following example shows how to implement property validation:
     /// <code lang="C#"><![CDATA[
     /// public class MyModel : ValidatingObjectBase
     /// {
@@ -67,11 +67,12 @@ namespace KGySoft.ComponentModel
     /// 
     ///         // info
     ///         if (Id == 0)
-    ///             result.Add(new ValidationResult(nameof(Id), "This will be considered as a new object when saved", ValidationSeverity.Information));
+    ///             result.AddInfo(nameof(Id), "This will be considered as a new object when saved");
+    ///             // or: result.Add(new ValidationResult(nameof(Id), "This will be considered as a new object when saved", ValidationSeverity.Information));
     /// 
     ///         // warning
     ///         if (Id < 0)
-    ///             result.Add(new ValidationResult(nameof(Id), $"{nameof(Id)} is recommended to be greater or equal to 0.", ValidationSeverity.Warning));
+    ///             result.AddWarning(nameof(Id), $"{nameof(Id)} is recommended to be greater or equal to 0.");
     /// 
     ///         // error
     ///         if (String.IsNullOrEmpty(Name))
@@ -149,7 +150,10 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Performs the validation on this instance and returns the validation results. Must not return <see langword="null"/>.
         /// </summary>
-        /// <returns> A <see cref="ValidationResultsCollection" /> instance containing the validation results.</returns>
+        /// <returns>A <see cref="ValidationResultsCollection" /> instance containing the validation results.</returns>
+        /// <remarks>
+        /// <note>See the <strong>Remarks</strong> section of the <see cref="ValidatingObjectBase"/> class for an example.</note>
+        /// </remarks>
         protected abstract ValidationResultsCollection DoValidation();
 
         /// <summary>
@@ -164,10 +168,7 @@ namespace KGySoft.ComponentModel
 
         #region Protected-Internal Methods
 
-        /// <summary>
-        /// Raises the <see cref="ObservableObjectBase.PropertyChanged" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
+        /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
             // Invalidating cached validation results if an affected property has changed.

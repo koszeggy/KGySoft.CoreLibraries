@@ -179,10 +179,7 @@ namespace KGySoft.ComponentModel
 
         #region Protected-Internal Methods
 
-        /// <summary>
-        /// Raises the <see cref="ObservableObjectBase.PropertyChanged" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
+        /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
             if (PropertiesInternal.ContainsKey(e.PropertyName))

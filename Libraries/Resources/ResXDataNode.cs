@@ -40,11 +40,11 @@ namespace KGySoft.Resources
 #pragma warning disable 618
     /// <summary>
     /// Represents a resource or metadata element in an XML resource (.resx) file.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
-    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXDataNode</a> section to see the differences.</note>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXDataNode</a> section for the differences.</note>
     /// <para>The <see cref="ResXDataNode"/> class supports the representation of rich data types within a resource file. It can support the storage of any object in a resource file.</para>
     /// <para>You can create a <see cref="ResXDataNode"/> object by calling one of its overloaded class constructors.
     /// You can then add the resource item or element to a resource file by one of the following options:

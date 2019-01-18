@@ -27,11 +27,11 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourceset.aspx" target="_blank">System.Resources.ResXResourceSet</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceSet.aspx" target="_blank">System.Resources.ResXResourceSet</a>
-    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section to see the differences.</note>
+    /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXResourceSet</a> section for the differences.</note>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// <para>The <see cref="ResXResourceSet"/> class represents a single XML resource file (.resx file) in memory. It uses <see cref="ResXResourceReader"/> internally to read the .resx content and <see cref="ResXResourceWriter"/> to save it.</para>

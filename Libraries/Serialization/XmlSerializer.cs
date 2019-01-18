@@ -16,7 +16,7 @@ namespace KGySoft.Serialization
     /// <summary>
     /// <see cref="XmlSerializer"/> makes possible serializing and deserializing object instances into/from XML content. The class contains various overloads to support serializing directly into file or by
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
-    /// <br/>See the <strong>Remarks</strong> section to see the differences compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a> class.
     /// </summary>
     /// <remarks>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
