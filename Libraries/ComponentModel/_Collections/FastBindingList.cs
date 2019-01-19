@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
+using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -31,26 +32,25 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a generic list that is able to notify its consumer about changes and supports data binding.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <see cref="BindingList{T}"/> class.
+    /// <br/>See the <strong>Remarks</strong> section for the differences compared to the <see cref="BindingList{T}"/> class.
     /// </summary>
     /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
-    /// <note><see cref="FastBindingList{T}"/> is compatible with <see cref="BindingList{T}"/> but has a better performance than that because element lookup
+    /// <note><see cref="FastBindingList{T}"/> is mainly compatible with <see cref="BindingList{T}"/> but has a better performance than that because element lookup
     /// in <see cref="FastBindingList{T}"/> is an O(1) operation. In contrast, element lookup in <see cref="BindingList{T}"/> is an O(n) operation, which makes
-    /// <see cref="BindingList{T}.AddNew"><![CDATA[BindingList<T>.AddNew]]></see> and <see cref="BindingList{T}.ListChanged"><![CDATA[BindingList<T>.ListChanged]]> invocation (when an element is changed)
-    /// slow because they call the <see cref="Collection{T}.IndexOf"><![CDATA[Collection{T}.IndexOf]]></see> method to determine the position of the added or changed element.</see>
-    /// </note>
+    /// <see cref="BindingList{T}.AddNew"><![CDATA[BindingList<T>.AddNew]]></see> and <see cref="BindingList{T}.ListChanged"><![CDATA[BindingList<T>.ListChanged]]></see> invocation (when an element is changed)
+    /// slow because they call the <see cref="Collection{T}.IndexOf"><![CDATA[Collection{T}.IndexOf]]></see> method to determine the position of the added or changed element.</note>
     /// <h1 class="heading">Comparison with <see cref="BindingList{T}"/></h1>
     /// <para><strong>Incompatibility</strong> with <see cref="BindingList{T}"/>:
     /// <list type="bullet">
     /// <item><see cref="BindingList{T}"/> is derived from <see cref="Collection{T}"/>, whereas <see cref="FastBindingList{T}"/> is derived from <see cref="FastLookupCollection{T}"/>, which is derived from <see cref="VirtualCollection{T}"/>.
     /// Both type implement the <see cref="IList{T}"/> interface though.</item>
     /// <item><see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event has <see cref="AddingNewEventHandler"/> type, which uses <see cref="AddingNewEventArgs"/>,
-    /// whereas the <see cref="AddingNew"/> event has <see cref="EventHandler{T}"/> type where <em>T</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
+    /// whereas in <see cref="FastBindingList{T}"/> the <see cref="AddingNew"/> event has <see cref="EventHandler{T}"/> type where <em>T</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
     /// that the latter is generic.</item>
     /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowRemove"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only.
     /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="true"/>&#160;by default.</item>
-    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only, or <typeparamref name="T"/> is not a value type and has no parameterless constructor.
+    /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only, or when <typeparamref name="T"/> is not a value type and has no parameterless constructor.
     /// The return value of <see cref="AllowNew"/> does not change when <see cref="AddingNew"/> event is subscribed and setting <see cref="AllowNew"/> does not reset the list.
     /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="false"/>&#160;if <typeparamref name="T"/> is not a primitive type and has no public parameterless constructor.
     /// However, return value of <see cref="BindingList{T}.AllowNew"><![CDATA[BindingList<T>.AllowNew]]></see> can change when <see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event is subscribed,
@@ -59,7 +59,7 @@ namespace KGySoft.ComponentModel
     /// <item>Calling <see cref="VirtualCollection{T}.Remove">Remove</see> or <see cref="VirtualCollection{T}.Clear">Clear</see> throws <see cref="InvalidOperationException"/> if <see cref="AllowRemove"/> is <see langword="false"/>.</item>
     /// <item><see cref="AddNewCore">AddNewCore</see> returns <typeparamref name="T"/> instead of <see cref="object">object</see>.</item>
     /// <item>If <see cref="AddNewCore">AddNewCore</see> is called for a <typeparamref name="T"/> type, which cannot be instantiated automatically and the <see cref="AddingNew"/> event is not subscribed or returns <see langword="null"/>,
-    /// then <see cref="InvalidOperationException"/> will be thrown. In contrast, <see cref="BindingList{T}.AddNewCore"><![CDATA[BindingList<T>.AddNewCore]]></see> can throw an <see cref="InvalidCastException"/> or <see cref="NotSupportedException"/>.</item>
+    /// then an <see cref="InvalidOperationException"/> will be thrown. In contrast, <see cref="BindingList{T}.AddNewCore"><![CDATA[BindingList<T>.AddNewCore]]></see> can throw an <see cref="InvalidCastException"/> or <see cref="NotSupportedException"/>.</item>
     /// </list>
     /// </para>
     /// <para><strong>New features and improvements</strong> compared to <see cref="BindingList{T}"/>:
@@ -67,16 +67,16 @@ namespace KGySoft.ComponentModel
     /// <item><term>Disposable</term><description>The <see cref="FastBindingList{T}"/> implements the <see cref="IDisposable"/> interface. When an instance is disposed, then both
     /// incoming and outgoing event subscriptions (self events and <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the elements) are removed. If the wrapped collection passed
     /// to the constructor is disposable, then it will also be disposed. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</description></item>
-    /// <item><term>Overridable properties</term><description>In <see cref="FastBindingList{T}"/> <see cref="AllowNew"/>, <see cref="AllowRemove"/>, <see cref="AllowEdit"/>
+    /// <item><term>Overridable properties</term><description>In <see cref="FastBindingList{T}"/> the <see cref="AllowNew"/>, <see cref="AllowRemove"/>, <see cref="AllowEdit"/>
     /// and <see cref="RaiseListChangedEvents"/> properties are virtual.</description></item>
     /// <item><term>Find support</term><description>In <see cref="FastBindingList{T}"/> the <see cref="IBindingList.Find">IBindingList.Find</see> method is supported.
     /// In <see cref="BindingList{T}"/> this throws a <see cref="NotSupportedException"/>.</description></item>
     /// <item><term>Public members for finding and sorting</term><description><see cref="FastBindingList{T}"/> offers several public <see cref="O:KGySoft.ComponentModel.FastBindingList`1.Find">Find</see>
-    /// and <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads. <see cref="RemoveSort">RemoveSort</see> method and <see cref="IsSorted"/>/<see cref="SortProperty"/> properties are also public instead of explicit interface implementation.</description></item>
-    /// <item><term>New virtual members</term><description><see cref="AddIndexCore">AddIndexCore</see> and <see cref="RemoveIndexCore">RemoveIndexCore</see> methods can be overridden to implement <see cref="IBindingList.AddNew">IBindingList.AddNew</see> and <see cref="IBindingList.RemoveIndex">IBindingList.RemoveIndex</see> calls.</description></item>
+    /// and <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads. <see cref="RemoveSort">RemoveSort</see> method and <see cref="IsSorted"/>/<see cref="SortProperty"/> properties are also public instead of explicit interface implementations.</description></item>
+    /// <item><term>New virtual members</term><description><see cref="AddIndexCore">AddIndexCore</see> and <see cref="RemoveIndexCore">RemoveIndexCore</see> methods can be overridden to implement <see cref="IBindingList.AddIndex">IBindingList.AddIndex</see> and <see cref="IBindingList.RemoveIndex">IBindingList.RemoveIndex</see> calls.</description></item>
     /// </list>
     /// </para>
-    /// <note type="tip"><see cref="FastBindingList{T}"/> does not implement sorting. See <see cref="SortableBindingList{T}"/> for an <see cref="IBindingList"/> implementation with sorting support.</note>
+    /// <note type="tip"><see cref="FastBindingList{T}"/> does not implement sorting. See the derived <see cref="SortableBindingList{T}"/> class for an <see cref="IBindingList"/> implementation with sorting support.</note>
     /// </remarks>
     [Serializable]
     public class FastBindingList<T> : FastLookupCollection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
@@ -288,7 +288,7 @@ namespace KGySoft.ComponentModel
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class using default settings.
+        /// Initializes a new instance of the <see cref="FastBindingList{T}"/> class with a <see cref="CircularList{T}"/> internally.
         /// </summary>
         public FastBindingList() => Initialize();
 
@@ -328,13 +328,13 @@ namespace KGySoft.ComponentModel
         /// Adds a new item to the collection.
         /// </summary>
         /// <returns>The item added to the list.</returns>
-        /// <remarks>
-        /// <para>To customize the behavior either subscribe the <see cref="AddingNew"/> event or override the <see cref="AddNewCore">AddNewCore</see> method in a derived class.</para>
-        /// </remarks>
         /// <exception cref="InvalidOperationException">The <see cref="AllowNew"/> property returns <see langword="false"/>
         /// <br/>-or-
         /// <br/><see cref="AddingNew"/> is not subscribed or returned <see langword="null"/>, and <typeparamref name="T"/> is not a value type
         /// or has no parameterless constructor.</exception>
+        /// <remarks>
+        /// <para>To customize the behavior either subscribe the <see cref="AddingNew"/> event or override the <see cref="AddNewCore">AddNewCore</see> method in a derived class.</para>
+        /// </remarks>
         public T AddNew()
         {
             if (disposed)
@@ -416,7 +416,7 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort"/> overloads.
+        /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads.
         /// </summary>
         /// <remarks>
         /// <remarks>
@@ -524,6 +524,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/> at the specified <paramref name="position"/>.
         /// </summary>
+        /// <param name="position">A zero-based index of the item to be reset.</param>
         public void ResetItem(int position)
         {
             if (disposed)
@@ -570,7 +571,7 @@ namespace KGySoft.ComponentModel
         /// <exception cref="InvalidOperationException"><see cref="AddingNew"/> is not subscribed or returned <see langword="null"/>, and <typeparamref name="T"/> is not a value type
         /// or has no parameterless constructor.</exception>
         /// <remarks>
-        /// <para>This is the overridable implementation of the <see cref="AddNew">AddNew</see> method. The base implementation raises the <see cref="AddingNew"/> event. If is not
+        /// <para>This is the overridable implementation of the <see cref="AddNew">AddNew</see> method. The base implementation raises the <see cref="AddingNew"/> event. If it is not
         /// handled or returns <see langword="null"/>, then tries to create a new instance of <typeparamref name="T"/> and adds it to the end of the list.</para>
         /// </remarks>
         protected virtual T AddNewCore()
@@ -585,7 +586,7 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// In overridden a derived class, sorts the items of the list.
+        /// If overridden in a derived class, sorts the items of the list.
         /// <br/>The base implementation throws a <see cref="NotSupportedException"/>.
         /// </summary>
         /// <param name="property">A <see cref="PropertyDescriptor"/> that specifies the property to sort on. If <see langword="null"/>, then the list will be sorted
@@ -598,7 +599,7 @@ namespace KGySoft.ComponentModel
         protected virtual void ApplySortCore(PropertyDescriptor property, ListSortDirection direction) => throw new NotSupportedException(Res.NotSupported);
 
         /// <summary>
-        /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort"/> overloads.
+        /// Removes any sort applied by the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads.
         /// <br/>The base implementation throws a <see cref="NotSupportedException"/>.
         /// </summary>
         /// <exception cref="NotSupportedException"><see cref="SupportsSortingCore"/> returns <see langword="false"/>.</exception>
@@ -631,19 +632,19 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// In a derived class adds the <see cref="PropertyDescriptors"/> to the indexes used for searching.
+        /// If overridden in a derived class, adds the <see cref="PropertyDescriptors"/> to the indices used for searching.
         /// <br/>The base implementation does nothing.
         /// </summary>
-        /// <param name="property">The property to add to the indexes used for searching.</param>
+        /// <param name="property">The property to add to the indices used for searching.</param>
         protected virtual void AddIndexCore(PropertyDescriptor property)
         {
         }
 
         /// <summary>
-        /// In a derived class removes the <see cref="PropertyDescriptors"/> from the indexes used for searching.
+        /// If overridden in a derived class, removes the <see cref="PropertyDescriptors"/> from the indices used for searching.
         /// <br/>The base implementation does nothing.
         /// </summary>
-        /// <param name="property">The property to remove from the indexes used for searching.</param>
+        /// <param name="property">The property to remove from the indices used for searching.</param>
         protected virtual void RemoveIndexCore(PropertyDescriptor property)
         {
         }
