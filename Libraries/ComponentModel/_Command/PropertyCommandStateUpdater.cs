@@ -1,6 +1,27 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: PropertyCommandStateUpdater.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.ComponentModel;
+
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.ComponentModel
 {
@@ -10,6 +31,7 @@ namespace KGySoft.ComponentModel
     /// For example, if a command represents a UI action bound to a menu item or a button (or both), then changing the <see cref="ICommandState.Enabled"/>
     /// property changes the <c>Enabled</c> property of the bound sources as well. You can adjust the text, shortcuts, associated image, checked state, etc. of
     /// the sources similarly.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>A state updater can be added to a binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.</para>
@@ -19,20 +41,32 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="ICommandStateUpdater" />
     public sealed class PropertyCommandStateUpdater : ICommandStateUpdater
     {
-        private PropertyCommandStateUpdater()
-        {
-        }
+        #region Properties
 
         /// <summary>
         /// Gets the <see cref="PropertyCommandStateUpdater"/> instance.
         /// </summary>
         public static PropertyCommandStateUpdater Updater { get; } = new PropertyCommandStateUpdater();
 
-        bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object value) 
+        #endregion
+
+        #region Constructors
+
+        private PropertyCommandStateUpdater()
+        {
+        }
+
+        #endregion
+
+        #region Methods
+
+        bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object value)
             => Reflector.TrySetProperty(commandSource, stateName, value);
 
         void IDisposable.Dispose()
         {
         }
+
+        #endregion
     }
 }

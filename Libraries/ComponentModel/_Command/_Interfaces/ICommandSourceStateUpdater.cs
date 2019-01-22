@@ -24,16 +24,18 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents an updater for the <see cref="ICommandState"/> entries that apply the state values on the command source instances.
-    /// For example, if the command source is a UI element such as a button or menu item, then the <see cref="ICommandState.Enabled"/>
-    /// or any arbitrary state (eg. text, image, shortcut, etc.) can be applied to the sources. See the <strong>Remarks</strong> section for details.
+    /// For example, if the command source is a UI element such as a button or menu item, then the <see cref="ICommandState.Enabled"/> property
+    /// or any arbitrary state (eg. text, image, shortcut, etc.) can be applied to the sources.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// <para>If a binding has no updaters, then the states are not synchronized back to the sources.</para>
     /// <para>A state updater can be added to a binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
     /// Multiple updaters can be added so if the first one cannot apply a state entry, then the second one will be used as a fallback and so on.</para>
     /// <para>If state entries represent properties on the source use can add the <see cref="PropertyCommandStateUpdater"/> to the <see cref="ICommandBinding"/>.</para>
-    /// <para>If you want to seal the falling back of the updaters you can use the <see cref="NullStateUpdater"/> after the last updater you want to allow to work.
+    /// <para>If you want to seal the falling back logic of the updaters you can use the <see cref="NullStateUpdater"/> after the last updater you want to allow to work.
     /// If the <see cref="NullStateUpdater"/> is the first added updater, then synchronization of the states will be completely disabled even if other updaters are chained.</para>
+    /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.</note>
     /// </remarks>
     /// <seealso cref="ICommand" />
     /// <seealso cref="ICommandState" />

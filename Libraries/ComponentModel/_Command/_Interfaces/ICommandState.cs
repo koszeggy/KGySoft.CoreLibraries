@@ -32,11 +32,14 @@ namespace KGySoft.ComponentModel
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
+    /// <para>The <see cref="Enabled"/> state, which is also predefined as a property, has a special function. By setting the <see cref="Enabled"/> property
+    /// the execution of the command can be disabled or enabled.</para>
     /// <para>If a binding has no updaters, then the states are not synchronized back to the sources.</para>
     /// <para>A state updater can be added to a binding by the <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
     /// Multiple updaters can be added so if the first one cannot apply a state entry, then the second one will be used as a fallback and so on.</para>
-    /// <para>If state entries represent properties on the source use can add the <see cref="PropertyCommandStateUpdater"/> to the <see cref="ICommandBinding"/>.</para>
-    /// <para>See the <strong>Remarks</strong> section of <see cref="ICommand"/> for examples.</para>
+    /// <para>If state entries represent properties on the source you can add the <see cref="PropertyCommandStateUpdater"/> to the <see cref="ICommandBinding"/>
+    /// so changing the <c>Enabled</c>, <c>Text</c>, <c>Image</c>, <c>Shortcut</c>, etc. state entries will change the same properties on the command sources as well.</para>
+    /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.</note>
     /// </remarks>
     /// <seealso cref="ICommand" />
     /// <seealso cref="ICommandStateUpdater" />

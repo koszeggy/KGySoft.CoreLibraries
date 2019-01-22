@@ -24,7 +24,9 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents source information about the command.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
+    /// <typeparam name="TEventArgs">The type of the event arguments of the source event.</typeparam>
     public interface ICommandSource<out TEventArgs> : ICommandSource
         where TEventArgs : EventArgs
     {

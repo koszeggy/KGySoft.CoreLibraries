@@ -24,7 +24,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents a command, which is unaware of its triggering sources and has no bound targets.
-    /// <br/>To see examples how to use the difference command types see the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <seealso cref="ICommand" />
     public class SimpleCommand : ICommand, IDisposable

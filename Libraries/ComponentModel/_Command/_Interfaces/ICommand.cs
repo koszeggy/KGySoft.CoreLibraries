@@ -24,7 +24,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents a command, which can be used to create a binding between an event of one or more sources and zero or more target objects. Can be used easily to bind
-    /// events with targets with any technology, even in Windows Forms environment or without any UI.
+    /// events with targets with any technology.
     /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
@@ -72,7 +72,7 @@ namespace KGySoft.ComponentModel
     /// 
     ///     private CommandBindingsCollection commandBindings = new CommandBindingsCollection();
     /// 
-    ///     public SomeViewBaseWithEvents()
+    ///     public MyView()
     ///     {
     ///         // ...some initialization of our View...
     /// 
@@ -80,13 +80,15 @@ namespace KGySoft.ComponentModel
     ///         // Below we assume we have a menu item with a Click event.
     ///         // We set also the initial status. By adding the property state updater the
     ///         // states will be applied on the source as properties.
-    ///         exitBinding = MyBindings.CloseApplication.CreateBinding(menuItemExit, "Click",
+    ///         exitBinding = MyCommands.CloseApplication.CreateBinding(
     ///             new Dictionary<string, object>
     ///             {
     ///                 { "Text", "Exit Application" },
     ///                 { "ShortcutKeys", Keys.Alt | Keys.F4 },
     ///                 { "ExitCode", 0 },
-    ///             }).AddStateUpdater(PropertyCommandStateUpdater.Updater);
+    ///             })
+    ///            .AddStateUpdater(PropertyCommandStateUpdater.Updater)
+    ///            .AddSource(menuItemExit, "Click");
     /// 
     ///         // If we add the created bindings to a CommandBindingsCollection, then all of them can be disposed at once by disposing the collection.
     ///         commandBindings.Add(exitBinding);
@@ -135,7 +137,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="source">An <see cref="ICommandSource"/> object containing information about the source of the command.</param>
         /// <param name="state">An <see cref="ICommandState"/> instance containing the state of the current command binding. The state can be changed during the execution.</param>
-        /// <param name="target">The target of the execution. Can be <see langword="null"/>&#160;if the binding contains no targets.</param>
+        /// <param name="target">The target of the execution. Can be <see langword="null"/>&#160;if the binding has no targets.</param>
         void Execute(ICommandSource source, ICommandState state, object target);
 
         #endregion

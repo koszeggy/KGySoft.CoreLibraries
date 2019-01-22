@@ -24,6 +24,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents source information about the command.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     public interface ICommandSource
     {

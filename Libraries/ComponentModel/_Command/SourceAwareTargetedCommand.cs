@@ -24,7 +24,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents a command, which is aware of its triggering sources and has one or more bound targets.
-    /// <br/>To see examples how to use the difference command types see the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
     /// <typeparam name="TTarget">The type of the target.</typeparam>

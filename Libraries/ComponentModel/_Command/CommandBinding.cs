@@ -60,6 +60,7 @@ namespace KGySoft.ComponentModel
         {
             #region Methods
 
+            // ReSharper disable once UnusedParameter.Local - sender must be specified because this method is invoked by event handler delegates
             internal void Execute(object sender, TEventArgs e) => Binding.InvokeCommand(new CommandSource<TEventArgs> { Source = Source, TriggeringEvent = EventName, EventArgs = e });
 
             #endregion
