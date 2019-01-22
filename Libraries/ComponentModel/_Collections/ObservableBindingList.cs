@@ -1,70 +1,184 @@
 ﻿#if !NET35
+#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ObservableBindingList.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
+
 using KGySoft.Annotations;
-using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
+#endregion
+
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Provides a class that combines the features of an <see cref="ObservableCollection{T}"/> and <see cref="BindingList{T}"/>.
-    /// If initialized by another <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> implementations captures and delegates also their events.
-    /// If initialized by the default constructor will use a <see cref="SortableBindingList{T}"/> inside.
+    /// Provides a class that combines the features of an <see cref="ObservableCollection{T}"/> and <see cref="BindingList{T}"/>. Unlike <see cref="ObservableCollection{T}"/>, can raise the <see cref="CollectionChanged"/> event also when a property
+    /// of a contained element changes.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <seealso cref="ObservableCollection{T}" />
     /// <seealso cref="IBindingList" />
     /// <remarks>
-    /// <note>In NET 3.5 this class is not available because it would require to reference <c>System.WindowsBase.dll</c></note>
+    /// <note>In NET 3.5 this class is not available because it would require to reference <c>System.WindowsBase.dll</c>.</note>
+    /// <para>The <see cref="ObservableBindingList{T}"/> can be used any environment where either <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> (mainly <see cref="ObservableCollection{T}"/>) types are supported.</para>
+    /// <para>If initialized by another <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> implementations, the <see cref="ObservableBindingList{T}"/> will capture and delegate also the events of the inner collections.</para>
+    /// <para>If the <see cref="ObservableBindingList{T}"/> is initialized by the default constructor it will use a <see cref="SortableBindingList{T}"/> inside.</para>
+    /// <note type="tip">In an environment, which supports only the <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> interface but not the other, <see cref="ObservableBindingList{T}"/> can be used as a bridge between the two worlds.
+    /// For example, by passing an <see cref="ObservableCollection{T}"/> to the constructor, it will be able to be accessed as an <see cref="IBindingList"/> implementation, and vice-versa: by wrapping an <see cref="IBindingList"/> instance
+    /// (such as <see cref="FastBindingList{T}"/> or <see cref="SortableBindingList{T}"/>), it can be used as an <see cref="INotifyCollectionChanged"/> implementation by the <see cref="ObservableBindingList{T}"/> class.</note>
+    /// <para><strong>Differences</strong> to the <see cref="ObservableCollection{T}"/> class:
+    /// <list type="bullet">
+    /// <item>The <see cref="PropertyChanged"/> event is raised also for a sort of additional properties, such as <see cref="AllowNew"/>, <see cref="AllowEdit"/>, <see cref="AllowRemove"/>, <see cref="RaiseCollectionChangedEvents"/>,
+    /// <see cref="RaiseItemChangedEvents"/> and <see cref="RaiseListChangedEvents"/>.</item>
+    /// <item>If <typeparamref name="T"/> implements <see cref="INotifyPropertyChanged"/>, then the <see cref="CollectionChanged"/> event can be raised even for property changes of the contained elements.
+    /// This behavior can be adjusted by the <see cref="RaiseItemChangedEvents"/> property.</item>
+    /// <item>There is no constructor that accepts an <see cref="IEnumerable{T}"/> instance. Instead, an instance of <see cref="IList{T}"/> must be provided.</item>
+    /// <item>When the <see cref="ObservableBindingList{T}"/> is initialized by another <see cref="IList{T}"/>, then the passed instance will be wrapped rather than just copying the elements.
+    /// Therefore the changes performed on the <see cref="ObservableBindingList{T}"/> will be reflected also in the wrapped list.
+    /// <br/>In contrast, passing any collection to an <see cref="ObservableCollection{T}"/> will copy the items in a new <see cref="List{T}"/> to be used inside the <see cref="ObservableCollection{T}"/>.</item>
+    /// <item>In <see cref="ObservableBindingList{T}"/> the <see cref="OnCollectionChanged">OnCollectionChanged</see> method simply raises the <see cref="CollectionChanged"/> event without calling <see cref="BlockReentrancy">BlockReentrancy</see>,
+    /// which is rather called explicitly whenever it is needed.</item>
+    /// <item>In <see cref="ObservableBindingList{T}"/> the <see cref="Collection{T}.Add">Add</see>, <see cref="Collection{T}.Insert">Insert</see>, <see cref="Collection{T}.Remove">Remove</see>, <see cref="Collection{T}.RemoveAt">RemoveAt</see>,
+    /// <see cref="Collection{T}.Clear">Clear</see> and <see cref="Move">Move</see> methods, and the setter if the <see cref="Collection{T}.Items">Items</see> property can throw a <see cref="NotSupportedException"/> if the wrapped collection is read-only.</item>
+    /// </list>
+    /// </para>
+    /// <para><strong>Differences</strong> to the <see cref="BindingList{T}"/> class:
+    /// <list type="bullet">
+    /// <item>In case of multiple subscribers of the <see cref="CollectionChanged"/> and <see cref="ListChanged"/> events reentrant changes during the event invocation is protected similarly to the <see cref="ObservableCollection{T}"/> class.
+    /// However, the <see cref="BlockReentrancy">BlockReentrancy</see> method is not called from the <see cref="OnListChanged">OnListChanged</see> and <see cref="OnCollectionChanged">OnCollectionChanged</see> methods. Instead, it should be called
+    /// explicitly when raising any or both of these events.</item>
+    /// <item>If the initializer collection that is passed to the constructor is an <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> implementation, then changes performed directly on the wrapped collection are
+    /// also captured and delegated to the self events.</item>
+    /// <item>Accessing the <see cref="ObservableBindingList{T}"/> through the <see cref="IBindingList"/>, <see cref="ICancelAddNew"/> and <see cref="IRaiseItemChangedEvents"/> interfaces are in some aspects different from a regular
+    /// <see cref="BindingList{T}"/>. Their implementation is as follows:
+    /// <list type="definition">
+    /// <item><term><see cref="IBindingList"/></term><description>
+    /// <list type="bullet">
+    /// <item><see cref="IBindingList.AddNew">AddNew</see>:
+    /// <list type="bullet">
+    /// <item>If <see cref="AllowNew"/> returns <see langword="false"/>, then an <see cref="InvalidOperationException"/> will be thrown.</item>
+    /// <item>Otherwise, if the underlying list implements <see cref="IBindingList"/>, then its <see cref="IBindingList.AddNew">AddNew</see> implementation will be called.</item>
+    /// <item>Otherwise, if <typeparamref name="T"/> is a value type or has a parameterless constructor, then a new item of <typeparamref name="T"/> is created and added to the list.</item>
+    /// <item>Otherwise, an <see cref="InvalidOperationException"/> will be thrown.</item>
+    /// </list></item>
+    /// <item><see cref="IBindingList.AllowNew"/>:
+    /// <list type="bullet">
+    /// <item>Returns <see langword="false"/>&#160;if the underlying list implements <see cref="IBindingList"/>, and its <see cref="IBindingList.AllowNew"/> returns <see langword="false"/>.</item>
+    /// <item>Otherwise, returns the lastly set value. Or, if was never set, returns <see langword="true"/>&#160;if <typeparamref name="T"/> is a value type or has a parameterless constructor, and the underlying collection is not read-only.</item>
+    /// </list></item>
+    /// <item><see cref="IBindingList.AllowEdit"/> and <see cref="IBindingList.AllowRemove"/>:
+    /// <list type="bullet">
+    /// <item>Both return <see langword="false"/>&#160;if the underlying list implements <see cref="IBindingList"/>, and its <see cref="IBindingList.AllowEdit"/>/<see cref="IBindingList.AllowRemove"/> return <see langword="false"/>.</item>
+    /// <item>Otherwise, they return the lastly set value. Or, if they were never set, they return <see langword="true"/>&#160;if the underlying collection is not read-only.</item>
+    /// </list></item>
+    /// <item><see cref="IBindingList.SupportsChangeNotification"/>: returns always <see langword="true"/>.</item>
+    /// <item><see cref="IBindingList.SupportsSearching"/>, <see cref="IBindingList.SupportsSorting"/> and <see cref="IBindingList.IsSorted"/>: If the underlying list implements <see cref="IBindingList"/>, then the values of the underlying
+    /// properties are returned; otherwise, they all return <see langword="false"/>.</item>
+    /// <item><see cref="IBindingList.SortProperty"/>: If the underlying list implements <see cref="IBindingList"/>, then the value of the underlying property is returned; otherwise, returns <see langword="null"/>.</item>
+    /// <item><see cref="IBindingList.SortDirection"/>: If the underlying list implements <see cref="IBindingList"/>, then the value of the underlying property is returned; otherwise, returns <see cref="ListSortDirection.Ascending"/>.</item>
+    /// <item><see cref="IBindingList.Find">Find</see>, <see cref="IBindingList.ApplySort">ApplySort</see> and <see cref="IBindingList.RemoveSort">RemoveSort</see>: If the underlying list implements <see cref="IBindingList"/>, then their
+    /// underlying implementation is called; otherwise, they all throw <see cref="NotSupportedException"/>.</item>
+    /// <item><see cref="IBindingList.AddIndex">AddIndex</see> and <see cref="IBindingList.RemoveIndex">RemoveIndex</see>: If the underlying list implements <see cref="IBindingList"/>, then their
+    /// underlying implementation is called; otherwise, they do nothing.</item>
+    /// </list>
+    /// </description></item>
+    /// <item><term><see cref="ICancelAddNew"/></term><description>
+    /// <list type="bullet">
+    /// <item><see cref="ICancelAddNew.EndNew">EndNew</see>: If the underlying list implements <see cref="ICancelAddNew"/>, then the underlying implementation is called; otherwise, commits the last pending new item added by
+    /// the <see cref="AddNew">AddNew</see> method.</item>
+    /// <item><see cref="ICancelAddNew.CancelNew">CancelNew</see>: If the underlying list implements <see cref="ICancelAddNew"/>, then the underlying implementation is called; otherwise, discards the last pending new item added by
+    /// the <see cref="AddNew">AddNew</see> method.</item>
+    /// </list>
+    /// </description></item>
+    /// <item><term><see cref="IRaiseItemChangedEvents"/></term><description>Returns the value of the <see cref="RaiseItemChangedEvents"/>, which is a settable property. See the <see cref="RaiseItemChangedEvents"/> property for more details.</description></item>
+    /// </list>
+    /// </item>
+    /// </list>
+    /// </para>
+    /// <para><strong><see cref="IDisposable"/> support</strong>:
+    /// <br/>The <see cref="ObservableBindingList{T}"/> implements the <see cref="IDisposable"/> interface. When an instance is disposed, then both
+    /// incoming and outgoing event subscriptions (self events and <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the elements) are removed. If the wrapped collection passed
+    /// to the constructor is disposable, then it will also be disposed. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</para>
     /// </remarks>
-    // Note: 
-    // Changes to ObservableCollection<T>:
-    // - PropertyChanged also for other properties
-    // - There is no IEnumerable<T> constructor and the IList<T> constructor wraps the original list rather than copying the elements
-    // - OnCollectionChanged does not call BlockReentrancy. It is called from the caller methods instead.
-    // - Move can thrown NotSupportedException if the underlying list is read-only
-    // Changes to BindingList<T>
-    // - In case of multiple subscribers of the CollectionChanged and ListChanged events reentrant changes during the event invocation is protected similarly to the ObservableCollection class
-    // - IBindingList/ICancelAddNew features (sorting, searching) are supported when the collection passed to the ctor(IList) supports those. SortableBindingList<T> supports sorting, FastBindingList supports searching for example.
-    //   With a non-IBindingList list or by the default ctor only AddNew is supported if <copy from FastBindingList>
-    // - If the initializer collection is IBindingList or INotifyCollectionChanged their changes are captured and delegated to the self events.
-    // - IRaiseItemChangedEvents support: NOT taken from underlying list, RaisesItemChangedEvents returns RaiseItemChangedEvents
-    // - IBindingList support:
-    //   - AllowNew: get/set (raises PropertyChanged), false if underlying list is IBindingList and returns false or T cannot be created without parameters; otherwise, true by default and can be toggled.
-    //   - AllowEdit: get/set (raises PropertyChanged), false if underlying list is IBindingList and returns false; otherwise, !IsReadOnly by default and can be toggled.
-    //   - AllowRemove: get/set (raises PropertyChanged), false if underlying list is IBindingList and returns false; otherwise, !IsReadOnly by default and can be toggled.
-    //   - AddNew: underlying AddNew if the initializer collection was an IBindingList; or, a new T if can be initialized without parameters; otherwise, throws InvalidOperationException
-    //   - Find/Sort: in underlying collection is IBindingList and supports find/sort
-    // - ICancelAddNew support: if underlying list is IBindingList and ICancelAddNew, then its implementation; otherwise, commits/remove the last local AddNew item if index is the same
-    // General remarks (above all of above):
-    // - Disposable implementation: Removing external subscriptions to ListChanged, PropertyChanged and CollectionChanged and self subscriptions to elements PropertyChanged and to the events of the wrapped list
     [Serializable]
     public class ObservableBindingList<T> : Collection<T>, IDisposable,
         INotifyCollectionChanged, INotifyPropertyChanged,
         IBindingList, ICancelAddNew, IRaiseItemChangedEvents
     {
-        // TODO: for each:+Local version,+FastBindingList version, embedded list (Old sortable version), Fire events
-        // - Ha nem jók az observablecollectionné fordított Remove/Replace eventek a régi elemek nélkül, akkor kell egy int-T dictionary is az elemekkel, amit külön karbantartunk
+        #region SimpleMonitor class
+
+        [Serializable]
+        private class SimpleMonitor : IDisposable
+        {
+            #region Fields
+
+            private int busyCount;
+
+            #endregion
+
+            #region Properties
+
+            public bool Busy => busyCount > 0;
+
+            #endregion
+
+            #region Methods
+
+            public void Enter() => ++busyCount;
+            public void Dispose() => --busyCount;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region Constants
 
         private const string indexerName = "Item[]";
+
+        #endregion
+
+        #region Fields
+
+        #region Static Fields
+
         private static readonly bool canAddNew = typeof(T).CanBeCreatedWithoutParameters();
         private static readonly bool canRaiseItemChange = typeof(INotifyPropertyChanged).IsAssignableFrom(typeof(T));
 
+        #endregion
+
+        #region Instance Fields
+
         private readonly SimpleMonitor monitor = new SimpleMonitor();
+
         private bool disposed;
         private bool raiseItemChangedEvents;
         private bool raiseListChangedEvents;
         private bool raiseCollectionChangedEvents;
-
         private bool allowNew;
         private bool allowEdit;
         private bool allowRemove;
@@ -78,18 +192,70 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private ListChangedEventHandler listChangedHandler;
         [NonSerialized] private PropertyDescriptorCollection propertyDescriptors;
 
-        private bool IsBindingList => Items is IBindingList;
-        private IBindingList AsBindingList => Items as IBindingList;
-        private bool HookItemsPropertyChanged => !IsBindingList && canRaiseItemChange;
-        private bool IsDualNotifyCollectionType => IsBindingList && Items is INotifyCollectionChanged;
+        #endregion
+
+        #endregion
+
+        #region Events
+
+        /// <summary>
+        /// Occurs when the list or an item in the list changes.
+        /// </summary>
+        /// <remarks>
+        /// <para>This event also occurs if the underlying collection that was passed to the constructor implements the <see cref="INotifyCollectionChanged"/> or <see cref="IBindingList"/> interfaces and an inner
+        /// <see cref="INotifyCollectionChanged.CollectionChanged"/> or <see cref="IBindingList.ListChanged"/> event is captured.</para>
+        /// <para>Raising this event can be disabled and enabled by the <see cref="RaiseListChangedEvents"/> property.</para>
+        /// <para>Raising this event for item property changes can be disabled and enabled by the <see cref="RaiseItemChangedEvents"/> property.</para>
+        /// </remarks>
+        public event ListChangedEventHandler ListChanged
+        {
+            add => listChangedHandler += value;
+            remove => listChangedHandler -= value;
+        }
+
+        /// <summary>
+        /// Occurs when the list or an item in the list changes.
+        /// </summary>
+        /// <remarks>
+        /// <para>This event also occurs if the underlying collection that was passed to the constructor implements the <see cref="INotifyCollectionChanged"/> or <see cref="IBindingList"/> interfaces and an inner
+        /// <see cref="INotifyCollectionChanged.CollectionChanged"/> or <see cref="IBindingList.ListChanged"/> event is captured.</para>
+        /// <para>Raising this event can be disabled and enabled by the <see cref="RaiseCollectionChangedEvents"/> property.</para>
+        /// <note>In <see cref="ObservableBindingList{T}"/> this event can also be raised if a property of an element changed.
+        /// <br/>In contrast, <see cref="ObservableCollection{T}"/> does not raise this event in such case.
+        /// <br/>Raising this event for item property changes can be disabled and enabled by the <see cref="RaiseItemChangedEvents"/> property.
+        /// </note>
+        /// </remarks>
+        public event NotifyCollectionChangedEventHandler CollectionChanged
+        {
+            add => collectionChangedHandler += value;
+            remove => collectionChangedHandler -= value;
+        }
+
+        /// <summary>
+        /// Occurs when a property value changes. Occurs also when the elements in the list changes, in which case the value of the <see cref="PropertyChangedEventArgs.PropertyName"/> will be <c>Item[]</c>.
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged
+        {
+            add => propertyChangedHandler += value;
+            remove => propertyChangedHandler -= value;
+        }
+
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
 
         /// <summary>
         /// Gets or sets whether <see cref="ListChanged"/> and <see cref="CollectionChanged"/> events are invoked with
         /// <see cref="ListChangedType.ItemChanged"/>/<see cref="NotifyCollectionChangedAction.Replace"/> change type when a property of an item changes.
-        /// <br/>Default value: <see langword="true"/>&#160;if <typeparamref name="T"/> implements <see cref="INotifyPropertyChanged"/>; otherwise, <see langword="false"/>.
+        /// <br/>If <typeparamref name="T"/> does not implement <see cref="INotifyPropertyChanged"/>, then this property returns <see langword="false"/>.
+        /// Otherwise, the default value is <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>Setting this property to <see langword="false"/>&#160;can result in better performance if the underlying list has a poor lookup performance.</para>
+        /// <para>Setting this property to <see langword="false"/>&#160;can result in better performance if the underlying list has a poor lookup performance.
+        /// <note>If the <see cref="ObservableBindingList{T}"/> is initialized by its default constructor, then the element lookup has O(1) cost.</note>
+        /// </para>
         /// <para>This property returns always <see langword="false"/>&#160;if <typeparamref name="T"/> does not implement the <see cref="INotifyPropertyChanged"/> interface.</para>
         /// <para><see cref="ListChanged"/> is invoked only if <see cref="RaiseListChangedEvents"/> is <see langword="true"/>; and <see cref="CollectionChanged"/> is raised only
         /// if <see cref="RaiseCollectionChangedEvents"/> is <see langword="true"/>.</para>
@@ -110,9 +276,14 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether new items can be added to the list by the <see cref="AddNew">AddNew</see> method.
+        /// <br/>If the underlying list implements <see cref="IBindingList"/> and its <see cref="IBindingList.AllowNew"/> returns <see langword="false"/>, then this property returns also <see langword="false"/>.
+        /// Otherwise, the default value is <see langword="true"/>&#160;if the wrapped list is not read-only and <typeparamref name="T"/> is a value type or has a parameterless constructor; otherwise, <see langword="false"/>.
+        /// </summary>
         public virtual bool AllowNew
         {
-            get => allowNew && (AsBindingList?.AllowNew).GetValueOrDefault(canAddNew);
+            get => allowNew && (AsBindingList?.AllowNew).GetValueOrDefault(true);
             set
             {
                 if (disposed)
@@ -129,6 +300,11 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether item properties can be edited in the list.
+        /// <br/>If the underlying list implements <see cref="IBindingList"/> and its <see cref="IBindingList.AllowEdit"/> returns <see langword="false"/>, then this property returns also <see langword="false"/>.
+        /// Otherwise, the default value is <see langword="true"/>.
+        /// </summary>
         public virtual bool AllowEdit
         {
             get => allowEdit && (AsBindingList?.AllowEdit).GetValueOrDefault(true);
@@ -148,6 +324,11 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether items can be removed from the list by the <see cref="VirtualCollection{T}.Remove">Remove</see>, <see cref="VirtualCollection{T}.RemoveAt">RemoveAt</see> and <see cref="VirtualCollection{T}.Clear">Clear</see> methods.
+        /// <br/>If the underlying list implements <see cref="IBindingList"/> and its <see cref="IBindingList.AllowRemove"/> returns <see langword="false"/>, then this property returns also <see langword="false"/>.
+        /// Otherwise, the default value is <see langword="true"/>.
+        /// </summary>
         public virtual bool AllowRemove
         {
             get => allowRemove && (AsBindingList?.AllowRemove).GetValueOrDefault(true);
@@ -167,6 +348,10 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether adding or removing items within the list raises <see cref="ListChanged"/> events.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
         public virtual bool RaiseListChangedEvents
         {
             get => raiseListChangedEvents;
@@ -182,6 +367,10 @@ namespace KGySoft.ComponentModel
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether adding or removing items within the list raises <see cref="CollectionChanged"/> events.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
         public virtual bool RaiseCollectionChangedEvents
         {
             get => raiseCollectionChangedEvents;
@@ -197,26 +386,486 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        bool IRaiseItemChangedEvents.RaisesItemChangedEvents => RaiseItemChangedEvents;
+        #endregion
 
+        #region Protected Properties
+
+        /// <summary>
+        /// Gets the property descriptors of <typeparamref name="T"/>.
+        /// </summary>
+        protected PropertyDescriptorCollection PropertyDescriptors
+            // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
+            => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
+
+        #endregion
+
+        #region Private Properties
+
+        private bool IsBindingList => Items is IBindingList;
+        private IBindingList AsBindingList => Items as IBindingList;
+        private bool HookItemsPropertyChanged => !IsBindingList && canRaiseItemChange;
+        private bool IsDualNotifyCollectionType => IsBindingList && Items is INotifyCollectionChanged;
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        bool IRaiseItemChangedEvents.RaisesItemChangedEvents => RaiseItemChangedEvents;
         bool IBindingList.SupportsChangeNotification => true;
         bool IBindingList.SupportsSearching => AsBindingList?.SupportsSearching ?? false;
         bool IBindingList.SupportsSorting => AsBindingList?.SupportsSorting ?? false;
         bool IBindingList.IsSorted => AsBindingList?.IsSorted ?? false;
         PropertyDescriptor IBindingList.SortProperty => AsBindingList?.SortProperty;
-        void IBindingList.ApplySort(PropertyDescriptor property, ListSortDirection direction) => (AsBindingList ?? throw new NotSupportedException(Res.NotSupported)).ApplySort(property, direction);
-        int IBindingList.Find(PropertyDescriptor property, object key) => AsBindingList?.Find(property, key) ?? throw new NotSupportedException(Res.NotSupported);
-        void IBindingList.AddIndex(PropertyDescriptor property) => AsBindingList?.AddIndex(property);
-        void IBindingList.RemoveIndex(PropertyDescriptor property) => AsBindingList?.RemoveIndex(property);
-        void IBindingList.RemoveSort() => (AsBindingList ?? throw new NotSupportedException(Res.NotSupported)).RemoveSort();
-
         ListSortDirection IBindingList.SortDirection => AsBindingList?.SortDirection ?? default;
 
-        public ObservableBindingList() : this(new FastLookupCollection<T>())
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObservableBindingList{T}"/> class with a <see cref="SortableBindingList{T}"/> internally.
+        /// </summary>
+        public ObservableBindingList() : this(new SortableBindingList<T>())
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObservableBindingList{T}"/> class with the specified <paramref name="list"/>.
+        /// </summary>
+        /// <param name="list">An <see cref="IList{T}" /> of items to be contained in the <see cref="ObservableBindingList{T}" />.</param>
+        /// <remarks>
+        /// <para>The <paramref name="list"/> will be wrapped by the new <see cref="ObservableBindingList{T}"/> instance. Changes performed on the <see cref="ObservableBindingList{T}"/> will be reflected in the
+        /// wrapped <paramref name="list"/> as well.</para>
+        /// <para>If the wrapped <paramref name="list"/> implements the <see cref="INotifyCollectionChanged"/> or <see cref="IBindingList"/> interface, then their <see cref="INotifyCollectionChanged.CollectionChanged"/> and
+        /// <see cref="IBindingList.ListChanged"/> events will be captured and raised as self <see cref="CollectionChanged"/> and <see cref="ListChanged"/> events.</para>
+        /// <note type="tip">In an environment, which supports only the <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> interface but not the other, <see cref="ObservableBindingList{T}"/> can be used as a bridge between the two worlds.
+        /// For example, by passing an <see cref="ObservableCollection{T}"/> to the constructor, it will be able to be accessed as an <see cref="IBindingList"/> implementation, and vice-versa: by wrapping an <see cref="IBindingList"/> instance
+        /// (such as <see cref="FastBindingList{T}"/> or <see cref="SortableBindingList{T}"/>), it can be used as an <see cref="INotifyCollectionChanged"/> implementation by the <see cref="ObservableBindingList{T}"/> class.</note>
+        /// </remarks>
         public ObservableBindingList(IList<T> list) : base(list) => Initialize();
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Releases the list and removes both incoming and outgoing subscriptions.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Adds a new item to the collection.
+        /// </summary>
+        /// <returns>The item added to the list.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="AllowNew"/> property returns <see langword="false"/>
+        /// <br/>-or-
+        /// <br/>The underlying collection could not add the new item, and <typeparamref name="T"/> is not a value type or has no parameterless constructor.</exception>
+        /// <remarks>
+        /// <para>If <see cref="AllowNew"/> returns <see langword="false"/>, then an <see cref="InvalidOperationException"/> will be thrown.</para>
+        /// <para>Otherwise, if the underlying list implements <see cref="IBindingList"/>, then its <see cref="IBindingList.AddNew">AddNew</see> implementation will be called.</para>
+        /// <para>Otherwise, if <typeparamref name="T"/> is a value type or has a parameterless constructor, then a new item of <typeparamref name="T"/> is created and added to the list.</para>
+        /// <para>Otherwise, an <see cref="InvalidOperationException"/> will be thrown.</para>
+        /// </remarks>
+        public T AddNew()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (!AllowNew)
+                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
+
+            if (Items is IBindingList bindingList)
+            {
+                T result;
+                isAddingNew = true;
+                try
+                {
+                    result = (T)bindingList.AddNew();
+                }
+                finally
+                {
+                    isAddingNew = false;
+                }
+                return result;
+            }
+
+            T newItem = canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewObservableBindingList(typeof(T)));
+            Add(newItem);
+            addNewPos = Count - 1;
+            return newItem;
+        }
+
+        /// <summary>
+        /// Discards a pending new item added by the <see cref="AddNew">AddNew</see> method.
+        /// </summary>
+        /// <param name="itemIndex">The index of the item that was previously added to the collection.</param>
+        /// <remarks>
+        /// <para>If the underlying list implements <see cref="ICancelAddNew"/>, then the underlying implementation is called; otherwise, discards the last pending new item added by
+        /// the <see cref="AddNew">AddNew</see> method.</para>
+        /// </remarks>
+        public virtual void CancelNew(int itemIndex)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (Items is ICancelAddNew cancelAddNew)
+            {
+                cancelAddNew.CancelNew(itemIndex);
+                EndNew();
+                return;
+            }
+
+            if (addNewPos < 0 || addNewPos != itemIndex)
+                return;
+            RemoveItem(addNewPos);
+        }
+
+        /// <summary>
+        /// Commits a pending new item added by the <see cref="AddNew">AddNew</see> method.
+        /// </summary>
+        /// <param name="itemIndex">The index of the item that was previously added to the collection.</param>
+        /// <remarks>
+        /// <para>If the underlying list implements <see cref="ICancelAddNew"/>, then the underlying implementation is called; otherwise, commits the last pending new item added by
+        /// the <see cref="AddNew">AddNew</see> method.</para>
+        /// </remarks>
+        public virtual void EndNew(int itemIndex)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            if (Items is ICancelAddNew cancelAddNew)
+            {
+                cancelAddNew.EndNew(itemIndex);
+                EndNew();
+                return;
+            }
+
+            // inside from this class this should be called to make sure the index is not sorted.
+            if (addNewPos >= 0 && addNewPos == itemIndex)
+                EndNew();
+        }
+
+        /// <summary>
+        /// Moves the item at the specified index to a new location in the <see cref="ObservableBindingList{T}"/>.
+        /// </summary>
+        /// <param name="oldIndex">The zero-based index specifying the location of the item to be moved.</param>
+        /// <param name="newIndex">The zero-based index specifying the new location of the item.</param>
+        public void Move(int oldIndex, int newIndex)
+        {
+            if (Items.IsReadOnly)
+                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+            if (oldIndex < 0 || oldIndex >= Count)
+                throw new ArgumentOutOfRangeException(nameof(oldIndex), Res.ArgumentOutOfRange);
+            if (newIndex < 0 || newIndex >= Count)
+                throw new ArgumentOutOfRangeException(nameof(newIndex), Res.ArgumentOutOfRange);
+            MoveItem(oldIndex, newIndex);
+        }
+
+        /// <summary>
+        /// Raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.Reset"/>
+        /// and the <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Reset"/>.
+        /// </summary>
+        public void ResetBindings()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            FireCollectionReset(false, false);
+        }
+
+        /// <summary>
+        /// Raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/>
+        /// and the <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Replace"/>
+        /// at the specified <paramref name="position"/>.
+        /// </summary>
+        /// <param name="position">A zero-based index of the item to be reset.</param>
+        public void ResetItem(int position)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            FireItemChanged(position, this[position], null);
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposing || disposed)
+                return;
+
+            propertyChangedHandler = null;
+            collectionChangedHandler = null;
+            listChangedHandler = null;
+            if (HookItemsPropertyChanged)
+            {
+                foreach (T item in Items)
+                    UnhookPropertyChanged(item);
+            }
+
+            if (Items is IBindingList bindingList)
+                bindingList.ListChanged -= BindingList_ListChanged;
+            if (Items is INotifyCollectionChanged notifyCollectionChanged)
+                notifyCollectionChanged.CollectionChanged -= NotifyCollectionChanged_CollectionChanged;
+
+            (Items as IDisposable)?.Dispose();
+            disposed = true;
+        }
+
+        /// <summary>
+        /// Replaces the <paramref name="item" /> at the specified <paramref name="index" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to replace.</param>
+        /// <param name="item">The new value for the element at the specified index.</param>
+        /// <remarks>
+        /// <para>After the item is set, <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/>
+        /// and <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Replace"/> are raised indicating the index of the item that was set.</para>
+        /// </remarks>
+        protected override void SetItem(int index, T item)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            T originalItem = this[index];
+            if (ReferenceEquals(originalItem, item))
+                return;
+
+            CheckReentrancy();
+
+            if (HookItemsPropertyChanged)
+                UnhookPropertyChanged(originalItem);
+
+            isExplicitChanging = true;
+            try
+            {
+                base.SetItem(index, item);
+            }
+            finally
+            {
+                isExplicitChanging = false;
+            }
+
+            if (HookItemsPropertyChanged)
+                HookPropertyChanged(item);
+
+            FireItemReplace(index, originalItem, item);
+        }
+
+        /// <summary>
+        /// Inserts an element into the <see cref="ObservableBindingList{T}" /> at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="item" /> should be inserted.</param>
+        /// <param name="item">The object to insert.</param>
+        /// <remarks>
+        /// <para><see cref="InsertItem">InsertItem</see> performs the following operations:
+        /// <list type="number">
+        /// <item>Calls <see cref="EndNew(int)">EndNew</see> to commit the last possible uncommitted item added by the <see cref="AddNew">AddNew</see> method.</item>
+        /// <item>Inserts the item at the specified index.</item>
+        /// <item>Raises a <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemChanged"/>
+        /// and <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Add"/> indicating the index of the item that was inserted.</item>
+        /// </list>
+        /// </para>
+        /// </remarks>
+        protected override void InsertItem(int index, T item)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            CheckReentrancy();
+            EndNew();
+            isExplicitChanging = true;
+            try
+            {
+                base.InsertItem(index, item);
+            }
+            finally
+            {
+                isExplicitChanging = false;
+            }
+
+            if (HookItemsPropertyChanged)
+                HookPropertyChanged(item);
+
+            FireItemAdded(index, item);
+        }
+
+        /// <summary>
+        /// Removes the element at the specified <paramref name="index" /> from the <see cref="ObservableBindingList{T}" />.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to remove.</param>
+        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/> and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
+        /// <remarks>
+        /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>
+        /// and <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Remove"/>.</para>
+        /// </remarks>
+        protected override void RemoveItem(int index)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            CheckReentrancy();
+
+            // even if remove not allowed we can remove the element being just added and yet uncommitted
+            if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+
+            EndNew();
+            T removedItem = this[index];
+            if (HookItemsPropertyChanged)
+                UnhookPropertyChanged(removedItem);
+
+            isExplicitChanging = true;
+            try
+            {
+                base.RemoveItem(index);
+            }
+            finally
+            {
+                isExplicitChanging = false;
+            }
+
+            FireItemRemoved(index, removedItem);
+        }
+
+        /// <summary>
+        /// Removes all elements from the <see cref="ObservableBindingList{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.Reset"/>
+        /// and <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Reset"/>.</para>
+        /// </remarks>
+        protected override void ClearItems()
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            CheckReentrancy();
+
+            if (Count == 0)
+                return;
+
+            // even if remove not allowed we can remove the element being just added and yet uncommitted
+            if (!allowRemove && !(addNewPos == 0 && Count == 1))
+                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
+
+            EndNew();
+            if (HookItemsPropertyChanged)
+            {
+                foreach (T item in Items)
+                    UnhookPropertyChanged(item);
+            }
+
+            isExplicitChanging = true;
+            try
+            {
+                base.ClearItems();
+            }
+            finally
+            {
+                isExplicitChanging = false;
+            }
+
+            FireCollectionReset(true, false);
+        }
+
+        /// <summary>
+        /// Moves the item at the specified index to a new location in the <see cref="ObservableBindingList{T}"/>.
+        /// </summary>
+        /// <param name="oldIndex">The zero-based index specifying the location of the item to be moved.</param>
+        /// <param name="newIndex">The zero-based index specifying the new location of the item.</param>
+        /// <remarks>
+        /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemMoved"/>
+        /// and <see cref="CollectionChanged"/> event of type <see cref="NotifyCollectionChangedAction.Move"/>.</para>
+        /// </remarks>
+        protected virtual void MoveItem(int oldIndex, int newIndex)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            CheckReentrancy();
+            EndNew();
+            T removedItem = this[oldIndex];
+
+            isExplicitChanging = true;
+            try
+            {
+                base.RemoveItem(oldIndex);
+                base.InsertItem(newIndex, removedItem);
+            }
+            finally
+            {
+                isExplicitChanging = false;
+            }
+
+            FireItemMoved(removedItem, newIndex, oldIndex);
+        }
+
+        /// <summary>
+        /// Raises the <see cref="PropertyChanged" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="PropertyChangedEventArgs" /> instance containing the event data.</param>
+        protected virtual void OnPropertyChanged(PropertyChangedEventArgs e) => propertyChangedHandler?.Invoke(this, e);
+
+        /// <summary>
+        /// Raises the <see cref="CollectionChanged"/> event.
+        /// </summary>
+        /// <param name="e">The <see cref="NotifyCollectionChangedEventArgs" /> instance containing the event data.</param>
+        protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs e) => collectionChangedHandler?.Invoke(this, e);
+
+        /// <summary>
+        /// Raises the <see cref="ListChanged" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="ListChangedEventArgs" /> instance containing the event data.</param>
+        protected virtual void OnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
+
+        /// <summary>
+        /// Disallows reentrant attempts to change this collection.
+        /// </summary>
+        /// <remarks>
+        /// Typical usage is to wrap event invocations with a <see langword="using"/>&#160;scope:
+        /// <code lang="C#">
+        /// using (BlockReentrancy())
+        /// {
+        ///     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        ///     OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+        /// }
+        /// </code>
+        /// </remarks>
+        protected IDisposable BlockReentrancy()
+        {
+            monitor.Enter();
+            return monitor;
+        }
+
+        /// <summary>
+        /// Checks for reentrant attempts to change this collection.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The result of a previous <see cref="BlockReentrancy">BlockReentrancy</see> call was not disposed yet.
+        /// Typically, this means there are additional attempts to change this collection during a <see cref="CollectionChanged"/> or <see cref="ListChanged"/> event.</exception>
+        protected void CheckReentrancy()
+        {
+            if (monitor.Busy)
+            {
+                // we can allow changes if there's only one listener
+                if ((collectionChangedHandler?.GetInvocationList().Length ?? 0)
+                    + (listChangedHandler?.GetInvocationList().Length ?? 0) > 1)
+                    throw new InvalidOperationException(Res.ComponentModelReentrancyNotAllowed);
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
 
         private void Initialize()
         {
@@ -241,6 +890,128 @@ namespace KGySoft.ComponentModel
             foreach (T item in Items)
                 HookPropertyChanged(item);
         }
+
+        private void HookPropertyChanged(T item)
+        {
+            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
+                return;
+
+            notifyPropertyChanged.PropertyChanged += Item_PropertyChanged;
+        }
+
+        private void UnhookPropertyChanged(T item)
+        {
+            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
+                return;
+
+            notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
+        }
+
+        private void EndNew() => addNewPos = -1;
+
+        private void FireItemReplace(int index, T oldItem, T newItem)
+        {
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
+                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index));
+            }
+
+            FirePropertyChanged(indexerName);
+        }
+
+        private void FireItemChanged(int index, T item, PropertyDescriptor pd)
+        {
+            if (!RaiseItemChangedEvents)
+                return;
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, item, index));
+                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index, pd));
+            }
+
+            FirePropertyChanged(indexerName);
+        }
+
+        private void FireItemAdded(int index, T item)
+        {
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
+                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, index));
+            }
+
+            FirePropertyChanged(nameof(Count));
+            FirePropertyChanged(indexerName);
+        }
+
+        private void FireItemRemoved(int index, T item)
+        {
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
+                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, index));
+            }
+
+            FirePropertyChanged(nameof(Count));
+            FirePropertyChanged(indexerName);
+        }
+
+        private void FireItemMoved(T item, int newIndex, int oldIndex)
+        {
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, item, newIndex, oldIndex));
+                OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
+            }
+
+            FirePropertyChanged(indexerName);
+        }
+
+        private void FireCollectionReset(bool countChanged, bool listChangeOnly)
+        {
+            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
+            ListChangedEventHandler handlerListChanged = listChangedHandler;
+            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
+                return;
+            using (BlockReentrancy())
+            {
+                if (!listChangeOnly)
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+                OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+            }
+
+            if (countChanged)
+                FirePropertyChanged(nameof(Count));
+            FirePropertyChanged(indexerName);
+        }
+
+        [NotifyPropertyChangedInvocator]
+        private void FirePropertyChanged([CallerMemberName] string propertyName = null) => OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+
+        #endregion
+
+        #region Event handlers
 
         private void NotifyCollectionChanged_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
@@ -280,7 +1051,7 @@ namespace KGySoft.ComponentModel
 
             using (BlockReentrancy())
             {
-                FireCollectionChanged(e);
+                OnCollectionChanged(e);
                 if (IsDualNotifyCollectionType)
                     return;
 
@@ -290,23 +1061,23 @@ namespace KGySoft.ComponentModel
                         if (e.NewItems?.Count > 1)
                         {
                             HookNewItems(e.NewItems);
-                            FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
                             break;
                         }
 
                         if (HookItemsPropertyChanged)
                             HookPropertyChanged(this[e.NewStartingIndex]);
-                        FireListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, e.NewStartingIndex));
+                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, e.NewStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Remove:
                         UnhookOldItems(e.OldItems);
                         if (e.OldItems?.Count > 1)
                         {
-                            FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
                             break;
                         }
 
-                        FireListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, e.OldStartingIndex));
+                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, e.OldStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Replace:
                         if (!(e.OldItems?.Count == 1 && e.NewItems?.Count == 1 && ReferenceEquals(e.OldItems[0], e.NewItems[0])))
@@ -316,16 +1087,16 @@ namespace KGySoft.ComponentModel
                         }
 
                         if (e.NewStartingIndex == e.OldStartingIndex && e.OldItems?.Count == 1 && e.NewItems?.Count == 1)
-                            FireListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, e.NewStartingIndex));
+                            OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, e.NewStartingIndex));
                         else
-                            FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                            OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
                         break;
                     case NotifyCollectionChangedAction.Move:
-                        FireListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, e.NewStartingIndex, e.OldStartingIndex));
+                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, e.NewStartingIndex, e.OldStartingIndex));
                         break;
                     case NotifyCollectionChangedAction.Reset:
                         UnhookOldItems(e.OldItems);
-                        FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
+                        OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
                         break;
                 }
             }
@@ -348,7 +1119,7 @@ namespace KGySoft.ComponentModel
             using (BlockReentrancy())
             {
                 if (RaiseListChangedEvents)
-                    FireListChanged(e);
+                    OnListChanged(e);
 
                 if (!RaiseCollectionChangedEvents || IsDualNotifyCollectionType)
                     return;
@@ -356,14 +1127,14 @@ namespace KGySoft.ComponentModel
                 switch (e.ListChangedType)
                 {
                     case ListChangedType.ItemAdded:
-                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this[e.NewIndex], e.NewIndex));
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, this[e.NewIndex], e.NewIndex));
                         break;
                     case ListChangedType.ItemDeleted:
                         // note: after the remove we can't retrieve the old item
-                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, default(T), e.NewIndex));
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, default(T), e.NewIndex));
                         break;
                     case ListChangedType.ItemMoved:
-                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, this[e.NewIndex], e.NewIndex, e.OldIndex));
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, this[e.NewIndex], e.NewIndex, e.OldIndex));
                         break;
                     case ListChangedType.ItemChanged:
                         if (e.PropertyDescriptor != null && !RaiseItemChangedEvents)
@@ -371,37 +1142,14 @@ namespace KGySoft.ComponentModel
 
                         // note: in case of replace we can't retrieve the old item
                         T item = e.NewIndex >= 0 && e.NewIndex < Count ? this[e.NewIndex] : default;
-                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, e.PropertyDescriptor != null ? item : default(T), e.NewIndex));
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, e.PropertyDescriptor != null ? item : default(T), e.NewIndex));
                         break;
                     default:
-                        FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+                        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
                         break;
                 }
             }
         }
-
-        private void HookPropertyChanged(T item)
-        {
-            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
-                return;
-
-            notifyPropertyChanged.PropertyChanged += Item_PropertyChanged;
-        }
-
-        private void UnhookPropertyChanged(T item)
-        {
-            if (!(item is INotifyPropertyChanged notifyPropertyChanged))
-                return;
-
-            notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
-        }
-
-        /// <summary>
-        /// Gets the property descriptors of <typeparamref name="T"/>.
-        /// </summary>
-        protected PropertyDescriptorCollection PropertyDescriptors
-            // ReSharper disable once ConstantNullCoalescingCondition - it CAN be null if an ICustomTypeDescriptor implemented so
-            => propertyDescriptors ?? (propertyDescriptors = TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null)); // not static so custom providers can be registered before creating an instance
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -434,466 +1182,20 @@ namespace KGySoft.ComponentModel
             FireItemChanged(pos, item, pd);
         }
 
-        public event ListChangedEventHandler ListChanged
-        {
-            add => listChangedHandler += value;
-            remove => listChangedHandler -= value;
-        }
+        #endregion
 
-        public event NotifyCollectionChangedEventHandler CollectionChanged
-        {
-            add => collectionChangedHandler += value;
-            remove => collectionChangedHandler -= value;
-        }
+        #region Explicitly Implemented Interface Methods
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposing || disposed)
-                return;
-
-            propertyChangedHandler = null;
-            collectionChangedHandler = null;
-            listChangedHandler = null;
-            if (HookItemsPropertyChanged)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
-
-            if (Items is IBindingList bindingList)
-                bindingList.ListChanged -= BindingList_ListChanged;
-            if (Items is INotifyCollectionChanged notifyCollectionChanged)
-                notifyCollectionChanged.CollectionChanged -= NotifyCollectionChanged_CollectionChanged;
-
-            (Items as IDisposable)?.Dispose();
-            disposed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged
-        {
-            add => propertyChangedHandler += value;
-            remove => propertyChangedHandler -= value;
-        }
-
+        void IBindingList.ApplySort(PropertyDescriptor property, ListSortDirection direction) => (AsBindingList ?? throw new NotSupportedException(Res.NotSupported)).ApplySort(property, direction);
+        int IBindingList.Find(PropertyDescriptor property, object key) => AsBindingList?.Find(property, key) ?? throw new NotSupportedException(Res.NotSupported);
+        void IBindingList.AddIndex(PropertyDescriptor property) => AsBindingList?.AddIndex(property);
+        void IBindingList.RemoveIndex(PropertyDescriptor property) => AsBindingList?.RemoveIndex(property);
+        void IBindingList.RemoveSort() => (AsBindingList ?? throw new NotSupportedException(Res.NotSupported)).RemoveSort();
         object IBindingList.AddNew() => AddNew();
 
-        public T AddNew()
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (!AllowNew)
-                throw new InvalidOperationException(Res.ComponentModelAddNewDisabled);
+        #endregion
 
-            if (Items is IBindingList bindingList)
-            {
-                T result;
-                isAddingNew = true;
-                try
-                {
-                    result = (T)bindingList.AddNew();
-                }
-                finally
-                {
-                    isAddingNew = false;
-                }
-                return result;
-            }
-
-            T newItem = canAddNew ? (T)Reflector.CreateInstance(typeof(T)) : throw new InvalidOperationException(Res.ComponentModelCannotAddNewObservableBindingList(typeof(T)));
-            Add(newItem);
-            addNewPos = Count - 1;
-            return newItem;
-        }
-
-        public virtual void CancelNew(int itemIndex)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (Items is ICancelAddNew cancelAddNew)
-            {
-                cancelAddNew.CancelNew(itemIndex);
-                EndNew();
-                return;
-            }
-
-            if (addNewPos < 0 || addNewPos != itemIndex)
-                return;
-            RemoveItem(addNewPos);
-        }
-
-        public virtual void EndNew(int itemIndex)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            if (Items is ICancelAddNew cancelAddNew)
-            {
-                cancelAddNew.EndNew(itemIndex);
-                EndNew();
-                return;
-            }
-
-            // inside from this class this should be called to make sure the index is not sorted.
-            if (addNewPos >= 0 && addNewPos == itemIndex)
-                EndNew();
-        }
-
-        private void EndNew() => addNewPos = -1;
-
-        protected override void SetItem(int index, T item)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            T originalItem = this[index];
-            if (ReferenceEquals(originalItem, item))
-                return;
-
-            CheckReentrancy();
-
-            if (HookItemsPropertyChanged)
-                UnhookPropertyChanged(originalItem);
-
-            isExplicitChanging = true;
-            try
-            {
-                base.SetItem(index, item);
-            }
-            finally
-            {
-                isExplicitChanging = false;
-            }
-
-            if (HookItemsPropertyChanged)
-                HookPropertyChanged(item);
-
-            FireItemReplace(index, originalItem, item);
-        }
-
-        protected override void InsertItem(int index, T item)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            CheckReentrancy();
-            EndNew();
-            isExplicitChanging = true;
-            try
-            {
-                base.InsertItem(index, item);
-            }
-            finally
-            {
-                isExplicitChanging = false;
-            }
-
-            if (HookItemsPropertyChanged)
-                HookPropertyChanged(item);
-
-            FireItemAdded(index, item);
-        }
-
-        protected override void RemoveItem(int index)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            CheckReentrancy();
-
-            // even if remove not allowed we can remove the element being just added and yet uncommitted
-            if (!allowRemove && !(addNewPos >= 0 && addNewPos == index))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
-
-            EndNew();
-            T removedItem = this[index];
-            if (HookItemsPropertyChanged)
-                UnhookPropertyChanged(removedItem);
-
-            isExplicitChanging = true;
-            try
-            {
-                base.RemoveItem(index);
-            }
-            finally
-            {
-                isExplicitChanging = false;
-            }
-
-            FireItemRemoved(index, removedItem);
-        }
-
-        protected override void ClearItems()
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            CheckReentrancy();
-
-            if (Count == 0)
-                return;
-
-            // even if remove not allowed we can remove the element being just added and yet uncommitted
-            if (!allowRemove && !(addNewPos == 0 && Count == 1))
-                throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
-
-            EndNew();
-            if (HookItemsPropertyChanged)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
-
-            isExplicitChanging = true;
-            try
-            {
-                base.ClearItems();
-            }
-            finally
-            {
-                isExplicitChanging = false;
-            }
-
-            FireCollectionReset(true, false);
-        }
-
-        public void Move(int oldIndex, int newIndex)
-        {
-            if (Items.IsReadOnly)
-                throw new NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-            if (oldIndex < 0 || oldIndex >= Count)
-                throw new ArgumentOutOfRangeException(nameof(oldIndex), Res.ArgumentOutOfRange);
-            if (newIndex < 0 || newIndex >= Count)
-                throw new ArgumentOutOfRangeException(nameof(newIndex), Res.ArgumentOutOfRange);
-            MoveItem(oldIndex, newIndex);
-        }
-
-        protected virtual void MoveItem(int oldIndex, int newIndex)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            CheckReentrancy();
-            EndNew();
-            T removedItem = this[oldIndex];
-
-            isExplicitChanging = true;
-            try
-            {
-                base.RemoveItem(oldIndex);
-                base.InsertItem(newIndex, removedItem);
-            }
-            finally
-            {
-                isExplicitChanging = false;
-            }
-
-            FireItemMoved(removedItem, newIndex, oldIndex);
-        }
-
-        private void FireItemReplace(int index, T oldItem, T newItem)
-        {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
-            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
-                return;
-            using (BlockReentrancy())
-            {
-                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
-                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index));
-            }
-
-            FirePropertyChanged(indexerName);
-        }
-
-        private void FireItemChanged(int index, T item, PropertyDescriptor pd)
-        {
-            if (!RaiseItemChangedEvents)
-                return;
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
-            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
-                return;
-            using (BlockReentrancy())
-            {
-                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, item, index));
-                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index, pd));
-            }
-
-            FirePropertyChanged(indexerName);
-        }
-
-        private void FireItemAdded(int index, T item)
-        {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
-            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
-                return;
-            using (BlockReentrancy())
-            {
-                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
-                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemAdded, index));
-            }
-
-            FirePropertyChanged(nameof(Count));
-            FirePropertyChanged(indexerName);
-        }
-
-        private void FireItemRemoved(int index, T item)
-        {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
-            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
-                return;
-            using (BlockReentrancy())
-            {
-                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
-                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemDeleted, index));
-            }
-
-            FirePropertyChanged(nameof(Count));
-            FirePropertyChanged(indexerName);
-        }
-
-        private void FireItemMoved(T item, int newIndex, int oldIndex)
-        {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
-            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
-                return;
-            using (BlockReentrancy())
-            {
-                FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, item, newIndex, oldIndex));
-                FireListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, newIndex, oldIndex));
-            }
-
-            FirePropertyChanged(indexerName);
-        }
-
-        private void FireCollectionReset(bool countChanged, bool listChangeOnly)
-        {
-            NotifyCollectionChangedEventHandler handlerCollChanged = collectionChangedHandler;
-            ListChangedEventHandler handlerListChanged = listChangedHandler;
-            if ((handlerCollChanged == null || !RaiseCollectionChangedEvents) && (handlerListChanged == null || !RaiseListChangedEvents))
-                return;
-            using (BlockReentrancy())
-            {
-                if (!listChangeOnly)
-                    FireCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-                FireListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
-            }
-
-            if (countChanged)
-                FirePropertyChanged(nameof(Count));
-            FirePropertyChanged(indexerName);
-        }
-
-        public void ResetBindings()
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            FireCollectionReset(false, false);
-        }
-
-        public void ResetItem(int position)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            FireItemChanged(position, this[position], null);
-        }
-
-        private void FireCollectionChanged(NotifyCollectionChangedEventArgs e)
-        {
-            if (RaiseCollectionChangedEvents)
-                collectionChangedHandler?.Invoke(this, e);
-        }
-
-        private void FireListChanged(ListChangedEventArgs e)
-        {
-            if (RaiseListChangedEvents)
-                listChangedHandler?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Raises the <see cref="PropertyChanged" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="PropertyChangedEventArgs" /> instance containing the event data.</param>
-        protected virtual void OnPropertyChanged(PropertyChangedEventArgs e) => propertyChangedHandler?.Invoke(this, e);
-
-        /// <summary>
-        /// Raises the <see cref="CollectionChanged"/> event.
-        /// </summary>
-        /// <param name="e">The <see cref="NotifyCollectionChangedEventArgs" /> instance containing the event data.</param>
-        /// <remarks>
-        /// When overriding this method, you can call the <see cref="BlockReentrancy"/> to guard against reentrant collection changes.
-        /// </remarks>
-        protected virtual void xOnCollectionChanged(NotifyCollectionChangedEventArgs e) => collectionChangedHandler?.Invoke(this, e);
-
-        /// <summary>
-        /// Raises the <see cref="ListChanged" /> event.
-        /// </summary>
-        /// <param name="e">The <see cref="ListChangedEventArgs" /> instance containing the event data.</param>
-        protected virtual void xOnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
-
-        /// <summary>
-        /// Disallow reentrant attempts to change this collection. E.g. a event handler
-        /// of the CollectionChanged event is not allowed to make changes to this collection.
-        /// </summary>
-        /// <remarks>
-        /// typical usage is to wrap e.g. a OnCollectionChanged call with a using() scope:
-        /// <code>
-        ///         using (BlockReentrancy())
-        ///         {
-        ///             CollectionChanged(this, new NotifyCollectionChangedEventArgs(action, item, index));
-        ///         }
-        /// </code>
-        /// </remarks>
-        protected IDisposable BlockReentrancy()
-        {
-            monitor.Enter();
-            return monitor;
-        }
-
-        /// <summary> Check and assert for reentrant attempts to change this collection. </summary>
-        /// <exception cref="InvalidOperationException"> raised when changing the collection
-        /// while another collection change is still being notified to other listeners </exception>
-        protected void CheckReentrancy()
-        {
-            if (monitor.Busy)
-            {
-                // we can allow changes if there's only one listener
-                if ((collectionChangedHandler?.GetInvocationList().Length ?? 0)
-                    + (listChangedHandler?.GetInvocationList().Length ?? 0) > 1)
-                    throw new InvalidOperationException(Res.ComponentModelReentrancyNotAllowed);
-            }
-        }
-
-        [NotifyPropertyChangedInvocator]
-        private void FirePropertyChanged([CallerMemberName] string propertyName = null) => OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
-
-
-        #region Private Types
-
-        // this class helps prevent reentrant calls
-        [Serializable]
-        private class SimpleMonitor : IDisposable
-        {
-            public void Enter() => ++busyCount;
-
-            public void Dispose() => --busyCount;
-
-            public bool Busy => busyCount > 0;
-
-            private int busyCount;
-        }
-
-        #endregion Private Types
-
+        #endregion
     }
 }
 #endif

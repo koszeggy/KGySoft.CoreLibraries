@@ -46,7 +46,7 @@ namespace KGySoft.ComponentModel
     /// <item><see cref="BindingList{T}"/> is derived from <see cref="Collection{T}"/>, whereas <see cref="FastBindingList{T}"/> is derived from <see cref="FastLookupCollection{T}"/>, which is derived from <see cref="VirtualCollection{T}"/>.
     /// Both type implement the <see cref="IList{T}"/> interface though.</item>
     /// <item><see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event has <see cref="AddingNewEventHandler"/> type, which uses <see cref="AddingNewEventArgs"/>,
-    /// whereas in <see cref="FastBindingList{T}"/> the <see cref="AddingNew"/> event has <see cref="EventHandler{T}"/> type where <em>T</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
+    /// whereas in <see cref="FastBindingList{T}"/> the <see cref="AddingNew"/> event has <see cref="EventHandler{TEventArgs}"/> type where <em>TEventArgs</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
     /// that the latter is generic.</item>
     /// <item>In <see cref="FastBindingList{T}"/> the <see cref="AllowRemove"/> property is initialized to <see langword="false"/>&#160;if the wrapped list is read-only.
     /// <br/>In contrast, in <see cref="BindingList{T}"/> this property is <see langword="true"/>&#160;by default.</item>
@@ -173,7 +173,7 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Gets or sets whether items can be removed from the list by the <see cref="VirtualCollection{T}.Remove">Remove</see> or <see cref="VirtualCollection{T}.RemoveAt">RemoveAt</see> methods.
+        /// Gets or sets whether items can be removed from the list by the <see cref="VirtualCollection{T}.Remove">Remove</see>, <see cref="VirtualCollection{T}.RemoveAt">RemoveAt</see> and <see cref="VirtualCollection{T}.Clear">Clear</see> methods.
         /// <br/>Default value: <see langword="true"/>&#160;if the wrapped list is not read-only; otherwise, <see langword="false"/>.
         /// </summary>
         public virtual bool AllowRemove
@@ -193,14 +193,20 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets whether the items in the list are sorted.
         /// </summary>
-        /// <remarks>This property returns the value of the overridable <see cref="IsSortedCore"/> property.</remarks>
+        /// <remarks>
+        /// <para>This property returns the value of the overridable <see cref="IsSortedCore"/> property.</para>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="false"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
         public bool IsSorted => IsSortedCore;
 
         /// <summary>
-        /// Gets a <see cref="PropertyDescriptor" /> that is being used for sorting. Returns <see langword="null"/> if the list is not sorted or
+        /// Gets a <see cref="PropertyDescriptor" /> that is being used for sorting. Returns <see langword="null"/>&#160;if the list is not sorted or
         /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
         /// </summary>
-        /// <remarks>This property returns the value of the overridable <see cref="SortPropertyCore"/> property.</remarks>
+        /// <remarks>
+        /// <para>This property returns the value of the overridable <see cref="SortPropertyCore"/> property.</para>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
         public PropertyDescriptor SortProperty => SortPropertyCore;
 
         /// <summary>
@@ -252,17 +258,23 @@ namespace KGySoft.ComponentModel
         /// Gets whether the list is sorted.
         /// <br/>The base implementation returns <see langword="false"/>.
         /// </summary>
+        /// <remarks>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="false"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
         protected virtual bool IsSortedCore => false;
 
         /// <summary>
         /// Gets the property descriptor that is used for sorting the list if sorting, or <see langword="null"/>&#160;if the list is not sorted or
         /// when it is sorted by the values of <typeparamref name="T"/> rather than by one of its properties.
-        /// <br/>The base implementation returns always <see langword="null"/>.
+        /// <br/>The base implementation returns <see langword="null"/>.
         /// </summary>
+        /// <remarks>
+        /// <note><see cref="FastBindingList{T}"/> returns always <see langword="null"/>&#160;for this property. Use the <see cref="SortableBindingList{T}"/> to be able to use sorting.</note>
+        /// </remarks>
         protected virtual PropertyDescriptor SortPropertyCore => null;
 
         /// <summary>
-        /// Gets the direction the list is sorted.
+        /// Gets the direction of the sort.
         /// <br/>The base implementation returns <see cref="ListSortDirection.Ascending"/>.
         /// </summary>
         protected virtual ListSortDirection SortDirectionCore => default;
@@ -272,13 +284,9 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Properties
 
         bool IBindingList.SupportsChangeNotification => SupportsChangeNotificationCore;
-
         bool IBindingList.SupportsSearching => SupportsSearchingCore;
-
         bool IBindingList.SupportsSorting => SupportsSortingCore;
-
         ListSortDirection IBindingList.SortDirection => SortDirectionCore;
-
         bool IRaiseItemChangedEvents.RaisesItemChangedEvents => canRaiseItemChange;
 
         #endregion
@@ -297,26 +305,10 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="list">An <see cref="IList{T}" /> of items to be contained in the <see cref="FastBindingList{T}" />.</param>
         /// <remarks>
-        /// <note>Do not wrap another <see cref="IBindingList"/> or <see cref="ObservableCollection{T}"/> as their events are not captured here.
+        /// <note>Do not wrap another <see cref="IBindingList"/> or <see cref="ObservableCollection{T}"/> as their events are not captured by the <see cref="FastBindingList{T}"/> class.
         /// To capture and generate events for both wrapped and self list operations use <see cref="ObservableBindingList{T}"/> instead.</note>
         /// </remarks>
         public FastBindingList(IList<T> list) : base(list) => Initialize();
-
-        private void Initialize()
-        {
-            // Default: if T is ValueType or has parameterless constructor (but can be turned on and off)
-            bool readOnly = Items.IsReadOnly;
-            allowNew = canAddNew && !readOnly;
-            allowRemove = !readOnly;
-            allowEdit = true; //Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
-
-            raiseListChangedEvents = true;
-            if (!canRaiseItemChange)
-                return;
-
-            foreach (T item in Items)
-                HookPropertyChanged(item);
-        }
 
         #endregion
 
@@ -474,7 +466,7 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
-        /// Clears the list and removes both incoming and outgoing subscriptions.
+        /// Releases the list and removes both incoming and outgoing subscriptions.
         /// </summary>
         public void Dispose()
         {
@@ -543,10 +535,6 @@ namespace KGySoft.ComponentModel
             OnListChanged(new ListChangedEventArgs(type, index));
         }
 
-        #endregion
-
-        #region Protected Methods
-
         /// <summary>
         /// Called when an item contained in the <see cref="FastBindingList{T}"/> changes. Can be used if the binding list is sorted or uses indices.
         /// <br/>The base implementation does nothing.
@@ -554,9 +542,13 @@ namespace KGySoft.ComponentModel
         /// <param name="item">The changed item.</param>
         /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
         /// <param name="property">The descriptor of the changed property.</param>
-        protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
+        internal /*private protected*/ virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
         {
         }
+
+        #endregion
+
+        #region Protected Methods
 
         /// <summary>
         /// Raises the <see cref="AddingNew" /> event.
@@ -614,9 +606,10 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="property">A <see cref="PropertyDescriptor"/> that specifies the property to search for.</param>
         /// <param name="key">The value of <paramref name="property"/> to match.</param>
+        /// <returns>The zero-based index of the item that matches the property descriptor and contains the specified value.</returns>
         /// <remarks>
-        /// <note><see cref="FastBindingList{T}"/> performs a linear search for this method. <see cref="SortableBindingList{T}"/> is able to perform a binary search if
-        /// <paramref name="property"/> equals <see cref="SortProperty"/>.</note>
+        /// <note><see cref="FastBindingList{T}"/> performs a linear search for this method, therefore has an O(n) cost, where n is the number of elements in the list.
+        /// <br/><see cref="SortableBindingList{T}"/> is able to perform a binary search if <paramref name="property"/> equals <see cref="SortProperty"/>, in which case the cost of this method is O(log n).</note>
         /// </remarks>
         protected virtual int FindCore(PropertyDescriptor property, object key)
         {
@@ -802,6 +795,22 @@ namespace KGySoft.ComponentModel
 
         #region Private Methods
 
+        private void Initialize()
+        {
+            // Default: if T is ValueType or has parameterless constructor (but can be turned on and off)
+            bool readOnly = Items.IsReadOnly;
+            allowNew = canAddNew && !readOnly;
+            allowRemove = !readOnly;
+            allowEdit = true; //Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
+
+            raiseListChangedEvents = true;
+            if (!canRaiseItemChange)
+                return;
+
+            foreach (T item in Items)
+                HookPropertyChanged(item);
+        }
+
         private void HookPropertyChanged(T item)
         {
             if (!(item is INotifyPropertyChanged notifyPropertyChanged))
@@ -851,9 +860,7 @@ namespace KGySoft.ComponentModel
         #region Explicitly Implemented Interface Methods
 
         object IBindingList.AddNew() => AddNew();
-
         void IBindingList.AddIndex(PropertyDescriptor property) => AddIndexCore(property);
-
         void IBindingList.RemoveIndex(PropertyDescriptor property) => RemoveIndexCore(property);
 
         #endregion

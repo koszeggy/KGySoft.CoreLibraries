@@ -46,7 +46,6 @@ namespace KGySoft.Collections.ObjectModel
         #region Fields
 
         private readonly IList<T> items;
-
         [NonSerialized] private object syncRoot;
 
         #endregion
