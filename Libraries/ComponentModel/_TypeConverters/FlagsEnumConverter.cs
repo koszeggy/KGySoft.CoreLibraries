@@ -32,14 +32,12 @@ namespace KGySoft.ComponentModel
     /// </summary>
     public class FlagsEnumConverter : EnumConverter
     {
-        #region Nested classes
-
         #region EnumFieldDescriptor class
 
         /// <summary>
         /// Represents an enumeration flag as a <see cref="bool"/> property.
         /// </summary>
-        protected class EnumFlagDescriptor : SimplePropertyDescriptor
+        private class EnumFlagDescriptor : SimplePropertyDescriptor
         {
             #region Fields
 
@@ -72,7 +70,7 @@ namespace KGySoft.ComponentModel
             /// <param name="defaultValue">The default value of the <see langword="enum"/>&#160;instance specified by the <see cref="DefaultValueAttribute"/> of its property or <see langword="null"/>.</param>
             /// <param name="valueField">The underlying value field of the <see langword="enum"/>&#160;type.</param>
             /// <param name="attributes">Custom attributes of the <see langword="enum"/>&#160;flag field.</param>
-            public EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
+            internal EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
                 : base(componentType, name, typeof(bool))
             {
                 this.flagValue = flagValue;
@@ -154,8 +152,6 @@ namespace KGySoft.ComponentModel
 
             #endregion
         }
-
-        #endregion
 
         #endregion
 

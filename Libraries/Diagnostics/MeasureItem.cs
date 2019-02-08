@@ -1,14 +1,36 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: MeasureItem.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Diagnostics;
+
+#endregion
 
 namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Represents a measured profiler item.
     /// </summary>
+    [Serializable]
     [DebuggerDisplay("{category}/{operation}: Total: {totalElapsed}; Average: {new System.TimeSpan(totalElapsed.Ticks / calls)}; Calls: {calls}")]
     internal sealed class MeasureItem : IMeasureItem
     {
+
         #region Fields
 
         private readonly string category;
@@ -21,41 +43,22 @@ namespace KGySoft.Diagnostics
 
         #endregion
 
+        #region Properties
+
+        public string Category => category;
+        public string Operation => operation;
+        public long NumberOfCalls => calls;
+        public TimeSpan FirstCall => firstCall;
+        public TimeSpan TotalElapsed => totalElapsed;
+
+        #endregion
+
         #region Constructors
 
         internal MeasureItem(string category, string operation)
         {
             this.category = category;
             this.operation = operation;
-        }
-
-        #endregion
-
-        #region Properties
-
-        public string Category
-        {
-            get { return category; }
-        }
-
-        public string Operation
-        {
-            get { return operation; }
-        }
-
-        public long NumberOfCalls
-        {
-            get { return calls; }
-        }
-
-        public TimeSpan FirstCall
-        {
-            get { return firstCall; }
-        }
-
-        public TimeSpan TotalElapsed
-        {
-            get { return totalElapsed; }
         }
 
         #endregion
@@ -72,9 +75,7 @@ namespace KGySoft.Diagnostics
                     firstCall = timeSpan;
                 }
                 else
-                {
                     totalElapsed += timeSpan;
-                }
 
                 calls++;
             }

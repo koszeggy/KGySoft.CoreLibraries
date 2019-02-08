@@ -17,7 +17,7 @@ namespace KGySoft.Diagnostics
     {
         #region Fields
 
-        private readonly static Dictionary<string, MeasureItem> items;
+        private static readonly Dictionary<string, MeasureItem> items;
 
         private static string profilerDir;
 
@@ -32,13 +32,9 @@ namespace KGySoft.Diagnostics
 
             // According to MSDN, DomainUnload is never raised in main app domain so using ProcessExit there
             if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-            {
-                AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
-            }
+                AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             else
-            {
-                AppDomain.CurrentDomain.DomainUnload += new EventHandler(CurrentDomain_DomainUnload);
-            }
+                AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
 
             items = new Dictionary<string, MeasureItem>();
 
@@ -89,11 +85,8 @@ namespace KGySoft.Diagnostics
         /// <seealso cref="AutoSaveResults"/>
         public static string ProfilerDirectory
         {
-            get { return profilerDir; }
-            set
-            {
-                profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value;
-            }
+            get => profilerDir;
+            set => profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value;
         }
 
         /// <summary>
@@ -102,15 +95,14 @@ namespace KGySoft.Diagnostics
         /// <remarks>
         /// <para>If <see cref="AutoSaveResults"/> is <see langword="true"/>, the measurement results are automatically dumped in
         /// XML files on application exit, so accessing this property is required only
-        /// when measurements are needed to be accessed programatically.
+        /// when measurements are needed to be accessed programmatically.
         /// </para>
         /// <para>Getting this property is an O(1) operation. The returned value is a lazy enumerator. If <see cref="Measure"/>
-        /// method is called during the enumeratation an exception might be thrown.</para>
+        /// method is called during the enumeration an exception might be thrown.</para>
         /// </remarks>
-        public static IEnumerable<IMeasureItem> GetMeasurementResults()
-        {
-            return items.Select(i => (IMeasureItem)i.Value);
-        }
+        public static IEnumerable<IMeasureItem> GetMeasurementResults() 
+            // ReSharper disable once InconsistentlySynchronizedField - see remarks above
+            => items.Select(i => (IMeasureItem)i.Value);
 
         /// <summary>
         /// Gets the measurement results of the given <paramref name="category"/> so far.
@@ -118,15 +110,14 @@ namespace KGySoft.Diagnostics
         /// <remarks>
         /// <para>If <see cref="AutoSaveResults"/> is <see langword="true"/>, the measurement results are automatically dumped in
         /// XML files on application exit, so accessing this property is required only
-        /// when measurements are needed to be accessed programatically.
+        /// when measurements are needed to be accessed programmatically.
         /// </para>
         /// <para>Getting this property is an O(1) operation. The returned value is a lazy enumerator. If <see cref="Measure"/>
-        /// method is called during the enumeratation an exception might be thrown.</para>
+        /// method is called during the enumeration an exception might be thrown.</para>
         /// </remarks>
         public static IEnumerable<IMeasureItem> GetMeasurementResults(string category)
-        {
-            return items.Where(i => i.Value.Category == category).Select(i => (IMeasureItem)i.Value);
-        }
+            // ReSharper disable once InconsistentlySynchronizedField - see remarks above
+            => items.Where(i => i.Value.Category == category).Select(i => (IMeasureItem)i.Value);
 
         /// <summary>
         /// Gets a measurement result as an <see cref="IMeasureItem"/> instance, or <see langword="null"/>, if the
@@ -135,7 +126,7 @@ namespace KGySoft.Diagnostics
         /// <param name="category">The category name of the operation.
         /// If <see langword="null"/>&#160;or empty, looks for an uncategorized operation.</param>
         /// <param name="operation">Name of the operation.</param>
-        /// <returns>An <see cref="IMeasureItem"/> instance that that contains the measurement results of the required
+        /// <returns>An <see cref="IMeasureItem"/> instance that contains the measurement results of the required
         /// operation, or <see langword="null"/>, if the measurement result is not found with the given <paramref name="category"/>
         /// and <paramref name="operation"/>.</returns>
         /// <remarks>Unless <see cref="Reset"/> is called, there is no need to retrieve the measurement result of the same
@@ -152,8 +143,7 @@ namespace KGySoft.Diagnostics
             string key = category + ":" + operation;
             lock (items)
             {
-                MeasureItem item;
-                if (items.TryGetValue(key, out item))
+                if (items.TryGetValue(key, out MeasureItem item))
                     return item;
             }
 
@@ -222,15 +212,11 @@ namespace KGySoft.Diagnostics
 
         private static void DumpResults()
         {
-            if (!Enabled || !AutoSaveResults || items.Count == 0)
-            {
-                return;
-            }
-
-            XElement result = new XElement("ProfilerResult");
-
+            var result = new XElement("ProfilerResult");
             lock (items)
             {
+                if (!Enabled || !AutoSaveResults || items.Count == 0)
+                    return;
                 foreach (MeasureItem item in items.Values)
                 {
                     XElement xItem = new XElement("item", new XAttribute("Category", item.Category),
@@ -249,16 +235,12 @@ namespace KGySoft.Diagnostics
             {
                 StringBuilder fileName = new StringBuilder(AppDomain.CurrentDomain.FriendlyName);
                 foreach (char c in Path.GetInvalidFileNameChars())
-                {
                     fileName.Replace(c, '_');
-                }
 
                 if (!Directory.Exists(profilerDir))
-                {
                     Directory.CreateDirectory(profilerDir);
-                }
 
-                result.Save(Path.Combine(profilerDir, Files.GetNextFileName(String.Format("{0}_{1}.xml", DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss.fffffff", CultureInfo.InvariantCulture), fileName))));
+                result.Save(Path.Combine(profilerDir, Files.GetNextFileName($"{DateTime.Now.ToString("yyyy-MM-dd_HH.mm.ss.fffffff", CultureInfo.InvariantCulture)}_{fileName}.xml")));
             }
             catch (IOException)
             {

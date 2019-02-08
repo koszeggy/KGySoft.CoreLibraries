@@ -76,11 +76,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
         public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
-        {
-            if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
-            return dictionary.TryGetValue(key, out object value) && value is TActualValue actualValue ? actualValue : defaultValue;
-        }
+            => dictionary.GetValueOrDefault<string, object, TActualValue>(key, defaultValue);
 
         /// <summary>
         /// Returns a <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.

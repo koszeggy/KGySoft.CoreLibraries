@@ -1,20 +1,38 @@
-﻿using System.Collections.Generic;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: DictionaryKeyCollectionDebugView.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System.Collections.Generic;
 using System.Diagnostics;
+
+#endregion
 
 namespace KGySoft.Diagnostics
 {
-    // ReSharper disable once UnusedTypeParameter
+    // ReSharper disable once UnusedTypeParameter - otherwise, DebuggerTypeProxyAttribute does not work
     internal sealed class DictionaryKeyCollectionDebugView<TKey, TValue>
     {
+        #region Fields
+
         private readonly ICollection<TKey> collection;
 
-        ///<summary>
-        /// Creates a new instance of CollectionDebugView
-        ///</summary>
-        public DictionaryKeyCollectionDebugView(ICollection<TKey> collection)
-        {
-            this.collection = collection;
-        }
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// Gets the visible items in debugger view
@@ -29,5 +47,16 @@ namespace KGySoft.Diagnostics
                 return items;
             }
         }
+
+        #endregion
+
+        #region Constructors
+
+        ///<summary>
+        /// Creates a new instance of CollectionDebugView
+        ///</summary>
+        public DictionaryKeyCollectionDebugView(ICollection<TKey> collection) => this.collection = collection;
+
+        #endregion
     }
 }
