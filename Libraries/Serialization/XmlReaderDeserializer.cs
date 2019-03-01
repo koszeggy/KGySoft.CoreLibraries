@@ -92,7 +92,7 @@ namespace KGySoft.Serialization
 
                 collectionElementType = objType.GetCollectionElementType();
                 IEnumerable collection = (IEnumerable)obj;
-                collection.Clear();
+                collection.TryClear(false);
             }
 
             DeserializeMembersAndElements(reader, obj, objType, collectionElementType, null);
@@ -144,13 +144,13 @@ namespace KGySoft.Serialization
                         IEnumerable collection = (IEnumerable)obj;
                         if (reader.IsEmptyElement)
                         {
-                            collection.Add(null);
+                            collection.TryAdd(null, false);
                             continue;
                         }
 
                         if (TryDeserializeObject(itemType ?? collectionElementType, reader, null, out var item))
                         {
-                            collection.Add(item);
+                            collection.TryAdd(item, false);
                             continue;
                         }
 

@@ -81,15 +81,20 @@ namespace KGySoft.CoreLibraries
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            if (type == Reflector.ObjectType)
-                return true;
-
             // checking null value: if not reference or nullable, null is wrong
             if (value == null)
                 return (!type.IsValueType || type.IsNullable());
 
+            if (type == Reflector.ObjectType)
+                return true;
+
             if (type.IsNullable())
                 type = Nullable.GetUnderlyingType(type);
+
+            // if parameter is passed by reference (ref, out modifiers) the element type must be checked
+            // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType call above
+            if (type.IsByRef)
+                type = type.GetElementType();
 
             // getting the type of the real instance
             Type instanceType = value.GetType();
@@ -98,26 +103,11 @@ namespace KGySoft.CoreLibraries
             if (type == instanceType)
                 return true;
 
-            // if parameter is passed by reference (ref, out modifiers) the element type must be checked
-            // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType call above
-            if (type.IsByRef)
-            {
-                type = type.GetElementType();
-                if (type == Reflector.ObjectType || type == instanceType)
-                    return true;
-            }
-
-            // instance is a concrete enum but type is not: when boxing or unboxing, enums are compatible with their underlying type
-            // immediate return is ok because object and same types are checked above, other relationship is not possible
-            if (value is Enum)
-                return type == Reflector.EnumType || type == Enum.GetUnderlyingType(instanceType);
-
-            // type is an enum but instance is not: when boxing or unboxing, enums are compatible with their underlying type
-            // base type is checked because when type == Enum, the AssignableFrom will tell the truth
-            // immediate return is ok because object and same types are checked above, other relationship is not possible
+            // When unboxing, enums are compatible with their underlying type
             // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType and type.GetElementType calls above
-            if (type.BaseType == Reflector.EnumType)
-                return instanceType == Enum.GetUnderlyingType(type);
+            if (value is Enum && type == Enum.GetUnderlyingType(instanceType) // eg. (int)objValueContainingEnum
+                || type.BaseType == Reflector.EnumType && instanceType == Enum.GetUnderlyingType(type)) // eg. (MyEnum)objValueContainingInt
+                return true;
 
             return type.IsAssignableFrom(instanceType);
         }
@@ -171,23 +161,49 @@ namespace KGySoft.CoreLibraries
         /// <param name="genericTypeDefinition">The generic type definition.</param>
         /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
-        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition)
+        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition) => IsImplementationOfGenericType(type, genericTypeDefinition, out var _);
+
+        /// <summary>
+        /// Gets whether the given <paramref name="type"/>, its base classes or interfaces implement the specified <paramref name="genericTypeDefinition"/>.
+        /// </summary>
+        /// <param name="type">The type to check.</param>
+        /// <param name="genericTypeDefinition">The generic type definition.</param>
+        /// <param name="genericType">When this method returns <see langword="true"/>, the this parameter contains the found implementation of the specified <paramref name="genericTypeDefinition"/>.</param>
+        /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
+        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, out Type genericType)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             if (genericTypeDefinition == null)
                 throw new ArgumentNullException(nameof(genericTypeDefinition), Res.ArgumentNull);
+
+            genericType = null;
             if (!genericTypeDefinition.IsGenericTypeDefinition)
                 return false;
 
             string rootName = genericTypeDefinition.Name;
             if (genericTypeDefinition.IsInterface)
-                return type.GetInterfaces().Any(i => i.Name == rootName && i.IsGenericTypeOf(genericTypeDefinition));
+            {
+                foreach (Type i in type.GetInterfaces())
+                {
+                    if (i.Name == rootName && i.IsGenericTypeOf(genericTypeDefinition))
+                    {
+                        genericType = i;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
 
             for (Type t = type; type != null; type = type.BaseType)
             {
                 if (t.Name == rootName && t.IsGenericTypeOf(genericTypeDefinition))
+                {
+                    genericType = t;
                     return true;
+                }
             }
 
             return false;

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Text;
@@ -55,12 +57,15 @@ namespace KGySoft.Reflection
 
         #region Method accessors
 
+        private static IDictionary<Type, FunctionMethodAccessor> methodsEnumerableExtensions_TryAdd;
+        private static IDictionary<Type, FunctionMethodAccessor> methodsEnumerableExtensions_TryClear;
+
 #if NET35 || NET40
         private static ActionMethodAccessor methodException_InternalPreserveStackTrace;
 #endif
 
 #if NET35 || NET40 || NET45
-        private static IDictionary<Type, ActionMethodAccessor> methodHashSet_Initialize;
+        private static IDictionary<Type, ActionMethodAccessor> methodsHashSet_Initialize;
 #else
 #error make sure not to use this from NET472, where capacity ctor is available
 #endif
@@ -147,11 +152,11 @@ namespace KGySoft.Reflection
             }
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Methods - for accessors of types of referenced assemblies
+        #region Methods - for accessors of types of referenced assemblies
 
 #if NET35 || NET40
         internal static void InternalPreserveStackTrace(this Exception exception)
@@ -166,12 +171,12 @@ namespace KGySoft.Reflection
 
         internal static void Initialize<T>(this HashSet<T> hashSet, int capacity)
         {
-            if (methodHashSet_Initialize == null)
-                methodHashSet_Initialize = new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe();
-            if (!methodHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor invoker))
+            if (methodsHashSet_Initialize == null)
+                methodsHashSet_Initialize = new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe();
+            if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor invoker))
             {
                 invoker = new ActionMethodAccessor(hashSet.GetType().GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
-                methodHashSet_Initialize[typeof(T)] = invoker;
+                methodsHashSet_Initialize[typeof(T)] = invoker;
             }
 
             invoker.Invoke(hashSet, capacity);
@@ -181,11 +186,11 @@ namespace KGySoft.Reflection
 #error make sure not to use this from NET472, where capacity ctor is available
 #endif
 
-#endregion
+        #endregion
 
-#region Methods - for accessors of types of non-referenced assemblies
+        #region Methods - for accessors of types of non-referenced assemblies
 
-#region Field accessors
+        #region Field accessors
 
         internal static string ResXFileRef_fileName_Get(object fileRef)
         {
@@ -291,9 +296,9 @@ namespace KGySoft.Reflection
             return (string)fieldDataNodeInfo_ReaderPosition.Get(nodeInfo);
         }
 
-#endregion
+        #endregion
 
-#region Property accessors
+        #region Property accessors
 
         internal static int Point_X_Get(object point)
         {
@@ -311,8 +316,8 @@ namespace KGySoft.Reflection
             return (int)propertyPoint_Y.Get(point);
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

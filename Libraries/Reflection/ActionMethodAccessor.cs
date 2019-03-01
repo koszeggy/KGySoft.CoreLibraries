@@ -16,7 +16,7 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate void AnyAction(object target, object[] arguments);
 
-        internal ActionMethodAccessor(MethodBase mi)
+        internal ActionMethodAccessor(MethodBase mi) // now can be used for ctors but that is not cached in the base! See the comment in Reflector
             : base(mi)
         {
         }

@@ -24,6 +24,7 @@
   + ToEnum method
   + EqualsAny/IndexOfAny/ContainsAny overloads
 * EnumerableExtensions class
+  + TryAdd/TryClear
   + New Shuffle overload: can be used with an already existing Random instance.
   + New GetRandomElement methods
 + New RandomExtensions class
@@ -31,7 +32,7 @@
 + TypeExtensions class
   + IsDelegate method
   + IsGenericTypeOf method
-  + IsImplementationOfGenericType method
+  + IsImplementationOfGenericType methods
 
 ! KGySoft.Collections namespace:
 ================================

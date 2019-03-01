@@ -2355,7 +2355,7 @@ namespace KGySoft.Serialization
                     return cachedResult;
             }
 
-            // keyvaluepair, dictionary entry
+            // KeyValuePair, dictionary entry
             if (descriptor.IsSingleElement)
             {
                 object result = Reflector.CreateInstance(descriptor.GetTypeToCreate());
@@ -2410,9 +2410,7 @@ namespace KGySoft.Serialization
                     continue;
                 }
 
-                // ReSharper disable PossibleMultipleEnumeration
-                collection.Add(element);
-                // ReSharper restore PossibleMultipleEnumeration
+                collection.TryAdd(element, false);
             }
 
             return descriptor.IsReadOnly ? descriptor.GetAsReadOnly(collection) : collection;

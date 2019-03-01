@@ -18,15 +18,15 @@
 
 using System;
 using System.Collections;
-#if !NET35
-using System.Collections.Concurrent;
-#endif
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.Reflection;
+#if !NET35
+using System.Collections.Concurrent;
+#endif
 
 #endregion
 
@@ -40,6 +40,8 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         #region Public Methods
+
+        #region Manipulation
 
         /// <summary>
         /// Similarly to the <see cref="List{T}.ForEach"><![CDATA[List<T>.ForEach]]></see> method, processes an action on each element of an enumerable collection.
@@ -64,21 +66,305 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
+        /// Tries to add the specified <paramref name="item"/> to the <paramref name="collection"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
+        /// <param name="collection">The collection to add the <paramref name="item"/> to.</param>
+        /// <param name="item">The item to add.</param>
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt adding the element without checking the read-only state.</param>
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by an adding method; <see langword="false"/> to suppress inner exceptions and return <see langword="false"/> on failure.</param>
+        /// <returns><see langword="true"/> if an adding method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the adding method threw an exception.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="item"/> can be added to the <paramref name="collection"/> if the collection is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// </remarks>
+        public static bool TryAdd<T>([NoEnumeration]this IEnumerable<T> collection, T item, bool checkReadOnly = true, bool throwError = true)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection));
+
+            try
+            {
+                switch (collection)
+                {
+                    case ICollection<T> genericCollection:
+                        if (checkReadOnly && genericCollection.IsReadOnly)
+                            return false;
+                        genericCollection.Add(item);
+                        return true;
+#if !NET35
+                    case IProducerConsumerCollection<T> producerConsumerCollection:
+                        return producerConsumerCollection.TryAdd(item);
+#endif
+
+                    case IList list:
+                        if (checkReadOnly && list.IsReadOnly)
+                            return false;
+                        list.Add(item);
+                        return true;
+
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to add the specified <paramref name="item"/> to the <paramref name="collection"/>.
+        /// </summary>
+        /// <param name="collection">The collection to add the <paramref name="item"/> to.</param>
+        /// <param name="item">The item to add.</param>
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt adding the element without checking the read-only state.</param>
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by an adding method; <see langword="false"/> to suppress inner exceptions and return <see langword="false"/> on failure.</param>
+        /// <returns><see langword="true"/> if an adding method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the adding method threw an exception.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="item"/> can be added to the <paramref name="collection"/> if the collection is either an <see cref="IList"/>, <see cref="IDictionary"/> (if <paramref name="item"/> is a <see cref="DictionaryEntry"/>),
+        /// or a generic <see cref="ICollection{T}"/> or <see cref="IProducerConsumerCollection{T}"/> implementation.</para>
+        /// </remarks>
+        public static bool TryAdd([NoEnumeration]this IEnumerable collection, object item, bool checkReadOnly = true, bool throwError = true)
+        {
+            IList list = collection as IList;
+
+            try
+            {
+                // 1.) IList
+                // ReSharper disable once UsePatternMatching - must be "as" cast due to the second .NET 3.5 part at the end
+                if (list != null)
+                {
+                    if (checkReadOnly && list.IsReadOnly)
+                        return false;
+#if NET35
+                    // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types
+                    if (item != null)
+#endif
+                    {
+                        list.Add(item);
+                        return true;
+                    }
+                }
+
+                // 2.) IDictionary
+                if (item is DictionaryEntry entry && collection is IDictionary dictionary)
+                {
+                    if (checkReadOnly && dictionary.IsReadOnly)
+                        return false;
+                    dictionary.Add(entry.Key, entry.Value);
+                    return true;
+                }
+
+                // 3.) ICollection<T>
+                Type collType = collection.GetType();
+                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                {
+                    if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                        return false;
+                    var genericArgument = closedGenericType.GetGenericArguments()[0];
+                    if (!genericArgument.CanAcceptValue(item))
+                        return false;
+                    MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(ICollection<_>.Add))).Invoke(collection, item);
+                    return true;
+                }
+
+#if !NET35
+                // 4.) IProducerConsumerCollection<T>
+                if (collType.IsImplementationOfGenericType(typeof(IProducerConsumerCollection<>), out closedGenericType))
+                    return (bool)MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))).Invoke(collection, item);
+#endif
+
+#if NET35
+                if (list == null)
+#endif
+                {
+                    return false;
+                }
+
+#if NET35
+                // if we reach this point now we can try to add null to the IList
+                list.Add(null);
+                return true;
+#endif
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to remove all elements from the <paramref name="collection"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
+        /// <param name="collection">The collection to clear.</param>
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt the clearing without checking the read-only state.</param>
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by the matching clear method; <see langword="false"/> to suppress inner exceptions and return <see langword="false"/> on failure.</param>
+        /// <returns><see langword="true"/> if a clear method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the clear method threw an exception.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="collection"/> can be cleared if the collection is either an <see cref="ICollection{T}"/>, <see cref="IList"/> or <see cref="IDictionary"/> implementation.</para>
+        /// </remarks>
+        public static bool TryClear<T>([NoEnumeration]this IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection));
+
+            try
+            {
+                switch (collection)
+                {
+                    case ICollection<T> genericCollection:
+                        if (checkReadOnly && genericCollection.IsReadOnly)
+                            return false;
+                        genericCollection.Clear();
+                        return true;
+                    case IList list:
+                        if (checkReadOnly && list.IsReadOnly)
+                            return false;
+                        list.Clear();
+                        return true;
+                    case IDictionary dictionary:
+                        if (checkReadOnly && dictionary.IsReadOnly)
+                            return false;
+                        dictionary.Clear();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to remove all elements from the <paramref name="collection"/>.
+        /// </summary>
+        /// <param name="collection">The collection to clear.</param>
+        /// <param name="checkReadOnly"><see langword="true"/> to return <see langword="false"/> if the collection is read-only; <see langword="false"/> to attempt the clearing without checking the read-only state.</param>
+        /// <param name="throwError"><see langword="true"/> to forward any exception thrown by the matching clear method; <see langword="false"/> to suppress inner exceptions and return <see langword="false"/> on failure.</param>
+        /// <returns><see langword="true"/> if a clear method could be successfully called; <see langword="false"/> if such method was not found, or <paramref name="checkReadOnly"/> is <see langword="true"/> and the collection was read-only,
+        /// or <paramref name="throwError"/> is <see langword="false"/> and the clear method threw an exception.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="collection"/> can be cleared if the collection is either an <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation.</para>
+        /// </remarks>
+        public static bool TryClear([NoEnumeration]this IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection));
+
+            try
+            {
+                switch (collection)
+                {
+                    case IList list:
+                        if (checkReadOnly && list.IsReadOnly)
+                            return false;
+                        list.Clear();
+                        return true;
+                    case IDictionary dictionary:
+                        if (checkReadOnly && dictionary.IsReadOnly)
+                            return false;
+                        dictionary.Clear();
+                        return true;
+                    default:
+                        Type collType = collection.GetType();
+                        if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                        {
+                            if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                                return false;
+                            MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(ICollection<_>.Clear))).Invoke(collection);
+                            return true;
+                        }
+
+                        return false;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Lookup
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
+        /// </summary>
+        /// <param name="source">The source to check.</param>
+        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
+        public static bool IsNullOrEmpty(this IEnumerable source)
+        {
+            if (source == null)
+                return true;
+
+            if (source is ICollection collection)
+                return collection.Count == 0;
+
+            var disposableEnumerator = source as IDisposable;
+            try
+            {
+                IEnumerator enumerator = source.GetEnumerator();
+                return enumerator.MoveNext();
+            }
+            finally
+            {
+                disposableEnumerator?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
+        /// </summary>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <param name="source">The source to check.</param>
+        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)
+        {
+            if (source == null)
+                return true;
+
+            if (source is ICollection<T> collection)
+                return collection.Count == 0;
+
+#if !(NET35 || NET40)
+            if (source is IReadOnlyCollection<T> readOnlyCollection)
+                return readOnlyCollection.Count == 0;
+#endif
+
+            return ((IEnumerable)source).IsNullOrEmpty();
+        }
+
+        /// <summary>
         /// Searches for an element in the <paramref name="source"/> enumeration where the specified <paramref name="predicate"/> returns <see langword="true"/>.
         /// </summary>
-        /// <typeparam name="TSource">The type of the elements in the enumeration..</typeparam>
+        /// <typeparam name="T">The type of the elements in the enumeration..</typeparam>
         /// <param name="source">The source enumeration to search.</param>
         /// <param name="predicate">The predicate to use for the search.</param>
         /// <returns>The index of the found element, or -1 if there was no match.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> or <paramref name="predicate"/> is <see langword="null"/>.</exception>
-        public static int IndexOf<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
+        public static int IndexOf<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (predicate == null)
                 throw new ArgumentNullException(nameof(predicate), Res.ArgumentNull);
 
-            if (source is IList<TSource> list)
+            if (source is IList<T> list)
             {
                 int length = list.Count;
                 for (int i = 0; i < length; i++)
@@ -105,18 +391,18 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Searches for an element in the <paramref name="source"/> enumeration.
         /// </summary>
-        /// <typeparam name="TSource">The type of the elements in the enumeration..</typeparam>
+        /// <typeparam name="T">The type of the elements in the enumeration..</typeparam>
         /// <param name="source">The source enumeration to search.</param>
         /// <param name="element">The element to search.</param>
         /// <returns>The index of the found element, or -1 if <paramref name="element"/> was not found.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
-        public static int IndexOf<TSource>(this IEnumerable<TSource> source, TSource element)
+        public static int IndexOf<T>(this IEnumerable<T> source, T element)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
-            var comparer = element is Enum ? (IEqualityComparer<TSource>)EnumComparer<TSource>.Comparer : EqualityComparer<TSource>.Default;
-            if (source is IList<TSource> list)
+            var comparer = element is Enum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+            if (source is IList<T> list)
             {
                 int length = list.Count;
                 for (int i = 0; i < length; i++)
@@ -129,7 +415,7 @@ namespace KGySoft.CoreLibraries
             }
 
             var index = 0;
-            foreach (TSource item in source)
+            foreach (T item in source)
             {
                 if (comparer.Equals(item, element))
                     return index;
@@ -140,23 +426,31 @@ namespace KGySoft.CoreLibraries
             return -1;
         }
 
+        #endregion
+
+        #region Conversion
+
         /// <summary>
         /// Creates a <see cref="CircularList{T}"/> from an <see cref="IEnumerable{T}"/>.
         /// </summary>
-        /// <typeparam name="TSource">The type of the elements of <paramref name="source"/>.</typeparam>
+        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
         /// <param name="source">The <see cref="IEnumerable{T}"/> to create a <see cref="CircularList{T}"/> from.</param>
         /// <returns>A <see cref="CircularList{T}"/> that contains elements from the input sequence.</returns>
         /// <remarks>
         /// The method forces immediate query evaluation and returns a <see cref="CircularList{T}"/> that contains the query results.
         /// You can append this method to your query in order to obtain a cached copy of the query results.
         /// </remarks>
-        public static CircularList<TSource> ToCircularList<TSource>(this IEnumerable<TSource> source)
+        public static CircularList<T> ToCircularList<T>(this IEnumerable<T> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
 
-            return new CircularList<TSource>(source);
+            return new CircularList<T>(source);
         }
+
+        #endregion
+
+        #region Random
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="Random"/> instance.
@@ -165,7 +459,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <param name="seed">The seed to use for the shuffling.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> which contains the elements of the <paramref name="source"/> in randomized order.</returns>
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed) 
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
             => Shuffle(source, new Random(seed));
 
         /// <summary>
@@ -246,151 +540,11 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        /// <summary>
-        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
-        /// </summary>
-        /// <param name="source">The source to check.</param>
-        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
-        public static bool IsNullOrEmpty(this IEnumerable source)
-        {
-            if (source == null)
-                return true;
-
-            if (source is ICollection collection)
-                return collection.Count == 0;
-
-            var disposableEnumerator = source as IDisposable;
-            try
-            {
-                IEnumerator enumerator = source.GetEnumerator();
-                return enumerator.MoveNext();
-            }
-            finally
-            {
-                disposableEnumerator?.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
-        /// </summary>
-        /// <typeparam name="T">The type of the elements of <paramref name="source"/>.</typeparam>
-        /// <param name="source">The source to check.</param>
-        /// <returns><see langword="true"/>&#160;if the <paramref name="source"/> collection is <see langword="null"/>&#160;or empty; otherwise, <see langword="false"/>.</returns>
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> source)
-        {
-            if (source == null)
-                return true;
-
-            if (source is ICollection<T> collection)
-                return collection.Count == 0;
-
-#if !(NET35 || NET40)
-            if (source is IReadOnlyCollection<T> readOnlyCollection)
-                return readOnlyCollection.Count == 0;
-#endif
-
-            return ((IEnumerable)source).IsNullOrEmpty();
-        }
+        #endregion
 
         #endregion
 
         #region Internal Methods
-
-        /// <summary>
-        /// Adds an element to an enumerable collection if possible.
-        /// That is, if <paramref name="source"/> implements either the non-generic <see cref="IList"/> or <see cref="IDictionary"/> interfaces,
-        /// or the generic <see cref="ICollection{T}"/> interface.
-        /// </summary>
-        internal static void Add([NoEnumeration]this IEnumerable source, object item)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
-
-            // ReSharper disable once UsePatternMatching - must be "as" cast due to .NET 3.5 part
-            IList list = source as IList;
-            if (list != null
-#if NET35
-                // IList with null element: skip because generic collections below .NET 4 may not support null elements of nullable types
-                && item != null
-#elif !(NET40 || NET45)
-#error .NET version is not set or not supported!
-#endif
-                )
-            {
-                list.Add(item);
-                return;
-            }
-
-            if (item is DictionaryEntry entry && source is IDictionary dictionary)
-            {
-                dictionary.Add(entry.Key, entry.Value);
-                return;
-            }
-
-            Type sourceType = source.GetType();
-            foreach (Type i in sourceType.GetInterfaces())
-            {
-                if (i.IsGenericTypeOf(typeof(ICollection<>)))
-                {
-                    MethodInfo mi = i.GetMethod("Add");
-                    if (mi.GetParameters()[0].ParameterType.CanAcceptValue(item))
-                    {
-                        MethodAccessor.GetAccessor(mi).Invoke(source, item);
-                        return;
-                    }
-                }
-            }
-
-#if NET35
-            if (list != null) // && item == null
-            {
-                list.Add(item);
-                return;
-            }
-#elif !(NET40 || NET45)
-#error .NET version is not set or not supported!
-#endif
-            throw new NotSupportedException(Res.EnumerableExtensionsCannotAdd(source.GetType()));
-        }
-
-        /// <summary>
-        /// Clears an enumerable collection if possible.
-        /// That is, if <paramref name="source"/> implements either the non-generic <see cref="IList"/> or <see cref="IDictionary"/> interfaces,
-        /// or the generic <see cref="ICollection{T}"/> interface.
-        /// </summary>
-        internal static void Clear([NoEnumeration]this IEnumerable source)
-        {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
-
-            IList list = source as IList;
-            if (list != null)
-            {
-                list.Clear();
-                return;
-            }
-
-            IDictionary dictionary = source as IDictionary;
-            if (dictionary != null)
-            {
-                dictionary.Clear();
-                return;
-            }
-
-            Type sourceType = source.GetType();
-            foreach (Type i in sourceType.GetInterfaces())
-            {
-                if (i.IsGenericTypeOf(typeof(ICollection<>)))
-                {
-                    MethodInfo mi = i.GetMethod("Clear");
-                    MethodAccessor.GetAccessor(mi).Invoke(source);
-                    return;
-                }
-            }
-
-            throw new InvalidOperationException(Res.EnumerableExtensionsCannotClear(source.GetType()));
-        }
 
         /// <summary>
         /// Adjusts the initializer collection created by <see cref="TypeExtensions.CreateInitializerCollection"/> after it is populated before calling the constructor.

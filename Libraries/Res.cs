@@ -529,16 +529,6 @@ namespace KGySoft
 
         #endregion
 
-        #region EnumerableExtensions
-
-        /// <summary>Cannot add element to type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</summary>
-        internal static string EnumerableExtensionsCannotAdd(Type type) => Get("EnumerableExtensions_CannotAddFormat", type);
-
-        /// <summary>Cannot clear items of type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</summary>
-        internal static string EnumerableExtensionsCannotClear(Type type) => Get("EnumerableExtensions_CannotClearFormat", type);
-
-        #endregion
-
         #region ObjectExtensions
 
         /// <summary>The specified argument cannot be converted to type {0}.</summary>

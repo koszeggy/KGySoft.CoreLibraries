@@ -288,7 +288,7 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-                if (!TryPopulateCollection(ref context, collection, targetCollection, targetElementType, isDictionary))
+                if (!TryPopulateCollection(ref context, collection, targetCollection, targetElementType))
                     return false;
                 value = targetCollection;
                 return true;
@@ -366,7 +366,7 @@ namespace KGySoft.CoreLibraries
             private static bool TryPopulateByInitializerCollection(ref ConversionContext context, IEnumerable sourceCollection, ConstructorInfo collectionCtor, Type targetElementType, bool isDictionary, out object value)
             {
 				IEnumerable initializerCollection = targetElementType.CreateInitializerCollection(isDictionary);
-                if (!TryPopulateCollection(ref context, sourceCollection, initializerCollection, targetElementType, isDictionary))
+                if (!TryPopulateCollection(ref context, sourceCollection, initializerCollection, targetElementType))
                 {
                     value = null;
                     return false;
@@ -377,15 +377,14 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            private static bool TryPopulateCollection(ref ConversionContext context, IEnumerable sourceCollection, IEnumerable targetCollection, Type targetElementType, bool isDictionary)
+            private static bool TryPopulateCollection(ref ConversionContext context, IEnumerable sourceCollection, IEnumerable targetCollection, Type targetElementType)
             {
                 try
                 {
                     foreach (object sourceItem in sourceCollection)
                     {
-                        if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem))
+                        if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem) || !targetCollection.TryAdd(targetItem, false))
                             return false;
-                        targetCollection.Add(targetItem);
                     }
 
                     return true;

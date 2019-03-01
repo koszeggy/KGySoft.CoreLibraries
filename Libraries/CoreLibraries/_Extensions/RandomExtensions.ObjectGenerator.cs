@@ -946,7 +946,7 @@ namespace KGySoft.CoreLibraries
                 if (!isDictionary)
                 {
                     for (int i = 0; i < count; i++)
-                        collection.Add(GenerateObject(elementType, true, ref context));
+                        collection.TryAdd(GenerateObject(elementType, true, ref context), false);
 
                     return;
                 }

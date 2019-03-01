@@ -38,6 +38,9 @@ namespace KGySoft.Reflection
             /// </summary>
             OmitParameters = 1 << 2,
 
+            /// <summary>
+            /// Treats a ConstructorInfo as a regular method
+            /// </summary>
             TreatCtorAsMethod = 1 << 3,
         }
 

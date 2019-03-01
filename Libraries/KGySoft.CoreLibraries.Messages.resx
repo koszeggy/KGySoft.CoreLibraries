@@ -187,12 +187,6 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_EmptyIndices" xml:space="preserve">
     <value>Indexer parameters are empty.</value>
   </data>
-  <data name="EnumerableExtensions_CannotAddFormat" xml:space="preserve">
-    <value>Cannot add element to type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
-  </data>
-  <data name="EnumerableExtensions_CannotClearFormat" xml:space="preserve">
-    <value>Cannot clear items of type {0} because it implements neither IList nor ICollection&lt;T&gt; interfaces.</value>
-  </data>
   <data name="IEnumerator_CollectionModified" xml:space="preserve">
     <value>Collection was modified; enumeration operation may not execute.</value>
   </data>
