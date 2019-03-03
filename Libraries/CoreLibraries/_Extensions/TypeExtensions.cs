@@ -69,7 +69,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <param name="value">The value, whose compatibility with the <paramref name="type"/> is checked.</param>
-        /// <returns><see langword="true"/> if <paramref name="value"/> can be an instance of <paramref name="type"/>; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>&#160;if <paramref name="value"/> can be an instance of <paramref name="type"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         /// <remarks>
         /// <para><paramref name="type"/> can be a <see cref="Nullable{T}"/> type.</para>

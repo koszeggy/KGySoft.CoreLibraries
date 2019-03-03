@@ -70,10 +70,7 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ")}")]
     [Serializable]
-    public sealed class CircularList<T> : IList<T>, IList
-#if !(NET35 || NET40)
-        , IReadOnlyList<T>
-#endif
+    public sealed class CircularList<T> : ISupportsRangeList<T>, IList
     {
         // ReSharper disable ParameterHidesMember
 
@@ -843,7 +840,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Inserts a <paramref name="collection"/> into the <see cref="CircularList{T}"/> at the specified index.
+        /// Inserts a <paramref name="collection"/> into the <see cref="CircularList{T}"/> at the specified <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="collection"/> items should be inserted.</param>
         /// <param name="collection">The collection to insert into the list.</param>
@@ -877,7 +874,7 @@ namespace KGySoft.Collections
             T[] asArray = ReferenceEquals(collection, this) ? ToArray() : collection as T[];
             ICollection<T> asCollection = asArray != null ? null : collection as ICollection<T>;
 
-            // ReSharper disable PossibleMultipleEnumeration - collection is not enumerated multiple times
+            // ReSharper disable PossibleMultipleEnumeration - collection.ToArray is called only if not evaluated yet
             // to prevent O(n * m) cost with inserting IEnumerable elements one by one we create a temp buffer
             if (asArray == null && asCollection == null)
                 asArray = collection.ToArray();
@@ -1005,7 +1002,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Removes the item from the see <see cref="CircularList{T}"/> at the specified index.
+        /// Removes the item from the see <see cref="CircularList{T}"/> at the specified <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularList{T}"/>.</exception>
@@ -1053,7 +1050,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Removes <paramref name="count"/> amount of items from the <see cref="CircularList{T}"/> at the specified index.
+        /// Removes <paramref name="count"/> amount of items from the <see cref="CircularList{T}"/> at the specified <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The zero-based index of the first item to remove.</param>
         /// <param name="count">The number of items to remove.</param>
@@ -1067,12 +1064,10 @@ namespace KGySoft.Collections
         {
             if ((uint)index >= (uint)size)
                 throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
-
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
-
             if (index + count > size)
-                throw new ArgumentException(Res.CircularListInvalidOffsLen);
+                throw new ArgumentException(Res.IListInvalidOffsLen);
 
             if (count == 0)
                 return;
@@ -1233,7 +1228,72 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region Search
+        #region Replace
+
+        /// <summary>
+        /// Removes <paramref name="count"/> amount of items from the <see cref="CircularList{T}"/> at the specified <paramref name="index"/> and.
+        /// inserts the specified <paramref name="collection"/> at the same position. The number of elements in <paramref name="collection"/> can be different from the amount of removed items.
+        /// </summary>
+        /// <param name="index">The zero-based index of the first item to remove and also the index at which <paramref name="collection"/> items should be inserted.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <param name="collection">The collection to insert into the list.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="CircularList{T}"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <para>If the length of the <see cref="CircularList{T}"/> is n and the length of the collection to insert is m, then replacement at the first or last position has O(m) cost.</para>
+        /// <para>If the elements to remove and to add have the same size, then the cost is O(m) at any position.</para>
+        /// <para>If capacity increase is needed (considering actual list size), or when the replacement of different amount of elements to remove and insert is performed in the middle of the <see cref="CircularList{T}"/>, the cost is O(Max(n, m)), and in practice no more than n/2 elements are moved.</para>
+        /// </remarks>
+        public void ReplaceRange(int index, int count, IEnumerable<T> collection)
+        {
+            if (count == 0)
+            {
+                InsertRange(index, collection);
+                return;
+            }
+
+            if ((uint)index >= (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+            if (index + count > size)
+                throw new ArgumentException(Res.IListInvalidOffsLen);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            using (IEnumerator<T> enumerator = collection.GetEnumerator())
+            {
+                // Copying elements while possible
+                int elementsCopied = 0;
+                while (count > 0 && enumerator.MoveNext())
+                {
+                    SetElementAt(index + elementsCopied++, enumerator.Current);
+                    count--;
+                }
+
+                // all inserted, removing the rest
+                if (count > 0)
+                {
+                    RemoveRange(index + elementsCopied, count);
+                    return;
+                }
+
+                // all removed (overwritten), inserting the rest
+                IList<T> rest = collection is IList<T> list ? new ListSegment<T>(list, elementsCopied) : enumerator.RestToList();
+                if (rest.Count > 0)
+                {
+                    InsertRange(index + elementsCopied, rest);
+                    return;
+                }
+
+                // elements to replace had the same size
+                version++;
+            }
+        }
+
+        #endregion
+
+        #region Lookup
 
         /// <summary>
         /// Determines whether the list contains the specific <paramref name="item"/>.
@@ -1825,7 +1885,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.CircularListInvalidOffsLen);
+                throw new ArgumentException(Res.IListInvalidOffsLen);
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
 
@@ -1955,7 +2015,7 @@ namespace KGySoft.Collections
         public void CopyTo(int index, T[] array, int arrayIndex, int count)
         {
             if (size - index < count)
-                throw new ArgumentException(Res.CircularListInvalidOffsLen);
+                throw new ArgumentException(Res.IListInvalidOffsLen);
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length - arrayIndex < count)
@@ -2006,7 +2066,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.CircularListInvalidOffsLen);
+                throw new ArgumentException(Res.IListInvalidOffsLen);
 
             int start = startIndex + index;
             int carry = start + count - items.Length;
@@ -2121,7 +2181,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.CircularListInvalidOffsLen);
+                throw new ArgumentException(Res.IListInvalidOffsLen);
 
             if (comparer == null && isEnum)
                 comparer = EnumComparer<T>.Comparer;
@@ -2250,7 +2310,7 @@ namespace KGySoft.Collections
             if (count < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
-                throw new ArgumentException(Res.CircularListInvalidOffsLen);
+                throw new ArgumentException(Res.IListInvalidOffsLen);
 
             CircularList<T> result = new CircularList<T>(count) { size = count };
 
@@ -2540,6 +2600,7 @@ namespace KGySoft.Collections
             items = newItems;
             size = newSize;
             startIndex = 0;
+            version++;
         }
 
         /// <summary>

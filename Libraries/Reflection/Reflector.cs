@@ -88,6 +88,7 @@ namespace KGySoft.Reflection
         internal static readonly Type IDictionaryType = typeof(IDictionary);
         internal static readonly Type IDictionaryGenType = typeof(IDictionary<,>);
         internal static readonly Type ICollectionGenType = typeof(ICollection<>);
+        internal static readonly Type IListGenType = typeof(IList<>);
         // ReSharper restore InconsistentNaming
 
         internal static readonly Type ByteArrayType = typeof(byte[]);
@@ -2281,7 +2282,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="expression"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="expression"/> does not access an action method.</exception>
         /// <seealso cref="MemberOf{T}"/>
-        internal static MethodInfo MemberOf(Expression<Action> expression)
+        public static MethodInfo MemberOf(Expression<Action> expression)
         {
             if (expression == null)
                 throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
@@ -2299,7 +2300,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method to check.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
-        internal static bool IsExplicitInterfaceImplementation(MethodInfo method)
+        public static bool IsExplicitInterfaceImplementation(MethodInfo method)
         {
             if (method == null)
                 throw new ArgumentNullException(nameof(method), Res.ArgumentNull);
@@ -2317,7 +2318,7 @@ namespace KGySoft.Reflection
                         continue;
 
                     // Now method is an interface implementation for sure.
-                    // Explicit, if name does not match. Note: can also be null if type is abstract an implementation is in a derived class.
+                    // Explicit, if name does not match. Note: can also be null if type is abstract and implementation is in a derived class.
                     return map.InterfaceMethods[i]?.Name != methodName;
                 }
             }

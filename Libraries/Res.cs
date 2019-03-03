@@ -126,6 +126,9 @@ namespace KGySoft
 
         /// <summary>Modifying a read-only collection is not supported.</summary>
         internal static string ICollectionReadOnlyModifyNotSupported => Get("ICollection_ReadOnlyModifyNotSupported");
+
+        /// <summary>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</summary>
+        internal static string IListInvalidOffsLen => Get("IList_InvalidOffsLen");
         // ReSharper restore InconsistentNaming
 
         #endregion
@@ -173,9 +176,6 @@ namespace KGySoft
         #endregion
 
         #region CircularList<T>
-
-        /// <summary>Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.</summary>
-        internal static string CircularListInvalidOffsLen => Get("CircularList_InvalidOffsLen");
 
         /// <summary>Failed to compare two elements in the collection.</summary>
         internal static string CircularListComparerFail => Get("CircularList_ComparerFail");

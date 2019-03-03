@@ -24,7 +24,8 @@
   + ToEnum method
   + EqualsAny/IndexOfAny/ContainsAny overloads
 * EnumerableExtensions class
-  + TryAdd/TryClear
+  + TryAdd/TryClear/TryInsert/TryRemove/TryRemoveAt/TrySetElementAt/TryGetElementAt methods
+  + New overloads for IndexOf methods
   + New Shuffle overload: can be used with an already existing Random instance.
   + New GetRandomElement methods
 + New RandomExtensions class

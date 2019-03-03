@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System;
 using System.Collections.Generic;
 using KGySoft.Collections;
 
@@ -39,6 +40,38 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to create a thread-safe wrapper for.</param>
         /// <returns>A <see cref="LockingCollection{T}"/>, which provides a thread-safe wrapper for the specified <paramref name="collection"/>.</returns>
         public static LockingCollection<T> AsThreadSafe<T>(this ICollection<T> collection) => new LockingCollection<T>(collection);
+
+        /// <summary>
+        /// Adds a <paramref name="collection"/> to the <paramref name="target"/>&#160;<see cref="ICollection{T}"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
+        /// <param name="target">The target collection.</param>
+        /// <param name="collection">The collection to add to the <paramref name="target"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="collection"/> is <see langword="null"/>.</exception>
+        /// <remarks>
+        /// <note>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements of <paramref name="collection"/> will be added one by one.</note>
+        /// </remarks>
+        public static void AddRange<T>(this ICollection<T> target, IEnumerable<T> collection)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            switch (target)
+            {
+                case ISupportsRangeColletion<T> supportsRangeColletion:
+                    supportsRangeColletion.AddRange(collection);
+                    return;
+                case List<T> list:
+                    list.AddRange(collection);
+                    return;
+                default:
+                    collection.ForEach(target.Add);
+                    return;
+            }
+        }
 
         #endregion
     }

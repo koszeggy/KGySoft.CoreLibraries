@@ -862,6 +862,30 @@ namespace _LibrariesTest.Tests.Collections
         }
 
         [Test]
+        public void ReplaceRange()
+        {
+            // replace same amount
+            CircularList<int?> list = PrepareList<int?>(10, 0, 8);
+            list.ReplaceRange(5, 2, new int?[] { null, -1 });
+            Assert.IsTrue(list.SequenceEqual(new int?[] { 0, 1, 2, 3, 4, null, -1, 7 }));
+
+            // remove more, add less
+            list = PrepareList<int?>(10, 0, 8);
+            list.ReplaceRange(5, 2, new int?[] { null });
+            Assert.IsTrue(list.SequenceEqual(new int?[] { 0, 1, 2, 3, 4, null, 7 }));
+
+            // remove less, add more as IList
+            list = PrepareList<int?>(10, 0, 8);
+            list.ReplaceRange(5, 2, new int?[] { null, -1, -2 });
+            Assert.IsTrue(list.SequenceEqual(new int?[] { 0, 1, 2, 3, 4, null, -1, -2, 7 }));
+
+            // remove less, add more as IEnumerable
+            list = PrepareList<int?>(10, 0, 8);
+            list.ReplaceRange(5, 2, new int?[] { null, -1, -2 }.Select(i => i));
+            Assert.IsTrue(list.SequenceEqual(new int?[] { 0, 1, 2, 3, 4, null, -1, -2, 7 }));
+        }
+
+        [Test]
         public void RemoveAll()
         {
             CircularList<int?> clist = PrepareList<int?>(10, 4, 8);

@@ -707,7 +707,7 @@ namespace KGySoft.ComponentModel
         /// Removes the element at the specified <paramref name="index" /> from the <see cref="FastBindingList{T}" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
-        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/> and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="AllowRemove"/> is <see langword="false"/>&#160;and the item to remove is not an uncommitted one added by the <see cref="AddNew">AddNew</see> method.</exception>
         /// <remarks>
         /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>.</para>
         /// </remarks>
