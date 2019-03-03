@@ -67,6 +67,7 @@ namespace KGySoft.CoreLibraries
                 case List<T> list:
                     list.AddRange(collection);
                     return;
+                // TODO: Relflector.TryRunMethod...
                 default:
                     collection.ForEach(target.Add);
                     return;

@@ -43,6 +43,15 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region Fields
+
+        private static MethodInfo addRangeExtMethod;
+        private static MethodInfo insertRangeExtMethod;
+        private static MethodInfo removeRangeExtMethod;
+        private static MethodInfo replaceRangeExtMethod;
+
+        #endregion
+
         #region Methods
 
         #region Public Methods
@@ -112,6 +121,7 @@ namespace KGySoft.CoreLibraries
                         return true;
 
                     default:
+                        // TODO: Relflector.TryRunMethod...
                         return false;
                 }
             }
@@ -225,6 +235,111 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
+        /// Tries to add the specified <paramref name="collection"/> to the <paramref name="target"/> collection.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
+        /// <param name="target">The target collection.</param>
+        /// <param name="collection">The collection to add to the <paramref name="target"/>.</param>
+        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only; <see langword="false"/>&#160;to attempt adding the <paramref name="collection"/> without checking the read-only state. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements of <paramref name="collection"/> can only be added one by one.</para>
+        /// </remarks>
+        public static bool TryAddRange<T>([NoEnumeration]this IEnumerable<T> target, IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            try
+            {
+                if (target is ICollection<T> genericCollection)
+                {
+                    if (checkReadOnly && genericCollection.IsReadOnly)
+                        return false;
+                    genericCollection.AddRange(collection);
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            return collection.All(item => target.TryAdd(item, checkReadOnly, throwError));
+        }
+
+        /// <summary>
+        /// Tries to add the specified <paramref name="collection"/> to the <paramref name="target"/> collection.
+        /// </summary>
+        /// <param name="target">The target collection.</param>
+        /// <param name="collection">The collection to add to the <paramref name="target"/>.</param>
+        /// <param name="checkReadOnly"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only; <see langword="false"/>&#160;to attempt adding the <paramref name="collection"/> without checking the read-only state. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>The <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements of <paramref name="collection"/> can only be added one by one.</para>
+        /// <note>Whenever possible, try to use the generic <see cref="TryAddRange{T}"><![CDATA[TryAddRange<T>]]></see> overload for better performance.</note>
+        /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
+        /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
+        /// </remarks>
+        public static bool TryAddRange([NoEnumeration]this IEnumerable target, IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            try
+            {
+                switch (target)
+                {
+                    case ICollection<object> genericCollection:
+                        if (checkReadOnly && genericCollection.IsReadOnly)
+                            return false;
+                        genericCollection.AddRange(collection.Cast<object>());
+                        return true;
+                    default:
+                        // ICollection<T>: CollectionExtensions.AddRange<T>
+                        Type t;
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType)
+                        && Reflector.IEnumerableGenType.MakeGenericType(t = closedGenericType.GetGenericArguments()[0]).IsInstanceOfType(collection))
+                        {
+                            if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
+                                return false;
+
+                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                            MethodInfo addRange = (addRangeExtMethod ?? (addRangeExtMethod = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange)))).MakeGenericMethod(t);
+                            MethodAccessor.GetAccessor(addRange).Invoke(null, target, collection);
+                            return true;
+                        }
+
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            return collection.Cast<object>().All(item => target.TryAdd(item, checkReadOnly, throwError));
+        }
+
+        /// <summary>
         /// Tries to remove all elements from the <paramref name="collection"/>.
         /// </summary>
         /// <typeparam name="T">The type of the elements in the <paramref name="collection"/>.</typeparam>
@@ -313,8 +428,7 @@ namespace KGySoft.CoreLibraries
                         genericCollection.Clear();
                         return true;
                     default:
-                        Type collType = collection.GetType();
-                        if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                        if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
                         {
                             if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
                                 return false;
@@ -429,8 +543,7 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
                 {
                     var genericArgument = closedGenericType.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
@@ -469,6 +582,123 @@ namespace KGySoft.CoreLibraries
                     throw;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Tries to insert the specified <paramref name="collection"/> into the <paramref name="target"/> collection.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
+        /// <param name="target">The target collection.</param>
+        /// <param name="index">The zero-based index at which the <paramref name="collection"/> should be inserted.</param>
+        /// <param name="collection">The collection to insert into the <paramref name="target"/>.</param>
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
+        /// </remarks>
+        public static bool TryInsertRange<T>([NoEnumeration]this IEnumerable<T> target, int index, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            try
+            {
+                if (target is IList<T> genericList)
+                {
+                    if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index > genericList.Count))
+                        return false;
+                    genericList.InsertRange(index, collection);
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            return collection.All(item => target.TryInsert(index++, item, checkReadOnlyAndBounds, throwError));
+        }
+
+        /// <summary>
+        /// Tries to insert the specified <paramref name="collection"/> into the <paramref name="target"/> collection.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
+        /// <param name="target">The target collection.</param>
+        /// <param name="index">The zero-based index at which the <paramref name="collection"/> should be inserted.</param>
+        /// <param name="collection">The collection to insert into the <paramref name="target"/>.</param>
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
+        /// <note>Whenever possible, try to use the generic <see cref="TryInsertRange{T}"><![CDATA[TryInsertRange<T>]]></see> overload for better performance.</note>
+        /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
+        /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
+        /// </remarks>
+        public static bool TryInsertRange([NoEnumeration]this IEnumerable target, int index, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        {
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            try
+            {
+                switch (target)
+                {
+                    case IList<object> genericList:
+                        {
+                            if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index > genericList.Count))
+                                return false;
+                            genericList.InsertRange(index, collection.Cast<object>());
+                            return true;
+                        }
+                    default:
+                        // IList<T>: ListExtensions.InsertRange<T>
+                        Type t;
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType)
+                            && Reflector.IEnumerableGenType.MakeGenericType(t = closedGenericType.GetGenericArguments()[0]).IsInstanceOfType(collection))
+                        {
+                            if (checkReadOnlyAndBounds)
+                            {
+                                if (index < 0)
+                                    return false;
+                                Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(t);
+                                int count = target is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(target);
+                                if (index > count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
+                                    return false;
+                            }
+
+                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                            MethodInfo insertRange = (insertRangeExtMethod ?? (insertRangeExtMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange)))).MakeGenericMethod(t);
+                            MethodAccessor.GetAccessor(insertRange).Invoke(null, target, index, collection);
+                            return true;
+                        }
+
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            return collection.Cast<object>().All(item => target.TryInsert(index++, item, checkReadOnlyAndBounds, throwError));
         }
 
         /// <summary>
@@ -570,8 +800,7 @@ namespace KGySoft.CoreLibraries
                     return genericCollection.Remove(item);
                 }
 
-                Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
                 {
                     if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
                         return false;
@@ -689,8 +918,7 @@ namespace KGySoft.CoreLibraries
                         return true;
                 }
 
-                Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
                 {
                     if (checkReadOnlyAndBounds)
                     {
@@ -715,6 +943,129 @@ namespace KGySoft.CoreLibraries
                     throw;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Tries to remove <paramref name="count"/> amount of items from the specified <paramref name="collection"/> at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
+        /// <param name="collection">The collection to remove the elements from.</param>
+        /// <param name="index">The zero-based index of the first item to remove.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <note>If <paramref name="collection"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeList{T}"/> implementation,
+        /// then the elements can only be removed one by one.</note>
+        /// </remarks>
+        public static bool TryRemoveRange<T>([NoEnumeration]this IEnumerable<T> collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+
+            try
+            {
+                if (collection is IList<T> genericList)
+                {
+                    if (checkReadOnlyAndBounds && (genericList.IsReadOnly || (uint)index >= (uint)genericList.Count || index + count > genericList.Count))
+                        return false;
+                    genericList.RemoveRange(index, count);
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                if (!collection.TryRemoveAt(index, checkReadOnlyAndBounds, throwError))
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Tries to remove <paramref name="count"/> amount of items from the specified <paramref name="collection"/> at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="collection">The collection to remove the elements from.</param>
+        /// <param name="index">The zero-based index of the first item to remove.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <note>If <paramref name="collection"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeList{T}"/> implementation,
+        /// then the elements can only be removed one by one.</note>
+        /// <note>Whenever possible, try to use the generic <see cref="TryRemoveRange{T}"><![CDATA[TryRemoveRange<T>]]></see> overload for better performance.</note>
+        /// </remarks>
+        public static bool TryRemoveRange([NoEnumeration]this IEnumerable collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        {
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
+
+            try
+            {
+                switch (collection)
+                {
+                    case IList<object> genericList:
+                        if (checkReadOnlyAndBounds && (genericList.IsReadOnly || (uint)index >= (uint)genericList.Count || index + count > genericList.Count))
+                            return false;
+                        genericList.RemoveRange(index, count);
+                        return true;
+                    default:
+                        // IList<T>: ListExtensions.RemoveRange<T>
+                        if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                        {
+                            Type t = closedGenericType.GetGenericArguments()[0];
+                            if (checkReadOnlyAndBounds)
+                            {
+                                if (index < 0)
+                                    return false;
+                                Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(t);
+                                int collCount = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
+                                if ((uint)index >= (uint)collCount || index + count > collCount || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                                    return false;
+                            }
+
+                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                            MethodInfo removeRange = (removeRangeExtMethod ?? (removeRangeExtMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange)))).MakeGenericMethod(t);
+                            MethodAccessor.GetAccessor(removeRange).Invoke(null, collection, index, count);
+                            return true;
+                        }
+
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                if (!collection.TryRemoveAt(index, checkReadOnlyAndBounds, throwError))
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -821,8 +1172,7 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
                 {
                     var genericArgument = closedGenericType.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
@@ -863,9 +1213,182 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#endregion
+        /// <summary>
+        /// Tries to remove <paramref name="count"/> amount of items from the <paramref name="target"/> at the specified <paramref name="index"/>, and
+        /// to insert the specified <paramref name="collection"/> at the same position. The number of elements in <paramref name="collection"/> can be different from the amount of removed items.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
+        /// <param name="target">The target collection.</param>
+        /// <param name="index">The zero-based index of the first item to remove and also the index at which <paramref name="collection"/> items should be inserted.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <param name="collection">The collection to insert into the <paramref name="target"/> list.</param>
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the used modifier members; <see langword="false"/>&#160;to suppress the exceptions thrown by the used members and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements can only be replaced one by one.</para>
+        /// </remarks>
+        public static bool TryReplaceRange<T>([NoEnumeration]this IEnumerable<T> target, int index, int count, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        {
+            if (count == 0)
+                return target.TryInsertRange(index, collection, checkReadOnlyAndBounds, throwError);
 
-#region Lookup
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            try
+            {
+                if (target is IList<T> genericList)
+                {
+                    if (checkReadOnlyAndBounds && (genericList.IsReadOnly || (uint)index >= (uint)genericList.Count || index + count > genericList.Count))
+                        return false;
+                    genericList.ReplaceRange(index, count, collection);
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            using (IEnumerator<T> enumerator = collection.GetEnumerator())
+            {
+                // Copying elements while possible
+                int elementsCopied = 0;
+                while (count > 0 && enumerator.MoveNext())
+                {
+                    if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
+                        return false;
+                    count--;
+                }
+
+                // all inserted, removing the rest
+                if (count > 0)
+                    return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
+
+                // all removed (overwritten), inserting the rest
+                IList<T> rest = collection is IList<T> list ? new ListSegment<T>(list, elementsCopied) : enumerator.RestToList();
+                if (rest.Count > 0)
+                    return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
+
+                // elements to replace had the same size
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Tries to remove <paramref name="count"/> amount of items from the <paramref name="target"/> at the specified <paramref name="index"/>, and
+        /// to insert the specified <paramref name="collection"/> at the same position. The number of elements in <paramref name="collection"/> can be different from the amount of removed items.
+        /// </summary>
+        /// <param name="target">The target collection.</param>
+        /// <param name="index">The zero-based index of the first item to remove and also the index at which <paramref name="collection"/> items should be inserted.</param>
+        /// <param name="count">The number of items to remove.</param>
+        /// <param name="collection">The collection to insert into the <paramref name="target"/> list.</param>
+        /// <param name="checkReadOnlyAndBounds"><see langword="true"/>&#160;to return <see langword="false"/>&#160;if the target collection is read-only or the <paramref name="index"/> is invalid; <see langword="false"/>&#160;to attempt inserting the <paramref name="collection"/> without checking the read-only state and bounds. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the used modifier members; <see langword="false"/>&#160;to suppress the exceptions thrown by the used members and return <see langword="false"/>&#160;on failure. This parameter is optional.
+        /// <br/>Default value: <see langword="true"/>.</param>
+        /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// then the elements can only be replaced one by one.</para>
+        /// <note>Whenever possible, try to use the generic <see cref="TryReplaceRange{T}"><![CDATA[TryReplaceRange<T>]]></see> overload for better performance.</note>
+        /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
+        /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
+        /// </remarks>
+        public static bool TryReplaceRange([NoEnumeration]this IEnumerable target, int index, int count, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
+        {
+            if (count == 0)
+                return target.TryInsertRange(index, collection, checkReadOnlyAndBounds, throwError);
+
+            if (target == null)
+                throw new ArgumentNullException(nameof(target), Res.ArgumentNull);
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection), Res.ArgumentNull);
+
+            try
+            {
+                switch (target)
+                {
+                    case IList<object> genericList:
+                        if (checkReadOnlyAndBounds && (genericList.IsReadOnly || (uint)index >= (uint)genericList.Count || index + count > genericList.Count))
+                            return false;
+                        genericList.ReplaceRange(index, count, collection.Cast<object>());
+                        return true;
+                    default:
+                        // IList<T>: ListExtensions.ReplaceRange<T>
+                        Type t;
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType)
+                            && Reflector.IEnumerableGenType.MakeGenericType(t = closedGenericType.GetGenericArguments()[0]).IsInstanceOfType(collection))
+                        {
+                            if (checkReadOnlyAndBounds)
+                            {
+                                if (index < 0)
+                                    return false;
+                                Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(t);
+                                int targetCount = target is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(target);
+                                if ((uint)index >= (uint)targetCount || index + count > targetCount || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
+                                    return false;
+                            }
+
+                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                            MethodInfo replaceRange = (replaceRangeExtMethod ?? (replaceRangeExtMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange)))).MakeGenericMethod(t);
+                            MethodAccessor.GetAccessor(replaceRange).Invoke(null, target, index, count, collection);
+                            return true;
+                        }
+
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                if (throwError)
+                    throw;
+                return false;
+            }
+
+            IEnumerator enumerator = collection.GetEnumerator();
+            try
+            {
+                // Copying elements while possible
+                int elementsCopied = 0;
+                while (count > 0 && enumerator.MoveNext())
+                {
+                    if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
+                        return false;
+                    count--;
+                }
+
+                // all inserted, removing the rest
+                if (count > 0)
+                    return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
+
+                // all removed (overwritten), inserting the rest
+                IList<object> rest = collection is IList<object> list ? new ListSegment<object>(list, elementsCopied) : enumerator.RestToList();
+                if (rest.Count > 0)
+                    return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
+
+                // elements to replace had the same size
+                return true;
+            }
+            finally
+            {
+                (enumerator as IDisposable)?.Dispose();
+            }
+        }
+
+        #endregion
+
+        #region Lookup
 
         /// <summary>
         /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
@@ -1166,9 +1689,9 @@ namespace KGySoft.CoreLibraries
             return collection.Cast<object>().TryGetElementAt(index, out item, checkBounds, throwError);
         }
 
-#endregion
+        #endregion
 
-#region Conversion
+        #region Conversion
 
         /// <summary>
         /// Creates a <see cref="CircularList{T}"/> from an <see cref="IEnumerable{T}"/>.
@@ -1188,9 +1711,9 @@ namespace KGySoft.CoreLibraries
             return new CircularList<T>(source);
         }
 
-#endregion
+        #endregion
 
-#region Random
+        #region Random
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="Random"/> instance.
@@ -1280,11 +1803,11 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Internal Methods
+        #region Internal Methods
 
         /// <summary>
         /// Adjusts the initializer collection created by <see cref="TypeExtensions.CreateInitializerCollection"/> after it is populated before calling the constructor.
@@ -1324,8 +1847,8 @@ namespace KGySoft.CoreLibraries
             return initializerArray;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System.Collections;
 using System.Collections.Generic;
 
 #endregion
@@ -29,6 +30,14 @@ namespace KGySoft.CoreLibraries
         internal static IList<T> RestToList<T>(this IEnumerator<T> enumerator)
         {
             var result = new List<T>();
+            while (enumerator.MoveNext())
+                result.Add(enumerator.Current);
+            return result;
+        }
+
+        internal static IList<object> RestToList(this IEnumerator enumerator)
+        {
+            var result = new List<object>();
             while (enumerator.MoveNext())
                 result.Add(enumerator.Current);
             return result;
