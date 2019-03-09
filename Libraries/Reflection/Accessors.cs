@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Xml;
+using KGySoft.Annotations;
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
 // ReSharper disable InconsistentNaming - Properties are named here: Type_Member. Fields: accessorType_Member
@@ -57,9 +60,6 @@ namespace KGySoft.Reflection
 
         #region Method accessors
 
-        private static IDictionary<Type, FunctionMethodAccessor> methodsEnumerableExtensions_TryAdd;
-        private static IDictionary<Type, FunctionMethodAccessor> methodsEnumerableExtensions_TryClear;
-
 #if NET35 || NET40
         private static ActionMethodAccessor methodException_InternalPreserveStackTrace;
 #endif
@@ -69,6 +69,21 @@ namespace KGySoft.Reflection
 #else
 #error make sure not to use this from NET472, where capacity ctor is available
 #endif
+
+        private static IDictionary<Type, ActionMethodAccessor> methodsCollectionExtensions_AddRange;
+        private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_InsertRange;
+        private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_RemoveRange;
+        private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_ReplaceRange;
+
+        #endregion
+
+        #region MethodInfos
+
+        private static MethodInfo addRangeExtensionMethod;
+        private static MethodInfo insertRangeExtensionMethod;
+        private static MethodInfo removeRangeExtensionMethod;
+        private static MethodInfo replaceRangeExtensionMethod;
+
         #endregion
 
         #endregion
@@ -185,6 +200,65 @@ namespace KGySoft.Reflection
 #else
 #error make sure not to use this from NET472, where capacity ctor is available
 #endif
+
+        internal static MethodAccessor CollectionExtensions_AddRange(Type genericArgument)
+        {
+            // Could be an IEnumerable extension but caller needs to check the method before executing
+            if (methodsCollectionExtensions_AddRange == null)
+                methodsCollectionExtensions_AddRange = new LockingDictionary<Type, ActionMethodAccessor>();
+            if (!methodsCollectionExtensions_AddRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            {
+                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                accessor = new ActionMethodAccessor(addRangeExtensionMethod ?? (addRangeExtensionMethod = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange))).MakeGenericMethod(genericArgument));
+                methodsCollectionExtensions_AddRange[genericArgument] = accessor;
+            }
+
+            return accessor;
+        }
+
+        internal static MethodAccessor ListExtensions_InsertRange(Type genericArgument)
+        {
+            // Could be an IEnumerable extension but caller needs to check the method before executing
+            if (methodsListExtensions_InsertRange == null)
+                methodsListExtensions_InsertRange = new LockingDictionary<Type, ActionMethodAccessor>();
+            if (!methodsListExtensions_InsertRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            {
+                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                accessor = new ActionMethodAccessor(insertRangeExtensionMethod ?? (insertRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange))).MakeGenericMethod(genericArgument));
+                methodsListExtensions_InsertRange[genericArgument] = accessor;
+            }
+
+            return accessor;
+        }
+
+        internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count)
+        {
+            if (methodsListExtensions_RemoveRange == null)
+                methodsListExtensions_RemoveRange = new LockingDictionary<Type, ActionMethodAccessor>();
+            if (!methodsListExtensions_RemoveRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            {
+                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                accessor = new ActionMethodAccessor(removeRangeExtensionMethod ?? (removeRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange))).MakeGenericMethod(genericArgument));
+                methodsListExtensions_RemoveRange[genericArgument] = accessor;
+            }
+
+            accessor.Invoke(null, collection, index, count);
+        }
+
+        internal static MethodAccessor ListExtensions_ReplaceRange(Type genericArgument)
+        {
+            // Could be an IEnumerable extension but caller needs to check the method before executing
+            if (methodsListExtensions_ReplaceRange == null)
+                methodsListExtensions_ReplaceRange = new LockingDictionary<Type, ActionMethodAccessor>();
+            if (!methodsListExtensions_ReplaceRange.TryGetValue(genericArgument, out ActionMethodAccessor accessor))
+            {
+                // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
+                accessor = new ActionMethodAccessor(replaceRangeExtensionMethod ?? (replaceRangeExtensionMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange))).MakeGenericMethod(genericArgument));
+                methodsListExtensions_ReplaceRange[genericArgument] = accessor;
+            }
+
+            return accessor;
+        }
 
         #endregion
 

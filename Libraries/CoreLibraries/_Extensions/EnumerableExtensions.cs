@@ -43,15 +43,6 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region Fields
-
-        private static MethodInfo addRangeExtMethod;
-        private static MethodInfo insertRangeExtMethod;
-        private static MethodInfo removeRangeExtMethod;
-        private static MethodInfo replaceRangeExtMethod;
-
-        #endregion
-
         #region Methods
 
         #region Public Methods
@@ -313,16 +304,14 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // ICollection<T>: CollectionExtensions.AddRange<T>
-                        Type t;
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType)
-                        && Reflector.IEnumerableGenType.MakeGenericType(t = closedGenericType.GetGenericArguments()[0]).IsInstanceOfType(collection))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
                         {
+                            MethodAccessor addRange = Accessors.CollectionExtensions_AddRange(closedGenericType.GetGenericArguments()[0]);
+                            if (!((MethodInfo)addRange.MemberInfo).GetParameters()[1].ParameterType.CanAcceptValue(collection))
+                                break;
                             if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
                                 return false;
-
-                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                            MethodInfo addRange = (addRangeExtMethod ?? (addRangeExtMethod = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange)))).MakeGenericMethod(t);
-                            MethodAccessor.GetAccessor(addRange).Invoke(null, target, collection);
+                            addRange.Invoke(null, target, collection);
                             return true;
                         }
 
@@ -668,23 +657,22 @@ namespace KGySoft.CoreLibraries
                         }
                     default:
                         // IList<T>: ListExtensions.InsertRange<T>
-                        Type t;
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType)
-                            && Reflector.IEnumerableGenType.MakeGenericType(t = closedGenericType.GetGenericArguments()[0]).IsInstanceOfType(collection))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
                         {
+                            MethodAccessor insertRange = Accessors.ListExtensions_InsertRange(closedGenericType.GetGenericArguments()[0]);
+                            if (!((MethodInfo)insertRange.MemberInfo).GetParameters()[2].ParameterType.CanAcceptValue(collection))
+                                break;
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(t);
+                                Type genericCollectionInterface = closedGenericType.GetInterface(Reflector.ICollectionGenType.Name);
                                 int count = target is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(target);
                                 if (index > count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
                                     return false;
                             }
 
-                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                            MethodInfo insertRange = (insertRangeExtMethod ?? (insertRangeExtMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange)))).MakeGenericMethod(t);
-                            MethodAccessor.GetAccessor(insertRange).Invoke(null, target, index, collection);
+                            insertRange.Invoke(null, target, index, collection);
                             return true;
                         }
 
@@ -1032,20 +1020,17 @@ namespace KGySoft.CoreLibraries
                         // IList<T>: ListExtensions.RemoveRange<T>
                         if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
                         {
-                            Type t = closedGenericType.GetGenericArguments()[0];
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(t);
+                                Type genericCollectionInterface = closedGenericType.GetInterface(Reflector.ICollectionGenType.Name);
                                 int collCount = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
                                 if ((uint)index >= (uint)collCount || index + count > collCount || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
                                     return false;
                             }
 
-                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                            MethodInfo removeRange = (removeRangeExtMethod ?? (removeRangeExtMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange)))).MakeGenericMethod(t);
-                            MethodAccessor.GetAccessor(removeRange).Invoke(null, collection, index, count);
+                            collection.RemoveRange(closedGenericType.GetGenericArguments()[0], index, count);
                             return true;
                         }
 
@@ -1326,23 +1311,22 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // IList<T>: ListExtensions.ReplaceRange<T>
-                        Type t;
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType)
-                            && Reflector.IEnumerableGenType.MakeGenericType(t = closedGenericType.GetGenericArguments()[0]).IsInstanceOfType(collection))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
                         {
+                            MethodAccessor replaceRange = Accessors.ListExtensions_ReplaceRange(closedGenericType.GetGenericArguments()[0]);
+                            if (!((MethodInfo)replaceRange.MemberInfo).GetParameters()[3].ParameterType.CanAcceptValue(collection))
+                                break;
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(t);
+                                Type genericCollectionInterface = closedGenericType.GetInterface(Reflector.ICollectionGenType.Name);
                                 int targetCount = target is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(target);
                                 if ((uint)index >= (uint)targetCount || index + count > targetCount || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
                                     return false;
                             }
 
-                            // ReSharper disable once PossibleNullReferenceException - will not be null, it exists (ensured by nameof)
-                            MethodInfo replaceRange = (replaceRangeExtMethod ?? (replaceRangeExtMethod = typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange)))).MakeGenericMethod(t);
-                            MethodAccessor.GetAccessor(replaceRange).Invoke(null, target, index, count, collection);
+                            replaceRange.Invoke(null, target, index, count, collection);
                             return true;
                         }
 
