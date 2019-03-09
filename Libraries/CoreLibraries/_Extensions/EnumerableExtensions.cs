@@ -532,9 +532,9 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
                 {
-                    var genericArgument = closedGenericType.GetGenericArguments()[0];
+                    var genericArgument = genericListInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
                         return false;
 
@@ -542,13 +542,13 @@ namespace KGySoft.CoreLibraries
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(genericArgument);
+                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
                         int count = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
                         if (index > count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
                             return false;
                     }
 
-                    MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(IList<_>.Insert))).Invoke(collection, index, item);
+                    MethodAccessor.GetAccessor(genericListInterface.GetMethod(nameof(IList<_>.Insert))).Invoke(collection, index, item);
                     return true;
                 }
 
@@ -906,20 +906,19 @@ namespace KGySoft.CoreLibraries
                         return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
                 {
                     if (checkReadOnlyAndBounds)
                     {
                         if (index < 0)
                             return false;
-                        var genericArgument = closedGenericType.GetGenericArguments()[0];
-                        Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(genericArgument);
+                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
                         int count = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
                         if (index >= count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
                             return false;
                     }
 
-                    MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(IList<_>.RemoveAt))).Invoke(collection, index);
+                    MethodAccessor.GetAccessor(genericListInterface.GetMethod(nameof(IList<_>.RemoveAt))).Invoke(collection, index);
                     return true;
                 }
 
@@ -1157,9 +1156,9 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
                 {
-                    var genericArgument = closedGenericType.GetGenericArguments()[0];
+                    var genericArgument = genericListInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
                         return false;
 
@@ -1167,13 +1166,17 @@ namespace KGySoft.CoreLibraries
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = Reflector.ICollectionGenType.MakeGenericType(genericArgument);
+                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
                         int count = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
-                        if (index >= count || (!(collection is Array) && (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection)))
+                        if (index >= count || (
+#if NET35
+                            !(collection is Array) && 
+#endif
+                            (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection)))
                             return false;
                     }
 
-                    PropertyAccessor.GetAccessor(closedGenericType.GetProperty(indexerName)).Set(collection, item, index);
+                    PropertyAccessor.GetAccessor(genericListInterface.GetProperty(indexerName)).Set(collection, item, index);
                     return true;
                 }
 
@@ -1370,9 +1373,9 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        #endregion
+#endregion
 
-        #region Lookup
+#region Lookup
 
         /// <summary>
         /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
@@ -1673,9 +1676,9 @@ namespace KGySoft.CoreLibraries
             return collection.Cast<object>().TryGetElementAt(index, out item, checkBounds, throwError);
         }
 
-        #endregion
+#endregion
 
-        #region Conversion
+#region Conversion
 
         /// <summary>
         /// Creates a <see cref="CircularList{T}"/> from an <see cref="IEnumerable{T}"/>.
@@ -1695,9 +1698,9 @@ namespace KGySoft.CoreLibraries
             return new CircularList<T>(source);
         }
 
-        #endregion
+#endregion
 
-        #region Random
+#region Random
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="Random"/> instance.
@@ -1787,11 +1790,11 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Internal Methods
+#region Internal Methods
 
         /// <summary>
         /// Adjusts the initializer collection created by <see cref="TypeExtensions.CreateInitializerCollection"/> after it is populated before calling the constructor.
@@ -1831,8 +1834,8 @@ namespace KGySoft.CoreLibraries
             return initializerArray;
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }
