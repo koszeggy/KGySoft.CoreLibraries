@@ -234,7 +234,7 @@ namespace KGySoft.Serialization
             {
                 if (!ComparerFieldName.Contains("."))
                     return Reflector.GetField(collection, ComparerFieldName);
-                return ComparerFieldName.Split('.').Aggregate(collection, Reflector.GetField);
+                return ComparerFieldName.Split('.').Aggregate(collection, (obj, name) => Reflector.GetField(obj, name));
             }
 
             private void SetComparer(object collection, object comparer)
