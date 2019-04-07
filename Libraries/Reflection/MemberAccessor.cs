@@ -30,44 +30,8 @@ namespace KGySoft.Reflection
     /// <summary>
     /// Base class of accessor classes that may access members without system reflection.
     /// </summary>
-    public abstract class MemberAccessor
+    public abstract partial class MemberAccessor
     {
-        #region Enumerations
-
-        /// <summary>
-        /// Options for the <see cref="MemberAccessor.CreateMethodInvokerAsDynamicMethod">MemberAccessor.CreateMethodInvokerAsDynamicMethod</see> method.
-        /// </summary>
-        [Flags]
-        protected enum DynamicMethodOptions
-        {
-            /// <summary>
-            /// No special handling.
-            /// </summary>
-            None = 0,
-
-            /// <summary>
-            /// Generates local variables for ref/out parameters and assigns them back in the object[] parameters array
-            /// </summary>
-            HandleByRefParameters = 1,
-
-            /// <summary>
-            /// Generates an object value parameter and also an object[] arguments parameter in case of indexers
-            /// </summary>
-            TreatAsPropertySetter = 1 << 1,
-
-            /// <summary>
-            /// Does not emit the object[] parameter for method arguments (for simple property getters)
-            /// </summary>
-            OmitParameters = 1 << 2,
-
-            /// <summary>
-            /// Treats a ConstructorInfo as a regular method
-            /// </summary>
-            TreatCtorAsMethod = 1 << 3,
-        }
-
-        #endregion
-
         #region Fields
 
         /// <summary>
@@ -185,11 +149,12 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Returns a <see cref="string"/> that represents the current <see cref="MemberAccessor"/>.
         /// </summary>
+        /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString() => MemberInfo != null ? MemberInfo.MemberType + ": " + MemberInfo : base.ToString();
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
         /// <summary>
         /// Gets a <see cref="DynamicMethod"/> that invokes the referred <paramref name="methodBase"/> (method or constructor).
@@ -207,7 +172,7 @@ namespace KGySoft.Reflection
         /// or <c>(<see cref="object"/> instance, <see cref="object"/> value, <see cref="object"/>[] indexerParameters)</c>.
         /// For constructors, generated parameter is always <c><see cref="object"/>[] parameters</c>.
         /// </returns>
-        protected DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
+        internal /*private protected*/ DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
             if (methodBase == null)
                 throw new ArgumentNullException(nameof(methodBase), Res.ArgumentNull);

@@ -63,7 +63,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Creates object initialization delegate.
         /// </summary>
-        protected override Delegate CreateInitializer()
+        internal /*private protected*/ override Delegate CreateInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);

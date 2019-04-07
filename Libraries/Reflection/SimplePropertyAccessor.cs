@@ -64,7 +64,7 @@ namespace KGySoft.Reflection
 
         #region Protected Methods
 
-        protected override Delegate CreateGetter()
+        internal /*private protected*/ override Delegate CreateGetter()
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
             MethodInfo getterMethod = property.GetGetMethod(true);
@@ -105,7 +105,7 @@ namespace KGySoft.Reflection
             return dm.CreateDelegate(typeof(PropertyGetter));
         }
 
-        protected override Delegate CreateSetter()
+        internal /*private protected*/ override Delegate CreateSetter()
         {
             PropertyInfo property = (PropertyInfo)MemberInfo;
             MethodInfo setterMethod = property.GetSetMethod(true);

@@ -41,7 +41,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance creator delegate.
         /// </summary>
-        protected Delegate Initializer => initializer ?? (initializer = CreateInitializer());
+        internal /*private protected*/ Delegate Initializer => initializer ?? (initializer = CreateInitializer());
 
         #endregion
 
@@ -125,13 +125,13 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
         /// <summary>
         /// In a derived class returns a delegate that creates the new instance.
         /// </summary>
         /// <returns>A delegate instance that can be used to invoke the method.</returns>
-        protected abstract Delegate CreateInitializer();
+        internal /*private protected*/ abstract Delegate CreateInitializer();
 
         #endregion
 

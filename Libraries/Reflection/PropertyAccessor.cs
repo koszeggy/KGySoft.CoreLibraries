@@ -47,25 +47,25 @@ namespace KGySoft.Reflection
         public bool CanRead => ((PropertyInfo)MemberInfo).CanRead;
 
         /// <summary>
-        /// Gets whether the property can be written to (has set accessor).
+        /// Gets whether the property can be written (has set accessor).
         /// </summary>
         public bool CanWrite => ((PropertyInfo)MemberInfo).CanWrite;
 
         #endregion
 
-        #region Protected Properties
+        #region Internal Properties
 
         /// <summary>
         /// Gets the property getter delegate.
         /// </summary>
-        protected Delegate Getter => getter ?? (getter = CanRead
+        internal /*private protected*/ Delegate Getter => getter ?? (getter = CanRead
             ? CreateGetter()
             : throw new NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name)));
 
         /// <summary>
         /// Gets the property setter delegate.
         /// </summary>
-        protected Delegate Setter => setter ?? (setter = CanWrite
+        internal /*private protected*/ Delegate Setter => setter ?? (setter = CanWrite
             ? CreateSetter()
             : throw new NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name)));
 
@@ -110,11 +110,9 @@ namespace KGySoft.Reflection
         /// <param name="property">The property for which an accessor should be created.</param>
         /// <returns>A <see cref="PropertyAccessor"/> instance that can be used to get or set the property.</returns>
         internal static PropertyAccessor CreateAccessor(PropertyInfo property)
-        {
-            return property.GetIndexParameters().Length == 0
+            => property.GetIndexParameters().Length == 0
                 ? (PropertyAccessor)new SimplePropertyAccessor(property)
                 : new IndexerAccessor(property);
-        }
 
         #endregion
 
@@ -158,19 +156,19 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
         /// <summary>
         /// In a derived class returns a delegate that executes the getter method of the property.
         /// </summary>
         /// <returns>A delegate instance that can be used to get the value of the property.</returns>
-        protected abstract Delegate CreateGetter();
+        internal /*private protected*/ abstract Delegate CreateGetter();
 
         /// <summary>
         /// In a derived class returns a delegate that executes the setter method of the property.
         /// </summary>
         /// <returns>A delegate instance that can be used to set the property.</returns>
-        protected abstract Delegate CreateSetter();
+        internal /*private protected*/ abstract Delegate CreateSetter();
 
         #endregion
 

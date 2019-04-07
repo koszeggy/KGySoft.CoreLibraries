@@ -58,9 +58,9 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
-        protected override Delegate CreateInvoker()
+        internal /*private protected*/ override Delegate CreateInvoker()
         {
             MethodInfo method = (MethodInfo)MemberInfo;
             Type declaringType = method.DeclaringType;

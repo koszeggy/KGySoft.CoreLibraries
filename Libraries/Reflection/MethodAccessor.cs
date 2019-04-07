@@ -41,7 +41,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the method invoker delegate.
         /// </summary>
-        protected Delegate Invoker => invoker ?? (invoker = CreateInvoker());
+        internal /*private protected*/ Delegate Invoker => invoker ?? (invoker = CreateInvoker());
 
         #endregion
 
@@ -99,7 +99,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/>&#160;for static methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
-        /// <returns>The return value of the method, or <see langword="null"/> for <see cref="Void"/> methods.</returns>
+        /// <returns>The return value of the method, or <see langword="null"/>&#160;for <see cref="Void"/> methods.</returns>
         /// <remarks>
         /// <note>
         /// Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
@@ -110,13 +110,13 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
         /// <summary>
         /// In a derived class returns a delegate that executes the method.
         /// </summary>
         /// <returns>A delegate instance that can be used to invoke the method.</returns>
-        protected abstract Delegate CreateInvoker();
+        internal /*private protected*/ abstract Delegate CreateInvoker();
 
         #endregion
 

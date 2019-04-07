@@ -55,13 +55,13 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
         /// <summary>
         /// Creates object initialization delegate. Stored MemberInfo is a Type so it works
         /// also in case of value types where actually there is no parameterless constructor.
         /// </summary>
-        protected override Delegate CreateInitializer()
+        internal /*private protected*/ override Delegate CreateInitializer()
         {
             NewExpression construct = Expression.New((Type)MemberInfo);
             LambdaExpression lambda = Expression.Lambda<DefaultCtor>(
