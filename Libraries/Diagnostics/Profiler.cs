@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -41,6 +42,7 @@ namespace KGySoft.Diagnostics
     /// then the results will be dumped into an .XML file into a folder designated by the <see cref="ProfilerDirectory"/> property.</para>
     /// <para>The profiling can be turned on and off globally by the <see cref="Enabled"/> property.</para>
     /// <note>It is recommended to measure performance with <c>Release</c> builds.</note>
+    /// </remarks>
     /// <example>
     /// The following example demonstrates how to place measurement sections into the code:
     /// <code lang="C#"><![CDATA[
@@ -102,7 +104,6 @@ namespace KGySoft.Diagnostics
     /// You can open the result even in Microsoft Excel as a table, which allows you to filter and sort the results easily:
     /// <br/><img src="../Help/Images/ProfilerResults.png" alt="The Profiler results opened in Microsoft Excel."/>
     /// </example>
-    /// </remarks>
     public static class Profiler
     {
         #region Fields
@@ -196,6 +197,7 @@ namespace KGySoft.Diagnostics
         /// </para>
         /// <para>Getting this property is an O(1) operation. The returned value is a lazy enumerator. If <see cref="Measure"/>
         /// method is called during the enumeration an exception might be thrown.</para>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<IMeasureItem> GetMeasurementResults()
             // ReSharper disable once InconsistentlySynchronizedField - see remarks above
@@ -211,6 +213,7 @@ namespace KGySoft.Diagnostics
         /// </para>
         /// <para>Getting this property is an O(1) operation. The returned value is a lazy enumerator. If <see cref="Measure"/>
         /// method is called during the enumeration an exception might be thrown.</para>
+        /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<IMeasureItem> GetMeasurementResults(string category)
             // ReSharper disable once InconsistentlySynchronizedField - see remarks above

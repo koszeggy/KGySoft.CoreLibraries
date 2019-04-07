@@ -217,7 +217,7 @@ namespace KGySoft.Serialization
             }
 
             // d.) KeyValuePair (DictionaryEntry is deserialized recursively because its properties are settable)
-            if (type?.IsGenericTypeOf(typeof(KeyValuePair<,>)) == true)
+            if (type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
             {
                 bool keyRead = false;
                 bool valueRead = false;

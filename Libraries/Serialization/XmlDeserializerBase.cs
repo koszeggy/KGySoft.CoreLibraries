@@ -176,7 +176,7 @@ namespace KGySoft.Serialization
                     field = declaringType.GetField(memberOrItemName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             }
             // no declaringType so "item" in a collection means an item, in any other case we have a member
-            else if (!(typeof(IEnumerable).IsAssignableFrom(type)) || memberOrItemName != XmlSerializer.ElementItem)
+            else if (!(Reflector.IEnumerableType.IsAssignableFrom(type)) || memberOrItemName != XmlSerializer.ElementItem)
             {
                 property = type.GetProperty(memberOrItemName);
                 if (property == null)

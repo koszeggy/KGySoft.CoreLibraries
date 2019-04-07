@@ -5,6 +5,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -53,7 +54,7 @@ namespace KGySoft.Serialization
 
         private AnyObjectSerializerWrapper(SerializationInfo info, StreamingContext context)
         {
-            byte[] rawData = (byte[])info.GetValue("data", typeof(byte[]));
+            byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
             if (info.GetBoolean("isWeak"))
                 serializer.Binder = new WeakAssemblySerializationBinder();

@@ -135,7 +135,7 @@ namespace KGySoft.Serialization
                     descriptor.IsReadOnly = br.ReadBoolean();
 
                 // Creating collection based on the infos above (comparer is added later because of id caching)
-                List<Type> ctorParamTypes = new List<Type> { typeof(int) }; // a collection can have capacity ctor parameter even is does not have Capacity property
+                List<Type> ctorParamTypes = new List<Type> { Reflector.IntType }; // a collection can have capacity ctor parameter even is does not have Capacity property
                 List<object> ctorParams = new List<object> { capacity };
                 //if (comparer != null)
                 //{
@@ -153,7 +153,7 @@ namespace KGySoft.Serialization
                 //}
                 if (HasCaseInsensitivity)
                 {
-                    ctorParamTypes.Add(typeof(bool));
+                    ctorParamTypes.Add(Reflector.BoolType);
                     ctorParams.Add(caseInsensitive);
                 }
 

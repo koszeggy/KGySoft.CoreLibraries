@@ -1,15 +1,38 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FieldAccessor.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
+#endregion
+
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Field accessor class for getting and setting fields via dynamic delegates.
+    /// Provides an efficient way for setting and getting fields values via dynamically created delegates.
+    /// You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.
     /// </summary>
-    public sealed class FieldAccessor: MemberAccessor
+    public sealed class FieldAccessor : MemberAccessor
     {
+        #region Delegates
+
         /// <summary>
         /// Represents a non-generic setter that can be used for any fields.
         /// </summary>
@@ -20,57 +43,147 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate object FieldGetter(object instance);
 
+        #endregion
+
+        #region Fields
+
         private FieldGetter getter;
         private FieldSetter setter;
 
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
+
         /// <summary>
-        /// The field getter delegate.
+        /// Gets whether the field is read-only.
         /// </summary>
-        private FieldGetter Getter
+        /// <remarks>
+        /// <note>Even if this property returns <see langword="true"/>&#160;the <see cref="FieldAccessor"/>
+        /// is able to set the field.</note>
+        /// </remarks>
+        public bool IsReadOnly => ((FieldInfo)MemberInfo).IsInitOnly;
+
+        /// <summary>
+        /// Gets whether the field is a constant. Constant fields cannot be set.
+        /// </summary>
+        public bool IsConstant => ((FieldInfo)MemberInfo).IsLiteral;
+
+        #endregion
+
+        #region Private Properties
+
+        /// <summary>
+        /// Gets the field getter delegate.
+        /// </summary>
+        private FieldGetter Getter => getter ?? (getter = CreateGetter());
+
+        /// <summary>
+        /// Gets the field setter delegate.
+        /// </summary>
+        private FieldSetter Setter => setter ?? (setter = IsConstant 
+            ? throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name))
+            : CreateSetter());
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FieldAccessor"/> class.
+        /// </summary>
+        /// <param name="field">The field for which the accessor is to be created.</param>
+        internal FieldAccessor(FieldInfo field) : base(field, null)
         {
-            get
-            {
-                if (getter == null)
-                {
-                    getter = CreateGetter();
-                }
-                return getter;
-            }
         }
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Gets a <see cref="FieldAccessor"/> for the specified <paramref name="field"/>.
+        /// </summary>
+        /// <param name="field">The field for which the accessor should be retrieved.</param>
+        /// <returns>A <see cref="FieldAccessor"/> instance that can be used to get or set the field.</returns>
+        public static FieldAccessor GetAccessor(FieldInfo field)
+            => (FieldAccessor)GetCreateAccessor(field ?? throw new ArgumentNullException(nameof(field), Res.ArgumentNull));
+
+        #endregion
+
+        #region Internal Methods
+
+        /// <summary>
+        /// Creates an accessor for a field without caching.
+        /// </summary>
+        /// <param name="field">The field for which an accessor should be created.</param>
+        /// <returns>A <see cref="FieldAccessor"/> instance that can be used to get or set the field.</returns>
+        internal static FieldAccessor CreateAccessor(FieldInfo field) => new FieldAccessor(field);
+
+        #endregion
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
+
+        /// <summary>
+        /// Sets the field.
+        /// For static fields the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// </summary>
+        /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/>&#160;for static fields.</param>
+        /// <param name="value">The value to be set.</param>
+        /// <remarks>
+        /// <note>
+        /// Setting the field for the first time is slower than the <see cref="FieldInfo.SetValue(object,object)">System.Reflection.FieldInfo.SetValue</see>
+        /// method but further calls are much faster.
+        /// </note>
+        /// </remarks>
+        public void Set(object instance, object value) => Setter.Invoke(instance, value);
+
+        /// <summary>
+        /// Gets the value of the field.
+        /// For static fields the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// </summary>
+        /// <param name="instance">The instance that the field belongs to. Can be <see langword="null"/>&#160;for static fields.</param>
+        /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <note>
+        /// Getting the field for the first time is slower than the <see cref="FieldInfo.GetValue">System.Reflection.FieldInfo.GetValue</see>
+        /// method but further calls are much faster.
+        /// </note>
+        /// </remarks>
+        public object Get(object instance) => Getter.Invoke(instance);
+
+        #endregion
+
+        #region Private Methods
 
         private FieldGetter CreateGetter()
         {
-            ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
 
             FieldInfo field = (FieldInfo)MemberInfo;
             Type declaringType = field.DeclaringType;
             if (!field.IsStatic && declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             MemberExpression member = Expression.Field(
-                field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                field);
+                    // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
+                    field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                    field);
 
             LambdaExpression lambda = Expression.Lambda<FieldGetter>(
-                Expression.Convert(member, typeof(object)), // object return type
-                instanceParameter); // instance (object)
+                    Expression.Convert(member, Reflector.ObjectType), // object return type
+                    instanceParameter); // instance (object)
             return (FieldGetter)lambda.Compile();
-        }
-
-        /// <summary>
-        /// The field setter delegate.
-        /// </summary>
-        private FieldSetter Setter
-        {
-            get
-            {
-                if (setter == null)
-                {
-                    if (IsConst)
-                        throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
-                    setter = CreateSetter();
-                }
-                return setter;
-            }
         }
 
         private FieldSetter CreateSetter()
@@ -80,24 +193,10 @@ namespace KGySoft.Reflection
             if (declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
-            // .NET 4.0: Using Expression.Assign (does not work for struct instance fields)
-            // http://scmccart.wordpress.com/2009/10/08/c-4-0-exposer-an-evil-dynamicobject/
-            //# var param = Expression.Parameter(this.Type, “obj”);
-            //#             var value = Expression.Parameter(typeof(object), “val”);
-            //#  
-            //#             var lambda = Expression.Lambda<Action<T, object>>(
-            //#                 Expression.Assign(
-            //#                     Expression.Field(param, fieldInfo),
-            //#                     Expression.Convert(value, fieldInfo.FieldType)),
-            //#                 param, value);
-            //#  
-            //#             return lambda.Compile();
-
-            // The always working solution: dynamic method
-
-            DynamicMethod dm = new DynamicMethod(String.Format("<SetField>__{0}", field.Name), // setter method name
-                typeof(void), // return type
-                new Type[] { typeof(object), typeof(object) }, declaringType, true); // instance and value parameters
+            // Expressions would not work for value types so using always dynamic methods
+            DynamicMethod dm = new DynamicMethod($"<SetField>__{field.Name}", // setter method name
+                    Reflector.VoidType, // return type
+                    new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType, true); // instance and value parameters
 
             ILGenerator il = dm.GetILGenerator();
 
@@ -114,40 +213,35 @@ namespace KGySoft.Reflection
                     il.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
-                    //LocalBuilder typedInstance = il.DeclareLocal(DeclaringType);
+                    //LocalBuilder typedInstance = il.DeclareLocal(declaringType);
                     //il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: typeof(object).MakeByRefType()
-                    //il.Emit(OpCodes.Unbox_Any, DeclaringType); // unboxing the instance
+                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: Reflector.ObjectType.MakeByRefType()
+                    //il.Emit(OpCodes.Unbox_Any, declaringType); // unboxing the instance
                     //il.Emit(OpCodes.Stloc_0); // saving value into 0. local
-                    //il.Emit(OpCodes.Ldloca_S, typedInstance); 
+                    //il.Emit(OpCodes.Ldloca_S, typedInstance);
                 }
                 else
                 {
                     il.Emit(OpCodes.Castclass, declaringType);
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
-                    //LocalBuilder typedInstance = il.DeclareLocal(DeclaringType);
+                    //LocalBuilder typedInstance = il.DeclareLocal(declaringType);
                     //il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: typeof(object).MakeByRefType()
-                    //il.Emit(OpCodes.Castclass, DeclaringType); // casting the instance
+                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: Reflector.ObjectType.MakeByRefType()
+                    //il.Emit(OpCodes.Castclass, declaringType); // casting the instance
                     //il.Emit(OpCodes.Stloc_0); // saving value into 0. local
-                    //il.Emit(OpCodes.Ldloca_S, typedInstance); 
+                    //il.Emit(OpCodes.Ldloca_S, typedInstance);
                 }
             }
 
             // processing 1st argument: value parameter
             il.Emit(OpCodes.Ldarg_1);
+
             // casting object value to field type
-            if (field.FieldType.IsValueType)
-                il.Emit(OpCodes.Unbox_Any, field.FieldType);
-            else
-                il.Emit(OpCodes.Castclass, field.FieldType);
+            il.Emit(field.FieldType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, field.FieldType);
 
             // processing assignment
-            if (field.IsStatic)
-                il.Emit(OpCodes.Stsfld, field);
-            else
-                il.Emit(OpCodes.Stfld, field);
+            il.Emit(field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, field);
 
             // returning without return value
             il.Emit(OpCodes.Ret);
@@ -155,69 +249,10 @@ namespace KGySoft.Reflection
             return (FieldSetter)dm.CreateDelegate(typeof(FieldSetter));
         }
 
-        /// <summary>
-        /// Gets whether the field is read-only.
-        /// </summary>
-        public bool IsReadOnly
-        {
-            get { return ((FieldInfo)MemberInfo).IsInitOnly; }
-        }
+        #endregion
 
-        /// <summary>
-        /// Gets whether the field is a constant.
-        /// </summary>
-        public bool IsConst
-        {
-            get { return ((FieldInfo)MemberInfo).IsLiteral; }
-        }
+        #endregion
 
-        /// <summary>
-        /// Creates a new FieldAccessor.
-        /// </summary>
-        internal FieldAccessor(FieldInfo field) :
-            base(field, null)
-        {
-        }
-
-        /// <summary>
-        /// Gets an accessor for a field.
-        /// </summary>
-        public static FieldAccessor GetAccessor(FieldInfo field) 
-            => (FieldAccessor)GetCreateAccessor(field ?? throw new ArgumentNullException(nameof(field), Res.ArgumentNull));
-
-        /// <summary>
-        /// Creates an accessor for a field.
-        /// </summary>
-        internal static FieldAccessor CreateAccessor(FieldInfo field) => new FieldAccessor(field);
-
-        /// <summary>
-        /// Sets the field.
-        /// In case of a static static field <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// </summary>
-        /// <remarks>
-        /// <note>
-        /// First setting of a field can be even slower than using <see cref="FieldInfo.SetValue(object,object)"/> of System.Reflection
-        /// but further calls are much more fast.
-        /// </note>
-        /// </remarks>
-        public void Set(object instance, object value)
-        {
-            Setter.Invoke(instance, value);
-        }
-
-        /// <summary>
-        /// Gets and returns the value of a field.
-        /// In case of a static static field <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
-        /// </summary>
-        /// <remarks>
-        /// <note>
-        /// Getting a field value at first time can be even slower than using <see cref="FieldInfo.GetValue(object)"/> of System.Reflection
-        /// but further calls are much more fast.
-        /// </note>
-        /// </remarks>
-        public object Get(object instance)
-        {
-            return Getter.Invoke(instance);
-        }
+        #endregion
     }
 }

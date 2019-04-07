@@ -175,7 +175,7 @@ namespace KGySoft.ComponentModel
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
             ParameterInfo[] parameters = invokeMethod?.GetParameters();
-            if (invokeMethod?.ReturnType != typeof(void) || parameters.Length != 2 || parameters[0].ParameterType != typeof(object) || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
+            if (invokeMethod?.ReturnType != Reflector.VoidType || parameters.Length != 2 || parameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
                 throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
 
             // already added

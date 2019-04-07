@@ -25,6 +25,8 @@ namespace KGySoft.Reflection
         
         internal static readonly object[] EmptyObjects = new object[0];
 
+        internal static readonly Type VoidType = typeof(void);
+
         internal static readonly Type ObjectType = typeof(object);
         internal static readonly Type BoolType = typeof(bool);
         internal static readonly Type StringType = typeof(string);
@@ -2378,7 +2380,7 @@ namespace KGySoft.Reflection
         /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="Type"/>,
         /// this method provides a non-string access to a field, property, constructor or function method:
         /// <example><code lang="C#"><![CDATA[
-        /// MemberInfo type = typeof(int); // Type: System.Int32 (by the built-in typeof() operator)
+        /// MemberInfo type = Reflector.IntType; // Type: System.Int32 (by the built-in typeof() operator)
         /// MemberInfo ctorList = Reflector.MemberOf(() => new List<int>()); // ConstructorInfo: List<int>().ctor()
         /// MemberInfo methodIndexOf = Reflector.MemberOf(() => default(List<int>).IndexOf(default(int))); // MethodInfo: List<int>.IndexOf(int) - works without a reference to a List
         /// MemberInfo fieldEmpty = Reflector.MemberOf(() => string.Empty); // FieldInfo: String.Empty
@@ -2432,7 +2434,7 @@ namespace KGySoft.Reflection
         /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="Type"/>,
         /// this method provides a non-string access to an action method:
         /// <example><code lang="C#"><![CDATA[
-        /// Type type = typeof(int); // Type: System.Int32 (by the built-in typeof() operator)
+        /// Type type = Reflector.IntType; // Type: System.Int32 (by the built-in typeof() operator)
         /// MethodInfo methodAdd = Reflector.MemberOf(() => default(List<int>).Add(default(int))); // MethodInfo: List<int>.Add() - works without a reference to a List
         /// ]]></code></example></para>
         /// <para>To reflect a function method, constructor, property or a field, you can use the <see cref="MemberOf{T}"/> method.</para>

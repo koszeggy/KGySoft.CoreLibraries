@@ -20,6 +20,8 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 
+using KGySoft.Reflection;
+
 #endregion
 
 namespace KGySoft.ComponentModel
@@ -39,7 +41,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+            => destinationType == Reflector.StringType || base.CanConvertTo(context, destinationType);
 
         /// <summary>
         /// Converts the given value object to the specified type, using the specified context and culture information.
@@ -53,7 +55,7 @@ namespace KGySoft.ComponentModel
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             Version version = value as Version;
-            if (destinationType == typeof(string) && version != null)
+            if (destinationType == Reflector.StringType && version != null)
                 return version.ToString();
             return base.ConvertTo(context, culture, value, destinationType);
         }
@@ -66,7 +68,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-            => (sourceType == typeof(string)) || base.CanConvertFrom(context, sourceType);
+            => (sourceType == Reflector.StringType) || base.CanConvertFrom(context, sourceType);
 
         /// <summary>
         /// Converts the given object to the type of this converter, using the specified context and culture information.

@@ -23,8 +23,8 @@ using System.Runtime.CompilerServices;
 namespace KGySoft.Reflection
 {
     /// <summary>
-    /// Contains several classes derived from <see cref="MemberAccessor"/> that can dynamically reflect objects, their members and type information by dynamically generated delegates.
-    /// Contains also the static <see cref="Reflector"/> class that provides most of the needed reflection tasks.
+    /// Contains the static <see cref="Reflector"/> class that provides most of the needed reflection tasks.
+    /// Additionally, contains several classes derived from <see cref="MemberAccessor"/> that can dynamically reflect objects, their members and type information by on-the-fly generated delegates.
     /// </summary>
     [CompilerGenerated]
     internal static class NamespaceDoc

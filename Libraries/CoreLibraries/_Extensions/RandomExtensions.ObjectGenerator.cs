@@ -174,26 +174,26 @@ namespace KGySoft.CoreLibraries
                     new Dictionary<Type, GenerateKnownType>
                 {
                     // primitive types
-                    { typeof(bool), GenerateBoolean },
-                    { typeof(byte), GenerateByte },
-                    { typeof(sbyte), GenerateSbyte },
-                    { typeof(char), GenerateChar },
-                    { typeof(short), GenerateInt16 },
-                    { typeof(ushort), GenerateUInt16 },
-                    { typeof(int), GenerateInt32 },
-                    { typeof(uint), GenerateUInt32 },
-                    { typeof(long), GenerateInt64 },
-                    { typeof(ulong), GenerateUInt64 },
-                    { typeof(IntPtr), GenerateIntPtr },
-                    { typeof(UIntPtr), GenerateUIntPtr },
+                    { Reflector.BoolType, GenerateBoolean },
+                    { Reflector.ByteType, GenerateByte },
+                    { Reflector.SByteType, GenerateSbyte },
+                    { Reflector.CharType, GenerateChar },
+                    { Reflector.ShortType, GenerateInt16 },
+                    { Reflector.UShortType, GenerateUInt16 },
+                    { Reflector.IntType, GenerateInt32 },
+                    { Reflector.UIntType, GenerateUInt32 },
+                    { Reflector.LongType, GenerateInt64 },
+                    { Reflector.ULongType, GenerateUInt64 },
+                    { Reflector.IntPtrType, GenerateIntPtr },
+                    { Reflector.UIntPtrType, GenerateUIntPtr },
 
                     // floating points
-                    { typeof(float), GenerateSingle },
-                    { typeof(double), GenerateDouble },
-                    { typeof(decimal), GenerateDecimal },
+                    { Reflector.FloatType, GenerateSingle },
+                    { Reflector.DoubleType, GenerateDouble },
+                    { Reflector.DecimalType, GenerateDecimal },
 
                     // strings
-                    { typeof(string), GenerateString },
+                    { Reflector.StringType, GenerateString },
                     { typeof(StringBuilder), GenerateStringBuilder },
                     { typeof(Uri), GenerateUri },
 
@@ -201,19 +201,19 @@ namespace KGySoft.CoreLibraries
                     { typeof(Guid), GenerateGuid },
 
                     // date and time
-                    { typeof(DateTime), GenerateDateTime },
-                    { typeof(DateTimeOffset), GenerateDateTimeOffset },
-                    { typeof(TimeSpan), GenerateTimeSpan },
+                    { Reflector.DateTimeType, GenerateDateTime },
+                    { Reflector.DateTimeOffsetType, GenerateDateTimeOffset },
+                    { Reflector.TimeSpanType, GenerateTimeSpan },
 
                     // reflection types - no generation but random selection
                     { typeof(Assembly), PickRandomAssembly },
-                    { typeof(Type), PickRandomType },
+                    { Reflector.Type, PickRandomType },
                 };
 
             private static readonly Type memberInfoType = typeof(MemberInfo);
             private static readonly Type fieldInfoType = typeof(FieldInfo);
             private static readonly Type rtFieldInfoType = Reflector.MemberOf(() => String.Empty).GetType();
-            private static readonly Type mdFieldInfoType = typeof(int).GetField(nameof(Int32.MaxValue)).GetType(); // MemberOf does not work for constants
+            private static readonly Type mdFieldInfoType = Reflector.IntType.GetField(nameof(Int32.MaxValue)).GetType(); // MemberOf does not work for constants
             private static readonly Type runtimeFieldInfoType = rtFieldInfoType.BaseType;
             private static readonly Type propertyInfoType = typeof(PropertyInfo);
             private static readonly Type runtimePropertyInfoType = Reflector.MemberOf(() => ((string)null).Length).GetType();
@@ -328,11 +328,11 @@ namespace KGySoft.CoreLibraries
 
                     // If we could not get the argument from provided type or it is not compatible with first constraint we put either first constraint or int/object
                     if (arg == null || constraints.Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
-                        arg = constraints[i].Length >= 1 ? constraints[i][0] : valueTypeConstraint ? typeof(int) : Reflector.ObjectType;
+                        arg = constraints[i].Length >= 1 ? constraints[i][0] : valueTypeConstraint ? Reflector.IntType : Reflector.ObjectType;
 
                     // a last check for value type constraint...
                     if (valueTypeConstraint && !arg.IsValueType)
-                        arg = typeof(int);
+                        arg = Reflector.IntType;
                     // ...for class constraint...
                     else if ((attr & GenericParameterAttributes.ReferenceTypeConstraint) != 0 && !arg.IsClass)
                         arg = Reflector.ObjectType;
@@ -390,7 +390,7 @@ namespace KGySoft.CoreLibraries
                     // if not found or contains generic parameters recursively, using a simple type based on the value type constraint
                     Type replacement = pos >= 0 && !constructedArguments[pos].ContainsGenericParameters
                             ? constructedArguments[pos]
-                            : (arg.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? typeof(int) : Reflector.ObjectType;
+                            : (arg.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? Reflector.IntType : Reflector.ObjectType;
 
                     // Generic parameters are never compatible with real types so skipping assertion for them
                     return arg.GetGenericParameterConstraints().All(c => c.ContainsGenericParameters || c.IsAssignableFrom(replacement)) ? replacement : null;
@@ -450,7 +450,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // calling NextObject<T> for return value
-                if (mi.ReturnType != typeof(void))
+                if (mi.ReturnType != Reflector.VoidType)
                 {
                     il.Emit(OpCodes.Ldsfld, randomField);
                     il.Emit(OpCodes.Ldnull);
@@ -752,7 +752,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // 5.) key-value pair (because its properties are read-only)
-                if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
+                if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
                 {
                     var args = type.GetGenericArguments();
                     context.PushMember(nameof(KeyValuePair<_, _>.Key));
@@ -953,7 +953,7 @@ namespace KGySoft.CoreLibraries
 
                 Type[] keyValue = GetKeyValueTypes(elementType);
                 IDictionary dictionary = collection as IDictionary;
-                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetAccessor((PropertyInfo)typeof(IDictionary<,>).MakeGenericType(keyValue).GetDefaultMembers()[0]);
+                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetAccessor((PropertyInfo)Reflector.IDictionaryGenType.MakeGenericType(keyValue).GetDefaultMembers()[0]);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -982,7 +982,7 @@ namespace KGySoft.CoreLibraries
                 if (isDictionary)
                 {
                     Type[] args = GetKeyValueTypes(elementType);
-                    initializerCollection = (IEnumerable)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(args[0], args[1]));
+                    initializerCollection = (IEnumerable)Activator.CreateInstance(Reflector.DictionaryGenType.MakeGenericType(args[0], args[1]));
                     PopulateCollection(initializerCollection, elementType, true, ref context);
                 }
                 else if (collectionCtor.GetParameters()[0].ParameterType.IsAssignableFrom(elementType.MakeArrayType()))
@@ -991,7 +991,7 @@ namespace KGySoft.CoreLibraries
                 }
                 else // for non-dictionaries array or list must be accepted by constructor
                 {
-                    initializerCollection = (IEnumerable)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+                    initializerCollection = (IEnumerable)Activator.CreateInstance(Reflector.ListGenType.MakeGenericType(elementType));
                     PopulateCollection(initializerCollection, elementType, false, ref context);
                 }
 
@@ -999,7 +999,7 @@ namespace KGySoft.CoreLibraries
             }
 
             private static Type[] GetKeyValueTypes(Type elementType)
-                => elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { typeof(object), typeof(object) };
+                => elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType };
 
             #endregion
 

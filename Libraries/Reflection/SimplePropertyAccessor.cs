@@ -1,12 +1,34 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: SimplePropertyAccessor.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
+#endregion
+
 namespace KGySoft.Reflection
 {
-    internal sealed class SimplePropertyAccessor: PropertyAccessor
+    internal sealed class SimplePropertyAccessor : PropertyAccessor
     {
+        #region Delegates
+
         /// <summary>
         /// Represents a non-generic setter that can be used for any simple properties.
         /// </summary>
@@ -17,10 +39,30 @@ namespace KGySoft.Reflection
         /// </summary>
         private delegate object PropertyGetter(object instance);
 
+        #endregion
+
+        #region Constructors
+
         internal SimplePropertyAccessor(PropertyInfo pi)
             : base(pi)
         {
         }
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
+        public override void Set(object instance, object value, params object[] indexerParameters)
+            => ((PropertySetter)Setter)(instance, value);
+
+        public override object Get(object instance, params object[] indexerParameters)
+            => ((PropertyGetter)Getter)(instance);
+
+        #endregion
+
+        #region Protected Methods
 
         protected override Delegate CreateGetter()
         {
@@ -34,37 +76,33 @@ namespace KGySoft.Reflection
             if (!declaringType.IsValueType || getterMethod.IsStatic)
             {
                 //---by property expression---
-                ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
+                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
 
                 MemberExpression member = Expression.Property(
-                    getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                    (PropertyInfo)MemberInfo);
+                        getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                        (PropertyInfo)MemberInfo);
 
                 LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
-                    Expression.Convert(member, typeof(object)), // object return type
-                    instanceParameter); // instance (object)
+                        Expression.Convert(member, Reflector.ObjectType), // object return type
+                        instanceParameter); // instance (object)
                 return lambda.Compile();
 
-                ////---by getmethod---
-                //PropertyInfo property = (PropertyInfo)MemberInfo;
-
-                //ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
+                ////---by calling the getter method---
+                //ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
 
                 //MethodCallExpression getterCall = Expression.Call(
-                //    Expression.Convert(instanceParameter, DeclaringType), // (TDeclaring)target
+                //    Expression.Convert(instanceParameter, declaringType), // (TDeclaring)target
                 //    getterMethod); // getter
 
                 //LambdaExpression lambda = Expression.Lambda<PropertyGetter>(
-                //    Expression.Convert(getterCall, typeof(object)), // object return type
+                //    Expression.Convert(getterCall, Reflector.ObjectType), // object return type
                 //    instanceParameter);   // instance (object)
                 //return lambda.Compile();
             }
+
             // for struct instance properties: Dynamic method
-            else
-            {
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
-                return dm.CreateDelegate(typeof(PropertyGetter));
-            }
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
+            return dm.CreateDelegate(typeof(PropertyGetter));
         }
 
         protected override Delegate CreateSetter()
@@ -78,50 +116,30 @@ namespace KGySoft.Reflection
             // for classes and static properties: Lambda expression
             if (!declaringType.IsValueType || setterMethod.IsStatic)
             {
-                // .NET 4.0: Using Expression.Assign could be used, though it calls setter after all and will not work for struct instances
-                //#  var param = Expression.Parameter(this.Type, "obj");
-                //#             var value = Expression.Parameter(typeof(object), "val");
-                //#  
-                //#             var lambda = Expression.Lambda<Action<T, object>>(
-                //#                 Expression.Assign(
-                //#                     Expression.Property(param, propertyInfo),
-                //#                     Expression.Convert(value, propertyInfo.PropertyType)),
-                //#                 param, value);
-                //#  
-                //#             return lambda.Compile();
-
-                // .NET 3.5: Calling the setter method
-                ParameterExpression instanceParameter = Expression.Parameter(typeof(object), "instance");
-                ParameterExpression valueParameter = Expression.Parameter(typeof(object), "value");
+                // Calling the setter method (works even in .NET 3.5, while Assign is available from .NET 4 only)
+                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+                ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
                 UnaryExpression castValue = Expression.Convert(valueParameter, property.PropertyType);
 
                 MethodCallExpression setterCall = Expression.Call(
-                    setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
-                    setterMethod, // setter
-                    castValue); // original parameter: (TProp)value
+                        setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                        setterMethod, // setter
+                        castValue); // original parameter: (TProp)value
 
                 LambdaExpression lambda = Expression.Lambda<PropertySetter>(
-                    setterCall, // no return type
-                    instanceParameter, // instance (object)
-                    valueParameter);
+                        setterCall, // no return type
+                        instanceParameter, // instance (object)
+                        valueParameter);
                 return lambda.Compile();
             }
+
             // for struct instance properties: Dynamic method
-            else
-            {
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
-                return dm.CreateDelegate(typeof(PropertySetter));
-            }
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
+            return dm.CreateDelegate(typeof(PropertySetter));
         }
 
-        public override void Set(object instance, object value, params object[] indexerParameters)
-        {
-            ((PropertySetter)Setter)(instance, value);
-        }
+        #endregion
 
-        public override object Get(object instance, params object[] indexerParameters)
-        {
-            return ((PropertyGetter)Getter)(instance);
-        }
+        #endregion
     }
 }

@@ -86,7 +86,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) 
-            => destinationType == Reflector.StringType || destinationType == typeof(int) || base.CanConvertTo(context, destinationType);
+            => destinationType == Reflector.StringType || destinationType == Reflector.IntType || base.CanConvertTo(context, destinationType);
 
         /// <summary>
         /// Converts the given value object to the specified type, using the specified context and culture information.
@@ -102,10 +102,10 @@ namespace KGySoft.ComponentModel
             if (!(value is Encoding encoding))
                 return base.ConvertTo(context, culture, value, destinationType);
 
-            if (destinationType == typeof(int))
+            if (destinationType == Reflector.IntType)
                 return encoding.CodePage;
 
-            if (destinationType == typeof(string))
+            if (destinationType == Reflector.StringType)
                 return $"{encoding.CodePage} | {encoding.EncodingName}";
 
             return base.ConvertTo(context, culture, value, destinationType);
@@ -119,7 +119,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/>&#160;if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) 
-            => sourceType == typeof(string) || sourceType == typeof(int) || base.CanConvertFrom(context, sourceType);
+            => sourceType == Reflector.StringType || sourceType == Reflector.IntType || base.CanConvertFrom(context, sourceType);
 
         /// <summary>
         /// Converts the given object to the type of this converter, using the specified context and culture information.

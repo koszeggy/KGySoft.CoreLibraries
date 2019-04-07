@@ -511,8 +511,8 @@ namespace KGySoft.Serialization
             {
                 // TODO: by hashset (lazy init?), maybe this method ban be deleted
                 return type.IsPrimitive || type.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
-                       type.In(typeof(string), typeof(UIntPtr), typeof(decimal), typeof(DateTime), typeof(TimeSpan),
-                           typeof(DateTimeOffset), typeof(Guid));
+                       type.In(Reflector.StringType, Reflector.UIntPtrType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType,
+                           Reflector.DateTimeOffsetType, typeof(Guid));
             }
 
             /// <summary>

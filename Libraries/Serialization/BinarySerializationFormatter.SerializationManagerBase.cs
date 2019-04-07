@@ -55,7 +55,7 @@ namespace KGySoft.Serialization
                 if (surrogateSelector == null)
                     return false;
 
-                if (type.IsPrimitive || type.IsArray || type.In(typeof(string), typeof(object), typeof(UIntPtr)))
+                if (type.IsPrimitive || type.IsArray || type.In(Reflector.StringType, Reflector.ObjectType, Reflector.UIntPtrType))
                     return false;
 
                 ISerializationSurrogate surrogate;

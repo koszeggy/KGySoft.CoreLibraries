@@ -205,53 +205,53 @@ namespace KGySoft.Serialization
                 switch (dataType)
                 {
                     case DataTypes.Bool:
-                        return typeof(bool);
+                        return Reflector.BoolType;
                     case DataTypes.Int8:
-                        return typeof(sbyte);
+                        return Reflector.SByteType;
                     case DataTypes.UInt8:
-                        return typeof(byte);
+                        return Reflector.ByteType;
                     case DataTypes.Int16:
-                        return typeof(short);
+                        return Reflector.ShortType;
                     case DataTypes.UInt16:
-                        return typeof(ushort);
+                        return Reflector.UShortType;
                     case DataTypes.Int32:
-                        return typeof(int);
+                        return Reflector.IntType;
                     case DataTypes.UInt32:
-                        return typeof(uint);
+                        return Reflector.UIntType;
                     case DataTypes.Int64:
-                        return typeof(long);
+                        return Reflector.LongType;
                     case DataTypes.UInt64:
-                        return typeof(ulong);
+                        return Reflector.ULongType;
                     case DataTypes.Char:
-                        return typeof(char);
+                        return Reflector.CharType;
                     case DataTypes.String:
-                        return typeof(string);
+                        return Reflector.StringType;
                     case DataTypes.Single:
-                        return typeof(float);
+                        return Reflector.FloatType;
                     case DataTypes.Double:
-                        return typeof(double);
+                        return Reflector.DoubleType;
                     case DataTypes.Decimal:
-                        return typeof(decimal);
+                        return Reflector.DecimalType;
                     case DataTypes.DateTime:
-                        return typeof(DateTime);
+                        return Reflector.DateTimeType;
                     case DataTypes.DBNull:
                         return typeof(DBNull);
                     case DataTypes.IntPtr:
-                        return typeof(IntPtr);
+                        return Reflector.IntPtrType;
                     case DataTypes.UIntPtr:
-                        return typeof(UIntPtr);
+                        return Reflector.UIntPtrType;
                     case DataTypes.Version:
                         return typeof(Version);
                     case DataTypes.Guid:
                         return typeof(Guid);
                     case DataTypes.TimeSpan:
-                        return typeof(TimeSpan);
+                        return Reflector.TimeSpanType;
                     case DataTypes.DateTimeOffset:
-                        return typeof(DateTimeOffset);
+                        return Reflector.DateTimeOffsetType;
                     case DataTypes.Uri:
                         return typeof(Uri);
                     case DataTypes.BitArray:
-                        return typeof(BitArray);
+                        return Reflector.BitArrayType;
                     case DataTypes.BitVector32:
                         return typeof(BitVector32);
                     case DataTypes.BitVector32Section:
@@ -259,7 +259,7 @@ namespace KGySoft.Serialization
                     case DataTypes.StringBuilder:
                         return typeof(StringBuilder);
                     case DataTypes.Object:
-                        return typeof(object);
+                        return Reflector.ObjectType;
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
@@ -270,7 +270,7 @@ namespace KGySoft.Serialization
                         if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)
                         {
                             Type underlyingType = GetElementType(dataType & ~DataTypes.Nullable, br, manager);
-                            return typeof(Nullable<>).MakeGenericType(underlyingType);
+                            return Reflector.NullableType.MakeGenericType(underlyingType);
                         }
 
                         // enum
@@ -285,7 +285,7 @@ namespace KGySoft.Serialization
                 switch (collectionDataType)
                 {
                     case DataTypes.List:
-                        return (typeof(List<>).MakeGenericType(ElementType));
+                        return (Reflector.ListGenType.MakeGenericType(ElementType));
                     case DataTypes.LinkedList:
                         return (typeof(LinkedList<>).MakeGenericType(ElementType));
                     case DataTypes.HashSet:
@@ -304,7 +304,7 @@ namespace KGySoft.Serialization
 #endif
 
                     case DataTypes.Dictionary:
-                        return (typeof(Dictionary<,>).MakeGenericType(ElementType, DictionaryValueType));
+                        return (Reflector.DictionaryGenType.MakeGenericType(ElementType, DictionaryValueType));
                     case DataTypes.SortedList:
                         return (typeof(SortedList<,>).MakeGenericType(ElementType, DictionaryValueType));
                     case DataTypes.SortedDictionary:
@@ -321,7 +321,7 @@ namespace KGySoft.Serialization
                     case DataTypes.StackNonGeneric:
                         return typeof(Stack);
                     case DataTypes.StringCollection:
-                        return typeof(StringCollection);
+                        return Reflector.StringCollectionType;
 
                     case DataTypes.SortedListNonGeneric:
                         return typeof(SortedList);
@@ -335,13 +335,13 @@ namespace KGySoft.Serialization
                         return typeof(StringDictionary);
 
                     case DataTypes.DictionaryEntry:
-                        return typeof(DictionaryEntry);
+                        return Reflector.DictionaryEntryType;
                     case DataTypes.DictionaryEntryNullable:
                         return typeof(DictionaryEntry?);
                     case DataTypes.KeyValuePair:
-                        return (typeof(KeyValuePair<,>).MakeGenericType(ElementType, DictionaryValueType));
+                        return (Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType));
                     case DataTypes.KeyValuePairNullable:
-                        return typeof(Nullable<>).MakeGenericType((typeof(KeyValuePair<,>).MakeGenericType(ElementType, DictionaryValueType)));
+                        return Reflector.NullableType.MakeGenericType((Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType)));
 
                     default:
                         throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(BinarySerializationFormatter.ToString(collectionDataType)));

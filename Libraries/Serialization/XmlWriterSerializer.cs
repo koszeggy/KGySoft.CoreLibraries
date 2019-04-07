@@ -229,7 +229,7 @@ namespace KGySoft.Serialization
             }
 
             // d/1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
-            if (type == typeof(DictionaryEntry))
+            if (type == Reflector.DictionaryEntryType)
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
@@ -239,7 +239,7 @@ namespace KGySoft.Serialization
             }
 
             // d/2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
-            if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
+            if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
@@ -358,7 +358,7 @@ namespace KGySoft.Serialization
                 Attribute[] attrs = Attribute.GetCustomAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
-                    ConstructorInfo ctor = convType.GetConstructor(new Type[] { typeof(Type) });
+                    ConstructorInfo ctor = convType.GetConstructor(new Type[] { Reflector.Type });
                     object[] ctorParams = { memberType };
                     if (ctor == null)
                     {

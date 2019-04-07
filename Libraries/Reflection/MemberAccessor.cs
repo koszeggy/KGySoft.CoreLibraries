@@ -1,9 +1,29 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: MemberAccessor.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+
 using KGySoft.Collections;
-using KGySoft.CoreLibraries;
+
+#endregion
 
 namespace KGySoft.Reflection
 {
@@ -12,8 +32,10 @@ namespace KGySoft.Reflection
     /// </summary>
     public abstract class MemberAccessor
     {
+        #region Enumerations
+
         /// <summary>
-        /// Options for <see cref="MemberAccessor.CreateMethodInvokerAsDynamicMethod"/> method.
+        /// Options for the <see cref="MemberAccessor.CreateMethodInvokerAsDynamicMethod">MemberAccessor.CreateMethodInvokerAsDynamicMethod</see> method.
         /// </summary>
         [Flags]
         protected enum DynamicMethodOptions
@@ -44,56 +66,77 @@ namespace KGySoft.Reflection
             TreatCtorAsMethod = 1 << 3,
         }
 
-        private readonly Type[] parameterTypes;
+        #endregion
+
+        #region Fields
 
         /// <summary>
         /// This locks also the loader method but this is OK because a new accessor creation is fast.
         /// </summary>
-        private static readonly LockingDictionary<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192).AsThreadSafe();
+        private static readonly IThreadSafeCacheAccessor<MemberInfo, MemberAccessor> accessorCache = new Cache<MemberInfo, MemberAccessor>(CreateAccessor, 8192).GetThreadSafeAccessor(true);
 
-        ///// <summary>
-        ///// Gets or sets the cache size used for caching compiled accessors. Setting size to 0 disables caching.
-        ///// </summary>
-        //public static int CacheSize
-        //{
-        //    get
-        //    {
-        //        return CachingEnabled ? accessorCache.Capacity : 0;
-        //    }
-        //    set
-        //    {
-        //        if (value < 0)
-        //            throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
-        //        else if (value == 0)
-        //        {
-        //            CachingEnabled = false;
-        //            accessorCache.Clear();
-        //        }
-        //        else
-        //        {
-        //            CachingEnabled = true;
-        //            accessorCache.Capacity = value;
-        //        }
-        //    }
-        //}
+        #endregion
 
-        ///// <summary>
-        ///// Gets or sets whether caching of compiled <see cref="MemberAccessor"/> instances is enabled.
-        ///// Disabling caching is not recommended.
-        ///// </summary>
-        //public static bool CachingEnabled { get; set; }
+        #region Properties
+
+        #region Public Properties
 
         /// <summary>
         /// Gets the reflection member info of the accessed member.
         /// </summary>
         public MemberInfo MemberInfo { get; }
 
+        #endregion
+
+        #region Protected Properties
+
         /// <summary>
-        /// This method is associated with itemLoader of cache.
+        /// Gets the type of parameters of the accessed member in the reflected type.
+        /// </summary>
+        protected Type[] ParameterTypes { get; }
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Protected constructor for the abstract <see cref="MemberAccessor"/>.
+        /// </summary>
+        /// <param name="member">The <see cref="MemberInfo"/> for which the accessor is created.</param>
+        /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
+        protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
+        {
+            MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.ArgumentNull);
+            ParameterTypes = parameterTypes ?? Type.EmptyTypes;
+        }
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        #region Protected Methods
+
+        /// <summary>
+        /// Gets an existing or creates a new <see cref="MemberAccessor"/> for the specified <paramref name="memberInfo"/>.
+        /// </summary>
+        /// <param name="memberInfo">The <see cref="MemberInfo"/> for which the accessor is to be obtained.</param>
+        /// <returns>A <see cref="MemberAccessor"/> instance for the specified <paramref name="memberInfo"/>.</returns>
+        protected static MemberAccessor GetCreateAccessor(MemberInfo memberInfo) => accessorCache[memberInfo];
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// This method is associated with the itemLoader of the cache.
         /// </summary>
         /// <remarks>
         /// Note: Make sure that created MemberAccessor is not cached until returning from this method
-        /// </remarks>        
+        /// </remarks>
         private static MemberAccessor CreateAccessor(MemberInfo member)
         {
             // method
@@ -118,68 +161,35 @@ namespace KGySoft.Reflection
             throw new NotSupportedException(Res.ReflectionNotSupportedMemberType(member.MemberType));
         }
 
-        /// <summary>
-        /// Gets the type of parameters of the accessed member in the reflected type.
-        /// </summary>
-        protected Type[] ParameterTypes
-        {
-            get { return parameterTypes; }
-        }
+        #endregion
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
 
         /// <summary>
-        /// Protected constructor for the abstract <see cref="MemberAccessor"/>.
+        /// Determines whether the specified <see cref="object"/> is equal to the current <see cref="MemberAccessor"/>.
         /// </summary>
-        /// <param name="member">Pass null when invoked from non-public constructors to avoid double caching.
-        /// You may set member from initializer, too. Public constructors must not allow null member to avoid violating encapsulation</param>
-        /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
-        protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
-        {
-            MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.ArgumentNull);
-            this.parameterTypes = parameterTypes ?? Type.EmptyTypes;
-        }
-
-        //static MemberAccessor()
-        //{
-        //    CachingEnabled = true;
-        //}
+        /// <param name="obj">The object to compare with the current <see cref="MemberAccessor"/>.</param>
+        /// <returns><see langword="true"/>&#160;if the specified object is equal to the current <see cref="MemberAccessor"/>; otherwise, <see langword="false"/>.</returns>
+        public override bool Equals(object obj) => obj is MemberAccessor other && Equals(other.MemberInfo, MemberInfo);
 
         /// <summary>
-        /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="MemberAccessor"/>.
+        /// Gets a hash code for the current <see cref="MemberAccessor"/> instance.
         /// </summary>
-        public override bool Equals(object obj)
-        {
-            MemberAccessor other = obj as MemberAccessor;
-            return other != null && Equals(other.MemberInfo, this.MemberInfo);
-        }
+        /// <returns>A hash code for the current <see cref="MemberAccessor"/>.</returns>
+        public override int GetHashCode() => MemberInfo != null ? MemberInfo.GetHashCode() : 0;
 
         /// <summary>
-        /// Gets a hash code fot the current <see cref="MemberAccessor"/> instance.
+        /// Returns a <see cref="string"/> that represents the current <see cref="MemberAccessor"/>.
         /// </summary>
-        /// <returns>
-        /// A hash code for the current <see cref="MemberAccessor"/>.
-        /// </returns>
-        public override int GetHashCode()
-        {
-            return MemberInfo != null ? MemberInfo.GetHashCode() : base.GetHashCode();
-        }
+        public override string ToString() => MemberInfo != null ? MemberInfo.MemberType + ": " + MemberInfo : base.ToString();
 
-        /// <summary>
-        /// Returns a <see cref="T:System.String"/> that represents the current <see cref="MemberAccessor"/>.
-        /// </summary>
-        public override string ToString()
-        {
-            return MemberInfo != null ? MemberInfo.MemberType + ": " + MemberInfo : base.ToString();
-        }
+        #endregion
 
-        /// <summary>
-        /// Gets accessor from cache in thread-safe way.
-        /// </summary>
-        /// <param name="memberInfo"></param>
-        /// <returns></returns>
-        protected static MemberAccessor GetCreateAccessor(MemberInfo memberInfo)
-        {
-            return accessorCache[memberInfo];
-        }
+        #region Protected Methods
 
         /// <summary>
         /// Gets a <see cref="DynamicMethod"/> that invokes the referred <paramref name="methodBase"/> (method or constructor).
@@ -189,7 +199,7 @@ namespace KGySoft.Reflection
         /// <param name="methodBase">The method or constructor, which invocation should be generated</param>
         /// <param name="options">Options for generation. Affects parameters of generated method and ref/out parameters handling</param>
         /// <returns>
-        /// Returns a <see cref="DynamicMethod"/> with given options. Return value of the method
+        /// Returns a <see cref="DynamicMethod"/> with given options. Return type of the method
         /// is <see cref="Void"/> if method has no return type, otherwise, <see cref="object"/>.
         /// By default, method parameters are <c>(<see cref="object"/> instance, <see cref="object"/>[] parameters)</c>,
         /// but when <see cref="DynamicMethodOptions.TreatAsPropertySetter"/> is set, then
@@ -210,21 +220,21 @@ namespace KGySoft.Reflection
                 throw new ArgumentException(Res.ReflectionInvalidMethodBase, nameof(methodBase));
 
             bool treatCtorAsMethod = (options & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
-            Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? typeof(void) : declaringType;
-            Type dmReturnType = returnType == typeof(void) ? typeof(void) : typeof(object);
+            Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? Reflector.VoidType : declaringType;
+            Type dmReturnType = returnType == Reflector.VoidType ? Reflector.VoidType : Reflector.ObjectType;
 
             List<Type> methodParameters = new List<Type>();
             string methodName;
 
             if (ctor != null && !treatCtorAsMethod)
             {
-                methodName = String.Format("<Construct>__{0}", declaringType.Name);
+                methodName = $"<Create>__{declaringType.Name}";
                 methodParameters.Add(typeof(object[])); // ctor parameters
             }
             else
             {
-                methodName = String.Format("<RunMethod>__{0}", methodBase.Name);
-                methodParameters.Add(typeof(object)); // instance parameter
+                methodName = $"<RunMethod>__{methodBase.Name}";
+                methodParameters.Add(Reflector.ObjectType); // instance parameter
 
                 // not a property setter
                 if ((options & DynamicMethodOptions.TreatAsPropertySetter) == DynamicMethodOptions.None)
@@ -235,16 +245,16 @@ namespace KGySoft.Reflection
                 // property setter
                 else
                 {
-                    methodParameters.Add(typeof(object)); // value
+                    methodParameters.Add(Reflector.ObjectType); // value
                     if (ParameterTypes.Length > 0)
                         methodParameters.Add(typeof(object[])); // indexer parameters
                 }
             }
 
             DynamicMethod dm = new DynamicMethod(methodName, // method name
-                dmReturnType, // return type
-                methodParameters.ToArray(), // parameters
-                declaringType, true); // owner
+                    dmReturnType, // return type
+                    methodParameters.ToArray(), // parameters
+                    declaringType, true); // owner
 
             ILGenerator il = dm.GetILGenerator();
 
@@ -254,30 +264,31 @@ namespace KGySoft.Reflection
                 ParameterInfo[] parameters = methodBase.GetParameters();
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
-                    if (ParameterTypes[i].IsByRef)
+                    if (!ParameterTypes[i].IsByRef)
+                        continue;
+
+                    Type paramType = ParameterTypes[i].GetElementType();
+
+                    // ReSharper disable once AssignNullToNotNullAttribute - not null because of the if above
+                    il.DeclareLocal(paramType);
+                        
+                    // initializing locals of ref (non-out) parameters
+                    if (!parameters[i].IsOut)
                     {
-                        Type paramType = ParameterTypes[i].GetElementType();
-                        il.DeclareLocal(paramType);
-                        // initializing locals of ref (non-out) parameters
-                        if (!parameters[i].IsOut)
-                        {
-                            il.Emit(method != null || treatCtorAsMethod ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
-                            il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                            il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
-                            if (paramType.IsValueType)
-                                il.Emit(OpCodes.Unbox_Any, paramType); // casting parameter as value type
-                            else
-                                il.Emit(OpCodes.Castclass, paramType); // casting parameter as reference
-                            il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
-                        }
-                        localsIndex++;
+                        il.Emit(method != null || treatCtorAsMethod ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
+                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                        il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
+                        il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
+                        il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
                     }
+
+                    localsIndex++;
                 }
             }
 
             LocalBuilder returnValue = null;
             // return value is the last local variable
-            if (returnType != typeof(void))
+            if (returnType != Reflector.VoidType)
                 returnValue = il.DeclareLocal(returnType);
 
             // if instance method:
@@ -292,12 +303,12 @@ namespace KGySoft.Reflection
                     il.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
-                    //LocalBuilder unboxedInstance = il.DeclareLocal(DeclaringType);
+                    //LocalBuilder unboxedInstance = il.DeclareLocal(declaringType);
                     //il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: typeof(object).MakeByRefType()
-                    //il.Emit(OpCodes.Unbox_Any, DeclaringType); // unboxing the instance
+                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: Reflector.ObjectType.MakeByRefType()
+                    //il.Emit(OpCodes.Unbox_Any, declaringType); // unboxing the instance
                     //il.Emit(OpCodes.Stloc_0); // saving value into 0. local
-                    //il.Emit(OpCodes.Ldloca_S, unboxedInstance); 
+                    //il.Emit(OpCodes.Ldloca_S, unboxedInstance);
                 }
             }
 
@@ -315,10 +326,7 @@ namespace KGySoft.Reflection
                     il.Emit(ctor != null ? OpCodes.Ldarg_0 : (options & DynamicMethodOptions.TreatAsPropertySetter) == DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2); // loading parameters argument
                     il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
                     il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
-                    if (ParameterTypes[i].IsValueType)
-                        il.Emit(OpCodes.Unbox_Any, ParameterTypes[i]); // casting parameter as value type
-                    else
-                        il.Emit(OpCodes.Castclass, ParameterTypes[i]); // casting parameter as reference
+                    il.Emit(ParameterTypes[i].IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, ParameterTypes[i]);
                 }
             }
 
@@ -329,10 +337,7 @@ namespace KGySoft.Reflection
                 if (pi == null)
                     throw new InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
                 il.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
-                if (pi.PropertyType.IsValueType)
-                    il.Emit(OpCodes.Unbox_Any, pi.PropertyType); // casting value as value type
-                else
-                    il.Emit(OpCodes.Castclass, pi.PropertyType); // casting value as reference               
+                il.Emit(pi.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType);
             }
 
             if (ctor != null)
@@ -351,7 +356,7 @@ namespace KGySoft.Reflection
             // If instance parameter was a ref parameter, then local variable should be boxed back:
             //il.Emit(OpCodes.Ldarg_0); // loading instance parameter
             //il.Emit(OpCodes.Ldloc_0); // loading unboxedInstance local variable
-            //il.Emit(OpCodes.Box, DeclaringType); // boxing
+            //il.Emit(OpCodes.Box, declaringType); // boxing
             //il.Emit(OpCodes.Stind_Ref); // storing the boxed object value
 
             // assigning back ref/out parameters
@@ -359,16 +364,17 @@ namespace KGySoft.Reflection
             {
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
-                    if (ParameterTypes[i].IsByRef)
-                    {
-                        Type paramType = ParameterTypes[i].GetElementType();
-                        il.Emit(ctor != null ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1); // loading parameters argument
-                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                        il.Emit(OpCodes.Ldloc, localsIndex++); // loading local variable
-                        if (paramType.IsValueType)
-                            il.Emit(OpCodes.Box, paramType); // boxing value type into object
-                        il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
-                    }
+                    if (!ParameterTypes[i].IsByRef)
+                        continue;
+                    Type paramType = ParameterTypes[i].GetElementType();
+                    il.Emit(ctor != null ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1); // loading parameters argument
+                    il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                    il.Emit(OpCodes.Ldloc, localsIndex++); // loading local variable
+                    
+                    // ReSharper disable once PossibleNullReferenceException - not null because of the if above
+                    if (paramType.IsValueType)
+                        il.Emit(OpCodes.Box, paramType); // boxing value type into object
+                    il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
                 }
             }
 
@@ -386,5 +392,11 @@ namespace KGySoft.Reflection
             il.Emit(OpCodes.Ret);
             return dm;
         }
+
+        #endregion
+
+        #endregion
+
+        #endregion
     }
 }

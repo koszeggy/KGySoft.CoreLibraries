@@ -71,7 +71,7 @@ namespace KGySoft.Serialization
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
             }
 
-            if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(typeof(string), typeof(UIntPtr)))
+            if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(Reflector.StringType, Reflector.UIntPtrType))
             {
                 selector = this;
                 return this;
@@ -101,7 +101,7 @@ namespace KGySoft.Serialization
             Type type = obj.GetType();
 
             int level = 0;
-            for (Type t = type; t != typeof(object); t = t.BaseType)
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
             {
                 FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)

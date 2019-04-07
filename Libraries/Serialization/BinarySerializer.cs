@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 namespace KGySoft.Serialization
 {
@@ -339,12 +340,12 @@ namespace KGySoft.Serialization
                     if (!CanSerializeStruct(field.FieldType))
                         return false;
                 }
-                else if (field.FieldType.IsArray || field.FieldType == typeof(string))
+                else if (field.FieldType.IsArray || field.FieldType == Reflector.StringType)
                 {
                     object[] attrs = field.GetCustomAttributes(typeof(MarshalAsAttribute), false);
                     MarshalAsAttribute marshalAs = attrs.Length > 0 ? attrs[0] as MarshalAsAttribute : null;
                     if (marshalAs != null && (field.FieldType.IsArray && marshalAs.Value == UnmanagedType.ByValArray ||
-                                              field.FieldType == typeof(string) && marshalAs.Value == UnmanagedType.ByValTStr))
+                                              field.FieldType == Reflector.StringType && marshalAs.Value == UnmanagedType.ByValTStr))
                     {
                         continue;
                     }

@@ -1197,8 +1197,8 @@ namespace KGySoft.Resources
             // 5.) to string by TypeConverter
             Type type = value.GetType();
             TypeConverter tc = TypeDescriptor.GetConverter(type);
-            bool toString = tc.CanConvertTo(typeof(string));
-            bool fromString = tc.CanConvertFrom(typeof(string));
+            bool toString = tc.CanConvertTo(Reflector.StringType);
+            bool fromString = tc.CanConvertFrom(Reflector.StringType);
             try
             {
                 if (toString && fromString)
@@ -1219,11 +1219,11 @@ namespace KGySoft.Resources
             }
 
             // 6.) to byte[] by TypeConverter
-            bool toByteArray = tc.CanConvertTo(typeof(byte[]));
-            bool fromByteArray = tc.CanConvertFrom(typeof(byte[]));
+            bool toByteArray = tc.CanConvertTo(Reflector.ByteArrayType);
+            bool fromByteArray = tc.CanConvertFrom(Reflector.ByteArrayType);
             if (toByteArray && fromByteArray)
             {
-                byte[] data = (byte[])tc.ConvertTo(value, typeof(byte[]));
+                byte[] data = (byte[])tc.ConvertTo(value, Reflector.ByteArrayType);
                 nodeInfo.ValueData = ResXCommon.ToBase64(data);
                 nodeInfo.MimeType = ResXCommon.ByteArraySerializedObjectMimeType;
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, compatibleFormat);
@@ -1330,7 +1330,7 @@ namespace KGySoft.Resources
             Type type = value.GetType();
             return type.CanBeParsedNatively()
                    && ((!compatibleFormat
-                        || !(type.In(typeof(DBNull), typeof(IntPtr), typeof(UIntPtr), Reflector.RuntimeType)))
+                        || !(type.In(typeof(DBNull), Reflector.IntPtrType, Reflector.UIntPtrType, Reflector.RuntimeType)))
                        && (type != Reflector.RuntimeType || !(((Type)value).IsGenericParameter)));
         }
 

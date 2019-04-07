@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 #endif
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -87,7 +88,7 @@ namespace KGySoft.CoreLibraries
 
 #if !DEBUG
             // this could be in static ctor but will be set only once per type when Comparer is accessed.
-            isUnsignedCompare = Enum.GetUnderlyingType(typeof(TEnum)) == typeof(ulong);
+            isUnsignedCompare = Enum.GetUnderlyingType(typeof(TEnum)) == Reflector.ULongType;
 #endif
         }
 
@@ -117,9 +118,9 @@ namespace KGySoft.CoreLibraries
 
             ParameterExpression objParameter = Expression.Parameter(typeof(TEnum), "obj");
             Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
-            UnaryExpression enumCastedToUnderlyingType = Expression.Convert(objParameter, underlyingType);
+            UnaryExpression enumCastToUnderlyingType = Expression.Convert(objParameter, underlyingType);
             // ReSharper disable once AssignNullToNotNullAttribute - the constructor ensures TEnum has an underlying enum type
-            MethodCallExpression getHashCodeCall = Expression.Call(enumCastedToUnderlyingType, underlyingType.GetMethod(nameof(Object.GetHashCode)));
+            MethodCallExpression getHashCodeCall = Expression.Call(enumCastToUnderlyingType, underlyingType.GetMethod(nameof(Object.GetHashCode)));
 
             return Expression.Lambda<Func<TEnum, int>>(getHashCodeCall, objParameter).Compile();
         }

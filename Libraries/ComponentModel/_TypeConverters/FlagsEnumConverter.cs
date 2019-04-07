@@ -71,7 +71,7 @@ namespace KGySoft.ComponentModel
             /// <param name="valueField">The underlying value field of the <see langword="enum"/>&#160;type.</param>
             /// <param name="attributes">Custom attributes of the <see langword="enum"/>&#160;flag field.</param>
             internal EnumFlagDescriptor(Type componentType, string name, ulong flagValue, ulong defaultValue, FieldInfo valueField, Attribute[] attributes, ITypeDescriptorContext context)
-                : base(componentType, name, typeof(bool))
+                : base(componentType, name, Reflector.BoolType)
             {
                 this.flagValue = flagValue;
                 this.defaultValue = defaultValue;

@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries
 #if NET35
                     comparer = EnumComparer<TEnum>.Comparer;
 #elif NET40 || NET45
-                    comparer = underlyingType == typeof(int)
+                    comparer = underlyingType == Reflector.IntType
                         ? (IEqualityComparer<TEnum>)EqualityComparer<TEnum>.Default
                         : EnumComparer<TEnum>.Comparer;
 #else
@@ -887,13 +887,13 @@ namespace KGySoft.CoreLibraries
             // eg. (int)-10: after the ulong->long conversion this is a bigger positive number as max
             unchecked
             {
-                if (underlyingType == typeof(int))
+                if (underlyingType == Reflector.IntType)
                     return ((int)nativeValue).ToString(CultureInfo.InvariantCulture);
 
-                if (underlyingType == typeof(short))
+                if (underlyingType == Reflector.ShortType)
                     return ((short)nativeValue).ToString(CultureInfo.InvariantCulture);
 
-                if (underlyingType == typeof(sbyte))
+                if (underlyingType == Reflector.SByteType)
                     return ((sbyte)nativeValue).ToString(CultureInfo.InvariantCulture);
             }
 

@@ -228,7 +228,7 @@ namespace KGySoft.Serialization
             }
 
             // d/1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
-            if (type == typeof(DictionaryEntry))
+            if (type == Reflector.DictionaryEntryType)
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
@@ -238,7 +238,7 @@ namespace KGySoft.Serialization
             }
 
             // d/2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
-            if (type.IsGenericTypeOf(typeof(KeyValuePair<,>)))
+            if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));

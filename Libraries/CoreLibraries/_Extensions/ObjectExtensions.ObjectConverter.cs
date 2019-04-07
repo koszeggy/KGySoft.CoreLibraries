@@ -15,9 +15,9 @@ namespace KGySoft.CoreLibraries
         {
             static ObjectConverter()
             {
-                typeof(KeyValuePair<,>).RegisterConversion(typeof(KeyValuePair<,>), TryConvertKeyValuePair);
-                typeof(DictionaryEntry).RegisterConversion(typeof(KeyValuePair<,>), TryConvertDictionaryEntryToKeyValuePair);
-                typeof(KeyValuePair<,>).RegisterConversion(typeof(DictionaryEntry), ConvertKeyValuePairToDictionaryEntry);
+                Reflector.KeyValuePairType.RegisterConversion(Reflector.KeyValuePairType, TryConvertKeyValuePair);
+                Reflector.DictionaryEntryType.RegisterConversion(Reflector.KeyValuePairType, TryConvertDictionaryEntryToKeyValuePair);
+                Reflector.KeyValuePairType.RegisterConversion(Reflector.DictionaryEntryType, ConvertKeyValuePairToDictionaryEntry);
             }
 
             private static bool TryConvertKeyValuePair(object obj, Type targetType, CultureInfo culture, out object result)

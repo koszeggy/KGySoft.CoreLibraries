@@ -26,7 +26,7 @@ namespace KGySoft.Serialization
             internal readonly MemberInfo MemberInfo;
             internal PropertyInfo Property => MemberInfo as PropertyInfo;
             internal FieldInfo Field => MemberInfo as FieldInfo;
-            internal bool SpecifyDeclaringType => memberNamesCounts[MemberInfo.Name] > 1 || MemberInfo.Name == XmlSerializer.ElementItem && typeof(IEnumerable).IsAssignableFrom(Property?.PropertyType ?? Field.FieldType);
+            internal bool SpecifyDeclaringType => memberNamesCounts[MemberInfo.Name] > 1 || MemberInfo.Name == XmlSerializer.ElementItem && Reflector.IEnumerableType.IsAssignableFrom(Property?.PropertyType ?? Field.FieldType);
 
             public Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
             {
@@ -37,7 +37,7 @@ namespace KGySoft.Serialization
 
         private static readonly HashSet<Type> trustedCollections = new HashSet<Type>
         {
-            typeof(List<>),
+            Reflector.ListGenType,
             typeof(LinkedList<>),
             typeof(Queue<>),
             typeof(Stack<>),
@@ -45,8 +45,8 @@ namespace KGySoft.Serialization
             typeof(ArrayList),
             typeof(Queue),
             typeof(Stack),
-            typeof(BitArray),
-            typeof(StringCollection),
+            Reflector.BitArrayType,
+            Reflector.StringCollectionType,
 
             typeof(CircularList<>),
 
@@ -186,7 +186,7 @@ namespace KGySoft.Serialization
             if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
             {
                 MethodInfo shouldSerializeMethod = member.DeclaringType?.GetMethod(XmlSerializer.MethodShouldSerialize + member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-                if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == typeof(bool) && !(bool)Reflector.RunMethod(obj, shouldSerializeMethod))
+                if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == Reflector.BoolType && !(bool)Reflector.RunMethod(obj, shouldSerializeMethod))
                     return true;
             }
 

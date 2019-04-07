@@ -27,6 +27,7 @@ using System.Threading;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -1153,7 +1154,7 @@ namespace KGySoft.Collections
             useEnumKeyComparer = typeKey.IsEnum;
             useEnumValueComparer = typeValue.IsEnum;
 #if NET40 || NET45
-            Type intType = typeof(int);
+            Type intType = Reflector.IntType;
             if (useEnumKeyComparer)
                 useEnumKeyComparer = Enum.GetUnderlyingType(typeKey) != intType;
             if (useEnumValueComparer)

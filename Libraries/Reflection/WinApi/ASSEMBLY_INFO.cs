@@ -1,4 +1,24 @@
-﻿using System.Runtime.InteropServices;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ASSEMBLY_INFO.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System.Runtime.InteropServices;
+
+#endregion
 
 namespace KGySoft.Reflection.WinApi
 {
@@ -7,6 +27,8 @@ namespace KGySoft.Reflection.WinApi
     /// </summary>
     internal struct ASSEMBLY_INFO
     {
+        #region Fields
+
         /// <summary>
         /// The size, in bytes, of the structure. This field is reserved for future extensibility.
         /// </summary>
@@ -34,5 +56,7 @@ namespace KGySoft.Reflection.WinApi
         /// The number of wide characters, including the null terminator, that pszCurrentAssemblyPathBuf contains.
         /// </summary>
         public int cchBuf;
+
+        #endregion
     }
 }

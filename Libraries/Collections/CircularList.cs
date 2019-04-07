@@ -626,7 +626,7 @@ namespace KGySoft.Collections
             isEnum = type.IsEnum;
 #if NET40 || NET45
             if (isEnum)
-                isNonIntEnum = Enum.GetUnderlyingType(type) != typeof(int);
+                isNonIntEnum = Enum.GetUnderlyingType(type) != Reflector.IntType;
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif

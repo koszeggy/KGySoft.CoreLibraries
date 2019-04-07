@@ -1,15 +1,33 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Accessors.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Xml;
-using KGySoft.Annotations;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
+
+#endregion
 
 // ReSharper disable InconsistentNaming - Properties are named here: Type_Member. Fields: accessorType_Member
 namespace KGySoft.Reflection

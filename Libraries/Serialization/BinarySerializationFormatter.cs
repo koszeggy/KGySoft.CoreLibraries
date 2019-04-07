@@ -858,7 +858,7 @@ namespace KGySoft.Serialization
 
             // non-sealed types below
             type = type ?? data.GetType();
-            if (type == typeof(object))
+            if (type == Reflector.ObjectType)
             {
                 bw.Write((ushort)DataTypes.Object);
                 return;
@@ -1090,13 +1090,13 @@ namespace KGySoft.Serialization
 #error .NET version is not set or not supported!
 #endif
  || typeDef == typeof(LinkedList<>)
-                    || typeDef == typeof(KeyValuePair<,>); // not actually a collection but can be encoded more easily as a dictionary
+                    || typeDef == Reflector.KeyValuePairType; // not actually a collection but can be encoded more easily as a dictionary
             }
 
             return type == typeof(ArrayList) || type == typeof(Queue) || type == typeof(Stack)
                 || type == typeof(Hashtable) || type == typeof(SortedList) || type == typeof(ListDictionary) || type == typeof(HybridDictionary) || type == typeof(OrderedDictionary)
                 || type == typeof(StringCollection) || type == typeof(StringDictionary)
-                || type == typeof(DictionaryEntry); // encoded as a non-generic dictionary
+                || type == Reflector.DictionaryEntryType; // encoded as a non-generic dictionary
         }
 
         private static IEnumerable<DataTypes> EncodeCollectionType(Type type, BinarySerializationOptions options, SerializationManager manager)
@@ -1227,11 +1227,11 @@ namespace KGySoft.Serialization
             if (type.IsArray)
                 return DataTypes.Array;
 
-            if (type == typeof(DictionaryEntry))
+            if (type == Reflector.DictionaryEntryType)
                 return DataTypes.DictionaryEntry;
 
             Type genType = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
-            if (genType == typeof(KeyValuePair<,>))
+            if (genType == Reflector.KeyValuePairType)
                 return DataTypes.KeyValuePair;
 
             if (type.IsNullable())
@@ -1247,7 +1247,7 @@ namespace KGySoft.Serialization
                 }
             }
 
-            if (!typeof(IEnumerable).IsAssignableFrom(type))
+            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
                 return DataTypes.Null;
 
             if (genType != null)
@@ -1313,35 +1313,35 @@ namespace KGySoft.Serialization
         private static DataTypes GetSupportedElementType(Type type, BinarySerializationOptions options, SerializationManager manager)
         {
             // a.) Natively supported primitive types
-            if (type == typeof(bool))
+            if (type == Reflector.BoolType)
                 return DataTypes.Bool;
-            if (type == typeof(byte))
+            if (type == Reflector.ByteType)
                 return DataTypes.UInt8;
-            if (type == typeof(sbyte))
+            if (type == Reflector.SByteType)
                 return DataTypes.Int8;
-            if (type == typeof(short))
+            if (type == Reflector.ShortType)
                 return DataTypes.Int16;
-            if (type == typeof(ushort))
+            if (type == Reflector.UShortType)
                 return DataTypes.UInt16;
-            if (type == typeof(int))
+            if (type == Reflector.IntType)
                 return DataTypes.Int32;
-            if (type == typeof(uint))
+            if (type == Reflector.UIntType)
                 return DataTypes.UInt32;
-            if (type == typeof(long))
+            if (type == Reflector.LongType)
                 return DataTypes.Int64;
-            if (type == typeof(ulong))
+            if (type == Reflector.ULongType)
                 return DataTypes.UInt64;
-            if (type == typeof(char))
+            if (type == Reflector.CharType)
                 return DataTypes.Char;
-            if (type == typeof(string))
+            if (type == Reflector.StringType)
                 return DataTypes.String;
-            if (type == typeof(float))
+            if (type == Reflector.FloatType)
                 return DataTypes.Single;
-            if (type == typeof(double))
+            if (type == Reflector.DoubleType)
                 return DataTypes.Double;
-            if (type == typeof(IntPtr))
+            if (type == Reflector.IntPtrType)
                 return DataTypes.IntPtr;
-            if (type == typeof(UIntPtr))
+            if (type == Reflector.UIntPtrType)
                 return DataTypes.UIntPtr;
 
             // b.) nullable (must be before surrogate-support checks)
@@ -1362,11 +1362,11 @@ namespace KGySoft.Serialization
                 return DataTypes.Null;
 
             // d.) Natively supported non-primitive types
-            if (type == typeof(decimal))
+            if (type == Reflector.DecimalType)
                 return DataTypes.Decimal;
-            if (type == typeof(DateTime))
+            if (type == Reflector.DateTimeType)
                 return DataTypes.DateTime;
-            if (type == typeof(object))
+            if (type == Reflector.ObjectType)
                 return DataTypes.Object;
             if (type == typeof(DBNull))
                 return DataTypes.DBNull;
@@ -1374,9 +1374,9 @@ namespace KGySoft.Serialization
                 return DataTypes.Version;
             if (type == typeof(Guid))
                 return DataTypes.Guid;
-            if (type == typeof(TimeSpan))
+            if (type == Reflector.TimeSpanType)
                 return DataTypes.TimeSpan;
-            if (type == typeof(DateTimeOffset))
+            if (type == Reflector.DateTimeOffsetType)
                 return DataTypes.DateTimeOffset;
             if (type == typeof(Uri))
                 return DataTypes.Uri;
@@ -1615,7 +1615,7 @@ namespace KGySoft.Serialization
                     WriteElement(bw, element.Value, valueCollectionDataTypes, valueDataType, collectionValueType, manager);
                 }
             }
-            // if cannot be casted an non-generic dictionary, Key and Value properties can be accessed only via reflection
+            // if cannot be cast to a non-generic dictionary, Key and Value properties can be accessed only via reflection
             else
             {
                 foreach (object element in collection)
@@ -2078,7 +2078,7 @@ namespace KGySoft.Serialization
                 Write(bw, entry.Value, false, manager);
 
                 // type
-                bool typeMatch = entry.Value == null && entry.ObjectType == typeof(object)
+                bool typeMatch = entry.Value == null && entry.ObjectType == Reflector.ObjectType
                  || entry.Value != null && entry.Value.GetType() == entry.ObjectType;
                 bw.Write(typeMatch);
                 if (!typeMatch)
@@ -2134,7 +2134,7 @@ namespace KGySoft.Serialization
                 }
 
                 List<MethodInfo> result = new List<MethodInfo>();
-                for (Type t = type; t != null && t != typeof(object); t = t.BaseType)
+                for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
                 {
                     foreach (MethodInfo method in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                     {
@@ -2344,7 +2344,7 @@ namespace KGySoft.Serialization
         /// </summary>
         private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager)
         {
-            if (!descriptor.IsSingleElement && !typeof(IEnumerable).IsAssignableFrom(descriptor.Type))
+            if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
                 throw new InvalidOperationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type));
 
             // getting whether the current instance is in cache
@@ -2903,18 +2903,18 @@ namespace KGySoft.Serialization
             Type type = obj.GetType();
 
             // iterating through self and base types
-            for (Type t = type; t != typeof(object); t = t.BaseType)
+            for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
             {
                 // checking name of base type
                 if (t != type)
                 {
                     string name = br.ReadString();
-                    while (t.Name != name && t != typeof(object))
+                    while (t.Name != name && t != Reflector.ObjectType)
                     {
                         t = t.BaseType;
                     }
 
-                    if (name.Length == 0 && t == typeof(object))
+                    if (name.Length == 0 && t == Reflector.ObjectType)
                         return;
 
                     if (t.Name != name && (manager.Options & BinarySerializationOptions.IgnoreObjectChanges) == BinarySerializationOptions.None)
@@ -2979,7 +2979,7 @@ namespace KGySoft.Serialization
             {
                 string name = br.ReadString();
                 object value = Read(br, false, manager);
-                Type elementType = value?.GetType() ?? typeof(object);
+                Type elementType = value?.GetType() ?? Reflector.ObjectType;
                 if (!br.ReadBoolean())
                     elementType = manager.ReadType(br);
                 si.AddValue(name, value, elementType);

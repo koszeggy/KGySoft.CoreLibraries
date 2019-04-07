@@ -35,7 +35,7 @@ namespace _PerformanceTest
             //    .DoTest();
 
             object o = 1;
-            FieldInfo intmValue = typeof(int).GetTypeInfo().GetDeclaredField("m_value");
+            FieldInfo intmValue = typeof(int).GetType().GetField("m_value", BindingFlags.Instance | BindingFlags.NonPublic);
             var accessor = FieldAccessor.GetAccessor(intmValue);
 
             new PerformanceTest { Repeat = 1, Iterations = 10000 }
