@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using KGySoft;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -12,14 +13,14 @@ using NUnit.Framework;
 namespace _PerformanceTest
 {
     [TestFixture]
-    public class  UnitTest1
+    public class UnitTest1
     {
         private static readonly MethodInfo methodAdd = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange));
 
         private static readonly IDictionary<Type, MethodInfo> methodCache = new LockingDictionary<Type, MethodInfo>();
 
         [Test]
-        public void TestMethod1()
+        public unsafe void TestMethod1()
         {
             //var parameter = Expression.Parameter(typeof(long), "value");
             //var dynamicMethod = Expression.Lambda<Func<long, ConsoleColor>>(
@@ -33,9 +34,38 @@ namespace _PerformanceTest
             //    .AddCase(() => converter.Invoke(0L), "ConverterExpression")
             //    .DoTest();
 
-            new PerformanceTest { Repeat = 3, Iterations = 10000 }
-                .AddCase(() => typeof(ICollection<>).MakeGenericType(typeof(int)), "MakeGenericType")
-                .AddCase(() => typeof(IList<int>).GetInterface(typeof(ICollection<>).Name), "GetInterface")
+            object o = 1;
+            FieldInfo intmValue = typeof(int).GetTypeInfo().GetDeclaredField("m_value");
+            var accessor = FieldAccessor.GetAccessor(intmValue);
+
+            new PerformanceTest { Repeat = 1, Iterations = 10000 }
+                .AddCase(() => intmValue.SetValue(o, 2), "FieldInfo.SetValue")
+                .AddCase(() => intmValue.SetValueDirect(__makeref(o), 2), "FieldInfo.SetValueDirect")
+                .AddCase(() => accessor.Set(o, 2), "FieldAccessor.Set")
+                .AddCase(() =>
+                {
+                    var objectPinned = GCHandle.Alloc(o, GCHandleType.Pinned);
+                    try
+                    {
+                        TypedReference objRef = __makeref(o);
+                        int* rawContent = (int*)*(IntPtr*)*(IntPtr*)&objRef;
+                        int* boxedInt = rawContent + IntPtr.Size;
+                        (*boxedInt)++;
+                    }
+                    finally
+                    {
+                        objectPinned.Free();
+                    }
+                }, "TypedReference with pinning")
+                .AddCase(() =>
+                {
+                    TypedReference objRef = __makeref(o);
+                    int* rawBoxedInstance = (int*)*(IntPtr*)*(IntPtr*)&objRef;
+                    if (IntPtr.Size == 4)
+                        rawBoxedInstance[1]++;
+                    else
+                        rawBoxedInstance[2]++;
+                }, "TypedReference no pinning")
                 .DoTest();
         }
 

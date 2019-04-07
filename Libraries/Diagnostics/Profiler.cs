@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Profiler.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -6,53 +24,95 @@ using System.Linq;
 using System.Security;
 using System.Text;
 using System.Xml.Linq;
+
 using KGySoft.CoreLibraries;
+
+#endregion
 
 namespace KGySoft.Diagnostics
 {
     /// <summary>
-    /// Represents a profiler for performance monitoring.
+    /// Provides members for performance monitoring.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
+    /// <remarks>
+    /// <para>The <see cref="Profiler"/> class can be used to place measurement sections into the code. The results can be accessed either directly
+    /// by the <see cref="GetMeasurementResults(string)">GetMeasurementResults</see> method or when the <see cref="AutoSaveResults"/> property is <see langword="true"/>,
+    /// then the results will be dumped into an .XML file into a folder designated by the <see cref="ProfilerDirectory"/> property.</para>
+    /// <para>The profiling can be turned on and off globally by the <see cref="Enabled"/> property.</para>
+    /// <note>It is recommended to measure performance with <c>Release</c> builds.</note>
+    /// <example>
+    /// The following example demonstrates how to place measurement sections into the code:
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Threading;
+    /// using KGySoft.Diagnostics;
+    ///
+    /// class Example
+    /// {
+    ///     static void Main(string[] args)
+    ///     {
+    ///         Profiler.Enabled = true; // set false to turn off profiling
+    ///         Profiler.AutoSaveResults = true; // if true a result .XML file is saved on exit
+    ///
+    ///         // put the measurement into a using block. You can specify a category and operation name.
+    ///         using (Profiler.Measure(nameof(Example), $"{nameof(Main)} total"))
+    ///         {
+    ///             for (int i = 0; i < 10; i++)
+    ///             {
+    ///                 using (Profiler.Measure(nameof(Example), $"{nameof(Main)}/1 iteration"))
+    ///                 {
+    ///                     DoSmallTask();
+    ///                     DoBigTask();
+    ///                 }
+    ///             }
+    ///         }
+    ///
+    ///         // if Profiler.AutoSaveResults is false you might want to check the results here: Profiler.GetMeasurementResults(nameof(Example));
+    ///     }
+    ///
+    ///     private static void DoSmallTask()
+    ///     {
+    ///         using (Profiler.Measure(nameof(Example), nameof(DoSmallTask)))
+    ///             Console.WriteLine(nameof(DoSmallTask));
+    ///     }
+    ///
+    ///     private static void DoBigTask()
+    ///     {
+    ///         using (Profiler.Measure(nameof(Example), nameof(DoBigTask)))
+    ///         {
+    ///             for (int i = 0; i < 5; i++)
+    ///             {
+    ///                 Thread.Sleep(10);
+    ///                 DoSmallTask();
+    ///             }
+    ///         }
+    ///     }
+    /// }]]></code>
+    /// As a result, in the folder of the application a new <c>Profiler</c> folder has been created with a file named something like <c>[time stamp]_ConsoleApp1.exe.xml</c>
+    /// with a similar content to the following:
+    /// <code lang="XML"><![CDATA[
+    /// <?xml version="1.0" encoding="utf-8"?>
+    /// <ProfilerResult>
+    ///   <item Category = "Example" Operation="Main total" NumberOfCalls="1" FirstCall="00:00:00.5500736" TotalTime="00:00:00.5500736" AverageCallTime="00:00:00.5500736" />
+    ///   <item Category = "Example" Operation="Main/1 iteration" NumberOfCalls="10" FirstCall="00:00:00.0555439" TotalTime="00:00:00.5500554" AverageCallTime="00:00:00.0550055" />
+    ///   <item Category = "Example" Operation="DoSmallTask" NumberOfCalls="60" FirstCall="00:00:00.0005378" TotalTime="00:00:00.0124114" AverageCallTime="00:00:00.0002068" />
+    ///   <item Category = "Example" Operation="DoBigTask" NumberOfCalls="10" FirstCall="00:00:00.0546513" TotalTime="00:00:00.5455339" AverageCallTime="00:00:00.0545533" />
+    /// </ProfilerResult>]]></code>
+    /// You can open the result even in Microsoft Excel as a table, which allows you to filter and sort the results easily:
+    /// <br/><img src="../Help/Images/ProfilerResults.png" alt="The Profiler results opened in Microsoft Excel."/>
+    /// </example>
+    /// </remarks>
     public static class Profiler
     {
         #region Fields
 
         private static readonly Dictionary<string, MeasureItem> items;
-
         private static string profilerDir;
 
         #endregion
 
-        #region Constructors
-
-        static Profiler()
-        {
-            Enabled = true;
-            AutoSaveResults = true;
-
-            // According to MSDN, DomainUnload is never raised in main app domain so using ProcessExit there
-            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-                AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-            else
-                AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
-
-            items = new Dictionary<string, MeasureItem>();
-
-            try
-            {
-                profilerDir = GetDefaultDir();
-            }
-            catch (SecurityException)
-            {
-                profilerDir = "Profiler";
-            }
-            catch (UnauthorizedAccessException)
-            {
-                profilerDir = "Profiler";
-            }
-        }
-
-        #endregion
+        #region Properties
 
         /// <summary>
         /// Gets or sets whether profiling is enabled.
@@ -89,6 +149,43 @@ namespace KGySoft.Diagnostics
             set => profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value;
         }
 
+        #endregion
+
+        #region Constructors
+
+        static Profiler()
+        {
+            Enabled = true;
+            AutoSaveResults = true;
+
+            // According to MSDN, DomainUnload is never raised in main app domain so using ProcessExit there
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+                AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+            else
+                AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
+
+            items = new Dictionary<string, MeasureItem>();
+
+            try
+            {
+                profilerDir = GetDefaultDir();
+            }
+            catch (SecurityException)
+            {
+                profilerDir = "Profiler";
+            }
+            catch (UnauthorizedAccessException)
+            {
+                profilerDir = "Profiler";
+            }
+        }
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
         /// <summary>
         /// Gets the measurement results so far.
         /// </summary>
@@ -100,7 +197,7 @@ namespace KGySoft.Diagnostics
         /// <para>Getting this property is an O(1) operation. The returned value is a lazy enumerator. If <see cref="Measure"/>
         /// method is called during the enumeration an exception might be thrown.</para>
         /// </remarks>
-        public static IEnumerable<IMeasureItem> GetMeasurementResults() 
+        public static IEnumerable<IMeasureItem> GetMeasurementResults()
             // ReSharper disable once InconsistentlySynchronizedField - see remarks above
             => items.Select(i => (IMeasureItem)i.Value);
 
@@ -150,10 +247,6 @@ namespace KGySoft.Diagnostics
             return null;
         }
 
-        #region Methods
-
-        #region Public Methods
-
         /// <summary>
         /// If <see cref="Enabled"/> is <see langword="true"/>, starts a profiling measure. Use in <see langword="using"/>&#160;block.
         /// </summary>
@@ -162,7 +255,9 @@ namespace KGySoft.Diagnostics
         /// <param name="operation">Name of the operation.</param>
         /// <returns>An <see cref="IDisposable"/> instance that should be enclosed into a <see langword="using"/>&#160;block.
         /// When <see cref="Enabled"/> is <see langword="false"/>, this method returns <see langword="null"/>.</returns>
-        // todo: remarks example
+        /// <remarks>
+        /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="Profiler"/> class for details and an example.</note>
+        /// </remarks>
         public static IDisposable Measure(string category, string operation)
         {
             if (!Enabled)
@@ -195,15 +290,13 @@ namespace KGySoft.Diagnostics
         {
             lock (items)
             {
-                items.Clear();                
+                items.Clear();
             }
         }
 
         #endregion
 
         #region Private Methods
-
-        #region Static Methods
 
         private static string GetDefaultDir()
         {
@@ -220,11 +313,11 @@ namespace KGySoft.Diagnostics
                 foreach (MeasureItem item in items.Values)
                 {
                     XElement xItem = new XElement("item", new XAttribute("Category", item.Category),
-                        new XAttribute("Operation", item.Operation),
-                        new XAttribute("NumberOfCalls", item.NumberOfCalls),
-                        new XAttribute("FirstCall", item.FirstCall.ToString()),
-                        new XAttribute("TotalTime", item.TotalElapsed.ToString()),
-                        new XAttribute("AverageCallTime", TimeSpan.FromTicks(item.TotalElapsed.Ticks / item.NumberOfCalls).ToString())
+                            new XAttribute("Operation", item.Operation),
+                            new XAttribute("NumberOfCalls", item.NumberOfCalls),
+                            new XAttribute("FirstCall", item.FirstCall.ToString()),
+                            new XAttribute("TotalTime", item.TotalElapsed.ToString()),
+                            new XAttribute("AverageCallTime", TimeSpan.FromTicks(item.TotalElapsed.Ticks / item.NumberOfCalls).ToString())
                         );
 
                     result.Add(xItem);
@@ -255,19 +348,11 @@ namespace KGySoft.Diagnostics
 
         #endregion
 
-        #region Static Event Handlers
+        #region Event handlers
 
-        static void CurrentDomain_DomainUnload(object sender, EventArgs e)
-        {
-            DumpResults();
-        }
+        static void CurrentDomain_DomainUnload(object sender, EventArgs e) => DumpResults();
 
-        static void CurrentDomain_ProcessExit(object sender, EventArgs e)
-        {
-            DumpResults();
-        }
-
-        #endregion
+        static void CurrentDomain_ProcessExit(object sender, EventArgs e) => DumpResults();
 
         #endregion
 

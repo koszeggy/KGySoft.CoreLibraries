@@ -1130,7 +1130,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// TODO: public
         /// </summary>
-        public static bool TryRunMethod(Type type, string methodName, out object result, params object[] parameters)
+        internal static bool TryRunMethod(Type type, string methodName, out object result, params object[] parameters)
             => TryRunMethod(type, methodName, null, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
@@ -1184,7 +1184,7 @@ namespace KGySoft.Reflection
 
                     try
                     {
-                        result = RunMethod(instance, mi, way, parameters);
+                        result = RunMethod(instance, mi, null, way, parameters);
                         return true;
                     }
                     catch (TargetInvocationException e)
@@ -1251,59 +1251,26 @@ namespace KGySoft.Reflection
             => CreateInstance(ctor, ReflectionWays.Auto, parameters);
 
         /// <summary>
-        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
-        /// for better performance.
+        /// Creates a new instance of given type using the default or parameterless constructor.
+        /// If <paramref name="type"/> is <see cref="ValueType"/>, then the new instance is created
+        /// by without using any constructors.
         /// </summary>
         /// <param name="type">Type of the instance to create.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <param name="way">Preferred invocation mode.</param>
+        /// <param name="genericParameters">Generic type parameters if <paramref name="type"/> is generic. For non-generic types this parameter is omitted.</param>
+        /// <param name="way">Preferred invocation mode.
+        /// Auto option uses system reflection mode.
+        /// In case of dynamic delegate mode first creation of an object of a method is slow but
+        /// further calls are somewhat faster but not as fast as the system reflection way for parameterless constructors.
+        /// TypeDescriptor way is possible but not preferred and uses no service provider. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
+        /// </param>
         /// <returns>The created instance.</returns>
-        public static object CreateInstance(Type type, ReflectionWays way, params object[] parameters)
+        public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way = ReflectionWays.Auto)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
-
-            if (parameters == null)
-                parameters = EmptyObjects;
-
-            // In case of value types no parameterless constructor would be found - redirecting
-            if (type.IsValueType && parameters.Length == 0)
-                return CreateInstance(type, way);
-
-            foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-            {
-                ParameterInfo[] ctorParams = ctor.GetParameters();
-
-                // skip when parameter count is not correct
-                if (ctorParams.Length != parameters.Length)
-                    continue;
-
-                if (!CheckParameters(ctorParams, parameters))
-                    continue;
-
-                try
-                {
-                    return CreateInstance(ctor, way, parameters);
-                }
-                catch (TargetInvocationException e)
-                {
-                    // re-throwing the inner exception by preserving its stack trace
-                    ExceptionDispatchInfo.Capture(e.InnerException).Throw();
-                }
-            }
-
-            throw new ReflectionException(Res.ReflectionCtorNotFound(type));
+            return TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null;
         }
-
-        /// <summary>
-        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <returns>The created instance.</returns>
-        public static object CreateInstance(Type type, params object[] parameters) 
-            => CreateInstance(type, ReflectionWays.Auto, parameters);
 
         /// <summary>
         /// Creates a new instance of given type using the default or parameterless constructor.
@@ -1320,23 +1287,215 @@ namespace KGySoft.Reflection
         /// </param>
         /// <returns>The created instance.</returns>
         public static object CreateInstance(Type type, ReflectionWays way = ReflectionWays.Auto)
+            => CreateInstance(type, null, way);
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+            return TryCreateInstanceByType(type, genericParameters, way, false, out result);
+        }
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, ReflectionWays way, out object result)
+            => TryCreateInstance(type, null, way, out result);
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, out object result)
+            => TryCreateInstance(type, null, ReflectionWays.Auto, out result);
+
+        private static bool TryCreateInstanceByType(Type type, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
+        {
+            result = null;
+
+            // if the type is generic we need the generic arguments and a constructed type with real types
+            if (type.IsGenericTypeDefinition)
+            {
+                Type[] genArgs = type.GetGenericArguments();
+                if (genericParameters.Length != genArgs.Length)
+                {
+                    if (throwError)
+                        throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
+                    return false;
+                }
+                try
+                {
+                    type = type.MakeGenericType(genericParameters);
+                }
+                catch (Exception)
+                {
+                    if (throwError)
+                        throw;
+                    return false;
+                }
+            }
+
+            if (way == ReflectionWays.DynamicDelegate)
+                result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+            else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
+                result = Activator.CreateInstance(type, true);
+            else // if (way == ReflectionWays.TypeDescriptor)
+                result = TypeDescriptor.CreateInstance(null, type, null, null);
+            return true;
+        }
+
+        /// <summary>
+        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
+        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
+        /// for better performance.
+        /// </summary>
+        /// <param name="type">Type of the instance to create.</param>
+        /// <param name="genericParameters">Generic type parameters if <paramref name="type"/> is generic. For non-generic types this parameter is omitted.</param>
+        /// <param name="way">Preferred invocation mode.</param>
+        /// <param name="parameters">Constructor parameters.</param>
+        /// <returns>The created instance.</returns>
+        public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            if (way == ReflectionWays.DynamicDelegate)
-            {
-                return CreateInstanceAccessor.GetAccessor(type).CreateInstance();
-            }
-            else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
-            {
-                return Activator.CreateInstance(type, true);
-            }
-            else // if (way == ReflectionWays.TypeDescriptor)
-            {
-                return TypeDescriptor.CreateInstance(null, type, null, null);
-            }
+            if (parameters == null)
+                parameters = EmptyObjects;
+
+            object result;
+
+            // In case of value types no parameterless constructor would be found - redirecting
+            if (type.IsValueType && parameters.Length == 0)
+                return TryCreateInstanceByType(type, genericParameters, way, true, out result) ? result : null;
+            return TryCreateInstanceByCtor(type, parameters, genericParameters ?? Type.EmptyTypes, way, true, out result) ? result : null;
         }
+
+        /// <summary>
+        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
+        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
+        /// for better performance.
+        /// </summary>
+        /// <param name="type">Type of the instance to create.</param>
+        /// <param name="parameters">Constructor parameters.</param>
+        /// <param name="way">Preferred invocation mode.</param>
+        /// <returns>The created instance.</returns>
+        public static object CreateInstance(Type type, ReflectionWays way, params object[] parameters)
+            => CreateInstance(type, null, way, parameters);
+
+        /// <summary>
+        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
+        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
+        /// for better performance.
+        /// </summary>
+        /// <param name="type">Type of the instance to create.</param>
+        /// <param name="genericParameters">Generic type parameters if <paramref name="type"/> is generic. For non-generic types this parameter is omitted.</param>
+        /// <param name="parameters">Constructor parameters.</param>
+        /// <returns>The created instance.</returns>
+        public static object CreateInstance(Type type, Type[] genericParameters, params object[] parameters)
+            => CreateInstance(type, genericParameters, ReflectionWays.Auto, parameters);
+
+        /// <summary>
+        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
+        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
+        /// for better performance.
+        /// </summary>
+        /// <param name="type">Type of the instance to create.</param>
+        /// <param name="parameters">Constructor parameters.</param>
+        /// <returns>The created instance.</returns>
+        public static object CreateInstance(Type type, params object[] parameters)
+            => CreateInstance(type, null, ReflectionWays.Auto, parameters);
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
+        {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
+
+            if (parameters == null)
+                parameters = EmptyObjects;
+
+            // In case of value types no parameterless constructor would be found - redirecting
+            if (type.IsValueType && parameters.Length == 0)
+                return TryCreateInstanceByType(type, genericParameters, way, false, out result);
+            return TryCreateInstanceByCtor(type, parameters, genericParameters ?? Type.EmptyTypes, way, false, out result);
+        }
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, Type[] genericParameters, out object result, params object[] parameters)
+            => TryCreateInstance(type, genericParameters, ReflectionWays.Auto, out result, parameters);
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, ReflectionWays way, out object result, params object[] parameters)
+            => TryCreateInstance(type, null, ReflectionWays.Auto, out result, parameters);
+
+        /// <summary>
+        /// TODO: public
+        /// </summary>
+        internal static bool TryCreateInstance(Type type, out object result, params object[] parameters)
+            => TryCreateInstance(type, null, ReflectionWays.Auto, out result, parameters);
+
+        private static bool TryCreateInstanceByCtor(Type type, object[] parameters, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
+        {
+            result = null;
+
+            // if the type is generic we need the generic arguments and a constructed type with real types
+            if (type.IsGenericTypeDefinition)
+            {
+                Type[] genArgs = type.GetGenericArguments();
+                if (genericParameters.Length != genArgs.Length)
+                {
+                    if (throwError)
+                        throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
+                    return false;
+                }
+                try
+                {
+                    type = type.MakeGenericType(genericParameters);
+                }
+                catch (Exception)
+                {
+                    if (throwError)
+                        throw;
+                    return false;
+                }
+            }
+
+            foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                ParameterInfo[] ctorParams = ctor.GetParameters();
+
+                // skip when parameter count is not correct
+                if (ctorParams.Length != parameters.Length)
+                    continue;
+
+                if (!CheckParameters(ctorParams, parameters))
+                    continue;
+
+                try
+                {
+                    result = CreateInstance(ctor, way, parameters);
+                    return true;
+                }
+                catch (TargetInvocationException e)
+                {
+                    // re-throwing the inner exception by preserving its stack trace
+                    ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                }
+            }
+
+            if (!throwError)
+                return false;
+            throw new ReflectionException(Res.ReflectionCtorNotFound(type));
+        }
+
 
         /// <summary>
         /// Invokes a constructor on an already created instance.
@@ -1606,7 +1765,7 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            return TryGetFieldByName(fieldName, null, type, way, out object result, true) ? result : null;
+            return TryGetFieldByName(fieldName, type, null, way, out object result, true) ? result : null;
         }
 
         /// <summary>
@@ -1633,7 +1792,7 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            return TryGetFieldByName(fieldName, null, type, way, out value, false);
+            return TryGetFieldByName(fieldName, type, null, way, out value, false);
         }
 
 

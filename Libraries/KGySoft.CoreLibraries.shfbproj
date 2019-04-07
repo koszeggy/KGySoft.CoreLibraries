@@ -127,6 +127,10 @@
       <ImageId>ComponentModel_BusinessObjects</ImageId>
       <AlternateText>Class diagram of business object base classes and interfaces</AlternateText>
     </Content>
+    <Content Include="Help\Images\ProfilerResults.png">
+      <ImageId>ProfilerResults</ImageId>
+      <AlternateText>Profiler Results</AlternateText>
+    </Content>
   </ItemGroup>
   <!-- Import the SHFB build targets -->
   <Import Project="$(SHFBROOT)\SandcastleHelpFileBuilder.targets" />

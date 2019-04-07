@@ -49,7 +49,7 @@ namespace KGySoft.ComponentModel
     public sealed class CommandState :
 #if !NET35
         DynamicObject,
-        ITypedList, // so a binding will not treat the type as a list of Key and Value properties (because the DynamicObject implements IDictionary<string, object>)
+        ITypedList, // so a binding will not treat the type as a list of Key and Value properties (because the CommandState implements IDictionary<string, object>)
 #endif
 
         ICommandState,

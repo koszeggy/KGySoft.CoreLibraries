@@ -235,7 +235,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
@@ -277,7 +277,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found add method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found add method and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
@@ -584,9 +584,9 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>The specified <paramref name="collection"/> can be inserted in the <paramref name="target"/> collection if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
         /// </remarks>
@@ -628,9 +628,9 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found insert method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found insert method and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
-        /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
+        /// <para>The specified <paramref name="collection"/> can be inserted in the <paramref name="target"/> collection if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryInsertRange{T}"><![CDATA[TryInsertRange<T>]]></see> overload for better performance.</note>
@@ -943,7 +943,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <note>If <paramref name="collection"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeList{T}"/> implementation,
@@ -992,7 +992,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by a found remove method; <see langword="false"/>&#160;to suppress the exceptions thrown by the found remove method and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole range could be removed from <paramref name="collection"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <note>If <paramref name="collection"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeList{T}"/> implementation,
@@ -1214,7 +1214,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the used modifier members; <see langword="false"/>&#160;to suppress the exceptions thrown by the used members and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
@@ -1284,7 +1284,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <param name="throwError"><see langword="true"/>&#160;to forward any exception thrown by the used modifier members; <see langword="false"/>&#160;to suppress the exceptions thrown by the used members and return <see langword="false"/>&#160;on failure. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
-        /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>;otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
