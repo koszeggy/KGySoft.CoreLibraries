@@ -501,7 +501,7 @@ namespace KGySoft.Resources
             {
                 if (compatibleFileRefTypeName == null)
                 {
-                    AssemblyName asmName = Reflector.mscorlibAssembly.GetName();
+                    AssemblyName asmName = Reflector.MsCorlibAssembly.GetName();
                     asmName.Name = "System.Windows.Forms";
                     compatibleFileRefTypeName = "System.Resources.ResXFileRef, " + asmName.FullName;
                 }

@@ -471,7 +471,7 @@ namespace KGySoft.CoreLibraries
 
             // non-generic type or generic type definition
             if (!(type.IsGenericType && !type.IsGenericTypeDefinition)) // same as: !type.IsConstructedGenericType from .NET4
-                return useAqn && type.Assembly != Reflector.mscorlibAssembly ? type.AssemblyQualifiedName : type.FullName;
+                return useAqn && type.Assembly != Reflector.MsCorlibAssembly ? type.AssemblyQualifiedName : type.FullName;
 
             // generic type without aqn: ToString
             if (!useAqn)
@@ -484,7 +484,7 @@ namespace KGySoft.CoreLibraries
             for (int i = 0; i < len; i++)
             {
                 Type genericArgument = type.GetGenericArguments()[i];
-                bool isMscorlibArg = genericArgument.Assembly == Reflector.mscorlibAssembly;
+                bool isMscorlibArg = genericArgument.Assembly == Reflector.MsCorlibAssembly;
                 if (!isMscorlibArg)
                     sb.Append('[');
                 sb.Append(GetTypeName(genericArgument, true));
@@ -495,7 +495,7 @@ namespace KGySoft.CoreLibraries
                     sb.Append(", ");
             }
             sb.Append(']');
-            if (type.Assembly != Reflector.mscorlibAssembly)
+            if (type.Assembly != Reflector.MsCorlibAssembly)
             {
                 sb.Append(", ");
                 sb.Append(type.Assembly.FullName);

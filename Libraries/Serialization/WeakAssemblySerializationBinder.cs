@@ -49,7 +49,7 @@ namespace KGySoft.Serialization
             {
                 // mscorlib is handled natively so is not omitted
                 // when assembly is omitted, a non-empty string should be returned so returning a symbol, which is not a valid name
-                if (serializedType.Assembly != Reflector.mscorlibAssembly)
+                if (serializedType.Assembly != Reflector.MsCorlibAssembly)
                     assemblyName = omittedAssemblyName;
 
                 // generic type arguments contains assembly info as well so stripping name for generics
