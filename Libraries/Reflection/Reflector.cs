@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -136,13 +137,13 @@ namespace KGySoft.Reflection
         /// <param name="instance">An instance whose property is about to be set. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here.</param>
         /// <remarks>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable before calling this method.</note>
         /// </remarks>
-        public static void SetProperty(object instance, PropertyInfo property, object value, ReflectionWays way, params object[] indexerParameters)
+        public static void SetProperty(object instance, PropertyInfo property, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
@@ -157,10 +158,10 @@ namespace KGySoft.Reflection
             {
                 case ReflectionWays.Auto:
                 case ReflectionWays.DynamicDelegate:
-                    PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParameters);
+                    PropertyAccessor.GetAccessor(property).Set(instance, value, indexParameters);
                     break;
                 case ReflectionWays.SystemReflection:
-                    property.SetValue(instance, value, indexerParameters);
+                    property.SetValue(instance, value, indexParameters);
                     break;
                 case ReflectionWays.TypeDescriptor:
                     throw new NotSupportedException(Res.ReflectionSetPropertyTypeDescriptorNotSupported);
@@ -175,85 +176,85 @@ namespace KGySoft.Reflection
         /// <param name="instance">An instance whose property is about to be set. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
-        /// <para>For setting the property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// <para>For setting the property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable before calling this method.</note>
         /// </remarks>
-        public static void SetProperty(object instance, PropertyInfo property, object value, params object[] indexerParameters)
-            => SetProperty(instance, property, value, ReflectionWays.Auto, indexerParameters);
+        public static void SetProperty(object instance, PropertyInfo property, object value, params object[] indexParameters)
+            => SetProperty(instance, property, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
-        /// Sets an instance property of the name specified by the <paramref name="propertyName"/> parameter.
+        /// Sets the instance property of an object by the specified <paramref name="propertyName"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexerParameters"/> match.</para>
-        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> overload
+        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable first.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
         /// </remarks>
-        public static void SetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexerParameters)
+        public static void SetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
-            if (indexerParameters == null)
-                indexerParameters = EmptyObjects;
+            if (indexParameters == null)
+                indexParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            TrySetPropertyByName(propertyName, type, instance, value, way, indexerParameters, true);
+            DoTrySetProperty(propertyName, type, instance, value, way, indexParameters, true);
         }
 
         /// <summary>
-        /// Sets an instance property of the name specified by the <paramref name="propertyName"/> parameter.
+        /// Sets the instance property of an object by the specified <paramref name="propertyName"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexerParameters"/> match.</para>
-        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> overload
+        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable first.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
         /// </remarks>
-        public static void SetProperty(object instance, string propertyName, object value, params object[] indexerParameters)
-            => SetProperty(instance, propertyName, value, ReflectionWays.Auto, indexerParameters);
+        public static void SetProperty(object instance, string propertyName, object value, params object[] indexParameters)
+            => SetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
-        /// Sets a static property of the name specified by the <paramref name="propertyName"/> parameter.
+        /// Sets the static property of a <see cref="System.Type"/> by the specified <paramref name="propertyName"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="type">The <see cref="Type"/> the static property belongs to.</param>
+        /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties.</para>
-        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> overload
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
         public static void SetProperty(Type type, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -262,80 +263,80 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            TrySetPropertyByName(propertyName, type, null, value, way, EmptyObjects, true);
+            DoTrySetProperty(propertyName, type, null, value, way, EmptyObjects, true);
         }
 
         /// <summary>
-        /// Tries to set an instance property of the name specified by the <paramref name="propertyName"> parameter.</paramref>.
+        /// Tries to set the instance property of an object by the specified <paramref name="propertyName"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
         /// <remarks>
-        /// <note type="warning">If a matching property could be found and the invocation itself throws an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexerParameters"/> match.</para>
-        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> overload
+        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable first.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
         /// </remarks>
-        public static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexerParameters)
+        public static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
-            if (indexerParameters == null)
-                indexerParameters = EmptyObjects;
+            if (indexParameters == null)
+                indexParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            return TrySetPropertyByName(propertyName, type, instance, value, way, indexerParameters, false);
+            return DoTrySetProperty(propertyName, type, instance, value, way, indexParameters, false);
         }
 
         /// <summary>
-        /// Tries to set an instance property of the name specified by the <paramref name="propertyName"> parameter.</paramref>.
+        /// Tries to set the instance property of an object by the specified <paramref name="propertyName"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
         /// <remarks>
-        /// <note type="warning">If a matching property could be found and the invocation itself throws an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexerParameters"/> match.</para>
-        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> overload
+        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable first.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
         /// </remarks>
-        public static bool TrySetProperty(object instance, string propertyName, object value, params object[] indexerParameters)
-            => TrySetProperty(instance, propertyName, value, ReflectionWays.Auto, indexerParameters);
+        public static bool TrySetProperty(object instance, string propertyName, object value, params object[] indexParameters)
+            => TrySetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
-        /// Tries to set a static property of the name specified by the <paramref name="propertyName"> parameter.</paramref>.
+        /// Tries to set the static property of a <see cref="System.Type"/> by the specified <paramref name="propertyName"/>.
         /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
-        /// <param name="type">The <see cref="Type"/> the static property belongs to.</param>
+        /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for static properties. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
         /// <remarks>
-        /// <note type="warning">If a matching property could be found and the invocation itself throws an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties.</para>
-        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> overload
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
         public static bool TrySetProperty(Type type, string propertyName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -344,13 +345,13 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            return TrySetPropertyByName(propertyName, type, null, value, way, EmptyObjects, false);
+            return DoTrySetProperty(propertyName, type, null, value, way, EmptyObjects, false);
         }
 
-        private static bool TrySetPropertyByName(string propertyName, Type type, object instance, object value, ReflectionWays way, object[] indexerParameters, bool throwError)
+        private static bool DoTrySetProperty(string propertyName, Type type, object instance, object value, ReflectionWays way, object[] indexParameters, bool throwError)
         {
             // type descriptor
-            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexerParameters == null || indexerParameters.Length == 0)))
+            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexParameters == null || indexParameters.Length == 0)))
             {
                 if (instance == null)
                     throw new NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
@@ -377,21 +378,22 @@ namespace KGySoft.Reflection
                     ParameterInfo[] indexParams = property.GetIndexParameters();
 
                     // skip when parameter count is not correct
-                    if (indexParams.Length != indexerParameters.Length)
+                    if (indexParams.Length != indexParameters.Length)
                         continue;
 
-                    if (!CheckParameters(indexParams, indexerParameters))
+                    if (!CheckParameters(indexParams, indexParameters))
                         continue;
                     try
                     {
                         if (!throwError && !property.PropertyType.CanAcceptValue(instance))
                             return false;
-                        SetProperty(instance, property, value, way, indexerParameters);
+                        SetProperty(instance, property, value, way, indexParameters);
                         return true;
                     }
                     catch (TargetInvocationException e)
                     {
-                        // re-throwing the inner exception by preserving its stack trace
+                        if (e.InnerException == null)
+                            throw;
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
                 }
@@ -406,87 +408,170 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// Sets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
-        /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
-        /// access, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
-        /// method for better performance.
+        /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
+        /// <param name="indexParameters">The index parameters.</param>
         /// <remarks>
-        /// This method does not access indexers of explicit interface implementations. Though <see cref="Array"/>s have
-        /// only explicitly implemented interface indexers, this method can be used also for arrays if <paramref name="indexerParameters"/>
-        /// can be converted to integer (respectively <see cref="long"/>) values. In case of arrays <paramref name="way"/> is irrelevant.
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
         /// </remarks>
-        /// <param name="instance">The object instance on which the indexer should be set.</param>
-        /// <param name="value">The new desired value of the indexer to set.</param>
-        /// <param name="way">Preferred access mode.
-        /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
-        /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of an indexer is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
-        /// <see cref="ReflectionWays.TypeDescriptor"/> way cannot be used on indexers.
-        /// </param>
-        /// <param name="indexerParameters">Index parameters.</param>
-        /// <remarks>
-        /// <note>
-        /// To preserve the changed inner state of a value type
-        /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
-        /// </note>
-        /// </remarks>
-        public static void SetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexerParameters)
+        public static void SetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
         {
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
-            if (indexerParameters == null)
-                throw new ArgumentNullException(nameof(indexerParameters), Res.ArgumentNull);
-            if (indexerParameters.Length == 0)
-                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexerParameters));
+            if (indexParameters == null)
+                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+            if (indexParameters.Length == 0)
+                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
             if (way == ReflectionWays.TypeDescriptor)
                 throw new NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
 
-            // Arrays
-            Array array = instance as Array;
-            if (array != null)
-            {
-                if (array.Rank != indexerParameters.Length)
-                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexerParameters));
+            DoTrySetIndexedMember(instance, value, way, indexParameters, true);
+        }
 
-                int[] indices = new int[indexerParameters.Length];
-                try
+        /// <summary>
+        /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For setting the indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
+        /// </remarks>
+        public static void SetIndexedMember(object instance, object value, params object[] indexParameters) 
+            => SetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns><see langword="true"/>, if the indexed member could be set; <see langword="false"/>, if a matching property or array setter could not be found.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <note>If a matching indexed property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
+        /// </remarks>
+        public static bool TrySetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
+        {
+            if (instance == null)
+                throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
+            if (indexParameters == null)
+                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+            if (indexParameters.Length == 0)
+                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
+            if (way == ReflectionWays.TypeDescriptor)
+                throw new NotSupportedException(Res.ReflectionSetIndexerTypeDescriptorNotSupported);
+
+            return DoTrySetIndexedMember(instance, value, way, indexParameters, false);
+        }
+
+        /// <summary>
+        /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
+        /// <br/>See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns><see langword="true"/>, if the indexed member could be set; <see langword="false"/>, if a matching property or array setter could not be found.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <note>If a matching indexed property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For setting the indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="value"/> parameter.</note>
+        /// </remarks>
+        public static bool TrySetIndexedMember(object instance, object value, params object[] indexParameters)
+            => TrySetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
+
+        private static bool DoTrySetIndexedMember(object instance, object value, ReflectionWays way, object[] indexParameters, bool throwError)
+        {
+            // Arrays
+            if (instance is Array array)
+            {
+                if (array.Rank != indexParameters.Length)
                 {
-                    for (int i = 0; i < indexerParameters.Length; i++)
-                        indices[i] = Convert.ToInt32(indexerParameters[i]);
+                    if (!throwError)
+                        return false;
+                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexParameters));
                 }
-                catch (Exception e)
+
+                int[] indices = new int[indexParameters.Length];
+                for (int i = 0; i < indexParameters.Length; i++)
                 {
-                    throw new ArgumentException(Res.ReflectionIndexParamsTypeMismatch, nameof(indexerParameters), e);
+                    var param = indexParameters[i];
+                    if (param is int intParam)
+                    {
+                        indices[i] = intParam;
+                        continue;
+                    }
+
+                    // from primitive types we try to convert just because long arguments must be accepted, too
+                    Exception error = null;
+                    if (param?.GetType().IsPrimitive == true)
+                    {
+                        try
+                        {
+                            indices[i] = Convert.ToInt32(param, CultureInfo.InvariantCulture);
+                            continue;
+                        }
+                        catch (Exception e)
+                        {
+                            error = e;
+                        }
+                    }
+
+                    if (!throwError)
+                        return false;
+                    throw new ArgumentException(Res.ReflectionIndexParamsTypeMismatch, nameof(indexParameters), error);
                 }
+
                 array.SetValue(value, indices);
-                return;
+                return true;
             }
 
             // Real indexers
             Type type = instance.GetType();
-
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
                 string defaultMemberName = DefaultMemberCache[checkedType];
-
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
+                // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
                 foreach (PropertyInfo property in checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
                 {
                     ParameterInfo[] indexParams = property.GetIndexParameters();
 
                     // skip when parameter count is not corrent
-                    if (indexParams.Length != indexerParameters.Length)
+                    if (indexParams.Length != indexParameters.Length)
                         continue;
 
-                    if (!CheckParameters(indexParams, indexerParameters))
+                    if (!CheckParameters(indexParams, indexParameters))
                         continue;
                     try
                     {
-                        SetProperty(instance, property, value, way, indexerParameters);
-                        return;
+                        SetProperty(instance, property, value, way, indexParameters);
+                        return true;
                     }
                     catch (TargetInvocationException e)
                     {
@@ -496,25 +581,10 @@ namespace KGySoft.Reflection
                 }
             }
 
+            if (!throwError)
+                return false;
             throw new ReflectionException(Res.ReflectionIndexerNotFound(type));
         }
-
-        /// <summary>
-        /// Sets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
-        /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
-        /// access, then it is recommended to use <see cref="SetProperty(object,System.Reflection.PropertyInfo,object,KGySoft.Reflection.ReflectionWays,object[])"/>
-        /// method for better performance.
-        /// </summary>
-        /// <remarks>
-        /// This method does not access indexers of explicit interface implementations. Though <see cref="Array"/>s have
-        /// only explicitly implemented interface indexers, this method can be used also for arrays if <paramref name="indexerParameters"/>
-        /// can be converted to integer (respectively <see cref="long"/>) values.
-        /// </remarks>
-        /// <param name="instance">The object instance on which the indexer should be set.</param>
-        /// <param name="value">The new desired value of the indexer to set.</param>
-        /// <param name="indexerParameters">Index parameters.</param>
-        public static void SetIndexedMember(object instance, object value, params object[] indexerParameters) 
-            => SetIndexedMember(instance, value, ReflectionWays.Auto, indexerParameters);
 
         #endregion
 
@@ -526,7 +596,7 @@ namespace KGySoft.Reflection
         /// <param name="instance">If <paramref name="property"/> to get is an instance property, then this parameter should
         /// contain the object instance on which the property getting should be performed.</param>
         /// <param name="property">The property to get.</param>
-        /// <param name="indexerParameters">Indexer parameters if <paramref name="property"/> is an indexer. Otherwise, this parameter is omitted.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. Otherwise, this parameter is omitted.</param>
         /// <param name="way">Preferred reflection mode. Usable ways: <see cref="ReflectionWays.Auto"/>, <see cref="ReflectionWays.SystemReflection"/>, <see cref="ReflectionWays.DynamicDelegate"/>.
         /// Auto option uses dynamic delegate mode. In case of dynamic delegate mode first access of a property is slow but
         /// further accesses are faster than the system reflection way.
@@ -538,7 +608,7 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static object GetProperty(object instance, PropertyInfo property, ReflectionWays way, params object[] indexerParameters)
+        public static object GetProperty(object instance, PropertyInfo property, ReflectionWays way, params object[] indexParameters)
         {
             if (property == null)
                 throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
@@ -549,11 +619,11 @@ namespace KGySoft.Reflection
 
             if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
             {
-                return PropertyAccessor.GetAccessor(property).Get(instance, indexerParameters);
+                return PropertyAccessor.GetAccessor(property).Get(instance, indexParameters);
             }
             else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
             {
-                return property.GetValue(instance, indexerParameters);
+                return property.GetValue(instance, indexParameters);
             }
             else //if (way == ReflectionWays.TypeDescriptor)
             {
@@ -574,20 +644,20 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets an instance property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexerParameters"/> fit.
+        /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexParameters"/> fit.
         /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the property should be set.</param>
         /// <param name="propertyName">The property name to set.</param>
         /// <param name="way">Preferred access mode.
-        /// Auto option uses type descriptor mode if <paramref name="instance"/> is <see cref="ICustomTypeDescriptor"/> and <paramref name="indexerParameters"/> are not defined,
+        /// Auto option uses type descriptor mode if <paramref name="instance"/> is <see cref="ICustomTypeDescriptor"/> and <paramref name="indexParameters"/> are not defined,
         /// otherwise, uses dynamic delegate mode. In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a property is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> reflection way.
         /// On components you may want to use the <see cref="ReflectionWays.TypeDescriptor"/> way to trigger property change events and to make possible to roll back
         /// changed values on error.
         /// </param>
-        /// <param name="indexerParameters">Index parameters if the property to set is an indexer.</param>
+        /// <param name="indexParameters">Index parameters if the property to set is an indexer.</param>
         /// <returns>Returns the value of the property.</returns>
         /// <remarks>
         /// <note>
@@ -595,32 +665,32 @@ namespace KGySoft.Reflection
         /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
         /// </note>
         /// </remarks>
-        public static object GetProperty(object instance, string propertyName, ReflectionWays way, params object[] indexerParameters)
+        public static object GetProperty(object instance, string propertyName, ReflectionWays way, params object[] indexParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
-            if (indexerParameters == null)
-                indexerParameters = EmptyObjects;
+            if (indexParameters == null)
+                indexParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            return TryGetPropertyByName(propertyName, type, instance, way, indexerParameters, true, out object result) ? result : null;
+            return TryGetPropertyByName(propertyName, type, instance, way, indexParameters, true, out object result) ? result : null;
         }
 
         /// <summary>
         /// Gets an instance property based on a property name given in <paramref name="propertyName"/> parameter.
         /// Property can refer to either public or non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexerParameters"/> fit.
+        /// all of the properties of the same name and chooses the first one to which provided <paramref name="indexParameters"/> fit.
         /// If you do not need the property name to be parsed from string, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the property should be set.</param>
         /// <param name="propertyName">The property name to set.</param>
-        /// <param name="indexerParameters">Index parameters if the property to set is an indexer.</param>
+        /// <param name="indexParameters">Index parameters if the property to set is an indexer.</param>
         /// <returns>Returns the value of the property.</returns>
-        public static object GetProperty(object instance, string propertyName, params object[] indexerParameters)
-            => GetProperty(instance, propertyName, ReflectionWays.Auto, indexerParameters);
+        public static object GetProperty(object instance, string propertyName, params object[] indexParameters)
+            => GetProperty(instance, propertyName, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Gets a static property based on a property name given in <paramref name="propertyName"/> parameter.
@@ -632,7 +702,7 @@ namespace KGySoft.Reflection
         /// <param name="propertyName">The property name to set.</param>
         /// <param name="way">Preferred access mode.
         /// Auto option uses dynamic delegate mode. In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a property is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> reflection way.
         /// On components you may want to use the <see cref="ReflectionWays.TypeDescriptor"/> way to trigger property change events and to make possible to roll back
         /// changed values on error. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
@@ -651,24 +721,24 @@ namespace KGySoft.Reflection
         /// <summary>
         /// TODO: public
         /// </summary>
-        internal static bool TryGetProperty(object instance, string propertyName, ReflectionWays way, out object value, params object[] indexerParameters)
+        internal static bool TryGetProperty(object instance, string propertyName, ReflectionWays way, out object value, params object[] indexParameters)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName), Res.ArgumentNull);
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
-            if (indexerParameters == null)
-                indexerParameters = EmptyObjects;
+            if (indexParameters == null)
+                indexParameters = EmptyObjects;
 
             Type type = instance.GetType();
-            return TryGetPropertyByName(propertyName, type, instance, way, indexerParameters, false, out value);
+            return TryGetPropertyByName(propertyName, type, instance, way, indexParameters, false, out value);
         }
 
         /// <summary>
         /// TODO: public
         /// </summary>
-        internal static bool TryGetProperty(object instance, string propertyName, out object value, params object[] indexerParameters)
-            => TryGetProperty(instance, propertyName, ReflectionWays.Auto, out value, indexerParameters);
+        internal static bool TryGetProperty(object instance, string propertyName, out object value, params object[] indexParameters)
+            => TryGetProperty(instance, propertyName, ReflectionWays.Auto, out value, indexParameters);
 
 
         /// <summary>
@@ -684,12 +754,12 @@ namespace KGySoft.Reflection
             return TryGetPropertyByName(propertyName, type, null, way, EmptyObjects, false, out value);
         }
 
-        private static bool TryGetPropertyByName(string propertyName, Type type, object instance, ReflectionWays way, object[] indexerParameters, bool throwError, out object value)
+        private static bool TryGetPropertyByName(string propertyName, Type type, object instance, ReflectionWays way, object[] indexParameters, bool throwError, out object value)
         {
             value = null;
 
             // type descriptor
-            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexerParameters == null || indexerParameters.Length == 0)))
+            if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexParameters == null || indexParameters.Length == 0)))
             {
                 if (instance == null)
                     throw new NotSupportedException(Res.ReflectionCannotGetStaticPropertyTypeDescriptor);
@@ -715,14 +785,14 @@ namespace KGySoft.Reflection
                     ParameterInfo[] indexParams = property.GetIndexParameters();
 
                     // skip when parameter count is not corrent
-                    if (indexParams.Length != indexerParameters.Length)
+                    if (indexParams.Length != indexParameters.Length)
                         continue;
 
-                    if (!CheckParameters(indexParams, indexerParameters))
+                    if (!CheckParameters(indexParams, indexParameters))
                         continue;
                     try
                     {
-                        value = GetProperty(instance, property, way, indexerParameters);
+                        value = GetProperty(instance, property, way, indexParameters);
                         return true;
                     }
                     catch (TargetInvocationException e)
@@ -743,31 +813,31 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
-        /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
+        /// selected by the provided <paramref name="indexParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
         /// access, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <param name="instance">The object instance on which the indexer should be get.</param>
         /// <param name="way">Preferred access mode.</param>
-        /// <param name="indexerParameters">Index parameters.
+        /// <param name="indexParameters">Index parameters.
         /// Auto option uses dynamic delegate mode. In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of an indexer is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// <see cref="ReflectionWays.TypeDescriptor"/> way cannot be used on indexers.
         /// </param>
         /// <returns>The value of the indexer.</returns>
         /// <remarks>
         /// This method does not access indexers of explicit interface implementations. Though <see cref="Array"/>s have
-        /// only explicitly implemented interface indexers, this method can be used also for arrays if <paramref name="indexerParameters"/>
+        /// only explicitly implemented interface indexers, this method can be used also for arrays if <paramref name="indexParameters"/>
         /// can be converted to integer (respectively <see cref="long"/>) values. In case of arrays <paramref name="way"/> parameter is irrelevant.
         /// </remarks>
-        public static object GetIndexedMember(object instance, ReflectionWays way, params object[] indexerParameters)
+        public static object GetIndexedMember(object instance, ReflectionWays way, params object[] indexParameters)
         {
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
-            if (indexerParameters == null)
-                throw new ArgumentNullException(nameof(indexerParameters), Res.ArgumentNull);
-            if (indexerParameters.Length == 0)
-                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexerParameters));
+            if (indexParameters == null)
+                throw new ArgumentNullException(nameof(indexParameters), Res.ArgumentNull);
+            if (indexParameters.Length == 0)
+                throw new ArgumentException(Res.ReflectionEmptyIndices, nameof(indexParameters));
             if (way == ReflectionWays.TypeDescriptor)
                 throw new NotSupportedException(Res.ReflectionGetIndexerTypeDescriptorNotSupported);
 
@@ -775,17 +845,17 @@ namespace KGySoft.Reflection
             Array array = instance as Array;
             if (array != null)
             {
-                if (array.Rank != indexerParameters.Length)
-                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexerParameters));
-                int[] indices = new int[indexerParameters.Length];
+                if (array.Rank != indexParameters.Length)
+                    throw new ArgumentException(Res.ReflectionIndexParamsLengthMismatch(array.Rank), nameof(indexParameters));
+                int[] indices = new int[indexParameters.Length];
                 try
                 {
-                    for (int i = 0; i < indexerParameters.Length; i++)
-                        indices[i] = Convert.ToInt32(indexerParameters[i]);
+                    for (int i = 0; i < indexParameters.Length; i++)
+                        indices[i] = Convert.ToInt32(indexParameters[i]);
                 }
                 catch (Exception e)
                 {
-                    throw new ArgumentException(Res.ReflectionIndexParamsTypeMismatch, nameof(indexerParameters), e);
+                    throw new ArgumentException(Res.ReflectionIndexParamsTypeMismatch, nameof(indexParameters), e);
                 }
                 return array.GetValue(indices);
             }
@@ -803,14 +873,14 @@ namespace KGySoft.Reflection
                     ParameterInfo[] indexParams = property.GetIndexParameters();
 
                     // skip when parameter count is not corrent
-                    if (indexParams.Length != indexerParameters.Length)
+                    if (indexParams.Length != indexParameters.Length)
                         continue;
 
-                    if (!CheckParameters(indexParams, indexerParameters))
+                    if (!CheckParameters(indexParams, indexParameters))
                         continue;
                     try
                     {
-                        return GetProperty(instance, property, way, indexerParameters);
+                        return GetProperty(instance, property, way, indexParameters);
                     }
                     catch (TargetInvocationException e)
                     {
@@ -825,20 +895,20 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the appropriate indexed member of an object <paramref name="instance"/>. The matching indexer is
-        /// selected by the provided <paramref name="indexerParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
+        /// selected by the provided <paramref name="indexParameters"/>. If you have already gained the <see cref="PropertyInfo"/> reference of the indexer to
         /// access, then it is recommended to use <see cref="GetProperty(object,System.Reflection.PropertyInfo,KGySoft.Reflection.ReflectionWays,object[])"/>
         /// method for better performance.
         /// </summary>
         /// <remarks>
         /// This method does not access indexers of explicit interface implementations. Though <see cref="Array"/>s have
-        /// only explicitly implemented interface indexers, this method can be used also for arrays if <paramref name="indexerParameters"/>
+        /// only explicitly implemented interface indexers, this method can be used also for arrays if <paramref name="indexParameters"/>
         /// can be converted to integer (respectively <see cref="long"/>) values.
         /// </remarks>
         /// <param name="instance">The object instance on which the indexer should be get.</param>
-        /// <param name="indexerParameters">Index parameters.</param>
+        /// <param name="indexParameters">Index parameters.</param>
         /// <returns>The value of the indexer.</returns>
-        public static object GetIndexedMember(object instance, params object[] indexerParameters) 
-            => GetIndexedMember(instance, ReflectionWays.Auto, indexerParameters);
+        public static object GetIndexedMember(object instance, params object[] indexParameters) 
+            => GetIndexedMember(instance, ReflectionWays.Auto, indexParameters);
 
         #endregion
 
@@ -853,7 +923,7 @@ namespace KGySoft.Reflection
         /// <param name="way">Preferred invocation mode.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a method is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// </param>
         /// <param name="genericParameters">Generic type parameters if method is generic. For non-generic methods this parameter is omitted.</param>
         /// <param name="parameters">Method parameters.</param>
@@ -934,7 +1004,7 @@ namespace KGySoft.Reflection
         /// Usable ways: <see cref="ReflectionWays.Auto"/>, <see cref="ReflectionWays.SystemReflection"/>, <see cref="ReflectionWays.DynamicDelegate"/>.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a method is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
@@ -976,7 +1046,7 @@ namespace KGySoft.Reflection
         /// Usable ways: <see cref="ReflectionWays.Auto"/>, <see cref="ReflectionWays.SystemReflection"/>, <see cref="ReflectionWays.DynamicDelegate"/>.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a method is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
@@ -1031,7 +1101,7 @@ namespace KGySoft.Reflection
         /// Usable ways: <see cref="ReflectionWays.Auto"/>, <see cref="ReflectionWays.SystemReflection"/>, <see cref="ReflectionWays.DynamicDelegate"/>.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a method is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
@@ -1074,7 +1144,7 @@ namespace KGySoft.Reflection
         /// Usable ways: <see cref="ReflectionWays.Auto"/>, <see cref="ReflectionWays.SystemReflection"/>, <see cref="ReflectionWays.DynamicDelegate"/>.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a method is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
@@ -1122,7 +1192,7 @@ namespace KGySoft.Reflection
         /// Usable ways: <see cref="ReflectionWays.Auto"/>, <see cref="ReflectionWays.SystemReflection"/>, <see cref="ReflectionWays.DynamicDelegate"/>.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a method is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way.
         /// </param>
         /// <param name="parameters">Method parameters.</param>
         /// <returns>Returns <see langword="null"/>&#160;if return type of the method is <see cref="Void"/>, otherwise, returns
@@ -1605,7 +1675,7 @@ namespace KGySoft.Reflection
         /// <param name="way">Preferred access mode.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way. This parameter is optional.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
         /// </param>
         /// <remarks>
@@ -1651,7 +1721,7 @@ namespace KGySoft.Reflection
         /// <param name="way">Preferred access mode.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> way. This parameter is optional.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> reflection way. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
         /// </param>
         /// <remarks>
@@ -1684,7 +1754,7 @@ namespace KGySoft.Reflection
         /// <param name="way">Preferred access mode.
         /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
         /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> way. This parameter is optional.
+        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
         /// </param>
         public static void SetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
@@ -2458,7 +2528,7 @@ namespace KGySoft.Reflection
         /// <param name="expression">A lambda expression returning a member.</param>
         /// <returns>A <see cref="MemberInfo"/> instance that represents the returned member of the <paramref name="expression"/></returns>
         /// <remarks>
-        /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="Type"/>,
+        /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="System.Type"/>,
         /// this method provides a non-string access to a field, property, constructor or function method:
         /// <example><code lang="C#"><![CDATA[
         /// MemberInfo type = Reflector.IntType; // Type: System.Int32 (by the built-in typeof() operator)
@@ -2512,7 +2582,7 @@ namespace KGySoft.Reflection
         /// <param name="expression">A lambda expression accessing an action method.</param>
         /// <returns>A <see cref="MethodInfo"/> instance that represents the accessed method of the <paramref name="expression"/></returns>
         /// <remarks>
-        /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="Type"/>,
+        /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="System.Type"/>,
         /// this method provides a non-string access to an action method:
         /// <example><code lang="C#"><![CDATA[
         /// Type type = Reflector.IntType; // Type: System.Int32 (by the built-in typeof() operator)
