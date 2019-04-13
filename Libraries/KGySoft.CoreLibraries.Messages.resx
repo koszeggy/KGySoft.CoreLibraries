@@ -200,7 +200,7 @@ Hit rate: {8:P2}</value>
     <value>Expected number of array index arguments: {0}.</value>
   </data>
   <data name="Reflection_IndexParamsTypeMismatch" xml:space="preserve">
-    <value>Index parameters cannot be converted to integer values.</value>
+    <value>Index parameters cannot be cast to integer values.</value>
   </data>
   <data name="CircularSortedList_InsertByIndexNotSupported" xml:space="preserve">
     <value>Adding an element by index is not supported.</value>

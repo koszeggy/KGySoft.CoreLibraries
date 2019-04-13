@@ -85,11 +85,11 @@ namespace KGySoft.CoreLibraries
             if (value == null)
                 return (!type.IsValueType || type.IsNullable());
 
-            if (type == Reflector.ObjectType)
+            if (type.IsInstanceOfType(value))
                 return true;
 
             if (type.IsNullable())
-                type = Nullable.GetUnderlyingType(type);
+                type = type.GetGenericArguments()[0];
 
             // if parameter is passed by reference (ref, out modifiers) the element type must be checked
             // ReSharper disable once PossibleNullReferenceException - false alarm due to the Nullable.GetUnderlyingType call above

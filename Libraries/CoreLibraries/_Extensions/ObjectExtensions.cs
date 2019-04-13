@@ -161,7 +161,7 @@ namespace KGySoft.CoreLibraries
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
         public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
-            => ObjectConverter.TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && typeof(TTargetType).CanAcceptValue(result)
+            => ObjectConverter.TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && (result is TTargetType || typeof(TTargetType).CanAcceptValue(result))
                 ? (TTargetType)result
                 : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj), error);
 
@@ -201,7 +201,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static bool TryConvert<TTargetType>(this object obj, CultureInfo culture, out TTargetType value)
         {
-            if (TryConvert(obj, typeof(TTargetType), culture, out object result) && typeof(TTargetType).CanAcceptValue(result))
+            if (TryConvert(obj, typeof(TTargetType), culture, out object result) && (result is TTargetType || typeof(TTargetType).CanAcceptValue(result)))
             {
                 value = (TTargetType)result;
                 return true;

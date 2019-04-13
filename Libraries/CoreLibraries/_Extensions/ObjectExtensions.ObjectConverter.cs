@@ -63,13 +63,7 @@ namespace KGySoft.CoreLibraries
                 internal HashSet<(object Instance, Type SourceType, Type TargetType)> FailedAttempts;
                 internal Dictionary<(Type SourceType, Type TargetType), Delegate> LastUsedConversion;
 
-                public ConversionContext(CultureInfo culture)
-                {
-                    Culture = culture;
-					FailedAttempts = null;
-                    LastUsedConversion = null;
-                    Error = null;
-                }
+                public ConversionContext(CultureInfo culture) : this() => Culture = culture;
             }
 
             internal static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)

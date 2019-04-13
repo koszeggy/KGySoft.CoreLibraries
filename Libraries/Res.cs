@@ -263,7 +263,7 @@ namespace KGySoft
         /// <summary>An indexer cannot be set via TypeDescriptor.</summary>
         internal static string ReflectionSetIndexerTypeDescriptorNotSupported => Get("Reflection_SetIndexerTypeDescriptorNotSupported");
 
-        /// <summary>Index parameters cannot be converted to integer values.</summary>
+        /// <summary>Index parameters cannot be cast to integer values.</summary>
         internal static string ReflectionIndexParamsTypeMismatch => Get("Reflection_IndexParamsTypeMismatch");
 
         /// <summary>Instance is null for a non-static member.</summary>
