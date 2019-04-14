@@ -1909,7 +1909,7 @@ namespace KGySoft.Serialization
         private static void WriteUri(BinaryWriter bw, Uri uri)
         {
             bw.Write(uri.IsAbsoluteUri);
-            bw.Write((string)Reflector.RunMethod(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
+            bw.Write((string)Reflector.InvokeMethod(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
         }
 
         private static void WriteBitArray(BinaryWriter bw, BitArray bitArray)
@@ -2228,7 +2228,7 @@ namespace KGySoft.Serialization
 
             foreach (MethodInfo method in methods)
             {
-                Reflector.RunMethod(obj, method, Context);
+                Reflector.InvokeMethod(obj, method, Context);
             }
         }
 
@@ -2385,7 +2385,7 @@ namespace KGySoft.Serialization
                 {
                     if (addMethod != null)
                     {
-                        Reflector.RunMethod(collection, addMethod, element, value);
+                        Reflector.InvokeMethod(collection, addMethod, element, value);
                         continue;
                     }
 
@@ -2399,14 +2399,14 @@ namespace KGySoft.Serialization
                     }
 
                     // generic dictionary with null value: calling generic Add because non-generic one may fail under .NET 4
-                    Reflector.RunMethod(collection, nameof(IDictionary<_,_>.Add), element, null);
+                    Reflector.InvokeMethod(collection, nameof(IDictionary<_,_>.Add), element, null);
                     continue;
 #endif
                 }
 
                 if (addMethod != null)
                 {
-                    Reflector.RunMethod(collection, addMethod, element);
+                    Reflector.InvokeMethod(collection, addMethod, element);
                     continue;
                 }
 
@@ -2993,7 +2993,7 @@ namespace KGySoft.Serialization
                 if (ci == null)
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
-                Reflector.RunMethod(ci, "SerializationInvoke", obj, si, Context);
+                Reflector.InvokeMethod(ci, "SerializationInvoke", obj, si, Context);
             }
             else
             {
@@ -3032,7 +3032,7 @@ namespace KGySoft.Serialization
                 if (ci == null)
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
-                Reflector.RunMethod(ci, "SerializationInvoke", obj, si, Context);
+                Reflector.InvokeMethod(ci, "SerializationInvoke", obj, si, Context);
             }
             else
             {

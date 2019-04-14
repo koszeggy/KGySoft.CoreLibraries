@@ -190,7 +190,7 @@ namespace KGySoft.ComponentModel
 
             // subscribing the event by info.Execute
             info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
-            Reflector.RunMethod(source, eventInfo.GetAddMethod(), info.Delegate);
+            Reflector.InvokeMethod(source, eventInfo.GetAddMethod(), info.Delegate);
 
             if (subscriptions == null)
                 sources[source] = new Dictionary<EventInfo, SubscriptionInfo> { { eventInfo, info } };
@@ -207,7 +207,7 @@ namespace KGySoft.ComponentModel
                 return false;
 
             foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
-                Reflector.RunMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
+                Reflector.InvokeMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
 
             return sources.Remove(source);
         }

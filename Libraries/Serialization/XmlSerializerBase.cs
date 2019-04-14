@@ -186,7 +186,7 @@ namespace KGySoft.Serialization
             if ((Options & XmlSerializationOptions.IgnoreShouldSerialize) == XmlSerializationOptions.None)
             {
                 MethodInfo shouldSerializeMethod = member.DeclaringType?.GetMethod(XmlSerializer.MethodShouldSerialize + member.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-                if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == Reflector.BoolType && !(bool)Reflector.RunMethod(obj, shouldSerializeMethod))
+                if (shouldSerializeMethod != null && shouldSerializeMethod.ReturnType == Reflector.BoolType && !(bool)Reflector.InvokeMethod(obj, shouldSerializeMethod))
                     return true;
             }
 

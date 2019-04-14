@@ -275,13 +275,13 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, mi, parameters);
+            Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, memberName, parameters);
+            Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
@@ -308,13 +308,13 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(null, mi, parameters);
+            Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(testType, memberName, parameters);
+            Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
@@ -343,14 +343,14 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, mi, parameters);
+            Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, memberName, parameters);
+            Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -380,14 +380,14 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(null, mi, parameters);
+            Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(testType, memberName, parameters);
+            Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -418,14 +418,14 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, mi, parameters);
+            result = Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, memberName, parameters);
+            result = Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
@@ -456,14 +456,14 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(null, mi, parameters);
+            result = Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(testType, memberName, parameters);
+            result = Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
@@ -496,7 +496,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, mi, parameters);
+            result = Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -504,7 +504,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, memberName, parameters);
+            result = Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -538,7 +538,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(null, mi, parameters);
+            result = Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -546,7 +546,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestClass.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(testType, memberName, parameters);
+            result = Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -579,13 +579,13 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, mi, parameters);
+            Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, memberName, parameters);
+            Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
 
@@ -612,13 +612,13 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(null, mi, parameters);
+            Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(testType, memberName, parameters);
+            Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
 
@@ -647,14 +647,14 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, mi, parameters);
+            Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(test, memberName, parameters);
+            Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -684,14 +684,14 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(null, mi, parameters);
+            Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            Reflector.RunMethod(testType, memberName, parameters);
+            Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
         }
@@ -722,14 +722,14 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, mi, parameters);
+            result = Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
 
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, memberName, parameters);
+            result = Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
         }
@@ -760,14 +760,14 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(null, mi, parameters);
+            result = Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(testType, memberName, parameters);
+            result = Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
         }
@@ -800,7 +800,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, mi, parameters);
+            result = Reflector.InvokeMethod(test, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -808,7 +808,7 @@ namespace _LibrariesTest.Tests.Reflection
             test = new TestStruct(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(test, memberName, parameters);
+            result = Reflector.InvokeMethod(test, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(test, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -842,7 +842,7 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(null, mi, parameters);
+            result = Reflector.InvokeMethod(null, mi, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
@@ -850,13 +850,13 @@ namespace _LibrariesTest.Tests.Reflection
             TestStruct.StaticIntProp = 0;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-            result = Reflector.RunMethod(testType, memberName, parameters);
+            result = Reflector.InvokeMethod(testType, memberName, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], Reflector.GetProperty(null, intProp));
             Assert.AreNotEqual(args[2], parameters[2]);
 
             args = new object[] { "10", null };
-            Reflector.RunMethod(typeof(Int32), "TryParse", args);
+            Reflector.InvokeMethod(typeof(Int32), "TryParse", args);
             Assert.AreEqual(10, args[1]);
         }
 

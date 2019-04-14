@@ -259,6 +259,9 @@ Hit rate: {8:P2}</value>
   <data name="StringExtensions_SeparatorNullOrEmpty" xml:space="preserve">
     <value>Separator is null or empty.</value>
   </data>
+  <data name="Profiler_MeasureItemToStringFormat" xml:space="preserve">
+    <value>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5}</value>
+  </data>
   <data name="Reflection_CannotSetConstantFieldFormat" xml:space="preserve">
     <value>The constant field cannot be set: {0}.{1}</value>
   </data>
@@ -338,10 +341,10 @@ Hit rate: {8:P2}</value>
     <value>No suitable static property "{0}" found on type "{1}".</value>
   </data>
   <data name="Reflection_TypeArgsLengthMismatchFormat" xml:space="preserve">
-    <value>Expected number of type arguments: {0}.</value>
+    <value>Expected number of generic parameters: {0}.</value>
   </data>
   <data name="Reflection_TypeParamsAreNull" xml:space="preserve">
-    <value>Method to invoke is generic but no type parameters are passed.</value>
+    <value>The method to invoke is generic but no generic parameters were passed.</value>
   </data>
   <data name="Reflection_NotAMemberFormat" xml:space="preserve">
     <value>No MemberInfo can be returned from expression type "{0}".</value>

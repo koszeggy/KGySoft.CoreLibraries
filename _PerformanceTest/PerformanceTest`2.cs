@@ -120,7 +120,7 @@ namespace _PerformanceTest
         public bool Collect { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets how many times the test cases sould be repeated.
+        /// Gets or sets how many times the test cases should be repeated.
         /// <br/>Default value: <c>1</c>.
         /// </summary>
         public int Repeat { get; set; } = 1;

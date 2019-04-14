@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
+using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
@@ -269,7 +270,7 @@ namespace KGySoft
         /// <summary>Instance is null for a non-static member.</summary>
         internal static string ReflectionInstanceIsNull => Get("Reflection_InstanceIsNull");
 
-        /// <summary>Method to invoke is generic but no type parameters are passed.</summary>
+        /// <summary>The method to invoke is generic but no generic parameters were passed.</summary>
         internal static string ReflectionTypeParamsAreNull => Get("Reflection_TypeParamsAreNull");
 
         /// <summary>Could not create generic method. For details see inner exception.</summary>
@@ -536,6 +537,13 @@ namespace KGySoft
 
         #endregion
 
+        #region Profiler
+
+        /// <summary>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5}</summary>
+        internal static string ProfilerMeasureItemToString(MeasureItem measureItem) => Get("Profiler_MeasureItemToStringFormat", measureItem.Category, measureItem.Operation, new TimeSpan(measureItem.TotalTime.Ticks / measureItem.NumberOfCalls), measureItem.FirstCall, measureItem.TotalTime, measureItem.NumberOfCalls);
+
+        #endregion
+
         #region Reflection
 
         /// <summary>The constant field cannot be set: {0}.{1}</summary>
@@ -571,7 +579,7 @@ namespace KGySoft
         /// <summary>Property "{0}" not found and cannot be retrieved via TypeDescriptor on type "{1}".</summary>
         internal static string ReflectionCannotGetPropertyTypeDescriptor(string propertyName, Type type) => Get("Reflection_CannotGetPropertyTypeDescriptorFormat", propertyName, type);
 
-        /// <summary>Expected number of type arguments: {0}.</summary>
+        /// <summary>Expected number of generic parameters: {0}.</summary>
         internal static string ReflectionTypeArgsLengthMismatch(int length) => Get("Reflection_TypeArgsLengthMismatchFormat", length);
 
         /// <summary>No suitable instance method "{0}" found on type "{1}" for the given parameters.</summary>

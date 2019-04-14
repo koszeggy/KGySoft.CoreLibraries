@@ -29,13 +29,13 @@ namespace _LibrariesTest.Tests
         [Test]
         public void TestUnknownResource()
         {
-            Assert.IsTrue(Reflector.RunMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
         }
 
         [Test]
         public void TestInvalidResource()
         {
-            Assert.IsTrue(Reflector.RunMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", new object[0]).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", new object[0]).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
         }
 
         [Test]

@@ -315,12 +315,12 @@ namespace KGySoft.Diagnostics
                     return;
                 foreach (MeasureItem item in items.Values)
                 {
-                    XElement xItem = new XElement("item", new XAttribute("Category", item.Category),
-                            new XAttribute("Operation", item.Operation),
-                            new XAttribute("NumberOfCalls", item.NumberOfCalls),
-                            new XAttribute("FirstCall", item.FirstCall.ToString()),
-                            new XAttribute("TotalTime", item.TotalElapsed.ToString()),
-                            new XAttribute("AverageCallTime", TimeSpan.FromTicks(item.TotalElapsed.Ticks / item.NumberOfCalls).ToString())
+                    XElement xItem = new XElement("item", new XAttribute(nameof(item.Category), item.Category),
+                            new XAttribute(nameof(item.Operation), item.Operation),
+                            new XAttribute(nameof(item.NumberOfCalls), item.NumberOfCalls),
+                            new XAttribute(nameof(item.FirstCall), item.FirstCall.ToString()),
+                            new XAttribute(nameof(item.TotalTime), item.TotalTime.ToString()),
+                            new XAttribute("AverageCallTime", TimeSpan.FromTicks(item.TotalTime.Ticks / item.NumberOfCalls).ToString())
                         );
 
                     result.Add(xItem);

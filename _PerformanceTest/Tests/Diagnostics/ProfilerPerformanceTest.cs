@@ -111,7 +111,7 @@ namespace _PerformanceTest.Tests.Diagnostics
 
             foreach (IMeasureItem item in Profiler.GetMeasurementResults("ProfilerTest"))
             {
-                Console.WriteLine("{0}: {1:N2} ms", item.Operation, item.TotalElapsed.TotalMilliseconds);
+                Console.WriteLine("{0}: {1:N2} ms", item.Operation, item.TotalTime.TotalMilliseconds);
             }
 
             Console.WriteLine();
@@ -215,7 +215,7 @@ namespace _PerformanceTest.Tests.Diagnostics
 
             foreach (IMeasureItem item in Profiler.GetMeasurementResults("ProfilerTest"))
             {
-                Console.WriteLine("{0}: {1:N2} ms", item.Operation, item.TotalElapsed.TotalMilliseconds);
+                Console.WriteLine("{0}: {1:N2} ms", item.Operation, item.TotalTime.TotalMilliseconds);
             }
 
             Console.WriteLine();

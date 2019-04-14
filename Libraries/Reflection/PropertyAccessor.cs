@@ -26,8 +26,80 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for setting and getting property values via dynamically created delegates.
-    /// You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.
+    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
+    /// <remarks>
+    /// <para>You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
+    /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the property, respectively.
+    /// The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
+    /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
+    /// they were dropped out from the cache, which can store about 8000 elements.</para>
+    /// <note>If you want to access a property by name rather then by a <see cref="PropertyInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">SetProperty</see>
+    /// and <see cref="O:KGySoft.Reflection.Reflector.SetProperty">GetProperty</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
+    /// </remarks>
+    /// <example>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Reflection;
+    /// using KGySoft.Diagnostics;
+    /// using KGySoft.Reflection;
+    /// 
+    /// class Example
+    /// {
+    ///     private class TestClass
+    ///     {
+    ///         public int TestProperty { get; set; }
+    ///     }
+    /// 
+    ///     static void Main(string[] args)
+    ///     {
+    ///         var instance = new TestClass();
+    ///         PropertyInfo property = instance.GetType().GetProperty(nameof(TestClass.TestProperty));
+    ///         PropertyAccessor accessor = PropertyAccessor.GetAccessor(property);
+    /// 
+    ///         const int iterations = 1000000;
+    ///         for (int i = 0; i < iterations; i++)
+    ///         {
+    ///             int result;
+    ///             using (Profiler.Measure(GetCategory(i), "Direct set"))
+    ///                 instance.TestProperty = i;
+    ///             using (Profiler.Measure(GetCategory(i), "Direct get"))
+    ///                 result = instance.TestProperty;
+    /// 
+    ///             using (Profiler.Measure(GetCategory(i), "PropertyAccessor.Set"))
+    ///                 accessor.Set(instance, i);
+    ///             using (Profiler.Measure(GetCategory(i), "PropertyAccessor.Get"))
+    ///                 result = (int)accessor.Get(instance);
+    /// 
+    ///             using (Profiler.Measure(GetCategory(i), "PropertyInfo.SetValue"))
+    ///                 property.SetValue(instance, i);
+    ///             using (Profiler.Measure(GetCategory(i), "PropertyInfo.GetValue"))
+    ///                 result = (int)property.GetValue(instance);
+    ///         }
+    /// 
+    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
+    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
+    ///         {
+    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
+    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces the following output:
+    /// // [Warm-up] Direct set: 0.1437 ms
+    /// // [Warm-up] Direct get: 0.0021 ms
+    /// // [Warm-up] PropertyAccessor.Set: 1.1377 ms
+    /// // [Warm-up] PropertyAccessor.Get: 0.8056 ms
+    /// // [Warm-up] PropertyInfo.SetValue: 0.0395 ms
+    /// // [Warm-up] PropertyInfo.GetValue: 0.0261 ms
+    /// // [Test] Direct set: 30.6068 ms (average: 3.06068306068306E-05 ms from 999999 calls)
+    /// // [Test] Direct get: 30.3644 ms (average: 3.03644303644304E-05 ms from 999999 calls)
+    /// // [Test] PropertyAccessor.Set: 67.3082 ms (average: 6.73082673082673E-05 ms from 999999 calls)
+    /// // [Test] PropertyAccessor.Get: 64.3375 ms (average: 6.43375643375643E-05 ms from 999999 calls)
+    /// // [Test] PropertyInfo.SetValue: 257.4104 ms (average: 0.000257410657410657 ms from 999999 calls)
+    /// // [Test] PropertyInfo.GetValue: 204.5283 ms (average: 0.000204528504528505 ms from 999999 calls)]]></code>
+    /// </example>
     public abstract class PropertyAccessor : MemberAccessor
     {
         #region Fields

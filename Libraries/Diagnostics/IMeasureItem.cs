@@ -52,7 +52,7 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets the total duration of the current operation.
         /// </summary>
-        TimeSpan TotalElapsed { get; }
+        TimeSpan TotalTime { get; }
 
         #endregion
     }

@@ -198,10 +198,10 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.RunMethod(t, mi, ReflectionWays.DynamicDelegate, p1, p2);
+                Reflector.InvokeMethod(t, mi, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
-            Console.WriteLine("Reflector.RunMethod(instance, MethodInfo, ReflectionWays.DynamicDelegate, ...): " + watch.ElapsedMilliseconds.ToString());
+            Console.WriteLine("Reflector.InvokeMethod(instance, MethodInfo, ReflectionWays.DynamicDelegate, ...): " + watch.ElapsedMilliseconds.ToString());
 
             // System.Reflection by method info
             ResetCache(cacheSize);
@@ -209,10 +209,10 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.RunMethod(t, mi, ReflectionWays.SystemReflection, p1, p2);
+                Reflector.InvokeMethod(t, mi, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
-            Console.WriteLine("Reflector.RunMethod(instance, MethodInfo, ReflectionWays.SystemReflection, ...): " + watch.ElapsedMilliseconds.ToString());
+            Console.WriteLine("Reflector.InvokeMethod(instance, MethodInfo, ReflectionWays.SystemReflection, ...): " + watch.ElapsedMilliseconds.ToString());
 
             // Lambda by name
             ResetCache(cacheSize);
@@ -220,11 +220,11 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.RunMethod(t, methodName, ReflectionWays.DynamicDelegate, p1, p2);
+                Reflector.InvokeMethod(t, methodName, ReflectionWays.DynamicDelegate, p1, p2);
                 //Reflector.RunStaticMethodByName(typeof(Test), methodName, ReflectionWays.DynamicDelegate, p1, p2);
             }
             watch.Stop();
-            Console.WriteLine("Reflector.RunMethod(instance, \"MethodName\", ReflectionWays.DynamicDelegate, ...): " + watch.ElapsedMilliseconds.ToString());
+            Console.WriteLine("Reflector.InvokeMethod(instance, \"MethodName\", ReflectionWays.DynamicDelegate, ...): " + watch.ElapsedMilliseconds.ToString());
 
             // Reflection by name
             ResetCache(cacheSize);
@@ -232,11 +232,11 @@ namespace _PerformanceTest.Tests.Reflection
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
-                Reflector.RunMethod(t, methodName, ReflectionWays.SystemReflection, p1, p2);
+                Reflector.InvokeMethod(t, methodName, ReflectionWays.SystemReflection, p1, p2);
                 //Reflector.RunStaticMethodByName(typeof(Test), methodName, ReflectionWays.SystemReflection, p1, p2);
             }
             watch.Stop();
-            Console.WriteLine("Reflector.RunMethod(instance, \"MethodName\", ReflectionWays.SystemReflection, ...): " + watch.ElapsedMilliseconds.ToString());
+            Console.WriteLine("Reflector.InvokeMethod(instance, \"MethodName\", ReflectionWays.SystemReflection, ...): " + watch.ElapsedMilliseconds.ToString());
 
             return;
             //Console.WriteLine("****************************************************");
@@ -339,10 +339,10 @@ Direct invocation (instance.(...)): 0
 Prefetched invoker (MethodInvoker.Invoke(instance, ...)): 90
 Re-fetched invoker (MethodInvoker.GetMethodInvoker(MethodInfo).Invoke(intance, ...)): 189
 MethodInfo.Invoke: 2867
-Reflector.RunMethod(instance, MethodInfo, ReflectionWays.DynamicDelegate, ...): 143
-Reflector.RunMethod(instance, MethodInfo, ReflectionWays.SystemReflection, ...): 3226
-Reflector.RunMethod(instance, "MethodName", ReflectionWays.DynamicDelegate, ...): 888
-Reflector.RunMethod(instance, "MethodName", ReflectionWays.SystemReflection, ...): 4591
+Reflector.InvokeMethod(instance, MethodInfo, ReflectionWays.DynamicDelegate, ...): 143
+Reflector.InvokeMethod(instance, MethodInfo, ReflectionWays.SystemReflection, ...): 3226
+Reflector.InvokeMethod(instance, "MethodName", ReflectionWays.DynamicDelegate, ...): 888
+Reflector.InvokeMethod(instance, "MethodName", ReflectionWays.SystemReflection, ...): 4591
 ****************************************************
 >>>>>> Cache Size: 1024
    Pre-Cached accessor, cache is on

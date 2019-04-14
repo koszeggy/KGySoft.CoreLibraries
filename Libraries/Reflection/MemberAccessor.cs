@@ -29,8 +29,13 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Base class of accessor classes that may access members without system reflection.
+    /// See the derived classes for more details.
     /// </summary>
-    public abstract partial class MemberAccessor
+    /// <seealso cref="FieldAccessor"/>
+    /// <seealso cref="PropertyAccessor"/>
+    /// <seealso cref="MethodAccessor"/>
+    /// <seealso cref="CreateInstanceAccessor"/>
+    public abstract class MemberAccessor
     {
         #region Fields
 

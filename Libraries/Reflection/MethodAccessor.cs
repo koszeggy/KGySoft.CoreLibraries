@@ -26,8 +26,68 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for invoking methods via dynamically created delegates.
-    /// You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.
+    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
+    /// <remarks>
+    /// <para>You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
+    /// <para>The <see cref="Invoke">Invoke</see> method can be used to invoke the method.
+    /// The first call of this method is slow because the delegate is generated on the first access, but further calls are much faster.</para>
+    /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
+    /// they were dropped out from the cache, which can store about 8000 elements.</para>
+    /// <note>If you want to invoke a method by name rather then by a <see cref="MethodInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">InvokeMethod</see>
+    /// methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
+    /// </remarks>
+    /// <example>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Reflection;
+    /// using KGySoft.Diagnostics;
+    /// using KGySoft.Reflection;
+    /// 
+    /// class Example
+    /// {
+    ///     private class TestClass
+    ///     {
+    ///         public int TestMethod(int i) => i + 1;
+    ///     }
+    /// 
+    ///     static void Main(string[] args)
+    ///     {
+    ///         var instance = new TestClass();
+    ///         MethodInfo method = instance.GetType().GetMethod(nameof(TestClass.TestMethod));
+    ///         MethodAccessor accessor = MethodAccessor.GetAccessor(method);
+    /// 
+    ///         const int iterations = 1000000;
+    ///         for (int i = 0; i < iterations; i++)
+    ///         {
+    ///             int result;
+    ///             using (Profiler.Measure(GetCategory(i), "Direct call"))
+    ///                 result = instance.TestMethod(i);
+    /// 
+    ///             using (Profiler.Measure(GetCategory(i), "MethodAccessor.Invoke"))
+    ///                 result = (int)accessor.Invoke(instance, i);
+    /// 
+    ///             using (Profiler.Measure(GetCategory(i), "MethodInfo.Invoke"))
+    ///                 result = (int)method.Invoke(instance, new object[] { i });
+    ///         }
+    /// 
+    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
+    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
+    ///         {
+    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
+    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces the following output:
+    /// // [Warm-up] Direct call: 0.1465 ms
+    /// // [Warm-up] MethodAccessor.Invoke: 2.4339 ms
+    /// // [Warm-up] MethodInfo.Invoke: 0.033 ms
+    /// // [Test] Direct call: 30.122 ms (average: 3.01220301220301E-05 ms from 999999 calls)
+    /// // [Test] MethodAccessor.Invoke: 57.1206 ms (average: 5.71206571206571E-05 ms from 999999 calls)
+    /// // [Test] MethodInfo.Invoke: 270.9596 ms (average: 0.000270959870959871 ms from 999999 calls)]]></code>
+    /// </example>
     public abstract class MethodAccessor : MemberAccessor
     {
         #region Fields

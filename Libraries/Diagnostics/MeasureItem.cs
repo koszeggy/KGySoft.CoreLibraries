@@ -49,7 +49,7 @@ namespace KGySoft.Diagnostics
         public string Operation => operation;
         public long NumberOfCalls => calls;
         public TimeSpan FirstCall => firstCall;
-        public TimeSpan TotalElapsed => totalElapsed;
+        public TimeSpan TotalTime => totalElapsed;
 
         #endregion
 
@@ -64,6 +64,8 @@ namespace KGySoft.Diagnostics
         #endregion
 
         #region Methods
+
+        public override string ToString() => calls == 0 ? base.ToString() : Res.ProfilerMeasureItemToString(this);
 
         internal void AddMeasurement(TimeSpan timeSpan)
         {
