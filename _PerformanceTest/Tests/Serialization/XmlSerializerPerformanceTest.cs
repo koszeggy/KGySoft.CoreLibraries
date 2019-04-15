@@ -146,7 +146,7 @@ namespace _PerformanceTest.Tests.Serialization
             new PerformanceTest<string>
                 {
                     TestName = "XmlSerializer performance test",
-                    Iterations = 1, WarmUpTime = 0, SortBySize = true, DumpResult = true, Repeat = 2 // comment this line for time test and uncomment for size test
+                    Iterations = 1, IsWarmUp = false, SortBySize = true, DumpResult = true, Repeat = 2 // comment this line for time test and uncomment for size test
                 }
                 .AddCase(() =>
                 {

@@ -108,10 +108,11 @@ namespace _PerformanceTest
         public int TestTime { get; set; } = 2000;
 
         /// <summary>
-        /// Gets or sets the warming up time in milliseconds before each cases.
-        /// <br/>Default value: <c>2000</c>.
+        /// Gets or sets whether there is an untested warm-up session before each test.
+        /// Its duration or iteration count equals to <see cref="TestName"/> or <see cref="Iterations"/>, respectively.
+        /// <br/>Default value: <see langword="true"/>.
         /// </summary>
-        public int WarmUpTime { get; set; } = 2000;
+        public bool IsWarmUp { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether <see cref="GC.Collect()">GC.Collect</see> should be called before running the test cases.
@@ -270,14 +271,21 @@ namespace _PerformanceTest
 
         private void WarmUp(TDelegate testCase)
         {
-            if (WarmUpTime <= 0)
+            if (!IsWarmUp)
                 return;
+
+            if (Iterations > 0)
+            {
+                for (int i = 0; i < Iterations; i++)
+                    Invoke(testCase);
+                return;
+            }
 
             var stopwatch = new Stopwatch();
             stopwatch.Start();
             do
                 Invoke(testCase);
-            while (stopwatch.ElapsedMilliseconds < WarmUpTime);
+            while (stopwatch.ElapsedMilliseconds < TestTime);
         }
 
         private void DoCollect()
@@ -386,8 +394,7 @@ namespace _PerformanceTest
             if (DumpConfig)
             {
                 Console.WriteLine(Iterations > 0 ? $"Iterations: {Iterations}" : $"Test Time: {TestTime:N0} ms");
-                if (WarmUpTime > 0)
-                    Console.WriteLine($"Warming up time: {WarmUpTime:N0} ms");
+                Console.WriteLine($"Warming up: {(IsWarmUp ? "Yes" : "No")}");
                 Console.WriteLine($"Test cases: {cases.Count}");
                 if (Repeat > 1)
                     Console.WriteLine($"Repeats: {Repeat}");

@@ -15,25 +15,9 @@ namespace _PerformanceTest
     [TestFixture]
     public class UnitTest1
     {
-        private static readonly MethodInfo methodAdd = typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange));
-
-        private static readonly IDictionary<Type, MethodInfo> methodCache = new LockingDictionary<Type, MethodInfo>();
-
         [Test]
-        public unsafe void TestMethod1()
+        public unsafe void SetBoxedIntTest()
         {
-            //var parameter = Expression.Parameter(typeof(long), "value");
-            //var dynamicMethod = Expression.Lambda<Func<long, ConsoleColor>>(
-            //    Expression.Convert(parameter, typeof(ConsoleColor)),
-            //    parameter);
-            //Func<long, ConsoleColor> converter = dynamicMethod.Compile();
-
-            //new PerformanceTest<ConsoleColor> { WarmUpTime = 0, Iterations = 10000, Repeat = 3 }
-            //    .AddCase(() => (ConsoleColor)Enum.ToObject(typeof(ConsoleColor), 0L), "Enum.ToObject")
-            //    .AddCase(() => (ConsoleColor)(object)(int)0L, "(TEnum)(object)(underlyingPrimitive)longValue")
-            //    .AddCase(() => converter.Invoke(0L), "ConverterExpression")
-            //    .DoTest();
-
             object o = 1;
             FieldInfo intmValue = typeof(int).GetType().GetField("m_value", BindingFlags.Instance | BindingFlags.NonPublic);
             var accessor = FieldAccessor.GetAccessor(intmValue);
@@ -69,56 +53,60 @@ namespace _PerformanceTest
                 .DoTest();
         }
 
-        //private void ByReflector()
-        //{
-        //    Reflector.SetInstancePropertyByName(new TestClass(), nameof(TestClass.Prop), 1);
-        //}
 
-        //private static PropertyInfo prop;
-        //private void ByAccessor()
-        //{
-        //    PropertyAccessor.GetPropertyAccessor(prop ?? (prop = typeof(TestClass).GetProperty(nameof(TestClass.Prop)))).Set(new TestClass(), 1);
-        //}
+        public struct TestStruct
+        {
+            public TestStruct(int i) { }
+        }
 
-        //private void DynamicObject()
-        //{
-        //    ((dynamic)new TestDynamic()).Prop = 1;
-        //}
+        public class TestClass
+        {
+            public TestClass() { }
+            public TestClass(int i) { }
+        }
 
-        //private void ExpandoObject()
-        //{
-        //    ((dynamic)new ExpandoObject()).Prop = 1;
-        //}
+        [Test]
+        public void CreateInstanceTest()
+        {
+            Type structType = typeof(TestStruct);
+            var ctorStructParams = structType.GetConstructor(new[] { typeof(int) });
+            var accessorByType = CreateInstanceAccessor.GetAccessor(structType);
+            var accessorByCtor = CreateInstanceAccessor.GetAccessor(ctorStructParams);
 
-        //private void DynamicOnObject()
-        //{
-        //    ((dynamic)new TestClass()).Prop = 1;
-        //}
+            new PerformanceTest { TestName = "Create Value Type", Iterations = 100000 }
+                .AddCase(() => new TestStruct(), "Direct creation, no ctor")
+                .AddCase(() => new TestStruct(1), "Direct creation, by ctor")
+                .AddCase(() => Activator.CreateInstance(structType), "Activator.CreateInstance(Type)")
+                .AddCase(() => Activator.CreateInstance(structType, 1), "Activator.CreateInstance(Type, params)")
+                .AddCase(() => ctorStructParams.Invoke(new object[] { 1 }), "ConstructorInfo.Invoke(params)")
+                .AddCase(() => accessorByType.CreateInstance(), "CreateInstanceAccessor(Type).CreateInstance()")
+                .AddCase(() => accessorByCtor.CreateInstance(1), "CreateInstanceAccessor(ConstructorInfo).CreateInstance(params)")
+                .AddCase(() => CreateInstanceAccessor.GetAccessor(structType).CreateInstance(), "CreateInstanceAccessor.GetAccessor(Type).CreateInstance()")
+                .AddCase(() => CreateInstanceAccessor.GetAccessor(ctorStructParams).CreateInstance(1), "CreateInstanceAccessor.GetAccessor(ConstructorInfo).CreateInstance(params)")
+                .DoTest();
 
-        //private class TestClass
-        //{
-        //    public int Prop { get; set; }
-        //}
+            Type classType = typeof(TestClass);
+            var ctorClassDefault = classType.GetConstructor(Type.EmptyTypes);
+            var ctorClassParams = classType.GetConstructor(new[] { typeof(int) });
+            accessorByType = CreateInstanceAccessor.GetAccessor(classType);
+            var accessorByDefaultCtor = CreateInstanceAccessor.GetAccessor(ctorClassDefault);
+            accessorByCtor = CreateInstanceAccessor.GetAccessor(ctorClassParams);
 
-        //private class TestDynamic : DynamicObject
-        //{
-        //    private Dictionary<string, object> properties = new Dictionary<string, object>();
+            new PerformanceTest { TestName = "Create Reference Type", Iterations = 100000 }
+                .AddCase(() => new TestClass(), "Direct creation, no ctor")
+                .AddCase(() => new TestClass(1), "Direct creation, by ctor")
+                .AddCase(() => Activator.CreateInstance(classType), "Activator.CreateInstance(Type)")
+                .AddCase(() => Activator.CreateInstance(classType, 1), "Activator.CreateInstance(Type, params)")
+                .AddCase(() => ctorClassDefault.Invoke(null), "ConstructorInfo.Invoke(null)")
+                .AddCase(() => ctorClassParams.Invoke(new object[] { 1 }), "ConstructorInfo.Invoke(params)")
+                .AddCase(() => accessorByType.CreateInstance(), "CreateInstanceAccessor(Type).CreateInstance()")
+                .AddCase(() => accessorByDefaultCtor.CreateInstance(), "CreateInstanceAccessor(ConstructorInfo).CreateInstance()")
+                .AddCase(() => accessorByCtor.CreateInstance(1), "CreateInstanceAccessor(ConstructorInfo).CreateInstance(params)")
+                .AddCase(() => CreateInstanceAccessor.GetAccessor(classType).CreateInstance(), "CreateInstanceAccessor.GetAccessor(Type).CreateInstance()")
+                .AddCase(() => CreateInstanceAccessor.GetAccessor(ctorClassDefault).CreateInstance(), "CreateInstanceAccessor.GetAccessor(ConstructorInfo).CreateInstance()")
+                .AddCase(() => CreateInstanceAccessor.GetAccessor(ctorClassParams).CreateInstance(1), "CreateInstanceAccessor.GetAccessor(ConstructorInfo).CreateInstance(params)")
+                .DoTest();
 
-        //    public override bool TrySetMember(SetMemberBinder binder, object value)
-        //    {
-        //        properties[binder.Name] = value;
-        //        return true;
-        //    }
-        //}
-
-        //private static T CastNormal<T>(int i)
-        //{
-        //    return (T)(object)i;
-        //}
-
-        //private static T CastTyperef<T>(int i)
-        //{
-        //    return __refvalue(__makeref(i), T);
-        //}
+        }
     }
 }

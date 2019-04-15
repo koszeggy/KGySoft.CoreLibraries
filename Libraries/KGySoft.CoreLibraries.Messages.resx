@@ -328,6 +328,9 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_InvokeMethodTypeDescriptorNotSupported" xml:space="preserve">
     <value>Invoking a method via TypeDescriptor is not supported.</value>
   </data>
+  <data name="Reflection_InvokeCtorTypeDescriptorNotSupported" xml:space="preserve">
+    <value>Invoking a constructor via TypeDescriptor is not supported in this overload of CreateInstance method.</value>
+  </data>
   <data name="Reflection_SetFieldTypeDescriptorNotSupported" xml:space="preserve">
     <value>A field cannot be set via TypeDescriptor.</value>
   </data>

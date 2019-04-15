@@ -28,7 +28,7 @@ namespace _PerformanceTest.Tests.Diagnostics
                 {
                     TestName = "DoTest performance without warm up",
                     Iterations = iterations,
-                    WarmUpTime = 0,
+                    IsWarmUp = false,
                     Repeat = 5,
                 }
                 .AddCase(DoNothing, nameof(DoNothing));
@@ -37,7 +37,7 @@ namespace _PerformanceTest.Tests.Diagnostics
 
             // 2. Test without warm up
             test.TestName = "DoTest performance with warm up";
-            test.WarmUpTime = 1000;
+            test.IsWarmUp = true;
             test.DoTest();
 
             // 3. Direct test
@@ -131,7 +131,7 @@ namespace _PerformanceTest.Tests.Diagnostics
                 {
                     TestName = "DoTest performance without warm up",
                     Iterations = iterations,
-                    WarmUpTime = 0,
+                    IsWarmUp = false,
                     Repeat = 5,
                 }
                 .AddCase(DoSomething, nameof(DoSomething));
@@ -140,7 +140,7 @@ namespace _PerformanceTest.Tests.Diagnostics
             test.DoTest();
 
             test.TestName = "DoTest performance with warmup";
-            test.WarmUpTime = 1000;
+            test.IsWarmUp = true;
 
             // 2. DoTest with warmup
             test.DoTest();

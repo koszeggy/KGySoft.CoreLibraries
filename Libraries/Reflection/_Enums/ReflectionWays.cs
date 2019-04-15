@@ -45,7 +45,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Uses the type descriptor way. If there is no <see cref="ICustomTypeDescriptor"/> implementation for an instance,
-        /// then this can be the slowest way but this is the preferred way for <see cref="Component"/>s. Not applicable in all cases.
+        /// then this can be the slowest way as it internally falls back to use system reflection. Not applicable in all cases.
         /// </summary>
         TypeDescriptor
     }

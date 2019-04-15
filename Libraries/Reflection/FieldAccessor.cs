@@ -27,8 +27,79 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for setting and getting fields values via dynamically created delegates.
-    /// You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.
+    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
+    /// <remarks>
+    /// <para>You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
+    /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the field, respectively.
+    /// The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
+    /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
+    /// they were dropped out from the cache, which can store about 8000 elements.</para>
+    /// <note>If you want to access a property by name rather then by a <see cref="FieldInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetField">SetField</see>
+    /// and <see cref="O:KGySoft.Reflection.Reflector.SetField">GetField</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>fieldName</c> parameter.</note>
+    /// </remarks>
+    /// <example><code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Reflection;
+    /// using KGySoft.Diagnostics;
+    /// using KGySoft.Reflection;
+    /// 
+    /// class Example
+    /// {
+    ///     private class TestClass
+    ///     {
+    ///         public int TestField;
+    ///     }
+    /// 
+    ///     static void Main(string[] args)
+    ///     {
+    ///         var instance = new TestClass();
+    ///         FieldInfo field = instance.GetType().GetField(nameof(TestClass.TestField));
+    ///         FieldAccessor accessor = FieldAccessor.GetAccessor(field);
+    /// 
+    ///         const int iterations = 1000000;
+    ///         for (int i = 0; i < iterations; i++)
+    ///         {
+    ///             int result;
+    ///             using (Profiler.Measure(GetCategory(i), "Direct set"))
+    ///                 instance.TestField = i;
+    ///             using (Profiler.Measure(GetCategory(i), "Direct get"))
+    ///                 result = instance.TestField;
+    /// 
+    ///             using (Profiler.Measure(GetCategory(i), "FieldAccessor.Set"))
+    ///                 accessor.Set(instance, i);
+    ///             using (Profiler.Measure(GetCategory(i), "FieldAccessor.Get"))
+    ///                 result = (int)accessor.Get(instance);
+    /// 
+    ///             using (Profiler.Measure(GetCategory(i), "FieldInfo.SetValue"))
+    ///                 field.SetValue(instance, i);
+    ///             using (Profiler.Measure(GetCategory(i), "FieldInfo.GetValue"))
+    ///                 result = (int)field.GetValue(instance);
+    ///         }
+    /// 
+    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
+    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
+    ///         {
+    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
+    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
+    ///         }
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces something like the following output:
+    /// // [Warm-up] Direct set: 0.168 ms
+    /// // [Warm-up] Direct get: 0.0021 ms
+    /// // [Warm-up] FieldAccessor.Set: 1.6251 ms
+    /// // [Warm-up] FieldAccessor.Get: 0.1957 ms
+    /// // [Warm-up] FieldInfo.SetValue: 0.0097 ms
+    /// // [Warm-up] FieldInfo.GetValue: 0.0019 ms
+    /// // [Test] Direct set: 31.4322 ms (average: 3.14322314322314E-05 ms from 999999 calls)
+    /// // [Test] Direct get: 31.1637 ms (average: 3.11637311637312E-05 ms from 999999 calls)
+    /// // [Test] FieldAccessor.Set: 40.0561 ms (average: 4.00561400561401E-05 ms from 999999 calls)
+    /// // [Test] FieldAccessor.Get: 45.2779 ms (average: 4.52779452779453E-05 ms from 999999 calls)
+    /// // [Test] FieldInfo.SetValue: 151.6642 ms (average: 0.000151664351664352 ms from 999999 calls)
+    /// // [Test] FieldInfo.GetValue: 157.2241 ms (average: 0.000157224257224257 ms from 999999 calls)]]></code>
+    /// </example>
     public sealed class FieldAccessor : MemberAccessor
     {
         #region Delegates

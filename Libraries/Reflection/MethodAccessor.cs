@@ -80,7 +80,7 @@ namespace KGySoft.Reflection
     ///     }
     /// }
     /// 
-    /// // This code example produces the following output:
+    /// // This code example produces something like the following output:
     /// // [Warm-up] Direct call: 0.1465 ms
     /// // [Warm-up] MethodAccessor.Invoke: 2.4339 ms
     /// // [Warm-up] MethodInfo.Invoke: 0.033 ms

@@ -21,7 +21,6 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
             new PerformanceTest
                 {
                     TestTime = 200,
-                    WarmUpTime = 1000,
                     Repeat = 5,
                 }
                 .AddCase(() => collReference.IndexOf(rnd.Next(collReference.Count)), "Collection.IndexOf")

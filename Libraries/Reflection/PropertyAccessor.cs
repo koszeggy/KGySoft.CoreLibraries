@@ -86,7 +86,7 @@ namespace KGySoft.Reflection
     ///     }
     /// }
     /// 
-    /// // This code example produces the following output:
+    /// // This code example produces something like the following output:
     /// // [Warm-up] Direct set: 0.1437 ms
     /// // [Warm-up] Direct get: 0.0021 ms
     /// // [Warm-up] PropertyAccessor.Set: 1.1377 ms

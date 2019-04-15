@@ -279,6 +279,9 @@ namespace KGySoft
         /// <summary>Invoking a method via TypeDescriptor is not supported.</summary>
         internal static string ReflectionInvokeMethodTypeDescriptorNotSupported => Get("Reflection_InvokeMethodTypeDescriptorNotSupported");
 
+        /// <summary>Invoking a constructor via TypeDescriptor is not supported in this overload of CreateInstance method.</summary>
+        internal static string ReflectionInvokeCtorTypeDescriptorNotSupported => Get("Reflection_InvokeCtorTypeDescriptorNotSupported");
+
         /// <summary>A field cannot be set via TypeDescriptor.</summary>
         internal static string ReflectionSetFieldTypeDescriptorNotSupported => Get("Reflection_SetFieldTypeDescriptorNotSupported");
 

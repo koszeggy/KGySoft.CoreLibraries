@@ -131,9 +131,10 @@ namespace KGySoft.Reflection
 
         #region SetProperty
 
+        #region By PropertyInfo
+
         /// <summary>
         /// Sets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to set.</param>
@@ -142,7 +143,7 @@ namespace KGySoft.Reflection
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here.</param>
         /// <remarks>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into an object or interface variable and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
         public static void SetProperty(object instance, PropertyInfo property, object value, ReflectionWays way, params object[] indexParameters)
@@ -173,7 +174,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Sets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to set.</param>
@@ -181,15 +181,18 @@ namespace KGySoft.Reflection
         /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into an object or interface variable and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
         public static void SetProperty(object instance, PropertyInfo property, object value, params object[] indexParameters)
             => SetProperty(instance, property, value, ReflectionWays.Auto, indexParameters);
 
+        #endregion
+
+        #region By Name
+
         /// <summary>
         /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
@@ -205,7 +208,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static void SetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
         {
@@ -222,7 +225,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
@@ -237,14 +239,13 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static void SetProperty(object instance, string propertyName, object value, params object[] indexParameters)
             => SetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Sets the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
@@ -271,7 +272,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
@@ -287,7 +287,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TrySetProperty(object instance, string propertyName, object value, ReflectionWays way, params object[] indexParameters)
         {
@@ -304,7 +304,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
@@ -319,14 +318,13 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
         /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TrySetProperty(object instance, string propertyName, object value, params object[] indexParameters)
             => TrySetProperty(instance, propertyName, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Tries to set the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
@@ -410,9 +408,12 @@ namespace KGySoft.Reflection
             throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
         }
 
+        #endregion
+
+        #region By Indexer
+
         /// <summary>
         /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">The value to set.</param>
@@ -423,7 +424,7 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static void SetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
         {
@@ -441,7 +442,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">The value to set.</param>
@@ -451,14 +451,13 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For setting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static void SetIndexedMember(object instance, object value, params object[] indexParameters) 
+        public static void SetIndexedMember(object instance, object value, params object[] indexParameters)
             => SetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">The value to set.</param>
@@ -471,7 +470,7 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TrySetIndexedMember(object instance, object value, ReflectionWays way, params object[] indexParameters)
         {
@@ -489,7 +488,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">The value to set.</param>
@@ -501,7 +499,7 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For setting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TrySetIndexedMember(object instance, object value, params object[] indexParameters)
             => TrySetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
@@ -566,11 +564,14 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #endregion
+
         #region GetProperty
+
+        #region By PropertyInfo
 
         /// <summary>
         /// Gets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to get.</param>
@@ -597,9 +598,9 @@ namespace KGySoft.Reflection
                 case ReflectionWays.DynamicDelegate:
                     return PropertyAccessor.GetAccessor(property).Get(instance, indexParameters);
                 case ReflectionWays.SystemReflection:
-                        return property.GetValue(instance, indexParameters);
+                    return property.GetValue(instance, indexParameters);
                 case ReflectionWays.TypeDescriptor:
-                        throw new NotSupportedException(Res.ReflectionGetPropertyTypeDescriptorNotSupported);
+                    throw new NotSupportedException(Res.ReflectionGetPropertyTypeDescriptorNotSupported);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
             }
@@ -607,7 +608,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to get.</param>
@@ -620,9 +620,12 @@ namespace KGySoft.Reflection
         public static object GetProperty(object instance, PropertyInfo property, params object[] indexParameters)
             => GetProperty(instance, property, ReflectionWays.Auto, indexParameters);
 
+        #endregion
+
+        #region By Name
+
         /// <summary>
         /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -654,7 +657,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -675,7 +677,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -702,7 +703,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -734,7 +734,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -755,7 +754,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to get the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static property belongs to.</param>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -801,7 +799,6 @@ namespace KGySoft.Reflection
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
-                // lambda or system reflection
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
 
@@ -838,9 +835,12 @@ namespace KGySoft.Reflection
             throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
         }
 
+        #endregion
+
+        #region By Indexer
+
         /// <summary>
         /// Gets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be read.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
@@ -868,7 +868,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be read.</param>
         /// <param name="indexParameters">The index parameters.</param>
@@ -879,12 +878,11 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static object GetIndexedMember(object instance, params object[] indexParameters) 
+        public static object GetIndexedMember(object instance, params object[] indexParameters)
             => GetIndexedMember(instance, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
@@ -914,7 +912,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value returned by the indexable object.</param>
@@ -992,11 +989,14 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #endregion
+
         #region InvokeMethod
+
+        #region By MethodInfo
 
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
@@ -1006,7 +1006,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into an object or interface variable and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, MethodInfo method, Type[] genericParameters, ReflectionWays way, params object[] parameters)
@@ -1050,7 +1050,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
@@ -1059,7 +1058,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para>For invoking the <paramref name="method"/> this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into an object or interface variable and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, MethodInfo method, Type[] genericParameters, params object[] parameters)
@@ -1067,7 +1066,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
@@ -1076,7 +1074,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into an object or interface variable and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, MethodInfo method, ReflectionWays way, params object[] parameters)
@@ -1084,7 +1082,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
@@ -1092,15 +1089,18 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para>For invoking the <paramref name="method"/> this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into an object or interface variable and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, MethodInfo method, params object[] parameters)
             => InvokeMethod(instance, method, null, ReflectionWays.Auto, parameters);
 
+        #endregion
+
+        #region By Name
+
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1116,7 +1116,7 @@ namespace KGySoft.Reflection
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
@@ -1130,7 +1130,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1145,14 +1144,13 @@ namespace KGySoft.Reflection
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, string methodName, Type[] genericParameters, params object[] parameters)
             => InvokeMethod(instance, methodName, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1167,14 +1165,13 @@ namespace KGySoft.Reflection
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static object InvokeMethod(object instance, string methodName, ReflectionWays way, params object[] parameters)
             => InvokeMethod(instance, methodName, null, way, parameters);
 
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1188,14 +1185,13 @@ namespace KGySoft.Reflection
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
-        public static object InvokeMethod(object instance, string methodName, params object[] parameters) 
+        public static object InvokeMethod(object instance, string methodName, params object[] parameters)
             => InvokeMethod(instance, methodName, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
         /// Invokes a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1224,7 +1220,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1240,12 +1235,11 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, Type[] genericParameters, params object[] parameters) 
+        public static object InvokeMethod(Type type, string methodName, Type[] genericParameters, params object[] parameters)
             => InvokeMethod(type, methodName, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
         /// Invokes a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1261,12 +1255,11 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, ReflectionWays way, params object[] parameters) 
+        public static object InvokeMethod(Type type, string methodName, ReflectionWays way, params object[] parameters)
             => InvokeMethod(type, methodName, null, way, parameters);
 
         /// <summary>
         /// Invokes a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1281,12 +1274,11 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        public static object InvokeMethod(Type type, string methodName, params object[] parameters) 
+        public static object InvokeMethod(Type type, string methodName, params object[] parameters)
             => InvokeMethod(type, methodName, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1302,7 +1294,7 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TryInvokeMethod(object instance, string methodName, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
         {
@@ -1316,7 +1308,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1331,14 +1322,13 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TryInvokeMethod(object instance, string methodName, Type[] genericParameters, out object result, params object[] parameters)
             => TryInvokeMethod(instance, methodName, genericParameters, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1353,14 +1343,13 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TryInvokeMethod(object instance, string methodName, ReflectionWays way, out object result, params object[] parameters)
             => TryInvokeMethod(instance, methodName, null, way, out result, parameters);
 
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="instance">An instance whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1374,14 +1363,13 @@ namespace KGySoft.Reflection
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
-        /// <note type="tip">To preserve the changes of a mutable value type embed it into a local object or interface variable and pass that instance as the <paramref name="instance"/> parameter.</note>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static bool TryInvokeMethod(object instance, string methodName, out object result, params object[] parameters)
             => TryInvokeMethod(instance, methodName, null, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
         /// Tries to invoke a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1414,7 +1402,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to invoke a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1435,7 +1422,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to invoke a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1456,7 +1442,6 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Tries to invoke a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
-        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> the static method belongs to.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
@@ -1466,7 +1451,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -1547,63 +1532,83 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #endregion
+
         #region Construction
 
+        #region By ConstructorInfo
+
         /// <summary>
-        /// Creates a new instance of an object based on a <see cref="ConstructorInfo"/> metadata given in <paramref name="ctor"/> parameter.
+        /// Creates a new instance by a <see cref="ConstructorInfo"/> specified in the <paramref name="ctor"/> parameter.
         /// </summary>
-        /// <param name="ctor">Contains the constructor to invoke.</param>
-        /// <param name="way">Preferred invocation mode.
-        /// Auto option uses dynamic delegate mode. In case of dynamic delegate mode first object creation is slow but
-        /// further calls are faster than the system reflection way. Type descriptor way is possible but uses no service provider.
-        /// </param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <returns>The created instance.</returns>
+        /// <param name="ctor">The constructor to be invoked.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note>To invoke the constructor explicitly by dynamically created delegates use the <see cref="CreateInstanceAccessor"/> class.</note>
+        /// </remarks>
         public static object CreateInstance(ConstructorInfo ctor, ReflectionWays way, params object[] parameters)
         {
             if (ctor == null)
                 throw new ArgumentNullException(nameof(ctor), Res.ArgumentNull);
 
-            if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
+            switch (way)
             {
-                return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(parameters);
-            }
-            else if (way == ReflectionWays.SystemReflection)
-            {
-                return ctor.Invoke(parameters);
-            }
-            else// if (way == ReflectionWays.TypeDescriptor)
-            {
-                return TypeDescriptor.CreateInstance(null, ctor.DeclaringType,
-                    (from p in ctor.GetParameters()
-                     select p.ParameterType).ToArray(), parameters);
+                case ReflectionWays.Auto:
+                case ReflectionWays.DynamicDelegate:
+                    return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(parameters);
+                case ReflectionWays.SystemReflection:
+                    return ctor.Invoke(parameters);
+                case ReflectionWays.TypeDescriptor:
+                    throw new NotSupportedException(Res.ReflectionInvokeCtorTypeDescriptorNotSupported);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
             }
         }
 
         /// <summary>
-        /// Creates a new instance of an object based on a <see cref="ConstructorInfo"/> metadata given in <paramref name="ctor"/> parameter.
+        /// Creates a new instance by a <see cref="ConstructorInfo"/> specified in the <paramref name="ctor"/> parameter.
         /// </summary>
-        /// <param name="ctor">Contains the constructor to invoke.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <returns>The created instance.</returns>
-        public static object CreateInstance(ConstructorInfo ctor, params object[] parameters) 
+        /// <param name="ctor">The constructor to be invoked.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note>To invoke the constructor explicitly by dynamically created delegates use the <see cref="CreateInstanceAccessor"/> class.</note>
+        /// </remarks>
+        public static object CreateInstance(ConstructorInfo ctor, params object[] parameters)
             => CreateInstance(ctor, ReflectionWays.Auto, parameters);
 
         /// <summary>
-        /// Creates a new instance of given type using the default or parameterless constructor.
-        /// If <paramref name="type"/> is <see cref="ValueType"/>, then the new instance is created
-        /// by without using any constructors.
+        /// Invokes a constructor on an already created instance.
         /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="genericParameters">Generic type parameters if <paramref name="type"/> is generic. For non-generic types this parameter is omitted.</param>
-        /// <param name="way">Preferred invocation mode.
-        /// Auto option uses system reflection mode.
-        /// In case of dynamic delegate mode first creation of an object of a method is slow but
-        /// further calls are somewhat faster but not as fast as the system reflection way for parameterless constructors.
-        /// TypeDescriptor way is possible but not preferred and uses no service provider. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
-        /// <returns>The created instance.</returns>
+        internal static void InvokeCtor(object instance, ConstructorInfo ctor, params object[] parameters)
+        {
+            // TODO: the old solution was slow and dangerous.
+            // The new could be in ActionMethodAccessor.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
+            // Performance test: MethodBase.Invoke is just 4x slower than an already executed invoker but at the first time invoker is 3000x slower.
+            ctor.Invoke(instance, parameters);
+        }
+
+        #endregion
+
+        #region Default Construction (by parameterless constructor or without constructor)
+
+        /// <summary>
+        /// Creates a new instance of the specified <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns>The created instance of <paramref name="type"/>.</returns>
+        /// <remarks>
+        /// <para>If you are not sure whether the type can be created without constructor parameters or by the provided <paramref name="genericParameters"/>, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
         public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way = ReflectionWays.Auto)
         {
             if (type == null)
@@ -1612,42 +1617,78 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// Creates a new instance of given type using the default or parameterless constructor.
-        /// If <paramref name="type"/> is <see cref="ValueType"/>, then the new instance is created
-        /// by without using any constructors.
+        /// Creates a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="way">Preferred invocation mode.
-        /// Auto option uses system reflection mode.
-        /// In case of dynamic delegate mode first creation of an object of a method is slow but
-        /// further calls are somewhat faster but not as fast as the system reflection way for parameterless constructors.
-        /// TypeDescriptor way is possible but not preferred and uses no service provider. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
-        /// <returns>The created instance.</returns>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="way">The preferred reflection way. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns>The created instance of <paramref name="type"/>.</returns>
+        /// <remarks>
+        /// <para>If you are not sure whether the type can be created without constructor parameters, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method selects the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
         public static object CreateInstance(Type type, ReflectionWays way = ReflectionWays.Auto)
             => CreateInstance(type, null, way);
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result)
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
+        /// <remarks>
+        /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
-            return TryCreateInstanceByType(type, genericParameters, way, false, out result);
+            return TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, false, out result);
         }
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, ReflectionWays way, out object result)
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
+        /// <remarks>
+        /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, Type[] genericParameters, out object result)
+            => TryCreateInstance(type, genericParameters, ReflectionWays.Auto, out result);
+
+        /// <summary>
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters.</returns>
+        /// <remarks>
+        /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, ReflectionWays way, out object result)
             => TryCreateInstance(type, null, way, out result);
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, out object result)
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters.</returns>
+        /// <remarks>
+        /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, out object result)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result);
 
         private static bool TryCreateInstanceByType(Type type, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
@@ -1659,11 +1700,7 @@ namespace KGySoft.Reflection
             {
                 Type[] genArgs = type.GetGenericArguments();
                 if (genericParameters.Length != genArgs.Length)
-                {
-                    if (throwError)
-                        throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
-                    return false;
-                }
+                    return throwError ? throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters)) : false;
                 try
                 {
                     type = type.MakeGenericType(genericParameters);
@@ -1676,109 +1713,184 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (way == ReflectionWays.DynamicDelegate)
-                result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
-            else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
-                result = Activator.CreateInstance(type, true);
-            else // if (way == ReflectionWays.TypeDescriptor)
-                result = TypeDescriptor.CreateInstance(null, type, null, null);
-            return true;
+            if (!throwError && !type.CanBeCreatedWithoutParameters())
+                return false;
+
+            switch (way)
+            {
+                case ReflectionWays.DynamicDelegate:
+                    result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                    return true;
+                case ReflectionWays.Auto:
+                case ReflectionWays.SystemReflection:
+                    try
+                    {
+                        result = Activator.CreateInstance(type, true);
+                        return true;
+                    }
+                    catch (TargetInvocationException e)
+                    {
+                        if (e.InnerException != null)
+                            ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                        throw;
+                    }
+
+                case ReflectionWays.TypeDescriptor:
+                    // ReSharper disable AssignNullToNotNullAttribute - false alarm
+                    result = TypeDescriptor.CreateInstance(null, type, null, null);
+                    // ReSharper restore AssignNullToNotNullAttribute
+                    return true;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
+            }
         }
 
+        #endregion
+
+        #region By Constructor Parameters
+
         /// <summary>
-        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
-        /// for better performance.
+        /// Creates a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="genericParameters">Generic type parameters if <paramref name="type"/> is generic. For non-generic types this parameter is omitted.</param>
-        /// <param name="way">Preferred invocation mode.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <returns>The created instance.</returns>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns>The created instance of <paramref name="type"/>.</returns>
+        /// <remarks>
+        /// <para>If you are not sure whether the type can be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
         public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way, params object[] parameters)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            if (parameters == null)
-                parameters = EmptyObjects;
-
-            object result;
-
             // In case of value types no parameterless constructor would be found - redirecting
-            if (type.IsValueType && parameters.Length == 0)
-                return TryCreateInstanceByType(type, genericParameters, way, true, out result) ? result : null;
-            return TryCreateInstanceByCtor(type, parameters, genericParameters ?? Type.EmptyTypes, way, true, out result) ? result : null;
+            return type.IsValueType && (parameters?.Length ?? 0) == 0 
+                ? (TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null)
+                : (TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result) ? result : null);
         }
 
         /// <summary>
-        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
-        /// for better performance.
+        /// Creates a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <param name="way">Preferred invocation mode.</param>
-        /// <returns>The created instance.</returns>
-        public static object CreateInstance(Type type, ReflectionWays way, params object[] parameters)
-            => CreateInstance(type, null, way, parameters);
-
-        /// <summary>
-        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
-        /// for better performance.
-        /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="genericParameters">Generic type parameters if <paramref name="type"/> is generic. For non-generic types this parameter is omitted.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <returns>The created instance.</returns>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns>The created instance of <paramref name="type"/>.</returns>
+        /// <remarks>
+        /// <para>If you are not sure whether the type can be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
         public static object CreateInstance(Type type, Type[] genericParameters, params object[] parameters)
             => CreateInstance(type, genericParameters, ReflectionWays.Auto, parameters);
 
         /// <summary>
-        /// Creates a new instance of given <paramref name="type"/> based on constructor <paramref name="parameters"/>.
-        /// If you know the exact constructor to invoke use the <see cref="CreateInstance"/> overload
-        /// for better performance.
+        /// Creates a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        /// <param name="type">Type of the instance to create.</param>
-        /// <param name="parameters">Constructor parameters.</param>
-        /// <returns>The created instance.</returns>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns>The created instance of <paramref name="type"/>.</returns>
+        /// <remarks>
+        /// <para>If you are not sure whether the type can be created by the provided <paramref name="parameters"/>, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static object CreateInstance(Type type, ReflectionWays way, params object[] parameters)
+            => CreateInstance(type, null, way, parameters);
+
+        /// <summary>
+        /// Creates a new instance of the specified <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns>The created instance of <paramref name="type"/>.</returns>
+        /// <remarks>
+        /// <para>If you are not sure whether the type can be created by the provided <paramref name="parameters"/>, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
         public static object CreateInstance(Type type, params object[] parameters)
             => CreateInstance(type, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>.</returns>
+        /// <remarks>
+        /// <note>If a matching constructor could be found and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result, params object[] parameters)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            if (parameters == null)
-                parameters = EmptyObjects;
-
             // In case of value types no parameterless constructor would be found - redirecting
-            if (type.IsValueType && parameters.Length == 0)
-                return TryCreateInstanceByType(type, genericParameters, way, false, out result);
-            return TryCreateInstanceByCtor(type, parameters, genericParameters ?? Type.EmptyTypes, way, false, out result);
+            return type.IsValueType && (parameters?.Length ?? 0) == 0
+                ? TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out result)
+                : TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result);
         }
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, Type[] genericParameters, out object result, params object[] parameters)
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="type"/> refers to a generic type definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="genericParameters"/> and <paramref name="parameters"/>.</returns>
+        /// <remarks>
+        /// <note>If a matching constructor could be found and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, Type[] genericParameters, out object result, params object[] parameters)
             => TryCreateInstance(type, genericParameters, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, ReflectionWays way, out object result, params object[] parameters)
-            => TryCreateInstance(type, null, ReflectionWays.Auto, out result, parameters);
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="parameters"/>.</returns>
+        /// <remarks>
+        /// <note>If a matching constructor could be found and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, ReflectionWays way, out object result, params object[] parameters)
+            => TryCreateInstance(type, null, way, out result, parameters);
 
         /// <summary>
-        /// TODO: public
+        /// Tries to create a new instance of the specified <paramref name="type"/>.
         /// </summary>
-        internal static bool TryCreateInstance(Type type, out object result, params object[] parameters)
+        /// <param name="type">The <see cref="System.Type"/> of the instance to create.</param>
+        /// <param name="result">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the created instance of <paramref name="type"/>.</param>
+        /// <param name="parameters">The parameters to be used for invoking the constructor.</param>
+        /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created by the provided <paramref name="parameters"/>.</returns>
+        /// <remarks>
+        /// <note>If a matching constructor could be found and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
+        /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
+        /// </remarks>
+        public static bool TryCreateInstance(Type type, out object result, params object[] parameters)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result, parameters);
 
         private static bool TryCreateInstanceByCtor(Type type, object[] parameters, Type[] genericParameters, ReflectionWays way, bool throwError, out object result)
@@ -1790,11 +1902,7 @@ namespace KGySoft.Reflection
             {
                 Type[] genArgs = type.GetGenericArguments();
                 if (genericParameters.Length != genArgs.Length)
-                {
-                    if (throwError)
-                        throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters));
-                    return false;
-                }
+                    return throwError ? throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters)) : false;
                 try
                 {
                     type = type.MakeGenericType(genericParameters);
@@ -1810,23 +1918,27 @@ namespace KGySoft.Reflection
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
                 ParameterInfo[] ctorParams = ctor.GetParameters();
-
-                // skip when parameter count is not correct
                 if (ctorParams.Length != parameters.Length)
                     continue;
-
                 if (!CheckParameters(ctorParams, parameters))
                     continue;
 
                 try
                 {
+                    if (way == ReflectionWays.TypeDescriptor)
+                    {
+                        result = TypeDescriptor.CreateInstance(null, type, ctorParams.Select(p => p.ParameterType).ToArray(), parameters);
+                        return true;
+                    }
+
                     result = CreateInstance(ctor, way, parameters);
                     return true;
                 }
                 catch (TargetInvocationException e)
                 {
-                    // re-throwing the inner exception by preserving its stack trace
-                    ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                    if (e.InnerException != null)
+                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                    throw;
                 }
             }
 
@@ -1835,40 +1947,24 @@ namespace KGySoft.Reflection
             throw new ReflectionException(Res.ReflectionCtorNotFound(type));
         }
 
-
-        /// <summary>
-        /// Invokes a constructor on an already created instance.
-        /// </summary>
-        internal static void InvokeCtor(object instance, ConstructorInfo ctor, params object[] parameters)
-        {
-            // TODO: the old solution was slow and dangerous.
-            // The new could be in ActionMethodAccessor.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
-            // Performance test: MethodBase.Invoke is just 4x slower than an already executed invoker but at the first time invoker is 3000x slower.
-            ctor.Invoke(instance, parameters);
-        }
+        #endregion
 
         #endregion
 
         #region SetField
 
         /// <summary>
-        /// Sets a field based on <see cref="FieldInfo"/> medatada given in <paramref name="field"/> parameter.
+        /// Sets a <paramref name="field"/> represented by the specified <see cref="FieldInfo"/>.
         /// </summary>
-        /// <param name="instance">If <paramref name="field"/> to set is an instance field, then this parameter should
-        /// contain the object instance on which the field assignment should be performed.</param>
+        /// <param name="instance">An instance whose field is about to be set. This parameter is ignored for static fields.</param>
         /// <param name="field">The field to set.</param>
-        /// <param name="value">The desired new value of the field</param>
-        /// <param name="way">Preferred access mode.
-        /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
-        /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <remarks>
-        /// <note>
-        /// To preserve the changed inner state of a value type
-        /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
-        /// </note>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
         public static void SetField(object instance, FieldInfo field, object value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -1880,41 +1976,38 @@ namespace KGySoft.Reflection
             if (field.IsLiteral)
                 throw new InvalidOperationException(Res.ReflectionCannotSetConstantField(field.DeclaringType, field.Name));
 
-            if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
+            switch (way)
             {
-                FieldAccessor.GetAccessor(field).Set(instance, value);
-            }
-            else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
-            {
-                field.SetValue(instance, value);
-            }
-            else// if (way == ReflectionWays.TypeDescriptor)
-            {
-                throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
+                case ReflectionWays.Auto:
+                case ReflectionWays.DynamicDelegate:
+                    FieldAccessor.GetAccessor(field).Set(instance, value);
+                    break;
+                case ReflectionWays.SystemReflection:
+                    field.SetValue(instance, value);
+                    break;
+                case ReflectionWays.TypeDescriptor:
+                    throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
             }
         }
 
         /// <summary>
-        /// Sets an instance field based on a field name given in <paramref name="fieldName"/> parameter.
-        /// Field can refer to either public or non-public fields.
-        /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="SetField(object,System.Reflection.FieldInfo,object,KGySoft.Reflection.ReflectionWays)"/>
-        /// method for better performance.
+        /// Sets the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">The object instance on which the field should be set.</param>
-        /// <param name="fieldName">The field name to set.</param>
-        /// <param name="value">The new desired value of the field to set.</param>
-        /// <param name="way">Preferred access mode.
-        /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
-        /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> or <see cref="ReflectionWays.TypeDescriptor"/> reflection way. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
+        /// <param name="instance">An instance whose field is about to be set.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <remarks>
-        /// <note>
-        /// To preserve the changed inner state of a value type
-        /// you must pass your struct in <paramref name="instance"/> parameter as an <see cref="object"/>.
-        /// </note>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetField">TrySetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         public static void SetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -1924,25 +2017,24 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
-            TrySetFieldByName(fieldName, type, instance, value, way, true);
+            DoTrySetField(fieldName, type, instance, value, way, true);
         }
 
         /// <summary>
-        /// Sets a static field based on a field name given in <paramref name="fieldName"/> parameter.
-        /// Field can refer to either public or non-public fields.
-        /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="SetField(object,System.Reflection.FieldInfo,object,KGySoft.Reflection.ReflectionWays)"/>
-        /// method for better performance.
+        /// Sets the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="type">The type that contains the static the field to set.</param>
-        /// <param name="fieldName">The field name to set.</param>
-        /// <param name="value">The new desired value of the field to set.</param>
-        /// <param name="way">Preferred access mode.
-        /// <see cref="ReflectionWays.Auto"/> option uses dynamic delegate mode.
-        /// In case of <see cref="ReflectionWays.DynamicDelegate"/> first access of a field is slow but
-        /// further calls are faster than the <see cref="ReflectionWays.SystemReflection"/> reflection way. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
+        /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetField">TrySetField</see> methods instead.</para>
+        /// </remarks>
         public static void SetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
@@ -1950,13 +2042,26 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            TrySetFieldByName(fieldName, type, null, value, way, true);
+            DoTrySetField(fieldName, type, null, value, way, true);
         }
 
         /// <summary>
-        /// TODO: public
+        /// Tries to set the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        internal static bool TrySetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
+        /// <param name="instance">An instance whose field is about to be set.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be set; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static bool TrySetField(object instance, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -1964,49 +2069,61 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
-            return TrySetFieldByName(fieldName, type, instance, value, way, false);
+            return DoTrySetField(fieldName, type, instance, value, way, false);
         }
 
         /// <summary>
-        /// TODO: public
+        /// Tries to set the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        internal static bool TrySetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
+        /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be set; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        public static bool TrySetField(Type type, string fieldName, object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            return TrySetFieldByName(fieldName, type, null, value, way, false);
+            return DoTrySetField(fieldName, type, null, value, way, false);
         }
 
-        private static bool TrySetFieldByName(string fieldName, Type type, object instance, object value, ReflectionWays way, bool throwError)
+        private static bool DoTrySetField(string fieldName, Type type, object instance, object value, ReflectionWays way, bool throwError)
         {
-            // type descriptor
             if (way == ReflectionWays.TypeDescriptor)
-            {
                 throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
-            }
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
-                // lambda or system reflection
                 BindingFlags flags = type == checkedType
                     ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy
                     : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
+
+                // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - fields are queried
                 foreach (FieldInfo field in checkedType.GetMember(fieldName, MemberTypes.Field, flags))
                 {
-                    // set first occurence
                     try
                     {
+                        if (!throwError && (field.IsLiteral || !field.FieldType.CanAcceptValue(value)))
+                            return false;
                         SetField(instance, field, value, way);
                         return true;
                     }
                     catch (TargetInvocationException e)
                     {
-                        // re-throwing the inner exception by preserving its stack trace
-                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                        if (e.InnerException != null)
+                            ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                        throw;
                     }
                 }
             }
@@ -2024,17 +2141,17 @@ namespace KGySoft.Reflection
         #region GetField
 
         /// <summary>
-        /// Gets a field based on <see cref="FieldInfo"/> medatada given in <paramref name="field"/> parameter.
+        /// Gets a <paramref name="field"/> represented by the specified <see cref="FieldInfo"/>.
         /// </summary>
-        /// <param name="instance">If <paramref name="field"/> to get is an instance field, then this parameter should
-        /// contain the object instance on which the field getting should be performed.</param>
+        /// <param name="instance">An instance whose field is about to be retrieved. This parameter is ignored for static fields.</param>
         /// <param name="field">The field to get.</param>
-        /// <param name="way">Preferred reflection mode.
-        /// Auto option uses dynamic delegate mode. In case of dynamic delegate mode first access of a field is slow but
-        /// further accesses are faster than the system reflection way. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
         /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note>To get the property explicitly by dynamically created delegates use the <see cref="FieldAccessor"/> class.</note>
+        /// </remarks>
         public static object GetField(object instance, FieldInfo field, ReflectionWays way = ReflectionWays.Auto)
         {
             if (field == null)
@@ -2042,35 +2159,36 @@ namespace KGySoft.Reflection
             if (instance == null && !field.IsStatic)
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
-            if (way == ReflectionWays.Auto || way == ReflectionWays.DynamicDelegate)
+            switch (way)
             {
-                return FieldAccessor.GetAccessor(field).Get(instance);
-            }
-            else if (way == ReflectionWays.Auto || way == ReflectionWays.SystemReflection)
-            {
-                return field.GetValue(instance);
-            }
-            else //if (way == ReflectionWays.TypeDescriptor)
-            {
-                throw new NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
+                case ReflectionWays.Auto:
+                case ReflectionWays.DynamicDelegate:
+                    return FieldAccessor.GetAccessor(field).Get(instance);
+                case ReflectionWays.SystemReflection:
+                    return field.GetValue(instance);
+                case ReflectionWays.TypeDescriptor:
+                    throw new NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
             }
         }
 
         /// <summary>
-        /// Gets an instance field based on a field name given in <paramref name="fieldName"/> parameter.
-        /// Field can refer to either public or non-public fields.
-        /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Reflection.ReflectionWays)"/>
-        /// method for better performance.
+        /// Gets the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">The object instance on which the field value should be get.</param>
-        /// <param name="fieldName">The field name to set.</param>
-        /// <param name="way">Preferred reflection mode.
-        /// Auto option uses dynamic delegate mode. In case of dynamic delegate mode first access of a field is slow but
-        /// further accesses are faster than the system reflection way. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
-        /// <returns>Returns the value of the field.</returns>
+        /// <param name="instance">An instance whose field is about to be retrieved.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="GetField(object,FieldInfo,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
         public static object GetField(object instance, string fieldName, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
@@ -2079,24 +2197,25 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
-            return TryGetFieldByName(fieldName, type, instance, way, out object result, true) ? result : null;
+            return DoTryGetField(fieldName, type, instance, way, out object result, true) ? result : null;
         }
 
         /// <summary>
-        /// Gets a static field based on a field name given in <paramref name="fieldName"/> parameter.
-        /// Field can refer to either public or non-public fields.
-        /// If you do not need the field name to be parsed from string, then it is recommended to use
-        /// <see cref="GetField(object,System.Reflection.FieldInfo,KGySoft.Reflection.ReflectionWays)"/>
-        /// method for better performance.
+        /// Gets the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="type">The type that contains the static the field to set.</param>
-        /// <param name="fieldName">The field name to set.</param>
-        /// <param name="way">Preferred reflection mode.
-        /// Auto option uses dynamic delegate mode. In case of dynamic delegate mode first access of a field is slow but
-        /// further accesses are faster than the system reflection way. This parameter is optional.
-        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.
-        /// </param>
-        /// <returns>Returns the value of the field.</returns>
+        /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="GetField(object,FieldInfo,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
         public static object GetField(Type type, string fieldName, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
@@ -2104,13 +2223,25 @@ namespace KGySoft.Reflection
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            return TryGetFieldByName(fieldName, type, null, way, out object result, true) ? result : null;
+            return DoTryGetField(fieldName, type, null, way, out object result, true) ? result : null;
         }
 
         /// <summary>
-        /// TODO: public
+        /// Tries to get the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        internal static bool TryGetField(object instance, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
+        /// <param name="instance">An instance whose field is about to be retrieved.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the field.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        public static bool TryGetField(object instance, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
@@ -2118,53 +2249,59 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(instance), Res.ArgumentNull);
 
             Type type = instance.GetType();
-            return TryGetFieldByName(fieldName, type, instance, way, out value, false);
+            return DoTryGetField(fieldName, type, instance, way, out value, false);
         }
 
         /// <summary>
-        /// TODO: public
+        /// Tries to get the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        internal static bool TryGetField(Type type, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
+        /// <param name="type">The <see cref="System.Type"/> the static field belongs to.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the value of the field.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        public static bool TryGetField(Type type, string fieldName, out object value, ReflectionWays way = ReflectionWays.Auto)
         {
             if (fieldName == null)
                 throw new ArgumentNullException(nameof(fieldName), Res.ArgumentNull);
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            return TryGetFieldByName(fieldName, type, null, way, out value, false);
+            return DoTryGetField(fieldName, type, null, way, out value, false);
         }
 
-
-        /// <summary>
-        /// Internal implementation of GetInstance/StaticFieldByName methods
-        /// </summary>
-        private static bool TryGetFieldByName(string fieldName, Type type, object instance, ReflectionWays way, out object value, bool throwError)
+        private static bool DoTryGetField(string fieldName, Type type, object instance, ReflectionWays way, out object value, bool throwError)
         {
-            // type descriptor
             if (way == ReflectionWays.TypeDescriptor)
-            {
-                throw new NotSupportedException(Res.ReflectionSetFieldTypeDescriptorNotSupported);
-            }
+                throw new NotSupportedException(Res.ReflectionGetFieldTypeDescriptorNotSupported);
 
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
-                // lambda or system reflection
                 BindingFlags flags = type == checkedType
                     ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy
                     : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
+
+                // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - fields are queried
                 foreach (FieldInfo field in checkedType.GetMember(fieldName, MemberTypes.Field, flags))
                 {
                     try
                     {
-                        // returning with first field
                         value = GetField(instance, field, way);
                         return true;
                     }
                     catch (TargetInvocationException e)
                     {
-                        // re-throwing the inner exception by preserving its stack trace
-                        ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                        if (e.InnerException != null)
+                            ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+                        throw;
                     }
                 }
             }
@@ -2240,7 +2377,7 @@ namespace KGySoft.Reflection
         #region Assembly resolve
 
         /// <summary>
-        /// Resolves an <paramref name="assemblyName"/> definition by string and gets an <see cref="Assembly"/> instance.
+        /// Gets the <see cref="Assembly"/> with the specified <paramref name="assemblyName"/>.
         /// </summary>
         /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
         /// <param name="tryToLoad">If <see langword="false"/>, searches the assembly among the already loaded assemblies. If <see langword="true"/>, tries to load the assembly when it is not already loaded.</param>
@@ -2258,9 +2395,8 @@ namespace KGySoft.Reflection
             if (assemblyName.Length == 0)
                 throw new ArgumentException(Res.ArgumentEmpty, nameof(assemblyName));
 
-            Assembly result;
             string key = (matchBySimpleName ? "-" : "+") + assemblyName;
-            if (AssemblyCache.TryGetValue(key, out result))
+            if (AssemblyCache.TryGetValue(key, out Assembly result))
                 return result;
 
             // 1.) Iterating through loaded assemblies, checking names
@@ -2310,14 +2446,10 @@ namespace KGySoft.Reflection
 
             // 2.) Trying to load the assembly
             if (result == null && tryToLoad)
-            {
                 result = matchBySimpleName ? LoadAssemblyWithPartialName(asmName) : Assembly.Load(asmName);
-            }
 
             if (result != null)
-            {
                 assemblyCache[key] = result;
-            }
 
             return result;
         }
@@ -2330,7 +2462,7 @@ namespace KGySoft.Reflection
             => AppDomain.CurrentDomain.GetAssemblies();
 
         /// <summary>
-        /// Loads the the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
+        /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
         /// <param name="assemblyName">Name of the assembly.</param>
         private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
@@ -2372,12 +2504,11 @@ namespace KGySoft.Reflection
         /// </summary>
         private static string GetGacPath(string name)
         {
-            ASSEMBLY_INFO aInfo = new ASSEMBLY_INFO();
+            var aInfo = new ASSEMBLY_INFO();
             aInfo.cchBuf = 1024;
             aInfo.currentAssemblyPath = new string('\0', aInfo.cchBuf);
 
-            IAssemblyCache ac;
-            int hr = Fusion.CreateAssemblyCache(out ac, 0);
+            int hr = Fusion.CreateAssemblyCache(out IAssemblyCache ac, 0);
             if (hr >= 0)
             {
                 hr = ac.QueryAssemblyInfo(0, name, ref aInfo);
@@ -2393,15 +2524,17 @@ namespace KGySoft.Reflection
         #region Type routines
 
         /// <summary>
-        /// Resolves a type definition given in string. When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
+        /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/>.
+        /// When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
         /// </summary>
-        /// <param name="typeName">Type declaration in string representation with or without assembly name.</param>
+        /// <param name="typeName">The type name as a string representation with or without assembly name.</param>
         /// <param name="loadPartiallyDefinedAssemblies"><see langword="true"/>&#160;to load assemblies with partially defined names; <see langword="false"/>&#160;to find partially defined names in already loaded assemblies only.</param>
         /// <param name="matchAssemblyByWeakName"><see langword="true"/>&#160;to allow resolving assembly names by simple assembly name, and ignoring version, culture and public key token information even if they present in <paramref name="typeName"/>.</param>
-        /// <returns>The resolved type or <see langword="null"/>&#160;when <paramref name="typeName"/> cannot be resolved.</returns>
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
-        /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names. When assmebly name is partially defined,
-        /// the assembly is attempted to be loaded only when <paramref name="loadPartiallyDefinedAssemblies"/> is <see langword="true"/>.</para>
+        /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names. When assembly name is partially defined,
+        /// then the assembly is attempted to be loaded only when <paramref name="loadPartiallyDefinedAssemblies"/> is <see langword="true"/>.</para>
+        /// </remarks>
         /// <example>
         /// <code lang="C#"><![CDATA[
         /// // mscorlib types are defined wihtout assembly, System.Uri is defined with fully qualified assembly name - it will be loaded if possible
@@ -2420,7 +2553,6 @@ namespace KGySoft.Reflection
         /// var type = ResolveType("System.Collections.Generic.Dictionary`2[System.String, System.Uri]", false, false);
         /// ]]></code>
         /// </example>
-        /// </remarks>
         /// <exception cref="ReflectionException"><paramref name="typeName"/> cannot be parsed.</exception>
         public static Type ResolveType(string typeName, bool loadPartiallyDefinedAssemblies = false, bool matchAssemblyByWeakName = false)
         {
@@ -2496,13 +2628,14 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// Resolves a type definition given in string. Type definition can be generic and should exist in specified <paramref name="assembly"/>.
+        /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/> from the specified <paramref name="assembly"/>.
+        /// Type name can be generic.
         /// </summary>
-        /// <param name="typeName">Type declaration in string representation.</param>
-        /// <param name="assembly">The assembly that may contain the type to retrieve.</param>
-        /// <returns>The resolved type or <see langword="null"/>&#160;when <paramref name="typeName"/> cannot be resolved.</returns>
+        /// <param name="typeName">The type name as a string representation.</param>
+        /// <param name="assembly">The assembly that contains the type to retrieve.</param>
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/>&#160;if <paramref name="typeName"/> cannot be resolved.</returns>
         /// <remarks>
-        /// <para>The generic type parameters can contain assembly part. However, when the main type definition contains assembly part,
+        /// <para>The generic type parameters can contain assembly parts. However, if the main type definition contains an assembly part, then
         /// an <see cref="ArgumentException"/> will be thrown. For such type names use <see cref="ResolveType(string,bool,bool)"/> overload instead.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="assembly"/> is <see langword="null"/>.</exception>
@@ -2530,9 +2663,7 @@ namespace KGySoft.Reflection
         {
             LockingDictionary<string, Type> cache = TypeCacheByAssembly[assembly];
             if (cache.TryGetValue(typeName, out var result))
-            {
                 return result;
-            }
 
             try
             {
@@ -2542,10 +2673,7 @@ namespace KGySoft.Reflection
                 // Try 2: if result is still null we may check whether a generic type is tried to be created (like: System.Collections.Generic.List`1[System.Globalization.CultureInfo])
                 if (result == null)
                 {
-                    string elementTypeName;
-                    string[] genTypeParams;
-                    int[] arrayRanks;
-                    GetNameAndIndices(typeName, out elementTypeName, out genTypeParams, out arrayRanks);
+                    GetNameAndIndices(typeName, out string elementTypeName, out string[] genTypeParams, out int[] arrayRanks);
                     if (genTypeParams != null || arrayRanks != null)
                     {
                         // this should have no assembly info in name
@@ -2610,6 +2738,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Separates the name from the indices like TypeGen[gentypeparam, asmname][12,1]. 
         /// Parsed indices are returned as string list.
+        /// array rank is -1 for non-zero based one dimensional arrays.
         /// </summary>
         internal static void GetNameAndIndices(string value, out string name, out string[] genericTypeParams, out int[] arrayRanks)
         {
@@ -2653,7 +2782,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            genericTypeParams = sb.ToString().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            genericTypeParams = sb.ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < genericTypeParams.Length; i++)
             {
                 genericTypeParams[i] = genericTypeParams[i].Trim().Replace(commaPlaceholder, ",");
@@ -2722,9 +2851,7 @@ namespace KGySoft.Reflection
             }
 
             if (lastArrayIndex != -1)
-            {
                 value = value.Remove(lastArrayIndex);
-            }
             return result.Count == 0 ? null : result.ToArray();
         }
 
@@ -2741,23 +2868,22 @@ namespace KGySoft.Reflection
         #region Member Reflection
 
         /// <summary>
-        /// Gets the returned member of a lambda expression providing a refactoring-safe way for
+        /// Gets the returned member of an expression providing a refactoring-safe way for
         /// referencing a field, property, constructor or function method.
         /// </summary>
         /// <typeparam name="T">Type of the returned member in the expression.</typeparam>
-        /// <param name="expression">A lambda expression returning a member.</param>
+        /// <param name="expression">An expression returning a member.</param>
         /// <returns>A <see cref="MemberInfo"/> instance that represents the returned member of the <paramref name="expression"/></returns>
         /// <remarks>
         /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="System.Type"/>,
         /// this method provides a non-string access to a field, property, constructor or function method:
         /// <example><code lang="C#"><![CDATA[
-        /// MemberInfo type = Reflector.IntType; // Type: System.Int32 (by the built-in typeof() operator)
         /// MemberInfo ctorList = Reflector.MemberOf(() => new List<int>()); // ConstructorInfo: List<int>().ctor()
         /// MemberInfo methodIndexOf = Reflector.MemberOf(() => default(List<int>).IndexOf(default(int))); // MethodInfo: List<int>.IndexOf(int) - works without a reference to a List
         /// MemberInfo fieldEmpty = Reflector.MemberOf(() => string.Empty); // FieldInfo: String.Empty
         /// MemberInfo propertyLength = Reflector.MemberOf(() => default(string).Length); // PropertyInfo: String.Length - works without a reference to a string
         /// ]]></code></example></para>
-        /// <para>Constant fields cannot be reflected by this method because C# compiler emits the value of the constant into
+        /// <para>Constant fields cannot be reflected by this method because the C# compiler emits the value of the constant into
         /// the expression instead of the access of the constant field.</para>
         /// <para>To reflect an action method, you can use the <see cref="MemberOf"/> method.</para>
         /// <para>To reflect methods, you can actually cast the method to a delegate and get its <see cref="Delegate.Method"/> property:
@@ -2766,7 +2892,7 @@ namespace KGySoft.Reflection
         /// ]]></code></example>
         /// <note>
         /// Accessing a method by the delegate cast is usually faster than using this method. However, you must have an instance to
-        /// access instance methods. That means that you cannot use the <see langword="default"/> operator for reference types
+        /// access instance methods. That means that you cannot use the <see langword="default"/>&#160;operator for reference types
         /// to access their instance methods. If the constructor of such a type is slow, then using this method can be
         /// more effective to access an instance method.
         /// </note>
@@ -2781,31 +2907,27 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
 
             Expression body = expression.Body;
-            MemberExpression member = body as MemberExpression;
-            if (member != null)
+            if (body is MemberExpression member)
                 return member.Member;
 
-            MethodCallExpression methodCall = body as MethodCallExpression;
-            if (methodCall != null)
+            if (body is MethodCallExpression methodCall)
                 return methodCall.Method;
 
-            NewExpression ctor = body as NewExpression;
-            if (ctor != null)
+            if (body is NewExpression ctor)
                 return ctor.Constructor;
 
             throw new ArgumentException(Res.ReflectionNotAMember(expression.GetType()), nameof(expression));
         }
 
         /// <summary>
-        /// Gets the accessed action method of a lambda expression by a refactoring-safe way.
+        /// Gets the action method of an expression by a refactoring-safe way.
         /// </summary>
-        /// <param name="expression">A lambda expression accessing an action method.</param>
-        /// <returns>A <see cref="MethodInfo"/> instance that represents the accessed method of the <paramref name="expression"/></returns>
+        /// <param name="expression">An expression accessing an action method.</param>
+        /// <returns>The <see cref="MethodInfo"/> instance of the <paramref name="expression"/>.</returns>
         /// <remarks>
         /// <para>Similarly to the <see langword="typeof"/> operator, which provides a refactoring-safe reference to a <see cref="System.Type"/>,
         /// this method provides a non-string access to an action method:
         /// <example><code lang="C#"><![CDATA[
-        /// Type type = Reflector.IntType; // Type: System.Int32 (by the built-in typeof() operator)
         /// MethodInfo methodAdd = Reflector.MemberOf(() => default(List<int>).Add(default(int))); // MethodInfo: List<int>.Add() - works without a reference to a List
         /// ]]></code></example></para>
         /// <para>To reflect a function method, constructor, property or a field, you can use the <see cref="MemberOf{T}"/> method.</para>
@@ -2830,8 +2952,7 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(expression), Res.ArgumentNull);
 
             Expression body = expression.Body;
-            MethodCallExpression methodCall = body as MethodCallExpression;
-            if (methodCall != null)
+            if (body is MethodCallExpression methodCall)
                 return methodCall.Method;
 
             throw new ArgumentException(Res.ReflectionNotAMethod, nameof(expression));
@@ -2878,23 +2999,9 @@ namespace KGySoft.Reflection
 
         private static string GetDefaultMember(Type type)
         {
-            CustomAttributeData data = null;
-            IList<CustomAttributeData> customAttributes = CustomAttributeData.GetCustomAttributes(type);
-            for (int i = 0; i < customAttributes.Count; i++)
-            {
-                if (customAttributes[i].Constructor.DeclaringType == typeof(DefaultMemberAttribute))
-                {
-                    data = customAttributes[i];
-                    break;
-                }
-            }
-
-            if (data == null)
-            {
-                return null;
-            }
-            CustomAttributeTypedArgument argument = data.ConstructorArguments[0];
-            return argument.Value as string;
+            CustomAttributeData data = CustomAttributeData.GetCustomAttributes(type).FirstOrDefault(a => a.Constructor.DeclaringType == typeof(DefaultMemberAttribute));
+            CustomAttributeTypedArgument? argument = data?.ConstructorArguments[0];
+            return argument?.Value as string;
         }
 
         #endregion
