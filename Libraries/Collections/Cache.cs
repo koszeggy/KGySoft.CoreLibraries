@@ -1449,8 +1449,9 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Gets an <see cref="ICacheStatistics"/> instance of the <see cref="Cache{TKey,TValue}"/> that can provide statistical information about the cache.
+        /// Gets an <see cref="ICacheStatistics"/> instance that provides statistical information about this <see cref="Cache{TKey,TValue}"/>.
         /// </summary>
+        /// <returns>An <see cref="ICacheStatistics"/> instance that provides statistical information about the <see cref="Cache{TKey,TValue}"/>.</returns>
         /// <remarks>
         /// <para>The returned <see cref="ICacheStatistics"/> instance is a wrapper around the <see cref="Cache{TKey,TValue}"/> and reflects any changes
         /// happened to the cache immediately. Therefore it is not necessary to call this method again whenever new statistics are required.</para>
@@ -1595,7 +1596,7 @@ namespace KGySoft.Collections
         /// Returns an enumerator that iterates through the <see cref="Cache{TKey,TValue}"/> elements in the evaluation order.
         /// </summary>
         /// <returns>
-        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
+        /// An <see cref="IEnumerator{T}"/> that can be used to iterate through the <see cref="Cache{TKey,TValue}"/>.
         /// </returns>
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>

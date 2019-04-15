@@ -809,9 +809,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Creates a new <see cref="ResXResourceReader"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
         /// </summary>
-        /// <returns>
-        /// An object that reads resources from the <paramref name="fileContents"/> string.
-        /// </returns>
+        /// <returns>A <see cref="ResXResourceReader"/> object that reads resources from the <paramref name="fileContents"/> string.</returns>
         /// <param name="fileContents">A string containing XML resource-formatted information.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource.</param>
         public static ResXResourceReader FromFileContents(string fileContents, ITypeResolutionService typeResolver = null)
@@ -842,6 +840,7 @@ namespace KGySoft.Resources
         /// Returns an <see cref="IDictionaryEnumerator"/> instance for the current <see cref="ResXResourceReader"/> object that enumerates the resources
         /// in the source XML resource file or stream.
         /// </summary>
+        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the resources from the current XML resource file or stream.</returns>
         /// <remarks>
         /// <para>In <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> if <see cref="UseResXDataNodes"/> property is <see langword="true"/>,
         /// the resource and metadata entries are mixed in the returned enumerator, while when it is <see langword="false"/>, then only the resources are returned. In this <see cref="ResXResourceReader"/> implementation the <see cref="GetEnumerator">GetEnumerator</see> method always
@@ -868,6 +867,7 @@ namespace KGySoft.Resources
         /// Returns an <see cref="IDictionaryEnumerator"/> instance for the current <see cref="ResXResourceReader"/> object that enumerates the design-time properties (&lt;metadata&gt; elements)
         /// in the source XML resource file or stream.
         /// </summary>
+        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the design-time properties (&lt;metadata&gt; elements) from the current XML resource file or stream.</returns>
         /// <remarks>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
@@ -889,6 +889,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Provides an <see cref="IDictionaryEnumerator"/> instance that can retrieve the aliases from the current XML resource file or stream.
         /// </summary>
+        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the aliases from the current XML resource file or stream.</returns>
         /// <remarks>
         /// <para>The <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is always a <see cref="string"/> regardless of the value of the <see cref="SafeMode"/> property.</para>
         /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>

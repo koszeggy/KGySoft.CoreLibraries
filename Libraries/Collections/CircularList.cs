@@ -2283,6 +2283,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="CircularList{T}"/>.
         /// </summary>
+        /// <returns>An <see cref="Enumerator"/> instance that can be used to iterate though the elements of the <see cref="CircularList{T}"/>.</returns>
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>

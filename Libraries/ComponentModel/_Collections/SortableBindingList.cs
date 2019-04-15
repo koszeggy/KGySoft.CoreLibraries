@@ -483,7 +483,7 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="index">The zero-based index of the element to remove.</param>
         /// <remarks>
-        /// <para>This method raises the <see cref="ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>.</para>
+        /// <para>This method raises the <see cref="FastBindingList{T}.ListChanged"/> event of type <see cref="ListChangedType.ItemDeleted"/>.</para>
         /// </remarks>
         protected override void RemoveItem(int index)
         {

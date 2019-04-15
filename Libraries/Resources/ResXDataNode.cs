@@ -962,6 +962,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Returns a string that represents the current object.
         /// </summary>
+        /// <returns>The string representation of this <see cref="ResXDataNode"/>.</returns>
         public override string ToString()
         {
             if (fileRef != null)

@@ -245,6 +245,7 @@ namespace KGySoft.Collections.ObjectModel
         /// Gets the element at the specified <paramref name="index" />.
         /// </summary>
         /// <param name="index">The zero-based index of the element to get.</param>
+        /// <returns>The element at the specified <paramref name="index"/>.</returns>
         /// <remarks>
         /// <para>This method has an O(1) cost, unless <see cref="CheckConsistency"/> is <see langword="true"/>&#160;and inconsistency is
         /// detected, in which case it has an O(n) cost. Inconsistency can happen if the underlying collection has been modified directly instead of accessing it only via this instance.</para>

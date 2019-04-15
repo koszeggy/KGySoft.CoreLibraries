@@ -173,8 +173,9 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets the real full path of the directory, where executing application resides.
+        /// Gets the real full path of the directory, where the executing application resides.
         /// </summary>
+        /// <returns>The full path of the directory where the executing application resides.</returns>
         public static string GetExecutingPath() => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         #endregion

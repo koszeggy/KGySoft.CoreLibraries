@@ -620,7 +620,6 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Tries to insert the specified <paramref name="collection"/> into the <paramref name="target"/> collection.
         /// </summary>
-        /// <typeparam name="T">The type of the elements in the collections.</typeparam>
         /// <param name="target">The target collection.</param>
         /// <param name="index">The zero-based index at which the <paramref name="collection"/> should be inserted.</param>
         /// <param name="collection">The collection to insert into the <paramref name="target"/>.</param>

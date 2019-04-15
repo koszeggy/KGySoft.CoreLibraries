@@ -176,6 +176,7 @@ namespace KGySoft.ComponentModel
         /// the converted <see langword="enum"/>, and to set the <see langword="enum"/>&#160;property of the container instance if one of the flags are set.</param>
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
+        /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
         public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
         {
             Type enumType = value.GetType();

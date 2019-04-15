@@ -222,6 +222,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <br/>Calls the overridable <see cref="GetItemIndex">GetItemIndex</see> and <see cref="RemoveItem">RemoveItem</see> methods.
         /// </summary>
         /// <param name="item">The object to remove from the <see cref="VirtualCollection{T}"/>.</param>
+        /// <returns><see langword="true"/>, if an occurrence of <paramref name="item"/> was removed; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="NotSupportedException"><see cref="IsReadOnly"/> returns <see langword="true"/>.</exception>
         public bool Remove(T item)
         {
@@ -340,6 +341,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <br/>The base implementation gets the element at the specified <paramref name="index"/> by calling the <see cref="P:System.Collections.Generic.IList`1.Item(System.Int32)">indexer</see> of the underlying collection.
         /// </summary>
         /// <param name="index">The zero-based index of the element to get.</param>
+        /// <returns>The element at the specified <paramref name="index"/>.</returns>
         protected virtual T GetItem(int index) => items[index];
 
         /// <summary>

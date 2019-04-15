@@ -831,6 +831,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Disallows reentrant attempts to change this collection.
         /// </summary>
+        /// <returns>An <see cref="IDisposable"/> instance that can be used to create a block of protected scope.</returns>
         /// <remarks>
         /// Typical usage is to wrap event invocations with a <see langword="using"/>&#160;scope:
         /// <code lang="C#">

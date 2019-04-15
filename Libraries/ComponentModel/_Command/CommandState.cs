@@ -208,6 +208,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
+        /// <returns>An <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>

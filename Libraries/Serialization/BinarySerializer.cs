@@ -476,8 +476,9 @@ namespace KGySoft.Serialization
         #region Other Methods
 
         /// <summary>
-        /// Creates a new <see cref="IFormatter"/> instance that can be used for serialization and deserialization with given <paramref name="options"/>
+        /// Creates a formatter that can be used for serialization and deserialization with given <paramref name="options"/>.
         /// </summary>
+        /// <returns>An <see cref="IFormatter"/> instance that can be used for serialization and deserialization with given <paramref name="options"/>.</returns>
         /// <param name="options">Options for serializing objects.</param>
         public static IFormatter CreateFormatter(BinarySerializationOptions options)
         {

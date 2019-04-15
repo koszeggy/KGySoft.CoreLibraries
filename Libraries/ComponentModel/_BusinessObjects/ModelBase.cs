@@ -55,8 +55,8 @@ namespace KGySoft.ComponentModel
     /// </note>
     /// </remarks>
     /// <seealso cref="ValidatingObjectBase" />
+    /// <seealso cref="ICanUndo" />
     /// <seealso cref="ICanUndoRedo" />
-    /// <seealso cref="ICanUndoInternal" />
     /// <seealso cref="IRevertibleChangeTracking" />
     /// <seealso cref="ICanEdit" />
     /// <seealso cref="IEditableObject" />

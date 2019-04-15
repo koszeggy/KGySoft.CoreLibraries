@@ -190,6 +190,7 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets the measurement results so far.
         /// </summary>
+        /// <returns>The measurement results collected so far.</returns>
         /// <remarks>
         /// <para>If <see cref="AutoSaveResults"/> is <see langword="true"/>, the measurement results are automatically dumped in
         /// XML files on application exit, so accessing this property is required only
@@ -206,6 +207,8 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets the measurement results of the given <paramref name="category"/> so far.
         /// </summary>
+        /// <param name="category">The category of the measurement results to obtain.</param>
+        /// <returns>The measurement results of the given <paramref name="category"/> collected so far.</returns>
         /// <remarks>
         /// <para>If <see cref="AutoSaveResults"/> is <see langword="true"/>, the measurement results are automatically dumped in
         /// XML files on application exit, so accessing this property is required only
@@ -223,8 +226,7 @@ namespace KGySoft.Diagnostics
         /// Gets a measurement result as an <see cref="IMeasureItem"/> instance, or <see langword="null"/>, if the
         /// measurement result is not found with the given <paramref name="category"/> and <paramref name="operation"/>.
         /// </summary>
-        /// <param name="category">The category name of the operation.
-        /// If <see langword="null"/>&#160;or empty, looks for an uncategorized operation.</param>
+        /// <param name="category">The category name of the operation. If <see langword="null"/>&#160;or empty, looks for an uncategorized operation.</param>
         /// <param name="operation">Name of the operation.</param>
         /// <returns>An <see cref="IMeasureItem"/> instance that contains the measurement results of the required
         /// operation, or <see langword="null"/>, if the measurement result is not found with the given <paramref name="category"/>

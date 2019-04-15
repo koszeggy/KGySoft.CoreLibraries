@@ -84,6 +84,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets statistics of the cache.
         /// </summary>
+        /// <returns>An <see cref="ICacheStatistics"/> instance that provides statistical information about the <see cref="ICache"/> instance.</returns>
         ICacheStatistics GetStatistics();
 
         #endregion

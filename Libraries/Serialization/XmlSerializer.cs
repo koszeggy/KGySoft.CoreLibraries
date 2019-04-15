@@ -8,6 +8,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using KGySoft.CoreLibraries;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 
@@ -37,16 +38,16 @@ namespace KGySoft.Serialization
     /// then its return value determines whether the member should be serialized. This is the same technique used in some designers and is supported by the <a href="https://msdn.microsoft.com/en-us/library/System.Windows.Forms.PropertyGrid.aspx" target="_blank">System.Windows.Forms.PropertyGrid</a> control
     /// as well (see also <see cref="XmlSerializationOptions.IgnoreShouldSerialize"/> option).</description></item>
     /// <item><term><see cref="TypeConverterAttribute"/></term><description>This attribute is supported both for types and property/field members. If a <see cref="TypeConverter"/> supports serialization to and from <see cref="string"/> type,
-    /// then it will be used for serializing its value (see also <see cref="Reflector.RegisterTypeConverter{T,TC}">Reflector.RegisterTypeConverter</see> method).</description></item>
+    /// then it will be used for serializing its value (see also <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method).</description></item>
     /// </list>
     /// </para>
     /// <para>Basically types with default constructors are supported. However, if a field or property value is not <see langword="null"/>&#160;after creating its parent object, then the returned instance is tried to be re-used on deserialization.
-    /// <note>Objects without a default constructor can be serialized at root level also by the <see cref="O:KGySoft.Serialization.SerializeContent">SerializeContent</see> methods into an already existing
+    /// <note>Objects without a default constructor can be serialized at root level also by the <see cref="O:KGySoft.Serialization.XmlSerializer.SerializeContent">SerializeContent</see> methods into an already existing
     /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the method. When deserializing, the result object should be created by the caller, and the content can be deserialized
-    /// by the <see cref="O:KGySoft.Serialization.DeserializeContent">DeserializeContent</see> methods.</note>
+    /// by the <see cref="O:KGySoft.Serialization.XmlSerializer.DeserializeContent">DeserializeContent</see> methods.</note>
     /// </para>
     /// <para><strong>Options:</strong>
-    /// <br/>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.SerializeContent">SerializeContent</see>
+    /// <br/>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.XmlSerializer.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.XmlSerializer.SerializeContent">SerializeContent</see>
     /// methods you can control the default behavior of serialization. The default options and the <see cref="XmlSerializationOptions.None"/> option ensure that only those types are serialized, which are guaranteed to be able to deserialized perfectly.
     /// For details see the description of the <see cref="XmlSerializationOptions.None"/> option.</para>
     /// <para>If a type cannot be serialized with the currently used options a <see cref="SerializationException"/> will be thrown.</para>
@@ -58,9 +59,9 @@ namespace KGySoft.Serialization
     /// </para>
     /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
     /// will be stored in the result XML. Though this provides the best compatibility of any type, it hides the whole inner structure of the serialized object. If a root level object without native support is serialized by the
-    /// <see cref="O:KGySoft.Serialization.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
+    /// <see cref="O:KGySoft.Serialization.XmlSerializer.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
     /// <note>To use binary serialization only for some types or properties you can use specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property or type
-    /// (or you can use the <see cref="Reflector.RegisterTypeConverter{T,TC}">Reflector.RegisterTypeConverter</see> method for types).</note>
+    /// (or you can use the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method for types).</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/System.Xml.Serialization.XmlSerializer.aspx" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
@@ -294,6 +295,7 @@ namespace KGySoft.Serialization
         /// Works for results of <see cref="Serialize(object,XmlSerializationOptions)"/> method.
         /// </summary>
         /// <param name="content">XML content of the object.</param>
+        /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
@@ -303,30 +305,30 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
         /// </summary>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for deserialization.</param>
+        /// <returns>The deserialized object.</returns>
         /// <remarks>
         /// <note>
         /// The <paramref name="reader"/> position must be <em>before</em> the content to deserialize.
         /// </note>
         /// </remarks>
-        /// <param name="reader">An <see cref="XmlReader"/> object to be used for deserialization.</param>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is incosistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        /// <returns>The deserialized object.</returns>
         public static object Deserialize(XmlReader reader) => XmlReaderDeserializer.Deserialize(reader);
 
         /// <summary>
         /// Deserializes an object using the provided <see cref="TextReader"/> in <paramref name="reader"/> parameter.
         /// </summary>
         /// <param name="reader">A <see cref="TextReader"/> object to be used for deserialization. The reader is not closed after deserialization.</param>
+        /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is incosistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        /// <returns>The deserialized object.</returns>
         public static object Deserialize(TextReader reader)
         {
             if (reader == null)
@@ -347,12 +349,12 @@ namespace KGySoft.Serialization
         /// Deserializes an object from the specified file passed in <paramref name="fileName"/> parameter.
         /// </summary>
         /// <param name="fileName">Name of the file that contains the serialized content.</param>
+        /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        /// <returns>The deserialized object.</returns>
         public static object Deserialize(string fileName)
         {
             if (fileName == null)
@@ -373,12 +375,12 @@ namespace KGySoft.Serialization
         /// Deserializes an object from the provided <see cref="Stream"/> in <paramref name="stream"/> parameter.
         /// </summary>
         /// <param name="stream">A <see cref="Stream"/> object to be used for deserialization. The stream is not closed after deserialization.</param>
+        /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is incosistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
-        /// <returns>The deserialized object.</returns>
         public static object Deserialize(Stream stream)
         {
             if (stream == null)

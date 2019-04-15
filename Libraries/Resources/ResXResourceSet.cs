@@ -547,6 +547,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Creates a new <see cref="ResXResourceSet"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
         /// </summary>
+        /// <returns>A <see cref="ResXResourceSet"/> instance that reads resources from the <paramref name="fileContents"/> string.</returns>
         /// <param name="fileContents">A string containing XML resource-formatted information.</param>
         /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object.</param>
         /// <returns></returns>

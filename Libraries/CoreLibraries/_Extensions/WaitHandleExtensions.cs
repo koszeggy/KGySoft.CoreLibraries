@@ -45,6 +45,7 @@ namespace KGySoft.CoreLibraries
         /// <br/>Default value: <see cref="Timeout.Infinite">Timeout.Infinite</see></param>
         /// <param name="cancellationToken">A token for cancellation. This parameter is optional.
         /// <br/>Default value: <see cref="CancellationToken.None">CancellationToken.None</see></param>
+        /// <returns><see langword="true"/>, if the specified <paramref name="handle"/> receives a signal before timing out or canceling; otherwise, <see langword="false"/>.</returns>
         public static async Task<bool> WaitOneAsync([NotNull] this WaitHandle handle, int timeout = Timeout.Infinite, CancellationToken cancellationToken = default)
         {
             if (handle == null)
@@ -73,6 +74,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="handle">The handle to wait on.</param>
         /// <param name="cancellationToken">A token for cancellation. This parameter is optional.
         /// <br/>Default value: <see cref="CancellationToken.None">CancellationToken.None</see></param>
+        /// <returns><see langword="true"/>, if the specified <paramref name="handle"/> receives a signal before canceling; otherwise, <see langword="false"/>.</returns>
         public static Task<bool> WaitOneAsync(this WaitHandle handle, CancellationToken cancellationToken = default)
             => WaitOneAsync(handle, Timeout.Infinite, cancellationToken);
 

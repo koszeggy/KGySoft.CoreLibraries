@@ -197,7 +197,7 @@ namespace KGySoft.Serialization
         byte[] Serialize(BinarySerializationOptions options);
 
         /// <summary>
-        /// Deserializes the inner state of the object from a byte array. Called only when the implementer does not have a constructor with (<see cref="BinarySerializationOptions"/>, <see cref="T:byte[]"/>) parameters.
+        /// Deserializes the inner state of the object from a byte array. Called only when the implementer does not have a constructor with (<see cref="BinarySerializationOptions"/>, <see cref="Array">byte[]</see>) parameters.
         /// Without such constructor parameterless constructor will be called if any (otherwise, no constructors will be executed). have <see langword="readonly"/> fields to deserialize,
         /// then you must use the special constructor to deserialize the object.
         /// </summary>
