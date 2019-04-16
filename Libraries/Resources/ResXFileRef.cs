@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ResXFileRef.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2017 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2017 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution. If not, then this file is considered as
@@ -39,22 +39,20 @@ namespace KGySoft.Resources
     /// You can add a <see cref="ResXFileRef"/> object to a .resx file programmatically by one of the following options:
     /// <list type="bullet">
     /// <item>Call the <see cref="ResXResourceWriter.AddResource(string,object)">ResXResourceWriter.AddResource(string, object)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance.</item>
-    /// <item>Or, call the <see cref="ResXDataNode"/>create a new instance of a <see cref="ResXDataNode"/> class initialized by a <see cref="ResXFileRef"/> instance and then use one of the following options:
-    /// <list type="bullet">
-    /// <item>Call the <see cref="ResXResourceWriter.AddResource(ResXDataNode)">ResXResourceWriter.AddResource(ResXDataNode)</see> method with the created <see cref="ResXFileRef"/> instance.</item>
-    /// <item>Call the <see cref="ResXResourceSet.SetObject">ResXResourceSet.SetObject(string, object)</see> method with the created <see cref="ResXFileRef"/> instance and then save the <see cref="ResXResourceSet"/> instance.</item>
-    /// <item>Call the <see cref="ResXResourceManager.SetObject">ResXResourceManager.SetObject(string, object, CultureInfo)</see> method with the created <see cref="ResXFileRef"/> instance and then save the <see cref="ResXResourceManager"/> instance.</item>
-    /// <item>Call the <see cref="HybridResourceManager.SetObject">HybridResourceManager.SetObject(string, object, CultureInfo)</see> method with the created <see cref="HybridResourceManager"/> instance and then save the <see cref="ResXResourceManager"/> instance.</item>
-    /// </list></item>
+    /// <item>Call the <see cref="ResXResourceSet.SetObject">ResXResourceSet.SetObject(string, object)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance and then save the <see cref="ResXResourceSet"/> instance.</item>
+    /// <item>Call the <see cref="ResXResourceManager.SetObject">ResXResourceManager.SetObject(string, object, CultureInfo)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance and then save the <see cref="ResXResourceManager"/> instance.</item>
+    /// <item>Call the <see cref="HybridResourceManager.SetObject">HybridResourceManager.SetObject(string, object, CultureInfo)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance and then save the <see cref="HybridResourceManager"/> instance.</item>
+    /// <item>Call the <see cref="DynamicResourceManager.SetObject">HybridResourceManager.SetObject(string, object, CultureInfo)</see> method where the second parameter is a <see cref="ResXFileRef"/> instance and then save the <see cref="DynamicResourceManager"/> instance.</item>
     /// </list>
     /// </para>
     /// <h1 class="heading">Comparison with System.Resources.ResXFileRef<a name="comparison">&#160;</a></h1>
     /// <note>The compatibility with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
-    /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, the <strong>Save</strong> overloads of <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
+    /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>,
+    /// <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
     /// the result will be able to be parsed by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a> type, too.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>:
     /// <list type="bullet">
-    /// <item>The constructor of this class (see <see cref="ResXFileRef(string,Type,Encoding)"/>) is incompatible with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
+    /// <item>The <see cref="ResXFileRef(string,Type,Encoding)">constructor</see> is incompatible with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>
     /// implementation. Unlike in system version you must specify the type by a <see cref="Type"/> instance instead of a string.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxfileref.aspx" target="_blank">System.Resources.ResXFileRef</a>:
@@ -113,11 +111,11 @@ namespace KGySoft.Resources
                 string[] parts = remainingString.Split(';');
                 string[] result;
                 if (parts.Length > 1)
-                    result = new string[] { fileName, parts[0], parts[1] };
+                    result = new[] { fileName, parts[0], parts[1] };
                 else if (parts.Length > 0)
-                    result = new string[] { fileName, parts[0] };
+                    result = new[] { fileName, parts[0] };
                 else
-                    result = new string[] { fileName };
+                    result = new[] { fileName };
 
                 return result;
             }
@@ -171,26 +169,13 @@ namespace KGySoft.Resources
 
             #region Instance Methods
 
-            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-            {
-                return sourceType == Reflector.StringType;
-            }
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == Reflector.StringType;
 
-            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            {
-                return destinationType == Reflector.StringType;
-            }
+            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == Reflector.StringType;
 
-            public override Object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-            {
-                return destinationType == Reflector.StringType ? value.ToString() : null;
-            }
+            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType == Reflector.StringType ? value.ToString() : null;
 
-            public override Object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-            {
-                string stringValue = value as string;
-                return stringValue != null ? ConvertFrom(stringValue, null, null) : null;
-            }
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
 
             #endregion
 
@@ -217,7 +202,7 @@ namespace KGySoft.Resources
         #region Public Properties
 
         /// <summary>
-        /// Gets the file name specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// Gets the file name specified in the <see cref="ResXFileRef(string,Type,Encoding)">constructor</see>.
         /// </summary>
         /// <returns>
         /// The name of the referenced file.
@@ -225,7 +210,7 @@ namespace KGySoft.Resources
         public string FileName => fileName;
 
         /// <summary>
-        /// Gets the type name specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// Gets the type name specified in the <see cref="ResXFileRef(string,Type,Encoding)">constructor</see>.
         /// </summary>
         /// <returns>
         /// The type name of the resource that is referenced.
@@ -233,7 +218,7 @@ namespace KGySoft.Resources
         public string TypeName => typeName;
 
         /// <summary>
-        /// Gets the encoding specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// Gets the encoding specified in the <see cref="ResXFileRef(string,Type,Encoding)">constructor</see>.
         /// </summary>
         /// <returns>
         /// The encoding used in the referenced file.
@@ -271,7 +256,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="fileName">The file to reference. </param>
         /// <param name="type">The type of the resource that is referenced. Should be either <see cref="string"/>, array of <see cref="byte"/>, <see cref="MemoryStream"/> or a type, which has a constructor with one <see cref="Stream"/> parameter.</param>
-        /// <param name="textFileEncoding">The encoding used in the referenced file. Used if <paramref name="type"/> is <see cref="string"/>.</param>
+        /// <param name="textFileEncoding">The encoding used in the referenced file. Used if <paramref name="type"/> is <see cref="string"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public ResXFileRef(string fileName, Type type, Encoding textFileEncoding = null)
         {
             if (fileName == null)
@@ -321,8 +307,7 @@ namespace KGySoft.Resources
             if (s == null)
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
-            ResXFileRef result;
-            if (TryParse(s, out result))
+            if (TryParse(s, out ResXFileRef result))
                 return result;
 
             throw new ArgumentException(Res.ArgumentInvalidString, nameof(s));
@@ -368,13 +353,10 @@ namespace KGySoft.Resources
             return result;
         }
 
-        internal static ResXFileRef InitFromWinForms(object other)
-        {
-            return new ResXFileRef(
-                Accessors.ResXFileRef_fileName_Get(other),
-                Accessors.ResXFileRef_typeName_Get(other),
-                Accessors.ResXFileRef_textFileEncoding_Get(other)?.WebName);
-        }
+        internal static ResXFileRef InitFromWinForms(object other) => new ResXFileRef(
+            Accessors.ResXFileRef_fileName_Get(other),
+            Accessors.ResXFileRef_typeName_Get(other),
+            Accessors.ResXFileRef_textFileEncoding_Get(other)?.WebName);
 
         #endregion
 
@@ -388,26 +370,17 @@ namespace KGySoft.Resources
         /// Gets the text representation of the current <see cref="ResXFileRef"/> object.
         /// </summary>
         /// <returns>
-        /// A string that consists of the concatenated text representations of the parameters specified in the current <see cref="ResXFileRef(string,Type,Encoding)"/> constructor.
+        /// A string that consists of the concatenated text representations of the parameters specified in the <see cref="ResXFileRef(string,Type,Encoding)">constructor</see>.
         /// </returns>
-        public override string ToString()
-        {
-            return ToString(fileName, typeName, encoding);
-        }
+        public override string ToString() => ToString(fileName, typeName, encoding);
 
         #endregion
 
         #region Internal Methods
 
-        internal ResXFileRef Clone()
-        {
-            return new ResXFileRef(fileName, typeName, encoding);
-        }
+        internal ResXFileRef Clone() => new ResXFileRef(fileName, typeName, encoding);
 
-        internal object GetValue(Type objectType, string basePath)
-        {
-            return Converter.ConvertFrom(ToString(), objectType, basePath);
-        }
+        internal object GetValue(Type objectType, string basePath) => Converter.ConvertFrom(ToString(), objectType, basePath);
 
         #endregion
 
