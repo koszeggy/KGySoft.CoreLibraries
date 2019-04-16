@@ -40,7 +40,7 @@ namespace KGySoft.Resources
 #pragma warning disable 618
     /// <summary>
     /// Represents a resource or metadata element in an XML resource (.resx) file.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for an example and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>
@@ -50,25 +50,28 @@ namespace KGySoft.Resources
     /// You can then add the resource item or element to a resource file by one of the following options:
     /// <list type="bullet">
     /// <item>Call the <see cref="ResXResourceWriter.AddResource(ResXDataNode)">ResXResourceWriter.AddResource(ResXDataNode)</see> or <see cref="ResXResourceWriter.AddMetadata(ResXDataNode)">ResXResourceWriter.AddMetadata(ResXDataNode)</see> method.</item>
-    /// <item>Call the <see cref="ResXResourceSet.SetObject(string, object)">ResXResourceSet.SetObject(string, object)</see> or <see cref="ResXResourceSet.SetMetaObject(string, object)">ResXResourceSet.SetMetaObject(string, object)</see> method and then save <see cref="ResXResourceSet"/> by one of the overloaded <strong>Save</strong> methods.</item>
-    /// <item>Call the <see cref="ResXResourceManager.SetObject(string, object, CultureInfo)">ResXResourceManager.SetObject(string, object, CultureInfo)</see> or <see cref="ResXResourceManager.SetMetaObject(string, object, CultureInfo)">ResXResourceManager.SetMetaObject(string, object, CultureInfo)</see> method and then save
-    /// the <see cref="ResXResourceManager"/> by the <see cref="ResXResourceManager.SaveResourceSet(CultureInfo, bool, bool)">ResXResourceManager.SaveResourceSet(CultureInfo, bool, bool)</see> or <see cref="ResXResourceManager.SaveAllResources(bool, bool)">ResXResourceManager.SaveAllResources(bool, bool)</see> methods.</item>
+    /// <item>Call the <see cref="ResXResourceSet.SetObject(string, object)">ResXResourceSet.SetObject(string, object)</see> or <see cref="ResXResourceSet.SetMetaObject(string, object)">ResXResourceSet.SetMetaObject(string, object)</see> method and then
+    /// call the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> method on it.</item>
+    /// <item>Call the <see cref="IExpandoResourceManager.SetObject">SetObject</see> or <see cref="IExpandoResourceManager.SetMetaObject">SetMetaObject</see> method on any <see cref="IExpandoResourceManager"/> implementation
+    /// (such as <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/>, <see cref="DynamicResourceManager"/>) and then call the <see cref="IExpandoResourceManager.SaveResourceSet">SaveResourceSet</see>
+    /// or <see cref="IExpandoResourceManager.SaveAllResources">SaveAllResources</see> methods on them.</item>
     /// </list>
-    /// <note>If you call the methods in the list above by any <see cref="object"/>, then a <see cref="ResXDataNode"/> instance will be implicitly created.
-    /// You need to create a <see cref="ResXDataNode"/> instance explicitly only if you want to set the <see cref="Comment"/> property.</note>
+    /// <note>If you call any of the <c>SetObject</c> methods of the list above by any <see cref="object"/>, then a <see cref="ResXDataNode"/> instance will be implicitly created.
+    /// A <see cref="ResXDataNode"/> instance should be explicitly created only if you want to set the <see cref="Comment"/> property.</note>
     /// </para>
     /// <para>To retrieve an existing <see cref="ResXDataNode"/> object, you can select one of the following options:
     /// <list type="bullet">
     /// <item>Enumerate the <see cref="ResXDataNode"/> objects in an XML (.resx file) by instantiating a <see cref="ResXResourceReader"/> object,
     /// setting the <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> property to <see langword="true"/>, and calling the
-    /// <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see> or <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> method to get an enumerator.</item>
+    /// <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see> or <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> method to get an enumerator.
+    /// See also the example below.</item>
     /// <item>Instantiate a new <see cref="ResXResourceSet"/> from a .resx file, set <see cref="ResXResourceSet.SafeMode">ResXResourceSet.SafeMode</see> to <see langword="true"/>,
     /// and call the <see cref="ResXResourceSet.GetObject(string)">ResXResourceSet.GetObject</see> or <see cref="ResXResourceSet.GetMetaObject">ResXResourceSet.GetMetaObject</see>
     /// methods with a key, which exists in the .resx file. You can use the <see cref="ResXResourceSet.GetEnumerator">ResXResourceSet.GetEnumerator</see> and <see cref="ResXResourceSet.GetMetadataEnumerator">ResXResourceSet.GetMetadataEnumerator</see>
     /// methods in a similar way as in case of the <see cref="ResXResourceReader"/> class.</item>
-    /// <item>Instantiate a new <see cref="ResXResourceManager"/> class, set <see cref="ResXResourceManager.SafeMode">ResXResourceManager.SafeMode</see> to <see langword="true"/>,
-    /// and call the <see cref="ResXResourceManager.GetObject(string)">ResXResourceManager.GetObject</see> or <see cref="ResXResourceManager.GetMetaObject">ResXResourceManager.GetMetaObject</see>
-    /// methods with a key, which exists in the .resx file. See the example below for illustration.</item>
+    /// <item>Instantiate a new <see cref="ResXResourceManager"/>/<see cref="HybridResourceManager"/> or <see cref="DynamicResourceManager"/> class, set <see cref="IExpandoResourceManager.SafeMode"/> to <see langword="true"/>,
+    /// and call the <see cref="IExpandoResourceManager.GetObject">GetObject</see> or <see cref="IExpandoResourceManager.GetMetaObject">GetMetaObject</see>
+    /// methods with a key, which exists in the .resx file.</item>
     /// </list>
     /// </para>
     /// <example>
@@ -212,7 +215,7 @@ namespace KGySoft.Resources
     /// <para>Unlike <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
     /// really preserves the original information stored in the .resx file. No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly
     /// requested by calling the <see cref="GetValue">GetValue</see> method.</para>
-    /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, the <strong>Save</strong> overloads of <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
+    /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
     /// the result will be able to be parsed by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> type, too.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">
@@ -227,13 +230,13 @@ namespace KGySoft.Resources
     /// by using <see cref="Reflector.ResolveType(string,bool,bool)">Reflector.ResolveType</see> method so this overload is actually not needed.</item>
     /// <item>The <see cref="GetValue">GetValue</see> method has three parameters instead of one. But all of them are optional so if called from a regular C# code, the method is compatible with
     /// the <a href="https://msdn.microsoft.com/en-us/library/d54fztkz.aspx" target="_blank">System.Resources.ResXDataNode.GetValue(ITypeResolutionService)</a> method.</item>
-    /// <item>There are no public constructors with <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> arguments. These <c>typeNameConverter</c> parameters are used exclusively in non-public methods, which are
-    /// called by the <see cref="ResXResourceWriter"/> class. But in the <see cref="ResXResourceWriter"/> constructors you can pass such a custom <c>typeNameConverter</c>.</item>
+    /// <item>There are no public constructors with <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> arguments. In the system version these <c>typeNameConverter</c> parameters are used exclusively by non-public methods, which are
+    /// called by the <see cref="ResXResourceWriter"/> class. But you can pass such a custom <c>typeNameConverter</c> to the <see cref="ResXResourceWriter"/> constructors.</item>
     /// <item>There is no <strong>GetNodePosition</strong> method because it returned a <a href="https://msdn.microsoft.com/en-us/library/system.drawing.point.aspx" target="_blank">Point</a> structure
     /// from the <c>System.Drawing</c> assembly, which is not referenced by this library. Use <see cref="GetNodeLinePosition">GetNodeLinePosition</see> and <see cref="GetNodeColumnPosition">GetNodeColumnPosition</see> methods instead.</item>
     /// <item>The <see cref="FileRef"/> property returns the same reference during the lifetime of the <see cref="ResXDataNode"/> instance. This is alright as <see cref="ResXFileRef"/> is immutable.
     /// Unlike the system version, the <see cref="FileRef"/> property in this <see cref="ResXDataNode"/> contains exactly the same type information as the original .resx file.</item>
-    /// <item>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.getvalue.aspx" target="_blank">System.Resources.ResXDataNode.GetValue</a> methods often throw <see cref="XmlException"/> if the node contains invalid data. In contrast,
+    /// <item>The <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.getvalue.aspx" target="_blank">System.Resources.ResXDataNode.GetValue</a> method often throws <see cref="XmlException"/> if the node contains invalid data. In contrast,
     /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a>:
@@ -251,12 +254,12 @@ namespace KGySoft.Resources
     /// </description></item>
     /// <item><term>Performance</term>
     /// <description>As there is no deserialization and assembly/type resolving during parsing a .resx file by the <see cref="ResXResourceReader"/> class, the parsing is
-    /// much more faster. This is true even if <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> is <see langword="false"/>, because there are always <see cref="ResXDataNode"/>
-    /// instances stored internally.</description></item>
+    /// much faster. This is true even if <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> is <see langword="false"/>, because there are always <see cref="ResXDataNode"/>
+    /// instances stored internally and deserialization occurs only when a resource is actually accessed.</description></item>
     /// <item><term>Support of non-serializable types</term>
     /// <description>When serializing an object, the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxdatanode.aspx" target="_blank">System.Resources.ResXDataNode</a> type
     /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types even if compatibility mode is used
-    /// (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> and the <strong>Save</strong> overloads of the <see cref="ResXResourceSet"/> class).
+    /// (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods).
     /// In compatibility mode this is achieved by wrapping the non-serializable types into an <see cref="AnyObjectSerializerWrapper"/> instance so the <see cref="BinaryFormatter"/> will
     /// able to handle them, too.</description></item>
     /// <item><term>Support of generics</term>
@@ -519,9 +522,6 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets or sets an arbitrary comment regarding this resource.
         /// </summary>
-        /// <returns>
-        /// A string that represents the comment.
-        /// </returns>
         public string Comment
         {
             get { return comment ?? nodeInfo?.Comment ?? String.Empty; }
@@ -531,18 +531,11 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets the name of this resource.
         /// </summary>
-        /// <returns>
-        /// A string that corresponds to the resource name.
-        /// </returns>
         public string Name => name ?? nodeInfo?.Name;
 
         /// <summary>
         /// Gets the file reference for this resource, or <see langword="null"/>, if this resource does not have a file reference.
         /// </summary>
-        /// <returns>
-        /// The file reference, if this resource uses one. If this resource stores its value as an <see cref="object"/>,
-        /// this property will return <see langword="null"/>.
-        /// </returns>
         public ResXFileRef FileRef => fileRef;
 
         /// <summary>
@@ -554,7 +547,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets the type information as <see cref="string"/> as it is stored in the source .resx file. It can be either an assembly qualified name,
-        /// or a type name with or without an assembly alias name. If <see cref="AssemblyAliasValue"/> was not <see langword="null"/>, this property value
+        /// or a type name with or without an assembly alias name. If <see cref="AssemblyAliasValue"/> is not <see langword="null"/>, this property value
         /// contains an assembly alias name. The property returns <see langword="null"/>, if the <c>type</c> attribute is not defined in the .resx file.
         /// If the resource does not contain the .resx information (that is, if the <see cref="ResXDataNode"/> was created from an object or the raw .resx data was removed on a <see cref="GetValue">GetValue</see> call), then this property returns <see langword="null"/>.
         /// </summary>

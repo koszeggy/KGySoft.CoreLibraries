@@ -39,10 +39,7 @@ namespace KGySoft.Resources
 
         #region Constructors
 
-        internal AutoSaveErrorEventArgs(Exception exception) : base(false)
-        {
-            Exception = exception;
-        }
+        internal AutoSaveErrorEventArgs(Exception exception) : base(false) => Exception = exception;
 
         #endregion
     }

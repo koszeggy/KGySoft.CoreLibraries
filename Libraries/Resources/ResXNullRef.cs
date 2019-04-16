@@ -45,7 +45,6 @@ namespace KGySoft.Resources
             {
                 if (value == null)
                     Interlocked.CompareExchange(ref value, new ResXNullRef(), null);
-
                 return value;
             }
         }
@@ -54,10 +53,7 @@ namespace KGySoft.Resources
 
         #region IObjectReference Members
 
-        object IObjectReference.GetRealObject(StreamingContext context)
-        {
-            return Value;
-        }
+        object IObjectReference.GetRealObject(StreamingContext context) => Value;
 
         #endregion
     }

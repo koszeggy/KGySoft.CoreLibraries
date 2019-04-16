@@ -64,15 +64,12 @@ namespace KGySoft.Resources
 
         #region Instance Methods
 
-        internal DataNodeInfo Clone()
-        {
-            return (DataNodeInfo)MemberwiseClone();
-        }
+        internal DataNodeInfo Clone() => (DataNodeInfo)MemberwiseClone();
 
         internal void DetectCompatibleFormat()
         {
             CompatibleFormat = MimeType != ResXCommon.KGySoftSerializedObjectMimeType
-                               && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal)));
+                && (TypeName == null || (!TypeName.StartsWith(ResXCommon.ResXFileRefNameKGySoft, StringComparison.Ordinal) && !TypeName.StartsWith(ResXCommon.ResXNullRefNameKGySoft, StringComparison.Ordinal)));
         }
 
         #endregion

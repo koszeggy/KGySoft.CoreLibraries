@@ -37,7 +37,7 @@ namespace KGySoft.Resources
 #pragma warning disable 618
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a>
@@ -58,15 +58,15 @@ namespace KGySoft.Resources
     /// The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property returns the alias names, while <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
     /// returns the corresponding assembly names for the alias names.</item>
     /// <item>As an explicit interface implementation, <see cref="ResXResourceReader"/> implements <see cref="IEnumerable.GetEnumerator">IEnumerable.GetEnumerator</see> method, which returns the same enumerator as
-    /// <see cref="GetEnumerator">GetEnumerator</see> as an <see cref="IEnumerator"/> instance. The <see cref="IEnumerator.Current">IEnumerator.Current</see> property will return <see cref="DictionaryEntry"/> instances.</item>
+    /// the <see cref="GetEnumerator">GetEnumerator</see> method as an <see cref="IEnumerator"/> instance. The <see cref="IEnumerator.Current">IEnumerator.Current</see> property will return <see cref="DictionaryEntry"/> instances.</item>
     /// </list>
     /// </note>
     /// </para>
-    /// <para>If you want to retrieve named resources from a .resx file rather than enumerating its resources, you can instantiate a <see cref="ResXResourceSet"/> object and call its
-    /// <see cref="ResXResourceSet.GetString(string)">GetString</see>/<see cref="ResXResourceSet.GetObject(string)">GetObject</see>, <see cref="ResXResourceSet.GetMetaString">GetMetaString</see>/<see cref="ResXResourceSet.GetMetaObject">GetMetaObject</see> and <see cref="ResXResourceSet.GetAliasValue">GetAliasValue</see> and  methods.
-    /// <see cref="ResXResourceSet"/> supports <see cref="ResXResourceSet.SafeMode"/>, too.</para>
     /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property is a <see cref="ResXDataNode"/>
     /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
+    /// <para>If you want to retrieve named resources from a .resx file rather than enumerating its resources, then you can instantiate a <see cref="ResXResourceSet"/> object and call its
+    /// <see cref="ResXResourceSet.GetString(string)">GetString</see>/<see cref="ResXResourceSet.GetObject(string)">GetObject</see>, <see cref="ResXResourceSet.GetMetaString">GetMetaString</see>/<see cref="ResXResourceSet.GetMetaObject">GetMetaObject</see> and <see cref="ResXResourceSet.GetAliasValue">GetAliasValue</see> methods.
+    /// Also <see cref="ResXResourceSet"/> supports <see cref="ResXResourceSet.SafeMode"/>.</para>
     /// <example>
     /// The following example shows how to enumerate the resources, metadata and aliases of a .resx file and what is the difference between safe and non-safe mode.
     /// Please note that <see cref="SafeMode"/> property can be switched on and off during the enumeration, too. Please also note that the values returned by the <see cref="GetAliasEnumerator">GetAliasEnumerator</see> are always
@@ -123,6 +123,7 @@ namespace KGySoft.Resources
     ///        Console.WriteLine("____Aliases in .resx:____");
     ///        Dump(reader, reader.GetAliasEnumerator);
     ///    }
+    /// 
     ///    private static void Dump(ResXResourceReader reader, Func<IDictionaryEnumerator> getEnumeratorFunction)
     ///    {
     ///        var enumerator = getEnumeratorFunction();
@@ -299,7 +300,7 @@ namespace KGySoft.Resources
     /// <description>The Soap formatter support is provided without referencing the <c>System.Runtime.Serialization.Formatters.Soap.dll</c> assembly. If the assembly cannot be loaded from the GAC (platform dependent),
     /// then a <see cref="NotSupportedException"/> will be thrown.</description></item>
     /// <item><term>Type resolving</term>
-    /// <description>If a <see cref="ITypeResolutionService"/> instance is passed to one of the constructors, it is used also for the type references in <see cref="ResXFileRef"/> instances.</description></item>
+    /// <description>If an <see cref="ITypeResolutionService"/> instance is passed to one of the constructors, it is used also for the type references in <see cref="ResXFileRef"/> instances.</description></item>
     /// </list></para>
     /// </remarks>
     /// <seealso cref="ResXDataNode"/>
@@ -483,9 +484,7 @@ namespace KGySoft.Resources
                         // there is already a buffer: occurs if the enumerator has been reset.
                         var result = new List<KeyValuePair<string, ResXDataNode>>();
                         while (bufferedEnumerator.MoveNext())
-                        {
                             result.Add(bufferedEnumerator.Current);
-                        }
 
                         IEnumerable<KeyValuePair<string, ResXDataNode>> rest = owner.ReadToEnd(mode);
                         if (result.Count > 0)
@@ -494,9 +493,7 @@ namespace KGySoft.Resources
                             bufferedEnumerator = result.GetEnumerator();
                         }
                         else
-                        {
                             bufferedEnumerator = rest.GetEnumerator();
-                        }
                     }
                 }
             }
@@ -571,6 +568,7 @@ namespace KGySoft.Resources
         #region Fields
 
         private readonly object syncRoot = new object();
+        private readonly ITypeResolutionService typeResolver;
 
         /// <summary>
         /// The internally created reader. Will be closed automatically when stream ends or on Dispose
@@ -579,7 +577,6 @@ namespace KGySoft.Resources
 
         private string basePath;
         private States state = States.Created;
-        private ITypeResolutionService typeResolver;
 
         /// <summary>
         /// The currently active aliases. Same as <see cref="aliases"/> if duplication is disabled.
@@ -603,6 +600,8 @@ namespace KGySoft.Resources
 
         #region Properties
 
+        #region Public Properties
+
         /// <summary>
         /// Gets or sets the base path for the relative file path specified in a <see cref="ResXFileRef"/> object.
         /// <br/>Default value: <see langword="null"/>.
@@ -619,7 +618,7 @@ namespace KGySoft.Resources
         /// </remarks>
         public string BasePath
         {
-            get { return basePath; }
+            get => basePath;
             set
             {
                 switch (state)
@@ -647,8 +646,8 @@ namespace KGySoft.Resources
         [Obsolete("This property is maintained due to compatibility reasons with the System.Windows.Forms.ResXResourceReader class. Use SafeMode property instead.")]
         public bool UseResXDataNodes
         {
-            get { return safeMode; }
-            set { SafeMode = value; }
+            get => safeMode;
+            set => SafeMode = value;
         }
 
         /// <summary>
@@ -657,17 +656,17 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="Close">Close</see> or <see cref="IDisposable.Dispose">IDisposable.Dispose</see> method has already been called on this
         /// <see cref="ResXResourceReader"/> instance.</exception>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the objects returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the objects returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method on the <see cref="ResXDataNode"/> instance.
-        /// See the remarks section and the examples at <see cref="ResXResourceReader"/> for more details.</para>
+        /// <br/>See also the examples at the <strong>Remarks</strong> section of the <see cref="ResXResourceReader"/> class.</para>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
         public bool SafeMode
         {
-            get { return safeMode; }
+            get => safeMode;
             set
             {
                 if (state == States.Disposed)
@@ -687,7 +686,7 @@ namespace KGySoft.Resources
         /// <see cref="ResXResourceReader"/> instance.</exception>
         public bool CheckHeader
         {
-            get { return checkHeader; }
+            get => checkHeader;
             set
             {
                 switch (state)
@@ -708,7 +707,7 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If an element is defined more than once, and <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>,
+        /// <para>If an element is defined more than once and <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>,
         /// then the enumeration returns every occurrence of the entries with identical names.
         /// If <see cref="AllowDuplicatedKeys"/> is <see langword="false"/>&#160;the enumeration returns always the last occurrence of the entries with identical names.</para>
         /// <para>If duplicated keys are allowed, the enumeration of the .resx file is lazy for the first time.
@@ -722,7 +721,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the XML resource file has already been accessed and is in use.</exception>
         public bool AllowDuplicatedKeys
         {
-            get { return allowDuplicatedKeys; }
+            get => allowDuplicatedKeys;
             set
             {
                 switch (state)
@@ -740,6 +739,19 @@ namespace KGySoft.Resources
 
         #endregion
 
+        #region Explicitly Implemented Interface Properties
+
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources => resources;
+        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata => metadata;
+        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases => aliases;
+        ITypeResolutionService IResXResourceContainer.TypeResolver => typeResolver;
+        bool IResXResourceContainer.AutoFreeXmlData => false;
+        int IResXResourceContainer.Version => 0;
+
+        #endregion
+
+        #endregion
+
         #region Construction and Destruction
 
         #region Constructors
@@ -748,7 +760,8 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceReader"/> class for the specified resource file.
         /// </summary>
         /// <param name="fileName">The name of an XML resource file that contains resources.</param>
-        /// <param name="typeResolver">An object that resolves type names specified in a resource.</param>
+        /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public ResXResourceReader(string fileName, ITypeResolutionService typeResolver = null)
         {
             if (fileName == null)
@@ -762,7 +775,8 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceReader"/> class for the specified <see cref="TextReader"/>.
         /// </summary>
         /// <param name="reader">A text stream reader that contains resources.</param>
-        /// <param name="typeResolver">An object that resolves type names specified in a resource.</param>
+        /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public ResXResourceReader(TextReader reader, ITypeResolutionService typeResolver = null)
         {
             if (reader == null)
@@ -773,10 +787,11 @@ namespace KGySoft.Resources
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResXResourceReader"/> class for the specified stream.
+        /// Initializes a new instance of the <see cref="ResXResourceReader"/> class for the specified <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">An input stream that contains resources.</param>
-        /// <param name="typeResolver">An object that resolves type names specified in a resource.</param>
+        /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public ResXResourceReader(Stream stream, ITypeResolutionService typeResolver = null)
         {
             if (stream == null)
@@ -811,7 +826,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <returns>A <see cref="ResXResourceReader"/> object that reads resources from the <paramref name="fileContents"/> string.</returns>
         /// <param name="fileContents">A string containing XML resource-formatted information.</param>
-        /// <param name="typeResolver">An object that resolves type names specified in a resource.</param>
+        /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         public static ResXResourceReader FromFileContents(string fileContents, ITypeResolutionService typeResolver = null)
         {
             ResXResourceReader result = new ResXResourceReader(new StringReader(fileContents), typeResolver);
@@ -830,10 +846,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// If the <see cref="ResXResourceReader"/> is initialized in a <c>using</c> statement, it is not needed to call this method explicitly.
         /// </remarks>
-        public void Close()
-        {
-            ((IDisposable)this).Dispose();
-        }
+        public void Close() => ((IDisposable)this).Dispose();
 
 #pragma warning disable 618
         /// <summary>
@@ -849,7 +862,7 @@ namespace KGySoft.Resources
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined name.</para>
-        /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
+        /// <para>See also the <strong>Remarks</strong> section of the <see cref="ResXResourceReader"/> class for examples.</para>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
@@ -858,22 +871,19 @@ namespace KGySoft.Resources
         /// <seealso cref="GetMetadataEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
 #pragma warning restore 618
-        public IDictionaryEnumerator GetEnumerator()
-        {
-            return GetEnumeratorInternal(ResXEnumeratorModes.Resources);
-        }
+        public IDictionaryEnumerator GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
         /// <summary>
-        /// Returns an <see cref="IDictionaryEnumerator"/> instance for the current <see cref="ResXResourceReader"/> object that enumerates the design-time properties (&lt;metadata&gt; elements)
+        /// Returns an <see cref="IDictionaryEnumerator"/> instance for the current <see cref="ResXResourceReader"/> object that enumerates the design-time properties (<c>&lt;metadata&gt;</c> elements)
         /// in the source XML resource file or stream.
         /// </summary>
-        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the design-time properties (&lt;metadata&gt; elements) from the current XML resource file or stream.</returns>
+        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the design-time properties (<c>&lt;metadata&gt</c>; elements) from the current XML resource file or stream.</returns>
         /// <remarks>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined name.</para>
-        /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
+        /// <para>See also the <strong>Remarks</strong> section of the <see cref="ResXResourceReader"/> class for examples.</para>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
@@ -881,10 +891,7 @@ namespace KGySoft.Resources
         /// <seealso cref="SafeMode"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
-        public IDictionaryEnumerator GetMetadataEnumerator()
-        {
-            return GetEnumeratorInternal(ResXEnumeratorModes.Metadata);
-        }
+        public IDictionaryEnumerator GetMetadataEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Metadata);
 
         /// <summary>
         /// Provides an <see cref="IDictionaryEnumerator"/> instance that can retrieve the aliases from the current XML resource file or stream.
@@ -895,17 +902,14 @@ namespace KGySoft.Resources
         /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>
         /// <para>If <see cref="AllowDuplicatedKeys"/> property is <see langword="true"/>, then this method returns a lazy enumerator for the first time meaning the .resx file is parsed only during the enumeration. When any of the enumerators are obtained
         /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined value will be returned of a redefined alias.</para>
-        /// <para>See also the examples at the remarks of the <see cref="ResXResourceReader"/>.</para>
+        /// <para>See also the <strong>Remarks</strong> section of the <see cref="ResXResourceReader"/> class for examples.</para>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <seealso cref="ResXResourceReader"/>
         /// <seealso cref="SafeMode"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetMetadataEnumerator"/>
-        public IDictionaryEnumerator GetAliasEnumerator()
-        {
-            return GetEnumeratorInternal(ResXEnumeratorModes.Aliases);
-        }
+        public IDictionaryEnumerator GetAliasEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Aliases);
 
         #endregion
 
@@ -990,13 +994,13 @@ namespace KGySoft.Resources
             }
         }
 
-        private int GetLineNumber(XmlReader reader)
+        private int GetLineNumber()
         {
             IXmlLineInfo xmlLineInfo = reader as IXmlLineInfo;
             return xmlLineInfo?.LineNumber ?? 0;
         }
 
-        private int GetLinePosition(XmlReader reader)
+        private int GetLinePosition()
         {
             IXmlLineInfo xmlLineInfo = reader as IXmlLineInfo;
             return xmlLineInfo?.LinePosition ?? 0;
@@ -1005,7 +1009,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Parses the resource header node. Header can be completely missing; however, it is checked when required and exists.
         /// </summary>
-        private void ParseResHeaderNode(XmlReader reader)
+        private void ParseResHeaderNode()
         {
             object name = reader[ResXCommon.NameStr];
             if (name == null)
@@ -1024,7 +1028,7 @@ namespace KGySoft.Resources
             {
                 string resHeaderMimeType = reader.NodeType == XmlNodeType.Element ? reader.ReadElementString() : reader.Value.Trim();
                 if (resHeaderMimeType != ResXCommon.ResMimeType)
-                    throw new NotSupportedException(Res.ResourcesHeaderMimeTypeNotSupported(resHeaderMimeType, GetLineNumber(reader), GetLinePosition(reader)));
+                    throw new NotSupportedException(Res.ResourcesHeaderMimeTypeNotSupported(resHeaderMimeType, GetLineNumber(), GetLinePosition()));
             }
             else if (name == ResXCommon.ReaderStr || name == ResXCommon.WriterStr)
             {
@@ -1038,25 +1042,25 @@ namespace KGySoft.Resources
                 if (name == ResXCommon.ReaderStr)
                 {
                     if (typeName == null || (!ResXCommon.ResXResourceReaderNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
-                        throw new NotSupportedException(Res.ResourcesResXReaderNotSupported(typeName, GetLineNumber(reader), GetLinePosition(reader)));
+                        throw new NotSupportedException(Res.ResourcesResXReaderNotSupported(typeName, GetLineNumber(), GetLinePosition()));
                 }
                 else
                 {
                     if (typeName == null || (!ResXCommon.ResXResourceWriterNameWinForms.StartsWith(typeName, StringComparison.Ordinal) && typeName != typeof(ResXResourceReader).FullName))
-                        throw new NotSupportedException(Res.ResourcesResXWriterNotSupported(typeName, GetLineNumber(reader), GetLinePosition(reader)));
+                        throw new NotSupportedException(Res.ResourcesResXWriterNotSupported(typeName, GetLineNumber(), GetLinePosition()));
                 }
             }
 #pragma warning restore 252, 253
         }
 
-        private void ParseAssemblyNode(XmlReader reader, out string key, out string value)
+        private void ParseAssemblyNode(out string key, out string value)
         {
             key = reader[ResXCommon.AliasStr];
             value = reader[ResXCommon.NameStr];
             if (value == null)
             {
-                int line = GetLineNumber(reader);
-                int col = GetLinePosition(reader);
+                int line = GetLineNumber();
+                int col = GetLinePosition();
                 throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.NameStr, line, col), line, col);
             }
         }
@@ -1126,12 +1130,8 @@ namespace KGySoft.Resources
             ICollection<KeyValuePair<string, ResXDataNode>> result = allowDuplicatedKeys 
                 ? (ICollection<KeyValuePair<string, ResXDataNode>>)new List<KeyValuePair<string, ResXDataNode>>() 
                 : new Dictionary<string, ResXDataNode>();
-            string key;
-            ResXDataNode value;
-            while (ReadNext(mode, out key, out value))
-            {
+            while (ReadNext(mode, out string key, out ResXDataNode value))
                 AddNode(result, key, value);
-            }
 
             return result;
         }
@@ -1141,9 +1141,7 @@ namespace KGySoft.Resources
         /// </summary>
         private void ReadAll()
         {
-            string key;
-            ResXDataNode value;
-            while (Advance(null, out key, out value))
+            while (Advance(null, out var _, out var _))
             {
             }
         }
@@ -1170,22 +1168,21 @@ namespace KGySoft.Resources
                 object name = reader.LocalName;
                 if (name == ResXCommon.DataStr)
                 {
-                    ParseDataNode(reader, out key, out value);
+                    ParseDataNode(out key, out value);
                     AddNode(resources, key, value);
                     if (mode == ResXEnumeratorModes.Resources)
                         return true;
                 }
                 else if (name == ResXCommon.MetadataStr)
                 {
-                    ParseDataNode(reader, out key, out value);
+                    ParseDataNode(out key, out value);
                     AddNode(metadata, key, value);
                     if (mode == ResXEnumeratorModes.Metadata)
                         return true;
                 }
                 else if (name == ResXCommon.AssemblyStr)
                 {
-                    string assemblyName;
-                    ParseAssemblyNode(reader, out key, out assemblyName);
+                    ParseAssemblyNode(out key, out string assemblyName);
                     AddAlias(key, assemblyName);
                     if (mode == ResXEnumeratorModes.Aliases)
                     {
@@ -1194,9 +1191,7 @@ namespace KGySoft.Resources
                     }
                 }
                 else if (name == ResXCommon.ResHeaderStr && checkHeader)
-                {
-                    ParseResHeaderNode(reader);
-                }
+                    ParseResHeaderNode();
 #pragma warning restore 252, 253
             }
 
@@ -1210,8 +1205,7 @@ namespace KGySoft.Resources
 
         private void AddAlias(string key, string assemblyName)
         {
-            var dict = aliases as Dictionary<string, string>;
-            if (dict != null)
+            if (aliases is Dictionary<string, string> dict)
             {
                 dict[key] = assemblyName;
                 Debug.Assert(ReferenceEquals(aliases, activeAliases), "activeAliases should be the same as aliases");
@@ -1235,11 +1229,11 @@ namespace KGySoft.Resources
         /// Parses a data or metadata node.
         /// Calls must be in a lock or from a ctor.
         /// </summary>
-        private void ParseDataNode(XmlReader reader, out string key, out ResXDataNode value)
+        private void ParseDataNode(out string key, out ResXDataNode value)
         {
             key = reader[ResXCommon.NameStr];
-            int line = GetLineNumber(reader);
-            int col = GetLinePosition(reader);
+            int line = GetLineNumber();
+            int col = GetLinePosition();
             if (key == null)
                 throw ResXCommon.CreateXmlException(Res.ResourcesNoResXName(line, col), line, col);
 
@@ -1277,8 +1271,8 @@ namespace KGySoft.Resources
                             nodeInfo.Comment = reader.ReadString();
                         else
                         {
-                            line = GetLineNumber(reader);
-                            col = GetLinePosition(reader);
+                            line = GetLineNumber();
+                            col = GetLinePosition();
                             throw ResXCommon.CreateXmlException(Res.ResourcesUnexpectedElementAt(name.ToString(), line, col), line, col);
                         }
                     }
@@ -1304,30 +1298,11 @@ namespace KGySoft.Resources
             Dispose(true);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumeratorInternal(ResXEnumeratorModes.Resources);
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
         #endregion
 
         #endregion
-
-        #endregion
-
-        #region IResXResourceContainer Members
-
-        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Resources => resources;
-
-        ICollection<KeyValuePair<string, ResXDataNode>> IResXResourceContainer.Metadata => metadata;
-
-        ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases => aliases;
-
-        ITypeResolutionService IResXResourceContainer.TypeResolver => typeResolver;
-
-        bool IResXResourceContainer.AutoFreeXmlData => false;
-
-        int IResXResourceContainer.Version => 0;
 
         #endregion
     }
