@@ -37,7 +37,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class.
+    /// <br/>See the <strong>Remarks</strong> section for an example and for the differences compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class.
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>
@@ -122,14 +122,14 @@ namespace KGySoft.Resources
     /// <item><c>SoapSerializedObjectMimeType</c></item>
     /// <item><c>Version</c></item>
     /// </list></item>
-    /// <item>In this version there are no one parameter constructors. Instead, the second parameter (<c>typeNameConverter</c>) is optional. If used purely from C# (no reflection or similar), this change is a
+    /// <item>In this version there are no one parameter constructors. Instead, the second parameter (<c>typeNameConverter</c>) is optional. If used purely from C# (no reflection or whatsoever), this change is a
     /// compatible one.</item>
     /// <item>This <see cref="ResXResourceWriter"/> is a sealed class.</item>
     /// <item>After disposing the <see cref="ResXResourceWriter"/> instance or calling the <see cref="Close">Close</see> method, calling the <see cref="Generate">Generate</see> method will throw an <see cref="ObjectDisposedException"/>.</item>
     /// <item>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.AddAlias.aspx" target="_blank">System.Resources.ResXResourceWriter.AddAlias</a> method just
     /// populates an inner alias list causing that the alias will be recognized on further processing but will never be dumped into the output stream. In this <see cref="ResXResourceWriter"/> implementation
     /// the <see cref="AddAlias(string,AssemblyName,bool)">AddAlias</see> method is somewhat different: not just registers the alias as a known one but also dumps that into the output stream.
-    /// It can be selected though, whether the dump should be deferred until the first occurrence.</item>
+    /// It can be specified though, whether the dump should be deferred until the alias is actually referenced for the first time.</item>
     /// </list>
     /// </para>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>:
@@ -153,7 +153,7 @@ namespace KGySoft.Resources
     /// </list></item>
     /// <item><term><see cref="AutoGenerateAlias"/> property</term>
     /// <description>If <see langword="true"/>, alias names for assemblies will be automatically generated without calling <see cref="AddAlias(string,string,bool)">AddAlias</see> method.
-    /// If <see langword="false"/>, the assembly qualified names will be used for non-mscorlib types, unless an alias name was defined by <see cref="AddAlias(string,string,bool)">AddAlias</see> method or the <see cref="ResXDataNode"/> to dump already contains an alias name.</description></item>
+    /// If <see langword="false"/>, the assembly qualified names will be used for non-mscorlib types, unless an alias name was explicitly added by the <see cref="AddAlias(string,string,bool)">AddAlias</see> method or the <see cref="ResXDataNode"/> to dump already contains an alias name.</description></item>
     /// <item><strong>Better support of several types:</strong>
     /// <list type="table">
     /// <listheader><term>Type</term><term>Improvement</term><term>How it is handled by the System version</term></listheader>
@@ -161,17 +161,17 @@ namespace KGySoft.Resources
     /// <term><see langword="null"/>&#160;value</term>
     /// <term>Invalid .resx representations of <see langword="null"/>&#160;value is fixed when re-written by <see cref="ResXResourceWriter"/>.
     /// </term><term>When the System version rewrites such an invalid <see langword="null"/>&#160;node, it turns into empty string.</term></item>
-    /// <item><term>Array of <see cref="sbyte"/></term>
+    /// <item><term><see cref="Array"/> of <see cref="sbyte"/></term>
     /// <term>Serializing <see cref="sbyte">sbyte[]</see> type works properly.</term>
     /// <term>The <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> changes the <see cref="sbyte">sbyte[]</see> types to <see cref="byte">byte[]</see>.</term></item>
     /// <item><term><see cref="char"/></term>
     /// <term>Support of unpaired surrogate characters.</term>
     /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize unpaired surrogates, though
-    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
+    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully if they are serialized by <see cref="ResXResourceWriter"/> and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
     /// <item><term><see cref="string"/> and any type serialized by a <see cref="TypeConverter"/>.</term>
     /// <term>Strings containing unpaired surrogates and invalid Unicode characters can be written without any error.</term>
     /// <term><a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceWriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> cannot serialize such strings, though
-    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully, if they are serialized by this class and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
+    /// <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a> can read them successfully if they are serialized by <see cref="ResXResourceWriter"/> and <see cref="CompatibleFormat"/> is <see langword="true"/>.</term></item>
     /// <item><term><see cref="DateTime"/> and <see cref="DateTimeOffset"/></term>
     /// <term>Serialized in a different way so even the milliseconds part is preserved.</term>
     /// <term>The fixed form can be deserialized by <a href="https://msdn.microsoft.com/en-us/library/System.Resources.ResXResourceReader.aspx" target="_blank">System.Resources.ResXResourceReader</a>, too;
@@ -202,8 +202,8 @@ namespace KGySoft.Resources
         /// <summary>
         /// Required because a writer created by XmlWriter.Create preserves \r chars only if they are entitized;
         /// however, to keep things readable (and compatible), entitization should be omitted on new lines and base64 wrapping,
-        /// but entitization cannot be changed once the writing has started. So this writer:
-        /// - Entitizes \r \n if they are not used together
+        /// but entitization cannot be changed once the writing has been started. So this writer:
+        /// - Entitizes \r \n chars only if they are not used together
         /// - Can write strings containing unpaired surrogates and invalid Unicode characters. This result can be read correctly even by system ResXResourceReader.
         /// </summary>
         private sealed class ResXWriter : XmlTextWriter
@@ -353,11 +353,11 @@ namespace KGySoft.Resources
 
         #region Static Fields
 
-        private static readonly string resourceHeader = @"
+        private static readonly string resourceHeader = $@"
     <!-- 
     Microsoft ResX Schema 
     
-    Version " + ResXCommon.Version + @"
+    Version {ResXCommon.Version}
     
     The primary goals of this format is to allow a simple XML format 
     that is mostly human readable. The generation and parsing of the 
@@ -368,16 +368,15 @@ namespace KGySoft.Resources
     
     ... ado.net/XML headers & schema ...
     <resheader name=""resmimetype"">text/microsoft-resx</resheader>
-    <resheader name=""version"">" + ResXCommon.Version + @"</resheader>
+    <resheader name=""version"">{ResXCommon.Version}</resheader>
     <resheader name=""reader"">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name=""writer"">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name=""Name1""><value>this is my long string</value><comment>this is a comment</comment></data>
     <data name=""Color1"" type=""System.Drawing.Color, System.Drawing"">Blue</data>
-    <data name=""Bitmap1"" mimetype=""" + ResXCommon.BinSerializedObjectMimeType + @""">
+    <data name=""Bitmap1"" mimetype=""{ResXCommon.BinSerializedObjectMimeType}"">
         <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
-    <data name=""Icon1"" type=""System.Drawing.Icon, System.Drawing"" mimetype="""
-                                                        + ResXCommon.ByteArraySerializedObjectMimeType + @""">
+    <data name=""Icon1"" type=""System.Drawing.Icon, System.Drawing"" mimetype=""{ResXCommon.ByteArraySerializedObjectMimeType}"">
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
@@ -395,16 +394,16 @@ namespace KGySoft.Resources
     ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
     
-    Note - " + ResXCommon.BinSerializedObjectMimeType + @" is the format 
+    Note - {ResXCommon.BinSerializedObjectMimeType} is the format 
     that the ResXResourceWriter will generate, however the reader can 
     read any of the formats listed below.
     
-    mimetype: " + ResXCommon.BinSerializedObjectMimeType + @"
+    mimetype: {ResXCommon.BinSerializedObjectMimeType}
     value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
     
-    mimetype: " + ResXCommon.ByteArraySerializedObjectMimeType + @"
+    mimetype: {ResXCommon.ByteArraySerializedObjectMimeType}
     value   : The object must be serialized into a byte array 
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
@@ -462,20 +461,23 @@ namespace KGySoft.Resources
 
         #region Instance Fields
 
+        private readonly Func<Type, string> typeNameConverter; // not a public property to be consistent with ResXDataNode class.
+
         /// <summary>
         /// Stores the alias mapping that should be used when writing assemblies.
         /// </summary>
         private Dictionary<string, string> aliases;
+
         /// <summary>
         /// Stores the already written and active alias mapping.
         /// </summary>
         private Dictionary<string, string> activeAliases;
+
         private bool autoGenerateAlias = true;
         private ResXWriter writer;
         private string basePath;
         private bool hasBeenSaved;
         private bool initialized;
-        private Func<Type, string> typeNameConverter; // no public property to be consistent with ResXDataNode class.
         private bool compatibleFormat = true;
         private bool omitHeader = true;
 
@@ -489,12 +491,14 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceWriter"/> instance should create a System compatible .resx file, which can be used
-        /// by the built-in resource editor of the Visual Studio. Default value is <see langword="true"/>. See the <strong>Remarks</strong> section for more information.
+        /// by the built-in resource editor of the Visual Studio.
+        /// <br/>Default value: <see langword="true"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <remarks>
         /// The value of the property affects the following differences:
         /// <list type="bullet">
-        /// <item><description>The <c>reader</c> and <c>writer</c>&#160;<c>resheader</c> elements.</description></item>
+        /// <item><description>The <c>reader</c> and <c>writer</c> attributes in <c>resheader</c> elements.</description></item>
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
         /// <item><description>The placeholder type of <see langword="null"/>&#160;references.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute): <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="DBNull"/> and <see cref="Type"/> (unless it is a generic type argument).</description></item>
@@ -506,7 +510,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the creation of the .resx file content has already been started.</exception>
         public bool CompatibleFormat
         {
-            get { return compatibleFormat; }
+            get => compatibleFormat;
             set
             {
                 if (initialized)
@@ -525,7 +529,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceWriter"/> instance is already disposed.</exception>
         public bool OmitHeader
         {
-            get { return omitHeader; }
+            get => omitHeader;
             set
             {
                 if (initialized)
@@ -547,7 +551,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException">In a set operation, a value cannot be specified because the creation of the .resx file content has already been started.</exception>
         public string BasePath
         {
-            get { return basePath; }
+            get => basePath;
             set
             {
                 if (initialized)
@@ -562,16 +566,16 @@ namespace KGySoft.Resources
         /// Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If <see>AutoGenerateAlias</see> is <see langword="false"/>&#160;the assembly names will be referenced by fully qualified names
-        /// unless the alias names are explicitly added by <see cref="AddAlias(string,string,bool)"/> method, or when a <see cref="ResXDataNode"/>
+        /// <para>If <see cref="AutoGenerateAlias"/> is <see langword="false"/>, then the assembly names will be referenced by fully qualified names
+        /// unless the alias names are explicitly added by the <see cref="O:KGySoft.Resources.ResXResourceWriter.AddAlias">AddAlias</see> methods, or when a <see cref="ResXDataNode"/>
         /// added by <see cref="AddResource(ResXDataNode)"/> method already contains an alias.</para>
-        /// <para>If <see>AutoGenerateAlias</see> is <see langword="true"/>&#160;the assembly aliases are re-generated, even if a <see cref="ResXDataNode"/>
-        /// already contains an alias. To use explicitly defined names instead of auto generated names use the <see cref="AddAlias(string,string,bool)"/> method.</para>
+        /// <para>If <see cref="AutoGenerateAlias"/> is <see langword="true"/>, then the assembly aliases are re-generated, even if a <see cref="ResXDataNode"/>
+        /// already contains an alias. To use explicitly defined names instead of auto generated names use the <see cref="O:KGySoft.Resources.ResXResourceWriter.AddAlias">AddAlias</see> methods.</para>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceWriter"/> instance is already disposed.</exception>
         public bool AutoGenerateAlias
         {
-            get { return autoGenerateAlias; }
+            get => autoGenerateAlias;
             set
             {
                 if (writer == null)
@@ -610,9 +614,10 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources to a specified file.
         /// </summary>
         /// <param name="fileName">The file to send output to.</param>
-        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.</param>
+        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
-        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
+        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> is <see langowrd="null"/>.</exception>
         public ResXResourceWriter(string fileName, Func<Type, string> typeNameConverter = null)
         {
@@ -627,9 +632,10 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources to a specified <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to send the output to.</param>
-        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.</param>
+        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
-        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
+        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> is <see langowrd="null"/>.</exception>
         public ResXResourceWriter(Stream stream, Func<Type, string> typeNameConverter = null)
         {
@@ -641,9 +647,10 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources to a specified <paramref name="textWriter"/>.
         /// </summary>
         /// <param name="textWriter">The <see cref="TextWriter"/> object to send output to.</param>
-        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.</param>
+        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/>&#160;for a <see cref="Type"/>, then the default
-        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be used a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
+        /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
         /// <exception cref="ArgumentNullException"><paramref name="textWriter"/> is <see langowrd="null"/>.</exception>
         public ResXResourceWriter(TextWriter textWriter, Func<Type, string> typeNameConverter = null)
         {
@@ -658,10 +665,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// This member overrides the <see cref="Object.Finalize"/> method.
         /// </summary>
-        ~ResXResourceWriter()
-        {
-            Dispose(false);
-        }
+        ~ResXResourceWriter() => Dispose(false);
 
         #endregion
 
@@ -689,7 +693,8 @@ namespace KGySoft.Resources
         /// <param name="aliasName">The name of the alias.</param>
         /// <param name="assemblyName">The name of the assembly represented by <paramref name="aliasName"/>.</param>
         /// <param name="forceWriteImmediately"><see langword="true"/>&#160;to write the alias immediately to the .resx file; <see langword="false"/>&#160;just to
-        /// add it to the inner mapping and write it only when it is referenced for the first time.</param>
+        /// add it to the inner mapping and write it only when the assembly is referenced for the first time. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, AssemblyName assemblyName, bool forceWriteImmediately = false)
         {
@@ -705,7 +710,8 @@ namespace KGySoft.Resources
         /// <param name="aliasName">The name of the alias.</param>
         /// <param name="assemblyName">The name of the assembly represented by <paramref name="aliasName"/>.</param>
         /// <param name="forceWriteImmediately"><see langword="true"/>&#160;to write the alias immediately to the .resx file; <see langword="false"/>&#160;just to
-        /// add it to the inner mapping and write it only when it is referenced for the first time.</param>
+        /// add it to the inner mapping and write it only when the assembly is referenced for the first time. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="aliasName"/> or <paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         public void AddAlias(string aliasName, string assemblyName, bool forceWriteImmediately = false)
         {
@@ -727,20 +733,14 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of a property.</param>
         /// <param name="value">A byte array containing the value of the property to add.</param>
-        public void AddMetadata(string name, byte[] value)
-        {
-            AddDataRow(ResXCommon.MetadataStr, name, value);
-        }
+        public void AddMetadata(string name, byte[] value) => AddDataRow(ResXCommon.MetadataStr, name, value);
 
         /// <summary>
         /// Adds a metadata node whose value is specified as a string to the list of resources to write.
         /// </summary>
         /// <param name="name">The name of a property.</param>
         /// <param name="value">A string that is the value of the property to add.</param>
-        public void AddMetadata(string name, string value)
-        {
-            AddDataRow(ResXCommon.MetadataStr, name, value);
-        }
+        public void AddMetadata(string name, string value) => AddDataRow(ResXCommon.MetadataStr, name, value);
 
         /// <summary>
         /// Adds a metadata node whose value is specified as an object to the list of resources to write.
@@ -757,29 +757,21 @@ namespace KGySoft.Resources
                 AddMetadata(node);
             }
             else
-            {
                 AddDataRow(ResXCommon.MetadataStr, name, value);
-            }
         }
 
         /// <summary>
         /// Adds a metadata node specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
         /// </summary>
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a metadata name/value pair.</param>
-        public void AddMetadata(ResXDataNode node)
-        {
-            AddDataRow(ResXCommon.MetadataStr, node.Name, node);
-        }
+        public void AddMetadata(ResXDataNode node) => AddDataRow(ResXCommon.MetadataStr, node.Name, node);
 
         /// <summary>
         /// Adds a named resource specified as a byte array to the list of resources to write.
         /// </summary>
         /// <param name="name">The name of the resource. </param>
         /// <param name="value">The value of the resource to add as an 8-bit unsigned integer array.</param>
-        public void AddResource(string name, byte[] value)
-        {
-            AddDataRow(ResXCommon.DataStr, name, value);
-        }
+        public void AddResource(string name, byte[] value) => AddDataRow(ResXCommon.DataStr, name, value);
 
         /// <summary>
         /// Adds a named resource specified as an object to the list of resources to write.
@@ -788,17 +780,14 @@ namespace KGySoft.Resources
         /// <param name="value">The value of the resource.</param>
         public void AddResource(string name, object value)
         {
-            var node = value as ResXDataNode;
-            if (node != null)
+            if (value is ResXDataNode node)
             {
                 if (name != node.Name)
                     node = new ResXDataNode(name, value);
                 AddResource(node);
             }
             else
-            {
                 AddDataRow(ResXCommon.DataStr, name, value);
-            }
         }
 
         /// <summary>
@@ -806,29 +795,20 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the resource.</param>
         /// <param name="value">The value of the resource.</param>
-        public void AddResource(string name, string value)
-        {
-            AddDataRow(ResXCommon.DataStr, name, value);
-        }
+        public void AddResource(string name, string value) => AddDataRow(ResXCommon.DataStr, name, value);
 
         /// <summary>
         /// Adds a named resource specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
         /// </summary>
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a resource name/value pair.</param>
-        public void AddResource(ResXDataNode node)
-        {
-            AddDataRow(ResXCommon.DataStr, node.Name, node);
-        }
+        public void AddResource(ResXDataNode node) => AddDataRow(ResXCommon.DataStr, node.Name, node);
 
         /// <summary>
         /// Releases all resources used by the <see cref="ResXResourceWriter"/>.
         /// If content has not been saved yet (see <see cref="Generate">Generate</see> method), then firstly flushes any remaining content.
         /// </summary>
         /// <remarks>Calling this method is the equivalent of calling <see cref="Dispose()">Dispose</see>.</remarks>
-        public void Close()
-        {
-            Dispose();
-        }
+        public void Close() => Dispose();
 
         /// <summary>
         /// Releases all resources used by the <see cref="ResXResourceWriter"/>.
@@ -920,17 +900,13 @@ namespace KGySoft.Resources
             string value = info.ValueData;
             ResXFileRef fileRef;
             if (basePath != null && (fileRef = node.FileRef) != null && Path.IsPathRooted(fileRef.FileName))
-            {
                 value = ResXFileRef.ToString(Files.GetRelativePath(fileRef.FileName, basePath), fileRef.TypeName, fileRef.EncodingName);
-            }
 
             AddDataRow(elementName, name, value, GetTypeNameWithAlias(info), info.MimeType, info.Comment);
         }
 
         private void AddDataRow(string elementName, string name, byte[] value)
-        {
-            AddDataRow(elementName, name, ResXCommon.ToBase64(value), GetTypeNameWithAlias(Reflector.ByteArrayType), null, null);
-        }
+            => AddDataRow(elementName, name, ResXCommon.ToBase64(value), GetTypeNameWithAlias(Reflector.ByteArrayType), null, null);
 
         private void AddDataRow(string elementName, string name, object value)
         {
@@ -963,9 +939,7 @@ namespace KGySoft.Resources
                 AddDataRow(elementName, name, null, GetTypeNameWithAlias(typeof(ResXNullRef)), null, null);
             }
             else
-            {
                 AddDataRow(elementName, name, value, null, null, null);
-            }
         }
 
         private void AddDataRow(string elementName, string name, string value, string typeWithAlias, string mimeType, string comment)
@@ -1013,14 +987,10 @@ namespace KGySoft.Resources
         }
 
         private string GetTypeNameWithAlias(DataNodeInfo info)
-        {
-            return info.TypeName == null ? null : GetTypeNameWithAlias(info.TypeName, info.AssemblyAliasValue);
-        }
+            => info.TypeName == null ? null : GetTypeNameWithAlias(info.TypeName, info.AssemblyAliasValue);
 
         private string GetTypeNameWithAlias(Type type)
-        {
-            return GetTypeNameWithAlias(ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, compatibleFormat), null);
-        }
+            => GetTypeNameWithAlias(ResXCommon.GetAssemblyQualifiedName(type, typeNameConverter, compatibleFormat), null);
 
         /// <summary>
         /// Gets the type name with alias.
