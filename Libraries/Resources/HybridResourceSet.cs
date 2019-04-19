@@ -27,7 +27,7 @@ using System.Resources;
 namespace KGySoft.Resources
 {
     /// <summary>
-    /// Represents a resource set of hybrid sources (both resx and compiled source).
+    /// Represents a resource set of hybrid sources (both .resx and compiled source).
     /// </summary>
     [Serializable]
     internal sealed class HybridResourceSet : ResourceSet, IExpandoResourceSet, IExpandoResourceSetInternal, IEnumerable
@@ -37,7 +37,7 @@ namespace KGySoft.Resources
         #region Enumerator class
 
         /// <summary>
-        /// An enumerator for a HybridResourceSet. If both resx and compiled resources contain the same key, returns only the value from the resx.
+        /// An enumerator for a HybridResourceSet. If both .resx and compiled resources contain the same key, returns only the value from the .resx.
         /// Must be implemented because yield return does not work for IDictionaryEnumerator.
         /// Cannot be serializable because the compiled enumerator is not serializable (supports reset, though).
         /// </summary>
@@ -58,14 +58,11 @@ namespace KGySoft.Resources
             #region Fields
 
             private readonly int version;
-
+            private readonly HybridResourceSet owner;
             private readonly ResXResourceEnumerator resxEnumerator;
             private readonly IDictionaryEnumerator compiledEnumerator;
 
             private State state;
-
-            private HybridResourceSet owner;
-
             private HashSet<string> resxKeys;
             private HashSet<string> compiledKeys;
 
@@ -208,9 +205,56 @@ namespace KGySoft.Resources
 
         private ResXResourceSet resxResourceSet;
         private ResourceSet compiledResourceSet;
-
         [NonSerialized] private HashSet<string> compiledKeys;
         [NonSerialized] private HashSet<string> compiledKeysCaseInsensitive;
+
+        #endregion
+
+        #region Properties
+
+        #region Public Properties
+
+        public bool IsModified
+        {
+            get
+            {
+                ResXResourceSet resx = resxResourceSet;
+                if (resx == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                return resx.IsModified;
+            }
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Properties
+
+        bool IExpandoResourceSetInternal.SafeMode
+        {
+            set => resxResourceSet.SafeMode = value;
+        }
+
+        bool IExpandoResourceSet.SafeMode
+        {
+            get
+            {
+                ResXResourceSet resx = resxResourceSet;
+                if (resx == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+                return resx.SafeMode;
+            }
+            set
+            {
+                ResXResourceSet resx = resxResourceSet;
+                if (resx == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+                resx.SafeMode = value;
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -218,12 +262,8 @@ namespace KGySoft.Resources
 
         internal HybridResourceSet(ResXResourceSet resx, ResourceSet compiled)
         {
-            if (resx == null)
-                throw new ArgumentNullException(nameof(resx), Res.ArgumentNull);
-            if (compiled == null)
-                throw new ArgumentNullException(nameof(compiled), Res.ArgumentNull);
-            resxResourceSet = resx;
-            compiledResourceSet = compiled;
+            resxResourceSet = resx ?? throw new ArgumentNullException(nameof(resx), Res.ArgumentNull);
+            compiledResourceSet = compiled ?? throw new ArgumentNullException(nameof(compiled), Res.ArgumentNull);
 
             // base ctor allocates a Hashtable and the dummy base ctor(bool), which avoids that, is not available from here
             Table = null;
@@ -294,41 +334,6 @@ namespace KGySoft.Resources
             return (string)GetResource(name, ignoreCase, true, resx.SafeMode);
         }
 
-        #endregion
-
-        #region Protected Methods
-
-        protected override void Dispose(bool disposing)
-        {
-            ResourceSet resx = resxResourceSet;
-            ResourceSet compiled = compiledResourceSet;
-            if (resx == null || compiled == null)
-                return;
-
-            // not disposing the wrapped resource sets just nullifying them because their life cycle can be longer
-            // than the hybrid one (eg. changing source from mixed to single one).
-            resxResourceSet = null;
-            compiledResourceSet = null;
-            compiledKeys = null;
-            compiledKeysCaseInsensitive = null;
-            base.Dispose(disposing);
-        }
-
-        #endregion
-
-        #endregion
-
-        #region IEnumerable Members
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        #endregion
-
-        #region IExpandoResourceSetInternal Members
-
         public object GetResource(string name, bool ignoreCase, bool isString, bool asSafe)
         {
             ResXResourceSet resx = resxResourceSet;
@@ -348,11 +353,6 @@ namespace KGySoft.Resources
             return isString ? compiled.GetString(name, ignoreCase) : compiled.GetObject(name, ignoreCase);
         }
 
-        bool IExpandoResourceSetInternal.SafeMode
-        {
-            set { resxResourceSet.SafeMode = value; }
-        }
-
         public object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe)
         {
             ResXResourceSet resx = resxResourceSet;
@@ -360,41 +360,6 @@ namespace KGySoft.Resources
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             return resx.GetMetaInternal(name, ignoreCase, isString, asSafe);
-        }
-
-        #endregion
-
-        #region IExpandoResourceSet Members
-
-        bool IExpandoResourceSet.SafeMode
-        {
-            get
-            {
-                ResXResourceSet resx = resxResourceSet;
-                if (resx == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-                return resx.SafeMode;
-            }
-            set
-            {
-                ResXResourceSet resx = resxResourceSet;
-                if (resx == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-                resx.SafeMode = value;
-            }
-        }
-
-        public bool IsModified
-        {
-            get
-            {
-                ResXResourceSet resx = resxResourceSet;
-                if (resx == null)
-                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
-                return resx.IsModified;
-            }
         }
 
         public IDictionaryEnumerator GetMetadataEnumerator()
@@ -570,6 +535,34 @@ namespace KGySoft.Resources
 
             resx.Save(textWriter, compatibleFormat, forceEmbeddedResources, basePath);
         }
+
+        #endregion
+
+        #region Protected Methods
+
+        protected override void Dispose(bool disposing)
+        {
+            ResourceSet resx = resxResourceSet;
+            ResourceSet compiled = compiledResourceSet;
+            if (resx == null || compiled == null)
+                return;
+
+            // not disposing the wrapped resource sets just nullifying them because their life cycle can be longer
+            // than the hybrid one (eg. changing source from mixed to single one).
+            resxResourceSet = null;
+            compiledResourceSet = null;
+            compiledKeys = null;
+            compiledKeysCaseInsensitive = null;
+            base.Dispose(disposing);
+        }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        #endregion
 
         #endregion
     }

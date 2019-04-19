@@ -85,10 +85,7 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Methods
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         #endregion
 

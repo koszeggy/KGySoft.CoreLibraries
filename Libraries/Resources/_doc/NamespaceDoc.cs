@@ -33,12 +33,12 @@ namespace KGySoft.Resources
     /// <br/>See the <strong>Remarks</strong> section to see when to use the difference classes of this namespace.
     /// </summary>
     /// <remarks>
-    /// The <see cref="N:KGySoft.Resources"/> namespace contains several classes, which can handle resources from XML resources (.resx files).
+    /// The <see cref="N:KGySoft.Resources"/> namespace contains several classes, which can handle resources from XML sources (.resx files).
     /// The table below can help you to choose the best one for your needs.
     /// <list type="table">
     /// <listheader><term>Class</term><term>When to choose this one; added functionality compared to previous levels.</term></listheader>
     /// <item><term><see cref="ResXResourceReader"/></term>
-    /// <term>Using <see cref="ResXResourceReader"/> is the most low-level option to read the content of a .resx file. It provides enumerators to retrieve the resources, metadata and aliases in a .resx file.
+    /// <term>Using <see cref="ResXResourceReader"/> is the most low-level option to read the content of a .resx file. It provides enumerators to retrieve the resources, metadata and aliases of a .resx content.
     /// In most cases you can use the more specialized classes, such as <see cref="ResXResourceSet"/> but there are some cases when you need to use <see cref="ResXResourceReader"/>:
     /// <list type="bullet">
     /// <item>The <see cref="ResXResourceReader"/> is able to read the .resx content in a lazy manner if <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <see langword="true"/>.
@@ -46,7 +46,7 @@ namespace KGySoft.Resources
     /// if you are looking for one specific key, after which you break the enumeration or if you want to process an incomplete or corrupted .resx file up to the point it can be parsed correctly.</item>
     /// <item>A .resx file may contain a key more than once (though it is somewhat incorrect). If <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <see langword="true"/>,
     /// you can retrieve all of the redefined values.</item>
-    /// <item><see cref="ResXResourceReader"/> allows you to handle type names in a customized way (the you map them to a <see cref="Type"/>). To achieve this you can pass an <see cref="ITypeResolutionService"/> instance to one of the constructors.</item>
+    /// <item><see cref="ResXResourceReader"/> allows you to handle type names in a customized way (how names are mapped to a <see cref="Type"/>). To use custom name resolution pass an <see cref="ITypeResolutionService"/> instance to one of the constructors.</item>
     /// </list>
     /// </term></item>
     /// <item><term><see cref="ResXResourceWriter"/></term>

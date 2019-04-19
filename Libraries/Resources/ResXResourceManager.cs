@@ -39,7 +39,7 @@ namespace KGySoft.Resources
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
     /// New elements can be added as well, which can be saved into the <c>.resx</c> files.
-    /// <br/>See the <strong>Remarks</strong> section for the differences compared to <see cref="ResourceManager"/> class.
+    /// <br/>See the <strong>Remarks</strong> section for examples and for the differences compared to <see cref="ResourceManager"/> class.
     /// </summary>
     /// <remarks>
     /// <para><see cref="ResXResourceManager"/> class is derived from <see cref="ResourceManager"/> so it can be used the same way.
@@ -71,7 +71,7 @@ namespace KGySoft.Resources
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Globalization;
-    /// using KGySoft.CoreLibraries;
+    /// using KGySoft;
     /// using KGySoft.Resources;
     /// 
     /// public class Program
@@ -143,7 +143,7 @@ namespace KGySoft.Resources
     /// using System;
     /// using System.Globalization;
     /// using System.Resources;
-    /// using KGySoft.CoreLibraries;
+    /// using KGySoft;
     /// using KGySoft.Resources;
     /// 
     /// // You can put this into AssemblyInfo.cs. Indicates that the invariant (default) resource set uses the American English culture.
@@ -156,7 +156,7 @@ namespace KGySoft.Resources
     ///     private static CultureInfo en = enUS.Parent;
     ///     private static CultureInfo invariant = en.Parent;
     /// 
-    ///     // Now that we not specify the neutralResourcesLanguage optional parameter it will be auto detected
+    ///     // Now that we don't specify the neutralResourcesLanguage optional parameter it will be auto detected
     ///     private static ResXResourceManager manager = new ResXResourceManager("NewResource");
     /// 
     ///     public static void Main()
@@ -252,7 +252,7 @@ namespace KGySoft.Resources
     /// <item>If <see cref="ResourceManager.GetResourceSet">ResourceManager.GetResourceSet</see> method is called with <c>createIfNotExists = false</c> for a culture,
     /// which has a corresponding but not loaded resource file, then a resource set for a parent culture might be cached and on successive calls that cached parent set will be
     /// returned even if the <c>createIfNotExists</c> argument is <see langword="true"/>. In <see cref="ResXResourceManager"/> the corresponding argument of
-    /// the <see cref="GetResourceSet">GetResourceSet</see> method is called <c>loadIfExists</c> and works as expected.</item>
+    /// the <see cref="GetResourceSet">GetResourceSet</see> method has been renamed to <c>loadIfExists</c> and works as expected.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <see cref="ResourceManager"/>:
     /// <list type="bullet">
@@ -387,7 +387,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
-        /// has been found but the resource set was requested last time. In cases it means difference this method performs usually better (no unneeded traversal again and again).
+        /// has been found but the resource set was requested last time. In cases it means difference this way performs usually better (no unneeded traversal again and again).
         /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
@@ -454,11 +454,12 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceManager"/> works in safe mode. In safe mode the retrieved
-        /// objects are not deserialized automatically. See the <strong>Remarks</strong> section for details.
+        /// objects are not deserialized automatically.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
@@ -471,9 +472,6 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance is disposed.
         /// </summary>
-        /// <returns>
-        ///   <see langword="true"/>&#160;if this instance is disposed; otherwise, <see langword="false"/>.
-        /// </returns>
         public bool IsDisposed => GetBaseResources() == null;
 
         /// <summary>
@@ -506,7 +504,7 @@ namespace KGySoft.Resources
         {
             get
             {
-                var result = base.ResourceSets;
+                Hashtable result = base.ResourceSets;
                 if (result == null)
                     throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return result;
@@ -519,7 +517,7 @@ namespace KGySoft.Resources
         {
             get
             {
-                var result = resourceSets ?? (resourceSets = GetBaseResources());
+                Dictionary<string, ResourceSet> result = resourceSets ?? (resourceSets = GetBaseResources());
                 if (result == null)
                     throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return result;
@@ -545,14 +543,7 @@ namespace KGySoft.Resources
         }
 
         private CultureInfo NeutralResourcesCulture
-        {
-            get
-            {
-                return neutralResourcesCulture ??
-                    (neutralResourcesCulture = ((CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this)
-                                ?? CultureInfo.InvariantCulture));
-            }
-        }
+            => neutralResourcesCulture ?? (neutralResourcesCulture = (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this) ?? CultureInfo.InvariantCulture);
 
         #endregion
 
@@ -594,7 +585,8 @@ namespace KGySoft.Resources
         /// <param name="baseName">A base name that is the prefix of the resource files.
         /// For example, the prefix for the resource file named <c>Resource1.en-US.resx</c> is <c>Resource1</c>.</param>
         /// <param name="neutralResourcesLanguage">Determines the language of the neutral resources. When <see langword="null"/>,
-        /// it will be determined by the entry assembly, or if that is not available, then by the assembly of the caller's method.</param>
+        /// it will be determined by the entry assembly, or if that is not available, then by the assembly of the caller's method. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>The <see cref="ResXResourceManager"/> looks up resources in <c>baseName.cultureName.resx</c> files, where <c>baseName.resx</c> contains the resource set of the
         /// ultimate fallback culture (also known as default or invariant or neutral resources culture).</para>
@@ -798,6 +790,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Returns the value of the specified non-string resource.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="ResXResourceManager"/> class for examples.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <returns>
@@ -808,11 +801,11 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
         public override object GetObject(string name) => GetObjectInternal(name, null, false);
 
         /// <summary>
         /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="ResXResourceManager"/> class for examples.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for
@@ -826,16 +819,16 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
         public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false);
 
         /// <summary>
-        /// Returns the value of the string metadata for the specified culture.
+        /// Returns the value of the string metadata for the specified <paramref name="culture"/>.
         /// </summary>
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
         /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
-        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture.
+        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method, no fallback is used if the metadata is not found in the specified culture. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.
         /// </param>
         /// <returns>
         /// The value of the metadata of the specified culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
@@ -852,12 +845,13 @@ namespace KGySoft.Resources
         public string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true);
 
         /// <summary>
-        /// Returns the value of the specified non-string metadata for the specified culture.
+        /// Returns the value of the specified non-string metadata for the specified <paramref name="culture"/>.
         /// </summary>
         /// <param name="name">The name of the metadata to retrieve.</param>
         /// <param name="culture">An object that represents the culture for which the metadata should be returned.
         /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
-        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture.
+        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> method, no fallback is used if the metadata is not found in the specified culture. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.
         /// </param>
         /// <returns>
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
@@ -877,7 +871,8 @@ namespace KGySoft.Resources
         /// <param name="culture">The culture of the resource to set. If this value is <see langword="null"/>,
         /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
         /// <param name="value">The value of the resource to set. If <see langword="null" />, then a null reference will be explicitly
-        /// stored for the specified <paramref name="culture"/>.</param>
+        /// stored for the specified <paramref name="culture"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para>If <paramref name="value" /> is <see langword="null" />, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method: the subsequent <see cref="GetObject(string, CultureInfo)">GetObject</see> calls
@@ -900,7 +895,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The case-sensitive name of the resource to remove.</param>
         /// <param name="culture">The culture of the resource to remove. If this value is <see langword="null"/>,
-        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
+        /// the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <para><paramref name="name"/> is considered as case-sensitive. If <paramref name="name"/> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.</para>
@@ -919,7 +915,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the metadata to set.</param>
         /// <param name="culture">The culture of the metadata to set.
-        /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.</param>
+        /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="value">The value of the metadata to set. If <see langword="null" />,  then a null reference will be explicitly
         /// stored for the specified <paramref name="culture" />.</param>
         /// <remarks>
@@ -942,7 +939,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The case-sensitive name of the metadata to remove.</param>
         /// <param name="culture">The culture of the metadata to remove.
-        /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.</param>
+        /// If this value is <see langword="null" />, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>
         /// <paramref name="name" /> is considered as case-sensitive. If <paramref name="name" /> occurs multiple times
         /// in the resource set in case-insensitive manner, they can be removed one by one only.
@@ -995,11 +993,11 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><see langword="true"/>&#160;to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/>&#160;to save only the modified resource sets.
+        /// <param name="force"><see langword="true"/>&#160;to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/>&#160;to save only the modified resource sets. This parameter is optional.
         /// <br />Default value: <see langword="false"/>.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
-        /// but the result can be read only by the <see cref="ResXResourceReader" /> class.
+        /// but the result can be read only by the <see cref="ResXResourceReader" /> class. This parameter is optional.
         /// <br />Default value: <see langword="false"/>.</param>
         /// <returns>
         ///   <see langword="true"/>&#160;if at least one resource set has been saved; otherwise, <see langword="false"/>.
@@ -1083,11 +1081,11 @@ namespace KGySoft.Resources
         /// Retrieves the resource set for a particular culture, which can be dynamically modified.
         /// </summary>
         /// <param name="culture">The culture whose resources are to be retrieved.</param>
-        /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>.
+        /// <param name="behavior">Determines the retrieval behavior of the result <see cref="IExpandoResourceSet"/>. This parameter is optional.
         /// <br/>Default value: <see cref="ResourceSetRetrieval.LoadIfExists"/>.</param>
-        /// <param name="tryParents"><see langword="true"/>&#160;to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/>&#160;to bypass the resource fallback process.
+        /// <param name="tryParents"><see langword="true"/>&#160;to use resource fallback to load an appropriate resource if the resource set cannot be found; <see langword="false"/>&#160;to bypass the resource fallback process. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <returns>The resource set for the specified culture, or <see langeword="null"/> if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>.</returns>
+        /// <returns>The resource set for the specified culture, or <see langword="null"/>&#160;if the specified culture cannot be retrieved by the defined <paramref name="behavior"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="behavior"/> does not fall in the expected range.</exception>
         /// <exception cref="MissingManifestResourceException">Resource file of the neutral culture was not found, while <paramref name="tryParents"/> is <see langword="true"/>
@@ -1138,8 +1136,8 @@ namespace KGySoft.Resources
                 if (rs is ResXResourceSet // result is not a proxy but an actual resource
                     || behavior == ResourceSetRetrieval.GetIfAlreadyLoaded // nothing new should be loaded
                     || (behavior == ResourceSetRetrieval.LoadIfExists
-                            && ((proxy = (ProxyResourceSet)rs).HierarchyLoaded // nothing new can be loaded in the hierarchy
-                                    || !tryParents && !proxy.FileExists))) // though there can be unloaded parents, only the child is required, which cannot be loaded
+                        && ((proxy = (ProxyResourceSet)rs).HierarchyLoaded // nothing new can be loaded in the hierarchy
+                            || !tryParents && !proxy.FileExists))) // though there can be unloaded parents, only the child is required, which cannot be loaded
                 {
                     return GetResXResourceSet(rs);
                 }
@@ -1186,14 +1184,11 @@ namespace KGySoft.Resources
                     // CanHaveLoadableParent flag in the hierarchy. Unless no new proxy is created (and thus the descendant proxies are deleted),
                     // this will prevent the redundant traversal next time.
                     if (tryParents && behavior == ResourceSetRetrieval.LoadIfExists)
-                    {
                         proxy.CanHaveLoadableParent = false;
-                    }
                 }
 
                 Debug.Assert(foundProxyCulture == null || rs != null, "There is a proxy without parent in the hierarchy.");
-                bool exists;
-                rs = GrovelForResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, out exists);
+                rs = GrovelForResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, out bool exists);
 
                 if (ThrowException && tryParents && !exists && behavior != ResourceSetRetrieval.CreateIfNotExists
                     && Equals(currentCultureInfo, CultureInfo.InvariantCulture))
@@ -1234,9 +1229,7 @@ namespace KGySoft.Resources
 #endif
 
                         foreach (string key in keysToRemove)
-                        {
                             localResourceSets.Remove(key);
-                        }
                     }
 
                     // Add entries to the cache for the cultures we have gone through.
@@ -1253,7 +1246,7 @@ namespace KGySoft.Resources
                         }
 
                         ResourceSet newProxy = new ProxyResourceSet(GetResXResourceSet(rs), foundCultureToAdd,
-                                GetExistingResourceFileName(updateCultureInfo) != null, behavior == ResourceSetRetrieval.GetIfAlreadyLoaded);
+                            GetExistingResourceFileName(updateCultureInfo) != null, behavior == ResourceSetRetrieval.GetIfAlreadyLoaded);
                         AddResourceSet(localResourceSets, updateCultureInfo.Name, ref newProxy);
                     }
 
@@ -1308,7 +1301,7 @@ namespace KGySoft.Resources
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // Internally just call the internal GetResXResourceSet instead. Via public methods GetExpandoResourceSet is called, which adjusts safe mode of the result accordingly to this instance.
-            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from CoreLibraries assembly.");
 
             // the base tries to parse the stream as binary. It would be better if GrovelForResourceSet
             // would be protected in base, so it would be enough to override only that one (at least in .NET 4 and above).
@@ -1332,9 +1325,7 @@ namespace KGySoft.Resources
                 // The non-generic enumerator is not a problem, values must be cast anyway.
                 IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
                 while (enumerator.MoveNext())
-                {
                     ((ResourceSet)enumerator.Value).Dispose();
-                }
             }
 
             ResourceSets = null;
@@ -1349,15 +1340,9 @@ namespace KGySoft.Resources
         #region Private Methods
 
 #if NET35
-        private Hashtable GetBaseResources()
-        {
-            return base.ResourceSets;
-        }
+        private Hashtable GetBaseResources() => return base.ResourceSets;
 #elif NET40 || NET45
-        private Dictionary<string, ResourceSet> GetBaseResources()
-        {
-            return (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this);
-        }
+        private Dictionary<string, ResourceSet> GetBaseResources() => (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this);
 #else
 #error .NET version is not set or not supported!
 #endif
@@ -1400,9 +1385,7 @@ namespace KGySoft.Resources
                 if (value != null)
                 {
                     lock (syncRoot)
-                    {
                         lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(culture.Name, toCache);
-                    }
 
                     return value;
                 }
@@ -1522,16 +1505,14 @@ namespace KGySoft.Resources
             {
                 var keys = from res in resources // res.Key is object in .NET 3.5, and is string above
 #if NET35
-                        .Cast<DictionaryEntry>()
+                    .Cast<DictionaryEntry>()
 #endif
 
-                           where !(res.Value is ResXResourceSet) || !((ResXResourceSet)res.Value).IsModified
-                           select res.Key;
+                    where !(res.Value is ResXResourceSet) || !((ResXResourceSet)res.Value).IsModified
+                    select res.Key;
 
                 foreach (var key in keys.ToList()) // key is object in .NET 3.5, and is string above
-                {
                     resources.Remove(key);
-                }
             }
         }
 

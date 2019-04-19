@@ -35,15 +35,16 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether the <see cref="IExpandoResourceSet"/> works in safe mode. In safe mode the retrieved
-        /// objects returned from .resx sources are not deserialized automatically. See the <strong>Remarks</strong> section for details.
+        /// objects returned from .resx sources are not deserialized automatically.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="GetObject"/> and <see cref="GetMetaObject"/> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
-        /// <para>When <c>SafeMode</c> is <see langword="true"/>, the <see cref="GetString"/> and <see cref="GetMetaString"/> methods
-        /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx resource.
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx source.
         /// For non-string elements the raw XML string value will be returned.</para>
         /// </remarks>
         bool SafeMode { get; set; }
@@ -72,7 +73,7 @@ namespace KGySoft.Resources
         /// To obtain a specific resource by name, use the <see cref="GetObject">GetObject</see> or <see cref="GetString">GetString</see> methods.
         /// To obtain an enumerator for the metadata entries instead, use the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method instead.</para>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
-        /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/>.</para>
+        /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
         /// <para>The returned enumerators in this assembly support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
         /// </remarks>
         /// <seealso cref="GetObject"/>
@@ -90,9 +91,9 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>The returned enumerator iterates through the metadata entries of the <see cref="IExpandoResourceSet"/>.
         /// To obtain a specific metadata by name, use the <see cref="GetMetaObject">GetMetaObject</see> or <see cref="GetMetaString">GetMetaString</see> methods.
-        /// To obtain an enumerator for the resources instead, use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
+        /// To obtain an enumerator for the resources use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
-        /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/>.</para>
+        /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the examples at <see cref="ResXDataNode"/> and <see cref="ResXResourceSet"/> classes.</para>
         /// <para>The returned enumerators in this assembly support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
         /// </remarks>
         /// <seealso cref="GetMetaObject"/>
@@ -110,7 +111,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>The returned enumerator iterates through the assembly aliases of the <see cref="IExpandoResourceSet"/>.
         /// To obtain a specific alias value by assembly name, use the <see cref="GetAliasValue">GetAliasValue</see> method.
-        /// To obtain an enumerator for the resources instead, use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
+        /// To obtain an enumerator for the resources use the <see cref="GetEnumerator">GetEnumerator</see> method instead.</para>
         /// <para>The <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is always a <see cref="string"/> regardless of the value of the <see cref="SafeMode"/> property.</para>
         /// <para>The <see cref="IDictionaryEnumerator.Key">IDictionaryEnumerator.Key</see> property of the returned enumerator is the alias name, whereas <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> is the corresponding assembly name.</para>
         /// <para>The returned enumerators in this assembly support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</para>
@@ -254,7 +255,7 @@ namespace KGySoft.Resources
         /// <param name="alias">The alias name to use instead of <paramref name="assemblyName"/> in the saved .resx file.</param>
         /// <param name="assemblyName">The fully or partially qualified name of the assembly.</param>
         /// <remarks>
-        /// <note>The added alias values are dumped on saving on demand: only when a resource type is defined in the <see cref="Assembly"/>, whose name is the <paramref name="assemblyName"/>.
+        /// <note>The added alias values are dumped on demand when saving: only when a resource type is defined in the <see cref="Assembly"/>, whose name is the <paramref name="assemblyName"/>.
         /// Other alias names will be auto generated for non-specified assemblies.</note>
         /// </remarks>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
@@ -298,13 +299,14 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="fileName">The location of the file where you want to save the resources.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
-        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>), but the result can be read only by <see cref="ResXResourceReader"/>
+        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>),
+        /// but the result can be read only by <see cref="ResXResourceReader"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
-        /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced to embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
-        /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>.
+        /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
@@ -316,31 +318,33 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="stream">The stream to which you want to save.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
-        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>), but the result can be read only by <see cref="ResXResourceReader"/>.
+        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>),
+        /// but the result can be read only by <see cref="ResXResourceReader"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced to embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
-        /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>.
+        /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
 
         /// <summary>
-        /// Saves the <see cref="IExpandoResourceSet"/> to the specified <paramref name="textWriter"/>. If the current <see cref="IExpandoResourceSet"/> instance
+        /// Saves the <see cref="IExpandoResourceSet"/> by the specified <paramref name="textWriter"/>. If the current <see cref="IExpandoResourceSet"/> instance
         /// represents a hybrid resource set, saves the expando-part (.resx content) only.
         /// </summary>
         /// <param name="textWriter">The text writer to which you want to save.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx file can be read by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcereader.aspx" target="_blank">System.Resources.ResXResourceReader</a> class
-        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>), but the result can be read only by <see cref="ResXResourceReader"/>.
+        /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx is often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter"/>),
+        /// but the result can be read only by <see cref="ResXResourceReader"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced to embedded resources.
+        /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
         /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
         /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
-        /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>.
+        /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>

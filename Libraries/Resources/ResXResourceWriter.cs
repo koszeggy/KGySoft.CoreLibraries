@@ -644,7 +644,7 @@ namespace KGySoft.Resources
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources to a specified <paramref name="textWriter"/>.
+        /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources by a specified <paramref name="textWriter"/>.
         /// </summary>
         /// <param name="textWriter">The <see cref="TextWriter"/> object to send output to.</param>
         /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.

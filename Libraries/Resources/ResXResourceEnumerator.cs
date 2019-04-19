@@ -26,7 +26,7 @@ using System.Linq;
 namespace KGySoft.Resources
 {
     /// <summary>
-    /// Provides an enumerator for resx resource classes, which have already cached resource data.
+    /// Provides an enumerator for .resx resource classes, which have already cached resource data.
     /// Non-serializable (the original returns a ListDictionary enumerator, which is non-serializable either - and hybrid cannot be serializable either).
     /// </summary>
     internal sealed class ResXResourceEnumerator : IDictionaryEnumerator
@@ -136,9 +136,7 @@ namespace KGySoft.Resources
         #region Static Methods
 
         internal static KeyValuePair<string, ResXDataNode> SelectAlias(KeyValuePair<string, string> alias)
-        {
-            return new KeyValuePair<string, ResXDataNode>(alias.Key, new ResXDataNode(alias.Key, alias.Value));
-        }
+            => new KeyValuePair<string, ResXDataNode>(alias.Key, new ResXDataNode(alias.Key, alias.Value));
 
         #endregion
 

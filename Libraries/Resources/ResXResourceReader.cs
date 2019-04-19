@@ -762,6 +762,9 @@ namespace KGySoft.Resources
         /// <param name="fileName">The name of an XML resource file that contains resources.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <note type="tip">To create a <see cref="ResXResourceReader"/> from a string use the <see cref="FromFileContents">FromFileContents</see> method.</note>
+        /// </remarks>
         public ResXResourceReader(string fileName, ITypeResolutionService typeResolver = null)
         {
             if (fileName == null)
