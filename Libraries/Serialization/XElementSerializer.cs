@@ -264,7 +264,7 @@ namespace KGySoft.Serialization
             }
 
             // e.) value type as binary only if enabled
-            if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeStruct((ValueType)obj, out byte[] data))
+            if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeValueType((ValueType)obj, out byte[] data))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));

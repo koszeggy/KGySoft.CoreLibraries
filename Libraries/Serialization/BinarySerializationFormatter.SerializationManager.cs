@@ -1,10 +1,31 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializationFormatter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -46,13 +67,13 @@ namespace KGySoft.Serialization
             {
                 get
                 {
-                    return (assemblyIndexCache == null ? KnownAssemblies.Length : assemblyIndexCache.Count)
+                    return (assemblyIndexCache?.Count ?? KnownAssemblies.Length)
 #if NET40 || NET45
- + (assemblyNameIndexCache == null ? 0 : assemblyNameIndexCache.Count)
+                        + (assemblyNameIndexCache?.Count ?? 0)
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
-;
+                        ;
                 }
             }
 
@@ -60,13 +81,13 @@ namespace KGySoft.Serialization
             {
                 get
                 {
-                    return (typeIndexCache == null ? KnownTypes.Length : typeIndexCache.Count)
+                    return (typeIndexCache?.Count ?? KnownTypes.Length)
 #if NET40 || NET45
- + (typeNameIndexCache == null ? 0 : typeNameIndexCache.Count)
+                        + (typeNameIndexCache?.Count ?? 0)
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
-;
+                        ;
                 }
             }
 
@@ -177,18 +198,16 @@ namespace KGySoft.Serialization
                         this.typeIndexCache.Add(type, this.TypeIndexCacheCount);
                         return;
                     }
-                        // omitting assembly
+                    // omitting assembly
                     else
                     {
                         // count: omitting assembly
                         Write7BitInt(bw, AssemblyIndexCacheCount);
                     }
                 }
-                    // known assembly
+                // known assembly
                 else
-                {
                     Write7BitInt(bw, index);
-                }
 
                 // known type
                 if (typeIndexCache.TryGetValue(type, out index))
@@ -218,9 +237,8 @@ namespace KGySoft.Serialization
                 // type is not known at all (count + 1: new type)
                 Write7BitInt(bw, typeIndexCacheCount + 1);
 
-                // ReSharper disable PossibleNullReferenceException
+                // ReSharper disable once AssignNullToNotNullAttribute
                 bw.Write(isGeneric ? typeDef.FullName : type.FullName);
-                // ReSharper restore PossibleNullReferenceException
                 if (isGeneric)
                 {
                     typeIndexCache.Add(typeDef, typeIndexCacheCount);
@@ -250,8 +268,7 @@ namespace KGySoft.Serialization
             {
                 string binderAsmName = null;
                 string binderTypeName = null;
-                if (Binder != null)
-                    Binder.BindToName(type, out binderAsmName, out binderTypeName);
+                Binder?.BindToName(type, out binderAsmName, out binderTypeName);
 
                 // Checking if type is natively supported. Can occur when writing SerializationInfo types on writing custom object graph
                 DataTypes nativelySupportedType;
@@ -363,6 +380,7 @@ namespace KGySoft.Serialization
                         isGeneric = type.IsGenericType;
                         typeDef = isGeneric ? type.GetGenericTypeDefinition() : null;
 
+                        // ReSharper disable once AssignNullToNotNullAttribute - see the check above
                         bw.Write(isGeneric ? typeDef.FullName : type.FullName);
                         if (isGeneric)
                         {
@@ -374,15 +392,14 @@ namespace KGySoft.Serialization
                         typeIndexCache.Add(type, TypeIndexCacheCount);
                         return;
                     }
+
                     // omitting assembly
                     // count: omitting assembly
                     Write7BitInt(bw, AssemblyIndexCacheCount);
                 }
                 // known assembly
                 else
-                {
                     Write7BitInt(bw, index);
-                }
 
                 // known type
                 string key = null;
@@ -430,6 +447,7 @@ namespace KGySoft.Serialization
                 // type is not known at all (count + 1: new type)
                 Write7BitInt(bw, typeIndexCacheCount + 1);
 
+                // ReSharper disable once AssignNullToNotNullAttribute
                 bw.Write(isGeneric ? typeDef.FullName : type.FullName);
                 if (isGeneric)
                 {
@@ -452,7 +470,7 @@ namespace KGySoft.Serialization
                 // null is always known.
                 if (data == null)
                 {
-                    // actally 7-bit encoded 0
+                    // actually 7-bit encoded 0
                     bw.Write((byte)0);
                     return true;
                 }
@@ -460,7 +478,7 @@ namespace KGySoft.Serialization
                 // DBNull has no equals so checking just by type.
                 if (data is DBNull)
                 {
-                    // actally 7-bit encoded 1
+                    // actually 7-bit encoded 1
                     bw.Write((byte)1);
                     return true;
                 }
@@ -472,8 +490,7 @@ namespace KGySoft.Serialization
                         idCacheByValue = new Dictionary<object, int>();
                     else
                     {
-                        int id;
-                        if (idCacheByValue.TryGetValue(data, out id))
+                        if (idCacheByValue.TryGetValue(data, out int id))
                         {
                             Write7BitInt(bw, id);
                             return true;
@@ -490,8 +507,7 @@ namespace KGySoft.Serialization
                     idCacheByRef = new Dictionary<object, int>(ReferenceEqualityComparer.Comparer);
                 else
                 {
-                    int id;
-                    if (idCacheByRef.TryGetValue(data, out id))
+                    if (idCacheByRef.TryGetValue(data, out int id))
                     {
                         Write7BitInt(bw, id);
                         return true;
@@ -521,9 +537,7 @@ namespace KGySoft.Serialization
             private void WriteGenericType(BinaryWriter bw, Type type)
             {
                 foreach (Type genericArgument in type.GetGenericArguments())
-                {
                     WriteType(bw, genericArgument);
-                }
             }
 
             #endregion

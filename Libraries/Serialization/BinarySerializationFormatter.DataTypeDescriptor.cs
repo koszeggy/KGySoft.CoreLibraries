@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializationFormatter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -6,9 +24,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -19,56 +40,35 @@ namespace KGySoft.Serialization
         /// </summary>
         sealed class DataTypeDescriptor
         {
+            #region Fields
+
             private BinarySerializationOptions serializationOptions;
 
-            internal DataTypes CollectionDataType { get; private set; }
-            private DataTypes ElementDataType { get; set; }
+            #endregion
 
-            private DataTypeDescriptor ElementDescriptor { get; set; }
-            private DataTypeDescriptor DictionaryValueDescriptor { get; set; }
+            #region Properties
 
-            internal DataTypeDescriptor ParentDescriptor { get; private set; }
+            #region Internal Properties
 
-            internal BinarySerializationOptions SerializationOptions
-            {
-                get { return ParentDescriptor == null ? serializationOptions : ParentDescriptor.SerializationOptions; }
-            }
+            internal DataTypes CollectionDataType { get; }
 
-            internal bool IsArray
-            {
-                get { return CollectionDataType == DataTypes.Array; }
-            }
+            internal DataTypeDescriptor ParentDescriptor { get; }
 
-            internal bool IsDictionary
-            {
-                get { return CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary; }
-            }
+            internal BinarySerializationOptions SerializationOptions => ParentDescriptor?.SerializationOptions ?? serializationOptions;
+
+            internal bool IsArray => CollectionDataType == DataTypes.Array;
+
+            internal bool IsDictionary => CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary;
 
 #if NET35
-            internal bool IsGenericDictionary
-            {
-                get { return CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary; }
-            }
+            internal bool IsGenericDictionary => CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary;
 #elif !(NET40 || NET45)
 #error .NET version is not set or not supported!
 #endif
 
-            private bool HasOptions
-            {
-                get
-                {
-                    return ((ElementDataType & DataTypes.SimpleTypes) == DataTypes.BinarySerializable) || ((ElementDataType & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph)
-                        || ElementDescriptor != null && ElementDescriptor.HasOptions
-                        || DictionaryValueDescriptor != null && DictionaryValueDescriptor.HasOptions;
-                }
-            }
-
             internal bool IsReadOnly { get; set; }
 
-            internal bool IsSingleElement
-            {
-                get { return serializationInfo[CollectionDataType].IsSingleElement; }
-            }
+            internal bool IsSingleElement => serializationInfo[CollectionDataType].IsSingleElement;
 
             /// <summary>
             /// Decoded type of self descriptor
@@ -104,6 +104,26 @@ namespace KGySoft.Serialization
                 }
             }
 
+            #endregion
+
+            #region Private Properties
+
+            private DataTypes ElementDataType { get; }
+
+            private DataTypeDescriptor ElementDescriptor { get; }
+
+            private DataTypeDescriptor DictionaryValueDescriptor { get; }
+
+            private bool HasOptions => ((ElementDataType & DataTypes.SimpleTypes) == DataTypes.BinarySerializable) || ((ElementDataType & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph)
+                || ElementDescriptor != null && ElementDescriptor.HasOptions
+                || DictionaryValueDescriptor != null && DictionaryValueDescriptor.HasOptions;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
             internal DataTypeDescriptor(DataTypeDescriptor parentDescriptor, DataTypes dataType, BinaryReader reader)
             {
                 ParentDescriptor = parentDescriptor;
@@ -112,15 +132,23 @@ namespace KGySoft.Serialization
 
                 // recursion 2: nested type
                 if (ElementDataType == DataTypes.Null)
-                {
                     ElementDescriptor = new DataTypeDescriptor(this, (DataTypes)reader.ReadUInt16(), reader);
-                }
                 // recursion 3: TValue in dictionaries
                 if (IsDictionary)
-                {
                     DictionaryValueDescriptor = new DataTypeDescriptor(this, (DataTypes)reader.ReadUInt16(), reader);
-                }
             }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override string ToString() => BinarySerializationFormatter.ToString(ElementDataType | CollectionDataType);
+
+            #endregion
+
+            #region Internal Methods
 
             /// <summary>
             /// Reads SerializationOptions if stored
@@ -147,10 +175,7 @@ namespace KGySoft.Serialization
 
                 // simple collection element or dictionary key
                 if (ElementDataType != DataTypes.Null)
-                {
                     ElementType = GetElementType(ElementDataType, br, manager);
-                }
-                // nested collection type in element type or in TKey of a dictionary
                 else // if (ElementDataType == DataTypes.Null)
                 {
                     ElementDescriptor.DecodeType(br, manager);
@@ -199,6 +224,56 @@ namespace KGySoft.Serialization
                 return !isTValue ? ElementDataType :
                     DictionaryValueDescriptor.CollectionDataType != DataTypes.Null ? DataTypes.Null : DictionaryValueDescriptor.ElementDataType;
             }
+
+            internal object GetAsReadOnly(object collection)
+            {
+                switch (CollectionDataType)
+                {
+                    case DataTypes.OrderedDictionary:
+                        Reflector.SetField(collection, "_readOnly", true);
+                        return collection;
+                    default:
+                        throw new NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
+                }
+            }
+
+            internal DataTypeDescriptor GetElementDescriptor(bool isTValue) => !isTValue ? ElementDescriptor : DictionaryValueDescriptor;
+
+            /// <summary>
+            /// If <see cref="Type"/> cannot be created/populated, then type of the instance to create can be overridden here
+            /// </summary>
+            internal Type GetTypeToCreate()
+            {
+                switch (CollectionDataType)
+                {
+                    case DataTypes.DictionaryEntryNullable:
+                    case DataTypes.KeyValuePairNullable:
+                        // nullables: returning the underlying type because they have the key/value constructor
+                        return Nullable.GetUnderlyingType(Type);
+                    default:
+                        return Type;
+                }
+            }
+
+            internal string GetFieldNameToSet(bool isValue)
+            {
+                switch (CollectionDataType)
+                {
+                    case DataTypes.DictionaryEntry:
+                    case DataTypes.DictionaryEntryNullable:
+                        return !isValue ? "_key" : "_value";
+                    case DataTypes.KeyValuePair:
+                    case DataTypes.KeyValuePairNullable:
+                        return !isValue ? "key" : "value";
+                    default:
+                        // should never occur, throwing internal error without resource
+                        throw new InvalidOperationException("GetFieldToSet is only for single element types");
+                }
+            }
+
+            #endregion
+
+            #region Private Methods
 
             private Type GetElementType(DataTypes dataType, BinaryReader br, DeserializationManager manager)
             {
@@ -303,6 +378,7 @@ namespace KGySoft.Serialization
 #error .NET version is not set or not supported!
 #endif
 
+
                     case DataTypes.Dictionary:
                         return (Reflector.DictionaryGenType.MakeGenericType(ElementType, DictionaryValueType));
                     case DataTypes.SortedList:
@@ -348,59 +424,9 @@ namespace KGySoft.Serialization
                 }
             }
 
-            internal object GetAsReadOnly(object collection)
-            {
-                switch (CollectionDataType)
-                {
-                    case DataTypes.OrderedDictionary:
-                        Reflector.SetField(collection, "_readOnly", true);
-                        return collection;
-                    default:
-                        throw new NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
-                }
-            }
+            #endregion
 
-            public override string ToString()
-            {
-                return BinarySerializationFormatter.ToString(ElementDataType | CollectionDataType);
-            }
-
-            internal DataTypeDescriptor GetElementDescriptor(bool isTValue)
-            {
-                return !isTValue ? ElementDescriptor : DictionaryValueDescriptor;
-            }
-
-            /// <summary>
-            /// If <see cref="Type"/> cannot be created/populated, then type of the instance to create can be overridden here
-            /// </summary>
-            internal Type GetTypeToCreate()
-            {
-                switch (CollectionDataType)
-                {
-                    case DataTypes.DictionaryEntryNullable:
-                    case DataTypes.KeyValuePairNullable:
-                        // nullables: returning the underlying type because they have the key/value constructor
-                        return Nullable.GetUnderlyingType(Type);
-                    default:
-                        return Type;
-                }
-            }
-
-            internal string GetFieldNameToSet(bool isValue)
-            {
-                switch (CollectionDataType)
-                {
-                    case DataTypes.DictionaryEntry:
-                    case DataTypes.DictionaryEntryNullable:
-                        return !isValue ? "_key" : "_value";
-                    case DataTypes.KeyValuePair:
-                    case DataTypes.KeyValuePairNullable:
-                        return !isValue ? "key" : "value";
-                    default:
-                        // should never occur, throwing internal error without resource
-                        throw new InvalidOperationException("GetFieldToSet is only for single element types");
-                }
-            }
+            #endregion
         }
     }
 }

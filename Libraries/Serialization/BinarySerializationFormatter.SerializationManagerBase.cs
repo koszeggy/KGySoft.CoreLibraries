@@ -1,17 +1,39 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializationFormatter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
+#endregion
+
 namespace KGySoft.Serialization
 {
-
     public sealed partial class BinarySerializationFormatter
     {
         abstract class SerializationManagerBase
         {
+            #region Fields
+
             #region Static Fields
 
             protected static readonly Assembly[] KnownAssemblies =
@@ -29,11 +51,33 @@ namespace KGySoft.Serialization
 
             #endregion
 
+            #region Instance Fields
+
+            #region Internal Fields
+
             internal readonly BinarySerializationOptions Options;
-            private readonly StreamingContext context;
+
+            #endregion
+
+            #region Protected Fields
+
             protected readonly SerializationBinder Binder;
+
+            #endregion
+
+            #region Private Fields
+
+            private readonly StreamingContext context;
             private readonly ISurrogateSelector surrogateSelector;
             private readonly Dictionary<Type, KeyValuePair<ISerializationSurrogate, ISurrogateSelector>> surrogates;
+
+            #endregion
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
 
             protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
             {
@@ -42,10 +86,12 @@ namespace KGySoft.Serialization
                 Binder = binder;
                 this.surrogateSelector = surrogateSelector;
                 if (surrogateSelector != null)
-                {
                     surrogates = new Dictionary<Type, KeyValuePair<ISerializationSurrogate, ISurrogateSelector>>();
-                }
             }
+
+            #endregion
+
+            #region Methods
 
             /// <summary>
             /// Gets if a type can use a surrogate
@@ -58,9 +104,7 @@ namespace KGySoft.Serialization
                 if (type.IsPrimitive || type.IsArray || type.In(Reflector.StringType, Reflector.ObjectType, Reflector.UIntPtrType))
                     return false;
 
-                ISerializationSurrogate surrogate;
-                ISurrogateSelector selector;
-                return TryGetSurrogate(type, out surrogate, out selector);
+                return TryGetSurrogate(type, out var _, out var _);
             }
 
             /// <summary>
@@ -88,6 +132,8 @@ namespace KGySoft.Serialization
                 surrogates[type] = new KeyValuePair<ISerializationSurrogate, ISurrogateSelector>(surrogate, selector);
                 return surrogate != null;
             }
+
+            #endregion
         }
     }
 }

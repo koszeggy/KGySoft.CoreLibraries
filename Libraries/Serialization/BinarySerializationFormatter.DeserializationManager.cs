@@ -1,12 +1,33 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializationFormatter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -15,7 +36,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// A manager class that provides that stored types will be built up in the same order both at serialization and deserialization for complex types.
         /// </summary>
-        sealed class DeserializationManager: SerializationManagerBase
+        sealed class DeserializationManager : SerializationManagerBase
         {
             #region Fields
 
@@ -28,20 +49,17 @@ namespace KGySoft.Serialization
 
             #endregion
 
-            #region Constructor
+            #region Properties
+
+            private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object> { { 0, null }, { 1, DBNull.Value } });
+
+            #endregion
+
+            #region Constructors
 
             internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
                 : base(context, options, binder, surrogateSelector)
             {
-            }
-
-            #endregion
-
-            #region Properties
-
-            private Dictionary<int, object> IdCache
-            {
-                get { return idCache ?? (idCache = new Dictionary<int, object> {{0, null}, {1, DBNull.Value}}); }
             }
 
             #endregion
@@ -119,9 +137,7 @@ namespace KGySoft.Serialization
                         throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
                     readTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
-                    {
                         type = ReadGenericType(br, type);
-                    }
 
                     return type;
                 }
@@ -129,9 +145,7 @@ namespace KGySoft.Serialization
                 Debug.Assert(index >= 0 && index < readTypes.Count, "Invalid type index");
                 Type result = readTypes[index];
                 if (result.IsGenericTypeDefinition)
-                {
                     result = ReadGenericType(br, result);
-                }
 
                 // ReSharper disable AssignNullToNotNullAttribute
                 return Binder != null
@@ -216,9 +230,7 @@ namespace KGySoft.Serialization
                     return;
 
                 foreach (KeyValuePair<FieldInfo, object> usage in refUsages)
-                {
                     FieldAccessor.GetAccessor(usage.Key).Set(usage.Value, realObject);
-                }
 
                 objectReferences.Remove(objRef);
             }
@@ -232,13 +244,9 @@ namespace KGySoft.Serialization
             /// </summary>
             private Type GetType(string assemblyName, string typeName)
             {
-                Type result;
                 string key = assemblyName + ":" + typeName;
-
-                if (typeByNameCache != null && typeByNameCache.TryGetValue(key, out result))
-                {
+                if (typeByNameCache != null && typeByNameCache.TryGetValue(key, out Type result))
                     return result;
-                }
 
                 if (Binder != null)
                 {
@@ -253,9 +261,7 @@ namespace KGySoft.Serialization
                 Assembly assembly = GetAssembly(assemblyName);
                 result = Reflector.ResolveType(assembly, typeName);
                 if (result == null)
-                {
                     throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
-                }
 
                 AddTypeToCache(key, result);
                 return result;
@@ -264,10 +270,7 @@ namespace KGySoft.Serialization
             private void AddTypeToCache(string key, Type result)
             {
                 if (typeByNameCache == null)
-                {
                     typeByNameCache = new Dictionary<string, Type>();
-                }
-
                 typeByNameCache.Add(key, result);
             }
 
@@ -276,12 +279,12 @@ namespace KGySoft.Serialization
                 int len = genTypeDef.GetGenericArguments().Length;
                 Type[] args = new Type[len];
                 for (int i = 0; i < len; i++)
-                {
                     args[i] = ReadType(br);
-                }
 
                 Type result = genTypeDef.MakeGenericType(args);
                 readTypes.Add(result);
+                
+                // ReSharper disable once AssignNullToNotNullAttribute
                 return Binder != null ? (Binder.BindToType(result.Assembly.FullName, result.FullName) ?? result) : result;
             }
 
@@ -290,11 +293,8 @@ namespace KGySoft.Serialization
             /// </summary>
             private Assembly GetAssembly(string name)
             {
-                Assembly result;
-                if (assemblyByNameCache != null && assemblyByNameCache.TryGetValue(name, out result))
-                {
+                if (assemblyByNameCache != null && assemblyByNameCache.TryGetValue(name, out Assembly result))
                     return result;
-                }
 
                 // 1.) Iterating through loaded assemblies
                 result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
@@ -320,17 +320,10 @@ namespace KGySoft.Serialization
                 }
 
                 if (result == null)
-                {
                     throw new SerializationException(Res.ReflectionCannotLoadAssembly(name));
-                }
-
                 if (assemblyByNameCache == null)
-                {
                     assemblyByNameCache = new Dictionary<string, Assembly>(1);
-                }
-
                 assemblyByNameCache.Add(name, result);
-
                 return result;
             }
 

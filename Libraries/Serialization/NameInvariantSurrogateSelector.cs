@@ -1,17 +1,39 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: NameInvariantSurrogateSelector.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
     /// <summary>
     /// An <see cref="ISurrogateSelector"/> implementation that makes possible to serialize and deserialize objects by
     /// <see cref="IFormatter"/>s without storing field names. This provides compatibility for obfuscated and non-obfuscated versions of an assembly.
+    /// <br/>See the <strong>Remarks</strong> section for details.
     /// </summary>
     /// <remarks>
     /// You can use this surrogate selector for any non-primitive types that does not implement <see cref="ISerializable"/> interface.
@@ -23,7 +45,7 @@ namespace KGySoft.Serialization
     /// Please note that this surrogate selector does not identify field names on deserialization so reordering members may corrupt or fail deserialization.
     /// </note>
     /// </remarks>
-    public class NameInvariantSurrogateSelector: ISurrogateSelector, ISerializationSurrogate
+    public class NameInvariantSurrogateSelector : ISurrogateSelector, ISerializationSurrogate
     {
         #region Fields
 
@@ -31,17 +53,16 @@ namespace KGySoft.Serialization
 
         #endregion
 
-        #region ISurrogateSelector Members
+        #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Specifies the next <see cref="ISurrogateSelector"/> for surrogates to examine if the current instance does not have a surrogate for the specified type and assembly in the specified context.
         /// </summary>
         /// <param name="selector">The next surrogate selector to examine.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
-        public void ChainSelector(ISurrogateSelector selector)
-        {
-            next = selector;
-        }
+        public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
         /// <summary>
         /// Returns the next surrogate selector in the chain.
@@ -49,10 +70,7 @@ namespace KGySoft.Serialization
         /// <returns>
         /// The next surrogate selector in the chain or null.
         /// </returns>
-        public ISurrogateSelector GetNextSelector()
-        {
-            return next;
-        }
+        public ISurrogateSelector GetNextSelector() => next;
 
         /// <summary>
         /// Finds the surrogate that represents the specified object's type, starting with the specified surrogate selector for the specified serialization context.
@@ -67,9 +85,7 @@ namespace KGySoft.Serialization
         public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
-            {
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
-            }
 
             if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(Reflector.StringType, Reflector.UIntPtrType))
             {
@@ -78,9 +94,7 @@ namespace KGySoft.Serialization
             }
 
             if (next != null)
-            {
                 return next.GetSurrogate(type, context, out selector);
-            }
 
             selector = null;
             return null;
@@ -89,7 +103,7 @@ namespace KGySoft.Serialization
 
         #endregion
 
-        #region ISerializationSurrogate Members
+        #region Explicitly Implemented Interface Methods
 
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
@@ -101,13 +115,13 @@ namespace KGySoft.Serialization
             Type type = obj.GetType();
 
             int level = 0;
+
+            // ReSharper disable once PossibleNullReferenceException - cannot be null die to the condition
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
             {
                 FieldInfo[] fields = BinarySerializer.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)
-                {
-                    info.AddValue(String.Format("{0}:{1}", level.ToString("X", NumberFormatInfo.InvariantInfo), i.ToString("X", NumberFormatInfo.InvariantInfo)), FieldAccessor.GetAccessor(fields[i]).Get(obj), fields[i].FieldType);
-                }
+                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}", FieldAccessor.GetAccessor(fields[i]).Get(obj), fields[i].FieldType);
 
                 // marking end of level
                 info.AddValue("x" + level.ToString("X", NumberFormatInfo.InvariantInfo), null);
@@ -180,6 +194,8 @@ namespace KGySoft.Serialization
                 else if (entry.Name == "x" + level.ToString("X", NumberFormatInfo.InvariantInfo))
                 {
                     level++;
+
+                    // ReSharper disable once PossibleNullReferenceException - see first line inside the loop
                     type = type.BaseType;
                     fields = BinarySerializer.GetSerializableFields(type);
                     fieldIndex = 0;
@@ -193,6 +209,8 @@ namespace KGySoft.Serialization
 
             return obj;
         }
+
+        #endregion
 
         #endregion
     }

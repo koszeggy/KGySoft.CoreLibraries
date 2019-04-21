@@ -250,7 +250,7 @@ namespace KGySoft.Serialization
                         throw new ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                result = BinarySerializer.DeserializeStruct(type, data);
+                result = BinarySerializer.DeserializeValueType(type, data);
                 return true;
             }
 

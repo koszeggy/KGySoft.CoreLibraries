@@ -16,6 +16,51 @@ namespace _PerformanceTest
     public class UnitTest1
     {
         [Test]
+        public void SerializeStructTest()
+        {
+            new PerformanceTest { Iterations = 10000000 }
+                .AddCase(() =>
+                {
+                    object o = 1;
+                    int i;
+                    if (o is int)
+                        i = (int)o;
+                }, "No pattern matching")
+                .AddCase(() =>
+                {
+                    object o = 1;
+                    int i;
+                    if (o is int intValue)
+                        i = intValue;
+                }, "Pattern matching")
+                .DoTest();
+
+            // fast and unsafe solution:
+            //public static T ReadUsingMarshalUnsafe<T>(byte[] data) where T : struct
+            //{
+            //    unsafe
+            //    {
+            //        fixed (byte* p = &data[0])
+            //        {
+            //            return (T)Marshal.PtrToStructure(new IntPtr(p), typeof(T));
+            //        }
+            //    }
+            //}
+
+            //public unsafe static byte[] WriteUsingMarshalUnsafe<selectedT>(selectedT structure) where selectedT : struct
+            //{
+            //    byte[] byteArray = new byte[Marshal.SizeOf(structure)];
+            //    fixed (byte* byteArrayPtr = byteArray)
+            //    {
+            //        Marshal.StructureToPtr(structure, (IntPtr)byteArrayPtr, true);
+            //    }
+            //    return byteArray;
+            //}
+
+            // Továbbá: a marshal nélküli, TypedReference-es verzió (asszem, volt egy olyan is) - megnézni, ugyanaz lesz-e a tartalom (a marshal attribute-okra mondjuk biztos nem)
+        }
+
+        [Test]
         public unsafe void SetBoxedIntTest()
         {
             object o = 1;

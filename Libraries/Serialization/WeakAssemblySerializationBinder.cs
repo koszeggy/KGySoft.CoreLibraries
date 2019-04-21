@@ -1,47 +1,88 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: WeakAssemblySerializationBinder.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
     /// <summary>
-    /// Provides a <see cref="SerializationBinder"/> instance for <see cref="IFormatter"/> implementations that can version and token information
+    /// Provides a <see cref="SerializationBinder"/> instance for <see cref="IFormatter"/> implementations that can ignore version and token information
     /// of stored assembly name. This makes possible to deserialize objects stored in different version of the original assembly.
     /// </summary>
     public sealed class WeakAssemblySerializationBinder : SerializationBinder
     {
-#if NET40 || NET45
-        private const string omittedAssemblyName = "*";
+        #region Constants
 
+#if !NET35
+        private const string omittedAssemblyName = "*";
+#endif
+
+        #endregion
+
+        #region Properties
+
+#if !NET35
         /// <summary>
         /// Gets or sets whether assembly name should be completely omitted on serialization.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <value>
         /// <see langword="true"/>&#160;to omit assembly name on serialize; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note>This property exists only in .NET 4 and above.</note>
-        /// <note>The value of this property is used only serialization; however, it affects deserialization as well:
+        /// <note>This property is available only in .NET 4 and above.</note>
+        /// <note>The value of this property is used only on serialization; however, it affects deserialization as well:
         /// when assembly name is omitted, deserialization will find the first matching type from any assembly.</note>
-        /// <para>When using <see cref="BinarySerializationFormatter"/>, <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/>
-        /// option can be used as well, which is available in every .NET version. However, with this property assembly names
+        /// <para>Using <see cref="BinarySerializationFormatter"/> with <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/>
+        /// option enabled has a similar effect. However, using <see cref="WeakAssemblySerializationBinder"/> with this property set to <see langword="true"/>, assembly names
         /// can be omitted even when using <see cref="BinaryFormatter"/> or other <see cref="IFormatter"/> implementations.</para>
         /// <para>When the value of this property is <see langword="true"/>, the serialized stream will be shorter; however,
         /// deserialization might be slower, and type will be searched only in already loaded assemblies. When multiple
-        /// assemblies have the same type name, the retrieved type cannot determined.</para>
+        /// assemblies have types with the same name the retrieved type cannot determined.</para>
         /// </remarks>
         public bool OmitAssemblyNameOnSerialize { get; set; }
+#endif
 
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
+#if !NET35
         /// <summary>
         /// When <see cref="OmitAssemblyNameOnSerialize"/> is <see langword="true"/>, suppresses the assembly name on serialization.
         /// Otherwise, returns <see langword="null"/>&#160;for both assembly and type names, indicating, that the original
         /// names should be used.
         /// </summary>
         /// <param name="serializedType">The type of the object the formatter creates a new instance of.</param>
-        /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object. </param>
-        /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object. </param>
+        /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
+        /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
+        /// <remarks>
+        /// <note>This method is available only in .NET 4 and above.</note>
+        /// </remarks>
         public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
             base.BindToName(serializedType, out assemblyName, out typeName);
@@ -57,10 +98,8 @@ namespace KGySoft.Serialization
                     typeName = serializedType.ToString();
             }
         }
-
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
+
 
         /// <summary>
         /// Retrieves a type by its <paramref name="assemblyName"/> and <paramref name="typeName"/>.
@@ -81,9 +120,13 @@ namespace KGySoft.Serialization
 
             if (result == null)
                 throw new SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, String.IsNullOrEmpty(assemblyName) ? Res.Undefined : assemblyName));
-            
+
             return result;
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Resolves an assembly by string
@@ -114,5 +157,9 @@ namespace KGySoft.Serialization
 
             return result;
         }
+
+        #endregion
+       
+        #endregion
     }
 }

@@ -1,8 +1,29 @@
-﻿using System;
-using System.Collections;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XmlSerializationOptions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
 #if !NET35
 using System.Collections.Concurrent;
 #endif
+
+#region Used Namespaces
+
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -10,7 +31,12 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
+
 using KGySoft.Collections;
+
+#endregion
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -20,10 +46,11 @@ namespace KGySoft.Serialization
     [Flags]
     public enum XmlSerializationOptions
     {
-#if NET35
-#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
-#pragma warning disable 1584,1711,1572,1581,1580
-#endif
+        #if NET35
+        #pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
+        #pragma warning disable 1584,1711,1572,1581,1580
+        #endif
+
         /// <summary>
         /// <para>Represents no enabled options.</para>
         /// <para>
@@ -55,10 +82,11 @@ namespace KGySoft.Serialization
         /// </para>
         /// </summary>
         None,
-#if NET35
-#pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
-#pragma warning restore 1584,1711,1572,1581,1580
-#endif
+        #if NET35
+        #pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
+        #pragma warning restore 1584,1711,1572,1581,1580
+        #endif
+
 
         /// <summary>
         /// <para>If enabled, collection elements and non binary-serialized complex objects will be identified by the assembly qualified type name, otherwise, only by full type name.
@@ -74,7 +102,7 @@ namespace KGySoft.Serialization
         /// <para>Though trusted collections and objects with only public read-write properties and fields can be serialized with <see cref="None"/> options
         /// as well, using this option will cause to serialize them in binary format, too.</para>
         /// <para>Note: If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
-        /// is stronger, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
+        /// has higher priority, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         BinarySerializationAsFallback = 1 << 1,
@@ -85,11 +113,11 @@ namespace KGySoft.Serialization
         /// If a property or collection element cannot be serialized, then a <see cref="SerializationException"/> will be thrown.</para>
         /// <para>Properties can be marked by <see cref="DesignerSerializationVisibilityAttribute"/> with <see cref="DesignerSerializationVisibility.Content"/> value to
         /// indicate that they should be serialized recursively without using this fallback option.
-        /// <note type="caution">Enabling this option will not guarantee that deserialization of the object will be the same as the original instance. 
+        /// <note type="caution">Enabling this option will not guarantee that deserialization of the object will be the same as the original instance.
         /// Use this option only when serialized types can be restored by setting public properties and fields, and the type has a default constructor.
         /// To avoid circular references use <see cref="DesignerSerializationVisibilityAttribute"/> with <see cref="DesignerSerializationVisibility.Hidden"/> value on back-referencing properties.</note></para>
         /// <para>If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
-        /// is stronger, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
+        /// has higher priority, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
         /// <para><c>Key</c> and <c>Value</c> properties of <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances are always serialized recursively because these are natively supported types.</para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
@@ -98,7 +126,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// <para>If a <see cref="ValueType"/> (<see langword="struct"/>) has no <see cref="TypeConverter"/> and contains no references,
         /// then by enabling this option the instance will be serialized in a compact binary form if possible.
-        /// <note>This option is stronger than fallback options (<see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/>),
+        /// <note>This option has higher priority than fallback options (<see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/>),
         /// except for <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances, which are always serialized recursively.
         /// This option affects only instances, which have no reference fields at all, or have only <see cref="string"/> or <see cref="Array"/> references,
         /// which are decorated by <see cref="MarshalAsAttribute"/> using <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.</note></para>

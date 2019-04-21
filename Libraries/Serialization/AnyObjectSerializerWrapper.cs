@@ -1,10 +1,27 @@
-﻿#region Used namespaces
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: AnyObjectSerializerWrapper.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -26,8 +43,8 @@ namespace KGySoft.Serialization
         #region Fields
 
         [NonSerialized]
-        private object obj;
-        private bool useWeakBinding;
+        private readonly object obj;
+        private readonly bool useWeakBinding;
 
         #endregion
 
@@ -36,7 +53,7 @@ namespace KGySoft.Serialization
         #region Public Constructors
 
         /// <summary>
-        /// Creates a new instace of <see cref="AnyObjectSerializerWrapper"/> with
+        /// Creates a new instance of <see cref="AnyObjectSerializerWrapper"/> with
         /// the provided object to be serialized.
         /// </summary>
         /// <param name="obj">The <see cref="object"/> to serialize. Non-serializable, remote objects, and <see langword="null"/>&#160;instances are supported, too.</param>
@@ -76,10 +93,7 @@ namespace KGySoft.Serialization
             info.AddValue("data", serializer.Serialize(obj));
         }
 
-        object IObjectReference.GetRealObject(StreamingContext context)
-        {
-            return obj;
-        }
+        object IObjectReference.GetRealObject(StreamingContext context) => obj;
 
         #endregion
     }

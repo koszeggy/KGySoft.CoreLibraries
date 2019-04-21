@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -56,14 +57,13 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
             /// </summary>
-            internal void WriteSpecificProperties(BinarySerializationFormatter owner, BinaryWriter bw, IEnumerable collection, SerializationManager manager)
+            internal void WriteSpecificProperties(BinarySerializationFormatter owner, BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
                 if (IsSingleElement)
                     return;
 
                 // 1.) Count
-                ICollection c = collection as ICollection;
-                if (c != null)
+                if (collection is ICollection c)
                     Write7BitInt(bw, c.Count);
                 else
                     Write7BitInt(bw, (int)Reflector.GetProperty(collection, "Count"));
@@ -79,13 +79,11 @@ namespace KGySoft.Serialization
                 // 4.) ReadOnly
                 if (HasReadOnly)
                 {
-                    IList list = collection as IList;
-                    if (list != null)
+                    if (collection is IList list)
                         bw.Write(list.IsReadOnly);
                     else
                     {
-                        IDictionary dictionary = collection as IDictionary;
-                        if (dictionary != null)
+                        if (collection is IDictionary dictionary)
                             bw.Write(dictionary.IsReadOnly);
                         else
                             // should never occur for suppoerted collections, throwing internal error without resource

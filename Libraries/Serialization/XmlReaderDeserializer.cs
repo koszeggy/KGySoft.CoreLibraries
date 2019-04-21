@@ -296,7 +296,7 @@ namespace KGySoft.Serialization
                         throw new ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                result = BinarySerializer.DeserializeStruct(type, data);
+                result = BinarySerializer.DeserializeValueType(type, data);
                 if (data.Length > 0)
                     ReadToNodeType(reader, XmlNodeType.EndElement);
                 return true;

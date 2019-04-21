@@ -169,7 +169,7 @@ namespace _LibrariesTest
                     return Check(BitConverter.DoubleToInt64Bits(doubleRef) == BitConverter.DoubleToInt64Bits(doubleCheck), $"Double equality failed: {doubleRef.ToRoundtripString()} <-> {doubleCheck.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(doubleRef).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(doubleCheck).ToHexValuesString()}", errors);
 
                 if (reference is decimal decimalRef && check is decimal decimalCheck)
-                    return Check(BinarySerializer.SerializeStruct(decimalRef).SequenceEqual(BinarySerializer.SerializeStruct(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeStruct(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeStruct(decimalCheck).ToHexValuesString()}", errors);
+                    return Check(BinarySerializer.SerializeValueType(decimalRef).SequenceEqual(BinarySerializer.SerializeValueType(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeValueType(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeValueType(decimalCheck).ToHexValuesString()}", errors);
 
                 if (typeRef == typeof(StringBuilder))
                 {

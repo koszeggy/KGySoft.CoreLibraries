@@ -1,7 +1,24 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializationFormatter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
@@ -10,9 +27,12 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 /* HOWTO
  * =====
@@ -56,113 +76,108 @@ using KGySoft.Reflection;
 namespace KGySoft.Serialization
 {
     /// <summary>
-    /// Serializes objects in a more effective(*) way than <see cref="BinaryFormatter"/>.
-    /// Natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
-    /// By implementing <see cref="IBinarySerializable"/> interface, you can control the serialization of any custom type.
-    /// <see cref="BinarySerializationFormatter"/> can recognize also <see cref="ISerializable"/> implementations, but can be used to serialize any type
-    /// when <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option is enabled.
-    /// <para><note>
-    /// (*) "Effectiveness" means guaranteed better speed performance only for primitive types. Serialization time of complex types can be
-    /// slower in some cases but the serialized result is almost always shorter than the result of <see cref="BinaryFormatter"/>,
-    /// especially when generic types are involved.
-    /// </note></para>
+    /// Serializes and deserialized objects in binary format.
+    /// <br/>See the <strong>Remarks</strong> section for details and for the differences to <see cref="BinaryFormatter"/>.
     /// </summary>
     /// <seealso cref="BinarySerializer"/>
     /// <seealso cref="BinarySerializationOptions"/>
     /// <seealso cref="IBinarySerializable"/>
     /// <remarks>
-    /// <para>
-    /// There are three ways to serialize/deserialize an object. If the needed result is a byte array, then the recommended choice is <see cref="Serialize(object)"/>.
-    /// If the serialized data should be dumped into a stream <see cref="SerializeToStream(System.IO.Stream,object)"/> can be useful. And if you want to use a specific writer with a
-    /// predefined <see cref="Encoding"/>, then <see cref="SerializeByWriter(System.IO.BinaryWriter,object)"/> should be chosen. If you want to use specific options
-    /// you can use the <see cref="BinarySerializationOptions"/>-specific overloads of these methods. For deserialization <see cref="Deserialize(byte[])"/>, <see cref="DeserializeFromStream"/> and
-    /// <see cref="DeserializeByReader"/> can be used, respectively.
-    /// <h1 class="heading">Simple types</h1>
-    /// Following types are natively supported (with <see cref="BinarySerializationOptions.None"/> option):
+    /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
+    /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
+    /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively. This also means better speed performance
+    /// for these types. Serialization of complex types can be sometimes slower than by <see cref="BinaryFormatter"/> (especially for the first time) but the serialized result is almost always shorter than the one by <see cref="BinaryFormatter"/>,
+    /// especially when generic types are involved.</note></para>
+    /// <para>Even if a type is not marked to be serializable by the <see cref="SerializableAttribute"/>, then you can use the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option to force their serialization.
+    /// Alternatively, you can implement the <see cref="IBinarySerializable"/> interface, which can be used to produce a more compact custom serialization than the one provided by implementing the <see cref="ISerializable"/> interface.
+    /// A custom serialization logic can be applied also by setting the <see cref="SurrogateSelector"/> property.<para>
+    /// </para>Similarly to <see cref="BinaryFormatter"/>, <see cref="ISerializable"/> implementations are also supported, and they are considered only for types marked by the <see cref="SerializableAttribute"/>, unless
+    /// the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option is enabled for the serialization.</para>
+    /// <para>As <see cref="BinarySerializationFormatter"/> implements <see cref="IFormatter"/> it fully supports <see cref="SerializationBinder"/> and <see cref="ISurrogateSelector"/> implementations.</para>
+    /// <para>There are three ways to serialize/deserialize an object. To serialize into a byte array use the <see cref="Serialize">Serialize</see> method. Its result can be deserialized by the <see cref="Deserialize">Deserialize</see> method.
+    /// Additionally, you can use the <see cref="SerializeToStream">SerializeToStream</see>/<see cref="DeserializeFromStream">DeserializeFromStream</see> methods to dump/read the result to and from a <see cref="Stream"/>, and the
+    /// the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="DeserializeByReader">DeserializeByReader</see> methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for
+    /// serialization and deserialization, respectively.</para>
+    /// <h1 class="heading">Natively supported simple types</h1>
+    /// <para>Following types are natively supported. When these types are serialized, no recursive traversal of the fields occurs:
     /// <list type="bullet">
-    /// <item><description><see langword="null"/>&#160;reference</description></item>
-    /// <item><description><see cref="object"/></description></item>
-    /// <item><description><see cref="DBNull"/></description></item>
-    /// <item><description><see cref="bool"/></description></item>
-    /// <item><description><see cref="sbyte"/></description></item>
-    /// <item><description><see cref="byte"/></description></item>
-    /// <item><description><see cref="short"/></description></item>
-    /// <item><description><see cref="ushort"/></description></item>
-    /// <item><description><see cref="int"/></description></item>
-    /// <item><description><see cref="uint"/></description></item>
-    /// <item><description><see cref="long"/></description></item>
-    /// <item><description><see cref="ulong"/></description></item>
-    /// <item><description><see cref="char"/></description></item>
-    /// <item><description><see cref="string"/></description></item>
-    /// <item><description><see cref="float"/></description></item>
-    /// <item><description><see cref="double"/></description></item>
-    /// <item><description><see cref="decimal"/></description></item>
-    /// <item><description><see cref="DateTime"/></description></item>
-    /// <item><description><see cref="TimeSpan"/></description></item>
-    /// <item><description><see cref="DateTimeOffset"/></description></item>
-    /// <item><description><see cref="IntPtr"/></description></item>
-    /// <item><description><see cref="UIntPtr"/></description></item>
-    /// <item><description><see cref="Version"/></description></item>
-    /// <item><description><see cref="Guid"/></description></item>
-    /// <item><description><see cref="Uri"/></description></item>
-    /// <item><description><see cref="StringBuilder"/></description></item>
-    /// <item><description><see cref="Enum"/> types</description></item>
-    /// <item><description><see cref="Nullable{T}"/> types if type parameter is a supported type</description></item>
-    /// <item><description>Any object that implements <see cref="IBinarySerializable"/> interface</description></item>
+    /// <item><see langword="null"/>&#160;reference</item>
+    /// <item>Non-derived <see cref="object"/> instances.</item>
+    /// <item><see cref="DBNull"/></item>
+    /// <item><see cref="bool"/></item>
+    /// <item><see cref="sbyte"/></item>
+    /// <item><see cref="byte"/></item>
+    /// <item><see cref="short"/></item>
+    /// <item><see cref="ushort"/></item>
+    /// <item><see cref="int"/></item>
+    /// <item><see cref="uint"/></item>
+    /// <item><see cref="long"/></item>
+    /// <item><see cref="ulong"/></item>
+    /// <item><see cref="char"/></item>
+    /// <item><see cref="string"/></item>
+    /// <item><see cref="float"/></item>
+    /// <item><see cref="double"/></item>
+    /// <item><see cref="decimal"/></item>
+    /// <item><see cref="DateTime"/></item>
+    /// <item><see cref="TimeSpan"/></item>
+    /// <item><see cref="DateTimeOffset"/></item>
+    /// <item><see cref="IntPtr"/></item>
+    /// <item><see cref="UIntPtr"/></item>
+    /// <item><see cref="Version"/></item>
+    /// <item><see cref="Guid"/></item>
+    /// <item><see cref="Uri"/></item>
+    /// <item><see cref="StringBuilder"/></item>
+    /// <item><see cref="Enum"/> types</item>
+    /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
+    /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
+    /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
+    /// <item><see cref="DictionaryEntry"/> if <see cref="DictionaryEntry.Key"/> and <see cref="DictionaryEntry.Value"/> are any of the supported types.</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
-    /// <item><description>If a non-derived <see cref="object"/> instance is deserialized the reference will not the same as the original object, thus <see cref="object.Equals(object,object)"/> will return
-    /// <see langword="false"/>&#160;for the two instances. Using the <c>object</c> type has more meaning in case of a generic collection argument type.</description></item>
-    /// <item><description>Serializing <see cref="Enum"/> types will result a longer raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.</description></item>
+    /// <item>Serializing <see cref="Enum"/> types will result a longer raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.</item>
+    /// <item>If <see cref="KeyValuePair{TKey,TValue}"/> contains non-natively supported type arguments or <see cref="DictionaryEntry"/> has non-natively supported keys an values, then for them recursive serialization may occur.
+    /// If they contain non-serializable types, then the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option should be enabled.</item>
     /// </list>
     /// </note>
     /// </para>
-    /// <h1 class="heading">Generic collections</h1>
-    /// Following generic collections are natively supported (with <see cref="BinarySerializationOptions.None"/> option) when their generic arguments are one of the simple types or other supported collections:
+    /// <h1 class="heading">Natively supported generic collections</h1>
+    /// <para>Following generic collections are natively supported. When their generic arguments are one of the simple types or other supported collections, then no recursive traversal of the fields occurs:
     /// <list type="bullet">
-    /// <item><description><see cref="Array"/> of types above or compound of other supported collections</description></item>
-    /// <item><description><see cref="List{T}"/></description></item>
-    /// <item><description><see cref="CircularList{T}"/></description></item>
-    /// <item><description><see cref="LinkedList{T}"/></description></item>
-    /// <item><description><see cref="HashSet{T}"/></description></item>
-    /// <item><description><see cref="Dictionary{TKey,TValue}"/></description></item>
-    /// <item><description><see cref="SortedList{TKey,TValue}"/></description></item>
-    /// <item><description><see cref="SortedDictionary{TKey,TValue}"/></description></item>
-    /// <item><description><see cref="Queue{T}"/></description></item>
-    /// <item><description><see cref="Stack{T}"/></description></item>
-    /// <item><description><see cref="SortedSet{T}"/> (in .NET 4 and above)</description></item>
+    /// <item><see cref="Array"/> of element types above or compound of other supported collections</item>
+    /// <item><see cref="List{T}"/></item>
+    /// <item><see cref="CircularList{T}"/></item>
+    /// <item><see cref="LinkedList{T}"/></item>
+    /// <item><see cref="HashSet{T}"/></item>
+    /// <item><see cref="Dictionary{TKey,TValue}"/></item>
+    /// <item><see cref="SortedList{TKey,TValue}"/></item>
+    /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
+    /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
+    /// <item><see cref="Queue{T}"/></item>
+    /// <item><see cref="Stack{T}"/></item>
+    /// <item><see cref="SortedSet{T}"/> (in .NET 4 and above)</item>
     /// </list>
-    /// <para>
-    /// Derived types of these collections and other types such as <see cref="Collection{T}"/> and <see cref="ReadOnlyCollection{T}"/> types are supported with <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option.
-    /// If <see cref="IBinarySerializable"/> interface is implemented on a type, then it becomes natively serializable.
-    /// </para>
-    /// <para>
-    /// <see cref="Array"/>s can be single- or multidimensional, jagged (array of arrays) and don't have to be zero index-based. Arrays and other generic collections can be nested.
-    /// If a collection uses a non-default <see cref="IEqualityComparer{T}"/> or <see cref="IComparer{T}"/> implementation, then it is possible that the type cannot be serialized without enabling
-    /// <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option, unless the comparer is decorated by <see cref="SerializableAttribute"/> or implements the <see cref="IBinarySerializable"/> interface.
-    /// </para>
-    /// <note type="caution">
-    /// If you use the <see cref="object"/> type as generic argument or <see cref="Array"/> base type, then please note that
-    /// <list type="bullet">
-    /// <item><description>Even if the element types are of the same type (integers, for example) the result will be longer if they are deemed as objects.</description></item>
-    /// <item><description>If an element type is not supported, an exception may be thrown. For collections that have non-natively supported elements you can enable <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
-    /// option.</description></item>
-    /// </list>
-    /// </note>
     /// <note>
-    /// If you serialize a collection of <see cref="IBinarySerializable"/> type implementations, then using the <see cref="IBinarySerializable"/> interface itself as array base type or generic argument
-    /// may produce longer result than using the actual type. The shortest result can be achieved by using <see langword="sealed"/> classes or value types as array base types and generic parameters.
+    /// <list type="bullet">
+    /// <item><see cref="Array"/>s can be single- and multidimensional, jagged (array of arrays) and don't have to be zero index-based. Arrays and other generic collections can be nested.</item>
+    /// <item>If a collection uses a non-default <see cref="IEqualityComparer{T}"/> or <see cref="IComparer{T}"/> implementation, then it is possible that the type cannot be serialized without enabling
+    /// <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option, unless the comparer is decorated by <see cref="SerializableAttribute"/> or implements the <see cref="IBinarySerializable"/> interface.</item>
+    /// <item>If an <see cref="Array"/> has <see cref="object"/> element type or <see cref="object"/> is used in generic arguments of the collection sabove and an element is not a natively supported type, then recursive serialization of fields
+    /// may occur. For non-serializable types the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option might be enabled.</item>
+    /// <item>Even if a generic collection of <see cref="object"/> contains natively supported types only, the result will be somewhat longer than in case of a more specific element type.</item>
+    /// </list>
     /// </note>
-    /// <h1 class="heading">Non-generic collections</h1>
-    /// Following non-generic collections are natively supported (with <see cref="BinarySerializationOptions.None"/> option):
+    /// </para>
+    /// <note type="tip">The shortest result can be achieved by using <see langword="sealed"/>&#160;classes or value types as array base types and generic parameters.</note>
+    /// <h1 class="heading">Natively supported non-generic collections</h1>
+    /// <para>Following non-generic collections are natively supported. When they contain only other natively supported elements, then no recursive traversal of the fields occurs:
     /// <list type="table">
-    /// <listheader><term>Collection type</term><description>Static element type</description></listheader>
-    /// <item><term><see cref="System.Collections.ArrayList"/></term><description><see cref="object"/></description></item>
+    /// <listheader><term>Collection type</term><description>Used element type</description></listheader>
+    /// <item><term><see cref="ArrayList"/></term><description><see cref="object"/></description></item>
     /// <item><term><see cref="Queue"/></term><description><see cref="object"/></description></item>
     /// <item><term><see cref="Stack"/></term><description><see cref="object"/></description></item>
     /// <item><term><see cref="StringCollection"/></term><description><see cref="string"/></description></item>
-    /// <item><term><see cref="System.Collections.Hashtable"/></term><description><see cref="object"/></description></item>
+    /// <item><term><see cref="Hashtable"/></term><description><see cref="object"/></description></item>
     /// <item><term><see cref="SortedList"/></term><description><see cref="object"/></description></item>
     /// <item><term><see cref="ListDictionary"/></term><description><see cref="object"/></description></item>
     /// <item><term><see cref="HybridDictionary"/></term><description><see cref="object"/></description></item>
@@ -172,26 +187,26 @@ namespace KGySoft.Serialization
     /// <item><term><see cref="BitVector32"/></term><description><see cref="bool"/> (actually the type is stored in a compact way)</description></item>
     /// <item><term><see cref="BitVector32.Section"/></term><description>n.a.</description></item>
     /// </list>
-    /// <para>
-    /// Derived types of these collections are supported with <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option.
-    /// You can either implement <see cref="IBinarySerializable"/> interface on a type to make it natively supported.
-    /// </para>
-    /// <para>
-    /// If a collection uses a non-default <see cref="IEqualityComparer"/> or <see cref="IComparer"/> implementation, then it is possible that the type cannot be serialized without enabling
-    /// <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option, unless the comparer is decorated by <see cref="SerializableAttribute"/> or implements the <see cref="IBinarySerializable"/> interface.
+    /// <note>
+    /// <list type="bullet">
+    /// <item>If a collection uses a non-default <see cref="IEqualityComparer"/> or <see cref="IComparer"/> implementation, then it is possible that the type cannot be serialized without enabling
+    /// <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option, unless the comparer is decorated by <see cref="SerializableAttribute"/> or implements the <see cref="IBinarySerializable"/> interface.</item>
+    /// <item>If an element in these collections is not a natively supported type, then recursive serialization of fields may occur. For non-serializable types the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
+    /// option might be enabled.</item>
+    /// </list>
+    /// </note>
     /// </para>
     /// <h1 class="heading">Serialization events</h1>
-    /// <see cref="BinarySerializationFormatter"/> supports calling methods decorated by <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>,
-    /// <see cref="OnDeserializingAttribute"/> and <see cref="OnDeserializedAttribute"/> as well as calling <see cref="IDeserializationCallback.OnDeserialization"/> method
-    /// of implementers. Attributes should be used on methods that have a single <see cref="StreamingContext"/> parameter.
-    /// <note>
-    /// Please note that if value type was serialized due to using <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> option, then method of <see cref="OnDeserializedAttribute"/> can be invoked
-    /// only after restoring the whole content so fields will be already restored.
-    /// </note>
+    /// <para><see cref="BinarySerializationFormatter"/> supports calling methods decorated by <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>,
+    /// <see cref="OnDeserializingAttribute"/> and <see cref="OnDeserializedAttribute"/> as well as calling <see cref="IDeserializationCallback.OnDeserialization">IDeserializationCallback.OnDeserialization</see> method.
+    /// Attributes should be used on methods that have a single <see cref="StreamingContext"/> parameter.
+    /// <note>Please note that if a value type was serialized by the <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> option, then the method of <see cref="OnDeserializingAttribute"/> can be invoked
+    /// only after restoring the whole content so fields will be already restored.</note>
+    /// </para>
     /// </remarks>
-    public sealed partial class BinarySerializationFormatter: IFormatter
+    public sealed partial class BinarySerializationFormatter : IFormatter
     {
-        #region Enums
+        #region Enumerations
 
         /// <summary>
         /// Represents possible types.
@@ -199,7 +214,7 @@ namespace KGySoft.Serialization
         /// </summary>
         [Flags]
         [DebuggerDisplay("{BinarySerializationFormatter.ToString(this)}")]
-        enum DataTypes: ushort
+        enum DataTypes : ushort
         {
             // ------ simple types:
             Null = 0,
@@ -362,21 +377,11 @@ namespace KGySoft.Serialization
             DefaultEnumComparer = 1 << 9,
         }
 
-        //enum ObjectGraphType: byte
-        //{
-        //    Default,
-        //    // ReSharper disable InconsistentNaming
-        //    ISerializable,
-        //    // ReSharper restore InconsistentNaming
-        //    SurrogateDriven
-        //}
-
         #endregion
 
         #region Constants
 
         private const BinarySerializationOptions extendedFlags = (BinarySerializationOptions)(1 << 7);
-        //private const BinarySerializationOptions omitEnumTypes = (BinarySerializationOptions)(1 << 12);
 
         #endregion
 
@@ -385,17 +390,14 @@ namespace KGySoft.Serialization
         #region Static Fields
 
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo;
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache 
+        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
             = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
         #endregion
 
         #region Instance Fields
 
-        //private volatile int serializationLevel;
-        private HashSet<object> serObjects;
         private List<IDeserializationCallback> deserRegObjects;
-        //private readonly object syncRootDeserialize = new object(); // to lock on registered objects for IDeserializationCallback
         private BinarySerializationOptions serializationOptions;
 
         #endregion
@@ -404,26 +406,40 @@ namespace KGySoft.Serialization
 
         #region Properties
 
-        #region Public Properties
-
         /// <summary>
-        /// Options used for serialization. On deserializing, always original options are used (the ones when data was serialized).
+        /// Options used for serialization and deserialization.
+        /// See the <see cref="BinarySerializationOptions"/> enumeration for details.
         /// </summary>
         public BinarySerializationOptions Options
         {
-            get { return serializationOptions; }
+            get => serializationOptions;
             set
             {
                 if (!value.AllFlagsDefined())
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentOutOfRange);
-                }
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.FlagsEnumOutOfRange(value));
 
                 serializationOptions = value;
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Gets or sets the <see cref="SerializationBinder"/> that performs type lookups.
+        /// </summary>
+        /// <remarks>
+        /// In .NET 4.0 and above affects both serialization and deserialization. In .NET 3.5 setting this property
+        /// has no effect during serialization.
+        /// </remarks>
+        public SerializationBinder Binder { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="StreamingContext"/> used for serialization and deserialization.
+        /// </summary>
+        public StreamingContext Context { get; set; }
+
+        /// <summary>
+        /// Gets or sets an <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization.
+        /// </summary>
+        public ISurrogateSelector SurrogateSelector { get; set; }
 
         #endregion
 
@@ -440,47 +456,47 @@ namespace KGySoft.Serialization
                 { DataTypes.List, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
                 { DataTypes.LinkedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric } },
                 { DataTypes.HashSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-                    SpecificAddMethod = "Add", ComparerFieldName = "m_comparer"} },
+                        SpecificAddMethod = "Add", ComparerFieldName = "m_comparer"} },
                 { DataTypes.Queue, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric,
-                    SpecificAddMethod = "Enqueue" } },
+                        SpecificAddMethod = "Enqueue" } },
                 { DataTypes.Stack, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                    SpecificAddMethod = "Push" } },
+                        SpecificAddMethod = "Push" } },
                 { DataTypes.CircularList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
-                { DataTypes.SortedSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,  
-                    ComparerFieldName = "comparer" } },
-                
+                { DataTypes.SortedSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
+                        ComparerFieldName = "comparer" } },
+
                 // generic dictionaries
                 { DataTypes.Dictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                    ComparerFieldName = "comparer"} },
+                        ComparerFieldName = "comparer"} },
                 { DataTypes.SortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                    ComparerFieldName = "comparer" } },
+                        ComparerFieldName = "comparer" } },
                 { DataTypes.SortedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                    ComparerFieldName = "_set.comparer.keyComparer" } },
+                        ComparerFieldName = "_set.comparer.keyComparer" } },
                 { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
                 { DataTypes.KeyValuePairNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
                 { DataTypes.CircularSortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
-                    ComparerFieldName = "comparer" } },
+                        ComparerFieldName = "comparer" } },
 
                 // non-generic collections
                 { DataTypes.ArrayList, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity } },
                 { DataTypes.QueueNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.None,
-                    SpecificAddMethod = "Enqueue" } },
+                        SpecificAddMethod = "Enqueue" } },
                 { DataTypes.StackNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.ReverseElements,
-                    SpecificAddMethod = "Push" } },
+                        SpecificAddMethod = "Push" } },
                 { DataTypes.StringCollection, CollectionSerializationInfo.Default },
 
                 // non-generic dictionaries
                 { DataTypes.Hashtable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                    ComparerFieldName = "_keycomparer" } },
+                        ComparerFieldName = "_keycomparer" } },
                 { DataTypes.SortedListNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                    ComparerFieldName = "comparer" } },
+                        ComparerFieldName = "comparer" } },
                 { DataTypes.ListDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, comparer and not equalitycomparer
-                    ComparerFieldName = "comparer" } },
+                        ComparerFieldName = "comparer" } },
                 { DataTypes.HybridDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity } },
                 { DataTypes.OrderedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
-                    ComparerFieldName = "_comparer"} },
+                        ComparerFieldName = "_comparer"} },
                 { DataTypes.StringDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary,
-                    SpecificAddMethod = "Add"} },
+                        SpecificAddMethod = "Add"} },
                 { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
                 { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
             };
@@ -493,28 +509,671 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Creates a new instance of <see cref="BinarySerializationFormatter"/> class.
         /// </summary>
-        /// <param name="options">Options used for serialization.</param>
-        public BinarySerializationFormatter(BinarySerializationOptions options)
+        /// <param name="options">Options used for serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        public BinarySerializationFormatter(BinarySerializationOptions options = BinarySerializer.DefaultOptions)
         {
             Context = new StreamingContext(StreamingContextStates.All);
             Options = options;
         }
 
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        private static void ThrowNotSupported(BinarySerializationOptions options, Type type) => throw new NotSupportedException(Res.BinarySerializationNotSupported(type, options));
+
         /// <summary>
-        /// Creates a new instance of <see cref="BinarySerializationFormatter"/> class with default options.
+        /// Writes options if needed
         /// </summary>
-        public BinarySerializationFormatter() :
-            this(BinarySerializer.DefaultOptions)
+        private static void WriteOptions(BinaryWriter bw, CircularList<DataTypes> collectionType, BinarySerializationOptions options)
         {
+            // options are needed if there is a BinarySerializable or recursively saved element anywhere
+            if (collectionType == null || collectionType.Exists(dt => (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph))
+            {
+                // 1 byte is enough
+                if (((int)options & 255) == (int)options)
+                {
+                    bw.Write((byte)options);
+                    return;
+                }
+
+                // storing options on 2 bytes
+                bw.Write((ushort)(options | extendedFlags));
+            }
+        }
+
+        /// <summary>
+        /// Writes AssemblyQiualifiedName of element types and array ranks if needed
+        /// </summary>
+        private static void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, BinarySerializationOptions options, SerializationManager manager)
+        {
+            // Enum, BinarySerializable, RawStruct, recursive serialization: type name
+            DataTypes elementType = GetSupportedElementType(type, options, manager);
+            if ((elementType & DataTypes.Enum) != DataTypes.Null
+                || (elementType & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
+                || (elementType & DataTypes.SimpleTypes) == DataTypes.RawStruct
+                || (elementType & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph)
+            {
+                if ((elementType & DataTypes.Nullable) == DataTypes.Nullable)
+                    type = Nullable.GetUnderlyingType(type);
+                manager.WriteType(bw, type);
+            }
+            // Array: element type name and rank
+            else if (type.IsArray)
+            {
+                WriteTypeNamesAndRanks(bw, type.GetElementType(), options, manager);
+                bw.Write((byte)type.GetArrayRank());
+            }
+            // recursion for generic arguments
+            else if (IsSupportedCollection(type))
+            {
+                foreach (Type genericArgument in type.GetGenericArguments())
+                    WriteTypeNamesAndRanks(bw, genericArgument, options, manager);
+            }
+        }
+
+        /// <summary>
+        /// Returning a true value just indicates that the type itself supported without the generic parameters or element type.
+        /// </summary>
+        private static bool IsSupportedCollection(Type type)
+        {
+            if (type.IsArray)
+                return true;
+            if (type.IsValueType)
+                type = Nullable.GetUnderlyingType(type) ?? type;
+            if (type.IsGenericType)
+            {
+                Type typeDef = type.GetGenericTypeDefinition();
+                return typeDef == typeof(List<>) || typeDef == typeof(Dictionary<,>)
+                    || typeDef == typeof(HashSet<>)
+                    || typeDef == typeof(CircularList<>) || typeDef == typeof(CircularSortedList<,>)
+                    || typeDef == typeof(SortedList<,>) || typeDef == typeof(SortedDictionary<,>)
+                    || typeDef == typeof(Queue<>) || typeDef == typeof(Stack<>)
+#if NET40 || NET45
+                    || typeDef == typeof(SortedSet<>)
+#elif !NET35
+#error .NET version is not set or not supported!
+#endif
+
+                    || typeDef == typeof(LinkedList<>)
+                    || typeDef == Reflector.KeyValuePairType; // not actually a collection but can be encoded more easily as a dictionary
+            }
+
+            return type == typeof(ArrayList) || type == typeof(Queue) || type == typeof(Stack)
+                || type == typeof(Hashtable) || type == typeof(SortedList) || type == typeof(ListDictionary) || type == typeof(HybridDictionary) || type == typeof(OrderedDictionary)
+                || type == typeof(StringCollection) || type == typeof(StringDictionary)
+                || type == Reflector.DictionaryEntryType; // encoded as a non-generic dictionary
+        }
+
+        private static IEnumerable<DataTypes> EncodeCollectionType(Type type, BinarySerializationOptions options, SerializationManager manager)
+        {
+            // array
+            if (type.IsArray)
+            {
+                Type elementType = type.GetElementType();
+                if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None
+                    && manager.CanUseSurrogate(elementType))
+                {
+                    DataTypes[] result = { DataTypes.Array | DataTypes.RecursiveObjectGraph };
+                    if (elementType.IsNullable())
+                        result[0] |= DataTypes.Nullable;
+                    return result;
+                }
+
+                DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
+                if (elementDataType != DataTypes.Null)
+                    return new[] { DataTypes.Array | elementDataType };
+
+                if (IsSupportedCollection(elementType))
+                {
+                    IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
+                    if (innerType != null)
+                        return (new[] { DataTypes.Array }).Concat(innerType);
+                }
+                return null;
+            }
+
+            DataTypes collectionType = GetSupportedCollectionType(type);
+            type = Nullable.GetUnderlyingType(type) ?? type;
+
+            // generic type
+            if (type.IsGenericType)
+            {
+                if (collectionType == DataTypes.Null)
+                    return null;
+
+                Type[] args = type.GetGenericArguments();
+                Type elementType = args[0];
+                DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
+
+                // generics with 1 argument
+                if (args.Length == 1)
+                {
+                    if (elementDataType != DataTypes.Null)
+                        return new[] { collectionType | elementDataType };
+
+                    if (IsSupportedCollection(elementType))
+                    {
+                        IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
+                        if (innerType != null)
+                            return (new[] { collectionType }).Concat(innerType);
+                    }
+                    return null;
+                }
+
+                // dictionaries
+                Type valueType = args[1];
+                DataTypes valueDataType = GetSupportedElementType(valueType, options, manager);
+
+                IEnumerable<DataTypes> keyTypes;
+                IEnumerable<DataTypes> valueTypes;
+
+                // key
+                if (elementDataType != DataTypes.Null)
+                    keyTypes = new DataTypes[] { collectionType | elementDataType };
+                else if (IsSupportedCollection(elementType))
+                {
+                    keyTypes = EncodeCollectionType(elementType, options, manager);
+                    if (keyTypes == null)
+                        return null;
+                    keyTypes = (new DataTypes[] { collectionType }).Concat(keyTypes);
+                }
+                else
+                    return null;
+
+                // value
+                if (valueDataType != DataTypes.Null)
+                    valueTypes = new DataTypes[] { valueDataType };
+                else if (IsSupportedCollection(valueType))
+                {
+                    valueTypes = EncodeCollectionType(valueType, options, manager);
+                    if (valueTypes == null)
+                        return null;
+                }
+                else
+                    return null;
+
+                return keyTypes.Concat(valueTypes);
+            }
+
+            // non-generic types
+            else
+            {
+                switch (collectionType)
+                {
+                    case DataTypes.ArrayList:
+                    case DataTypes.QueueNonGeneric:
+                    case DataTypes.StackNonGeneric:
+                        return new DataTypes[] { collectionType | DataTypes.Object };
+
+                    case DataTypes.Hashtable:
+                    case DataTypes.SortedListNonGeneric:
+                    case DataTypes.ListDictionary:
+                    case DataTypes.HybridDictionary:
+                    case DataTypes.OrderedDictionary:
+                    case DataTypes.DictionaryEntry:
+                    case DataTypes.DictionaryEntryNullable:
+                        return new DataTypes[] { collectionType | DataTypes.Object, DataTypes.Object };
+
+                    case DataTypes.StringCollection:
+                        return new DataTypes[] { collectionType | DataTypes.String };
+
+                    case DataTypes.StringDictionary:
+                        return new DataTypes[] { collectionType | DataTypes.String, DataTypes.String };
+                    default:
+                        // should never occur, throwing internal error without resource
+                        throw new InvalidOperationException("Element type of non-generic collection is not defined: " + ToString(collectionType));
+                }
+            }
+        }
+
+        private static DataTypes GetSupportedCollectionType(Type type)
+        {
+            if (type.IsArray)
+                return DataTypes.Array;
+
+            if (type == Reflector.DictionaryEntryType)
+                return DataTypes.DictionaryEntry;
+
+            Type genType = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
+            if (genType == Reflector.KeyValuePairType)
+                return DataTypes.KeyValuePair;
+
+            if (type.IsNullable())
+            {
+                switch (GetSupportedCollectionType(Nullable.GetUnderlyingType(type)))
+                {
+                    case DataTypes.DictionaryEntry:
+                        return DataTypes.DictionaryEntryNullable;
+                    case DataTypes.KeyValuePair:
+                        return DataTypes.KeyValuePairNullable;
+                    default:
+                        return DataTypes.Null;
+                }
+            }
+
+            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
+                return DataTypes.Null;
+
+            if (genType != null)
+            {
+                if (genType == typeof(List<>))
+                    return DataTypes.List;
+                if (genType == typeof(Dictionary<,>))
+                    return DataTypes.Dictionary;
+                if (genType == typeof(HashSet<>))
+                    return DataTypes.HashSet;
+                if (genType == typeof(CircularList<>))
+                    return DataTypes.CircularList;
+                if (genType == typeof(CircularSortedList<,>))
+                    return DataTypes.CircularSortedList;
+                if (genType == typeof(LinkedList<>))
+                    return DataTypes.LinkedList;
+                if (genType == typeof(SortedList<,>))
+                    return DataTypes.SortedList;
+                if (genType == typeof(SortedDictionary<,>))
+                    return DataTypes.SortedDictionary;
+                if (genType == typeof(Queue<>))
+                    return DataTypes.Queue;
+                if (genType == typeof(Stack<>))
+                    return DataTypes.Stack;
+#if NET40 || NET45
+                if (genType == typeof(SortedSet<>))
+                    return DataTypes.SortedSet;
+#elif !NET35
+#error .NET version is not set or not supported!
+#endif
+
+
+                return DataTypes.Null;
+            }
+
+            if (type == typeof(ArrayList))
+                return DataTypes.ArrayList;
+            if (type == typeof(Hashtable))
+                return DataTypes.Hashtable;
+            if (type == typeof(Queue))
+                return DataTypes.QueueNonGeneric;
+            if (type == typeof(Stack))
+                return DataTypes.StackNonGeneric;
+            if (type == typeof(StringCollection))
+                return DataTypes.StringCollection;
+            if (type == typeof(SortedList))
+                return DataTypes.SortedListNonGeneric;
+            if (type == typeof(ListDictionary))
+                return DataTypes.ListDictionary;
+            if (type == typeof(HybridDictionary))
+                return DataTypes.HybridDictionary;
+            if (type == typeof(OrderedDictionary))
+                return DataTypes.OrderedDictionary;
+            if (type == typeof(StringDictionary))
+                return DataTypes.StringDictionary;
+
+            return DataTypes.Null;
+        }
+
+        private static DataTypes GetSupportedElementType(Type type, BinarySerializationOptions options, SerializationManager manager)
+        {
+            // a.) Natively supported primitive types
+            if (type == Reflector.BoolType)
+                return DataTypes.Bool;
+            if (type == Reflector.ByteType)
+                return DataTypes.UInt8;
+            if (type == Reflector.SByteType)
+                return DataTypes.Int8;
+            if (type == Reflector.ShortType)
+                return DataTypes.Int16;
+            if (type == Reflector.UShortType)
+                return DataTypes.UInt16;
+            if (type == Reflector.IntType)
+                return DataTypes.Int32;
+            if (type == Reflector.UIntType)
+                return DataTypes.UInt32;
+            if (type == Reflector.LongType)
+                return DataTypes.Int64;
+            if (type == Reflector.ULongType)
+                return DataTypes.UInt64;
+            if (type == Reflector.CharType)
+                return DataTypes.Char;
+            if (type == Reflector.StringType)
+                return DataTypes.String;
+            if (type == Reflector.FloatType)
+                return DataTypes.Single;
+            if (type == Reflector.DoubleType)
+                return DataTypes.Double;
+            if (type == Reflector.IntPtrType)
+                return DataTypes.IntPtr;
+            if (type == Reflector.UIntPtrType)
+                return DataTypes.UIntPtr;
+
+            // b.) nullable (must be before surrogate-support checks)
+            if (type.IsNullable())
+            {
+                DataTypes elementType = GetSupportedElementType(Nullable.GetUnderlyingType(type), options, manager);
+                if (elementType == DataTypes.Null)
+                    return elementType;
+                return DataTypes.Nullable | elementType;
+            }
+
+            // c.) surrogate for any type: check even for sub-collections
+            if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None && manager.CanUseSurrogate(type))
+                return DataTypes.RecursiveObjectGraph;
+
+            // if type is a collection, then returning null here
+            if (GetSupportedCollectionType(type) != DataTypes.Null)
+                return DataTypes.Null;
+
+            // d.) Natively supported non-primitive types
+            if (type == Reflector.DecimalType)
+                return DataTypes.Decimal;
+            if (type == Reflector.DateTimeType)
+                return DataTypes.DateTime;
+            if (type == Reflector.ObjectType)
+                return DataTypes.Object;
+            if (type == typeof(DBNull))
+                return DataTypes.DBNull;
+            if (type == typeof(Version))
+                return DataTypes.Version;
+            if (type == typeof(Guid))
+                return DataTypes.Guid;
+            if (type == Reflector.TimeSpanType)
+                return DataTypes.TimeSpan;
+            if (type == Reflector.DateTimeOffsetType)
+                return DataTypes.DateTimeOffset;
+            if (type == typeof(Uri))
+                return DataTypes.Uri;
+            if (type == typeof(BitArray))
+                return DataTypes.BitArray;
+            if (type == typeof(BitVector32))
+                return DataTypes.BitVector32;
+            if (type == typeof(BitVector32.Section))
+                return DataTypes.BitVector32Section;
+            if (type == typeof(StringBuilder))
+                return DataTypes.StringBuilder;
+
+            // e.) enum
+            if (type.IsEnum)
+                return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), options, manager);
+
+            // f.) IBinarySerializable implementation
+            if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None)
+                && typeof(IBinarySerializable).IsAssignableFrom(type))
+            {
+                return DataTypes.BinarySerializable;
+            }
+
+            // g.) Any struct if can be serialized
+            if ((options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
+                return DataTypes.RawStruct;
+
+            // h.) Recursive serialization
+            if ((options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None
+                || manager != null && manager.CanUseSurrogate(type)
+                || type.IsSerializable || type.IsInterface)
+            {
+                return DataTypes.RecursiveObjectGraph;
+            }
+
+#pragma warning disable 618, 612
+            // i.) Any struct (obsolete but still supported as backward compatibility)
+            if ((options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None && type.IsValueType)
+                return DataTypes.RawStruct;
+#pragma warning restore 618, 612
+
+            return DataTypes.Null;
+        }
+
+        /// <summary>
+        /// Gets the element types for a dictionary
+        /// </summary>
+        private static CircularList<DataTypes> GetDictionaryValueTypes(CircularList<DataTypes> collectionTypeDescriptor)
+        {
+            // descriptor must refer a generic dictionary type here
+            Debug.Assert(collectionTypeDescriptor.Count > 0, "Type description is invalid: not enough data");
+#if DEBUG
+            int collType = ((int)(collectionTypeDescriptor[0] & DataTypes.CollectionTypes) >> 8);
+            Debug.Assert(collType >= 16 && collType < 32
+                || collType >= 48 && collType < 64, "Type description is invalid: dictionary type is expected");
+#endif
+
+            CircularList<DataTypes> result = new CircularList<DataTypes>();
+            int skipLevel = 0; // starting from -1 because dictionary will increase it by 1 or 2
+            bool startingDictionaryResolved = false;
+            foreach (DataTypes dataType in collectionTypeDescriptor)
+            {
+                if (startingDictionaryResolved && skipLevel == 0) // 0 means we are in value already
+                    result.Add(dataType);
+                else
+                {
+                    switch (dataType & DataTypes.CollectionTypes)
+                    {
+                        case DataTypes.Null:
+                            // simple type: leaf element of previous collection
+                            skipLevel--;
+                            break;
+                        case DataTypes.Array:
+                        case DataTypes.List:
+                        //case DataTypes.Collection:
+                        case DataTypes.LinkedList:
+                        case DataTypes.HashSet:
+                        case DataTypes.Queue:
+                        case DataTypes.Stack:
+                        //case DataTypes.ReadOnlyCollection:
+                        case DataTypes.CircularList:
+                        case DataTypes.SortedSet:
+                        case DataTypes.ArrayList:
+                        case DataTypes.QueueNonGeneric:
+                        case DataTypes.StackNonGeneric:
+                        case DataTypes.StringCollection:
+                            // collections with a single element: decreasing level if element is specified
+                            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
+                                skipLevel--;
+                            break;
+                        case DataTypes.Dictionary:
+                        case DataTypes.SortedList:
+                        case DataTypes.SortedDictionary:
+                        case DataTypes.CircularSortedList:
+                        case DataTypes.Hashtable:
+                        case DataTypes.SortedListNonGeneric:
+                        case DataTypes.ListDictionary:
+                        case DataTypes.HybridDictionary:
+                        case DataTypes.OrderedDictionary:
+                        case DataTypes.StringDictionary:
+                        case DataTypes.KeyValuePair:
+                        case DataTypes.DictionaryEntry:
+                        case DataTypes.KeyValuePairNullable:
+                        case DataTypes.DictionaryEntryNullable:
+                            // dictionary types: increasing level by 1 if key is not specified, otherwise current level remains
+                            if ((dataType & ~DataTypes.CollectionTypes) == DataTypes.Null)
+                                skipLevel++;
+                            startingDictionaryResolved = true;
+                            break;
+                    }
+                }
+            }
+            return result;
+        }
+
+        private static void Write7BitInt(BinaryWriter bw, int value)
+        {
+            uint v = (uint)value;
+            while (v >= 0x80UL)
+            {
+                bw.Write((byte)(v | 0x80UL));
+                v >>= 7;
+            }
+
+            bw.Write((byte)v);
+        }
+
+        /// <summary>
+        /// Must be separated from Write7BitInt because -1 would result 10 bytes here and 5 there
+        /// </summary>
+        private static void Write7BitLong(BinaryWriter bw, ulong value)
+        {
+            while (value >= 0x80UL)
+            {
+                bw.Write((byte)(value | 0x80UL));
+                value >>= 7;
+            }
+
+            bw.Write((byte)value);
+        }
+
+        private static void WriteDateTime(BinaryWriter bw, DateTime dateTime)
+        {
+            bw.Write((byte)dateTime.Kind);
+            bw.Write(dateTime.Ticks);
+        }
+
+        private static void WriteDateTimeOffset(BinaryWriter bw, DateTimeOffset dateTimeOffset)
+        {
+            bw.Write(((DateTime)Reflector.GetField(dateTimeOffset, "m_dateTime")).Ticks);
+            bw.Write((short)Reflector.GetField(dateTimeOffset, "m_offsetMinutes"));
+        }
+
+        private static void WriteVersion(BinaryWriter bw, Version version)
+        {
+            bw.Write(version.Major);
+            bw.Write(version.Minor);
+            bw.Write(version.Build);
+            bw.Write(version.Revision);
+        }
+
+        private static void WriteUri(BinaryWriter bw, Uri uri)
+        {
+            bw.Write(uri.IsAbsoluteUri);
+            bw.Write((string)Reflector.InvokeMethod(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
+        }
+
+        private static void WriteBitArray(BinaryWriter bw, BitArray bitArray)
+        {
+            int length = bitArray.Length;
+            Write7BitInt(bw, bitArray.Length);
+            if (length > 0)
+            {
+                int[] value = (int[])Reflector.GetField(bitArray, "m_array");
+                foreach (int i in value)
+                    bw.Write(i);
+            }
+        }
+
+        private static void WriteSection(BinaryWriter bw, BitVector32.Section section)
+        {
+            bw.Write(section.Mask);
+            bw.Write(section.Offset);
+        }
+
+        private static IEnumerable<MethodInfo> GetMethodsWithAttribute(Type attribute, Type type)
+        {
+            Dictionary<Type, IEnumerable<MethodInfo>> cacheItem = methodsByAttributeCache[type];
+
+            lock (cacheItem)
+            {
+                IEnumerable<MethodInfo> cachedResult;
+                if (cacheItem.TryGetValue(attribute, out cachedResult))
+                {
+                    return cachedResult;
+                }
+
+                List<MethodInfo> result = new List<MethodInfo>();
+                for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+                {
+                    foreach (MethodInfo method in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                    {
+                        if (method.IsDefined(attribute, false))
+                        {
+                            ParameterInfo[] parameters = method.GetParameters();
+                            if (parameters.Length == 1 && parameters[0].ParameterType == typeof(StreamingContext))
+                            {
+                                result.Add(method);
+                            }
+                        }
+                    }
+                }
+
+                if (result.Count > 1)
+                    result.Reverse();
+
+                if (result.Count == 0)
+                {
+                    cacheItem[attribute] = null;
+                    return null;
+                }
+
+                cacheItem[attribute] = result;
+                return result;
+            }
+        }
+
+        private static int Read7BitInt(BinaryReader br)
+        {
+            int result = 0;
+            int shift = 0;
+            byte b;
+            do
+            {
+                // Check for a corrupted stream. Max 4 * 7 bits are valid
+                if (shift == 35)
+                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
+
+                b = br.ReadByte();
+
+                result |= (b & 0x7F) << shift;
+                shift += 7;
+            }
+            while ((b & 0x80) != 0);
+
+            return result;
+        }
+
+        private static BinarySerializationOptions ReadOptions(BinaryReader br)
+        {
+            BinarySerializationOptions options = (BinarySerializationOptions)br.ReadByte();
+
+            // if stored on 2 bytes
+            if ((options & extendedFlags) == extendedFlags)
+            {
+                options &= ~extendedFlags;
+                options |= (BinarySerializationOptions)(br.ReadByte() << 8);
+            }
+
+            return options;
+        }
+
+        /// <summary>
+        /// Converts a <see cref="DataTypes"/> enumeration into the corresponding string representation.
+        /// This method is needed because <see cref="Enum.ToString()"/> and <see cref="Enum{TEnum}.ToString(TEnum,EnumFormattingOptions,string)"/>
+        /// cannot always handle the fields and flags structure of <see cref="DataTypes"/> enum.
+        /// </summary>
+        private static string ToString(DataTypes dataType)
+        {
+            if (dataType.In(DataTypes.Null, DataTypes.SimpleTypes, DataTypes.CollectionTypes))
+                return dataType.ToString<DataTypes>();
+
+            StringBuilder result = new StringBuilder();
+            if ((dataType & DataTypes.CollectionTypes) != DataTypes.Null)
+                result.Append(Enum<DataTypes>.ToString(dataType & DataTypes.CollectionTypes, EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
+            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
+            {
+                if (result.Length > 0)
+                    result.Insert(0, " | ");
+                result.Insert(0, Enum<DataTypes>.ToString(dataType & ~DataTypes.CollectionTypes, EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
+            }
+
+            return result.ToString();
         }
 
         #endregion
 
-        #endregion
+        #region Instance Methods
 
-        #region Public methods
-
-        #region Object serialization
+        #region Public Methods
 
         /// <summary>
         /// Serializes an object into a byte array.
@@ -535,7 +1194,7 @@ namespace KGySoft.Serialization
             }
             finally
             {
-                ReleaseLocks();
+                Release();
             }
         }
 
@@ -543,10 +1202,11 @@ namespace KGySoft.Serialization
         /// Deserializes the specified part of a byte array into an object.
         /// </summary>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
-        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
+        /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
-        public object Deserialize(byte[] rawData, int offset)
+        public object Deserialize(byte[] rawData, int offset = 0)
         {
             using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
             {
@@ -558,19 +1218,9 @@ namespace KGySoft.Serialization
                 }
                 finally
                 {
-                    ReleaseLocks();
+                    Release();
                 }
             }
-        }
-
-        /// <summary>
-        /// Deserializes a byte array into an object.
-        /// </summary>
-        /// <param name="rawData">The raw data representation of the object to deserialize.</param>
-        /// <returns>The deserialized data.</returns>
-        public object Deserialize(byte[] rawData)
-        {
-            return Deserialize(rawData, 0);
         }
 
         /// <summary>
@@ -587,7 +1237,7 @@ namespace KGySoft.Serialization
             }
             finally
             {
-                ReleaseLocks();
+                Release();
             }
         }
 
@@ -607,17 +1257,17 @@ namespace KGySoft.Serialization
             }
             finally
             {
-                ReleaseLocks();
+                Release();
             }
         }
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
         /// </summary>
-        /// <note>
-        /// This method produces compatible serialized data with <see cref="Serialize(object)"/>
-        /// and <see cref="SerializeToStream(System.IO.Stream,object)"/> only when encoding of the writer is UTF-8. Otherwise, you must use <see cref="DeserializeByReader"/> with the same encoding as here.
-        /// </note>
+        /// <remarks>
+        /// <note>This method produces compatible serialized data with <see cref="Serialize">Serialize</see>
+        /// and <see cref="SerializeToStream">SerializeToStream</see> methods only when encoding of the writer is UTF-8. Otherwise, you must use <see cref="DeserializeByReader">DeserializeByReader</see> with the same encoding as here.</note>
+        /// </remarks>
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         public void SerializeByWriter(BinaryWriter writer, object data)
@@ -628,18 +1278,18 @@ namespace KGySoft.Serialization
             }
             finally
             {
-                ReleaseLocks();
+                Release();
             }
         }
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="reader"/>.
         /// </summary>
-        /// <note>
-        /// If data was serialized by <see cref="Serialize(object)"/> or <see cref="SerializeToStream(System.IO.Stream,object)"/>, then
-        /// reader must use UTF-8 encoding to get correct result. If data was serialized by <see cref="SerializeByWriter(System.IO.BinaryWriter,object)"/>, then you must use the same encoding as there.
-        /// </note>
-        /// <param name="reader">The reader that will be used to deserialize data. The reder will remain opened after deserialization.</param>
+        /// <remarks>
+        /// <note>If data was serialized by <see cref="Serialize">Serialize</see> or <see cref="SerializeToStream">SerializeToStream</see> methods, then
+        /// <paramref name="reader"/> must use UTF-8 encoding to get correct result. If data was serialized by the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as there.</note>
+        /// </remarks>
+        /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
         public object DeserializeByReader(BinaryReader reader)
         {
@@ -651,11 +1301,9 @@ namespace KGySoft.Serialization
             }
             finally
             {
-                ReleaseLocks();
+                Release();
             }
         }
-
-        #endregion
 
         #endregion
 
@@ -950,7 +1598,7 @@ namespace KGySoft.Serialization
                 && (binarySerializable = data as IBinarySerializable) != null)
             {
                 bw.Write((ushort)DataTypes.BinarySerializable);
-                
+
                 // on root level writing the id after datatype even if the object is value type because the boxed reference can be shared
                 if (isRoot)
                 {
@@ -965,7 +1613,7 @@ namespace KGySoft.Serialization
             }
 
             // g.) Any struct if can serialize
-            if ((options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None && type.IsValueType && BinarySerializer.CanSerializeStruct(type))
+            if ((options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
             {
                 bw.Write((ushort)DataTypes.RawStruct);
                 manager.WriteType(bw, type);
@@ -991,7 +1639,7 @@ namespace KGySoft.Serialization
                 return;
             }
 
-#pragma warning disable 618,612
+#pragma warning disable 618, 612
             // i.) Any struct (obsolete but still supported as backward compatibility)
             if ((options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None && type.IsValueType)
             {
@@ -1000,500 +1648,16 @@ namespace KGySoft.Serialization
                 WriteValueType(bw, data, options);
                 return;
             }
-#pragma warning restore 618,612
+#pragma warning restore 618, 612
 
             ThrowNotSupported(options, type);
         }
 
         private bool CanHaveRecursion(CircularList<DataTypes> collectionType)
-        {
-            return collectionType.Exists(dt =>
+            => collectionType.Exists(dt =>
                 (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
                 || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
                 || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
-        }
-
-        private static void ThrowNotSupported(BinarySerializationOptions options, Type type) => throw new NotSupportedException(Res.BinarySerializationNotSupported(type, options));
-
-        /// <summary>
-        /// Writes options if needed
-        /// </summary>
-        private static void WriteOptions(BinaryWriter bw, CircularList<DataTypes> collectionType, BinarySerializationOptions options)
-        {
-            // options are needed if there is a BinarySerializable or recursively saved element anywhere
-            if (collectionType == null || collectionType.Exists(dt => (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph))
-            {
-                // 1 byte is enough
-                if (((int)options & 255) == (int)options)
-                {
-                    bw.Write((byte)options);
-                    return;
-                }
-
-                // storing options on 2 bytes
-                bw.Write((ushort)(options | extendedFlags));
-            }
-        }
-
-        /// <summary>
-        /// Writes AssemblyQiualifiedName of element types and array ranks if needed
-        /// </summary>
-        private static void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, BinarySerializationOptions options, SerializationManager manager)
-        {
-            // Enum, BinarySerializable, RawStruct, recursive serialization: type name
-            DataTypes elementType = GetSupportedElementType(type, options, manager);
-            if ((elementType & DataTypes.Enum) != DataTypes.Null
-                || (elementType & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
-                || (elementType & DataTypes.SimpleTypes) == DataTypes.RawStruct
-                || (elementType & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph)
-            {
-                if ((elementType & DataTypes.Nullable) == DataTypes.Nullable)
-                    type = Nullable.GetUnderlyingType(type);
-                manager.WriteType(bw, type);
-            }
-            // Array: element type name and rank
-            else if (type.IsArray)
-            {
-                WriteTypeNamesAndRanks(bw, type.GetElementType(), options, manager);
-                bw.Write((byte)type.GetArrayRank());
-            }
-            // recursion for generic arguments
-            else if (IsSupportedCollection(type))
-            {
-                foreach (Type genericArgument in type.GetGenericArguments())
-                {
-                    WriteTypeNamesAndRanks(bw, genericArgument, options, manager);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Returning a true value just indicates that the type itself supported without the generic parameters or element type.
-        /// </summary>
-        private static bool IsSupportedCollection(Type type)
-        {
-            if (type.IsArray)
-                return true;
-            if (type.IsValueType && type.IsNullable())
-                type = Nullable.GetUnderlyingType(type);
-            if (type.IsGenericType)
-            {
-                Type typeDef = type.GetGenericTypeDefinition();
-                return typeDef == typeof(List<>) || typeDef == typeof(Dictionary<,>)
-                    || typeDef == typeof(HashSet<>)
-                    || typeDef == typeof(CircularList<>) || typeDef == typeof(CircularSortedList<,>)
-                    || typeDef == typeof(SortedList<,>) || typeDef == typeof(SortedDictionary<,>)
-                    || typeDef == typeof(Queue<>) || typeDef == typeof(Stack<>)
-#if NET40 || NET45
- || typeDef == typeof(SortedSet<>)
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
- || typeDef == typeof(LinkedList<>)
-                    || typeDef == Reflector.KeyValuePairType; // not actually a collection but can be encoded more easily as a dictionary
-            }
-
-            return type == typeof(ArrayList) || type == typeof(Queue) || type == typeof(Stack)
-                || type == typeof(Hashtable) || type == typeof(SortedList) || type == typeof(ListDictionary) || type == typeof(HybridDictionary) || type == typeof(OrderedDictionary)
-                || type == typeof(StringCollection) || type == typeof(StringDictionary)
-                || type == Reflector.DictionaryEntryType; // encoded as a non-generic dictionary
-        }
-
-        private static IEnumerable<DataTypes> EncodeCollectionType(Type type, BinarySerializationOptions options, SerializationManager manager)
-        {
-            // array
-            if (type.IsArray)
-            {
-                Type elementType = type.GetElementType();
-                if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None
-                    && manager.CanUseSurrogate(elementType))
-                {
-                    DataTypes[] result = { DataTypes.Array | DataTypes.RecursiveObjectGraph };
-                    if (elementType.IsNullable())
-                        result[0] |= DataTypes.Nullable;
-                    return result;
-                }
-
-                DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
-                if (elementDataType != DataTypes.Null)
-                    return new[] { DataTypes.Array | elementDataType };
-
-                if (IsSupportedCollection(elementType))
-                {
-                    IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
-                    if (innerType != null)
-                        return (new[] { DataTypes.Array }).Concat(innerType);
-                }
-                return null;
-            }
-
-            DataTypes collectionType = GetSupportedCollectionType(type);
-            if (type.IsNullable())
-                type = Nullable.GetUnderlyingType(type);
-
-            // generic type
-            if (type.IsGenericType)
-            {
-                if (collectionType == DataTypes.Null)
-                    return null;
-
-                Type[] args = type.GetGenericArguments();
-                Type elementType = args[0];
-                DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
-
-                // generics with 1 argument
-                if (args.Length == 1)
-                {
-                    if (elementDataType != DataTypes.Null)
-                        return new[] { collectionType | elementDataType };
-
-                    if (IsSupportedCollection(elementType))
-                    {
-                        IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
-                        if (innerType != null)
-                            return (new[] { collectionType }).Concat(innerType);
-                    }
-                    return null;
-                }
-
-                // dictionaries
-                Type valueType = args[1];
-                DataTypes valueDataType = GetSupportedElementType(valueType, options, manager);
-
-                IEnumerable<DataTypes> keyTypes;
-                IEnumerable<DataTypes> valueTypes;
-
-                // key
-                if (elementDataType != DataTypes.Null)
-                    keyTypes = new DataTypes[] { collectionType | elementDataType };
-                else if (IsSupportedCollection(elementType))
-                {
-                    keyTypes = EncodeCollectionType(elementType, options, manager);
-                    if (keyTypes == null)
-                        return null;
-                    keyTypes = (new DataTypes[] { collectionType }).Concat(keyTypes);
-                }
-                else
-                    return null;
-
-                // value
-                if (valueDataType != DataTypes.Null)
-                    valueTypes = new DataTypes[] { valueDataType };
-                else if (IsSupportedCollection(valueType))
-                {
-                    valueTypes = EncodeCollectionType(valueType, options, manager);
-                    if (valueTypes == null)
-                        return null;
-                }
-                else
-                    return null;
-
-                return keyTypes.Concat(valueTypes);
-            }
-
-            // non-generic types
-            else
-            {
-                switch (collectionType)
-                {
-                    case DataTypes.ArrayList:
-                    case DataTypes.QueueNonGeneric:
-                    case DataTypes.StackNonGeneric:
-                        return new DataTypes[] { collectionType | DataTypes.Object };
-
-                    case DataTypes.Hashtable:
-                    case DataTypes.SortedListNonGeneric:
-                    case DataTypes.ListDictionary:
-                    case DataTypes.HybridDictionary:
-                    case DataTypes.OrderedDictionary:
-                    case DataTypes.DictionaryEntry:
-                    case DataTypes.DictionaryEntryNullable:
-                        return new DataTypes[] { collectionType | DataTypes.Object, DataTypes.Object };
-
-                    case DataTypes.StringCollection:
-                        return new DataTypes[] { collectionType | DataTypes.String };
-
-                    case DataTypes.StringDictionary:
-                        return new DataTypes[] { collectionType | DataTypes.String, DataTypes.String };
-                    default:
-                        // should never occur, throwing internal error without resource
-                        throw new InvalidOperationException("Element type of non-generic collection is not defined: " + ToString(collectionType));
-                }
-            }
-        }
-
-        private static DataTypes GetSupportedCollectionType(Type type)
-        {
-            if (type.IsArray)
-                return DataTypes.Array;
-
-            if (type == Reflector.DictionaryEntryType)
-                return DataTypes.DictionaryEntry;
-
-            Type genType = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
-            if (genType == Reflector.KeyValuePairType)
-                return DataTypes.KeyValuePair;
-
-            if (type.IsNullable())
-            {
-                switch (GetSupportedCollectionType(Nullable.GetUnderlyingType(type)))
-                {
-                    case DataTypes.DictionaryEntry:
-                        return DataTypes.DictionaryEntryNullable;
-                    case DataTypes.KeyValuePair:
-                        return DataTypes.KeyValuePairNullable;
-                    default:
-                        return DataTypes.Null;
-                }
-            }
-
-            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
-                return DataTypes.Null;
-
-            if (genType != null)
-            {
-                if (genType == typeof(List<>))
-                    return DataTypes.List;
-                //if (genType == typeof(Collection<>))
-                //    return DataTypes.Collection;
-                if (genType == typeof(Dictionary<,>))
-                    return DataTypes.Dictionary;
-                if (genType == typeof(HashSet<>))
-                    return DataTypes.HashSet;
-                if (genType == typeof(CircularList<>))
-                    return DataTypes.CircularList;
-                if (genType == typeof(CircularSortedList<,>))
-                    return DataTypes.CircularSortedList;
-                if (genType == typeof(LinkedList<>))
-                    return DataTypes.LinkedList;
-                if (genType == typeof(SortedList<,>))
-                    return DataTypes.SortedList;
-                if (genType == typeof(SortedDictionary<,>))
-                    return DataTypes.SortedDictionary;
-                if (genType == typeof(Queue<>))
-                    return DataTypes.Queue;
-                if (genType == typeof(Stack<>))
-                    return DataTypes.Stack;
-                //if (genType == typeof(ReadOnlyCollection<>))
-                //    return DataTypes.ReadOnlyCollection;
-#if NET40 || NET45
-                if (genType == typeof(SortedSet<>))
-                    return DataTypes.SortedSet;
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-
-                return DataTypes.Null;
-            }
-
-            if (type == typeof(ArrayList))
-                return DataTypes.ArrayList;
-            if (type == typeof(Hashtable))
-                return DataTypes.Hashtable;
-            if (type == typeof(Queue))
-                return DataTypes.QueueNonGeneric;
-            if (type == typeof(Stack))
-                return DataTypes.StackNonGeneric;
-            if (type == typeof(StringCollection))
-                return DataTypes.StringCollection;
-            if (type == typeof(SortedList))
-                return DataTypes.SortedListNonGeneric;
-            if (type == typeof(ListDictionary))
-                return DataTypes.ListDictionary;
-            if (type == typeof(HybridDictionary))
-                return DataTypes.HybridDictionary;
-            if (type == typeof(OrderedDictionary))
-                return DataTypes.OrderedDictionary;
-            if (type == typeof(StringDictionary))
-                return DataTypes.StringDictionary;
-
-            return DataTypes.Null;
-        }
-
-        private static DataTypes GetSupportedElementType(Type type, BinarySerializationOptions options, SerializationManager manager)
-        {
-            // a.) Natively supported primitive types
-            if (type == Reflector.BoolType)
-                return DataTypes.Bool;
-            if (type == Reflector.ByteType)
-                return DataTypes.UInt8;
-            if (type == Reflector.SByteType)
-                return DataTypes.Int8;
-            if (type == Reflector.ShortType)
-                return DataTypes.Int16;
-            if (type == Reflector.UShortType)
-                return DataTypes.UInt16;
-            if (type == Reflector.IntType)
-                return DataTypes.Int32;
-            if (type == Reflector.UIntType)
-                return DataTypes.UInt32;
-            if (type == Reflector.LongType)
-                return DataTypes.Int64;
-            if (type == Reflector.ULongType)
-                return DataTypes.UInt64;
-            if (type == Reflector.CharType)
-                return DataTypes.Char;
-            if (type == Reflector.StringType)
-                return DataTypes.String;
-            if (type == Reflector.FloatType)
-                return DataTypes.Single;
-            if (type == Reflector.DoubleType)
-                return DataTypes.Double;
-            if (type == Reflector.IntPtrType)
-                return DataTypes.IntPtr;
-            if (type == Reflector.UIntPtrType)
-                return DataTypes.UIntPtr;
-
-            // b.) nullable (must be before surrogate-support checks)
-            if (type.IsNullable())
-            {
-                DataTypes elementType = GetSupportedElementType(Nullable.GetUnderlyingType(type), options, manager);
-                if (elementType == DataTypes.Null)
-                    return elementType;
-                return DataTypes.Nullable | elementType;
-            }
-
-            // c.) surrogate for any type: check even for sub-collections
-            if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None && manager.CanUseSurrogate(type))
-                return DataTypes.RecursiveObjectGraph;
-
-            // if type is a collection, then returning null here
-            if (GetSupportedCollectionType(type) != DataTypes.Null)
-                return DataTypes.Null;
-
-            // d.) Natively supported non-primitive types
-            if (type == Reflector.DecimalType)
-                return DataTypes.Decimal;
-            if (type == Reflector.DateTimeType)
-                return DataTypes.DateTime;
-            if (type == Reflector.ObjectType)
-                return DataTypes.Object;
-            if (type == typeof(DBNull))
-                return DataTypes.DBNull;
-            if (type == typeof(Version))
-                return DataTypes.Version;
-            if (type == typeof(Guid))
-                return DataTypes.Guid;
-            if (type == Reflector.TimeSpanType)
-                return DataTypes.TimeSpan;
-            if (type == Reflector.DateTimeOffsetType)
-                return DataTypes.DateTimeOffset;
-            if (type == typeof(Uri))
-                return DataTypes.Uri;
-            if (type == typeof(BitArray))
-                return DataTypes.BitArray;
-            if (type == typeof(BitVector32))
-                return DataTypes.BitVector32;
-            if (type == typeof(BitVector32.Section))
-                return DataTypes.BitVector32Section;
-            if (type == typeof(StringBuilder))
-                return DataTypes.StringBuilder;
-
-            // e.) enum
-            if (type.IsEnum)
-                return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), options, manager);
-
-            // f.) IBinarySerializable implementation
-            if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None)
-                && typeof(IBinarySerializable).IsAssignableFrom(type))
-            {
-                return DataTypes.BinarySerializable;
-            }
-
-            // g.) Any struct if can be serialized
-            if ((options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None && type.IsValueType && BinarySerializer.CanSerializeStruct(type))
-            {
-                return DataTypes.RawStruct;
-            }
-
-            // h.) Recursive serialization
-            if ((options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None
-                || manager != null && manager.CanUseSurrogate(type)
-                || type.IsSerializable || type.IsInterface)
-            {
-                return DataTypes.RecursiveObjectGraph;
-            }
-
-#pragma warning disable 618,612
-            // i.) Any struct (obsolete but still supported as backward compatibility)
-            if ((options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None && type.IsValueType)
-            {
-                return DataTypes.RawStruct;
-            }
-#pragma warning restore 618,612
-
-            return DataTypes.Null;
-        }
-
-        /// <summary>
-        /// Gets the element types for a dictionary
-        /// </summary>
-        private static CircularList<DataTypes> GetDictionaryValueTypes(CircularList<DataTypes> collectionTypeDescriptor)
-        {
-            // descriptor must refer a generic dictionary type here
-            Debug.Assert(collectionTypeDescriptor.Count > 0, "Type description is invalid: not enough data");
-#if DEBUG
-            int collType = ((int)(collectionTypeDescriptor[0] & DataTypes.CollectionTypes) >> 8);
-            Debug.Assert(collType >= 16 && collType < 32
-                || collType >= 48 && collType < 64, "Type description is invalid: dictionary type is expected");
-#endif
-            CircularList<DataTypes> result = new CircularList<DataTypes>();
-            int skipLevel = 0; // starting from -1 because dictionary will increase it by 1 or 2
-            bool startingDictionaryResolved = false;
-            foreach (DataTypes dataType in collectionTypeDescriptor)
-            {
-                if (startingDictionaryResolved && skipLevel == 0) // 0 means we are in value already
-                    result.Add(dataType);
-                else
-                {
-                    switch (dataType & DataTypes.CollectionTypes)
-                    {
-                        case DataTypes.Null:
-                            // simple type: leaf element of previous collection
-                            skipLevel--;
-                            break;
-                        case DataTypes.Array:
-                        case DataTypes.List:
-                        //case DataTypes.Collection:
-                        case DataTypes.LinkedList:
-                        case DataTypes.HashSet:
-                        case DataTypes.Queue:
-                        case DataTypes.Stack:
-                        //case DataTypes.ReadOnlyCollection:
-                        case DataTypes.CircularList:
-                        case DataTypes.SortedSet:
-                        case DataTypes.ArrayList:
-                        case DataTypes.QueueNonGeneric:
-                        case DataTypes.StackNonGeneric:
-                        case DataTypes.StringCollection:
-                            // collections with a single element: decreasing level if element is specified
-                            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
-                                skipLevel--;
-                            break;
-                        case DataTypes.Dictionary:
-                        case DataTypes.SortedList:
-                        case DataTypes.SortedDictionary:
-                        case DataTypes.CircularSortedList:
-                        case DataTypes.Hashtable:
-                        case DataTypes.SortedListNonGeneric:
-                        case DataTypes.ListDictionary:
-                        case DataTypes.HybridDictionary:
-                        case DataTypes.OrderedDictionary:
-                        case DataTypes.StringDictionary:
-                        case DataTypes.KeyValuePair:
-                        case DataTypes.DictionaryEntry:
-                        case DataTypes.KeyValuePairNullable:
-                        case DataTypes.DictionaryEntryNullable:
-                            // dictionary types: increasing level by 1 if key is not specified, otherwise current level remains
-                            if ((dataType & ~DataTypes.CollectionTypes) == DataTypes.Null)
-                                skipLevel++;
-                            startingDictionaryResolved = true;
-                            break;
-                    }
-                }
-            }
-            return result;
-        }
 
         private void WriteCollection(BinaryWriter bw, CircularList<DataTypes> collectionTypeDescriptor, object obj,
             SerializationManager manager)
@@ -1508,7 +1672,7 @@ namespace KGySoft.Serialization
             // array
             if ((collectionDataType & DataTypes.CollectionTypes) == DataTypes.Array)
             {
-                Array array = (Array) obj;
+                Array array = (Array)obj;
                 // 1. Dimensions
                 for (int i = 0; i < array.Rank; i++)
                 {
@@ -1519,10 +1683,10 @@ namespace KGySoft.Serialization
                 // 2. Write elements
                 Type elementType = array.GetType().GetElementType();
                 // 2.a.) Primitive array
+                // ReSharper disable once PossibleNullReferenceException - it is an array
                 if (elementType.IsPrimitive)
                 {
-                    byte[] rawData = array as byte[];
-                    if (rawData == null)
+                    if (!(array is byte[] rawData))
                     {
                         rawData = new byte[Buffer.ByteLength(array)];
                         Buffer.BlockCopy(array, 0, rawData, 0, rawData.Length);
@@ -1539,8 +1703,8 @@ namespace KGySoft.Serialization
 
             // other collections
             CollectionSerializationInfo serInfo = serializationInfo[collectionDataType & DataTypes.CollectionTypes];
-            IEnumerable collection = obj as IEnumerable ?? new object[] {obj};
-                // as object[] for DictionaryEntry and KeyValuePair
+            IEnumerable collection = obj as IEnumerable ?? new object[] { obj };
+            // as object[] for DictionaryEntry and KeyValuePair
 
             // 1. Write specific properties
             serInfo.WriteSpecificProperties(this, bw, collection, manager);
@@ -1561,8 +1725,7 @@ namespace KGySoft.Serialization
             // 3.b.) generic dictionary
             if (serInfo.IsGenericDictionary)
             {
-                Type[] argTypes =
-                    (obj is IEnumerable ? collection : ((object[]) collection)[0]).GetType().GetGenericArguments();
+                Type[] argTypes = (obj is IEnumerable ? collection : ((object[])collection)[0]).GetType().GetGenericArguments();
                 Type keyType = argTypes[0];
                 Type valueType = argTypes[1];
 
@@ -1571,9 +1734,7 @@ namespace KGySoft.Serialization
                 DataTypes valueDataType = DataTypes.Null;
                 if ((valueCollectionDataTypes[0] & DataTypes.CollectionTypes) == DataTypes.Null)
                     valueDataType = valueCollectionDataTypes[0] & ~DataTypes.Enum;
-                WriteDictionaryElements(bw, collection, collectionTypeDescriptor, elementDataType,
-                    valueCollectionDataTypes, valueDataType,
-                    keyType, valueType, manager);
+                WriteDictionaryElements(bw, collection, collectionTypeDescriptor, elementDataType, valueCollectionDataTypes, valueDataType, keyType, valueType, manager);
                 return;
             }
             // 3.c.) non-generic collection
@@ -1598,9 +1759,7 @@ namespace KGySoft.Serialization
             Type collectionElementType, SerializationManager manager)
         {
             foreach (object element in collection)
-            {
                 WriteElement(bw, element, elementCollectionDataTypes, elementDataType, collectionElementType, manager);
-            }
         }
 
         private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, CircularList<DataTypes> keyCollectionDataTypes, DataTypes keyDataType,
@@ -1860,78 +2019,6 @@ namespace KGySoft.Serialization
             Write7BitLong(bw, value);
         }
 
-        private static void Write7BitInt(BinaryWriter bw, int value)
-        {
-            uint v = (uint)value;
-            while (v >= 0x80UL)
-            {
-                bw.Write((byte)(v | 0x80UL));
-                v >>= 7;
-            }
-
-            bw.Write((byte)v);
-        }
-
-        /// <summary>
-        /// Must be separated from Write7BitInt because -1 would result 10 bytes here and 5 there
-        /// </summary>
-        private static void Write7BitLong(BinaryWriter bw, ulong value)
-        {
-            while (value >= 0x80UL)
-            {
-                bw.Write((byte)(value | 0x80UL));
-                value >>= 7;
-            }
-
-            bw.Write((byte)value);
-        }
-
-        private static void WriteDateTime(BinaryWriter bw, DateTime dateTime)
-        {
-            bw.Write((byte)dateTime.Kind);
-            bw.Write(dateTime.Ticks);
-        }
-
-        private static void WriteDateTimeOffset(BinaryWriter bw, DateTimeOffset dateTimeOffset)
-        {
-            bw.Write(((DateTime)Reflector.GetField(dateTimeOffset, "m_dateTime")).Ticks);
-            bw.Write((short)Reflector.GetField(dateTimeOffset, "m_offsetMinutes"));
-        }
-
-        private static void WriteVersion(BinaryWriter bw, Version version)
-        {
-            bw.Write(version.Major);
-            bw.Write(version.Minor);
-            bw.Write(version.Build);
-            bw.Write(version.Revision);
-        }
-
-        private static void WriteUri(BinaryWriter bw, Uri uri)
-        {
-            bw.Write(uri.IsAbsoluteUri);
-            bw.Write((string)Reflector.InvokeMethod(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
-        }
-
-        private static void WriteBitArray(BinaryWriter bw, BitArray bitArray)
-        {
-            int length = bitArray.Length;
-            Write7BitInt(bw, bitArray.Length);
-            if (length > 0)
-            {
-                int[] value = (int[])Reflector.GetField(bitArray, "m_array");
-                foreach (int i in value)
-                {
-                    bw.Write(i);
-                }
-            }
-        }
-
-        private static void WriteSection(BinaryWriter bw, BitVector32.Section section)
-        {
-            bw.Write(section.Mask);
-            bw.Write(section.Offset);
-        }
-
         private void WriteStringBuilder(BinaryWriter bw, StringBuilder sb)
         {
             Write7BitInt(bw, sb.Capacity);
@@ -1950,7 +2037,7 @@ namespace KGySoft.Serialization
         private void WriteValueType(BinaryWriter bw, object data, BinarySerializationOptions options)
         {
             OnSerializing(data, options);
-            byte[] rawData = BinarySerializer.SerializeStruct((ValueType)data);
+            byte[] rawData = BinarySerializer.SerializeValueType((ValueType)data);
             Write7BitInt(bw, rawData.Length);
             bw.Write(rawData);
             OnSerialized(data, options);
@@ -1973,9 +2060,7 @@ namespace KGySoft.Serialization
             ISerializationSurrogate surrogate;
             ISurrogateSelector selector;
             if (manager.TryGetSurrogate(type, out surrogate, out selector) || ((options & BinarySerializationOptions.IgnoreISerializable) == BinarySerializationOptions.None && data is ISerializable))
-            {
                 WriteCustomObjectGraph(bw, data, collectionElementType, options, manager, surrogate);
-            }
             else
             {
                 // type
@@ -2000,6 +2085,7 @@ namespace KGySoft.Serialization
             Debug.Assert(!type.IsArray, "Array cannot be serialized as object graph");
 
             // iterating through self and base types
+            // ReSharper disable once PossibleNullReferenceException - data is an object in all cases
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType)
             {
                 // writing fields of current level
@@ -2007,11 +2093,10 @@ namespace KGySoft.Serialization
 
                 if (fields.Length != 0 || t == type)
                 {
+                    // ReSharper disable once PossibleNullReferenceException - type is never null
                     // writing name of base type
                     if (t != type)
-                    {
                         bw.Write(t.Name);
-                    }
 
                     // writing the fields
                     Write7BitInt(bw, fields.Length);
@@ -2079,7 +2164,7 @@ namespace KGySoft.Serialization
 
                 // type
                 bool typeMatch = entry.Value == null && entry.ObjectType == Reflector.ObjectType
-                 || entry.Value != null && entry.Value.GetType() == entry.ObjectType;
+                        || entry.Value != null && entry.Value.GetType() == entry.ObjectType;
                 bw.Write(typeMatch);
                 if (!typeMatch)
                     manager.WriteType(bw, entry.ObjectType);
@@ -2121,50 +2206,6 @@ namespace KGySoft.Serialization
             RegisterDeserializedObject(obj as IDeserializationCallback);
         }
 
-        private static IEnumerable<MethodInfo> GetMethodsWithAttribute(Type attribute, Type type)
-        {
-            Dictionary<Type, IEnumerable<MethodInfo>> cacheItem = methodsByAttributeCache[type];
-
-            lock (cacheItem)
-            {
-                IEnumerable<MethodInfo> cachedResult;
-                if (cacheItem.TryGetValue(attribute, out cachedResult))
-                {
-                    return cachedResult;
-                }
-
-                List<MethodInfo> result = new List<MethodInfo>();
-                for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
-                {
-                    foreach (MethodInfo method in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    {
-                        if (method.IsDefined(attribute, false))
-                        {
-                            ParameterInfo[] parameters = method.GetParameters();
-                            if (parameters.Length == 1 && parameters[0].ParameterType == typeof(StreamingContext))
-                            {
-                                result.Add(method);
-                            }
-                        }
-                    }
-                }
-
-                if (result.Count > 1)
-                {
-                    result.Reverse();
-                }
-
-                if (result.Count == 0)
-                {
-                    cacheItem[attribute] = null;
-                    return null;
-                }
-
-                cacheItem[attribute] = result;
-                return result;
-            }
-        }
-
         /// <summary>
         /// Registers object to detect circular reference.
         /// Must be called from inside of try-finally to remove lock in finally if neccessary.
@@ -2199,16 +2240,13 @@ namespace KGySoft.Serialization
             //Monitor.Exit(syncRootDeserialize);
         }
 
-        /// <summary>
-        /// Releases accidentaly opened locks (happens on exceptions)
-        /// </summary>
-        private void ReleaseLocks()
+        private void Release()
         {
             //// closing opened serialization lock
             //if (serializationLevel != 0)
             //{
             //    serializationLevel = 0;
-            serObjects = null;
+            //    serObjects = null;
             //    Monitor.Exit(syncRootSerialize);
             //}
 
@@ -2220,16 +2258,13 @@ namespace KGySoft.Serialization
             //}
         }
 
-
         private void ExecuteMethods(object obj, IEnumerable<MethodInfo> methods)
         {
             if (methods == null)
                 return;
 
             foreach (MethodInfo method in methods)
-            {
                 Reflector.InvokeMethod(obj, method, Context);
-            }
         }
 
         /// <summary>
@@ -2328,7 +2363,7 @@ namespace KGySoft.Serialization
             // multidimensional array
             else
             {
-                ArrayIndexer arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                var arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
                 while (arrayIndexer.MoveNext())
                 {
                     object value = ReadElement(br, descriptor, manager, false);
@@ -2365,14 +2400,11 @@ namespace KGySoft.Serialization
                 object value = descriptor.IsDictionary ? ReadElement(br, descriptor, manager, true) : null;
                 Reflector.SetField(result, descriptor.GetFieldNameToSet(false), key);
                 Reflector.SetField(result, descriptor.GetFieldNameToSet(true), value);
-                //ConstructorInfo ctor = descriptor.GetTypeToCreate().GetConstructor(new Type[] { descriptor.ElementType, descriptor.DictionaryValueType });
-                //result = Reflector.Construct(ctor, key, value);
                 return result;
             }
 
             CollectionSerializationInfo serInfo = serializationInfo[descriptor.CollectionDataType];
-            int count;
-            IEnumerable collection = (IEnumerable)serInfo.InitializeCollection(this, br, addToCache, descriptor, manager, out count);
+            IEnumerable collection = (IEnumerable)serInfo.InitializeCollection(this, br, addToCache, descriptor, manager, out int count);
 
             MethodInfo addMethod = serInfo.SpecificAddMethod != null ? collection.GetType().GetMethod(serInfo.SpecificAddMethod) : null;
 
@@ -2391,17 +2423,18 @@ namespace KGySoft.Serialization
 
 #if NET35
                     if (value != null || !descriptor.IsGenericDictionary)
-                    {
 #endif
+                    {
                         ((IDictionary)collection).Add(element, value);
                         continue;
-#if NET35
                     }
+#if NET35
 
                     // generic dictionary with null value: calling generic Add because non-generic one may fail under .NET 4
                     Reflector.InvokeMethod(collection, nameof(IDictionary<_,_>.Add), element, null);
                     continue;
 #endif
+
                 }
 
                 if (addMethod != null)
@@ -2429,31 +2462,8 @@ namespace KGySoft.Serialization
             if (elementDescriptor.IsArray)
                 return CreateArray(br, true, elementDescriptor, manager);
 
-            // other nested colletion
+            // other nested collection
             return CreateCollection(br, !elementDescriptor.Type.IsValueType || elementDescriptor.Type.IsNullable(), elementDescriptor, manager);
-        }
-
-        private static int Read7BitInt(BinaryReader br)
-        {
-            int result = 0;
-            int shift = 0;
-            byte b;
-            do
-            {
-                // Check for a corrupted stream. Max 4 * 7 bits are valid
-                if (shift == 35)
-                {
-                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
-                }
-
-                b = br.ReadByte();
-
-                result |= (b & 0x7F) << shift;
-                shift += 7;
-            }
-            while ((b & 0x80) != 0);
-
-            return result;
         }
 
         private long Read7BitLong(BinaryReader br)
@@ -2641,51 +2651,45 @@ namespace KGySoft.Serialization
 
                     // IBinarySerializable
                     case DataTypes.BinarySerializable:
+                        // occurs on root level: object id is stored only after data type
+                        if (isRoot)
                         {
-                            // occurs on root level: object id is stored only after data type
-                            if (isRoot)
+                            if (manager.TryGetCachedObject(br, out cachedResult))
                             {
-                                if (manager.TryGetCachedObject(br, out cachedResult))
-                                {
-                                    Debug.Fail("Root level object is not expected in the cache");
-                                    return cachedResult;
-                                }
+                                Debug.Fail("Root level object is not expected in the cache");
+                                return cachedResult;
                             }
+                        }
 
-                            BinarySerializationOptions origOptions = collectionDescriptor == null
-                                ? ReadOptions(br)
-                                : collectionDescriptor.SerializationOptions;
+                        BinarySerializationOptions origOptions = collectionDescriptor?.SerializationOptions ?? ReadOptions(br);
 
-                            // checking instance id
-                            Type elementType = null;
-                            if (collectionDescriptor != null &&
-                                (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
+                        // checking instance id
+                        Type elementType = null;
+                        if (collectionDescriptor != null &&
+                            (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
+                        {
+                            if (manager.TryGetCachedObject(br, out cachedResult))
+                                return cachedResult;
+                        }
+
+                        Type objType;
+                        if (collectionDescriptor == null)
+                            objType = manager.ReadType(br);
+                        else
+                        {
+                            // Common order: 1: qualify -> is element type, 2: different type -> read type, 3: deserialize
+                            // 1. If elements should be qualified and element is not the same as collection element type
+                            if (collectionDescriptor.AreAllElementsQualified(isTValue) && !br.ReadBoolean())
                             {
-                                if (manager.TryGetCachedObject(br, out cachedResult))
-                                    return cachedResult;
-                            }
-
-                            Type objType;
-                            if (collectionDescriptor == null)
-                            {
+                                // 2. then read type
                                 objType = manager.ReadType(br);
                             }
                             else
-                            {
-                                // Common order: 1: qualify -> is element type, 2: different type -> read type, 3: deserialize
-                                // 1. If elements should be qualified and element is not the same as collection element type
-                                if (collectionDescriptor.AreAllElementsQualified(isTValue) && !br.ReadBoolean())
-                                {
-                                    // 2. then read type
-                                    objType = manager.ReadType(br);
-                                }
-                                else
-                                    objType = elementType ?? collectionDescriptor.GetElementType(isTValue);
-                            }
-
-                            // 3. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
-                            return ReadBinarySerializable(br, addToCache || isRoot, objType, origOptions, manager);
+                                objType = elementType ?? collectionDescriptor.GetElementType(isTValue);
                         }
+
+                        // 3. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
+                        return ReadBinarySerializable(br, addToCache || isRoot, objType, origOptions, manager);
 
                     // recursive graph
                     case DataTypes.RecursiveObjectGraph:
@@ -2704,12 +2708,12 @@ namespace KGySoft.Serialization
                                 }
                             }
 
-                            BinarySerializationOptions origOptions = collectionDescriptor == null
-                                ? ReadOptions(br)
-                                : collectionDescriptor.SerializationOptions;
+                            // TODO: options is not used here anymore
+                            if (collectionDescriptor?.SerializationOptions == null)
+                                ReadOptions(br); // just reading it to pass through but not used
 
                             // checking instance id
-                            Type elementType = null;
+                            elementType = null;
                             if (collectionDescriptor != null &&
                                 (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
                             {
@@ -2718,7 +2722,7 @@ namespace KGySoft.Serialization
                             }
 
                             // in collection, type is already known, otherwise, reading it
-                            Type objType = collectionDescriptor == null
+                            objType = collectionDescriptor == null
                                 ? manager.ReadType(br)
                                 : (elementType ?? collectionDescriptor.GetElementType(isTValue));
 
@@ -2728,24 +2732,22 @@ namespace KGySoft.Serialization
 
                     // raw structure
                     case DataTypes.RawStruct:
-                        {
-                            Type structType = collectionDescriptor == null
-                                ? manager.ReadType(br)
-                                : collectionDescriptor.GetElementType(isTValue);
-                            byte[] rawData = br.ReadBytes(Read7BitInt(br));
-                            result = BinarySerializer.DeserializeStruct(structType, rawData);
-                            OnDeserializing(result);
-                            OnDeserialized(result);
-                            return result;
-                        }
+                        Type structType = collectionDescriptor == null
+                            ? manager.ReadType(br)
+                            : collectionDescriptor.GetElementType(isTValue);
+                        byte[] rawData = br.ReadBytes(Read7BitInt(br));
+                        result = BinarySerializer.DeserializeValueType(structType, rawData);
+                        OnDeserializing(result);
+                        OnDeserialized(result);
+                        return result;
 
                     default:
                         // enum
                         if ((dataType & DataTypes.Enum) == DataTypes.Enum)
                         {
                             Type enumType = collectionDescriptor == null
-                                ? manager.ReadType(br)
-                                : collectionDescriptor.GetElementType(isTValue);
+                                    ? manager.ReadType(br)
+                                    : collectionDescriptor.GetElementType(isTValue);
                             switch (dataType & DataTypes.SimpleTypes)
                             {
                                 case DataTypes.Int8:
@@ -2783,20 +2785,6 @@ namespace KGySoft.Serialization
             }
         }
 
-        private static BinarySerializationOptions ReadOptions(BinaryReader br)
-        {
-            BinarySerializationOptions options = (BinarySerializationOptions)br.ReadByte();
-
-            // if stored on 2 bytes
-            if ((options & extendedFlags) == extendedFlags)
-            {
-                options &= ~extendedFlags;
-                options |= (BinarySerializationOptions)(br.ReadByte() << 8);
-            }
-
-            return options;
-        }
-
         private object ReadBinarySerializable(BinaryReader br, bool addToCache, Type type, BinarySerializationOptions origOptions, DeserializationManager manager)
         {
             byte[] serData = br.ReadBytes(Read7BitInt(br));
@@ -2810,18 +2798,13 @@ namespace KGySoft.Serialization
             // Looking for a serializer constructor
             ConstructorInfo ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(BinarySerializationOptions), typeof(byte[]) }, null);
             if (ctor != null)
-            {
                 Reflector.InvokeCtor(result, ctor, origOptions, serData);
-            }
-            // No special constructor - Deserialize method should be executed
             else
             {
                 // Looking for parameterless constructor
                 ctor = type.GetDefaultConstructor();
                 if (ctor != null)
-                {
                     Reflector.InvokeCtor(result, ctor);
-                }
 
                 ((IBinarySerializable)result).Deserialize(origOptions, serData);
             }
@@ -2849,11 +2832,9 @@ namespace KGySoft.Serialization
                 manager.AddObjectToCache(result, out id);
             OnDeserializing(result);
 
-            ISerializationSurrogate surrogate;
-            ISurrogateSelector selector;
-            bool useSurrogate = manager.TryGetSurrogate(type, out surrogate, out selector);
+            bool useSurrogate = manager.TryGetSurrogate(type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector);
             bool isISerializable = result is ISerializable;
-            
+
             // default graph was serialized
             if (isDefaultObjectGraph)
             {
@@ -2909,10 +2890,10 @@ namespace KGySoft.Serialization
                 if (t != type)
                 {
                     string name = br.ReadString();
+
+                    // ReSharper disable once PossibleNullReferenceException - obj is object in all cases
                     while (t.Name != name && t != Reflector.ObjectType)
-                    {
                         t = t.BaseType;
-                    }
 
                     if (name.Length == 0 && t == Reflector.ObjectType)
                         return;
@@ -2961,7 +2942,7 @@ namespace KGySoft.Serialization
                     for (int i = 0; i < count; i++)
                     {
                         br.ReadString();
-                        Read(br, false, manager);        
+                        Read(br, false, manager);
                     }
                 }
                 while (br.ReadString() != String.Empty);
@@ -3047,7 +3028,7 @@ namespace KGySoft.Serialization
         {
             int count = Read7BitInt(br);
             Dictionary<string, object> elements = new Dictionary<string, object>(count);
-           
+
             // reading content into the dictionary
             for (int i = 0; i < count; i++)
             {
@@ -3067,6 +3048,7 @@ namespace KGySoft.Serialization
 
             bool checkFields = (manager.Options & BinarySerializationOptions.IgnoreObjectChanges) == BinarySerializationOptions.None;
 
+            // ReSharper disable once PossibleNullReferenceException - obj is object in all cases
             // iterating through fields and setting found elements
             for (Type t = obj.GetType(); t != Reflector.ObjectType; t = t.BaseType)
             {
@@ -3075,8 +3057,7 @@ namespace KGySoft.Serialization
                 {
                     //if (field.IsNotSerialized) TODO: enable when GetSerializableFields is removed
                     //    continue;
-                    object value;
-                    if (elements.TryGetValue(field.Name, out value))
+                    if (elements.TryGetValue(field.Name, out object value))
                     {
                         manager.TrySetField(field, obj, value);
                         if (checkFields)
@@ -3089,70 +3070,17 @@ namespace KGySoft.Serialization
                 throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), elements.First().Key));
         }
 
-        /// <summary>
-        /// Converts a <see cref="DataTypes"/> enumeration into the corresponding string representation.
-        /// This method is needed because <see cref="Enum.ToString()"/> and <see cref="Enum{TEnum}.ToString(TEnum)"/>
-        /// cannot always handle the fields and flags structure of <see cref="DataTypes"/> enum.
-        /// </summary>
-        private static string ToString(DataTypes dataType)
-        {
-            if (dataType.In(DataTypes.Null, DataTypes.SimpleTypes, DataTypes.CollectionTypes))
-                return dataType.ToString<DataTypes>();
+        #endregion
 
-            StringBuilder result = new StringBuilder();
-            if ((dataType & DataTypes.CollectionTypes) != DataTypes.Null)
-                result.Append(Enum<DataTypes>.ToString(dataType & DataTypes.CollectionTypes, EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
-            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
-            {
-                if (result.Length > 0)
-                    result.Insert(0, " | ");
-                result.Insert(0, Enum<DataTypes>.ToString(dataType & ~DataTypes.CollectionTypes, EnumFormattingOptions.CompoundFlagsAndNumber, " | "));
-            }
+        #region Explicitly Implemented Interface Methods
 
-            return result.ToString();
-        }
+        object IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
+
+        void IFormatter.Serialize(Stream serializationStream, object graph) => SerializeToStream(serializationStream, graph);
 
         #endregion
 
-        #region IFormatter Members
-
-        /// <summary>
-        /// Gets or sets the <see cref="SerializationBinder"/> that performs type lookups.
-        /// </summary>
-        /// <returns>
-        /// The <see cref="SerializationBinder"/> that performs type lookups.
-        /// </returns>
-        /// <remarks>
-        /// From .NET 4.0 affects both serialization and deserialization. In .NET 3.5 setting this property
-        /// has no effect during serialization.
-        /// </remarks>
-        public SerializationBinder Binder { get; set; }
-
-        /// <summary>
-        /// Gets or sets the <see cref="StreamingContext"/> used for serialization and deserialization.
-        /// </summary>
-        /// <returns>
-        /// The <see cref="StreamingContext"/> used for serialization and deserialization.
-        /// </returns>
-        public StreamingContext Context { get; set; }
-
-        object IFormatter.Deserialize(Stream serializationStream)
-        {
-            return DeserializeFromStream(serializationStream);
-        }
-
-        void IFormatter.Serialize(Stream serializationStream, object graph)
-        {
-            SerializeToStream(serializationStream, graph);
-        }
-
-        /// <summary>
-        /// Gets or sets the <see cref="SurrogateSelector"/> used by the current formatter.
-        /// </summary>
-        /// <returns>
-        /// The <see cref="SurrogateSelector"/> used by this formatter.
-        /// </returns>
-        public ISurrogateSelector SurrogateSelector { get; set; }
+        #endregion
 
         #endregion
     }

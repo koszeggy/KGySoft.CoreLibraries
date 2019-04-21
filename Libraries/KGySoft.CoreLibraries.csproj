@@ -240,16 +240,16 @@
     <Compile Include="Serialization\BinarySerializationFormatter.DeserializationManager.cs" />
     <Compile Include="Serialization\BinarySerializationFormatter.SerializationManager.cs" />
     <Compile Include="Serialization\BinarySerializationFormatter.SerializationManagerBase.cs" />
-    <Compile Include="Serialization\BinarySerializationOptions.cs" />
+    <Compile Include="Serialization\_Enums\BinarySerializationOptions.cs" />
     <Compile Include="Serialization\BinarySerializer.cs" />
-    <Compile Include="Serialization\IBinarySerializable.cs" />
+    <Compile Include="Serialization\_Interfaces\IBinarySerializable.cs" />
     <Compile Include="Serialization\NameInvariantSurrogateSelector.cs" />
     <Compile Include="Serialization\WeakAssemblySerializationBinder.cs" />
     <Compile Include="Serialization\XElementDeserializer.cs" />
     <Compile Include="Serialization\XElementSerializer.cs" />
     <Compile Include="Serialization\XmlDeserializerBase.cs" />
     <Compile Include="Serialization\XmlReaderDeserializer.cs" />
-    <Compile Include="Serialization\XmlSerializationOptions.cs" />
+    <Compile Include="Serialization\_Enums\XmlSerializationOptions.cs" />
     <Compile Include="Serialization\XmlSerializer.cs" />
     <Compile Include="Serialization\XmlSerializerBase.cs" />
     <Compile Include="Serialization\XmlWriterSerializer.cs" />
@@ -286,7 +286,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
