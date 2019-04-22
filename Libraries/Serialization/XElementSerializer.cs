@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XElementSerializer.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,17 +28,28 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
     internal class XElementSerializer : XmlSerializerBase
     {
+        #region Constructors
+
         public XElementSerializer(XmlSerializationOptions options) : base(options)
         {
         }
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Serializes the object passed in <paramref name="obj"/> parameter into a new <see cref="XElement"/> object.
@@ -104,6 +133,10 @@ namespace KGySoft.Serialization
                 UnregisterSerializedObject(obj);
             }
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Serializing a collection by LinqToXml
@@ -243,10 +276,10 @@ namespace KGySoft.Serialization
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
 
-                object key = Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key));
-                object value = Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value));
-                XElement xKey = new XElement(nameof(KeyValuePair<_,_>.Key));
-                XElement xValue = new XElement(nameof(KeyValuePair<_,_>.Value));
+                object key = Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key));
+                object value = Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value));
+                XElement xKey = new XElement(nameof(KeyValuePair<_, _>.Key));
+                XElement xValue = new XElement(nameof(KeyValuePair<_, _>.Value));
                 parent.Add(xKey, xValue);
                 if (key != null)
                 {
@@ -300,7 +333,7 @@ namespace KGySoft.Serialization
 
                     // if can be trusted in all circumstances
                     if (IsTrustedCollection(type)
-                        // or recursive is requested 
+                        // or recursive is requested
                         || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
@@ -383,7 +416,6 @@ namespace KGySoft.Serialization
             }
         }
 
-
         private void SerializeXmlSerializable(IXmlSerializable obj, XContainer parent)
         {
             StringBuilder sb = new StringBuilder();
@@ -443,5 +475,9 @@ namespace KGySoft.Serialization
 
             parent.Add(s);
         }
+
+        #endregion
+
+        #endregion
     }
 }

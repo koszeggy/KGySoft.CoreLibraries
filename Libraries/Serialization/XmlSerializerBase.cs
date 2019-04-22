@@ -1,10 +1,27 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XmlSerializerBase.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -12,28 +29,61 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
     internal abstract class XmlSerializerBase
     {
+        #region Member struct
+
         protected struct Member
         {
-            private readonly Dictionary<string, int> memberNamesCounts;
+            #region Fields
+
+            #region Internal Fields
+
             internal readonly MemberInfo MemberInfo;
+
+            #endregion
+
+            #region Private Fields
+
+            private readonly Dictionary<string, int> memberNamesCounts;
+
+            #endregion
+
+            #endregion
+
+            #region Properties
+
             internal PropertyInfo Property => MemberInfo as PropertyInfo;
             internal FieldInfo Field => MemberInfo as FieldInfo;
             internal bool SpecifyDeclaringType => memberNamesCounts[MemberInfo.Name] > 1 || MemberInfo.Name == XmlSerializer.ElementItem && Reflector.IEnumerableType.IsAssignableFrom(Property?.PropertyType ?? Field.FieldType);
+
+            #endregion
+
+            #region Constructors
 
             public Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
             {
                 MemberInfo = memberInfo;
                 this.memberNamesCounts = memberNamesCounts;
             }
+
+            #endregion
         }
+
+        #endregion
+
+        #region Fields
+
+        #region Static Fields
 
         private static readonly HashSet<Type> trustedCollections = new HashSet<Type>
         {
@@ -55,16 +105,68 @@ namespace KGySoft.Serialization
             typeof(ConcurrentQueue<>),
             typeof(ConcurrentStack<>),
 #endif
+
         };
 
         private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache = new Cache<Type, bool>(IsTypeTrusted).GetThreadSafeAccessor();
+
+        #endregion
+
+        #region Instance Fields
+
+        private HashSet<object> serObjects;
+
+        #endregion
+
+        #endregion
+
+        #region Properties
+
+        #region Protected Properties
+
+        protected XmlSerializationOptions Options { get; }
+        protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
+        protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
+        protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+        protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
+        protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
+        protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
+
+        #endregion
+
+        #region Private Properties
+
+        private HashSet<object> SerObjects => serObjects ?? (serObjects = new HashSet<object>(ReferenceEqualityComparer.Comparer));
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        protected XmlSerializerBase(XmlSerializationOptions options) => Options = options;
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        #region Protected Methods
+
+        protected static bool IsTrustedCollection(Type type)
+            => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
+
+        #endregion
+
+        #region Private Methods
 
         private static bool IsTypeTrusted(Type type) =>
             // has default constructor
             type.CanBeCreatedWithoutParameters()
             // properties:
             && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p =>
-                // have public getter                
+                // have public getter
                     (p.GetGetMethod() != null
                         // of a non-delegate type
                         && !p.PropertyType.IsDelegate()
@@ -85,25 +187,56 @@ namespace KGySoft.Serialization
             // and the type has no instance events
             && type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length == 0;
 
-        private HashSet<object> serObjects;
+        private static bool IsWhiteSpace(char c, bool ignoreNewline)
+        {
+            if (c == ' ' || c == '\t')
+                return true;
 
-        protected XmlSerializationOptions Options { get; }
+            if (ignoreNewline)
+                return false;
 
-        private HashSet<object> SerObjects => serObjects ?? (serObjects = new HashSet<object>(ReferenceEqualityComparer.Comparer));
+            return c == '\r' || c == '\n';
 
-        protected XmlSerializerBase(XmlSerializationOptions options) => Options = options;
+            // U+0009 = <control> HORIZONTAL TAB
+            // U+000a = <control> LINE FEED
+            // U+000b = <control> VERTICAL TAB
+            // U+000c = <contorl> FORM FEED
+            // U+000d = <control> CARRIAGE RETURN
+            // U+0085 = <control> NEXT LINE
+            // U+00a0 = NO-BREAK SPACE
+            //if ((c == ' ') || (c >= '\x0009' && c <= '\x000d') || c == '\x00a0' || c == '\x0085')
+            //    return (true);
+        }
 
-        protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
+        /// <summary>
+        /// Gets whether a character has to be escaped
+        /// </summary>
+        private static bool EscapeNeeded(string s, int index, bool escapeNewlines, out bool isValidSurrogate)
+        {
+            isValidSurrogate = false;
+            char c = s[index];
+            if (c == '\t' // TAB is ok
+                || (c >= 0x20 && c.IsValidCharacter())
+                || (!escapeNewlines && (c == 0xA || c == 0xD))) // \n, \r are ok if new lines are not escaped
+            {
+                return false;
+            }
 
-        protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
+            // valid surrogate pair
+            if (index < s.Length - 1 && Char.IsSurrogatePair(c, s[index + 1]))
+            {
+                isValidSurrogate = true;
+                return false;
+            }
 
-        protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+            return true;
+        }
 
-        protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
+        #endregion
 
-        protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
+        #endregion
 
-        protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
+        #region Instance Methods
 
         protected BinarySerializationOptions GetBinarySerializationOptions()
         {
@@ -112,14 +245,10 @@ namespace KGySoft.Serialization
 
             // no fully qualified names -> omitting even in binary serializer
             if ((Options & XmlSerializationOptions.FullyQualifiedNames) == XmlSerializationOptions.None)
-            {
                 result |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
-            }
+
             return result;
         }
-
-        protected static bool IsTrustedCollection(Type type)
-            => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
 
         protected bool IsTrustedType(Type type) => trustedTypesCache[type];
 
@@ -129,33 +258,35 @@ namespace KGySoft.Serialization
 
             // getting read-write non-indexer readable instance properties
             IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.GetIndexParameters().Length == 0
-                    && p.CanRead
-                    && (p.CanWrite
-                        // read-only are accepted only if forced
-                        || ForceReadonlyMembersAndCollections
-                        // or is XmlSerializable
-                        || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
-                        // or the collection is not read-only (regardless of constructors)
-                        || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))))
+                    .Where(p => p.GetIndexParameters().Length == 0
+                        && p.CanRead
+                        && (p.CanWrite
+                            // read-only are accepted only if forced
+                            || ForceReadonlyMembersAndCollections
+                            // or is XmlSerializable
+                            || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
+                            // or the collection is not read-only (regardless of constructors)
+                            || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(Reflector.GetProperty(obj, p))))
 #if NET35
-                .Cast<MemberInfo>()
-                // ReSharper disable RedundantCast
+                    .Cast<MemberInfo>()
+                    // ReSharper disable RedundantCast
 #endif
-                        ;
+                ;
 
-                // getting non read-only instance fields
-                IEnumerable<MemberInfo> fields = ExcludeFields ? (IEnumerable<MemberInfo>)new MemberInfo[0] : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(f => !f.IsInitOnly
-                        // read-only fields are serialized only if forced
-                        || ForceReadonlyMembersAndCollections
-                        // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
-                        || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)))
+            // getting non read-only instance fields
+            IEnumerable<MemberInfo> fields = ExcludeFields
+                    ? (IEnumerable<MemberInfo>)new MemberInfo[0]
+                    : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(f => !f.IsInitOnly
+                            // read-only fields are serialized only if forced
+                            || ForceReadonlyMembersAndCollections
+                            // or if it is a read-write collection or a collection that can be created by a constructor (because a read-only field also can be set by reflection)
+                            || f.FieldType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out var _) || elementType != null && f.FieldType != Reflector.StringType && f.FieldType.IsReadWriteCollection(Reflector.GetField(obj, f)))
 #if NET35
-                // ReSharper restore RedundantCast
-                .Cast<MemberInfo>()
+                    // ReSharper restore RedundantCast
+                    .Cast<MemberInfo>()
 #endif
-                        ;
+                ;
 
             var result = new List<Member>();
             var memberNameCounts = new Dictionary<string, int>();
@@ -256,19 +387,12 @@ namespace KGySoft.Serialization
                 return XmlConvert.ToString((DateTimeOffset)value);
             Type type = value as Type;
             if (type != null)
-            {
-                //if (value.GetType() != Reflector.RuntimeType)
-                //    throw new NotSupportedException(Res.Get(Res.XmlNonRuntimeType));
-                //if (type.IsGenericParameter)
-                //    throw new NotSupportedException(Res.Get(Res.XmlGenericTypeParam));
                 return GetTypeString(type);
-            }
 
             string result = value.ToString();
             if (result.Length == 0)
                 return result;
 
-            //bool prevWhiteSpace = false;
             bool escapeNewline = (Options & XmlSerializationOptions.EscapeNewlineCharacters) != XmlSerializationOptions.None;
             StringBuilder escapedResult = null;
             spacePreserve = IsWhiteSpace(result[0], escapeNewline);
@@ -276,8 +400,7 @@ namespace KGySoft.Serialization
             // checking result for escaping
             for (int i = 0; i < result.Length; i++)
             {
-                bool isValidSurrogate;
-                if (EscapeNeeded(result, i, escapeNewline, out isValidSurrogate))
+                if (EscapeNeeded(result, i, escapeNewline, out bool isValidSurrogate))
                 {
                     if (escapedResult == null)
                         escapedResult = new StringBuilder(result.Substring(0, i).Replace(@"\", @"\\"));
@@ -309,50 +432,8 @@ namespace KGySoft.Serialization
             return result;
         }
 
-        private static bool IsWhiteSpace(char c, bool ignoreNewline)
-        {
-            // U+0009 = <control> HORIZONTAL TAB 
-            // U+000a = <control> LINE FEED
-            // U+000b = <control> VERTICAL TAB 
-            // U+000c = <contorl> FORM FEED 
-            // U+000d = <control> CARRIAGE RETURN
-            // U+0085 = <control> NEXT LINE 
-            // U+00a0 = NO-BREAK SPACE
+        #endregion
 
-            if (c == ' ' || c == '\t')
-                return true;
-
-            if (ignoreNewline)
-                return false;
-
-            return c == '\r' || c == '\n';
-
-            //if ((c == ' ') || (c >= '\x0009' && c <= '\x000d') || c == '\x00a0' || c == '\x0085')
-            //    return (true);
-        }
-
-        /// <summary>
-        /// Gets whether a character has to be escaped
-        /// </summary>
-        private static bool EscapeNeeded(string s, int index, bool escapeNewlines, out bool isValidSurrogate)
-        {
-            isValidSurrogate = false;
-            char c = s[index];
-            if (c == '\t' // TAB is ok
-                || (c >= 0x20 && c.IsValidCharacter())
-                || (!escapeNewlines && (c == 0xA || c == 0xD))) // \n, \r are ok if new lines are not escaped
-            {
-                return false;
-            }
-
-            // valid surrogate pair
-            if (index < s.Length - 1 && Char.IsSurrogatePair(c, s[index + 1]))
-            {
-                isValidSurrogate = true;
-                return false;
-            }
-
-            return true;
-        }
+        #endregion
     }
 }

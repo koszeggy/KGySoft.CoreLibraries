@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XElementDeserializer.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,9 +27,12 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -21,6 +42,10 @@ namespace KGySoft.Serialization
     /// </summary>
     internal abstract class XElementDeserializer : XmlDeserializerBase
     {
+        #region Methods
+
+        #region Public Methods
+
         /// <summary>
         /// Deserializes an XML content to an object.
         /// </summary>
@@ -96,6 +121,10 @@ namespace KGySoft.Serialization
 
             DeserializeMembersAndElements(parent, obj, objType, collectionElementType, null);
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
@@ -184,9 +213,9 @@ namespace KGySoft.Serialization
             string format = element.Attribute(XmlSerializer.AttributeFormat)?.Value;
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
-                object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters() 
-                    ? Reflector.CreateInstance(type) 
-                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
+                            ? Reflector.CreateInstance(type)
+                            : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));
                 DeserializeXmlSerializable(xmlSerializable, element);
@@ -209,7 +238,7 @@ namespace KGySoft.Serialization
             if (type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
             {
                 // key
-                XElement xItem = element.Element(nameof(KeyValuePair<_,_>.Key));
+                XElement xItem = element.Element(nameof(KeyValuePair<_, _>.Key));
                 if (xItem == null)
                     throw new ArgumentException(Res.XmlSerializationKeyValueMissingKey);
                 XAttribute xType = xItem.Attribute(XmlSerializer.AttributeType);
@@ -222,7 +251,7 @@ namespace KGySoft.Serialization
                 }
 
                 // value
-                xItem = element.Element(nameof(KeyValuePair<_,_>.Value));
+                xItem = element.Element(nameof(KeyValuePair<_, _>.Value));
                 if (xItem == null)
                     throw new ArgumentException(Res.XmlSerializationKeyValueMissingValue);
                 xType = xItem.Attribute(XmlSerializer.AttributeType);
@@ -302,8 +331,8 @@ namespace KGySoft.Serialization
                 }
 
                 result = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                    ? Reflector.CreateInstance(type)
-                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                        ? Reflector.CreateInstance(type)
+                        : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
 
                 // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !type.IsReadWriteCollection(result))
@@ -429,5 +458,9 @@ namespace KGySoft.Serialization
 
             return Unescape(element.Value);
         }
+
+        #endregion
+
+        #endregion
     }
 }

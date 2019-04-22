@@ -16,14 +16,11 @@
 
 #region Usings
 
+using System;
+using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
-
-#region Used Namespaces
-
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -33,8 +30,6 @@ using System.Xml;
 using System.Xml.Serialization;
 
 using KGySoft.Collections;
-
-#endregion
 
 #endregion
 
@@ -50,26 +45,25 @@ namespace KGySoft.Serialization
         #pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
         #pragma warning disable 1584,1711,1572,1581,1580
         #endif
-
         /// <summary>
         /// <para>Represents no enabled options.</para>
         /// <para>
         /// With every options disabled only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
         /// <list type="bullet">
-        /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> version and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
+        /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> counterpart and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
         /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is not a standalone generic parameter.</description></item>
         /// <item><term><see cref="IXmlSerializable"/> instances</term><description>Types that implement the <see cref="IXmlSerializable"/> interface can be serialized.</description></item>
         /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
         /// <item><term>Simple objects</term><description>A type can be serialized with the default options if it meets the following criteria:
         /// <list type="bullet">
-        /// <item>The type has parameterless constructor, or is a value type</item>
+        /// <item>The type has a parameterless constructor, or is a value type</item>
         /// <item>It has only public instance fields and properties. For properties, both accessors are public. Static members are ignored.
         /// <note>Compiler-generated backing fields are ignored so types with public auto properties are considered simple.</note></item>
         /// <item>All fields and properties can be set, or, all read-only fields and properties are either <see cref="IXmlSerializable"/> implementations or collections of the types enlisted at next main bullet point.</item>
         /// <item>None of the fields and properties are delegates.</item>
         /// <item>The type has no instance events.</item>
         /// </list>
-        /// <note>A type can be serialized only if these criteria are true for the serialized properties recursively.</note></description></item>
+        /// <note>A type can be serialized if these criteria are true for the serialized properties and fields recursively.</note></description></item>
         /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Stack{T}"/>,
         /// <see cref="ArrayList"/>, <see cref="Queue"/>,  <see cref="Stack"/>, <see cref="BitArray"/>, <see cref="StringCollection"/>,
         /// <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
@@ -101,7 +95,7 @@ namespace KGySoft.Serialization
         /// enabling this option makes possible to store its content in binary format within the XML.</para>
         /// <para>Though trusted collections and objects with only public read-write properties and fields can be serialized with <see cref="None"/> options
         /// as well, using this option will cause to serialize them in binary format, too.</para>
-        /// <para>Note: If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
+        /// <para>If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
         /// has higher priority, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
@@ -137,13 +131,13 @@ namespace KGySoft.Serialization
         /// <summary>
         /// <para>If enabled, then members without <see cref="DefaultValueAttribute"/> defined, will be treated as if they were decorated by
         /// <see cref="DefaultValueAttribute"/> with the default value of the property type (<see langword="null"/>&#160;for reference types and
-        /// bitwise zero value of value types).</para>
+        /// bitwise zero value of value types). This causes to skip serializing members, whose value equals to the default value of their type.</para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         AutoGenerateDefaultValuesAsFallback = 1 << 4,
 
         /// <summary>
-        /// <para>Ignores the original predefined <see cref="DefaultValueAttribute"/> definitions for all of the properties.</para>
+        /// <para>Ignores the originally defined <see cref="DefaultValueAttribute"/> definitions for all of the properties. This causes that all members will be serialized regardless of their values.</para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreDefaultValueAttribute = 1 << 5,
@@ -168,7 +162,7 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// <para>Unless a well configured <see cref="XmlWriter"/> is used, newline characters of string or char values can be lost or changed during deserialization.
-        /// This flag ensures that newline characters can be always deserialized regardless of the used <see cref="XmlWriterSettings.NewLineHandling"/> value.</para>
+        /// This flag ensures that newline characters can be always deserialized regardless of the used <see cref="XmlWriterSettings.NewLineHandling"/> value of an <see cref="XmlWriter"/>.</para>
         /// <para>Default at serialization methods: <strong>Enabled</strong></para>
         /// </summary>
         EscapeNewlineCharacters = 1 << 9,
@@ -194,7 +188,7 @@ namespace KGySoft.Serialization
         /// <note>Read-only collections witch recognizable collection initializer constructor are serializable even without this option.</note>
         /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
         /// Deserialization will fail if the read-only property returns a <see langword="null"/>&#160;value or its content cannot be restored (eg. it has a simple type or is a read-only collection).
-        /// Use this option only if object is serialized only for information (eg. in logs) and deserialization is not necessary.</note>
+        /// Use this option only if and object has to be serialized only for information (eg. in logs) and deserialization is not necessary.</note>
         /// </para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>

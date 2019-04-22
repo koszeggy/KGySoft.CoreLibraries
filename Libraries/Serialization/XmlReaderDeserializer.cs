@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XmlReaderDeserializer.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,9 +26,12 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -20,6 +41,10 @@ namespace KGySoft.Serialization
     /// </summary>
     internal abstract class XmlReaderDeserializer : XmlDeserializerBase
     {
+        #region Methods
+
+        #region Public Methods
+
         /// <summary>
         /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
         /// </summary>
@@ -97,6 +122,10 @@ namespace KGySoft.Serialization
 
             DeserializeMembersAndElements(reader, obj, objType, collectionElementType, null);
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
@@ -196,8 +225,8 @@ namespace KGySoft.Serialization
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                    ? Reflector.CreateInstance(type)
-                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                            ? Reflector.CreateInstance(type)
+                            : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));
                 DeserializeXmlSerializable(xmlSerializable, reader);
@@ -233,7 +262,7 @@ namespace KGySoft.Serialization
                         case XmlNodeType.Element:
                             switch (reader.Name)
                             {
-                                case nameof(KeyValuePair<_,_>.Key):
+                                case nameof(KeyValuePair<_, _>.Key):
                                     if (keyRead)
                                         throw new ArgumentException(Res.XmlSerializationMultipleKeys);
 
@@ -248,7 +277,7 @@ namespace KGySoft.Serialization
                                     }
                                     break;
 
-                                case nameof(KeyValuePair<_,_>.Value):
+                                case nameof(KeyValuePair<_, _>.Value):
                                     if (valueRead)
                                         throw new ArgumentException(Res.XmlSerializationMultipleValues);
 
@@ -288,8 +317,8 @@ namespace KGySoft.Serialization
                 string attrCrc = reader[XmlSerializer.AttributeCrc];
                 ReadToNodeType(reader, XmlNodeType.Text, XmlNodeType.EndElement);
                 byte[] data = reader.NodeType == XmlNodeType.Text
-                    ? Convert.FromBase64String(reader.Value)
-                    : new byte[0];
+                        ? Convert.FromBase64String(reader.Value)
+                        : new byte[0];
                 if (attrCrc != null)
                 {
                     if ($"{Crc32.CalculateHash(data):X8}" != attrCrc)
@@ -351,9 +380,9 @@ namespace KGySoft.Serialization
                     return true;
                 }
 
-                result = existingInstance ?? (type.CanBeCreatedWithoutParameters() 
-                    ? Reflector.CreateInstance(type) 
-                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                result = existingInstance ?? (type.CanBeCreatedWithoutParameters()
+                        ? Reflector.CreateInstance(type)
+                        : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
 
                 // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !type.IsReadWriteCollection(result))
@@ -526,5 +555,9 @@ namespace KGySoft.Serialization
             }
             while (true);
         }
+
+        #endregion
+
+        #endregion
     }
 }

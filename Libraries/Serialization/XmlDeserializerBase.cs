@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XmlDeserializerBase.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,13 +25,20 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
     internal abstract class XmlDeserializerBase
     {
+        #region Methods
+
+        #region Protected Methods
+
         protected static void ParseArrayDimensions(string attrLength, string attrDim, out int[] lengths, out int[] lowerBounds)
         {
             if (attrLength == null && attrDim == null)
@@ -117,47 +142,6 @@ namespace KGySoft.Serialization
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
-        /// </summary>
-        private static void CopyContent(object target, object source)
-        {
-            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyContent)}.");
-
-            // 1.) Array
-            if (target is Array targetArray && source is Array sourceArray)
-            {
-                int[] lengths = new int[sourceArray.Rank];
-                int[] lowerBounds = new int[sourceArray.Rank];
-                for (int i = 0; i < sourceArray.Rank; i++)
-                {
-                    lengths[i] = sourceArray.GetLength(i);
-                    lowerBounds[i] = sourceArray.GetLowerBound(i);
-                }
-
-                CheckArray(targetArray, lengths, lowerBounds, true);
-                if (targetArray.GetType().GetElementType()?.IsPrimitive == true)
-                    Buffer.BlockCopy(sourceArray, 0, targetArray, 0, Buffer.ByteLength(sourceArray));
-                else if (lengths.Length == 1)
-                    Array.Copy(sourceArray, targetArray, sourceArray.Length);
-                else
-                {
-                    var indices = new ArrayIndexer(lengths, lowerBounds);
-                    while (indices.MoveNext())
-                        targetArray.SetValue(sourceArray.GetValue(indices.Current), indices.Current);
-                }
-
-                return;
-            }
-
-            // 2.) non-array: every fields (here we don't know how was the instance serialized but we have a deserialized source)
-            for (Type t = target.GetType(); t != null; t = t.BaseType)
-            {
-                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    Reflector.SetField(target, field, Reflector.GetField(source, field));
-            }
         }
 
         protected static void ResolveMember(Type type, string memberOrItemName, string strDeclaringType, string strItemType, out PropertyInfo property, out FieldInfo field, out Type itemType)
@@ -321,5 +305,54 @@ namespace KGySoft.Serialization
 
             return result.ToString();
         }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
+        /// </summary>
+        private static void CopyContent(object target, object source)
+        {
+            Debug.Assert(target != null && source != null && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyContent)}.");
+
+            // 1.) Array
+            if (target is Array targetArray && source is Array sourceArray)
+            {
+                int[] lengths = new int[sourceArray.Rank];
+                int[] lowerBounds = new int[sourceArray.Rank];
+                for (int i = 0; i < sourceArray.Rank; i++)
+                {
+                    lengths[i] = sourceArray.GetLength(i);
+                    lowerBounds[i] = sourceArray.GetLowerBound(i);
+                }
+
+                CheckArray(targetArray, lengths, lowerBounds, true);
+                if (targetArray.GetType().GetElementType()?.IsPrimitive == true)
+                    Buffer.BlockCopy(sourceArray, 0, targetArray, 0, Buffer.ByteLength(sourceArray));
+                else if (lengths.Length == 1)
+                    Array.Copy(sourceArray, targetArray, sourceArray.Length);
+                else
+                {
+                    var indices = new ArrayIndexer(lengths, lowerBounds);
+                    while (indices.MoveNext())
+                        targetArray.SetValue(sourceArray.GetValue(indices.Current), indices.Current);
+                }
+
+                return;
+            }
+
+            // 2.) non-array: every fields (here we don't know how was the instance serialized but we have a deserialized source)
+            for (Type t = target.GetType(); t != null; t = t.BaseType)
+            {
+                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                    Reflector.SetField(target, field, Reflector.GetField(source, field));
+            }
+        }
+
+        #endregion
+
+        #endregion
     }
 }

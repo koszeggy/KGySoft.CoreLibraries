@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: XmlWriterSerializer.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,17 +26,28 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
     internal class XmlWriterSerializer : XmlSerializerBase
     {
+        #region Constructors
+
         public XmlWriterSerializer(XmlSerializationOptions options) : base(options)
         {
         }
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         public void Serialize(XmlWriter writer, object obj)
         {
@@ -92,6 +121,10 @@ namespace KGySoft.Serialization
                 UnregisterSerializedObject(obj);
             }
         }
+
+        #endregion
+
+        #region Private Methods
 
         /// <summary>
         /// Serializing a collection by XmlWriter
@@ -244,10 +277,10 @@ namespace KGySoft.Serialization
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
 
-                object key = Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key));
-                object value = Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value));
+                object key = Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key));
+                object value = Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value));
 
-                writer.WriteStartElement(nameof(KeyValuePair<_,_>.Key));
+                writer.WriteStartElement(nameof(KeyValuePair<_, _>.Key));
                 if (key == null)
                     writer.WriteEndElement();
                 else
@@ -257,7 +290,7 @@ namespace KGySoft.Serialization
                     writer.WriteFullEndElement();
                 }
 
-                writer.WriteStartElement(nameof(KeyValuePair<_,_>.Value));
+                writer.WriteStartElement(nameof(KeyValuePair<_, _>.Value));
                 if (value == null)
                     writer.WriteEndElement();
                 else
@@ -307,10 +340,10 @@ namespace KGySoft.Serialization
 
                     // if can be trusted in all circumstances
                     if (IsTrustedCollection(type)
-                        // or recursive is requested 
+                        // or recursive is requested
                         || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                            // and is a supported collection or serialization is forced
-                            && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
+                                // and is a supported collection or serialization is forced
+                                && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
                     {
                         SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), typeNeeded, writer, visibility);
                         return;
@@ -446,5 +479,9 @@ namespace KGySoft.Serialization
 
             writer.WriteString(s);
         }
+
+        #endregion
+
+        #endregion
     }
 }

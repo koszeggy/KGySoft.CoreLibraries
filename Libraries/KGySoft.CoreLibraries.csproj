@@ -230,7 +230,7 @@
     <Compile Include="Resources\ResXResourceSet.cs" />
     <Compile Include="Resources\ResXResourceWriter.cs" />
     <Compile Include="Security\Cryptography\Crc32.cs" />
-    <Compile Include="Security\Cryptography\NamespaceDoc.cs" />
+    <Compile Include="Security\Cryptography\_doc\NamespaceDoc.cs" />
     <Compile Include="Security\Cryptography\SecureRandom.cs" />
     <Compile Include="Serialization\AnyObjectSerializerWrapper.cs" />
     <Compile Include="Serialization\ArrayIndexer.cs" />
@@ -286,7 +286,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
