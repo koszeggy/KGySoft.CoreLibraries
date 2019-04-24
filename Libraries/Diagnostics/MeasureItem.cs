@@ -65,7 +65,7 @@ namespace KGySoft.Diagnostics
 
         #region Methods
 
-        public override string ToString() => calls == 0 ? base.ToString() : Res.ProfilerMeasureItemToString(this);
+        public override string ToString() => calls == 0 ? base.ToString() : Res.ProfilerMeasureItemToString(Category, Operation, new TimeSpan(TotalTime.Ticks / NumberOfCalls), FirstCall, TotalTime, NumberOfCalls);
 
         internal void AddMeasurement(TimeSpan timeSpan)
         {

@@ -880,7 +880,7 @@ namespace KGySoft.Resources
         /// Returns an <see cref="IDictionaryEnumerator"/> instance for the current <see cref="ResXResourceReader"/> object that enumerates the design-time properties (<c>&lt;metadata&gt;</c> elements)
         /// in the source XML resource file or stream.
         /// </summary>
-        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the design-time properties (<c>&lt;metadata&gt</c>; elements) from the current XML resource file or stream.</returns>
+        /// <returns>An <see cref="IDictionaryEnumerator" /> for that can be used to iterate through the design-time properties (<c>&lt;metadata&gt;</c>; elements) from the current XML resource file or stream.</returns>
         /// <remarks>
         /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>, the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property of the returned enumerator is a <see cref="ResXDataNode"/>
         /// instance rather than the resource value. This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source. See also the example at <see cref="ResXDataNode"/>.</para>

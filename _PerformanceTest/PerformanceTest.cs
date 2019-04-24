@@ -24,7 +24,7 @@ using NUnit.Framework;
 
 namespace _PerformanceTest
 {
-    internal class PerformanceTest : PerformanceTest<Action, object>
+    internal class PerformanceTest : KGySoft.Diagnostics.PerformanceTest
     {
         #region Methods
 
@@ -48,10 +48,10 @@ namespace _PerformanceTest
 
         #region Instance Methods
 
-        protected override object Invoke(Action del)
+        protected override void OnInitialize()
         {
-            del.Invoke();
-            return null;
+            base.OnInitialize();
+            CheckTestingFramework();
         }
 
         #endregion

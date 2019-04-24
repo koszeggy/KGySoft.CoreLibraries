@@ -138,6 +138,123 @@
   <data name="General_MaxLengthLessThanMinLength" xml:space="preserve">
     <value>Maximum length must be greater than or equal to minimum length.</value>
   </data>
+  <data name="General_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="General_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="General_Millisecond" xml:space="preserve">
+    <value>ms</value>
+  </data>
+  <data name="PerformanceTest_InvalidTDelegate" xml:space="preserve">
+    <value>Type argument 'TDelegate' must be a delegate type</value>
+  </data>
+  <data name="PerformanceTest_NoTestCases" xml:space="preserve">
+    <value>No test cases are added.</value>
+  </data>
+  <data name="PerformanceTest_Item" xml:space="preserve">
+    <value>item</value>
+  </data>
+  <data name="PerformanceTest_Byte" xml:space="preserve">
+    <value>byte</value>
+  </data>
+  <data name="PerformanceTest_NoDifference" xml:space="preserve">
+    <value>No difference</value>
+  </data>
+  <data name="PerformanceTest_DefaultName" xml:space="preserve">
+    <value>Performance Test</value>
+  </data>
+  <data name="PerformanceTest_SortBySize" xml:space="preserve">
+    <value>size (shortest first)</value>
+  </data>
+  <data name="PerformanceTest_SortByTime" xml:space="preserve">
+    <value>time (quickest first)</value>
+  </data>
+  <data name="PerformanceTest_SortByIterations" xml:space="preserve">
+    <value>fulfilled iterations (most first)</value>
+  </data>
+  <data name="PerformanceTest_Separator" xml:space="preserve">
+    <value>--------------------------------------------------</value>
+  </data>
+  <data name="PerformanceTest_BestMark" xml:space="preserve">
+    <value>&#x9; &lt;---- Best</value>
+  </data>
+  <data name="PerformanceTest_WorstMark" xml:space="preserve">
+    <value>&#x9; &lt;---- Worst</value>
+  </data>
+  <data name="PerformanceTest_WorstBestDiff" xml:space="preserve">
+    <value>  Worst-Best difference: </value>
+  </data>
+  <data name="PerformanceTest_DumpedResult" xml:space="preserve">
+    <value>Dumped result:</value>
+  </data>
+  <data name="PerformanceTest_CaseDefaultNameFormat" xml:space="preserve">
+    <value>Case #{0}</value>
+  </data>
+  <data name="PerformanceTest_CaseNameFormat" xml:space="preserve">
+    <value>{0}: </value>
+  </data>
+  <data name="PerformanceTest_HeaderFormat" xml:space="preserve">
+    <value>==[{0} Results]================================================</value>
+  </data>
+  <data name="PerformanceTest_IterationsFormat" xml:space="preserve">
+    <value>Iterations: {0:N0}</value>
+  </data>
+  <data name="PerformanceTest_TestTimeFormat" xml:space="preserve">
+    <value>Test Time: {0:N0} ms</value>
+  </data>
+  <data name="PerformanceTest_WarmingUpFormat" xml:space="preserve">
+    <value>Warming up: {0}</value>
+  </data>
+  <data name="PerformanceTest_TestCasesFormat" xml:space="preserve">
+    <value>Test cases: {0}</value>
+  </data>
+  <data name="PerformanceTest_RepeatsFormat" xml:space="preserve">
+    <value>Repeats: {0}</value>
+  </data>
+  <data name="PerformanceTest_CallingGcCollectFormat" xml:space="preserve">
+    <value>Calling GC.Collect: {0}</value>
+  </data>
+  <data name="PerformanceTest_CpuAffinityFormat" xml:space="preserve">
+    <value>Forced CPU Affinity: {0}</value>
+  </data>
+  <data name="PerformanceTest_SortOfCasesFormat" xml:space="preserve">
+    <value>Cases are sorted by {0}</value>
+  </data>
+  <data name="PerformanceTest_CaseAverageTimeFormat" xml:space="preserve">
+    <value>average time: {0:N2} ms</value>
+  </data>
+  <data name="PerformanceTest_CaseOrderFormat" xml:space="preserve">
+    <value>{0}. </value>
+  </data>
+  <data name="PerformanceTest_DifferenceFormat" xml:space="preserve">
+    <value> ({0}{1:N2}{2} / {3:P2})</value>
+  </data>
+  <data name="PerformanceTest_CaseIterationsFormat" xml:space="preserve">
+    <value>{0:N0} iterations in {1:N2} ms. Adjusted for {2:N0} ms: {3:N2}</value>
+  </data>
+  <data name="PerformanceTest_CaseRepetitionOrderFormat" xml:space="preserve">
+    <value>  #{0,-2} {1}</value>
+  </data>
+  <data name="PerformanceTest_CaseRepetitionTimeFormat" xml:space="preserve">
+    <value>{0,13:N2} ms</value>
+  </data>
+  <data name="PerformanceTest_CaseRepetitionIterationsFormat" xml:space="preserve">
+    <value>{0:N0} iterations in {1:N2} ms. Adjusted: {2:N2}</value>
+  </data>
+  <data name="PerformanceTest_WorstBestDiffTimeFormat" xml:space="preserve">
+    <value>{0:N2} ms ({1:P2})</value>
+  </data>
+  <data name="PerformanceTest_WorstBestDiffIterationFormat" xml:space="preserve">
+    <value>{0:N2} ({1:P2})</value>
+  </data>
+  <data name="PerformanceTest_ResultSizeFormat" xml:space="preserve">
+    <value>  Result size: {0:N0} {1}</value>
+  </data>
+  <data name="PerformanceTest_UnitPossiblePluralFormat" xml:space="preserve">
+    <value>{0}(s)</value>
+  </data>
   <data name="ICollection_CopyToSingleDimArrayOnly" xml:space="preserve">
     <value>Only single dimensional arrays are supported for the requested action.</value>
   </data>
@@ -260,7 +377,7 @@ Hit rate: {8:P2}</value>
     <value>Separator is null or empty.</value>
   </data>
   <data name="Profiler_MeasureItemToStringFormat" xml:space="preserve">
-    <value>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5}</value>
+    <value>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5:N0}</value>
   </data>
   <data name="Reflection_CannotSetConstantFieldFormat" xml:space="preserve">
     <value>The constant field cannot be set: {0}.{1}</value>

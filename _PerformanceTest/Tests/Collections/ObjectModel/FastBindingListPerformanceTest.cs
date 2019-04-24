@@ -38,7 +38,8 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
                     collTest.AddNew();
                     collTest.RemoveAt(collTest.Count - 1);
                 }, "FastBindingList.AddNew")
-                .DoTest();
+                .DoTest()
+                .DumpResults(Console.Out);
         }
 
         [Test]
@@ -57,7 +58,8 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
                 }
                 .AddCase(() => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
                 .AddCase(() => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")
-                .DoTest();
+                .DoTest()
+                .DumpResults(Console.Out);
         }
     }
 }

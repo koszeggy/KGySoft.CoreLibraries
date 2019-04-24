@@ -96,8 +96,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PerformanceTest.cs" />
-    <Compile Include="PerformanceTest`1.cs" />
-    <Compile Include="PerformanceTest`2.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastBindingListPerformanceTest.cs" />
     <Compile Include="Tests\Collections\ObjectModel\FastLookupCollectionPerformanceTest.cs" />
     <Compile Include="Tests\Diagnostics\ProfilerPerformanceTest.cs" />

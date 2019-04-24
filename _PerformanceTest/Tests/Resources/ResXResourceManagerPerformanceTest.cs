@@ -1,5 +1,7 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Resources;
+using KGySoft.Diagnostics;
 using KGySoft.Resources;
 using NUnit.Framework;
 
@@ -24,7 +26,8 @@ namespace _PerformanceTest.Tests.Resources
                 }
                 .AddCase(() => refManager.GetObject("TestString", inv), "ResourceManager")
                 .AddCase(() => manager.GetObject("TestString", inv), "ResXResourceManager")
-                .DoTest();
+                .DoTest()
+                .DumpResults(Console.Out);
 
             new PerformanceTest<object>
                 {
@@ -34,7 +37,8 @@ namespace _PerformanceTest.Tests.Resources
                 }
                 .AddCase(() => refManager.GetObject("TestString", hu), "ResourceManager")
                 .AddCase(() => manager.GetObject("TestString", hu), "ResXResourceManager")
-                .DoTest();
+                .DoTest()
+                .DumpResults(Console.Out);
 
             // 1. jelenleg a gyári vagy a resx-e a gyorsabb -> inv: 122.83 % - 128.50 %; hu: 127.37 % - 136.73 %
             // 2. a resx-ben mindenképpen overrideolni kell a GetString/Object-et, és beletenni az ortogonalitást. -> inv: 144.92 % - 149.58 %; hu: 151.30 % - 153.41 %

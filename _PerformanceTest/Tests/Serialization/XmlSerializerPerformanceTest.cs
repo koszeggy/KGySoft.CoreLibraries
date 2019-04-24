@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Xml;
+using KGySoft.Diagnostics;
 using KGySoft.Serialization;
 using NUnit.Framework;
 using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
@@ -146,7 +147,7 @@ namespace _PerformanceTest.Tests.Serialization
             new PerformanceTest<string>
                 {
                     TestName = "XmlSerializer performance test",
-                    Iterations = 1, IsWarmUp = false, SortBySize = true, DumpResult = true, Repeat = 2 // comment this line for time test and uncomment for size test
+                    Iterations = 1, WarmUp = false, SortBySize = true, Repeat = 2 // comment this line for time test and uncomment for size test
                 }
                 .AddCase(() =>
                 {
@@ -165,7 +166,8 @@ namespace _PerformanceTest.Tests.Serialization
                 }, "KGySoft.XmlSerializer by XmlWriter")
                 .AddCase(() => XmlSerializer.Serialize(obj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute).ToString(),
                     "KGySoft.XmlSerializer by LINQ")
-                .DoTest();
+                .DoTest()
+                .DumpResults(Console.Out, dumpReturnValue: true);
         }
     }
 }

@@ -26,7 +26,8 @@ namespace _PerformanceTest.Tests.Collections.ObjectModel
                 .AddCase(() => collReference.IndexOf(rnd.Next(collReference.Count)), "Collection.IndexOf")
                 .AddCase(() => collTest.IndexOf(rnd.Next(collTest.Count)), "FastLookupCollection.IndexOf, Consistency check ON")
                 .AddCase(() => collTest.IndexOf(rnd.Next(collTestNoCheck.Count)), "FastLookupCollection.IndexOf, Consistency check OFF")
-                .DoTest();
+                .DoTest()
+                .DumpResults(Console.Out);
         }
     }
 }

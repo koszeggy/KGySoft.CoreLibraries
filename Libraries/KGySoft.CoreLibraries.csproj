@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <Import Project="..\packages\NUnit.3.11.0\build\NUnit.props" Condition="Exists('..\packages\NUnit.3.11.0\build\NUnit.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug_NET35</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -18,6 +19,8 @@
     <OutputPath>bin\$(Configuration)</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>latest</LangVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_NET35|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -63,6 +66,9 @@
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework, Version=3.11.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.11.0\lib\net45\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
@@ -142,7 +148,12 @@
     <Compile Include="Diagnostics\DictionaryDebugView.cs" />
     <Compile Include="Diagnostics\DictionaryKeyCollectionDebugView.cs" />
     <Compile Include="Diagnostics\DictionaryValueCollectionDebugView.cs" />
-    <Compile Include="Diagnostics\IMeasureItem.cs" />
+    <Compile Include="Diagnostics\PerformanceTest.cs" />
+    <Compile Include="Diagnostics\PerformanceTestBase.cs" />
+    <Compile Include="Diagnostics\PerformanceTestBase`2.cs" />
+    <Compile Include="Diagnostics\PerformanceTestResultCollection.cs" />
+    <Compile Include="Diagnostics\PerformanceTest`1.cs" />
+    <Compile Include="Diagnostics\_Interfaces\IMeasureItem.cs" />
     <Compile Include="Diagnostics\MeasureItem.cs" />
     <Compile Include="Diagnostics\MeasureOperation.cs" />
     <Compile Include="Diagnostics\Profiler.cs" />
@@ -177,6 +188,9 @@
     </Compile>
     <Compile Include="CoreLibraries\HiResTimer.cs" />
     <Compile Include="CoreLibraries\_EventArgs\HiResTimerElapsedEventArgs.cs" />
+    <Compile Include="Diagnostics\_Interfaces\IPerformanceTestResultCollection.cs" />
+    <Compile Include="Diagnostics\_Interfaces\ITestCaseRepetition.cs" />
+    <Compile Include="Diagnostics\_Interfaces\ITestCaseResult.cs" />
     <Compile Include="LanguageSettings.cs" />
     <Compile Include="CoreLibraries\ReferenceComparer.cs" />
     <Compile Include="NamespaceDoc.cs" />
@@ -270,6 +284,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ComponentModel\_TypeConverters\EncodingConverter.cs" />
     <Compile Include="ComponentModel\_TypeConverters\VersionConverter.cs" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\KGySoft.snk">
@@ -286,7 +301,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
@@ -294,4 +309,10 @@
 if $(ConfigurationName) == Release_NET40 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
 if $(ConfigurationName) == Release_NET45 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)</PostBuildEvent>
   </PropertyGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\NUnit.3.11.0\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.3.11.0\build\NUnit.props'))" />
+  </Target>
 </Project>

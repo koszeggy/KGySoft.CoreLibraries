@@ -22,7 +22,6 @@ using System.Linq;
 using System.Reflection;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
-using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
@@ -102,6 +101,15 @@ namespace KGySoft
 
         /// <summary>Maximum length must be greater than or equal to minimum length.</summary>
         internal static string MaxLengthLessThanMinLength => Get("General_MaxLengthLessThanMinLength");
+
+        /// <summary>Yes</summary>
+        internal static string Yes => Get("General_Yes");
+
+        /// <summary>No</summary>
+        internal static string No => Get("General_No");
+
+        /// <summary>ms</summary>
+        internal static string Millisecond => Get("General_Millisecond");
 
         // ReSharper disable InconsistentNaming
         /// <summary>Enumeration has either not started or has already finished.</summary>
@@ -222,6 +230,52 @@ namespace KGySoft
 
         /// <summary>Type parameter is expected to be a System.Enum type.</summary>
         internal static string EnumTypeParameterInvalid => Get("Enum_TypeParameterInvalid");
+
+        #endregion
+
+        #region PerformanceTest
+
+        /// <summary>Type argument 'TDelegate' must be a delegate type</summary>
+        internal static string PerformanceTestInvalidTDelegate => Get("PerformanceTest_InvalidTDelegate");
+
+        /// <summary>No test cases are added.</summary>
+        internal static string PerformanceTestNoTestCases => Get("PerformanceTest_NoTestCases");
+
+        /// <summary>item</summary>
+        internal static string PerformanceTestItem => Get("PerformanceTest_Item");
+
+        /// <summary>byte</summary>
+        internal static string PerformanceTestByte => Get("PerformanceTest_Byte");
+
+        /// <summary>No difference</summary>
+        internal static string PerformanceTestNoDifference => Get("PerformanceTest_NoDifference");
+
+        /// <summary>Performance Test</summary>
+        internal static string PerformanceTestDefaultName => Get("PerformanceTest_DefaultName");
+
+        /// <summary>size (shortest first)</summary>
+        internal static string PerformanceTestSortBySize => Get("PerformanceTest_SortBySize");
+
+        /// <summary>time (quickest first)</summary>
+        internal static string PerformanceTestSortByTime => Get("PerformanceTest_SortByTime");
+
+        /// <summary>fulfilled iterations (most first)</summary>
+        internal static string PerformanceTestSortByIterations => Get("PerformanceTest_SortByIterations");
+
+        /// <summary>--------------------------------------------------</summary>
+        internal static string PerformanceTestSeparator => Get("PerformanceTest_Separator");
+
+        /// <summary>&#x9; &lt;---- Best</summary>
+        internal static string PerformanceTestBestMark => Get("PerformanceTest_BestMark");
+
+        /// <summary>&#x9; &lt;---- Worst</summary>
+        internal static string PerformanceTestWorstMark => Get("PerformanceTest_WorstMark");
+
+        /// <summary>  Worst-Best difference: </summary>
+        internal static string PerformanceTestWorstBestDiff => Get("PerformanceTest_WorstBestDiff");
+
+        /// <summary>Dumped result:</summary>
+        internal static string PerformanceTestDumpedResult => Get("PerformanceTest_DumpedResult");
 
         #endregion
 
@@ -386,10 +440,10 @@ namespace KGySoft
         internal static string ArgumentMustBeBetween(object low, object high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
-        internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatValues<TEnum>());
+        internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatEnumValues<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
-        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name, FormatFlags<TEnum>());
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
@@ -540,10 +594,80 @@ namespace KGySoft
 
         #endregion
 
+        #region PerformanceTest
+
+        /// <summary>Case #{0}</summary>
+        internal static string PerformanceTestCaseDefaultName(int testCaseNo) => Get("PerformanceTest_CaseDefaultNameFormat", testCaseNo);
+
+        /// <summary>{0}: </summary>
+        internal static string PerformanceTestCaseName(string name) => Get("PerformanceTest_CaseNameFormat", name);
+
+        /// <summary>==[{0} Results]================================================</summary>
+        internal static string PerformanceTestHeader(string testName) => Get("PerformanceTest_HeaderFormat", testName);
+
+        /// <summary>Iterations: {0:N0}</summary>
+        internal static string PerformanceTestIterations(int iterations) => Get("PerformanceTest_IterationsFormat", iterations);
+
+        /// <summary>Test Time: {0:N0} ms</summary>
+        internal static string PerformanceTestTestTime(int testTime) => Get("PerformanceTest_TestTimeFormat", testTime);
+
+        /// <summary>Warming up: {0}</summary>
+        internal static string PerformanceTestWarmingUp(bool value) => Get("PerformanceTest_WarmingUpFormat", FormatBool(value));
+
+        /// <summary>Test cases: {0}</summary>
+        internal static string PerformanceTestTestCases(int count) => Get("PerformanceTest_TestCasesFormat", count);
+
+        /// <summary>Repeats: {0}</summary>
+        internal static string PerformanceTestRepeats(int count) => Get("PerformanceTest_RepeatsFormat", count);
+
+        /// <summary>Calling GC.Collect: {0}</summary>
+        internal static string PerformanceTestCallingGcCollect(bool value) => Get("PerformanceTest_CallingGcCollectFormat", FormatBool(value));
+
+        /// <summary>Forced CPU Affinity: {0}</summary>
+        internal static string PerformanceTestCpuAffinity(int? affinity) => Get("PerformanceTest_CpuAffinityFormat", affinity == null ? No : (object)affinity);
+
+        /// <summary>Cases are sorted by {0}</summary>
+        internal static string PerformanceTestSortOfCases(string sort) => Get("PerformanceTest_SortOfCasesFormat", sort);
+
+        /// <summary>average time: {0:N2} ms</summary>
+        internal static string PerformanceTestCaseAverageTime(double msecs) => Get("PerformanceTest_CaseAverageTimeFormat", msecs);
+
+        /// <summary>{0}. </summary>
+        internal static string PerformanceTestCaseOrder(int order) => Get("PerformanceTest_CaseOrderFormat", order);
+
+        /// <summary> ({0}{1:N2}{2} / {3:P2})</summary>
+        internal static string PerformanceTestDifference(string sign, double diff, string unit, double currentPerBaseValue) => Get("PerformanceTest_DifferenceFormat", sign, diff, unit, currentPerBaseValue);
+
+        /// <summary>{0:N0} iterations in {1:N2} ms. Adjusted for {2:N0} ms: {3:N2}</summary>
+        internal static string PerformanceTestCaseIterations(int totalIterations, double totalMilliseconds, int testTime, double averageIterations) => Get("PerformanceTest_CaseIterationsFormat", totalIterations, totalMilliseconds, testTime, averageIterations);
+
+        /// <summary>  #{0,-2} {1}</summary>
+        internal static string PerformanceTestCaseRepetitionOrder(int order, string content) => Get("PerformanceTest_CaseRepetitionOrderFormat", order, content);
+
+        /// <summary>{0,13:N2} ms</summary>
+        internal static string PerformanceTestCaseRepetitionTime(double ms) => Get("PerformanceTest_CaseRepetitionTimeFormat", ms);
+
+        /// <summary>{0:N0} iterations in {1:N2} ms. Adjusted: {2:N2}</summary>
+        internal static string PerformanceTestCaseRepetitionIterations(int iterations, double totalMilliseconds, double averageIterationsPerTestTime) => Get("PerformanceTest_CaseRepetitionIterationsFormat", iterations, totalMilliseconds, averageIterationsPerTestTime);
+
+        /// <summary>{0:N2} ms ({1:P2})</summary>
+        internal static string PerformanceTestWorstBestDiffTime(double totalMilliseconds, double percent) => Get("PerformanceTest_WorstBestDiffTimeFormat", totalMilliseconds, percent);
+
+        /// <summary>{0:N2} ({1:P2})</summary>
+        internal static string PerformanceTestWorstBestDiffIteration(double diff, double percent) => Get("PerformanceTest_WorstBestDiffIterationFormat", diff, percent);
+
+        /// <summary>  Result size: {0:N0} {1}</summary>
+        internal static string PerformanceTestResultSize(int length, string unit) => Get("PerformanceTest_ResultSizeFormat", length, unit);
+
+        /// <summary>{0}(s)</summary>
+        internal static string PerformanceTestUnitPossiblePlural(string unit) => Get("PerformanceTest_UnitPossiblePluralFormat", unit);
+
+        #endregion
+
         #region Profiler
 
-        /// <summary>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5}</summary>
-        internal static string ProfilerMeasureItemToString(MeasureItem measureItem) => Get("Profiler_MeasureItemToStringFormat", measureItem.Category, measureItem.Operation, new TimeSpan(measureItem.TotalTime.Ticks / measureItem.NumberOfCalls), measureItem.FirstCall, measureItem.TotalTime, measureItem.NumberOfCalls);
+        /// <summary>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5:N0}</summary>
+        internal static string ProfilerMeasureItemToString(string category,  string operation, TimeSpan averageTime, TimeSpan firstCall, TimeSpan totalTime, long calls) => Get("Profiler_MeasureItemToStringFormat", category, operation, averageTime, firstCall, totalTime, calls);
 
         #endregion
 
@@ -797,19 +921,21 @@ namespace KGySoft
             return args == null ? format : SafeFormat(format, args);
         }
 
-        private static string FormatValues<TEnum>() where TEnum : struct, IConvertible
+        private static string FormatEnumValues<TEnum>() where TEnum : struct, IConvertible
             => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd)
 #if NET35
                     .ToArray()
 #endif
             );
 
-        private static string FormatFlags<TEnum>() where TEnum : struct, IConvertible
+        private static string FormatEnumFlags<TEnum>() where TEnum : struct, IConvertible
             => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd)
 #if NET35
                     .ToArray()
 #endif
             );
+
+        private static string FormatBool(bool value) => value ? Yes : No;
 
         private static string SafeFormat(string format, object[] args)
         {
