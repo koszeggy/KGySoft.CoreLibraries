@@ -1,0 +1,316 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <Import Project="..\packages\NUnit.3.11.0\build\NUnit.props" Condition="Exists('..\packages\NUnit.3.11.0\build\NUnit.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug_NET35</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>KGySoft</RootNamespace>
+    <AssemblyName>KGySoft.CoreLibraries</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <DocumentationFile>bin\$(Configuration)\KGySoft.CoreLibraries.xml</DocumentationFile>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <OutputPath>bin\$(Configuration)</OutputPath>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_NET35|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DefineConstants>TRACE;DEBUG;NET35</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_NET35|AnyCPU' ">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE;NET35</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_NET40|AnyCPU'">
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>TRACE;DEBUG;NET40</DefineConstants>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_NET40|AnyCPU'">
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <DefineConstants>TRACE;NET40</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_NET45|AnyCPU'">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>TRACE;DEBUG;NET45</DefineConstants>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_NET45|AnyCPU'">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DefineConstants>TRACE;NET45</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Collections\AllowNullDictionary.cs" />
+    <Compile Include="Collections\CircularList.BinarySearchHelper.cs" />
+    <Compile Include="Collections\Cache.cs" />
+    <Compile Include="Collections\ListSegment.cs" />
+    <Compile Include="Collections\_Enums\CacheBehavior.cs" />
+    <Compile Include="Collections\CircularList.cs" />
+    <Compile Include="Collections\CircularSortedList.cs" />
+    <Compile Include="Collections\CircularList.ComparableBinarySearchHelper.cs" />
+    <Compile Include="Collections\LockingCollection.cs" />
+    <Compile Include="Collections\LockingDictionary.cs" />
+    <Compile Include="Collections\LockingList.cs" />
+    <Compile Include="Collections\ObjectModel\FastLookupCollection.cs" />
+    <Compile Include="Collections\_Interfaces\ICache.cs" />
+    <Compile Include="Collections\_Interfaces\ICacheStatistics.cs" />
+    <Compile Include="Collections\_Interfaces\ISupportsRangeColletion.cs" />
+    <Compile Include="Collections\_Interfaces\ISupportsRangeList.cs" />
+    <Compile Include="Collections\_Interfaces\IThreadSafeCacheAccessor.cs" />
+    <Compile Include="Collections\_doc\NamespaceDoc.cs" />
+    <Compile Include="ComponentModel\_Collections\SortableBindingList.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\EditableHelper.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\EditableObjectBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ModelBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_EventArgs\AddingNewEventArgs.cs" />
+    <Compile Include="ComponentModel\_Collections\ObservableBindingList.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ValidatingObjectBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ValidationResult.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ValidationResultsCollection.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Enums\ValidationSeverity.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Enums\EditableObjectBehavior.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoInternal.cs" />
+    <Compile Include="ComponentModel\_Collections\ItemComparer.cs" />
+    <Compile Include="ComponentModel\_Collections\ItemGenericComparer.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\UndoableHelper.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\UndoableObjectBase.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_EventArgs\PropertyChangedExtendedEventArgs.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Extensions\PropertyChangedEventArgsExtensions.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndoRedo.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanUndo.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\ICanEdit.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\IValidatingObject.cs" />
+    <Compile Include="ComponentModel\_Collections\FastBindingList.cs" />
+    <Compile Include="ComponentModel\_Command\PropertyCommandStateUpdater.cs" />
+    <Compile Include="ComponentModel\_TypeConverters\BinaryTypeConverter.cs" />
+    <Compile Include="ComponentModel\_Command\CommandState.cs" />
+    <Compile Include="ComponentModel\_Command\_Extensions\Command.cs" />
+    <Compile Include="ComponentModel\_Command\CommandBinding.cs" />
+    <Compile Include="ComponentModel\_Command\CommandBindingsCollection.cs" />
+    <Compile Include="ComponentModel\_Command\CommandSource.cs" />
+    <Compile Include="ComponentModel\_TypeConverters\FlagsEnumConverter.cs" />
+    <Compile Include="Annotations\Annotations.cs" />
+    <Compile Include="ComponentModel\_Command\NullStateUpdater.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\PersistableObjectBase.cs" />
+    <Compile Include="ComponentModel\_Command\SimpleCommand.cs" />
+    <Compile Include="ComponentModel\_Command\SourceAwareCommand.cs" />
+    <Compile Include="ComponentModel\_Command\TargetedCommand.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommand.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommandBinding.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommandSource.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommandSourceStateUpdater.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommandSource`1.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommandState.cs" />
+    <Compile Include="ComponentModel\_Command\_Interfaces\ICommand`1.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\IPersistableObject.cs" />
+    <Compile Include="ComponentModel\_BusinessObjects\ObservableObjectBase.cs" />
+    <Compile Include="ComponentModel\_Command\SourceAwareTargetedCommand.cs" />
+    <Compile Include="ComponentModel\__doc\NamespaceDoc.cs" />
+    <Compile Include="CoreLibraries\_Extensions\EnumeratorExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Delegates\Conversion.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Delegates\ConversionAttempt.cs" />
+    <Compile Include="Diagnostics\CollectionDebugView.cs" />
+    <Compile Include="Diagnostics\DictionaryDebugView.cs" />
+    <Compile Include="Diagnostics\DictionaryKeyCollectionDebugView.cs" />
+    <Compile Include="Diagnostics\DictionaryValueCollectionDebugView.cs" />
+    <Compile Include="Diagnostics\PerformanceTest.cs" />
+    <Compile Include="Diagnostics\PerformanceTestBase.cs" />
+    <Compile Include="Diagnostics\PerformanceTestBase`2.cs" />
+    <Compile Include="Diagnostics\PerformanceTestResultCollection.cs" />
+    <Compile Include="Diagnostics\PerformanceTest`1.cs" />
+    <Compile Include="Diagnostics\_Interfaces\IMeasureItem.cs" />
+    <Compile Include="Diagnostics\MeasureItem.cs" />
+    <Compile Include="Diagnostics\MeasureOperation.cs" />
+    <Compile Include="Diagnostics\Profiler.cs" />
+    <Compile Include="Diagnostics\_doc\NamespaceDoc.cs" />
+    <Compile Include="CoreLibraries\Enum.cs" />
+    <Compile Include="CoreLibraries\EnumComparer.cs" />
+    <Compile Include="CoreLibraries\_Enums\EnumFormattingOptions.cs" />
+    <Compile Include="CoreLibraries\ThreadSafeRandom.cs" />
+    <Compile Include="CoreLibraries\_doc\NamespaceDoc.cs" />
+    <Compile Include="CoreLibraries\_EventArgs\EventArgs.cs" />
+    <Compile Include="CoreLibraries\_Extensions\CharExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\CollectionExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\DateTimeExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\DecimalExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\DictionaryExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\DoubleExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\EnumerableExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\EnumExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\FloatExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\ListExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\RandomExtensions.WordGenerator.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Classes\GenerateObjectSettings.cs" />
+    <Compile Include="CoreLibraries\_Extensions\ObjectExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\ByteArrayExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\RandomExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\RandomExtensions.ObjectGenerator.cs" />
+    <Compile Include="CoreLibraries\_Extensions\StreamExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\StringExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\TypeExtensions.cs" />
+    <Compile Include="CoreLibraries\Files.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="CoreLibraries\HiResTimer.cs" />
+    <Compile Include="CoreLibraries\_EventArgs\HiResTimerElapsedEventArgs.cs" />
+    <Compile Include="Diagnostics\_Interfaces\IPerformanceTestResultCollection.cs" />
+    <Compile Include="Diagnostics\_Interfaces\ITestCaseRepetition.cs" />
+    <Compile Include="Diagnostics\_Interfaces\ITestCaseResult.cs" />
+    <Compile Include="LanguageSettings.cs" />
+    <Compile Include="CoreLibraries\ReferenceComparer.cs" />
+    <Compile Include="NamespaceDoc.cs" />
+    <Compile Include="Collections\ObjectModel\VirtualCollection.cs" />
+    <Compile Include="Collections\ObjectModel\_doc\NamespaceDoc.cs" />
+    <Compile Include="Reflection\_Enums\DynamicMethodOptions.cs" />
+    <Compile Include="Reflection\_Enums\ReflectionWays.cs" />
+    <Compile Include="Reflection\WinApi\ASSEMBLY_INFO.cs" />
+    <Compile Include="Reflection\WinApi\Fusion.cs" />
+    <Compile Include="Reflection\WinApi\IAssemblyCache.cs" />
+    <Compile Include="Reflection\Accessors.cs" />
+    <Compile Include="Reflection\ActionMethodAccessor.cs" />
+    <Compile Include="Reflection\FieldAccessor.cs" />
+    <Compile Include="Reflection\FunctionMethodAccessor.cs" />
+    <Compile Include="Reflection\IndexerAccessor.cs" />
+    <Compile Include="Reflection\MemberAccessor.cs" />
+    <Compile Include="Reflection\MethodAccessor.cs" />
+    <Compile Include="Reflection\CreateInstanceAccessor.cs" />
+    <Compile Include="Reflection\DefaultCreateInstanceAccessor.cs" />
+    <Compile Include="Reflection\ParameterizedCreateInstanceAccessor.cs" />
+    <Compile Include="Reflection\PropertyAccessor.cs" />
+    <Compile Include="Reflection\ReflectionException.cs" />
+    <Compile Include="Reflection\Reflector.cs" />
+    <Compile Include="Reflection\SimplePropertyAccessor.cs" />
+    <Compile Include="Reflection\_doc\NamespaceDoc.cs" />
+    <Compile Include="Resources\AutoSaveErrorEventArgs.cs" />
+    <Compile Include="Resources\DataNodeInfo.cs" />
+    <Compile Include="Resources\DynamicResourceManager.cs" />
+    <Compile Include="Resources\_Enums\AutoAppendOptions.cs" />
+    <Compile Include="Resources\_Enums\AutoSaveOptions.cs" />
+    <Compile Include="Resources\_Enums\_Extensions\AutoAppendOptionsExtensions.cs" />
+    <Compile Include="Resources\_Enums\ResourceManagerSources.cs" />
+    <Compile Include="Resources\_Enums\ResourceSetRetrieval.cs" />
+    <Compile Include="Resources\_Enums\ResXEnumeratorModes.cs" />
+    <Compile Include="Resources\HybridResourceManager.cs" />
+    <Compile Include="Resources\HybridResourceSet.cs" />
+    <Compile Include="Resources\_Interfaces\IExpandoResourceManager.cs" />
+    <Compile Include="Resources\_Interfaces\IExpandoResourceSet.cs" />
+    <Compile Include="Resources\_Interfaces\IExpandoResourceSetInternal.cs" />
+    <Compile Include="Resources\_Interfaces\IResXResourceContainer.cs" />
+    <Compile Include="Resources\_doc\NamespaceDoc.cs" />
+    <Compile Include="Res.cs" />
+    <Compile Include="Resources\ResourceFallbackManager.cs" />
+    <Compile Include="Resources\ResXCommon.cs" />
+    <Compile Include="Resources\ResXDataNode.cs" />
+    <Compile Include="Resources\ResXFileRef.cs" />
+    <Compile Include="Resources\ResXNullRef.cs" />
+    <Compile Include="Resources\ResXResourceEnumerator.cs" />
+    <Compile Include="Resources\ResXResourceManager.cs" />
+    <Compile Include="Resources\ResXResourceReader.cs" />
+    <Compile Include="Resources\ResXResourceSet.cs" />
+    <Compile Include="Resources\ResXResourceWriter.cs" />
+    <Compile Include="Security\Cryptography\Crc32.cs" />
+    <Compile Include="Security\Cryptography\_doc\NamespaceDoc.cs" />
+    <Compile Include="Security\Cryptography\SecureRandom.cs" />
+    <Compile Include="Serialization\AnyObjectSerializerWrapper.cs" />
+    <Compile Include="Serialization\ArrayIndexer.cs" />
+    <Compile Include="Serialization\BinarySerializationFormatter.CollectionSerializationInfo.cs" />
+    <Compile Include="Serialization\BinarySerializationFormatter.cs" />
+    <Compile Include="Serialization\BinarySerializationFormatter.DataTypeDescriptor.cs" />
+    <Compile Include="Serialization\BinarySerializationFormatter.DeserializationManager.cs" />
+    <Compile Include="Serialization\BinarySerializationFormatter.SerializationManager.cs" />
+    <Compile Include="Serialization\BinarySerializationFormatter.SerializationManagerBase.cs" />
+    <Compile Include="Serialization\_Enums\BinarySerializationOptions.cs" />
+    <Compile Include="Serialization\BinarySerializer.cs" />
+    <Compile Include="Serialization\_Interfaces\IBinarySerializable.cs" />
+    <Compile Include="Serialization\NameInvariantSurrogateSelector.cs" />
+    <Compile Include="Serialization\WeakAssemblySerializationBinder.cs" />
+    <Compile Include="Serialization\XElementDeserializer.cs" />
+    <Compile Include="Serialization\XElementSerializer.cs" />
+    <Compile Include="Serialization\XmlDeserializerBase.cs" />
+    <Compile Include="Serialization\XmlReaderDeserializer.cs" />
+    <Compile Include="Serialization\_Enums\XmlSerializationOptions.cs" />
+    <Compile Include="Serialization\XmlSerializer.cs" />
+    <Compile Include="Serialization\XmlSerializerBase.cs" />
+    <Compile Include="Serialization\XmlWriterSerializer.cs" />
+    <Compile Include="Serialization\_doc\NamespaceDoc.cs" />
+    <Compile Include="System\Runtime\CompilerServices\CallerMemberNameAttribute.cs" />
+    <Compile Include="System\Runtime\CompilerServices\TupleElementNamesAttribute.cs" />
+    <Compile Include="System\Runtime\ExceptionServices\ExceptionDispatchInfo.cs" />
+    <Compile Include="System\ValueTuple.cs" />
+    <Compile Include="_.cs" />
+    <Compile Include="CoreLibraries\_Extensions\ObjectExtensions.ObjectConverter.cs" />
+    <None Include="..\LICENSE">
+      <Link>LICENSE</Link>
+    </None>
+    <None Include="ComponentModel\BusinessObjects.cd" />
+    <Compile Include="CoreLibraries\_Extensions\WaitHandleExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Enums\FloatScale.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Enums\ObjectInitialization.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Enums\StringCreation.cs" />
+    <Compile Include="CoreLibraries\_Extensions\_Structs\Range.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ComponentModel\_TypeConverters\EncodingConverter.cs" />
+    <Compile Include="ComponentModel\_TypeConverters\VersionConverter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\KGySoft.snk">
+      <Link>KGySoft.snk</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="KGySoft.CoreLibraries.Messages.resx">
+      <LogicalName>KGySoft.CoreLibraries.Messages.resources</LogicalName>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+    </VisualStudio>
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName) == Release_NET35 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
+if $(ConfigurationName) == Release_NET40 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
+if $(ConfigurationName) == Release_NET45 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)</PostBuildEvent>
+  </PropertyGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\NUnit.3.11.0\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.3.11.0\build\NUnit.props'))" />
+  </Target>
+</Project>
