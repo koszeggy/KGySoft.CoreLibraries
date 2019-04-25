@@ -24,7 +24,7 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a class for performance tests of <see cref="Action"/> delegate test cases.
-    /// <br/>See the <strong>Remarks</strong> section for details.
+    /// <br/>See the <strong>Examples</strong> section for some examples.
     /// </summary>
     /// <example>
     /// <para>The following example shows the simplest usage for timed tests.
@@ -100,7 +100,7 @@ namespace KGySoft.Diagnostics
     /// //   #2  3,832,780 iterations in 2,000.00 ms. Adjusted: 3,832,779.23        <---- Best
     /// //   Worst-Best difference: 46,626.46 (1.23 %)]]></code>
     /// </para>
-    /// <para>By specifying <see cref="PerformanceTestBase.Iterations"/> you can specify to execute the test cases for a fix number of times instead of
+    /// <para>By specifying <see cref="PerformanceTestBase.Iterations"/> you can constrain to execute the test cases for a fix number of times instead of
     /// executing them for the specified time period:
     /// <code lang="C#"><![CDATA[
     /// using System;

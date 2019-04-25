@@ -121,7 +121,7 @@ namespace KGySoft.Diagnostics
 
             #region Methods
 
-            public void DumpResults(TextWriter writer, bool dumpConfig, bool dumpReturnValue)
+            public void DumpResults(TextWriter writer, bool dumpConfig, bool dumpReturnValue, bool forceShowSize)
             {
                 string DumpDiff(double currentValue, double baseValue, string unit = null)
                 {
@@ -198,7 +198,7 @@ namespace KGySoft.Diagnostics
                     // Result
                     // ReSharper disable once PossibleNullReferenceException - never null, ensured by static ctor
                     if (typeof(TDelegate).GetMethod(nameof(Action.Invoke)).ReturnType != Reflector.VoidType
-                        && (dumpReturnValue || test.SortBySize))
+                        && (forceShowSize || dumpReturnValue || test.SortBySize))
                     {
                         int caseLength = test.GetLength(result.Result);
                         string units = Res.PerformanceTestUnitPossiblePlural(test.GetUnit());
