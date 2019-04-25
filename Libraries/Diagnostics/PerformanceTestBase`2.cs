@@ -182,8 +182,8 @@ namespace KGySoft.Diagnostics
                         {
                             Repetition repetition = result.Repetitions[r];
                             writer.Write(Res.PerformanceTestCaseRepetitionOrder(r + 1, test.Iterations > 0
-                                        ? Res.PerformanceTestCaseRepetitionTime(repetition.ExecutionTime.TotalMilliseconds)
-                                        : Res.PerformanceTestCaseRepetitionIterations(repetition.Iterations, repetition.ExecutionTime.TotalMilliseconds, repetition.AverageIterationsPerTestTime)));
+                                ? Res.PerformanceTestCaseRepetitionTime(repetition.ExecutionTime.TotalMilliseconds)
+                                : Res.PerformanceTestCaseRepetitionIterations(repetition.Iterations, repetition.ExecutionTime.TotalMilliseconds, repetition.AverageIterationsPerTestTime)));
                             if (result.IndexBest != result.IndexWorst && r.In(result.IndexBest, result.IndexWorst))
                                 writer.Write(r == result.IndexBest ? Res.PerformanceTestBestMark : Res.PerformanceTestWorstMark);
                             writer.WriteLine();
@@ -191,13 +191,14 @@ namespace KGySoft.Diagnostics
 
                         writer.Write(Res.PerformanceTestWorstBestDiff);
                         writer.WriteLine(test.Iterations > 0
-                                ? Res.PerformanceTestWorstBestDiffTime((result.Repetitions[result.IndexWorst].ExecutionTime - result.Repetitions[result.IndexBest].ExecutionTime).TotalMilliseconds, result.Repetitions[result.IndexWorst].ExecutionTime.TotalMilliseconds / result.Repetitions[result.IndexBest].ExecutionTime.TotalMilliseconds - 1)
-                                : Res.PerformanceTestWorstBestDiffIteration(result.Repetitions[result.IndexBest].AverageIterationsPerTestTime - result.Repetitions[result.IndexWorst].AverageIterationsPerTestTime, result.Repetitions[result.IndexBest].AverageIterationsPerTestTime / result.Repetitions[result.IndexWorst].AverageIterationsPerTestTime - 1));
+                            ? Res.PerformanceTestWorstBestDiffTime((result.Repetitions[result.IndexWorst].ExecutionTime - result.Repetitions[result.IndexBest].ExecutionTime).TotalMilliseconds, result.Repetitions[result.IndexWorst].ExecutionTime.TotalMilliseconds / result.Repetitions[result.IndexBest].ExecutionTime.TotalMilliseconds - 1)
+                            : Res.PerformanceTestWorstBestDiffIteration(result.Repetitions[result.IndexBest].AverageIterationsPerTestTime - result.Repetitions[result.IndexWorst].AverageIterationsPerTestTime, result.Repetitions[result.IndexBest].AverageIterationsPerTestTime / result.Repetitions[result.IndexWorst].AverageIterationsPerTestTime - 1));
                     }
 
                     // Result
                     // ReSharper disable once PossibleNullReferenceException - never null, ensured by static ctor
-                    if (typeof(TDelegate).GetMethod(nameof(Action.Invoke)).ReturnType != Reflector.VoidType)
+                    if (typeof(TDelegate).GetMethod(nameof(Action.Invoke)).ReturnType != Reflector.VoidType
+                        && (dumpReturnValue || test.SortBySize))
                     {
                         int caseLength = test.GetLength(result.Result);
                         string units = Res.PerformanceTestUnitPossiblePlural(test.GetUnit());

@@ -247,7 +247,7 @@ namespace KGySoft
         /// <summary>byte</summary>
         internal static string PerformanceTestByte => Get("PerformanceTest_Byte");
 
-        /// <summary>No difference</summary>
+        /// <summary> No difference</summary>
         internal static string PerformanceTestNoDifference => Get("PerformanceTest_NoDifference");
 
         /// <summary>Performance Test</summary>

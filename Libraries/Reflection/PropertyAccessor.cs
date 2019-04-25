@@ -57,48 +57,46 @@ namespace KGySoft.Reflection
     ///         PropertyInfo property = instance.GetType().GetProperty(nameof(TestClass.TestProperty));
     ///         PropertyAccessor accessor = PropertyAccessor.GetAccessor(property);
     /// 
-    ///         const int iterations = 1000000;
-    ///         for (int i = 0; i < iterations; i++)
-    ///         {
-    ///             int result;
-    ///             using (Profiler.Measure(GetCategory(i), "Direct set"))
-    ///                 instance.TestProperty = i;
-    ///             using (Profiler.Measure(GetCategory(i), "Direct get"))
-    ///                 result = instance.TestProperty;
+    ///         new PerformanceTest { TestName = "Set Property", Iterations = 1000000 }
+    ///             .AddCase(() => instance.TestProperty = 1, "Direct set")
+    ///             .AddCase(() => property.SetValue(instance, 1), "PropertyInfo.SetValue")
+    ///             .AddCase(() => accessor.Set(instance, 1), "PropertyAccessor.Set")
+    ///             .DoTest()
+    ///             .DumpResults(Console.Out);
     /// 
-    ///             using (Profiler.Measure(GetCategory(i), "PropertyAccessor.Set"))
-    ///                 accessor.Set(instance, i);
-    ///             using (Profiler.Measure(GetCategory(i), "PropertyAccessor.Get"))
-    ///                 result = (int)accessor.Get(instance);
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "PropertyInfo.SetValue"))
-    ///                 property.SetValue(instance, i);
-    ///             using (Profiler.Measure(GetCategory(i), "PropertyInfo.GetValue"))
-    ///                 result = (int)property.GetValue(instance);
-    ///         }
-    /// 
-    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
-    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
-    ///         {
-    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
-    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
-    ///         }
+    ///         new PerformanceTest<int> { TestName = "Get Property", Iterations = 1000000 }
+    ///             .AddCase(() => instance.TestProperty, "Direct get")
+    ///             .AddCase(() => (int)property.GetValue(instance), "PropertyInfo.GetValue")
+    ///             .AddCase(() => (int)accessor.Get(instance), "PropertyAccessor.Get")
+    ///             .DoTest()
+    ///             .DumpResults(Console.Out);
     ///     }
     /// }
     /// 
-    /// // This code example produces something like the following output:
-    /// // [Warm-up] Direct set: 0.1437 ms
-    /// // [Warm-up] Direct get: 0.0021 ms
-    /// // [Warm-up] PropertyAccessor.Set: 1.1377 ms
-    /// // [Warm-up] PropertyAccessor.Get: 0.8056 ms
-    /// // [Warm-up] PropertyInfo.SetValue: 0.0395 ms
-    /// // [Warm-up] PropertyInfo.GetValue: 0.0261 ms
-    /// // [Test] Direct set: 30.6068 ms (average: 3.06068306068306E-05 ms from 999999 calls)
-    /// // [Test] Direct get: 30.3644 ms (average: 3.03644303644304E-05 ms from 999999 calls)
-    /// // [Test] PropertyAccessor.Set: 67.3082 ms (average: 6.73082673082673E-05 ms from 999999 calls)
-    /// // [Test] PropertyAccessor.Get: 64.3375 ms (average: 6.43375643375643E-05 ms from 999999 calls)
-    /// // [Test] PropertyInfo.SetValue: 257.4104 ms (average: 0.000257410657410657 ms from 999999 calls)
-    /// // [Test] PropertyInfo.GetValue: 204.5283 ms (average: 0.000204528504528505 ms from 999999 calls)]]></code>
+    /// // This code example produces a similar output to this one:
+    /// // ==[Set Property Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 3
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: 2
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct set: average time: 2.93 ms
+    /// // 2. PropertyAccessor.Set: average time: 24.22 ms (+21.29 ms / 825.79 %)
+    /// // 3. PropertyInfo.SetValue: average time: 214.56 ms (+211.63 ms / 7,314.78 %)
+    /// // 
+    /// // ==[Get Property Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 3
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: 2
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct get: average time: 2.58 ms
+    /// // 2. PropertyAccessor.Get: average time: 16.62 ms (+14.05 ms / 645.30 %)
+    /// // 3. PropertyInfo.GetValue: average time: 169.12 ms (+166.54 ms / 6,564.59 %)]]></code>
     /// </example>
     public abstract class PropertyAccessor : MemberAccessor
     {

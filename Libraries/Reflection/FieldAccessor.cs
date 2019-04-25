@@ -57,48 +57,46 @@ namespace KGySoft.Reflection
     ///         FieldInfo field = instance.GetType().GetField(nameof(TestClass.TestField));
     ///         FieldAccessor accessor = FieldAccessor.GetAccessor(field);
     /// 
-    ///         const int iterations = 1000000;
-    ///         for (int i = 0; i < iterations; i++)
-    ///         {
-    ///             int result;
-    ///             using (Profiler.Measure(GetCategory(i), "Direct set"))
-    ///                 instance.TestField = i;
-    ///             using (Profiler.Measure(GetCategory(i), "Direct get"))
-    ///                 result = instance.TestField;
+    ///         new PerformanceTest { TestName = "Set Field", Iterations = 1000000 }
+    ///             .AddCase(() => instance.TestField = 1, "Direct set")
+    ///             .AddCase(() => field.SetValue(instance, 1), "FieldInfo.SetValue")
+    ///             .AddCase(() => accessor.Set(instance, 1), "FieldAccessor.Set")
+    ///             .DoTest()
+    ///             .DumpResults(Console.Out);
     /// 
-    ///             using (Profiler.Measure(GetCategory(i), "FieldAccessor.Set"))
-    ///                 accessor.Set(instance, i);
-    ///             using (Profiler.Measure(GetCategory(i), "FieldAccessor.Get"))
-    ///                 result = (int)accessor.Get(instance);
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "FieldInfo.SetValue"))
-    ///                 field.SetValue(instance, i);
-    ///             using (Profiler.Measure(GetCategory(i), "FieldInfo.GetValue"))
-    ///                 result = (int)field.GetValue(instance);
-    ///         }
-    /// 
-    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
-    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
-    ///         {
-    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
-    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
-    ///         }
+    ///         new PerformanceTest<int> { TestName = "Get Field", Iterations = 1000000 }
+    ///             .AddCase(() => instance.TestField, "Direct get")
+    ///             .AddCase(() => (int)field.GetValue(instance), "FieldInfo.GetValue")
+    ///             .AddCase(() => (int)accessor.Get(instance), "FieldAccessor.Get")
+    ///             .DoTest()
+    ///             .DumpResults(Console.Out);
     ///     }
     /// }
     /// 
-    /// // This code example produces something like the following output:
-    /// // [Warm-up] Direct set: 0.168 ms
-    /// // [Warm-up] Direct get: 0.0021 ms
-    /// // [Warm-up] FieldAccessor.Set: 1.6251 ms
-    /// // [Warm-up] FieldAccessor.Get: 0.1957 ms
-    /// // [Warm-up] FieldInfo.SetValue: 0.0097 ms
-    /// // [Warm-up] FieldInfo.GetValue: 0.0019 ms
-    /// // [Test] Direct set: 31.4322 ms (average: 3.14322314322314E-05 ms from 999999 calls)
-    /// // [Test] Direct get: 31.1637 ms (average: 3.11637311637312E-05 ms from 999999 calls)
-    /// // [Test] FieldAccessor.Set: 40.0561 ms (average: 4.00561400561401E-05 ms from 999999 calls)
-    /// // [Test] FieldAccessor.Get: 45.2779 ms (average: 4.52779452779453E-05 ms from 999999 calls)
-    /// // [Test] FieldInfo.SetValue: 151.6642 ms (average: 0.000151664351664352 ms from 999999 calls)
-    /// // [Test] FieldInfo.GetValue: 157.2241 ms (average: 0.000157224257224257 ms from 999999 calls)]]></code>
+    /// // This code example produces a similar output to this one:
+    /// // ==[Set Field Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 3
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: 2
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct set: average time: 2.58 ms
+    /// // 2. FieldAccessor.Set: average time: 10.92 ms (+8.34 ms / 422.84 %)
+    /// // 3. FieldInfo.SetValue: average time: 110.98 ms (+108.40 ms / 4,296.20 %)
+    /// // 
+    /// // ==[Get Field Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 3
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: 2
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct get: average time: 2.99 ms
+    /// // 2. FieldAccessor.Get: average time: 8.56 ms (+5.58 ms / 286.69 %)
+    /// // 3. FieldInfo.GetValue: average time: 111.37 ms (+108.38 ms / 3,729.24 %)]]></code>
     /// </example>
     public sealed class FieldAccessor : MemberAccessor
     {

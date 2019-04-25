@@ -61,57 +61,37 @@ namespace KGySoft.Reflection
     ///         CreateInstanceAccessor accessorForType = CreateInstanceAccessor.GetAccessor(testType);
     ///         CreateInstanceAccessor accessorForCtor = CreateInstanceAccessor.GetAccessor(ctorWithParameters);
     /// 
-    ///         const int iterations = 1000000;
-    ///         for (int i = 0; i < iterations; i++)
-    ///         {
-    ///             TestClass result;
-    ///             using (Profiler.Measure(GetCategory(i), "Default constructor direct call"))
-    ///                 result = new TestClass();
-    ///             using (Profiler.Measure(GetCategory(i), "Parameterized constructor direct call"))
-    ///                 result = new TestClass(i);
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "CreateInstanceAccessor.CreateInstance (for type)"))
-    ///                 result = (TestClass)accessorForType.CreateInstance();
-    ///             using (Profiler.Measure(GetCategory(i), "CreateInstanceAccessor.CreateInstance (parameterized constructor)"))
-    ///                 result = (TestClass)accessorForCtor.CreateInstance(i);
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "ConstructorInfo.Invoke (default constructor)"))
-    ///                 result = (TestClass)ctorDefault.Invoke(null);
-    ///             using (Profiler.Measure(GetCategory(i), "ConstructorInfo.Invoke (parameterized constructor)"))
-    ///                 result = (TestClass)ctorWithParameters.Invoke(new object[] { i });
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "Activator.CreateInstance (for type)"))
-    ///                 result = (TestClass)Activator.CreateInstance(testType);
-    ///             using (Profiler.Measure(GetCategory(i), "Activator.CreateInstance (parameterized constructor)"))
-    ///                 result = (TestClass)Activator.CreateInstance(testType, i);
-    ///         }
-    /// 
-    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
-    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
-    ///         {
-    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
-    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
-    ///         }
+    ///         new PerformanceTest { Iterations = 1000000 }
+    ///             .AddCase(() => new TestClass(), "Default constructor direct call")
+    ///             .AddCase(() => new TestClass(1), "Parameterized constructor direct call")
+    ///             .AddCase(() => Activator.CreateInstance(testType), "Activator.CreateInstance by type")
+    ///             .AddCase(() => Activator.CreateInstance(testType, 1), "Activator.CreateInstance by constructor parameters")
+    ///             .AddCase(() => ctorDefault.Invoke(null), "ConstructorInfo.Invoke (default constructor)")
+    ///             .AddCase(() => ctorWithParameters.Invoke(new object[] { 1 }), "ConstructorInfo.Invoke (parameterized constructor)")
+    ///             .AddCase(() => accessorForType.CreateInstance(), "CreateInstanceAccessor.CreateInstance (for type)")
+    ///             .AddCase(() => accessorForCtor.CreateInstance(1), "CreateInstanceAccessor.CreateInstance (parameterized constructor)")
+    ///             .DoTest()
+    ///             .DumpResults(Console.Out);
     ///     }
     /// }
     /// 
-    /// // This code example produces something like the following output:
-    /// // [Warm-up] Default constructor direct call: 0.1471 ms
-    /// // [Warm-up] Parameterized constructor direct call: 0.0022 ms
-    /// // [Warm-up] CreateInstanceAccessor.CreateInstance (for type): 0.7019 ms
-    /// // [Warm-up] CreateInstanceAccessor.CreateInstance (parameterized constructor): 1.8973 ms
-    /// // [Warm-up] ConstructorInfo.Invoke (default constructor): 0.0309 ms
-    /// // [Warm-up] ConstructorInfo.Invoke (parameterized constructor): 0.0228 ms
-    /// // [Warm-up] Activator.CreateInstance (for type): 0.0043 ms
-    /// // [Warm-up] Activator.CreateInstance (parameterized constructor): 0.0029 ms
-    /// // [Test] Default constructor direct call: 31.9088 ms (average: 3.19088319088319E-05 ms from 999999 calls)
-    /// // [Test] Parameterized constructor direct call: 35.113 ms (average: 3.51130351130351E-05 ms from 999999 calls)
-    /// // [Test] CreateInstanceAccessor.CreateInstance (for type): 80.0461 ms (average: 8.00461800461801E-05 ms from 999999 calls)
-    /// // [Test] CreateInstanceAccessor.CreateInstance (parameterized constructor): 60.5984 ms (average: 6.05984605984606E-05 ms from 999999 calls)
-    /// // [Test] ConstructorInfo.Invoke (default constructor): 235.3841 ms (average: 0.000235384335384335 ms from 999999 calls)
-    /// // [Test] ConstructorInfo.Invoke (parameterized constructor): 294.9582 ms (average: 0.000294958494958495 ms from 999999 calls)
-    /// // [Test] Activator.CreateInstance (for type): 116.7714 ms (average: 0.000116771516771517 ms from 999999 calls)
-    /// // [Test] Activator.CreateInstance (parameterized constructor): 814.8384 ms (average: 0.000814839214839215 ms from 999999 calls)]]></code>
+    /// // This code example produces a similar output to this one:
+    /// // ==[Performance Test Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 8
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: 2
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Default constructor direct call: average time: 4.27 ms
+    /// // 2. Parameterized constructor direct call: average time: 4.99 ms (+0.72 ms / 116.89 %)
+    /// // 3. CreateInstanceAccessor.CreateInstance (for type): average time: 25.57 ms (+21.30 ms / 599.00 %)
+    /// // 4. CreateInstanceAccessor.CreateInstance (parameterized constructor): average time: 26.57 ms (+22.30 ms / 622.28 %)
+    /// // 5. Activator.CreateInstance by type: average time: 57.60 ms (+53.33 ms / 1,349.24 %)
+    /// // 6. ConstructorInfo.Invoke (default constructor): average time: 163.87 ms (+159.60 ms / 3,838.56 %)
+    /// // 7. ConstructorInfo.Invoke (parameterized constructor): average time: 225.14 ms (+220.87 ms / 5,273.79 %)
+    /// // 8. Activator.CreateInstance by constructor parameters: average time: 689.54 ms (+685.27 ms / 16,152.22 %)]]></code>
     /// </example>
     public abstract class CreateInstanceAccessor : MemberAccessor
     {

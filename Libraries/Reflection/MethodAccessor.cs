@@ -48,7 +48,7 @@ namespace KGySoft.Reflection
     /// {
     ///     private class TestClass
     ///     {
-    ///         public int TestMethod(int i) => i + 1;
+    ///         public int TestMethod(int i) => i;
     ///     }
     /// 
     ///     static void Main(string[] args)
@@ -57,36 +57,27 @@ namespace KGySoft.Reflection
     ///         MethodInfo method = instance.GetType().GetMethod(nameof(TestClass.TestMethod));
     ///         MethodAccessor accessor = MethodAccessor.GetAccessor(method);
     /// 
-    ///         const int iterations = 1000000;
-    ///         for (int i = 0; i < iterations; i++)
-    ///         {
-    ///             int result;
-    ///             using (Profiler.Measure(GetCategory(i), "Direct call"))
-    ///                 result = instance.TestMethod(i);
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "MethodAccessor.Invoke"))
-    ///                 result = (int)accessor.Invoke(instance, i);
-    /// 
-    ///             using (Profiler.Measure(GetCategory(i), "MethodInfo.Invoke"))
-    ///                 result = (int)method.Invoke(instance, new object[] { i });
-    ///         }
-    /// 
-    ///         string GetCategory(int i) => i < 1 ? "Warm-up" : "Test";
-    ///         foreach (IMeasureItem item in Profiler.GetMeasurementResults())
-    ///         {
-    ///             Console.WriteLine($@"[{item.Category}] {item.Operation}: {item.TotalTime.TotalMilliseconds} ms{(item.NumberOfCalls > 1
-    ///                 ? $" (average: {item.TotalTime.TotalMilliseconds / item.NumberOfCalls} ms from {item.NumberOfCalls} calls)" : null)}");
-    ///         }
+    ///         new PerformanceTest { Iterations = 1000000 }
+    ///             .AddCase(() => instance.TestMethod(1), "Direct call")
+    ///             .AddCase(() => method.Invoke(instance, new object[] { 1 }), "MethodInfo.Invoke")
+    ///             .AddCase(() => accessor.Invoke(instance, 1), "MethodAccessor.Invoke")
+    ///             .DoTest()
+    ///             .DumpResults(Console.Out);
     ///     }
     /// }
     /// 
-    /// // This code example produces something like the following output:
-    /// // [Warm-up] Direct call: 0.1465 ms
-    /// // [Warm-up] MethodAccessor.Invoke: 2.4339 ms
-    /// // [Warm-up] MethodInfo.Invoke: 0.033 ms
-    /// // [Test] Direct call: 30.122 ms (average: 3.01220301220301E-05 ms from 999999 calls)
-    /// // [Test] MethodAccessor.Invoke: 57.1206 ms (average: 5.71206571206571E-05 ms from 999999 calls)
-    /// // [Test] MethodInfo.Invoke: 270.9596 ms (average: 0.000270959870959871 ms from 999999 calls)]]></code>
+    /// // This code example produces a similar output to this one:
+    /// // ==[Performance Test Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 3
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: 2
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct call: average time: 2.87 ms
+    /// // 2. MethodAccessor.Invoke: average time: 26.02 ms (+23.15 ms / 906.97 %)
+    /// // 3. MethodInfo.Invoke: average time: 241.47 ms (+238.60 ms / 8,416.44 %)]]></code>
     /// </example>
     public abstract class MethodAccessor : MemberAccessor
     {

@@ -160,7 +160,7 @@
     <value>byte</value>
   </data>
   <data name="PerformanceTest_NoDifference" xml:space="preserve">
-    <value>No difference</value>
+    <value> No difference</value>
   </data>
   <data name="PerformanceTest_DefaultName" xml:space="preserve">
     <value>Performance Test</value>
