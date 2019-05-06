@@ -1,40 +1,66 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResTests.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+
 using KGySoft.Reflection;
 using KGySoft.Resources;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests
 {
     [TestFixture]
     public class ResTests
     {
+        #region Constants
+
         private const string unavailableResourcePrefix = "Resource ID not found";
         private const string invalidResourcePrefix = "Resource text is not valid";
+
+        #endregion
+
+        #region Fields
+
         private static readonly Random random = new Random();
 
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
+
         [OneTimeSetUp]
-        public void Initialize()
-        {
-            LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
-        }
+        public void Initialize() => LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
 
         [Test]
-        public void TestUnknownResource()
-        {
-            Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
-        }
+        public void TestUnknownResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));
 
         [Test]
-        public void TestInvalidResource()
-        {
-            Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", new object[0]).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
-        }
+        public void TestInvalidResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "General_NotAnInstanceOfTypeFormat", new object[0]).ToString().StartsWith(invalidResourcePrefix, StringComparison.Ordinal));
 
         [Test]
         public void TestResources()
@@ -46,6 +72,10 @@ namespace KGySoft.CoreLibraries.UnitTests
             CheckMethods(obtainedMembers);
             CheckCoverage(obtainedMembers);
         }
+
+        #endregion
+
+        #region Private Methods
 
         private void CheckProperties(HashSet<string> obtainedMembers)
         {
@@ -80,7 +110,9 @@ namespace KGySoft.CoreLibraries.UnitTests
                         || parameter is bool b && value.Contains(b ? Res.Yes : Res.No, StringComparison.Ordinal) // percentage format of float
                         || parameter is int n && value.Contains(n.ToString("N0"), StringComparison.Ordinal) // normal ToString checked above, number format checked here
                         || parameter is long l && value.Contains(l.ToString("N0"), StringComparison.Ordinal), // normal ToString checked above, number format checked here
-                        $"{nameof(Res)}.{method.Name} does not use parameter #{i}.");}
+                        $"{nameof(Res)}.{method.Name} does not use parameter #{i}.");
+                }
+
                 obtainedMembers.Add(method.Name);
             }
         }
@@ -105,5 +137,9 @@ namespace KGySoft.CoreLibraries.UnitTests
 
             Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan compiled resources detected:{Environment.NewLine}{String.Join(Environment.NewLine, uncovered.ToArray())}");
         }
+
+        #endregion
+
+        #endregion
     }
 }

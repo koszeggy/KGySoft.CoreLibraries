@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXResourceManagerTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -7,27 +25,34 @@ using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Windows.Forms;
+
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
-    //[DeploymentItem("Resources", "Resources")]
-    //[DeploymentItem("en", "en")]
-    //[DeploymentItem("en-US", "en-US")]
-    public class ResXResourceManagerTest: TestBase
+    public class ResXResourceManagerTest : TestBase
     {
-        private static CultureInfo inv = CultureInfo.InvariantCulture;
+        #region Fields
 
+        private static CultureInfo inv = CultureInfo.InvariantCulture;
         private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
         private static CultureInfo en = CultureInfo.GetCultureInfo("en");
         private static CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
-
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         [Test]
         public void GetString()
@@ -140,7 +165,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetObject(resName, en), manager.GetObject(resName, en));
             Assert.AreNotEqual(refManager.GetObject(resName, en), refManager.GetObject(resName, enUS));
             Assert.AreNotEqual(manager.GetObject(resName, en), manager.GetObject(resName, enUS));
-        
+
             // TestBytes is defined in invariant only
             resName = "TestBytes";
             Assert.IsNotNull(refManager.GetResourceSet(inv, true, false).GetObject(resName));
@@ -246,7 +271,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         {
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
-            
+
             // string
             Assert.AreEqual(refManager.GetString("TestString"), manager.GetString("TestString"));
 
@@ -394,7 +419,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNull(manager.GetResourceSet(inv, loadIfExists: true, tryParents: false));
 
             // in system ResourceManager if a derived culture is required but only a parent is available, then this parent will be
-            // cached for derived cultures, too, so groveling is needed only once. 
+            // cached for derived cultures, too, so groveling is needed only once.
             refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", inv);
             manager = new ResXResourceManager("TestResourceResX", inv);
 
@@ -424,6 +449,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // and though en exists, it will not be loaded anymore if a parent is already cached
             Assert.AreSame(rsInv, refManager.GetResourceSet(enUS, createIfNotExists: true, tryParents: false));
 #endif
+
 
             // though en exist, we haven't load it yet, so if we don't load it, it will return a proxy for inv, too
             Assert.IsNotNull(rsInv = manager.GetResourceSet(inv, loadIfExists: false, tryParents: false));
@@ -457,6 +483,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #else
             resourceSets = (IDictionary)Reflector.GetProperty(manager, "ResourceSets"); // Dictionary
 #endif
+
             int sets = resourceSets.Count;
 
             // "loading" hu does not change anything, since it is up-to date
@@ -500,7 +527,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(true));
 
-            // non-empty but unmodified manager: saving on forcing 
+            // non-empty but unmodified manager: saving on forcing
             manager.GetResourceSet(inv, true, false);
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(false));
@@ -572,6 +599,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Dispose(); // this will not throw anything
         }
 
+        #endregion
+
+        #region Private Methods
+
         private ResourceManager CreateResourceManager(string name, CultureInfo neutralLang)
         {
             var result = new ResourceManager(name, GetType().Assembly);
@@ -580,8 +611,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         private void Clean(ResXResourceManager manager, CultureInfo culture)
-        {
-            File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{manager.BaseName}.{culture.Name}.resx"));
-        }
+            => File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{manager.BaseName}.{culture.Name}.resx"));
+
+        #endregion
+
+        #endregion
     }
 }

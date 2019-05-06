@@ -1,16 +1,40 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXResourceReaderTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
+
 using KGySoft.Resources;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
-    public class ResXResourceReaderTest: TestBase
+    public class ResXResourceReaderTest : TestBase
     {
+        #region Methods
+
         [Test]
         public void ParseData()
         {
@@ -99,7 +123,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<string>(aliasEnumLazy.Value);
             reader.SafeMode = false;
             Assert.IsInstanceOf<string>(aliasEnumCached.Value);
-            Assert.IsInstanceOf<string>(aliasEnumLazy.Value);            
+            Assert.IsInstanceOf<string>(aliasEnumLazy.Value);
         }
 
         [Test]
@@ -109,13 +133,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
             //var refReader = new System.Resources.ResXResourceReader(path, new TypeResolver())
             //    {
-            //        BasePath = Path.GetDirectoryName(path)                    
+            //        BasePath = Path.GetDirectoryName(path)
             //    };
             ResXResourceReader reader = new ResXResourceReader(path, new TestTypeResolver())
-                {
-                    AllowDuplicatedKeys = false,
-                    BasePath = Path.GetDirectoryName(path)
-                };
+            {
+                AllowDuplicatedKeys = false,
+                BasePath = Path.GetDirectoryName(path)
+            };
             //var refEnumerator = refReader.GetEnumerator(); // this reads now the whole xml BUG: System resx reader throws exception even with type resolver because the resolver is not used for file refs.
             var enumerator = reader.GetEnumerator(); // this reads now the whole xml
             while (/*refEnumerator.MoveNext() &&*/ enumerator.MoveNext())
@@ -138,5 +162,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             Throws<XmlException>(() => reader.GetEnumerator().ToEnumerable().ToArray());
         }
+
+        #endregion
     }
 }

@@ -1,31 +1,60 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: HybridResourceManagerTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Resources;
+
 using KGySoft.Reflection;
 using KGySoft.Resources;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
-    //[DeploymentItem("Resources", "Resources")]
-    //[DeploymentItem("en", "en")]
-    //[DeploymentItem("en-US", "en-US")]
-    public class HybridResourceManagerTest: TestBase
+    public class HybridResourceManagerTest : TestBase
     {
+        #region Constants
+
         private const string resXBaseName = "TestResourceResX";
 
-        private static CultureInfo inv = CultureInfo.InvariantCulture;
+        #endregion
 
+        #region Fields
+
+        private static CultureInfo inv = CultureInfo.InvariantCulture;
         private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
         private static CultureInfo en = CultureInfo.GetCultureInfo("en");
         private static CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
-
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         [Test]
         public void GetStringTest()
@@ -201,7 +230,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Source = ResourceManagerSources.CompiledAndResX;
             manager.ReleaseAllResources();
             hybrid = manager.GetObject(resName, huHU); // hu and hu-HU are now proxies, last=inv
-            Assert.IsNotNull(hybrid); 
+            Assert.IsNotNull(hybrid);
             Assert.AreSame(hybrid, manager.GetObject(resName, huHU)); // returned from cached lastUsedResourceSet
             Assert.AreSame(hybrid, manager.GetObject(resName, hu)); // returned from cached proxy in resourceSets
             Assert.AreSame(hybrid, manager.GetObject(resName, inv)); // returned from cached non-proxy in resourceSets
@@ -537,7 +566,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(true));
 
-            // non-empty but unmodified manager: saving on forcing 
+            // non-empty but unmodified manager: saving on forcing
             manager.GetResourceSet(inv, true, false);
             Assert.IsFalse(manager.IsModified);
             Assert.IsFalse(manager.SaveAllResources(false));
@@ -622,9 +651,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Dispose(); // this will not throw anything
         }
 
+        #endregion
+
+        #region Private Methods
+
         private void Clean(HybridResourceManager manager, CultureInfo culture)
-        {
-            File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
-        }
+            => File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
+
+        #endregion
+
+        #endregion
     }
 }

@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: DynamicResourceManagerTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -6,9 +24,13 @@ using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Security.Policy;
+
 using KGySoft.Reflection;
 using KGySoft.Resources;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
@@ -16,15 +38,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     /// Test of <see cref="DynamicResourceManager"/> class.
     /// </summary>
     [TestFixture]
-    //[DeploymentItem("Resources", "Resources")]
-    //[DeploymentItem("en", "en")]
-    //[DeploymentItem("en-US", "en-US")]
-    public class DynamicResourceManagerTest: TestBase
+    public class DynamicResourceManagerTest : TestBase
     {
-        private const string resXBaseName = "TestResourceResX";
+        #region Nested classes
 
         private class RemoteDrmConsumer : MarshalByRefObject
         {
+            #region Methods
+
             internal void UseDrmRemotely(bool useLanguageSettings, CultureInfo testCulture)
             {
                 var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
@@ -43,22 +64,46 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
                 manager.SetObject("TestResourceKey", "TestResourceValue", testCulture);
             }
+
+            #endregion
         }
 
-        private static CultureInfo inv = CultureInfo.InvariantCulture;
+        #endregion
 
+        #region Constants
+
+        private const string resXBaseName = "TestResourceResX";
+
+        #endregion
+
+        #region Fields
+
+        #region Static Fields
+
+        private static CultureInfo inv = CultureInfo.InvariantCulture;
         private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
         private static CultureInfo en = CultureInfo.GetCultureInfo("en");
         private static CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
-
         private static CultureInfo de = CultureInfo.GetCultureInfo("de");
         private static CultureInfo deDE = CultureInfo.GetCultureInfo("de-DE");
-
         private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
         private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
+
+        #endregion
+
+        #region Instance Fields
+
         private CultureInfo huRunic; // hu-Runic: neutral under hu
         private CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
         private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU
+
+        #endregion
+
+        #endregion
+
+        #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
@@ -623,10 +668,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Dispose(); // this will not throw anything
         }
 
+        #endregion
+
+        #region Private Methods
+
         private void Clean(DynamicResourceManager manager, params CultureInfo[] cultures)
         {
             foreach (CultureInfo culture in cultures)
                 File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
         }
+
+        #endregion
+
+        #endregion
     }
 }

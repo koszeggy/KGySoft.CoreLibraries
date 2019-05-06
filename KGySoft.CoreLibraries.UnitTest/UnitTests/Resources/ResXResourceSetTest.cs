@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ResXResourceSetTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -7,21 +25,48 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+
 using KGySoft.Resources;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
     public class ResXResourceSetTest : TestBase
     {
+        #region Nested types
+
+        #region Enumerations
+
         private enum TestEnum { X }
+
+        #endregion
+
+        #region Nested classes
 
         private class NonSerializableClass
         {
+            #region Properties
+
             public int Prop { get; set; }
+
+            #endregion
+
+            #region Methods
+
             public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+
+            #endregion
         }
+
+        #endregion
+
+        #endregion
+
+        #region Methods
 
         /// <summary>
         /// Tests whether the different kinds of objects can be deserialized.
@@ -316,5 +361,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             File.Delete(newFile);
         }
+
+        #endregion
     }
 }

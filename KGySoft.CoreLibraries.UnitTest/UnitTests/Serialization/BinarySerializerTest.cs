@@ -1,4 +1,22 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializerTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,11 +31,15 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Policy;
 using System.Text;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization;
+
 using NUnit.Framework;
 using NUnit.Framework.Internal;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Serialization
 {
@@ -25,20 +47,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
     /// Test of <see cref="BinarySerializer"/> class.
     /// </summary>
     [TestFixture]
-    public class BinarySerializerTest: TestBase
+    public class BinarySerializerTest : TestBase
     {
-        private const bool dumpDetails = false;
-        private const bool dumpSerContent = false;
+        #region Nested types
 
-        #region Nested Types
+        #region Enumerations
 
-        enum TestEnumSByte: sbyte
+        enum TestEnumSByte : sbyte
         {
             Min = SByte.MinValue,
             Max = SByte.MaxValue
         }
 
-        enum TestEnumByte: byte
+        enum TestEnumByte : byte
         {
             Min = Byte.MinValue,
             One = 1,
@@ -46,7 +67,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = Byte.MaxValue
         }
 
-        enum TestEnumShort: short
+        enum TestEnumShort : short
         {
             Min = Int16.MinValue,
             Limit = (1 << 7) - 1,
@@ -54,7 +75,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = Int16.MaxValue,
         }
 
-        enum TestEnumUShort: ushort
+        enum TestEnumUShort : ushort
         {
             Min = UInt16.MinValue,
             Limit = (1 << 7) - 1,
@@ -62,7 +83,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = UInt16.MaxValue,
         }
 
-        enum TestEnumInt: int
+        enum TestEnumInt : int
         {
             Min = Int32.MinValue,
             Limit = (1 << 21) - 1,
@@ -70,7 +91,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = Int32.MaxValue,
         }
 
-        enum TestEnumUInt: uint
+        enum TestEnumUInt : uint
         {
             Min = UInt32.MinValue,
             Limit = (1 << 21) - 1,
@@ -78,7 +99,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = UInt32.MaxValue,
         }
 
-        enum TestEnumLong: long
+        enum TestEnumLong : long
         {
             Min = Int64.MinValue,
             Limit = (1L << 49) - 1,
@@ -86,7 +107,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = Int64.MaxValue,
         }
 
-        enum TestEnumULong: ulong
+        enum TestEnumULong : ulong
         {
             Min = UInt64.MinValue,
             Limit = (1UL << 49) - 1,
@@ -94,10 +115,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Max = UInt64.MaxValue,
         }
 
+        #endregion
+
+        #region Nested classes
+
+        #region NonSerializableClass class
+
         private class NonSerializableClass
         {
+            #region Properties
+
             public int IntProp { get; set; }
+
             public string StringProp { get; set; }
+
+            #endregion
+
+            #region Methods
 
             /// <summary>
             /// Overridden for the test equality check
@@ -109,71 +143,67 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 NonSerializableClass other = (NonSerializableClass)obj;
                 return StringProp == other.StringProp && IntProp == other.IntProp;
             }
+
+            #endregion
         }
 
-        private sealed class NonSerializableSealedClass: NonSerializableClass
+        #endregion
+
+        #region NonSerializableSealedClass class
+
+        private sealed class NonSerializableSealedClass : NonSerializableClass
         {
+            #region Fields
+
+            #region Public Fields
+
             public int PublicDerivedField;
+
+            #endregion
+
+            #region Private Fields
+
             private string PrivateDerivedField;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
 
             public NonSerializableSealedClass(int i, string s)
             {
                 PublicDerivedField = i;
                 PrivateDerivedField = s;
             }
+
+            #endregion
         }
 
-        private struct NonSerializableStruct
-        {
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
-            private string str10;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-            private byte[] bytes3;
+        #endregion
 
-            public int IntProp { get; set; }
-
-            public string Str10
-            {
-                get { return str10; }
-                set { str10 = value; }
-            }
-
-            public byte[] Bytes3
-            {
-                get { return bytes3; }
-                set { bytes3 = value; }
-            }
-
-            /// <summary>
-            /// Overridden for the test equality check
-            /// </summary>
-            public override bool Equals(object obj)
-            {
-                if (!(obj is NonSerializableStruct))
-                    return base.Equals(obj);
-                NonSerializableStruct other = (NonSerializableStruct)obj;
-                return str10 == other.str10 && IntProp == other.IntProp
-                    && ((bytes3 == null && other.bytes3 == null) || (bytes3 != null && other.bytes3 != null
-                    && bytes3[0] == other.bytes3[0] && bytes3[1] == other.bytes3[1] && bytes3[2] == other.bytes3[2]));
-            }
-        }
+        #region BinarySerializableClass class
 
         [Serializable]
-        private class BinarySerializableClass: AbstractClass, IBinarySerializable
+        private class BinarySerializableClass : AbstractClass, IBinarySerializable
         {
+            #region Fields
+
             public int PublicField;
+
+            #endregion
+
+            #region Properties
 
             public int IntProp { get; set; }
 
             public string StringProp { get; set; }
 
-            [OnDeserializing]
-            private void OnDeserializing(StreamingContext ctx)
-            {
-                IntProp = -1;
-            }
+            #endregion
 
-            #region IBinarySerializable Members
+            #region Methods
+
+            #region Public Methods
 
             public byte[] Serialize(BinarySerializationOptions options)
             {
@@ -198,8 +228,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 }
             }
 
-            #endregion
-
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
@@ -210,11 +238,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 BinarySerializableClass other = (BinarySerializableClass)obj;
                 return PublicField == other.PublicField && StringProp == other.StringProp && IntProp == other.IntProp;
             }
+
+            #endregion
+
+            #region Private Methods
+
+            [OnDeserializing]
+            private void OnDeserializing(StreamingContext ctx)
+            {
+                IntProp = -1;
+            }
+
+            #endregion
+
+            #endregion
         }
 
+        #endregion
+
+        #region BinarySerializableSealedClass class
+
         [Serializable]
-        private sealed class BinarySerializableSealedClass: BinarySerializableClass
+        private sealed class BinarySerializableSealedClass : BinarySerializableClass
         {
+            #region Constructors
+
             /// <summary>
             /// Non-default constructor so the class will be deserialized without constructor
             /// </summary>
@@ -223,151 +271,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 IntProp = intProp;
                 StringProp = stringProp;
             }
-        }
-
-        [Serializable]
-        private struct BinarySerializableStruct: IBinarySerializable
-        {
-            public int IntProp { get; set; }
-
-            public string StringProp { get; set; }
-
-            [NonSerialized]
-            private int nonSerializedInt;
-
-            [OnDeserializing]
-            private void OnDeserializing(StreamingContext ctx)
-            {
-                IntProp = -1;
-            }
-
-            public BinarySerializableStruct(BinarySerializationOptions options, byte[] serData)
-                : this()
-            {
-                using (BinaryReader br = new BinaryReader(new MemoryStream(serData)))
-                {
-                    IntProp = br.ReadInt32();
-                    if (br.ReadBoolean())
-                        StringProp = br.ReadString();
-                }
-            }
-
-            #region IBinarySerializable Members
-
-            public byte[] Serialize(BinarySerializationOptions options)
-            {
-                MemoryStream ms = new MemoryStream();
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write(IntProp);
-                    bw.Write(StringProp != null);
-                    if (StringProp != null)
-                        bw.Write(StringProp);
-                }
-
-                return ms.ToArray();
-            }
-
-            public void Deserialize(BinarySerializationOptions options, byte[] serData)
-            {
-                throw new InvalidOperationException("This method never will be called");
-            }
 
             #endregion
         }
 
-        [Serializable]
-        private struct SystemSerializableStruct
-        {
-            public int IntProp { get; set; }
+        #endregion
 
-            public string StringProp { get; set; }
-
-            [NonSerialized]
-            private int nonSerializedInt;
-
-            [OnDeserializing]
-            private void OnDeserializing(StreamingContext ctx)
-            {
-                IntProp = -1;
-            }
-        }
-
-        [Serializable]
-        private struct CustomSerializableStruct: ISerializable
-        {
-            public int IntProp { get; set; }
-
-            public string StringProp { get; set; }
-
-            [OnDeserializing]
-            private void OnDeserializing(StreamingContext ctx)
-            {
-                IntProp = -1;
-            }
-
-            private CustomSerializableStruct(SerializationInfo info, StreamingContext context)
-                : this()
-            {
-                IntProp = info.GetInt32("Int");
-                StringProp = info.GetString("String");
-            }
-
-            #region ISerializable Members
-
-            public void GetObjectData(SerializationInfo info, StreamingContext context)
-            {
-                info.AddValue("Int", IntProp);
-                info.AddValue("String", StringProp);
-            }
-
-            #endregion
-        }
-
-        [Serializable]
-        private struct BinarySerializableStructNoCtor: IBinarySerializable
-        {
-            public int IntProp { get; set; }
-
-            public string StringProp { get; set; }
-
-            #region IBinarySerializable Members
-
-            public byte[] Serialize(BinarySerializationOptions options)
-            {
-                MemoryStream ms = new MemoryStream();
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write(IntProp);
-                    bw.Write(StringProp);
-                }
-
-                return ms.ToArray();
-            }
-
-            public void Deserialize(BinarySerializationOptions options, byte[] serData)
-            {
-                using (BinaryReader br = new BinaryReader(new MemoryStream(serData)))
-                {
-                    IntProp = br.ReadInt32();
-                    StringProp = br.ReadString();
-                }
-            }
-
-            #endregion
-        }
+        #region AbstractClass class
 
         [Serializable]
         public abstract class AbstractClass
         {
         }
 
+        #endregion
+
+        #region SystemSerializableClass class
+
         [Serializable]
-        private class SystemSerializableClass: AbstractClass
+        private class SystemSerializableClass : AbstractClass
         {
+            #region Properties
+
             public int IntProp { get; set; }
+
             public string StringProp { get; set; }
+
             public bool? Bool { get; set; }
+
+            #endregion
+
+            #region Methods
 
             /// <summary>
             /// Overridden for the test equality check
@@ -379,47 +313,112 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 SystemSerializableClass other = (SystemSerializableClass)obj;
                 return StringProp == other.StringProp && IntProp == other.IntProp && Bool == other.Bool;
             }
+
+            #endregion
         }
 
-        private sealed class NonSerializableClassWithSerializableBase: SystemSerializableClass
+        #endregion
+
+        #region NonSerializableClassWithSerializableBase class
+
+        private sealed class NonSerializableClassWithSerializableBase : SystemSerializableClass
         {
+            #region Fields
+
+            #region Public Fields
+
             public int PublicDerivedField;
+
+            #endregion
+
+            #region Private Fields
+
             private string PrivateDerivedField;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
 
             public NonSerializableClassWithSerializableBase(int i, string s)
             {
                 PublicDerivedField = i;
                 PrivateDerivedField = s;
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region SystemSerializableSealedClass class
+
         [Serializable]
-        private sealed class SystemSerializableSealedClass: SystemSerializableClass
+        private sealed class SystemSerializableSealedClass : SystemSerializableClass
         {
         }
 
+        #endregion
+
+        #region SerializationEventsClass class
+
         [Serializable]
-        private class SerializationEventsClass: IDeserializationCallback
+        private class SerializationEventsClass : IDeserializationCallback
         {
-            [NonSerialized]
-            private IntPtr privatePointer;
+            #region Fields
+
+            #region Static Fields
 
             private static int idCounter;
 
-            [NonSerialized]
-            private SerializationEventsClass parent;
+            #endregion
+
+            #region Instance Fields
+
+            #region Protected Fields
 
             protected readonly Collection<SerializationEventsClass> children = new Collection<SerializationEventsClass>();
 
+            #endregion
+
+            #region Private Fields
+
+            [NonSerialized]
+            private IntPtr privatePointer;
+            [NonSerialized]
+            private SerializationEventsClass parent;
+
+            #endregion
+
+            #endregion
+
+            #endregion
+
+            #region Properties
+
             public int Id { get; protected set; }
+
             public string Name { get; set; }
+
             public SerializationEventsClass Parent { get { return parent; } }
+
             public ICollection Children { get { return children; } }
+
+            #endregion
+
+            #region Constructors
 
             public SerializationEventsClass()
             {
                 Id = ++idCounter;
             }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
 
             public SerializationEventsClass AddChild(string name)
             {
@@ -429,6 +428,39 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 privatePointer = new IntPtr(children.Count);
                 return child;
             }
+
+            public virtual void OnDeserialization(object sender)
+            {
+                //Console.WriteLine("OnDeserialization {0}", this);
+                if (children != null)
+                {
+                    foreach (SerializationEventsClass child in children)
+                    {
+                        child.parent = this;
+                    }
+                }
+            }
+
+            public override bool Equals(object obj)
+            {
+                SerializationEventsClass other = obj as SerializationEventsClass;
+                if (other == null)
+                    return base.Equals(obj);
+
+                return Id == other.Id
+                    && privatePointer == other.privatePointer
+                    && (parent == null && other.parent == null || parent != null && other.parent != null && parent.Id == other.parent.Id)
+                    && children.SequenceEqual(other.children);
+            }
+
+            public override string ToString()
+            {
+                return String.Format("{0} - {1}", Id, Name ?? "<null>");
+            }
+
+            #endregion
+
+            #region Private Methods
 
             [OnSerializing]
             private void OnSerializing(StreamingContext ctx)
@@ -460,44 +492,35 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     privatePointer = new IntPtr(children.Count);
             }
 
-            #region IDeserializationCallback Members
+            #endregion
 
-            public virtual void OnDeserialization(object sender)
+            #endregion
+        }
+
+        #endregion
+
+        #region CustomSerializedClass class
+
+        [Serializable]
+        private class CustomSerializedClass : SerializationEventsClass, ISerializable
+        {
+            #region Properties
+
+            public bool? Bool { get; set; }
+
+            #endregion
+
+            #region Constructors
+
+            #region Public Constructors
+
+            public CustomSerializedClass()
             {
-                //Console.WriteLine("OnDeserialization {0}", this);
-                if (children != null)
-                {
-                    foreach (SerializationEventsClass child in children)
-                    {
-                        child.parent = this;
-                    }
-                }
             }
 
             #endregion
 
-            public override bool Equals(object obj)
-            {
-                SerializationEventsClass other = obj as SerializationEventsClass;
-                if (other == null)
-                    return base.Equals(obj);
-
-                return Id == other.Id
-                    && privatePointer == other.privatePointer
-                    && (parent == null && other.parent == null || parent != null && other.parent != null && parent.Id == other.parent.Id)
-                    && children.SequenceEqual(other.children);
-            }
-
-            public override string ToString()
-            {
-                return String.Format("{0} - {1}", Id, Name ?? "<null>");
-            }
-        }
-
-        [Serializable]
-        private class CustomSerializedClass: SerializationEventsClass, ISerializable
-        {
-            public bool? Bool { get; set; }
+            #region Private Constructors
 
             private CustomSerializedClass(SerializationInfo info, StreamingContext context)
             {
@@ -507,11 +530,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 ((Collection<SerializationEventsClass>)info.GetValue("Children", typeof(Collection<SerializationEventsClass>))).ForEach(child => children.Add(child));
             }
 
-            public CustomSerializedClass()
-            {
-            }
+            #endregion
 
-            #region ISerializable Members
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
 
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
@@ -522,7 +547,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 info.AddValue("dummy", null, typeof(List<string[]>));
             }
 
+            public override bool Equals(object obj)
+            {
+                CustomSerializedClass other = obj as CustomSerializedClass;
+                if (other == null)
+                    return base.Equals(obj);
+
+                return Bool == other.Bool && base.Equals(obj);
+            }
+
             #endregion
+
+            #region Private Methods
 
             [OnSerialized]
             private void OnSerialized(StreamingContext ctx)
@@ -536,26 +572,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 //Console.WriteLine("OnDeserialized derived {0}", this);
             }
 
-            public override bool Equals(object obj)
-            {
-                CustomSerializedClass other = obj as CustomSerializedClass;
-                if (other == null)
-                    return base.Equals(obj);
+            #endregion
 
-                return Bool == other.Bool && base.Equals(obj);
-            }
+            #endregion
         }
 
-        [Serializable]
-        private sealed class CustomSerializedSealedClass: CustomSerializedClass, ISerializable
-        {
+        #endregion
 
-            private CustomSerializedSealedClass(SerializationInfo info, StreamingContext context)
+        #region CustomSerializedSealedClass class
+
+        [Serializable]
+        private sealed class CustomSerializedSealedClass : CustomSerializedClass, ISerializable
+        {
+            #region Constructors
+
+            #region Public Constructors
+
+            public CustomSerializedSealedClass(string name)
             {
-                throw new InvalidOperationException("Never executed");
+                Name = name;
             }
 
-            // this is what called on deserialization
+            #endregion
+
+            #region Internal Constructors
+
             internal CustomSerializedSealedClass(int id, string name, IEnumerable<SerializationEventsClass> children, bool? boolean)
             {
                 Id = id;
@@ -564,12 +605,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Bool = boolean;
             }
 
-            public CustomSerializedSealedClass(string name)
+            #endregion
+
+            #region Private Constructors
+
+            private CustomSerializedSealedClass(SerializationInfo info, StreamingContext context)
             {
-                Name = name;
+                throw new InvalidOperationException("Never executed");
             }
 
-            #region ISerializable Members
+            #endregion
+
+            #endregion
+
+            #region Methods
 
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
@@ -580,10 +629,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             #endregion
         }
 
+        #endregion
+
+        #region CustomAdvancedSerializedClassHelper class
+
         [Serializable]
-        private class CustomAdvancedSerializedClassHelper: IObjectReference, ISerializable, IDeserializationCallback
+        private class CustomAdvancedSerializedClassHelper : IObjectReference, ISerializable, IDeserializationCallback
         {
+            #region Fields
+
             readonly CustomSerializedSealedClass toDeserialize;
+
+            #endregion
+
+            #region Constructors
 
             private CustomAdvancedSerializedClassHelper(SerializationInfo info, StreamingContext context)
             {
@@ -592,32 +651,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     (bool?)info.GetValue("Bool", typeof(bool?)));
             }
 
-            [OnDeserialized]
-            private void OnDeserialized(StreamingContext ctx)
-            {
-                //Console.WriteLine("OnDeserialized Helper");
-                Reflector.SetField(toDeserialize, "privatePointer", new IntPtr(toDeserialize.Children.Count));
-            }
+            #endregion
 
-            #region IObjectReference Members
+            #region Methods
+
+            #region Public Methods
 
             public object GetRealObject(StreamingContext context)
             {
                 return toDeserialize;
             }
 
-            #endregion
-
-            #region ISerializable Members
-
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 throw new NotImplementedException("Never executed");
             }
-
-            #endregion
-
-            #region IDeserializationCallback Members
 
             public void OnDeserialization(object sender)
             {
@@ -625,23 +673,65 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
 
             #endregion
+
+            #region Private Methods
+
+            [OnDeserialized]
+            private void OnDeserialized(StreamingContext ctx)
+            {
+                //Console.WriteLine("OnDeserialized Helper");
+                Reflector.SetField(toDeserialize, "privatePointer", new IntPtr(toDeserialize.Children.Count));
+            }
+
+            #endregion
+
+            #endregion
         }
 
+        #endregion
+
+        #region DefaultGraphObjRef class
+
         [Serializable]
-        private class DefaultGraphObjRef: IObjectReference
+        private class DefaultGraphObjRef : IObjectReference
         {
+            #region Fields
+
+            #region Static Fields
+
             private readonly static DefaultGraphObjRef instance = new DefaultGraphObjRef("singleton instance");
+
+            #endregion
+
+            #region Instance Fields
+
             private readonly string name;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            private DefaultGraphObjRef(string name)
+            {
+                this.name = name;
+            }
+
+            #endregion
+
+            #region Methods
+
+            #region Static Methods
 
             public static DefaultGraphObjRef Get()
             {
                 return instance;
             }
 
-            private DefaultGraphObjRef(string name)
-            {
-                this.name = name;
-            }
+            #endregion
+
+            #region Instance Methods
 
             public override string ToString()
             {
@@ -653,30 +743,36 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 return ReferenceEquals(obj, instance);
             }
 
-            #region IObjectReference Members
-
             public object GetRealObject(StreamingContext context)
             {
                 return instance;
             }
 
             #endregion
+
+            #endregion
         }
 
+        #endregion
+
+        #region CustomGraphDefaultObjRef class
+
         [Serializable]
-        private sealed class CustomGraphDefaultObjRef: ISerializable
+        private sealed class CustomGraphDefaultObjRef : ISerializable
         {
+            #region Properties
+
             public string Name { get; set; }
 
-            #region ISerializable Members
+            #endregion
+
+            #region Methods
 
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("name", Name);
                 info.SetType(typeof(CustomGraphDefaultObjRefDeserializer));
             }
-
-            #endregion
 
             public override bool Equals(object obj)
             {
@@ -685,14 +781,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     return false;
                 return Name == other.Name;
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region CustomGraphDefaultObjRefDeserializer class
+
         [Serializable]
-        private class CustomGraphDefaultObjRefDeserializer: IObjectReference
+        private class CustomGraphDefaultObjRefDeserializer : IObjectReference
         {
+            #region Fields
+
             private string name;
 
-            #region IObjectReference Members
+            #endregion
+
+            #region Methods
 
             public object GetRealObject(StreamingContext context)
             {
@@ -702,15 +808,33 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             #endregion
         }
 
-        [Serializable]
-        private class CustomGenericCollection<T>: List<T> { }
+        #endregion
+
+        #region CustomGenericCollection class
 
         [Serializable]
-        private class CustomNonGenericCollection: ArrayList { }
-
-        [Serializable]
-        private class CustomGenericDictionary<TKey, TValue>: Dictionary<TKey, TValue>
+        private class CustomGenericCollection<T> : List<T>
         {
+        }
+
+        #endregion
+
+        #region CustomNonGenericCollection class
+
+        [Serializable]
+        private class CustomNonGenericCollection : ArrayList
+        {
+        }
+
+        #endregion
+
+        #region CustomGenericDictionary class
+
+        [Serializable]
+        private class CustomGenericDictionary<TKey, TValue> : Dictionary<TKey, TValue>
+        {
+            #region Constructors
+
             public CustomGenericDictionary()
             {
             }
@@ -719,11 +843,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 base(info, context)
             {
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region CustomNonGenericDictionary class
+
         [Serializable]
-        private class CustomNonGenericDictionary: Hashtable
+        private class CustomNonGenericDictionary : Hashtable
         {
+            #region Constructors
+
             public CustomNonGenericDictionary()
             {
             }
@@ -732,11 +864,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 base(info, context)
             {
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region MemoryStreamWithEquals class
+
         [Serializable]
-        private sealed class MemoryStreamWithEquals: MemoryStream
+        private sealed class MemoryStreamWithEquals : MemoryStream
         {
+            #region Methods
+
             public override bool Equals(object obj)
             {
                 MemoryStreamWithEquals other = obj as MemoryStreamWithEquals;
@@ -746,57 +886,57 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 return this.CanRead == other.CanRead && this.CanSeek == other.CanSeek && this.CanTimeout == other.CanTimeout && this.CanWrite == other.CanWrite
                     && this.Capacity == other.Capacity && this.Length == other.Length && this.Position == other.Position && this.GetBuffer().SequenceEqual(other.GetBuffer());
             }
+
+            #endregion
         }
 
-#if NET40 || NET45
-        private class TestSerializationBinder: SerializationBinder
-        {
-            public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
-            {
-                if (dumpDetails)
-                    Console.WriteLine("BindToName: " + serializedType);
-                assemblyName = "rev_" + new string(serializedType.Assembly.FullName.Reverse().ToArray());
-                typeName = "rev_" + new string(serializedType.FullName.Reverse().ToArray());
-            }
+        #endregion
 
-            public override Type BindToType(string assemblyName, string typeName)
-            {
-                if (dumpDetails)
-                    Console.WriteLine("BindToType: {0}, {1}", assemblyName, typeName);
-                if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
-                    assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
-
-                if (typeName.StartsWith("rev_", StringComparison.Ordinal))
-                    typeName = new string(typeName.Substring(4).Reverse().ToArray());
-
-                Assembly assembly = assemblyName.Length == 0 ? null : Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
-                if (assembly == null && assemblyName.Length > 0)
-                    return null;
-
-                return assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
-            }
-        }
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
+        #region CircularReferenceClass class
 
         [Serializable]
         private sealed class CircularReferenceClass
         {
+            #region Fields
+
+            #region Static Fields
+
             private static int idCounter;
 
-            private CircularReferenceClass parent;
+            #endregion
+
+            #region Instance Fields
+
             private readonly Collection<CircularReferenceClass> children = new Collection<CircularReferenceClass>();
 
+            private CircularReferenceClass parent;
+
+            #endregion
+
+            #endregion
+
+            #region Properties
+
             public int Id { get; private set; }
+
             public string Name { get; set; }
+
             public CircularReferenceClass Parent { get { return parent; } }
+
             public Collection<CircularReferenceClass> Children { get { return children; } }
+
+            #endregion
+
+            #region Constructors
 
             public CircularReferenceClass()
             {
                 Id = ++idCounter;
             }
+
+            #endregion
+
+            #region Methods
 
             public CircularReferenceClass AddChild(string name)
             {
@@ -822,28 +962,62 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 return String.Format("{0} - {1}", Id, Name ?? "<null>");
             }
 
+            #endregion
         }
 
+        #endregion
+
+        #region SelfReferencer class
+
         [Serializable]
-        private class SelfReferencer: ISerializable
+        private class SelfReferencer : ISerializable
         {
-            public string Name { get; set; }
-            public SelfReferencer Self { get; set; }
+            #region Nested classes
+
+            #region Box class
 
             [Serializable]
             private class Box
             {
+                #region Fields
+
                 internal SelfReferencer owner;
+
+                #endregion
             }
 
+            #endregion
+
+            #endregion
+
+            #region Fields
+
             private readonly Box selfReferenceFromChild;
+
+            #endregion
+
+            #region Properties
+
+            public string Name { get; set; }
+
+            public SelfReferencer Self { get; set; }
+
+            #endregion
+
+            #region Constructors
+
+            #region Public Constructors
 
             public SelfReferencer(string name)
             {
                 Name = name;
                 Self = this;
-                selfReferenceFromChild = new Box{owner = this};
+                selfReferenceFromChild = new Box { owner = this };
             }
+
+            #endregion
+
+            #region Private Constructors
 
             private SelfReferencer(SerializationInfo info, StreamingContext context)
             {
@@ -851,6 +1025,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Self = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
                 selfReferenceFromChild = (Box)info.GetValue("selfBox", typeof(Box));
             }
+
+            #endregion
+
+            #endregion
+
+            #region Methods
 
             public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
             {
@@ -867,15 +1047,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var other = (SelfReferencer)obj;
                 return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self);
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region SelfReferencerEvil class
+
         [Serializable]
-        private class SelfReferencerEvil: SelfReferencer
+        private class SelfReferencerEvil : SelfReferencer
         {
+            #region Constructors
+
             public SelfReferencerEvil(string name)
                 : base(name)
             {
             }
+
+            #endregion
+
+            #region Methods
 
             public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
@@ -891,19 +1083,35 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var other = (SelfReferencerEvil)obj;
                 return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self);
             }
+
+            #endregion
         }
 
+        #endregion
+
+        #region SelfReferencerEvilDeserializer class
+
         [Serializable]
-        private class SelfReferencerEvilDeserializer: IObjectReference, ISerializable
+        private class SelfReferencerEvilDeserializer : IObjectReference, ISerializable
         {
+            #region Fields
+
             private SelfReferencer instance;
             private string name;
+
+            #endregion
+
+            #region Constructors
 
             protected SelfReferencerEvilDeserializer(SerializationInfo info, StreamingContext context)
             {
                 name = info.GetString("name");
                 instance = (SelfReferencer)info.GetValue("self", typeof(SelfReferencer));
             }
+
+            #endregion
+
+            #region Methods
 
             public object GetRealObject(StreamingContext context)
             {
@@ -914,12 +1122,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 throw new NotImplementedException();
             }
+
+            #endregion
         }
 
-        private class TestWriter: BinaryWriter
+        #endregion
+
+        #region TestWriter class
+
+        private class TestWriter : BinaryWriter
         {
-            private long pos;
+            #region Fields
+
             private readonly bool log;
+
+            private long pos;
+
+            #endregion
+
+            #region Constructors
 
             public TestWriter(Stream stream, bool log)
                 : base(stream)
@@ -927,12 +1148,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 this.log = log;
             }
 
-            private void Advance(int offset)
-            {
-                if (log)
-                    Console.Write("{0:X8} ", pos);
-                pos += offset;
-            }
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
 
             public override void Write(bool value)
             {
@@ -1083,18 +1303,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     Console.WriteLine("ushort: {0} ({0:X4}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
                 base.Write(value);
             }
-        }
 
-        private class TestReader: BinaryReader
-        {
-            private bool log;
-            private long pos;
+            #endregion
 
-            public TestReader(Stream s, bool log)
-                : base(s)
-            {
-                this.log = log;
-            }
+            #region Private Methods
 
             private void Advance(int offset)
             {
@@ -1102,6 +1314,38 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     Console.Write("{0:X8} ", pos);
                 pos += offset;
             }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region TestReader class
+
+        private class TestReader : BinaryReader
+        {
+            #region Fields
+
+            private bool log;
+            private long pos;
+
+            #endregion
+
+            #region Constructors
+
+            public TestReader(Stream s, bool log)
+                : base(s)
+            {
+                this.log = log;
+            }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
 
             public override int Read()
             {
@@ -1279,9 +1523,63 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     Console.WriteLine("ulong: {0} ({0:X16}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
                 return result;
             }
+
+            #endregion
+
+            #region Private Methods
+
+            private void Advance(int offset)
+            {
+                if (log)
+                    Console.Write("{0:X8} ", pos);
+                pos += offset;
+            }
+
+            #endregion
+
+            #endregion
         }
 
-        private class TestSurrogateSelector: ISurrogateSelector, ISerializationSurrogate
+        #endregion
+
+        #region TestSerializationBinder Class
+
+#if NET40 || NET45
+        private class TestSerializationBinder : SerializationBinder
+        {
+            public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
+            {
+                if (dumpDetails)
+                    Console.WriteLine("BindToName: " + serializedType);
+                assemblyName = "rev_" + new string(serializedType.Assembly.FullName.Reverse().ToArray());
+                typeName = "rev_" + new string(serializedType.FullName.Reverse().ToArray());
+            }
+
+            public override Type BindToType(string assemblyName, string typeName)
+            {
+                if (dumpDetails)
+                    Console.WriteLine("BindToType: {0}, {1}", assemblyName, typeName);
+                if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
+                    assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
+
+                if (typeName.StartsWith("rev_", StringComparison.Ordinal))
+                    typeName = new string(typeName.Substring(4).Reverse().ToArray());
+
+                Assembly assembly = assemblyName.Length == 0 ? null : Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == assemblyName);
+                if (assembly == null && assemblyName.Length > 0)
+                    return null;
+
+                return assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
+            }
+        }
+#elif !NET35
+#error .NET version is not set or not supported!
+#endif
+        #endregion
+
+        #region TestSurrogateSelector class
+
+        private class TestSurrogateSelector : ISurrogateSelector, ISerializationSurrogate
         {
             #region Fields
 
@@ -1289,7 +1587,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #endregion
 
-            #region ISurrogateSelector Members
+            #region Methods
+
+            #region Public Methods
 
             public void ChainSelector(ISurrogateSelector selector)
             {
@@ -1326,7 +1626,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #endregion
 
-            #region ISerializationSurrogate Members
+            #region Explicitly Implemented Interface Methods
 
             void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
             {
@@ -1363,50 +1663,394 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
 
             #endregion
+
+            #endregion
         }
 
         #endregion
 
-        #region Test Methods
+        #endregion
+
+        #region Nested structs
+
+        #region NonSerializableStruct struct
+
+        private struct NonSerializableStruct
+        {
+            #region Fields
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
+            private string str10;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+            private byte[] bytes3;
+
+            #endregion
+
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            public string Str10
+            {
+                get { return str10; }
+                set { str10 = value; }
+            }
+
+            public byte[] Bytes3
+            {
+                get { return bytes3; }
+                set { bytes3 = value; }
+            }
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Overridden for the test equality check
+            /// </summary>
+            public override bool Equals(object obj)
+            {
+                if (!(obj is NonSerializableStruct))
+                    return base.Equals(obj);
+                NonSerializableStruct other = (NonSerializableStruct)obj;
+                return str10 == other.str10 && IntProp == other.IntProp
+                    && ((bytes3 == null && other.bytes3 == null) || (bytes3 != null && other.bytes3 != null
+                                && bytes3[0] == other.bytes3[0] && bytes3[1] == other.bytes3[1] && bytes3[2] == other.bytes3[2]));
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region BinarySerializableStruct struct
+
+        [Serializable]
+        private struct BinarySerializableStruct : IBinarySerializable
+        {
+            #region Fields
+
+            [NonSerialized]
+            private int nonSerializedInt;
+
+            #endregion
+
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            public string StringProp { get; set; }
+
+            #endregion
+
+            #region Constructors
+
+            public BinarySerializableStruct(BinarySerializationOptions options, byte[] serData)
+                : this()
+            {
+                using (BinaryReader br = new BinaryReader(new MemoryStream(serData)))
+                {
+                    IntProp = br.ReadInt32();
+                    if (br.ReadBoolean())
+                        StringProp = br.ReadString();
+                }
+            }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public byte[] Serialize(BinarySerializationOptions options)
+            {
+                MemoryStream ms = new MemoryStream();
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    bw.Write(IntProp);
+                    bw.Write(StringProp != null);
+                    if (StringProp != null)
+                        bw.Write(StringProp);
+                }
+
+                return ms.ToArray();
+            }
+
+            public void Deserialize(BinarySerializationOptions options, byte[] serData)
+            {
+                throw new InvalidOperationException("This method never will be called");
+            }
+
+            #endregion
+
+            #region Private Methods
+
+            [OnDeserializing]
+            private void OnDeserializing(StreamingContext ctx)
+            {
+                IntProp = -1;
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region SystemSerializableStruct struct
+
+        [Serializable]
+        private struct SystemSerializableStruct
+        {
+            #region Fields
+
+            [NonSerialized]
+            private int nonSerializedInt;
+
+            #endregion
+
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            public string StringProp { get; set; }
+
+            #endregion
+
+            #region Methods
+
+            [OnDeserializing]
+            private void OnDeserializing(StreamingContext ctx)
+            {
+                IntProp = -1;
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region CustomSerializableStruct struct
+
+        [Serializable]
+        private struct CustomSerializableStruct : ISerializable
+        {
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            public string StringProp { get; set; }
+
+            #endregion
+
+            #region Constructors
+
+            private CustomSerializableStruct(SerializationInfo info, StreamingContext context)
+                : this()
+            {
+                IntProp = info.GetInt32("Int");
+                StringProp = info.GetString("String");
+            }
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                info.AddValue("Int", IntProp);
+                info.AddValue("String", StringProp);
+            }
+
+            #endregion
+
+            #region Private Methods
+
+            [OnDeserializing]
+            private void OnDeserializing(StreamingContext ctx)
+            {
+                IntProp = -1;
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region BinarySerializableStructNoCtor struct
+
+        [Serializable]
+        private struct BinarySerializableStructNoCtor : IBinarySerializable
+        {
+            #region Properties
+
+            public int IntProp { get; set; }
+
+            public string StringProp { get; set; }
+
+            #endregion
+
+            #region Methods
+
+            public byte[] Serialize(BinarySerializationOptions options)
+            {
+                MemoryStream ms = new MemoryStream();
+                using (BinaryWriter bw = new BinaryWriter(ms))
+                {
+                    bw.Write(IntProp);
+                    bw.Write(StringProp);
+                }
+
+                return ms.ToArray();
+            }
+
+            public void Deserialize(BinarySerializationOptions options, byte[] serData)
+            {
+                using (BinaryReader br = new BinaryReader(new MemoryStream(serData)))
+                {
+                    IntProp = br.ReadInt32();
+                    StringProp = br.ReadString();
+                }
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Constants
+
+        private const bool dumpDetails = false;
+        private const bool dumpSerContent = false;
+
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        private static byte[] SerializeObjects(object[] objects, IFormatter formatter)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                formatter.Serialize(ms, objects.Length);
+                BinaryWriter bw = null;
+                BinarySerializationFormatter bsf = null;
+                if (dumpDetails && formatter is BinarySerializationFormatter)
+                {
+                    bw = new TestWriter(ms, dumpDetails);
+                    bsf = formatter as BinarySerializationFormatter;
+                }
+
+                foreach (object o in objects)
+                {
+                    long pos = ms.Position;
+                    if (bsf != null)
+                        bsf.SerializeByWriter(bw, o);
+                    else
+                        formatter.Serialize(ms, o);
+                    Console.WriteLine("{0} - length: {1}", o == null ? "<null>" : o.GetType().ToString(), ms.Position - pos);
+                }
+                Console.WriteLine("Full length: {0}", ms.Length);
+                if (dumpSerContent)
+                    Console.WriteLine(ToRawString(ms.ToArray()));
+                return ms.ToArray();
+            }
+        }
+
+        private static object[] DeserializeObjects(byte[] serObjects, IFormatter formatter)
+        {
+            using (MemoryStream ms = new MemoryStream(serObjects))
+            {
+                int length;
+                object[] result = new object[length = (int)formatter.Deserialize(ms)];
+
+                BinaryReader br = null;
+                BinarySerializationFormatter bsf = null;
+                if (dumpDetails && formatter is BinarySerializationFormatter)
+                {
+                    br = new TestReader(ms, dumpDetails);
+                    bsf = formatter as BinarySerializationFormatter;
+                }
+
+                for (int i = 0; i < length; i++)
+                {
+                    result[i] = bsf != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+                }
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Converts the byte array (deemed as extended 8-bit ASCII characters) to raw Unicode UTF-8 string representation.
+        /// </summary>
+        /// <param name="bytes">The bytes to visualize as a raw UTF-8 data.</param>
+        /// <remarks>
+        /// <note type="caution">
+        /// Please note that the .NET <see cref="string"/> type is always UTF-16 encoded. What this method does is
+        /// not parsing an UTF-8 encoded stream but a special conversion that makes possible to display a byte array as a raw UTF-8 data.
+        /// To convert a byte array to a regular <see cref="string"/> for usual purposes
+        /// use <see cref="Encoding.Convert(System.Text.Encoding,System.Text.Encoding,byte[])"/> method instead.
+        /// </note>
+        /// </remarks>
+        /// <returns>
+        /// A <see cref="string"/> instance that is good for visualizing a raw UTF-8 string.</returns>
+        private static string ToRawString(byte[] bytes) => Encoding.Default.GetString(bytes).Replace('\0', '\u25A1'); // "\0" to "□" in output
+
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
 
         [Test]
         public void SerializeSimpleTypes()
         {
-            object[] referenceObjects = 
-            {
-                null,
-                new object(),
-                DBNull.Value,
-                true,
-                (sbyte)1,
-                (byte)1,
-                (short)1,
-                (ushort)1,
-                (int)1,
-                (uint)1,
-                (long)1,
-                (ulong)1,
-                'a',
-                "alma",
-                (float)1,
-                (double)1,
-                (decimal)1,
-                DateTime.UtcNow,
-                DateTime.Now,
-                new IntPtr(1),
-                new UIntPtr(1),
-                new Version(1, 2, 3, 4),
-                new Guid("ca761232ed4211cebacd00aa0057b223"),
-                new TimeSpan(1, 1, 1),
-                new DateTimeOffset(DateTime.Now),
-                new DateTimeOffset(DateTime.UtcNow),
-                new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
-                new Uri(@"x:\teszt"), // 20
-                new DictionaryEntry(1, "alma"),
-                new KeyValuePair<int,string>(1, "alma"), // 14
-                new BitArray(new[] {true, false, true}), // 10 -> 7
-                new StringBuilder("alma")
-            };
+            object[] referenceObjects =
+                {
+                    null,
+                    new object(),
+                    DBNull.Value,
+                    true,
+                    (sbyte)1,
+                    (byte)1,
+                    (short)1,
+                    (ushort)1,
+                    (int)1,
+                    (uint)1,
+                    (long)1,
+                    (ulong)1,
+                    'a',
+                    "alpha",
+                    (float)1,
+                    (double)1,
+                    (decimal)1,
+                    DateTime.UtcNow,
+                    DateTime.Now,
+                    new IntPtr(1),
+                    new UIntPtr(1),
+                    new Version(1, 2, 3, 4),
+                    new Guid("ca761232ed4211cebacd00aa0057b223"),
+                    new TimeSpan(1, 1, 1),
+                    new DateTimeOffset(DateTime.Now),
+                    new DateTimeOffset(DateTime.UtcNow),
+                    new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
+                    new Uri(@"x:\teszt"), // 20
+                    new DictionaryEntry(1, "alpha"),
+                    new KeyValuePair<int,string>(1, "alpha"), // 14
+                    new BitArray(new[] {true, false, true}), // 10 -> 7
+                    new StringBuilder("alpha")
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1427,52 +2071,52 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeValues()
         {
-            object[] referenceObjects = 
-            {
-                // 1 bytes
-                SByte.MinValue,
-                SByte.MaxValue,
-                Byte.MinValue,
-                Byte.MaxValue,
+            object[] referenceObjects =
+                {
+                    // 1 bytes
+                    SByte.MinValue,
+                    SByte.MaxValue,
+                    Byte.MinValue,
+                    Byte.MaxValue,
 
-                // 2 bytes
-                Int16.MinValue,
-                (short)TestEnumShort.Treshold,
-                Int16.MaxValue,
-                (ushort)TestEnumUShort.Treshold,
-                UInt16.MaxValue,
-                Char.MaxValue,
+                    // 2 bytes
+                    Int16.MinValue,
+                    (short)TestEnumShort.Treshold,
+                    Int16.MaxValue,
+                    (ushort)TestEnumUShort.Treshold,
+                    UInt16.MaxValue,
+                    Char.MaxValue,
 
-                // 2 bytes compressed
-                (short)TestEnumShort.Limit,
-                UInt16.MinValue,
-                (ushort)TestEnumUShort.Limit,
-                Char.MinValue,
+                    // 2 bytes compressed
+                    (short)TestEnumShort.Limit,
+                    UInt16.MinValue,
+                    (ushort)TestEnumUShort.Limit,
+                    Char.MinValue,
 
-                // 4 bytes
-                Int32.MinValue,
-                (int)TestEnumInt.Treshold,
-                Int32.MaxValue,
-                (uint)TestEnumUInt.Treshold,
-                UInt32.MaxValue,
+                    // 4 bytes
+                    Int32.MinValue,
+                    (int)TestEnumInt.Treshold,
+                    Int32.MaxValue,
+                    (uint)TestEnumUInt.Treshold,
+                    UInt32.MaxValue,
 
-                // 4 bytes compressed
-                (int)TestEnumInt.Limit,   // 5
-                UInt32.MinValue,          // 3
-                (uint)TestEnumUInt.Limit, // 5
+                    // 4 bytes compressed
+                    (int)TestEnumInt.Limit,   // 5
+                    UInt32.MinValue,          // 3
+                    (uint)TestEnumUInt.Limit, // 5
 
-                // 8 bytes
-                Int64.MinValue,
-                (long)TestEnumLong.Treshold,
-                Int64.MaxValue,
-                (ulong)TestEnumULong.Treshold,
-                UInt64.MaxValue,
+                    // 8 bytes
+                    Int64.MinValue,
+                    (long)TestEnumLong.Treshold,
+                    Int64.MaxValue,
+                    (ulong)TestEnumULong.Treshold,
+                    UInt64.MaxValue,
 
-                // 8 bytes compressed
-                (long)TestEnumLong.Limit,   // 9
-                UInt64.MinValue,            // 3
-                (ulong)TestEnumULong.Limit, // 9
-            };
+                    // 8 bytes compressed
+                    (long)TestEnumLong.Limit,   // 9
+                    UInt64.MinValue,            // 3
+                    (ulong)TestEnumULong.Limit, // 9
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1484,54 +2128,54 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeEnums()
         {
-            object[] referenceObjects = 
-            {
-                // local enums, testing 7-bit encodings
-                TestEnumByte.Min, 
-                TestEnumByte.Max, 
-                TestEnumSByte.Min,
-                TestEnumSByte.Max,
+            object[] referenceObjects =
+                {
+                    // local enums, testing 7-bit encodings
+                    TestEnumByte.Min,
+                    TestEnumByte.Max,
+                    TestEnumSByte.Min,
+                    TestEnumSByte.Max,
 
-                TestEnumShort.Min,
-                TestEnumShort.Limit,
-                TestEnumShort.Treshold,
-                TestEnumShort.Max,
+                    TestEnumShort.Min,
+                    TestEnumShort.Limit,
+                    TestEnumShort.Treshold,
+                    TestEnumShort.Max,
 
-                TestEnumUShort.Min,
-                TestEnumUShort.Limit,
-                TestEnumUShort.Treshold,
-                TestEnumUShort.Max,
+                    TestEnumUShort.Min,
+                    TestEnumUShort.Limit,
+                    TestEnumUShort.Treshold,
+                    TestEnumUShort.Max,
 
-                TestEnumInt.Min,
-                TestEnumInt.Limit,
-                TestEnumInt.Treshold,
-                TestEnumInt.Max,
+                    TestEnumInt.Min,
+                    TestEnumInt.Limit,
+                    TestEnumInt.Treshold,
+                    TestEnumInt.Max,
 
-                TestEnumUInt.Min,
-                TestEnumUInt.Limit,
-                TestEnumUInt.Treshold,
-                TestEnumUInt.Max,
+                    TestEnumUInt.Min,
+                    TestEnumUInt.Limit,
+                    TestEnumUInt.Treshold,
+                    TestEnumUInt.Max,
 
-                TestEnumLong.Min,
-                TestEnumLong.Limit,
-                TestEnumLong.Treshold,
-                TestEnumLong.Max,
+                    TestEnumLong.Min,
+                    TestEnumLong.Limit,
+                    TestEnumLong.Treshold,
+                    TestEnumLong.Max,
 
-                TestEnumULong.Min,
-                TestEnumULong.Limit,
-                TestEnumULong.Treshold,
-                TestEnumULong.Max,
+                    TestEnumULong.Min,
+                    TestEnumULong.Limit,
+                    TestEnumULong.Treshold,
+                    TestEnumULong.Max,
 
-                ConsoleColor.White, // mscorlib enum
-                ConsoleColor.Black, // mscorlib enum
+                    ConsoleColor.White, // mscorlib enum
+                    ConsoleColor.Black, // mscorlib enum
 
-                UriKind.Absolute, // System enum
-                UriKind.Relative, // System enum
+                    UriKind.Absolute, // System enum
+                    UriKind.Relative, // System enum
 
-                HandleInheritability.Inheritable, // System.Core enum
+                    HandleInheritability.Inheritable, // System.Core enum
 
-                BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
-            };
+                    BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1546,15 +2190,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeTypes()
         {
-            object[] referenceObjects = 
-            {
-                typeof(int), // 166
-                typeof(List<int>), // 280
-                typeof(CustomGenericCollection<int>), // 303
+            object[] referenceObjects =
+                {
+                    typeof(int), // 166
+                    typeof(List<int>), // 280
+                    typeof(CustomGenericCollection<int>), // 303
 
-                typeof(List<>), // 187
-                typeof(List<>).GetGenericArguments()[0] // 335
-            };
+                    typeof(List<>), // 187
+                    typeof(List<>).GetGenericArguments()[0] // 335
+                };
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
@@ -1565,22 +2209,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeComplexTypes()
         {
-            object[] referenceObjects = 
-            {
-                new BinarySerializableSealedClass(3, "cica"), // None: 154
-                new BinarySerializableClass{ IntProp = 1, StringProp = "alma"}, // None: 148
-                new BinarySerializableStruct{ IntProp = 2, StringProp = "béka" }, // None: 147
-                new BinarySerializableStructNoCtor { IntProp = 2, StringProp = "béka" }, // None: 152
-                new SystemSerializableClass{ IntProp = 3, StringProp = "cica",  Bool = null }, // None: 224
+            object[] referenceObjects =
+                {
+                    new BinarySerializableSealedClass(3, "gamma"), // None: 154
+                    new BinarySerializableClass{ IntProp = 1, StringProp = "alpha"}, // None: 148
+                    new BinarySerializableStruct{ IntProp = 2, StringProp = "beta" }, // None: 147
+                    new BinarySerializableStructNoCtor { IntProp = 2, StringProp = "beta" }, // None: 152
+                    new SystemSerializableClass{ IntProp = 3, StringProp = "gamma",  Bool = null }, // None: 224
 
-                new KeyValuePair<int, object>(1, new object[] {1, "alma", DateTime.Now, null}), // None: 36
+                    new KeyValuePair<int, object>(1, new object[] {1, "alpha", DateTime.Now, null}), // None: 36
 
-                new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent, // None: 455
-                new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 525
-                new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // IObjectReference - None: 548
-                DefaultGraphObjRef.Get(), // IObjectReference without ISerializable
-                new CustomGraphDefaultObjRef{ Name = "alma" } // obj is ISerializable but IObjectReference is not
-            };
+                    new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent, // None: 455
+                    new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 525
+                    new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // IObjectReference - None: 548
+                    DefaultGraphObjRef.Get(), // IObjectReference without ISerializable
+                    new CustomGraphDefaultObjRef{ Name = "alpha" } // obj is ISerializable but IObjectReference is not
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1593,9 +2237,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
-                new NonSerializableClass{ IntProp = 3, StringProp = "cica" },
-                new NonSerializableSealedClass(1, "alma") { IntProp = 1, StringProp = "alma" },
-                new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alma" },
+                new NonSerializableClass{ IntProp = 3, StringProp = "gamma" },
+                new NonSerializableSealedClass(1, "alpha") { IntProp = 1, StringProp = "alpha" },
+                new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alpha" },
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // 529
@@ -1611,17 +2255,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeByteArrays()
         {
-            object[] referenceObjects = 
-            {
-                new byte[] { 1, 2, 3}, // single byte array
-                new byte[,] { {11, 12, 13}, {21, 22, 23} }, // multidimensional byte array
-                new byte[][] { new byte[] {11, 12, 13}, new byte[] {21, 22, 23, 24, 25}, null }, // jagged byte array
-                new byte[][,] { new byte[,] {{11, 12, 13}, {21, 22, 23}}, new byte[,] {{11, 12, 13, 14}, {21, 22, 23, 24}, {31, 32, 33, 34}} }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
-                new byte[,][] { {new byte[] {11, 12, 13}, new byte[] { 21, 22, 23}}, { new byte[] {11, 12, 13, 14}, new byte[] {21, 22, 23, 24}} }, // crazy jagged byte array 2 (1D array of 2D matrices)
-                new byte[][,,] { new byte[,,] { { {11, 12, 13}, {21, 21, 23} } }, null }, // crazy jagged byte array containing null reference
-                Array.CreateInstance(typeof(byte), new int[] {3}, new int[]{-1}), // array with -1..1 index interval
-                Array.CreateInstance(typeof(byte), new int[] {3, 3}, new int[]{-1, 1}) // array with [-1..1 and 1..3] index interval
-            };
+            object[] referenceObjects =
+                {
+                    new byte[] { 1, 2, 3}, // single byte array
+                    new byte[,] { {11, 12, 13}, {21, 22, 23} }, // multidimensional byte array
+                    new byte[][] { new byte[] {11, 12, 13}, new byte[] {21, 22, 23, 24, 25}, null }, // jagged byte array
+                    new byte[][,] { new byte[,] {{11, 12, 13}, {21, 22, 23}}, new byte[,] {{11, 12, 13, 14}, {21, 22, 23, 24}, {31, 32, 33, 34}} }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
+                    new byte[,][] { {new byte[] {11, 12, 13}, new byte[] { 21, 22, 23}}, { new byte[] {11, 12, 13, 14}, new byte[] {21, 22, 23, 24}} }, // crazy jagged byte array 2 (1D array of 2D matrices)
+                    new byte[][,,] { new byte[,,] { { {11, 12, 13}, {21, 21, 23} } }, null }, // crazy jagged byte array containing null reference
+                    Array.CreateInstance(typeof(byte), new int[] {3}, new int[]{-1}), // array with -1..1 index interval
+                    Array.CreateInstance(typeof(byte), new int[] {3, 3}, new int[]{-1, 1}) // array with [-1..1 and 1..3] index interval
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1633,37 +2277,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeSimpleArrays()
         {
-            object[] referenceObjects = 
-            {
-                new object[] { new object(), null}, 
-                new DBNull[] { DBNull.Value, null },
-                new bool[] { true, false },
-                new sbyte[] { 1, 2 },
-                new byte[] { 1, 2 },
-                new short[] { 1, 2 },
-                new ushort[] { 1, 2 },
-                new int[] { 1, 2 },
-                new uint[] { 1, 2 },
-                new long[] { 1, 2 },
-                new ulong[] { 1, 2 },
-                new char[] { 'a', 'á' }, // Char.ConvertFromUtf32(0x1D161)[0] }, //U+1D161 = MUSICAL SYMBOL SIXTEENTH NOTE, serializing its low-surrogate <- System serializer fails at compare
-                new string[] { "alma", null },
-                new float[] { 1, 2 },
-                new double[] { 1, 2 },
-                new decimal[] { 1, 2 },
-                new DateTime[] { DateTime.UtcNow, DateTime.Now },
-                new IntPtr[] { new IntPtr(1), IntPtr.Zero },
-                new UIntPtr[] { new UIntPtr(1), UIntPtr.Zero },
-                new Version[] {new Version(1, 2, 3, 4), null},
-                new Guid[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid() },
-                new TimeSpan[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks) },
-                new DateTimeOffset[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)) },
-                new Uri[] { new Uri(@"x:\teszt"), new Uri("ftp://myUrl/%2E%2E/%2E%2E"), null },
-                new DictionaryEntry[] { new DictionaryEntry(1, "alma") },
-                new KeyValuePair<int, string>[] { new KeyValuePair<int,string>(1, "alma") },
-                new BitArray[]{ new BitArray(new[] {true, false, true}), null },
-                new StringBuilder[] { new StringBuilder("alma"), null },
-            };
+            object[] referenceObjects =
+                {
+                    new object[] { new object(), null},
+                    new DBNull[] { DBNull.Value, null },
+                    new bool[] { true, false },
+                    new sbyte[] { 1, 2 },
+                    new byte[] { 1, 2 },
+                    new short[] { 1, 2 },
+                    new ushort[] { 1, 2 },
+                    new int[] { 1, 2 },
+                    new uint[] { 1, 2 },
+                    new long[] { 1, 2 },
+                    new ulong[] { 1, 2 },
+                    new char[] { 'a', 'á' }, // Char.ConvertFromUtf32(0x1D161)[0] }, //U+1D161 = MUSICAL SYMBOL SIXTEENTH NOTE, serializing its low-surrogate <- System serializer fails at compare
+                    new string[] { "alpha", null },
+                    new float[] { 1, 2 },
+                    new double[] { 1, 2 },
+                    new decimal[] { 1, 2 },
+                    new DateTime[] { DateTime.UtcNow, DateTime.Now },
+                    new IntPtr[] { new IntPtr(1), IntPtr.Zero },
+                    new UIntPtr[] { new UIntPtr(1), UIntPtr.Zero },
+                    new Version[] {new Version(1, 2, 3, 4), null},
+                    new Guid[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid() },
+                    new TimeSpan[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks) },
+                    new DateTimeOffset[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)) },
+                    new Uri[] { new Uri(@"x:\teszt"), new Uri("ftp://myUrl/%2E%2E/%2E%2E"), null },
+                    new DictionaryEntry[] { new DictionaryEntry(1, "alpha") },
+                    new KeyValuePair<int, string>[] { new KeyValuePair<int,string>(1, "alpha") },
+                    new BitArray[]{ new BitArray(new[] {true, false, true}), null },
+                    new StringBuilder[] { new StringBuilder("alpha"), null },
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1687,17 +2331,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeEnumArrays()
         {
-            object[] referenceObjects = 
-            {
-                new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }, // single enum array
-                new TestEnumByte[,] { {TestEnumByte.One}, {TestEnumByte.Two} }, // multidimensional enum array
-                new TestEnumByte[][] { new TestEnumByte[] {TestEnumByte.One}, new TestEnumByte[] {TestEnumByte.Two} }, // jagged enum array
+            object[] referenceObjects =
+                {
+                    new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }, // single enum array
+                    new TestEnumByte[,] { {TestEnumByte.One}, {TestEnumByte.Two} }, // multidimensional enum array
+                    new TestEnumByte[][] { new TestEnumByte[] {TestEnumByte.One}, new TestEnumByte[] {TestEnumByte.Two} }, // jagged enum array
 
-                new object[] { TestEnumByte.One, null }, // - 130
-                new IConvertible[] { TestEnumByte.One, null }, // - 165 -> 153
-                new Enum[] { TestEnumByte.One, null }, // - 157 -> 145
-                new ValueType[] { TestEnumByte.One, null }, // - 162 -> 150
-            };
+                    new object[] { TestEnumByte.One, null }, // - 130
+                    new IConvertible[] { TestEnumByte.One, null }, // - 165 -> 153
+                    new Enum[] { TestEnumByte.One, null }, // - 157 -> 145
+                    new ValueType[] { TestEnumByte.One, null }, // - 162 -> 150
+                };
 
             SystemSerializeObject(referenceObjects);
             //SystemSerializeObjects(referenceObjects); // System serializer fails with IConvertible is not serializable
@@ -1715,12 +2359,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeStringArrays()
         {
-            object[] referenceObjects = 
-            {
-                new string[] { "Egy", "Kettő" }, // single string array
-                new string[,] { {"Egy", "Kettő"}, {"One", "Two"} }, // multidimensional string array
-                new string[][] { new string[] {"Egy", "Kettő", "Három"}, new string[] {"One", "Two", null}, null }, // jagged string array with null values (first null as string, second null as array)
-            };
+            object[] referenceObjects =
+                {
+                    new string[] { "One", "Two" }, // single string array
+                    new string[,] { {"One", "Two"}, {"One", "Two"} }, // multidimensional string array
+                    new string[][] { new string[] {"One", "Two", "Three"}, new string[] {"One", "Two", null}, null }, // jagged string array with null values (first null as string, second null as array)
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1743,19 +2387,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             //Debugger.Launch();
             object[] referenceObjects =
-            {
-                new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, new BinarySerializableStruct{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable struct - None: 161
-                new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableClass{IntProp = 2, StringProp = "béka"} }, // array of a BinarySerializable non sealed class - None: 170 
-                new BinarySerializableClass[] {new BinarySerializableSealedClass(1, "alma"), new BinarySerializableSealedClass(2, "béka") }, // array of a BinarySerializable non sealed class with derived elements - None: 240
-                new BinarySerializableSealedClass[] { new BinarySerializableSealedClass(1, "alma"), new BinarySerializableSealedClass(2, "béka"), new BinarySerializableSealedClass(3, "cica") }, // array of a BinarySerializable sealed class - None: 189
-                new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object - None: 419
-                new SystemSerializableStruct[] { new SystemSerializableStruct{ IntProp = 1, StringProp = "alma" }, new SystemSerializableStruct { IntProp = 2, StringProp = "béka" } }, // None: 276 -> 271
-                new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object - None: 467 -> 469
-                new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"} }, // array of a [Serializable] object, with an IBinarySerializable element - 458 -> 393
+                {
+                    new BinarySerializableStruct[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, new BinarySerializableStruct{IntProp = 2, StringProp = "beta"} }, // array of a BinarySerializable struct - None: 161
+                    new BinarySerializableClass[] {new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass{IntProp = 2, StringProp = "beta"} }, // array of a BinarySerializable non sealed class - None: 170
+                    new BinarySerializableClass[] {new BinarySerializableSealedClass(1, "alpha"), new BinarySerializableSealedClass(2, "beta") }, // array of a BinarySerializable non sealed class with derived elements - None: 240
+                    new BinarySerializableSealedClass[] { new BinarySerializableSealedClass(1, "alpha"), new BinarySerializableSealedClass(2, "beta"), new BinarySerializableSealedClass(3, "gamma") }, // array of a BinarySerializable sealed class - None: 189
+                    new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object - None: 419
+                    new SystemSerializableStruct[] { new SystemSerializableStruct{ IntProp = 1, StringProp = "alpha" }, new SystemSerializableStruct { IntProp = 2, StringProp = "beta" } }, // None: 276 -> 271
+                    new AbstractClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object - None: 467 -> 469
+                    new AbstractClass[] { new BinarySerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"} }, // array of a [Serializable] object, with an IBinarySerializable element - 458 -> 393
 
-                new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alma"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }),  }, // None: 151
-                new KeyValuePair<int, CustomSerializedClass>[] { new KeyValuePair<int, CustomSerializedClass>(1, new CustomSerializedClass {Bool = true, Name = "alma" }), new KeyValuePair<int, CustomSerializedClass>(2, null) }, // None: 341
-            };
+                    new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }),  }, // None: 151
+                    new KeyValuePair<int, CustomSerializedClass>[] { new KeyValuePair<int, CustomSerializedClass>(1, new CustomSerializedClass {Bool = true, Name = "alpha" }), new KeyValuePair<int, CustomSerializedClass>(2, null) }, // None: 341
+                };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -1769,14 +2413,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
-                new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "béka"}, new NonSerializableClassWithSerializableBase(3, "cica") }, // a non serializable element among te serializable ones - 660/664/595
-                new NonSerializableClass[] { new NonSerializableClass { IntProp = 1, StringProp = "alma"}, new NonSerializableSealedClass(1, "béka") { IntProp = 3, StringProp = "cica" } } , // 411/414/345
-                new NonSerializableSealedClass[] { new NonSerializableSealedClass(1, "alma") { IntProp = 2, StringProp = "béka" }, null } , // 280/281/212
-                new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}, new BinarySerializableClass {IntProp = 2, StringProp = "béka"}, new BinarySerializableSealedClass(3, "cica") }, // IBinarySerializable array - 316/317/248
-                new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alma"}}, null }, // IBinarySerializable array - 160/161/92
-                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alma", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "béka", Bytes3 = new byte[] {3, 2, 1}} }, // array custom struct - 254/178/109
+                new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"}, new NonSerializableClassWithSerializableBase(3, "gamma") }, // a non serializable element among te serializable ones - 660/664/595
+                new NonSerializableClass[] { new NonSerializableClass { IntProp = 1, StringProp = "alpha"}, new NonSerializableSealedClass(1, "beta") { IntProp = 3, StringProp = "gamma" } } , // 411/414/345
+                new NonSerializableSealedClass[] { new NonSerializableSealedClass(1, "alpha") { IntProp = 2, StringProp = "beta" }, null } , // 280/281/212
+                new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass {IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass(3, "gamma") }, // IBinarySerializable array - 316/317/248
+                new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}}, null }, // IBinarySerializable array - 160/161/92
+                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "beta", Bytes3 = new byte[] {3, 2, 1}} }, // array custom struct - 254/178/109
 
-                new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alma"}, new SystemSerializableStruct {IntProp = 2, StringProp = "béka"}, null, 1}, // - 309/312/243
+                new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alpha"}, new SystemSerializableStruct {IntProp = 2, StringProp = "beta"}, null, 1}, // - 309/312/243
                 new IConvertible[] { null, 1 }, // - 33/34/34
                 new IConvertible[][] { null, new IConvertible[]{ null, 1},  }, // - 56 -> 40/41/41
             };
@@ -1794,37 +2438,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeNullableArrays()
         {
-            object[] referenceObjects = 
-            {
-                new bool?[] { true, false, null }, // 10
-                new sbyte?[] { 1, 2, null }, // 10
-                new byte?[] { 1, 2, null }, // 10
-                new short?[] { 1, 2, null }, // 12
-                new ushort?[] { 1, 2, null }, //12
-                new int?[] { 1, 2, null }, // -> 16
-                new uint?[] { 1, 2, null }, // 16
-                new long?[] { 1, 2, null }, // 24
-                new ulong?[] { 1, 2, null }, // 24
-                new char?[] { 'a', /*Char.ConvertFromUtf32(0x1D161)[0],*/ null }, // 9
-                new float?[] { 1, 2, null }, // 16
-                new double?[] { 1, 2, null }, // 24
-                new decimal?[] { 1, 2, null }, // 40
-                new DateTime?[] { DateTime.UtcNow, DateTime.Now, null }, // 26
-                new IntPtr?[] { new IntPtr(1), IntPtr.Zero, null }, // 24
-                new UIntPtr?[] { new UIntPtr(1), UIntPtr.Zero, null }, // 24
-                new Guid?[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid(), null }, // 40
-                new TimeSpan?[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks), null }, // 24
-                new DateTimeOffset?[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)), null }, // 39
+            object[] referenceObjects =
+                {
+                    new bool?[] { true, false, null }, // 10
+                    new sbyte?[] { 1, 2, null }, // 10
+                    new byte?[] { 1, 2, null }, // 10
+                    new short?[] { 1, 2, null }, // 12
+                    new ushort?[] { 1, 2, null }, //12
+                    new int?[] { 1, 2, null }, // -> 16
+                    new uint?[] { 1, 2, null }, // 16
+                    new long?[] { 1, 2, null }, // 24
+                    new ulong?[] { 1, 2, null }, // 24
+                    new char?[] { 'a', /*Char.ConvertFromUtf32(0x1D161)[0],*/ null }, // 9
+                    new float?[] { 1, 2, null }, // 16
+                    new double?[] { 1, 2, null }, // 24
+                    new decimal?[] { 1, 2, null }, // 40
+                    new DateTime?[] { DateTime.UtcNow, DateTime.Now, null }, // 26
+                    new IntPtr?[] { new IntPtr(1), IntPtr.Zero, null }, // 24
+                    new UIntPtr?[] { new UIntPtr(1), UIntPtr.Zero, null }, // 24
+                    new Guid?[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid(), null }, // 40
+                    new TimeSpan?[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks), null }, // 24
+                    new DateTimeOffset?[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)), null }, // 39
 
-                new TestEnumByte?[] { TestEnumByte.One, TestEnumByte.Two, null }, // 130
+                    new TestEnumByte?[] { TestEnumByte.One, TestEnumByte.Two, null }, // 130
 
-                new DictionaryEntry?[] { new DictionaryEntry(1, "alma"), null}, // 21
-                new KeyValuePair<int, string>?[] { new KeyValuePair<int,string>(1, "alma"), null}, // 21
-                new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?,int?>(1, 2), new KeyValuePair<int?,int?>(2, null), null}, // 28
+                    new DictionaryEntry?[] { new DictionaryEntry(1, "alpha"), null}, // 21
+                    new KeyValuePair<int, string>?[] { new KeyValuePair<int,string>(1, "alpha"), null}, // 21
+                    new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?,int?>(1, 2), new KeyValuePair<int?,int?>(2, null), null}, // 28
 
-                new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, null }, // 151
-                new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, null }, // 206
-            };
+                    new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null }, // 151
+                    new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null }, // 206
+                };
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
@@ -1834,7 +2478,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
-                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alma"}, null }, // 195/159/90
+                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alpha"}, null }, // 195/159/90
                 new BitVector32?[] { new BitVector32(13), null }, // 11/11/11
                 new BitVector32.Section?[] { BitVector32.CreateSection(13), null }, // 11/11/11
             };
@@ -1862,8 +2506,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                     new HashSet<int> { 1, 2, 3},
                     new HashSet<int[]> { new int[]{1, 2, 3}, null },
-                    new HashSet<string>(StringComparer.CurrentCulture) { "alma", "Alma", "ALMA" },
-                    new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "alma", "Alma", "ALMA" },
+                    new HashSet<string>(StringComparer.CurrentCulture) { "alpha", "Alpha", "ALPHA" },
+                    new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "Alpha", "ALPHA" },
                     new HashSet<TestEnumByte>(EnumComparer<TestEnumByte>.Comparer) { TestEnumByte.One, TestEnumByte.Two },
 
                     new Queue<int>(new[]{ 1, 2, 3}),
@@ -1875,39 +2519,39 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new CircularList<int>(new[]{ 1, 2, 3}),
                     new CircularList<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
 
-#if NET40 || NET45
+                    #if NET40 || NET45
                     new SortedSet<int>(new[]{ 1, 2, 3}),
                     new SortedSet<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
-                    new SortedSet<string>(StringComparer.CurrentCulture) { "alma", "Alma", "ALMA" },
-                    new SortedSet<string>(StringComparer.OrdinalIgnoreCase) { "alma", "Alma", "ALMA" },
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
+                    new SortedSet<string>(StringComparer.CurrentCulture) { "alpha", "Alpha", "ALPHA" },
+                    new SortedSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "Alpha", "ALPHA" },
+                    #elif !NET35
+                    #error .NET version is not set or not supported!
+                    #endif
 
-                    new Dictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
+
+                    new Dictionary<int, string> { {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
                     new Dictionary<int, TestEnumByte> { {1, TestEnumByte.One}, {2, TestEnumByte.Two}},
-                    new Dictionary<int[], string[]> { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
-                    new Dictionary<string, int>(StringComparer.CurrentCulture) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
+                    new Dictionary<int[], string[]> { {new int[]{1}, new string[] {"alpha"}}, {new int[]{2}, null}},
+                    new Dictionary<string, int>(StringComparer.CurrentCulture) { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}},
                     new Dictionary<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
 
-                    new SortedList<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new SortedList<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
-                    new SortedList<string, int>(StringComparer.CurrentCulture) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
-                    new SortedList<string, int>(StringComparer.OrdinalIgnoreCase) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
+                    new SortedList<int, string> { {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
+                    new SortedList<int, string[]> { {1, new string[] {"alpha"}}, {2 , null}},
+                    new SortedList<string, int>(StringComparer.OrdinalIgnoreCase) { {"alpha", 1}, {"beta", 2}, {"gamma", 3}, {"delta", 4}},
                     new SortedList<TestEnumByte, int>(Comparer<TestEnumByte>.Default) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
                     new SortedList<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
 
-                    new SortedDictionary<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new SortedDictionary<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
-                    new SortedDictionary<string, int>(StringComparer.CurrentCulture) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
-                    new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
+                    new SortedDictionary<int, string> { {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
+                    new SortedDictionary<int, string[]> { {1, new string[] {"alpha"}}, {2 , null}},
+                    new SortedDictionary<string, int>(StringComparer.CurrentCulture) { { "alpha", 1}, { "beta", 2}, { "gamma", 3}, { "delta", 4}},
+                    new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "alpha", 1}, { "beta", 2}, { "gamma", 3}, { "delta", 4}},
                     new SortedDictionary<TestEnumByte, int>(Comparer<TestEnumByte>.Default) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
                     new SortedDictionary<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
 
-                    new CircularSortedList<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new CircularSortedList<int, string[]> { {1, new string[] {"alma"}}, {2 , null}},
-                    new CircularSortedList<string, int>(StringComparer.CurrentCulture) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
-                    new CircularSortedList<string, int>(StringComparer.OrdinalIgnoreCase) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
+                    new CircularSortedList<int, string> { {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
+                    new CircularSortedList<int, string[]> { {1, new string[] {"alpha"}}, {2 , null}},
+                    new CircularSortedList<string, int>(StringComparer.CurrentCulture) { { "alpha", 1}, { "beta", 2}, { "gamma", 3}, { "delta", 4}},
+                    new CircularSortedList<string, int>(StringComparer.OrdinalIgnoreCase) { { "alpha", 1}, { "beta", 2}, { "gamma", 3}, { "delta", 4}},
                     new CircularSortedList<TestEnumByte, int>(Comparer<TestEnumByte>.Default) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
                     new CircularSortedList<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
                 };
@@ -1924,32 +2568,32 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new ArrayList { 1, "alma", DateTime.Now }, // 34 -> 25
+                    new ArrayList { 1, "alpha", DateTime.Now }, // 34 -> 25
 
-                    new Hashtable { {1, "alma"}, { (byte)2, "béka"}, {3m, "cica"} },
-                    new Hashtable(StringComparer.CurrentCulture) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
+                    new Hashtable { {1, "alpha"}, { (byte)2, "beta"}, {3m, "gamma"} },
+                    new Hashtable(StringComparer.CurrentCulture) { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}},
 
-                    new Queue(new object[]{ 1, (byte)2, 3m, new string[]{"alma", "béka", "cica"} }),
+                    new Queue(new object[]{ 1, (byte)2, 3m, new string[]{"alpha", "beta", "gamma"} }),
 
-                    new Stack(new object[]{ 1, (byte)2, 3m, new string[]{"alma", "béka", "cica"} }),
+                    new Stack(new object[]{ 1, (byte)2, 3m, new string[]{"alpha", "beta", "gamma"} }),
 
-                    new StringCollection{ "alma", "béka", "cica" },
+                    new StringCollection{ "alpha", "beta", "gamma" },
 
-                    new SortedList{ {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new SortedList(StringComparer.CurrentCulture) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
-                    new SortedList(StringComparer.OrdinalIgnoreCase) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
+                    new SortedList{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
+                    new SortedList(StringComparer.CurrentCulture) { {"alpha", 1}, {"beta", 2}, {"gamma", 3}, {"delta", 4}},
+                    new SortedList(StringComparer.OrdinalIgnoreCase) { {"alpha", 1}, {"beta", 2}, {"gamma", 3}, {"delta", 4}},
 
-                    new ListDictionary{ {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new ListDictionary(StringComparer.CurrentCulture) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
-                    new ListDictionary(StringComparer.OrdinalIgnoreCase) { {"kerek", 1}, {"kerék", 2}, {"keres", 3}, {"kérés", 4}},
+                    new ListDictionary{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
+                    new ListDictionary(StringComparer.CurrentCulture) { {"alpha", 1}, {"beta", 2}, {"gamma", 3}, {"delta", 4}},
+                    new ListDictionary(StringComparer.OrdinalIgnoreCase) { {"alpha", 1}, {"beta", 2}, {"gamma", 3}, {"delta", 4}},
 
-                    new HybridDictionary(false) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
+                    new HybridDictionary(false) { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}},
 
-                    new OrderedDictionary { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
-                    new OrderedDictionary { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}}.AsReadOnly(),
-                    new OrderedDictionary(StringComparer.OrdinalIgnoreCase) { {"alma", 1}, {"béka", 2}, {"cica", 3}},
+                    new OrderedDictionary { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}},
+                    new OrderedDictionary { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}}.AsReadOnly(),
+                    new OrderedDictionary(StringComparer.OrdinalIgnoreCase) { {"alpha", 1}, {"beta", 2}, {"gamma", 3}},
 
-                    new StringDictionary{ {"a", "alma"}, {"b", "béka"}, {"c", "cica"}, {"x", null} },
+                    new StringDictionary{ {"a", "alpha"}, {"b", "beta"}, {"c", "gamma"}, {"x", null} },
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -1967,22 +2611,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new Collection<int> { 1, 2, 3 }, // -> 77/77
                     new Collection<int[]> { new int[]{1, 2, 3}, null }, // -> 85/85
                     new Collection<ReadOnlyCollection<int>>(new Collection<ReadOnlyCollection<int>>{new ReadOnlyCollection<int>(new int[]{ 1, 2, 3})}), // -> 166/166
-                    new Collection<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, default(BinarySerializableStruct) }, // -> 214/145
-                    new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alma" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "béka" }, null}, // -> 481/412
-                    
+                    new Collection<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) }, // -> 214/145
+                    new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null}, // -> 481/412
+
                     // collections of keyvalue pairs (as object and strongly typed as well)
-                    new Collection<object> { new KeyValuePair<int, object>(1, "alma"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alma", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) }, // -> 155/155
-                    new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alma"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alma", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } , // -> 141/151
+                    new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) }, // -> 155/155
+                    new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } , // -> 141/151
 
                     new ReadOnlyCollection<int>(new int[]{ 1, 2, 3}), // -> 85/85
                     new ReadOnlyCollection<int[]>(new int[][]{new int[]{1, 2, 3}, null}), // -> 93/93
 
-                    new CustomNonGenericCollection { "alma", 2, null }, // -> 198/129
-                    new CustomNonGenericDictionary { { "alma", 2 }, { "béka", null } }, // -> 328/259
+                    new CustomNonGenericCollection { "alpha", 2, null }, // -> 198/129
+                    new CustomNonGenericDictionary { { "alpha", 2 }, { "beta", null } }, // -> 328/259
                     new CustomGenericCollection<int> { 1, 2, 3 }, // -> 199/130
-                    new CustomGenericDictionary<int, string> { { 1, "alma" }, { 2, null } }, // -> 334/265
+                    new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } }, // -> 334/265
 
-                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alma"}} }, // -> 618/549
+                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alpha"}} }, // -> 618/549
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -2012,11 +2656,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new Dictionary<int, Queue<int>>{{1, new Queue<int>(new[]{1,2})}, {2, null}}, // Queue
                     new Dictionary<int, Stack<int>>{{1, new Stack<int>(new[]{1,2})}, {2, null}}, // Stack
                     new Dictionary<int, CircularList<int>>{{1, new CircularList<int>{1, 2}}, {2, null}}, // CircularList
-#if NET40 || NET45
+                    #if NET40 || NET45
                     new Dictionary<int, SortedSet<int>>{{1, new SortedSet<int>{1, 2}}, {2, null}}, // SortedSet
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
+                    #elif !NET35
+                    #error .NET version is not set or not supported!
+                    #endif
+
 
                     // generic dictionary value
                     new Dictionary<int, Dictionary<int, int>>{{1, new Dictionary<int, int>{{1, 2}}}, {2, null}}, // Dictionary
@@ -2031,7 +2676,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new Dictionary<int, Queue>{{1, new Queue(new[]{1, 2})}, {2, null}}, // Queue
                     new Dictionary<int, Stack>{{1, new Stack(new[]{1, 2})}, {2, null}}, // Stack
                     new Dictionary<int, StringCollection>{{1, new StringCollection()}, {2, null}}, // StringCollection
-                    
+
                     // non-generic dictionary value
                     new Dictionary<int, Hashtable>{{1, new Hashtable{{1, 2}}}, {2, null}}, // Hashtable
                     new Dictionary<int, SortedList>{{1, new SortedList{{1, 2}}}, {2, null}}, // SortedList
@@ -2069,53 +2714,53 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new List<byte[]> { new byte[]{ 11, 12, 13}, new byte[] {21, 22} }, // list of arrays
 
                     // a single key-value pair with a dictionary somewhere in value
-                    new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("cica", new Dictionary<string, string>{{"alma", "béka"}})),
+                    new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("gamma", new Dictionary<string, string>{{"alpha", "beta"}})),
 
                     // dictionary with dictionary<int, string> value
-                    new Dictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string>{ {1, "alma"}, {2, "béka"}, {3, "cica"}}}, {"en", new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
+                    new Dictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {"en", new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
 
                     // dictionary with dictionary<int, IBinarySerializable> value
-                    new Dictionary<string, Dictionary<int, IBinarySerializable>> { { "alma", new Dictionary<int, IBinarySerializable>{ {1, null}, {2, new BinarySerializableClass{IntProp = 2, StringProp = "béka"}}, {3, new BinarySerializableStruct{IntProp = 3, StringProp = "cica"}}}}, {"en", null} },
+                    new Dictionary<string, Dictionary<int, IBinarySerializable>> { { "alpha", new Dictionary<int, IBinarySerializable>{ {1, null}, {2, new BinarySerializableClass{IntProp = 2, StringProp = "beta"}}, {3, new BinarySerializableStruct{IntProp = 3, StringProp = "gamma"}}}}, {"en", null} },
 
                     // dictionary with array key
-                    new Dictionary<string[], Dictionary<int, string>> { { new string[] {"hu"}, new Dictionary<int, string>{ {1, "alma"}, {2, "béka"}, {3, "cica"}}}, {new string[] {"en"}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
+                    new Dictionary<string[], Dictionary<int, string>> { { new string[] {"hu"}, new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {new string[] {"en"}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
 
                     // dictionary with dictionary key and value
-                    new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string>{{new int[] {1}, "key.value1"}}, new Dictionary<int, string>{ {1, "alma"}, {2, "béka"}, {3, "cica"}}}, {new Dictionary<int[], string>{{new int[] {2}, "key.value2"}}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
+                    new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string>{{new int[] {1}, "key.value1"}}, new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {new Dictionary<int[], string>{{new int[] {2}, "key.value2"}}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
 
                     // dictionary with many non-system types
-                    new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable>{{BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}} }} },
+                    new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable>{{BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}} }} },
 
                     // object list vith various elements
-                    new List<object> { 1, "alma", new Version(13,0), new SystemSerializableClass{IntProp = 2, StringProp = "béka" }, new object[]{ new BinarySerializableClass{IntProp = 3, StringProp = "cica"}}},
+                    new List<object> { 1, "alpha", new Version(13,0), new SystemSerializableClass{IntProp = 2, StringProp = "beta" }, new object[]{ new BinarySerializableClass{IntProp = 3, StringProp = "gamma"}}},
 
                     // dictionary with object key and value
-                    new Dictionary<object, object> { {1, "alma"}, {new object(), "béka"}, {new int[] {3, 4}, null}, { TestEnumByte.One, new BinarySerializableStruct{IntProp = 13, StringProp = "cica"} }},
+                    new Dictionary<object, object> { {1, "alpha"}, {new object(), "beta"}, {new int[] {3, 4}, null}, { TestEnumByte.One, new BinarySerializableStruct{IntProp = 13, StringProp = "gamma"} }},
 
                     // dictionary with read-only collection value
                     new Dictionary<object, ReadOnlyCollection<int>> { {1, new ReadOnlyCollection<int>(new[]{1, 2})}},
 
                     // lists with binary serializable elements
-                    new List<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, default(BinarySerializableStruct) },
-                    new List<BinarySerializableStruct?> { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, default(BinarySerializableStruct?) },
-                    new List<BinarySerializableClass> { new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass(2, "béka"), null },
-                    new List<BinarySerializableSealedClass> { new BinarySerializableSealedClass(1, "alma"), null },
-                    new List<IBinarySerializable> { new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass(2, "béka"), new BinarySerializableStruct{IntProp = 3, StringProp = "cica"}, null },
+                    new List<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) },
+                    new List<BinarySerializableStruct?> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct?) },
+                    new List<BinarySerializableClass> { new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass(2, "beta"), null },
+                    new List<BinarySerializableSealedClass> { new BinarySerializableSealedClass(1, "alpha"), null },
+                    new List<IBinarySerializable> { new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass(2, "beta"), new BinarySerializableStruct{IntProp = 3, StringProp = "gamma"}, null },
 
                     // lists with default recursive elements
-                    new List<SystemSerializableStruct> { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, default(SystemSerializableStruct) },
-                    new List<SystemSerializableStruct?> { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, default(SystemSerializableStruct?) },
-                    new List<SystemSerializableClass> { new SystemSerializableClass {IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass {IntProp = 2, StringProp = "béka"}, null },
-                    new List<SystemSerializableSealedClass> { new SystemSerializableSealedClass {IntProp = 1, StringProp = "alma"}, null },
+                    new List<SystemSerializableStruct> { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(SystemSerializableStruct) },
+                    new List<SystemSerializableStruct?> { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(SystemSerializableStruct?) },
+                    new List<SystemSerializableClass> { new SystemSerializableClass {IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass {IntProp = 2, StringProp = "beta"}, null },
+                    new List<SystemSerializableSealedClass> { new SystemSerializableSealedClass {IntProp = 1, StringProp = "alpha"}, null },
 
                     // lists with custom recursive elements
-                    new List<CustomSerializableStruct> { new CustomSerializableStruct{IntProp = 1, StringProp = "alma"}, default(CustomSerializableStruct) },
-                    new List<CustomSerializableStruct?> { new CustomSerializableStruct{IntProp = 1, StringProp = "alma"}, default(CustomSerializableStruct?) },
-                    new List<CustomSerializedClass> { new CustomSerializedClass{ Name = "alma", Bool = true }, new CustomSerializedSealedClass("béka") { Bool = null }, null },
-                    new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alma") { Bool = false }, null },
+                    new List<CustomSerializableStruct> { new CustomSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(CustomSerializableStruct) },
+                    new List<CustomSerializableStruct?> { new CustomSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(CustomSerializableStruct?) },
+                    new List<CustomSerializedClass> { new CustomSerializedClass{ Name = "alpha", Bool = true }, new CustomSerializedSealedClass("beta") { Bool = null }, null },
+                    new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
 
                     new IList<int>[] { new int[]{1, 2, 3}, new List<int>{1, 2, 3}},
-                    new List<IList<int>> { new int[]{1, 2, 3}, new List<int>{1, 2, 3} } 
+                    new List<IList<int>> { new int[]{1, 2, 3}, new List<int>{1, 2, 3} }
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -2131,11 +2776,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new Cache<int, string> { {1, "alma"}, {2, "béka"}, {3, "cica"}},
-                    new Cache<int[], string[]> { {new int[]{1}, new string[] {"alma"}}, {new int[]{2}, null}},
-                    new Cache<string, int>(StringComparer.CurrentCulture) { {"alma", 1}, {"Alma", 2}, {"ALMA", 3}},
+                    new Cache<int, string> { {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
+                    new Cache<int[], string[]> { {new int[]{1}, new string[] {"alpha"}}, {new int[]{2}, null}},
+                    new Cache<string, int>(StringComparer.CurrentCulture) { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}},
                     new Cache<TestEnumByte, int> { {TestEnumByte.One, 1}, {TestEnumByte.Two, 2}},
-                    new Cache<string, string>(s => s.ToUpper()) { {"alma", "ALMA"}},
+                    new Cache<string, string>(s => s.ToUpper()) { {"alpha", "ALPHA"}},
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -2153,10 +2798,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             try
             {
                 object[] referenceObjects =
-                {
-                    new MemoryStreamWithEquals(), // local
-                    domain.CreateInstanceAndUnwrap(Assembly.GetExecutingAssembly().FullName, typeof(MemoryStreamWithEquals).FullName) // remote
-                };
+                    {
+                        new MemoryStreamWithEquals(), // local
+                        domain.CreateInstanceAndUnwrap(Assembly.GetExecutingAssembly().FullName, typeof(MemoryStreamWithEquals).FullName) // remote
+                    };
 
                 // default - does not work for remote objects
                 //try
@@ -2205,7 +2850,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new HashSet<int>{1}, // generic, natively supported for KGySoft only, in core
                     TestEnumByte.One, // non standard assembly
                     new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
-                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alma"}} },
+                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alpha"}} },
                     // new CustomSerializedSealedClass("1"), // type is changed on serialization: System BF fail: the binder gets the original type instead of the changed one
                 };
 
@@ -2278,91 +2923,93 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
+
         }
 
         [Test]
         public void SerializationSurrogateTest()
         {
             object[] referenceObjects =
-            {
-                // simple types
-                new object(),
-                DBNull.Value,
-                true,
-                (sbyte)1,
-                (byte)1,
-                (short)1,
-                (ushort)1,
-                (int)1,
-                (uint)1,
-                (long)1,
-                (ulong)1,
-                'a',
-                "alma",
-                (float)1,
-                (double)1,
-                (decimal)1,
-                DateTime.UtcNow,
-                DateTime.Now,
-                new IntPtr(1),
-                new UIntPtr(1),
-                new Version(1, 2, 3, 4),
-                new Guid("ca761232ed4211cebacd00aa0057b223"),
-                new TimeSpan(1, 1, 1),
-                new DateTimeOffset(DateTime.Now),
-                new DateTimeOffset(DateTime.UtcNow),
-                new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
-                new Uri(@"x:\teszt"),
-                new DictionaryEntry(1, "alma"),
-                new KeyValuePair<int,string>(1, "alma"),
-                new BitArray(new[] {true, false, true}),
-                new StringBuilder("alma"),
+                {
+                    // simple types
+                    new object(),
+                    DBNull.Value,
+                    true,
+                    (sbyte)1,
+                    (byte)1,
+                    (short)1,
+                    (ushort)1,
+                    (int)1,
+                    (uint)1,
+                    (long)1,
+                    (ulong)1,
+                    'a',
+                    "alpha",
+                    (float)1,
+                    (double)1,
+                    (decimal)1,
+                    DateTime.UtcNow,
+                    DateTime.Now,
+                    new IntPtr(1),
+                    new UIntPtr(1),
+                    new Version(1, 2, 3, 4),
+                    new Guid("ca761232ed4211cebacd00aa0057b223"),
+                    new TimeSpan(1, 1, 1),
+                    new DateTimeOffset(DateTime.Now),
+                    new DateTimeOffset(DateTime.UtcNow),
+                    new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
+                    new Uri(@"x:\teszt"),
+                    new DictionaryEntry(1, "alpha"),
+                    new KeyValuePair<int,string>(1, "alpha"),
+                    new BitArray(new[] {true, false, true}),
+                    new StringBuilder("alpha"),
 
-                TestEnumByte.Two,
-                new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alma"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }),  },
+                    TestEnumByte.Two,
+                    new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }),  },
 
-                // dictionary with any object key and read-only collection value
-                new Dictionary<object, ReadOnlyCollection<int>> { {1, new ReadOnlyCollection<int>(new[]{1, 2})}, { new SystemSerializableClass { IntProp = 1, StringProp = "alma" }, null}},
+                    // dictionary with any object key and read-only collection value
+                    new Dictionary<object, ReadOnlyCollection<int>> { {1, new ReadOnlyCollection<int>(new[]{1, 2})}, { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, null}},
 
-                // nested default recursion
-                new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alma" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "béka" }, null},
-                new CustomSerializedClass { Bool = false, Name = "cica" },
+                    // nested default recursion
+                    new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null},
+                    new CustomSerializedClass { Bool = false, Name = "gamma" },
 
-                new CustomGenericCollection<TestEnumByte> {TestEnumByte.One, TestEnumByte.Two},
-                new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> {{TestEnumByte.One, new CustomSerializedClass { Name = "alma" }}},
+                    new CustomGenericCollection<TestEnumByte> {TestEnumByte.One, TestEnumByte.Two},
+                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> {{TestEnumByte.One, new CustomSerializedClass { Name = "alpha" }}},
 
-                // nullable arrays
-                new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, null },
-                new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, null },
+                    // nullable arrays
+                    new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
+                    new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
 
-                // lists with binary serializable elements
-                new List<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, default(BinarySerializableStruct) },
-                new List<BinarySerializableStruct?> { new BinarySerializableStruct{IntProp = 1, StringProp = "alma"}, default(BinarySerializableStruct?) },
-                new List<BinarySerializableClass> { new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass(2, "béka"), null },
-                new List<BinarySerializableSealedClass> { new BinarySerializableSealedClass(1, "alma"), null },
-                new List<IBinarySerializable> { new BinarySerializableClass {IntProp = 1, StringProp = "alma"}, new BinarySerializableSealedClass(2, "béka"), new BinarySerializableStruct{IntProp = 3, StringProp = "cica"}, null },
+                    // lists with binary serializable elements
+                    new List<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) },
+                    new List<BinarySerializableStruct?> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct?) },
+                    new List<BinarySerializableClass> { new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass(2, "beta"), null },
+                    new List<BinarySerializableSealedClass> { new BinarySerializableSealedClass(1, "alpha"), null },
+                    new List<IBinarySerializable> { new BinarySerializableClass {IntProp = 1, StringProp = "alpha"}, new BinarySerializableSealedClass(2, "beta"), new BinarySerializableStruct{IntProp = 3, StringProp = "gamma"}, null },
 
-                // lists with default recursive elements
-                new List<SystemSerializableStruct> { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, default(SystemSerializableStruct) },
-                new List<SystemSerializableStruct?> { new SystemSerializableStruct{IntProp = 1, StringProp = "alma"}, default(SystemSerializableStruct?) },
-                new List<SystemSerializableClass> { new SystemSerializableClass {IntProp = 1, StringProp = "alma"}, new SystemSerializableSealedClass {IntProp = 2, StringProp = "béka"}, null },
-                new List<SystemSerializableSealedClass> { new SystemSerializableSealedClass {IntProp = 1, StringProp = "alma"}, null },
+                    // lists with default recursive elements
+                    new List<SystemSerializableStruct> { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(SystemSerializableStruct) },
+                    new List<SystemSerializableStruct?> { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(SystemSerializableStruct?) },
+                    new List<SystemSerializableClass> { new SystemSerializableClass {IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass {IntProp = 2, StringProp = "beta"}, null },
+                    new List<SystemSerializableSealedClass> { new SystemSerializableSealedClass {IntProp = 1, StringProp = "alpha"}, null },
 
-                // lists with custom recursive elements
-                new List<CustomSerializableStruct> { new CustomSerializableStruct{IntProp = 1, StringProp = "alma"}, default(CustomSerializableStruct) },
-                new List<CustomSerializableStruct?> { new CustomSerializableStruct{IntProp = 1, StringProp = "alma"}, default(CustomSerializableStruct?) },
-                new List<CustomSerializedClass> { new CustomSerializedClass{ Name = "alma", Bool = true }, new CustomSerializedSealedClass("béka") { Bool = null }, null },
-                new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alma") { Bool = false }, null },
+                    // lists with custom recursive elements
+                    new List<CustomSerializableStruct> { new CustomSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(CustomSerializableStruct) },
+                    new List<CustomSerializableStruct?> { new CustomSerializableStruct{IntProp = 1, StringProp = "alpha"}, default(CustomSerializableStruct?) },
+                    new List<CustomSerializedClass> { new CustomSerializedClass{ Name = "alpha", Bool = true }, new CustomSerializedSealedClass("beta") { Bool = null }, null },
+                    new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
 
-                // collections with native support
-                new CircularList<int>{ 1, 2, 3},
-#if NET40 || NET45
-                new SortedSet<int>{ 1, 2, 3},
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-                new CircularSortedList<int, int>{ {1, 1}, {2, 2}, {3, 3}},
-            };
+                    // collections with native support
+                    new CircularList<int>{ 1, 2, 3},
+                    #if NET40 || NET45
+                    new SortedSet<int>{ 1, 2, 3},
+                    #elif !NET35
+                    #error .NET version is not set or not supported!
+                    #endif
+
+                    new CircularSortedList<int, int>{ {1, 1}, {2, 2}, {3, 3}},
+                };
 
             // default
             // SystemSerializeObjects(referenceObjects); system serialization fails: IBinarySerializable is not serializable
@@ -2474,13 +3121,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         public void SerializeSameValues()
         {
             object one = 1;
-            string s1 = "alma";
+            string s1 = "alpha";
             string s2 = String.Format("{0}{1}", "al", "ma");
             SystemSerializableClass tc = new SystemSerializableClass { IntProp = 10, StringProp = "s1" };
             object ts = new SystemSerializableStruct { IntProp = 10, StringProp = "s1" };
             object[] referenceObjects =
                 {   // *: Id is generated on system serialization
-                    new object[] { 1, 2, 3 }, // different objects - 14 -> 18
+                        new object[] { 1, 2, 3 }, // different objects - 14 -> 18
                     new object[] { 1, 1, 1 }, // same values but different instances - 14 -> 12
                     new object[] { one, one, one }, // same value type boxed reference - 14 -> 12
                     new object[] { s1, s1 }, // same references* - 19 -> 15
@@ -2548,7 +3195,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-        #region PrivateMethods
+        #region Private Methods
 
         private void SystemSerializeObject(object obj, bool safeCompare = false)
         {
@@ -2696,73 +3343,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private static byte[] SerializeObjects(object[] objects, IFormatter formatter)
-        {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                formatter.Serialize(ms, objects.Length);
-                BinaryWriter bw = null;
-                BinarySerializationFormatter bsf = null;
-                if (dumpDetails && formatter is BinarySerializationFormatter)
-                {
-                    bw = new TestWriter(ms, dumpDetails);
-                    bsf = formatter as BinarySerializationFormatter;
-                }
+        #endregion
 
-                foreach (object o in objects)
-                {
-                    long pos = ms.Position;
-                    if (bsf != null)
-                        bsf.SerializeByWriter(bw, o);
-                    else
-                        formatter.Serialize(ms, o);
-                    Console.WriteLine("{0} - length: {1}", o == null ? "<null>" : o.GetType().ToString(), ms.Position - pos);
-                }
-                Console.WriteLine("Full length: {0}", ms.Length);
-                if (dumpSerContent)
-                    Console.WriteLine(ToRawString(ms.ToArray()));
-                return ms.ToArray();
-            }
-        }
-
-        private static object[] DeserializeObjects(byte[] serObjects, IFormatter formatter)
-        {
-            using (MemoryStream ms = new MemoryStream(serObjects))
-            {
-                int length;
-                object[] result = new object[length = (int)formatter.Deserialize(ms)];
-
-                BinaryReader br = null;
-                BinarySerializationFormatter bsf = null;
-                if (dumpDetails && formatter is BinarySerializationFormatter)
-                {
-                    br = new TestReader(ms, dumpDetails);
-                    bsf = formatter as BinarySerializationFormatter;
-                }
-
-                for (int i = 0; i < length; i++)
-                {
-                    result[i] = bsf != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
-                }
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// Converts the byte array (deemed as extended 8-bit ASCII characters) to raw Unicode UTF-8 string representation.
-        /// </summary>
-        /// <param name="bytes">The bytes to visualize as a raw UTF-8 data.</param>
-        /// <remarks>
-        /// <note type="caution">
-        /// Please note that the .NET <see cref="string"/> type is always UTF-16 encoded. What this method does is
-        /// not parsing an UTF-8 encoded stream but a special conversion that makes possible to display a byte array as a raw UTF-8 data.
-        /// To convert a byte array to a regular <see cref="string"/> for usual purposes
-        /// use <see cref="Encoding.Convert(System.Text.Encoding,System.Text.Encoding,byte[])"/> method instead.
-        /// </note>
-        /// </remarks>
-        /// <returns>
-        /// A <see cref="string"/> instance that is good for visualizing a raw UTF-8 string.</returns>
-        private static string ToRawString(byte[] bytes) => Encoding.Default.GetString(bytes).Replace('\0', '\u25A1'); // "\0" to "□" in output
+        #endregion
 
         #endregion
     }
