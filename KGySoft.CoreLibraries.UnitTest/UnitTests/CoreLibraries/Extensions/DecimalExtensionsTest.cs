@@ -1,117 +1,94 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: DecimalExtensionsTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+
 using KGySoft.Annotations;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 {
     [TestFixture]
     public class DecimalExtensionsTest : TestBase
     {
+        #region Fields
+
         private static readonly decimal decimalEpsilon = new decimal(1, 0, 0, false, 28);
         private static readonly double diffTolerance = 1E-10d;
+        private static readonly decimal[] logETestSource = { 1, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
+        private static readonly decimal[] log10TestSource = { 1, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
+        private static readonly decimal[] logTestSource = { 1, 2, 3, 4, 8, 9, 10, 27, 128, 256, 1 << 16, 1L << 62, 1.1m, 0.00000000000001m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
+        private static readonly decimal[] powETestSource = { 0, 1, 2, 10, -1, -10, 0.1m, -0.1m, decimalEpsilon, -decimalEpsilon, Int16.MinValue, Int32.MinValue, Int64.MinValue, 66.500000000000000001m };
+        private static readonly decimal[] powTestSource = { 0.5m, -0.5m, 2, -2, 3, 10, 16 };
 
-        [Test]
-        public void LogETest()
+        #endregion
+
+        #region Methods
+
+        #region Static Methods
+
+        [AssertionMethod]
+        private static void AreEqual(double expected, decimal actualDecimal)
         {
-            TestLogE(1);
-            TestLogE(1.1m);
-            TestLogE(0.00000000000001m);
-            TestLogE(10m);
-            TestLogE(decimal.MaxValue);
-            TestLogE(decimalEpsilon);
-            TestLogE(1m / decimalEpsilon);
-            TestLogE(DecimalExtensions.E);
-            TestLogE(DecimalExtensions.PI);
+            var actual = (double)actualDecimal;
+            Console.WriteLine($"{actualDecimal.ToRoundtripString()} (double: {expected.ToRoundtripString()})");
+            Assert.IsTrue(Math.Max(expected, actual) - Math.Min(expected, actual) <= diffTolerance, $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
         }
 
-        [Test]
-        public void Log10Test()
+        #endregion
+
+        #region Instance Methods
+
+        #region Public Methods
+
+        [TestCaseSource(nameof(logETestSource))]
+        public void LogETest(decimal value)
         {
-            TestLog10(1);
-            TestLog10(1.1m);
-            TestLog10(0.00000000000001m);
-            TestLog10(10m);
-            TestLog10(decimal.MaxValue);
-            TestLog10(decimalEpsilon);
-            TestLog10(1m / decimalEpsilon);
-            TestLog10(DecimalExtensions.E);
-            TestLog10(DecimalExtensions.PI);
+            Console.Write($"base e log of {value.ToRoundtripString()}: ");
+            AreEqual(Math.Log((double)value), value.Log());
         }
 
-        [Test]
-        public void Log2Test() => LogTest(2);
-
-        [Test]
-        public void Log3Test() => LogTest(3);
-
-        [Test]
-        public void Log16Test() => LogTest(16);
-
-        [Test]
-        public void PowETest()
+        [TestCaseSource(nameof(log10TestSource))]
+        public void Log10Test(decimal value)
         {
-            TestPowE(0);
-            TestPowE(1);
-            TestPowE(2);
-            TestPowE(10);
-            TestPowE(-1);
-            TestPowE(-10);
-            TestPowE(0.1m);
-            TestPowE(-0.1m);
-            TestPowE(decimalEpsilon);
-            TestPowE(-decimalEpsilon);
-            TestPowE(short.MinValue);
-            TestPowE(int.MinValue);
-            TestPowE(long.MinValue);
-            TestPowE(66.500000000000000001m);
-            Throws<OverflowException>(() => TestPowE(66.6m));
+            Console.Write($"base 10 log of {value.ToRoundtripString()}: ");
+            AreEqual(Math.Log10((double)value), value.Log10());
         }
 
-        [Test]
-        public void Pow05Test() => PowTest(0.5m);
-
-        [Test]
-        public void Pow_05Test() => PowTest(-0.5m);
-
-        [Test]
-        public void Pow2Test() => PowTest(2);
-
-        [Test]
-        public void Pow_2Test() => PowTest(-2);
-
-        [Test]
-        public void Pow3Test() => PowTest(3);
-
-        [Test]
-        public void Pow10Test() => PowTest(10);
-
-        [Test]
-        public void Pow16Test() => PowTest(16);
-
-        private void LogTest(decimal @base)
+        [TestCaseSource(nameof(logTestSource))]
+        public void LogTest(decimal value)
         {
-            TestLog(1, @base);
-            TestLog(2, @base);
-            TestLog(3, @base);
-            TestLog(4, @base);
-            TestLog(8, @base);
-            TestLog(9, @base);
-            TestLog(10m, @base);
-            TestLog(27, @base);
-            TestLog(128, @base);
-            TestLog(256, @base);
-            TestLog(1 << 16, @base);
-            TestLog(1 << 64, @base);
-            TestLog(1.1m, @base);
-            TestLog(0.00000000000001m, @base);
-            TestLog(decimal.MaxValue, @base);
-            TestLog(decimalEpsilon, @base);
-            TestLog(1m / decimalEpsilon, @base);
-            TestLog(DecimalExtensions.E, @base);
-            TestLog(DecimalExtensions.PI, @base);
+            void TestLog(decimal d, decimal newBase)
+            {
+                Console.Write($"base {newBase} log of {d.ToRoundtripString()}: ");
+                AreEqual(Math.Log((double)d, (double)newBase), d.Log(newBase));
+            }
+
+            TestLog(value, 2);
+            TestLog(value, 3);
+            TestLog(value, 16);
         }
 
-        private void TestPowE(decimal power)
+        [TestCaseSource(nameof(powETestSource))]
+        public void PowETest(decimal power)
         {
             Console.Write($"e raised to {power.ToRoundtripString()}: ");
             try
@@ -125,8 +102,36 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             }
         }
 
+        [Test]
+        public void PowETestOverflow() => Throws<OverflowException>(() => PowETest(66.6m));
+
+        #endregion
+
+        #region Private Methods
+
+        [TestCaseSource(nameof(powTestSource))]
         private void PowTest(decimal value)
         {
+            void TestPow(decimal d, decimal power)
+            {
+                Console.Write($"{d} raised to {power.ToRoundtripString()}: ");
+                var doubleResult = Math.Pow((double)d, (double)power);
+                try
+                {
+                    AreEqual(doubleResult, d.Pow(power));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    if (d < 0 && power != Math.Round(power))
+                        Assert.IsInstanceOf(typeof(ArgumentOutOfRangeException), e);
+                    else if (doubleResult > (double)decimal.MaxValue || doubleResult < (double)decimal.MinValue)
+                        Assert.IsInstanceOf(typeof(OverflowException), e);
+                    else
+                        throw;
+                }
+            }
+
             TestPow(value, 0);
             TestPow(value, 1);
             TestPow(value, -1);
@@ -140,50 +145,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             TestPow(value, -28);
         }
 
-        private void TestPow(decimal value, decimal power)
-        {
-            Console.Write($"{value} raised to {power.ToRoundtripString()}: ");
-            var doubleResult = Math.Pow((double)value, (double)power);
-            try
-            {
-                AreEqual(doubleResult, value.Pow(power));
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
-                if (value < 0 && power != Math.Round(power))
-                    Assert.IsInstanceOf(typeof(ArgumentOutOfRangeException), e);
-                else if (doubleResult > (double)decimal.MaxValue || doubleResult < (double)decimal.MinValue)
-                    Assert.IsInstanceOf(typeof(OverflowException), e);
-                else
-                    throw;
-            }
-        }
+        #endregion
 
-        private void TestLogE(decimal value)
-        {
-            Console.Write($"base e log of {value.ToRoundtripString()}: ");
-            AreEqual(Math.Log((double)value), value.Log());
-        }
+        #endregion
 
-        private void TestLog(decimal value, decimal newBase)
-        {
-            Console.Write($"base {newBase} log of {value.ToRoundtripString()}: ");
-            AreEqual(Math.Log((double)value, (double)newBase), value.Log(newBase));
-        }
-
-        private void TestLog10(decimal value)
-        {
-            Console.Write($"base 10 log of {value.ToRoundtripString()}: ");
-            AreEqual(Math.Log10((double)value), value.Log10());
-        }
-
-        [AssertionMethod]
-        private void AreEqual(double expected, decimal actualDecimal)
-        {
-            var actual = (double)actualDecimal;
-            Console.WriteLine($"{actualDecimal.ToRoundtripString()} (double: {expected.ToRoundtripString()})");
-            Assert.IsTrue(Math.Max(expected, actual) - Math.Min(expected, actual) <= diffTolerance, $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
-        }
+        #endregion
     }
 }

@@ -1,10 +1,32 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: CircularListTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
@@ -14,26 +36,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
     [TestFixture]
     public class CircularListTest
     {
-        [Test]
-        public void Construction()
+        #region Constants
+
+        private const string testString = "dummy";
+
+        #endregion
+        
+        #region Methods
+
+        #region Static Methods
+
+        /// <summary>
+        /// Creates a list with given conditions
+        /// </summary>
+        private static CircularList<T> PrepareList<T>(int capacity, int startIndex, int count)
         {
-            // default constructor
-            new CircularList<int>();
+            CircularList<T> result = new CircularList<T>(capacity);
+            Reflector.SetField(result, "startIndex", startIndex);
+            Type type = typeof(T);
+            if (type.IsNullable())
+                type = Nullable.GetUnderlyingType(type);
 
-            // setting capacity
-            new CircularList<int>(10);
-
-            // construction from ICollection<int> (Count is known)
-            new CircularList<int>(new int[] { 1, 2, 3, 4, 5 });
-
-            // construction from IEnumarable<int> (Count is not known, resizing is needed once)
-            new CircularList<int>(new int[] { 1, 2, 3, 4, 5 }.Select(i => i));
+            for (int i = 0; i < count; i++)
+            {
+                result.Add((T)Convert.ChangeType(i, type));
+            }
+            return result;
         }
+
+        #endregion
+
+        #region Instance Methods
 
         [Test]
         public void AddLastAndFirst()
         {
-            CircularList<int> list = new CircularList<int>();
+            var list = new CircularList<int>();
             list.Add(1); // Resize to 4; [0] = 1
             Assert.AreEqual(list[list.Count - 1], 1);
             list.Add(2); // [1] = 2
@@ -48,9 +86,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(list[list.Count - 1], 3);
 
             for (int i = 0; i < list.Count; i++)
-            {
                 Assert.AreEqual(list[i], i - 2);
-            }
         }
 
         [Test]
@@ -68,12 +104,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             CircularList<int> list = PrepareList<int>(4, 3, 2);
 
-            list.Insert(0, Int32.MinValue); // addfirst
+            list.Insert(0, Int32.MinValue); // add first
             Assert.AreEqual(Int32.MinValue, list[0]);
-            list.Insert(list.Count, Int32.MaxValue); // addlast
+            list.Insert(list.Count, Int32.MaxValue); // add last
             Assert.AreEqual(Int32.MaxValue, list[list.Count - 1]);
 
-            list.Insert(0, -1); // addfirst with resize
+            list.Insert(0, -1); // add first with resize
             Assert.AreEqual(-1, list[0]);
             list.Insert(1, 1); // inserting into the middle "smoke test"
             Assert.AreEqual(1, list[1]);
@@ -85,89 +121,89 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             // shift up, carry -, startIndex 0
             CircularList<string> list = PrepareList<string>(8, 0, 4);
             List<string> refList = new List<string>(list);
-            list.Insert(3, "alma");
-            Assert.AreEqual("alma", list[3]);
-            refList.Insert(3, "alma");
+            list.Insert(3, testString);
+            Assert.AreEqual(testString, list[3]);
+            refList.Insert(3, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry -, startIndex 1, single shift inside the array
             list = PrepareList<string>(8, 1, 4);
             refList = new List<string>(list);
-            list.Insert(3, "alma");
-            Assert.AreEqual("alma", list[3]);
-            refList.Insert(3, "alma");
+            list.Insert(3, testString);
+            Assert.AreEqual(testString, list[3]);
+            refList.Insert(3, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry -, startIndex 1, single shift to the end
             list = PrepareList<string>(8, 1, 6);
             refList = new List<string>(list);
-            list.Insert(4, "alma");
-            Assert.AreEqual("alma", list[4]);
-            refList.Insert(4, "alma");
+            list.Insert(4, testString);
+            Assert.AreEqual(testString, list[4]);
+            refList.Insert(4, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 0, startIndex 2, toMove 1 (single element from end to head)
             list = PrepareList<string>(8, 2, 6);
             refList = new List<string>(list);
-            list.Insert(5, "alma");
-            Assert.AreEqual("alma", list[5]);
-            refList.Insert(5, "alma");
+            list.Insert(5, testString);
+            Assert.AreEqual(testString, list[5]);
+            refList.Insert(5, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 0, startIndex 2, toMove 2
             list = PrepareList<string>(8, 2, 7);
             refList = new List<string>(list);
-            list.Insert(5, "alma");
-            Assert.AreEqual("alma", list[5]);
-            refList.Insert(5, "alma");
+            list.Insert(5, testString);
+            Assert.AreEqual(testString, list[5]);
+            refList.Insert(5, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 1, startIndex 3, toMove 2, insert to the end
             list = PrepareList<string>(8, 3, 6);
             refList = new List<string>(list);
-            list.Insert(4, "alma");
-            Assert.AreEqual("alma", list[4]);
-            refList.Insert(4, "alma");
+            list.Insert(4, testString);
+            Assert.AreEqual(testString, list[4]);
+            refList.Insert(4, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 1, startIndex 3, toMove 1, insert to the beginning
             list = PrepareList<string>(8, 3, 6);
             refList = new List<string>(list);
-            list.Insert(5, "alma");
-            Assert.AreEqual("alma", list[5]);
-            refList.Insert(5, "alma");
+            list.Insert(5, testString);
+            Assert.AreEqual(testString, list[5]);
+            refList.Insert(5, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 3, startIndex 7, shifting elements only at the carried part
             list = PrepareList<string>(8, 7, 4);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 1, startIndex 7, shifting only carried elements
             list = PrepareList<string>(8, 7, 5);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 1, startIndex 6, shifting only carried elements
             list = PrepareList<string>(8, 6, 5);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift up, carry 2, startIndex 4, shifting all kind of elements
             list = PrepareList<string>(12, 4, 10);
             refList = new List<string>(list);
-            list.Insert(6, "alma");
-            Assert.AreEqual("alma", list[6]);
-            refList.Insert(6, "alma");
+            list.Insert(6, testString);
+            Assert.AreEqual(testString, list[6]);
+            refList.Insert(6, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
@@ -177,125 +213,125 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             // shift down, carry 0, startIndex 4
             CircularList<string> list = PrepareList<string>(8, 4, 4);
             List<string> refList = new List<string>(list);
-            list.Insert(1, "alma");
-            Assert.AreEqual("alma", list[1]);
-            refList.Insert(1, "alma");
+            list.Insert(1, testString);
+            Assert.AreEqual(testString, list[1]);
+            refList.Insert(1, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 0, startIndex 2, single shift inside the array
             list = PrepareList<string>(8, 2, 4);
             refList = new List<string>(list);
-            list.Insert(1, "alma");
-            Assert.AreEqual("alma", list[1]);
-            refList.Insert(1, "alma");
+            list.Insert(1, testString);
+            Assert.AreEqual(testString, list[1]);
+            refList.Insert(1, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 0, startIndex 1, single shift to the beginning
             list = PrepareList<string>(8, 1, 4);
             refList = new List<string>(list);
-            list.Insert(1, "alma");
-            Assert.AreEqual("alma", list[1]);
-            refList.Insert(1, "alma");
+            list.Insert(1, testString);
+            Assert.AreEqual(testString, list[1]);
+            refList.Insert(1, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 0, startIndex 0, putting one element to the end, inserting to the beginning
             list = PrepareList<string>(8, 0, 4);
             refList = new List<string>(list);
-            list.Insert(1, "alma");
-            Assert.AreEqual("alma", list[1]);
-            refList.Insert(1, "alma");
+            list.Insert(1, testString);
+            Assert.AreEqual(testString, list[1]);
+            refList.Insert(1, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 1, startIndex 7, shifting one element at the end, inserting to the end
             list = PrepareList<string>(8, 7, 4);
             refList = new List<string>(list);
-            list.Insert(1, "alma");
-            Assert.AreEqual("alma", list[1]);
-            refList.Insert(1, "alma");
+            list.Insert(1, testString);
+            Assert.AreEqual(testString, list[1]);
+            refList.Insert(1, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 2, startIndex 6, shifting one element at the end, inserting before the end
             list = PrepareList<string>(8, 6, 6);
             refList = new List<string>(list);
-            list.Insert(1, "alma");
-            Assert.AreEqual("alma", list[1]);
-            refList.Insert(1, "alma");
+            list.Insert(1, testString);
+            Assert.AreEqual(testString, list[1]);
+            refList.Insert(1, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 2, startIndex 6, shifting two elements at the end, inserting to the end
             list = PrepareList<string>(8, 6, 6);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 2, startIndex 10, shifting two elements at the end, moving first to last, inserting to the beginning
             list = PrepareList<string>(12, 10, 10);
             refList = new List<string>(list);
-            list.Insert(3, "alma");
-            Assert.AreEqual("alma", list[3]);
-            refList.Insert(3, "alma");
+            list.Insert(3, testString);
+            Assert.AreEqual(testString, list[3]);
+            refList.Insert(3, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // shift down, carry 2, startIndex 10, shifting two elements at the end, moving first to last, moving one element at the beginning, inserting to position 1
             list = PrepareList<string>(12, 10, 10);
             refList = new List<string>(list);
-            list.Insert(4, "alma");
-            Assert.AreEqual("alma", list[4]);
-            refList.Insert(4, "alma");
+            list.Insert(4, testString);
+            Assert.AreEqual(testString, list[4]);
+            refList.Insert(4, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
         [Test]
         public void InsertIncreaseCapacity()
         {
-            // addlast
+            // add last
             CircularList<string> list = PrepareList<string>(4, 0, 4);
             List<string> refList = new List<string>(list);
-            list.Insert(4, "alma");
-            Assert.AreEqual("alma", list[4]);
-            refList.Insert(4, "alma");
+            list.Insert(4, testString);
+            Assert.AreEqual(testString, list[4]);
+            refList.Insert(4, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
-            // addfirst
+            // add first
             list = PrepareList<string>(4, 0, 4);
             refList = new List<string>(list);
-            list.Insert(0, "alma");
-            Assert.AreEqual("alma", list[0]);
-            refList.Insert(0, "alma");
+            list.Insert(0, testString);
+            Assert.AreEqual(testString, list[0]);
+            refList.Insert(0, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // no wrap
             list = PrepareList<string>(4, 0, 4);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // wrap before index
             list = PrepareList<string>(4, 3, 4);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // wrap at index
             list = PrepareList<string>(4, 2, 4);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
 
             // wrap after index
             list = PrepareList<string>(4, 1, 4);
             refList = new List<string>(list);
-            list.Insert(2, "alma");
-            Assert.AreEqual("alma", list[2]);
-            refList.Insert(2, "alma");
+            list.Insert(2, testString);
+            Assert.AreEqual(testString, list[2]);
+            refList.Insert(2, testString);
             Assert.IsTrue(refList.SequenceEqual(list));
         }
 
@@ -395,7 +431,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             CircularList<string> list = PrepareList<string>(8, 1, 3);
             List<string> refList = new List<string>(list);
-            string[] toAdd = new string[] { "alma", "béka", "cica" };
+            string[] toAdd = new string[] { "alpha", "beta", "gamma" };
 
             // simple shifting up 1 element
             list.InsertRange(2, toAdd);
@@ -478,7 +514,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             CircularList<string> list = PrepareList<string>(8, 4, 4);
             List<string> refList = new List<string>(list);
-            string[] toAdd = new string[] { "alma", "béka", "cica" };
+            string[] toAdd = new string[] { "alpha", "beta", "gamma" };
 
             // simple shifting down 1 element
             list.InsertRange(1, toAdd);
@@ -559,15 +595,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void InsertRangeIncreaseCapacity()
         {
-            // addlast
+            // add last
             CircularList<string> list = PrepareList<string>(4, 0, 4);
             List<string> refList = new List<string>(list);
-            string[] toInsert = new[] { "alma", "béka", "cica" };
+            string[] toInsert = new string[] { "alpha", "beta", "gamma" };
             list.InsertRange(4, toInsert);
             refList.InsertRange(4, toInsert);
             Assert.IsTrue(refList.SequenceEqual(list));
 
-            // addfirst
+            // add first
             list = PrepareList<string>(4, 0, 4);
             refList = new List<string>(list);
             list.InsertRange(0, toInsert);
@@ -806,7 +842,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             // 1 element wrapped from down
             list = new CircularList<int>(4);
-            list.InsertRange(0, new[] {1}); // startIndex = 3, count = 1
+            list.InsertRange(0, new[] { 1 }); // startIndex = 3, count = 1
             list.RemoveRange(0, 1);
             Assert.AreEqual(0, list.Count);
         }
@@ -1116,7 +1152,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(list.SequenceEqual(reference));
         }
 
-
         [Test]
         public void Sort()
         {
@@ -1217,6 +1252,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void NonGenericAccess()
         {
+            // No assert here. Just tests whether runs without throwing an exception.
             // adding null to nullable (does not work in .NET 3.5 List)
             IList ilist = new CircularList<int?>();
             ilist.Add(null);
@@ -1230,22 +1266,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ilist.Add(1);
         }
 
-        /// <summary>
-        /// Creates a list with given conditions
-        /// </summary>
-        private static CircularList<T> PrepareList<T>(int capacity, int startIndex, int count)
-        {
-            CircularList<T> result = new CircularList<T>(capacity);
-            Reflector.SetField(result, "startIndex", startIndex);
-            Type type = typeof(T);
-            if (type.IsNullable())
-                type = Nullable.GetUnderlyingType(type);
+        #endregion
 
-            for (int i = 0; i < count; i++)
-            {
-                result.Add((T)Convert.ChangeType(i, type));
-            }
-            return result;
-        }
+        #endregion
     }
 }

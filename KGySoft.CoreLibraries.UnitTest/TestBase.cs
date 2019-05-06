@@ -1,8 +1,28 @@
-﻿#if !NET35
-#endif
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: TestBase.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+#region Used Namespaces
+
 using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Drawing;
@@ -12,59 +32,32 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
+
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
+
 using NUnit.Framework;
+
+#endregion
+
+#region Used Aliases
+
 using Assert = NUnit.Framework.Assert;
-using SystemFileRef = System.Resources.ResXFileRef;
 using SystemDataNode = System.Resources.ResXDataNode;
+using SystemFileRef = System.Resources.ResXFileRef;
+
+#endregion
+
+#endregion
 
 namespace KGySoft.CoreLibraries
 {
     public class TestBase
     {
-        protected sealed class TypeResolver : ITypeResolutionService
-        {
-            #region ITypeResolutionService Members
+        #region Methods
 
-            public Assembly GetAssembly(AssemblyName name, bool throwOnError)
-            {
-                throw new NotImplementedException();
-            }
-
-            public Assembly GetAssembly(AssemblyName name)
-            {
-                throw new NotImplementedException();
-            }
-
-            public string GetPathOfAssembly(AssemblyName name)
-            {
-                throw new NotImplementedException();
-            }
-
-            public Type GetType(string name, bool throwOnError, bool ignoreCase)
-            {
-                throw new NotImplementedException();
-            }
-
-            public Type GetType(string name, bool throwOnError)
-            {
-                return Reflector.ResolveType(name, true, true);
-            }
-
-            public Type GetType(string name)
-            {
-                return Reflector.ResolveType(name, true, true);
-            }
-
-            public void ReferenceAssembly(AssemblyName name)
-            {
-                throw new NotImplementedException();
-            }
-
-            #endregion
-        }
+        #region Protected Methods
 
         /// <summary>
         /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
@@ -112,8 +105,51 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
         /// </summary>
-        protected static bool MembersAndItemsEqual(object reference, object check) 
+        protected static bool MembersAndItemsEqual(object reference, object check)
             => CheckMembersAndItemsEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
+
+        protected static void Throws<T>(TestDelegate action, string expectedMessageContent = null)
+            where T : Exception
+        {
+            var e = Assert.Throws<T>(action);
+            Assert.IsInstanceOf(typeof(T), e);
+            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
+        }
+
+        protected static void CheckTestingFramework()
+        {
+#if NET35
+            if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
+                Assert.Inconclusive("mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion>v3.5</TargetFrameworkVersion> to csproj and try again");
+#elif NET40 || NET45
+            if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
+                Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion> to csproj and try again");
+#endif
+
+        }
+
+        protected static void CopyContent(object target, object source)
+        {
+            if (target == null || source == null)
+                return;
+
+            if (target is Array arrayTarget)
+            {
+                var arraySource = (Array)source;
+                Array.Copy(arraySource, arrayTarget, arrayTarget.Length);
+                return;
+            }
+
+            for (Type t = target.GetType(); t != null; t = t.BaseType)
+            {
+                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                    Reflector.SetField(target, field, Reflector.GetField(source, field));
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
 
         private static bool CheckDeepEquals(object reference, object check, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
@@ -232,6 +268,7 @@ namespace KGySoft.CoreLibraries
             }
 #endif
 
+
             IEnumerator enumRef = referenceObjects.GetEnumerator();
             IEnumerator enumChk = targetObjects.GetEnumerator();
 
@@ -251,6 +288,7 @@ namespace KGySoft.CoreLibraries
                     errors?.Add($"{type}[{index}]:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
 #endif
 
+
                 index++;
             }
 
@@ -268,6 +306,7 @@ namespace KGySoft.CoreLibraries
 #else
                 errors?.Add($"{name}:{Environment.NewLine}\t{String.Join($"{Environment.NewLine}\t", subErrors)}");
 #endif
+
             return result;
         }
 
@@ -374,14 +413,16 @@ namespace KGySoft.CoreLibraries
             if (!result)
                 Assert.Fail(String.Join(Environment.NewLine, errors
 #if NET35
-                    .ToArray()
+                            .ToArray()
 #endif
+
                     ));
             else if (errors.Count > 0)
                 Assert.Inconclusive(String.Join(Environment.NewLine, errors
 #if NET35
-                    .ToArray()
+                            .ToArray()
 #endif
+
                     ));
         }
 
@@ -394,65 +435,8 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-        protected static void Throws<T>(TestDelegate action, string expectedMessageContent = null)
-            where T : Exception
-        {
-            var e = Assert.Throws<T>(action);
-            Assert.IsInstanceOf(typeof(T), e);
-            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
+        #endregion
 
-            //try
-            //{
-            //    action.Invoke();
-            //}
-            //catch (Exception e)
-            //{
-            //    Assert.IsInstanceOf(typeof(T), e);
-            //    Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
-            //    return;
-            //}
-
-            //Assert.Fail("No exception was thrown");
-        }
-
-        protected static void CheckTestingFramework()
-        {
-#if NET35
-            if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
-                Assert.Inconclusive("mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion>v3.5</TargetFrameworkVersion> to csproj and try again");
-#elif NET40 || NET45
-            if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
-                Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion> to csproj and try again");
-#endif
-        }
-
-        protected static void CopyContent(object target, object source)
-        {
-            if (target == null || source == null)
-                return;
-
-            if (target is Array arrayTarget)
-            {
-                var arraySource = (Array)source;
-                Array.Copy(arraySource, arrayTarget, arrayTarget.Length);
-                return;
-            }
-
-            for (Type t = target.GetType(); t != null; t = t.BaseType)
-            {
-                foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    Reflector.SetField(target, field, Reflector.GetField(source, field));
-            }
-        }
-    }
-
-    [TestFixture]
-    public class NetVersionCheck : TestBase
-    {
-        [Test]
-        public void CheckFrameworkVersion()
-        {
-            CheckTestingFramework();
-        }
+        #endregion
     }
 }

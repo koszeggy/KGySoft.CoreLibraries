@@ -27,6 +27,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
 using System.Text;
 using System.Xml;
 using KGySoft.CoreLibraries;
@@ -1501,6 +1502,7 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Methods
 
+        [SecurityCritical]
         void ISerializable.GetObjectData(SerializationInfo si, StreamingContext context)
         {
             // ReSharper disable once LocalVariableHidesMember

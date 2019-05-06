@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Security;
 using System.Threading;
 
 using KGySoft.Collections;
@@ -90,7 +91,7 @@ namespace KGySoft.ComponentModel
 
             #region Methods
 
-            public object GetRealObject(StreamingContext context) => Value;
+            [SecurityCritical] public object GetRealObject(StreamingContext context) => Value;
             public override string ToString() => Res.ComponentModelMissingPropertyReference;
             public override bool Equals(object obj) => obj is MissingPropertyReference;
             public override int GetHashCode() => 0;

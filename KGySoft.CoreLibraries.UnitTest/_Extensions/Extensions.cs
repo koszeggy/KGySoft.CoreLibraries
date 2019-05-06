@@ -1,11 +1,36 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Extensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
+    /// <summary>
+    /// Moved to the tests from Libraries (it was internal anyway) because not recommended to use in general as it is not repeatable.
+    /// </summary>
     internal static class Extensions
     {
+        #region Methods
+
         /// <summary>
         /// Creates an <see cref="IEnumerable{T}"/> of <see cref="DictionaryEntry"/> elements from an <see cref="IDictionaryEnumerator"/>.
         /// </summary>
@@ -39,5 +64,7 @@ namespace KGySoft.CoreLibraries
             while (enumerator.MoveNext())
                 yield return new KeyValuePair<TKey, TValue>((TKey)enumerator.Key, (TValue)enumerator.Value);
         }
+
+        #endregion
     }
 }

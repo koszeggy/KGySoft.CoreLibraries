@@ -1,22 +1,40 @@
-﻿using System.Collections.Generic;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: CircularSortedListTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System.Collections.Generic;
 using System.Linq;
+
 using KGySoft.Collections;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
     public class CircularSortedListTest
     {
+        #region Methods
+
         [Test]
         public void Construction()
         {
-            // default constructor
-            new CircularSortedList<int, int>();
-
-            // setting capacity
-            new CircularSortedList<int, int>(10);
-
             // construction from ICollection<int> (Count is known)
             Dictionary<int, int> dict = new Dictionary<int, int> { { 1, 2 }, { 13, 14 }, { 5, 6 } };
             Assert.IsTrue(new CircularSortedList<int, int>(dict).SequenceEqual(new SortedList<int, int>(dict)));
@@ -69,5 +87,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(4, cslist.Add(4, 4));
             Assert.IsTrue(cslist.Keys.SequenceEqual(new[] { 0, 1, 2, 3, 4, 5, 6 }));
         }
+
+        #endregion
     }
 }

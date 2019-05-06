@@ -552,7 +552,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
             Func<Type, string> typeNameConverter = t => t.AssemblyQualifiedName;
-            ITypeResolutionService typeResolver = new TypeResolver();
+            ITypeResolutionService typeResolver = new TestTypeResolver();
             SystemSerializeObjects(referenceObjects, typeNameConverter, typeResolver);
             KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver);
             KGySerializeObjects(referenceObjects, false, true, typeNameConverter, typeResolver);

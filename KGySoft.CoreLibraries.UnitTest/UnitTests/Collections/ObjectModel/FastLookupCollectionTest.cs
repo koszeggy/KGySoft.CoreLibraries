@@ -1,24 +1,50 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FastLookupCollectionTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.Reflection;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
 {
     [TestFixture]
     public class FastLookupCollectionTest : TestBase
     {
+        #region Methods
+
+        #region Public Methods
+
         [Test]
         public void Construction()
         {
             AssertConsistency(new FastLookupCollection<int>());
-            AssertConsistency(new FastLookupCollection<int>(new List<int>{1, 2, 3, 4, 5}));
-            AssertConsistency(new FastLookupCollection<int>(new List<int>{1, 1, 2, 2, 1}));
-            AssertConsistency(new FastLookupCollection<string>(new List<string>{null, null, "1", "2", "1"}));
+            AssertConsistency(new FastLookupCollection<int>(new List<int> { 1, 2, 3, 4, 5 }));
+            AssertConsistency(new FastLookupCollection<int>(new List<int> { 1, 1, 2, 2, 1 }));
+            AssertConsistency(new FastLookupCollection<string>(new List<string> { null, null, "1", "2", "1" }));
         }
 
         [Test]
@@ -67,7 +93,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
         [Test]
         public void SetInner()
         {
-            var inner = new List<string> { "1", "2", "3", "2", "1"};
+            var inner = new List<string> { "1", "2", "3", "2", "1" };
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
             inner[2] = null;
             Throws<AssertionException>(() => AssertConsistency(coll));
@@ -88,6 +114,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
             AssertConsistency(coll);
         }
 
+        #endregion
+
+        #region Private Methods
+
         private void AssertConsistency<T>(FastLookupCollection<T> coll)
         {
             var itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
@@ -106,8 +136,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
             var actualItemToIndex = (AllowNullDictionary<T, CircularList<int>>)Reflector.GetField(coll, "itemToIndex");
             AssertItemsEqual(Sorted(itemToIndex), Sorted(actualItemToIndex));
 
-            IEnumerable Sorted(AllowNullDictionary<T, CircularList<int>> dict) 
+            IEnumerable Sorted(AllowNullDictionary<T, CircularList<int>> dict)
                 => new AllowNullDictionary<T, CircularList<int>>(dict.OrderBy(item => item.Key));
         }
+
+        #endregion
+
+        #endregion
     }
 }

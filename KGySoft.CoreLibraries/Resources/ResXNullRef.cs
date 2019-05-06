@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.Serialization;
+using System.Security;
 using System.Threading;
 
 #endregion
@@ -53,6 +54,7 @@ namespace KGySoft.Resources
 
         #region IObjectReference Members
 
+        [SecurityCritical]
         object IObjectReference.GetRealObject(StreamingContext context) => Value;
 
         #endregion

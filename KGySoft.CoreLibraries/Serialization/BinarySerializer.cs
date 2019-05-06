@@ -23,7 +23,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-
+using System.Security;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -75,6 +75,7 @@ namespace KGySoft.Serialization
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized object.</returns>
+        [SecurityCritical]
         public static object Deserialize(byte[] rawData, int offset = 0) => new BinarySerializationFormatter().Deserialize(rawData, offset);
 
         /// <summary>
@@ -91,6 +92,7 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+        [SecurityCritical]
         public static object DeserializeFromStream(Stream stream) => new BinarySerializationFormatter().DeserializeFromStream(stream);
 
         /// <summary>
@@ -115,6 +117,7 @@ namespace KGySoft.Serialization
         /// </remarks>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+        [SecurityCritical]
         public static object DeserializeByReader(BinaryReader reader) => new BinarySerializationFormatter().DeserializeByReader(reader);
 
         /// <summary>
@@ -127,6 +130,7 @@ namespace KGySoft.Serialization
         /// object with undetermined object references. Only string and array reference fields can be serialized safely if they are decorated by <see cref="MarshalAsAttribute"/> using
         /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.</note>
         /// </remarks>
+        [SecurityCritical]
         public static byte[] SerializeValueType(ValueType obj)
         {
             if (obj == null)
@@ -188,6 +192,7 @@ namespace KGySoft.Serialization
         /// <note type="caution">Never call this method on a <typeparamref name="T"/> that has reference (non-value type) fields. Deserializing such value would result an invalid
         /// object with undetermined object references.</note>
         /// </remarks>
+        [SecurityCritical]
         public static byte[] SerializeValueArray<T>(T[] array) where T : struct
         {
             if (array == null)
@@ -251,6 +256,7 @@ namespace KGySoft.Serialization
         /// <param name="type">The type of the target object. Must be a <see cref="ValueType"/>.</param>
         /// <param name="data">The byte array that starts with byte representation of the object.</param>
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
+        [SecurityCritical]
         public static object DeserializeValueType(Type type, byte[] data)
         {
             if (type == null)
@@ -317,6 +323,7 @@ namespace KGySoft.Serialization
         /// <param name="offset">The offset that points to the beginning of the serialized data.</param>
         /// <param name="count">Number of elements to deserialize from the <paramref name="data"/>.</param>
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
+        [SecurityCritical]
         public static T[] DeserializeValueArray<T>(byte[] data, int offset, int count)
             where T : struct
         {

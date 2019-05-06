@@ -1,22 +1,49 @@
-﻿using System;
-using System.Collections;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: TypeExtensionsTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+#if !NET35
 using System.Collections.Concurrent;
+#endif
+
+#region Used Namespaces
+
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reflection;
+
 using KGySoft.Collections;
+
 using NUnit.Framework;
 
-#if !NET35
+#endregion
 
-#endif
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 {
     [TestFixture]
     public class TypeExtensionsTest
     {
+        #region Methods
+
         [Test]
         public void IsSupportedCollectionForReflectionTest()
         {
@@ -64,5 +91,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<ConcurrentQueue<int>>(true, false, typeof(IEnumerable<int>), typeof(int), false);
 #endif
         }
+
+        #endregion
     }
 }

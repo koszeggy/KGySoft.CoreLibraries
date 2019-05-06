@@ -21,7 +21,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-
+using System.Security;
 using KGySoft.Reflection;
 
 #endregion
@@ -84,6 +84,7 @@ namespace KGySoft.Serialization
 
         #region Methods
 
+        [SecurityCritical]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue("isWeak", useWeakBinding);
@@ -93,6 +94,7 @@ namespace KGySoft.Serialization
             info.AddValue("data", serializer.Serialize(obj));
         }
 
+        [SecurityCritical]
         object IObjectReference.GetRealObject(StreamingContext context) => obj;
 
         #endregion

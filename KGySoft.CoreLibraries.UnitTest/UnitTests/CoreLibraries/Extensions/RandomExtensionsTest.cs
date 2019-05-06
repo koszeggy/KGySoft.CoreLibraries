@@ -1,26 +1,98 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: RandomExtensionsTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+
 using KGySoft.Collections;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 {
     [TestFixture]
     public class RandomExtensionsTest : TestBase
     {
+        #region Nested types
+
+        #region Enumerations
+
+        private enum EmptyEnum { }
+
+        #endregion
+
+        #region Delegates
+
+        private delegate void OutDelegate(out string s);
+
+        #endregion
+
+        #region Nested classes
+
+        #region TestRandom class
+
         private class TestRandom : Random
         {
+            #region Fields
+
             private int nextBytePtr;
             private byte[] nextBytes;
             private int nextDoublePtr;
             private double[] nextDoubles;
             private int nextIntPtr;
             private int[] nextIntegers;
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override void NextBytes(byte[] buffer)
+            {
+                if (nextBytes == null)
+                {
+                    base.NextBytes(buffer);
+                    return;
+                }
+
+                for (int i = 0; i < buffer.Length; i++)
+                    buffer[i] = nextBytes[nextBytePtr++ % nextBytes.Length];
+            }
+
+            public override double NextDouble() => nextDoubles?[nextDoublePtr++ % nextDoubles.Length] ?? base.NextDouble();
+
+            public override int Next() => nextIntegers?[nextIntPtr++ % nextIntegers.Length] ?? base.Next();
+
+            public override int Next(int maxValue) => nextIntegers == null ? base.Next(maxValue) : Next();
+
+            public override int Next(int minValue, int maxValue) => nextIntegers == null ? base.Next(minValue, maxValue) : Next();
+
+            #endregion
+
+            #region Internal Methods
 
             internal TestRandom WithNextBytes(params byte[] nextBytes)
             {
@@ -43,23 +115,31 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 return this;
             }
 
-            public override void NextBytes(byte[] buffer)
-            {
-                if (nextBytes == null)
-                {
-                    base.NextBytes(buffer);
-                    return;
-                }
+            #endregion
 
-                for (int i = 0; i < buffer.Length; i++)
-                    buffer[i] = nextBytes[nextBytePtr++ % nextBytes.Length];
-            }
-
-            public override double NextDouble() => nextDoubles?[nextDoublePtr++ % nextDoubles.Length] ?? base.NextDouble();
-            public override int Next() => nextIntegers?[nextIntPtr++ % nextIntegers.Length] ?? base.Next();
-            public override int Next(int maxValue) => nextIntegers == null ? base.Next(maxValue) : Next();
-            public override int Next(int minValue, int maxValue) => nextIntegers == null ? base.Next(minValue, maxValue) : Next();
+            #endregion
         }
+
+        #endregion
+
+        #region Recursive class
+
+        private class Recursive
+        {
+            #region Properties
+
+            public Recursive Child { get; set; }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Methods
 
         [Test]
         public void NextUInt64Test()
@@ -274,14 +354,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(DateTimeOffset.MaxValue.AddDays(-1), DateTimeOffset.MaxValue);
         }
 
-        private enum EmptyEnum { }
-        private delegate void OutDelegate(out string s);
-
-        private class Recursive
-        {
-            public Recursive Child { get; set; }
-        }
-
         [Test]
         public void NextObjectTest()
         {
@@ -366,5 +438,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // recursive type
             Test<Recursive>();
         }
+
+        #endregion
     }
 }

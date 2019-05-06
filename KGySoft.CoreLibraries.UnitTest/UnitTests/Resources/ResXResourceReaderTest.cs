@@ -111,7 +111,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             //    {
             //        BasePath = Path.GetDirectoryName(path)                    
             //    };
-            ResXResourceReader reader = new ResXResourceReader(path, new TypeResolver())
+            ResXResourceReader reader = new ResXResourceReader(path, new TestTypeResolver())
                 {
                     AllowDuplicatedKeys = false,
                     BasePath = Path.GetDirectoryName(path)
