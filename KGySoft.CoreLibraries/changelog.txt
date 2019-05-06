@@ -3,8 +3,10 @@
 * Compatible changes inside
 - Bugfix
 + New feature
+===============================================================================
 
-2018 - ez majd verzióra átírni
+v4.5.0.0:
+~~~~~~~~~
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
@@ -96,11 +98,14 @@
 + ResXDataNode: Like System.Resources.ResXDataNode with more functionality. Makes possible to obtain every information
   of the raw XML data before serializing.
   Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
-+ ResXFileRef class: Like System.Resources.ResXFileRef with some improvements
++ ResXFileRef class: Like System.Resources.ResXFileRef with some improvements.
   Compatible with the System.Resources version without referencing the System.Windows.Forms.dll
-+ ResXResourceReader: ...
-
-+ ... TODO
++ ResXResourceReader: Like System.Resources.ResXResourceReader with several improvements.
++ ResXResourceWriter: Like System.Resources.ResXResourceWriter with several improvements.
++ ResXResourceSet: Like System.Resources.ResXResourceSet with expansion support.
++ ResXResourceManager: Like System.Resources.ResourceManger but works with .resx files directly and supports expansion.
++ HybridResourceManager: A ResourceManger that works with binary and .resx files and supports expansion.
++ DynamicResourceManager: A HybridResourceManger with auto append and auto save support.
 
 + KGySoft.Security.Cryptography namespace:
 ==========================================

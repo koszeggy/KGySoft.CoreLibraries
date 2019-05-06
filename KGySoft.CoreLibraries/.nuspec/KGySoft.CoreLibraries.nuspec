@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>KGySoft.CoreLibraries</id>
+    <version>4.5.0</version>
+    <title>KGy SOFT Core Libraries</title>
+    <authors>György Kőszeg</authors>
+    <owners>György Kőszeg</owners>
+    <license type="file">LICENSE</license>
+    <!--<licenseUrl>https://creativecommons.org/licenses/by-nd/4.0/legalcode</licenseUrl>-->
+    <projectUrl>https://kgysoft.net/corelibraries</projectUrl>
+    <iconUrl>https://kgysoft.net/images/Icon64.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>High-performance and handy general libraries such as binary and XML serialization, alternative reflection API, fast collections and more.</summary>
+    <description xml:space="preserve">KGy SOFT Core Libraries features high-performance and handy general libraries. Many of them aims to replace some existing API of the original .NET framework with a more efficient version.
+
+Among others:
+- Useful extensions for simple types, collections, and others
+- High-performance collections
+- High-performance reflection API
+- Very compact binary serializer
+- Powerful XML serializer 
+- Resource managers for .resx resources with dynamic expansion support
+- Base classes for business objects and model classes with change tracking, editing, undo/redo capability and validation
+- Technology-agnostic command binding with disposable event handlers
+- Performance measurement and other diagnostic tools
+- and more...
+
+Just the most core framework .dlls are referenced. No dependencies to any 3rd party libraries.
+
+Find the full documentation with examples online: https://docs.kgysoft.net/corelibraries</description>
+    <releaseNotes>See the detailed release notes here: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt</releaseNotes>
+    <copyright>Copyright © KGy SOFT</copyright>
+    <tags>KGySoft CoreLibraries performance performant collection extension reflection serialization serializer binary xml enum cache resource manager resx dynamic command binding</tags>
+    <language>en-US</language>
+    <repository type="git" url="https://github.com/koszeggy/KGySoft.CoreLibraries" />
+    <dependencies>
+      <group targetFramework=".NETFramework3.5" />
+      <group targetFramework=".NETFramework4.0" />
+      <group targetFramework=".NETFramework4.5" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\..\LICENSE" />
+    <file src="..\Help\KGySoft.CoreLibraries.chm" target="Help" />
+    <file src="readme.txt"/>
+    <file src="..\bin\Release_NET35\KGySoft.CoreLibraries.dll" target="lib\net35" />
+    <file src="..\bin\Release_NET35\KGySoft.CoreLibraries.xml" target="lib\net35" />
+    <file src="..\bin\Release_NET40\KGySoft.CoreLibraries.dll" target="lib\net40" />
+    <file src="..\bin\Release_NET40\KGySoft.CoreLibraries.xml" target="lib\net40" />
+    <file src="..\bin\Release_NET45\KGySoft.CoreLibraries.dll" target="lib\net45" />
+    <file src="..\bin\Release_NET45\KGySoft.CoreLibraries.xml" target="lib\net45" />
+  </files>
+</package>

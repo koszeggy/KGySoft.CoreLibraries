@@ -23,10 +23,11 @@
       <DocumentationSource sourceFile="bin\Release_NET45\KGySoft.CoreLibraries.xml" />
     </DocumentationSources>
     <HelpFileFormat>Website</HelpFileFormat>
-    <HelpTitle>KGySoft.CoreLibraries Help</HelpTitle>
+    <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
     <IndentHtml>False</IndentHtml>
-    <NamingMethod>Guid</NamingMethod>
-    <ProjectSummary>KGy SOFT Libraries</ProjectSummary>
+    <NamingMethod>MemberName</NamingMethod>
+    <ProjectSummary>
+    </ProjectSummary>
     <RootNamespaceContainer>False</RootNamespaceContainer>
     <MissingTags>Summary, Parameter, Returns, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
     <NamespaceSummaries>
@@ -66,10 +67,28 @@
     <PlugInConfigurations />
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
-    <HelpFileVersion>1.0.0.0</HelpFileVersion>
+    <HelpFileVersion>4.5.0.0</HelpFileVersion>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
+    <HeaderText>
+    </HeaderText>
+    <CopyrightText>Copyright &amp;#169%3b KGy SOFT. All rights reserved.</CopyrightText>
+    <FooterText>
+    </FooterText>
+    <TransformComponentArguments>
+      <Argument Key="logoFile" Value="logo.png" />
+      <Argument Key="logoHeight" Value="" />
+      <Argument Key="logoWidth" Value="" />
+      <Argument Key="logoAltText" Value="KGy SOFT" />
+      <Argument Key="logoPlacement" Value="above" />
+      <Argument Key="logoAlignment" Value="left" />
+      <Argument Key="maxVersionParts" Value="" />
+      <Argument Key="defaultLanguage" Value="cs" />
+      <Argument Key="includeEnumValues" Value="true" />
+      <Argument Key="baseSourceCodeUrl" Value="" />
+      <Argument Key="requestExampleUrl" Value="" />
+    </TransformComponentArguments>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional
@@ -91,6 +110,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">
   </PropertyGroup>
   <ItemGroup>
+    <Folder Include="icons\" />
     <Folder Include="Help\" />
     <Folder Include="Help\Images\" />
   </ItemGroup>
@@ -130,6 +150,12 @@
     <Content Include="Help\Images\ProfilerResults.png">
       <ImageId>ProfilerResults</ImageId>
       <AlternateText>Profiler Results</AlternateText>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="icons\logo.png">
+      <ImageId>logo</ImageId>
+      <AlternateText>logo</AlternateText>
     </Content>
   </ItemGroup>
   <!-- Import the SHFB build targets -->
