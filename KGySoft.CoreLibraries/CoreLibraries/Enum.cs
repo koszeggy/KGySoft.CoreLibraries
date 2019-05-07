@@ -58,6 +58,7 @@ namespace KGySoft.CoreLibraries
         private static CircularSortedList<ulong, string> numValueNamePairs;
         private static Dictionary<string, TEnum> nameValuePairs;
         private static Dictionary<string, ulong> nameNumValuePairs;
+        private static Dictionary<string, ulong> nameNumValuePairsIgnoreCase;
         // ReSharper restore StaticMemberInGenericType
 
         #endregion
@@ -191,6 +192,24 @@ namespace KGySoft.CoreLibraries
 
                     return nameNumValuePairs = result;
                 }
+            }
+        }
+
+        private static Dictionary<string, ulong> NameNumValuePairsIgnoreCase
+        {
+            get
+            {
+                Dictionary<string, ulong> result = nameNumValuePairsIgnoreCase;
+                if (result != null)
+                    return result;
+
+                result = new Dictionary<string, ulong>(Names.Length, StringComparer.OrdinalIgnoreCase);
+                Dictionary<string, ulong> refDict = NameNumValuePairs;
+                foreach (KeyValuePair<string, ulong> pair in refDict)
+                    result[pair.Key] = pair.Value;
+
+                lock (syncRoot)
+                    return nameNumValuePairsIgnoreCase = result;
             }
         }
 
@@ -508,7 +527,7 @@ namespace KGySoft.CoreLibraries
                 return false;
 
             // simple numeric value
-            if ((Char.IsDigit(value[0]) || value[0] == '-' || value[0] == '+'))
+            if ((value[0] >= '0' && value[0] <= '9') || value[0] == '-' || value[0] == '+')
             {
                 if (isSigned)
                 {
@@ -554,18 +573,14 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // checking for case-insensitive match
-                if (ignoreCase)
+                if (ignoreCase && NameNumValuePairsIgnoreCase.TryGetValue(token, out tokenValue))
                 {
-                    int index = Array.FindIndex(names, name => StringComparer.OrdinalIgnoreCase.Equals(name, token));
-                    if (index >= 0)
-                    {
-                        acc |= NameNumValuePairs[names[index]];
-                        continue;
-                    }
+                    acc |= tokenValue;
+                    continue;
                 }
 
                 // checking if is numeric token
-                if ((Char.IsDigit(token[0]) || token[0] == '-' || token[0] == '+'))
+                if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-' || token[0] == '+')
                 {
                     if (isSigned)
                     {
