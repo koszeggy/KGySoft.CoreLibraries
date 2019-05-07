@@ -111,16 +111,16 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
                     readOnlyIntArray = new int[] { 1, 2, 3, 4, 5 };
                     innerList = new List<TestInner>
                     {
-                        new TestInner {InnerInt = 1, InnerString = "Egy"},
-                        new TestInner {InnerInt = 2, InnerString = "Kettő"},
+                        new TestInner {InnerInt = 1, InnerString = "One"},
+                        new TestInner {InnerInt = 2, InnerString = "Two"},
                         null
                     };
                     Point = new Point(13, 13);
                     PointArray = new Point[] { new Point(1, 2), new Point(3, 4) };
-                    InnerArray = new TestInner[] { new TestInner { InnerInt = 1, InnerString = "Egy" }, new TestInner { InnerInt = 2, InnerString = "Kettő" } };
+                    InnerArray = new TestInner[] { new TestInner { InnerInt = 1, InnerString = "One" }, new TestInner { InnerInt = 2, InnerString = "Two" } };
                     Structure = new InnerStructure("InnerStructureString", 13);
-                    StructureArray = new InnerStructure[] { new InnerStructure("Egyeske", 1), new InnerStructure("Ketteske", 2), };
-                    StructureList = new List<InnerStructure> { new InnerStructure("Első", 1), new InnerStructure("Második", 2) };
+                    StructureArray = new InnerStructure[] { new InnerStructure("first", 1), new InnerStructure("second", 2), };
+                    StructureList = new List<InnerStructure> { new InnerStructure("1st", 1), new InnerStructure("2nd", 2) };
                     StringValue = String.Empty;
                 }
             }
@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
                 new HashSet<int> { 1, 2, 3, 4, 5 },
                 new HashSet<int[]> { new int[] { 1, 2, 3, 4, 5 }, null },
                 new Collection<int>{ 1, 2, 3, 4, 5 },
-                new DictionaryEntry(new object(), "alma"),
+                new DictionaryEntry(new object(), "dummy"),
                 new FullExtraComponent(true)
             };
 

@@ -64,16 +64,16 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
             //var x = 1;
             //var x = new List<int>(new int[10]);
             //var x = new HashSet<int> {1, 2, 3};
-            //var x = new HashSet<string>(StringComparer.CurrentCulture) { "kerek", "kerék", "kérek" };
+            //var x = new HashSet<string>(StringComparer.CurrentCulture) { "alpha", "beta", "gamma" };
             //var x = new HashSet<TestEnum>(EnumComparer<TestEnum>.Comparer) { TestEnum.One, TestEnum.Two };
             //var x = new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null });
             //var x = new Stack<int>(new int[] { 1, 2, 3 });
             //var x = new BitArray(new[] {true, false, true});
             //var x = new BitArray[]{ new BitArray(new[] {true, false, true}), null };
             //var x = new Collection<int>(new int[10]);
-            //var x = new DictionaryEntry(new object(), "alma");
-            var x = new Dictionary<int, string> { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } };
-            //var x = new Cache<int, string>(Cache<int,string>.NullLoader) { { 1, "alma" }, { 2, "béka" }, { 3, "cica" } };
+            //var x = new DictionaryEntry(new object(), "alpha");
+            var x = new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } };
+            //var x = new Cache<int, string>(Cache<int,string>.NullLoader) { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } };
             DoTestBinarySerialize(x);
         }
     }

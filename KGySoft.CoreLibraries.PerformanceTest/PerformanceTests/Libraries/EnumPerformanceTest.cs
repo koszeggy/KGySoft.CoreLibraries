@@ -13,33 +13,34 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
     {
         private enum TestEnum: long
         {
-            Semmi,
-            Alma = 1,
-            Béka = 2,
-            Cica = 4,
-            Kecske = 8,
-            aa = 1,
+            None,
+            Alpha = 1,
+            Beta = 2,
+            Gamma = 4,
+            Delta = 8,
 
-            Kecskebéka = Kecske | Béka,
+            Redefined = 1,
 
-            Mínusz = Int64.MinValue,
-            Plusz = Int64.MaxValue,
+            Alphabet = Alpha | Beta,
+
+            Min = Int64.MinValue,
+            Max = Int64.MaxValue,
         }
 
         [Flags]
         private enum TestFlagsEnum: long
         {
-            Semmi,
-            Alma = 1,
-            Béka = 2,
-            Cica = 4,
-            Kecske = 8,
-            aa = 1,
+            None,
+            Alpha = 1,
+            Beta = 2,
+            Gamma = 4,
+            Delta = 8,
+            Redefined = 1,
 
-            Kecskebéka = Kecske | Béka,
+            Alphabet = Alpha | Beta,
 
-            Mínusz = Int64.MinValue,
-            Plusz = Int64.MaxValue,
+            Min = Int64.MinValue,
+            Max = Int64.MaxValue,
         }
 
         [SetUp]
@@ -73,7 +74,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("KGySoft.CoreLibraries.Enum<{0}>.GetNames(): {1} ms", enumType.Name, watch.ElapsedMilliseconds);
 
-            const TestEnum e = TestEnum.Cica;
+            const TestEnum e = TestEnum.Gamma;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -124,8 +125,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
         {
             const int iterations = 1000000;
             Type enumType = typeof(TestEnum);
-            TestEnum e = TestEnum.Cica;
-            string s = "Cica";
+            TestEnum e = TestEnum.Gamma;
+            string s = "Gamma";
             long n = (long)e;
 
             Console.WriteLine("==================IsDefined (iterations: {0:N0})==================", iterations);
@@ -189,7 +190,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
         {
             const int iterations = 1000000;
             Type enumType = typeof(TestEnum);
-            TestEnum e = TestEnum.Cica;
+            TestEnum e = TestEnum.Gamma;
 
             Console.WriteLine("==================ToString (iterations: {0:N0})==================", iterations);
             Stopwatch watch = new Stopwatch();
@@ -201,7 +202,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("{0}.ToString() (existing field: {1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
 
-            e = (TestEnum)((long)TestEnum.Cica + 100);
+            e = (TestEnum)((long)TestEnum.Gamma + 100);
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -211,7 +212,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("{0}.ToString() (non-existing field: {1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
 
-            e = TestEnum.Kecskebéka;
+            e = TestEnum.Alphabet;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -221,7 +222,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("{0}.ToString() (flags with self value: {1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
 
-            e = (TestEnum)((long)TestEnum.Béka | (long)TestEnum.Cica); // to suppress resharper error
+            e = (TestEnum)((long)TestEnum.Beta | (long)TestEnum.Gamma); // to suppress resharper error
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -232,7 +233,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             Console.WriteLine("{0}.ToString() (flags without FlagsAttribute: {1}): {2} ms", enumType.Name, e, watch.ElapsedMilliseconds);
 
             enumType = typeof(TestFlagsEnum);
-            TestFlagsEnum f = TestFlagsEnum.Cica;
+            TestFlagsEnum f = TestFlagsEnum.Gamma;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -242,7 +243,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("{0}.ToString() (existing field: {1}): {2} ms", enumType.Name, f, watch.ElapsedMilliseconds);
 
-            f = (TestFlagsEnum)((long)TestFlagsEnum.Cica + 100);
+            f = (TestFlagsEnum)((long)TestFlagsEnum.Gamma + 100);
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -252,7 +253,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("{0}.ToString() (non-existing field: {1}): {2} ms", enumType.Name, f, watch.ElapsedMilliseconds);
 
-            f = TestFlagsEnum.Kecskebéka;
+            f = TestFlagsEnum.Alphabet;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -262,7 +263,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("{0}.ToString() (flags with self value: {1}): {2} ms", enumType.Name, f, watch.ElapsedMilliseconds);
 
-            f = TestFlagsEnum.Béka | TestFlagsEnum.Cica;
+            f = TestFlagsEnum.Beta | TestFlagsEnum.Gamma;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -275,7 +276,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             ////////////
 
             enumType = typeof(TestEnum);
-            e = TestEnum.Cica;
+            e = TestEnum.Gamma;
 
             watch.Reset();
             watch.Start();
@@ -286,7 +287,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("Enum<{0}>.ToString(value) (existing field: {1}): {2} ms", enumType.Name, Enum<TestEnum>.ToString(e), watch.ElapsedMilliseconds);
 
-            e = (TestEnum)((long)TestEnum.Cica + 100);
+            e = (TestEnum)((long)TestEnum.Gamma + 100);
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -296,7 +297,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("Enum<{0}>.ToString(value) (non-existing field: {1}): {2} ms", enumType.Name, Enum<TestEnum>.ToString(e), watch.ElapsedMilliseconds);
 
-            e = TestEnum.Kecskebéka;
+            e = TestEnum.Alphabet;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -306,7 +307,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("Enum<{0}>.ToString(value) (flags with self value: {1}): {2} ms", enumType.Name, Enum<TestEnum>.ToString(e), watch.ElapsedMilliseconds);
 
-            e = (TestEnum)((long)TestEnum.Béka | (long)TestEnum.Cica); // to suppress resharper error
+            e = (TestEnum)((long)TestEnum.Beta | (long)TestEnum.Gamma); // to suppress resharper error
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -317,7 +318,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             Console.WriteLine("Enum<{0}>.ToString(value) (flags without FlagsAttribute: {1}): {2} ms", enumType.Name, Enum<TestEnum>.ToString(e), watch.ElapsedMilliseconds);
 
             enumType = typeof(TestFlagsEnum);
-            f = TestFlagsEnum.Cica;
+            f = TestFlagsEnum.Gamma;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -327,7 +328,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("Enum<{0}>.ToString(value) (existing field: {1}): {2} ms", enumType.Name, Enum<TestFlagsEnum>.ToString(f), watch.ElapsedMilliseconds);
 
-            f = (TestFlagsEnum)((long)TestFlagsEnum.Cica + 100);
+            f = (TestFlagsEnum)((long)TestFlagsEnum.Gamma + 100);
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -337,7 +338,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("Enum<{0}>.ToString(value) (non-existing field: {1}): {2} ms", enumType.Name, Enum<TestFlagsEnum>.ToString(f), watch.ElapsedMilliseconds);
 
-            f = TestFlagsEnum.Kecskebéka;
+            f = TestFlagsEnum.Alphabet;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -347,7 +348,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("Enum<{0}>.ToString(value) (flags with self value: {1}): {2} ms", enumType.Name, Enum<TestFlagsEnum>.ToString(f), watch.ElapsedMilliseconds);
 
-            f = TestFlagsEnum.Béka | TestFlagsEnum.Cica;
+            f = TestFlagsEnum.Beta | TestFlagsEnum.Gamma;
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -373,7 +374,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             const int iterations = 1000000;
             Type enumType = typeof(TestEnum);
 
-            string s = "Cica";
+            string s = "Gamma";
             Console.WriteLine("==================Parse (iterations: {0:N0})==================", iterations);
             Stopwatch watch = new Stopwatch();
             watch.Start();
@@ -431,7 +432,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("KGySoft.Enum<{0}>.Parse(\"{1}\") (non-existing field from number): {2} ms", enumType.Name, s, watch.ElapsedMilliseconds);
 
-            s = "Cica, Kecskebéka";
+            s = "Gamma, Alphabet";
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -450,7 +451,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("KGySoft.Enum<{0}>.Parse(\"{1}\") (coumpond flags): {2} ms", enumType.Name, s, watch.ElapsedMilliseconds);
 
-            s = "Cica, Kecske, Mínusz";
+            s = "Gamma, Delta, Min";
             watch.Reset();
             watch.Start();
             for (int i = 0; i < iterations; i++)
@@ -488,7 +489,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             watch.Stop();
             Console.WriteLine("KGySoft.Enum<{0}>.Parse(\"{1}\") (flags, case-insensitive): {2} ms", enumType.Name, s, watch.ElapsedMilliseconds);
 
-            s = "Cica | Kecske | Béka | 16";
+            s = "Gamma | Delta | Beta | 16";
 
             watch.Reset();
             watch.Start();
@@ -511,7 +512,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Libraries
             var c1 = EnumComparer<TestEnum>.Comparer;
             var d1 = Comparer<TestEnum>.Default;
             var e1 = EqualityComparer<TestEnum>.Default;
-            var v1 = new TestEnum[] { TestEnum.Mínusz, TestEnum.Plusz };
+            var v1 = new TestEnum[] { TestEnum.Min, TestEnum.Max };
 
             Console.WriteLine("==================EnumComparer (iterations: {0:N0})==================", iterations);
             Stopwatch watch = new Stopwatch();

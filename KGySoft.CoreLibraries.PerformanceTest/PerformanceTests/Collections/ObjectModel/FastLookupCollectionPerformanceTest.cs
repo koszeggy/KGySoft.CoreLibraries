@@ -1,19 +1,43 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: FastLookupCollectionPerformanceTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+
 using KGySoft.Collections.ObjectModel;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
 {
     [TestFixture]
     public class FastLookupCollectionPerformanceTest
     {
+        #region Methods
+
         [Test]
         public void TestIndexOf()
         {
             var list = Enumerable.Range(0, 1000).ToList();
-            var collReference =  new Collection<int>(list);
+            var collReference = new Collection<int>(list);
             var collTest = new FastLookupCollection<int>(list);
             var collTestNoCheck = new FastLookupCollection<int>(list) { CheckConsistency = false };
             var rnd = new Random();
@@ -29,5 +53,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
                 .DoTest()
                 .DumpResults(Console.Out);
         }
+
+        #endregion
     }
 }

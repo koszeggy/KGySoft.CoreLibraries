@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: PerformanceTest.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution. If not, then this file is considered as
@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+
 using NUnit.Framework;
 
 #endregion
@@ -40,7 +41,6 @@ namespace KGySoft.CoreLibraries
 #else
 #error unknown .NET version
 #endif
-
         }
 
         #endregion
@@ -49,6 +49,9 @@ namespace KGySoft.CoreLibraries
 
         protected override void OnInitialize()
         {
+#if DEBUG
+            Assert.Inconclusive("Run the performance test in Release Build");
+#endif
             base.OnInitialize();
             CheckTestingFramework();
         }
@@ -64,11 +67,13 @@ namespace KGySoft.CoreLibraries
 
         protected override void OnInitialize()
         {
+#if DEBUG
+            Assert.Inconclusive("Run the performance test in Release Build");
+#endif
             base.OnInitialize();
             PerformanceTest.CheckTestingFramework();
         }
 
         #endregion
     }
-
 }

@@ -1,450 +1,46 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: CircularSortedListPerformanceTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.PerformanceTests.Collections
 {
     [TestFixture]
     public class CircularSortedListPerformanceTest
     {
-        [Test]
-        public void PopulateTest()
-        {
-            const int capacity = 1000;
-            const int iterations = 1000;
+        #region Enumerations
 
-            CircularSortedList<int, string> cslist = new CircularSortedList<int, string>(capacity);
-            SortedList<int, string> slist = new SortedList<int, string>(capacity);
-            SortedDictionary<int, string> sdict = new SortedDictionary<int, string>();
+        private enum LongEnum : long { }
 
-            Console.WriteLine("==========Populate (iterations: {0:N0}, elements: {1:N0})===========", iterations, capacity);
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                slist.Clear();
-                for (int j = 0; j < capacity; j++)
-                {
-                    slist.Add(j, null);
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating SortedList from sorted data: {0} ms", watch.ElapsedMilliseconds);
+        #endregion
 
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                sdict.Clear();
-                for (int j = 0; j < capacity; j++)
-                {
-                    sdict.Add(j, null);
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating SordedDictionary from sorted data: {0} ms", watch.ElapsedMilliseconds);
+        #region Methods
 
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslist.Clear();
-                for (int j = 0; j < capacity; j++)
-                {
-                    cslist.Add(j, null);
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating CircularSortedList from sorted data: {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-         
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                slist.Clear();
-                for (int j = capacity - 1; j >= 0; j--)
-                {
-                    slist.Add(j, null);                    
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating SortedList from reverse sorted data: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                sdict.Clear();
-                for (int j = capacity - 1; j >= 0; j--)
-                {
-                    sdict.Add(j, null);
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating SordedDictionary from reverse sorted data: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslist.Clear();
-                for (int j = capacity - 1; j >= 0; j--)
-                {
-                    cslist.Add(j, null);
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating CircularSortedList from reverse sorted data: {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-
-            Random rnd = new Random(0);
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                slist.Clear();
-                for (int j = 0; j < capacity; j++)
-                {
-                    slist[rnd.Next(Int32.MaxValue)] = null;
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating SortedList from random data: {0} ms", watch.ElapsedMilliseconds);
-
-            rnd = new Random(0);
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                sdict.Clear();
-                for (int j = 0; j < capacity; j++)
-                {
-                    sdict[rnd.Next(Int32.MaxValue)] = null;
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating SordedDictionary from random data: {0} ms", watch.ElapsedMilliseconds);
-
-            rnd = new Random(0);
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslist.Clear();
-                for (int j = 0; j < capacity; j++)
-                {
-                    cslist[rnd.Next(Int32.MaxValue)] = null;
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Populating CircularSortedList from random data: {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-
-            // TODO: enum key
-        }
-
-        [Test]
-        public void EnumeratingTest()
-        {
-            const int capacity = 1000;
-            const int iterations = 10000;
-
-            CircularSortedList<int, string> cslist = PrepareList<int, string>(capacity, 0, capacity);
-            CircularSortedList<int, string> cslistwrap = PrepareList<int, string>(capacity, capacity >> 1, capacity);
-            SortedList<int, string> slist = new SortedList<int, string>(cslist);
-            SortedDictionary<int, string> sdict = new SortedDictionary<int, string>(cslist);
-
-            Console.WriteLine("==========Enumerating (iterations: {0:N0}, elements: {1:N0})===========", iterations, capacity);
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in slist)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating SortedList: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in sdict)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating SortedDictionary: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in cslist)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating CircularCircularList (non wrapped): {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in cslistwrap)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating CircularSortedList (wrapped): {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-
-            IEnumerable<KeyValuePair<int, string>> ilist = slist;
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in ilist)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating SortedList as IEnumerable: {0} ms", watch.ElapsedMilliseconds);
-
-            ilist = sdict;
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in ilist)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating SortedDictionary as IEnumerable: {0} ms", watch.ElapsedMilliseconds);
-
-            ilist = cslist;
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in ilist)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating CircularSortedList as IEnumerable (non wrapped): {0} ms", watch.ElapsedMilliseconds);
-
-            ilist = cslistwrap;
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                foreach (var item in ilist)
-                {
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating CircularSortedList as IEnumerable (wrapped): {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-
-            watch.Reset();
-            watch.Start();
-            int x;
-            for (int i = 0; i < iterations; i++)
-            {
-                for (int j = 0; j < slist.Count; j++)
-                {
-                    x = slist.Keys[j];
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating SortedList.Keys via indexer: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                for (int j = 0; j < cslist.Count; j++)
-                {
-                    x = cslist.Keys[j];
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating CircularSortedList.Keys via indexer (non-wrapped): {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                for (int j = 0; j < cslist.Count; j++)
-                {
-                    x = cslistwrap.Keys[j];
-                }
-            }
-            watch.Stop();
-            Console.WriteLine("Enumerating CircularSortedList.Keys via indexer (wrapped): {0} ms", watch.ElapsedMilliseconds);
-            // TODO: enum key
-        }
-
-        private enum TestIntEnum { }
-        private enum TestUIntEnum : uint { }
-        [Test]
-        public void SearchTest()
-        {
-            const int capacity = 10000;
-            const int iterations = 100000;
-
-            CircularSortedList<int, int> cslist = PrepareList<int, int>(capacity, 0, capacity);
-            CircularSortedList<int, int> cslistw = PrepareList<int, int>(capacity, capacity >> 1, capacity);
-            SortedList<int, int> slist = new SortedList<int, int>(cslist);
-            SortedDictionary<int, int> sdict = new SortedDictionary<int, int>(cslist);
-            Console.WriteLine("==========Search (iterations: {0:N0}, elements: {1:N0})===========", iterations, capacity);
-
-            // warm-up (creating comparer, initializing first-time things)
-            slist.ContainsKey(capacity);
-            sdict.ContainsKey(capacity);
-            cslist.ContainsKey(capacity);
-            cslistw.ContainsKey(capacity);
-
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                slist.ContainsKey(capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("SortedList<int,int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                sdict.ContainsKey(capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("SortedDictionary<int,int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslist.ContainsKey(capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("CircularSortedList<int,int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslistw.ContainsKey(capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("CircularSortedList<int,int>.ContainsKey (wrapped): {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-
-            CircularSortedList<TestIntEnum, int> cslistEnum = PrepareList<TestIntEnum, int>(capacity, 0, capacity);
-            CircularSortedList<TestIntEnum, int> cslistwEnum = PrepareList<TestIntEnum, int>(capacity, capacity >> 1, capacity);
-            SortedList<TestIntEnum, int> slistEnum = new SortedList<TestIntEnum, int>(cslistEnum);
-            SortedDictionary<TestIntEnum, int> sdictEnum = new SortedDictionary<TestIntEnum, int>(cslistEnum);
-
-            // warm-up (creating comparer, initializing first-time things)
-            slistEnum.ContainsKey((TestIntEnum)capacity);
-            sdictEnum.ContainsKey((TestIntEnum)capacity);
-            cslistEnum.ContainsKey((TestIntEnum)capacity);
-            cslistwEnum.ContainsKey((TestIntEnum)capacity);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                slistEnum.ContainsKey((TestIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("SortedList<TestIntEnum, int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                sdictEnum.ContainsKey((TestIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("SortedDictionary<TestIntEnum, int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslistEnum.ContainsKey((TestIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("CircularSortedList<TestIntEnum, int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslistwEnum.ContainsKey((TestIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("CircularSortedList<TestIntEnum, int>.ContainsKey (wrapped): {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-
-            CircularSortedList<TestUIntEnum, int> cslistUIntEnum = PrepareList<TestUIntEnum, int>(capacity, 0, capacity);
-            CircularSortedList<TestUIntEnum, int> cslistwUIntEnum = PrepareList<TestUIntEnum, int>(capacity, capacity >> 1, capacity);
-            SortedList<TestUIntEnum, int> slistUIntEnum = new SortedList<TestUIntEnum, int>(cslistUIntEnum);
-            SortedDictionary<TestUIntEnum, int> sdictUIntEnum = new SortedDictionary<TestUIntEnum, int>(cslistUIntEnum);
-
-            // warm-up (creating comparer, initializing first-time things)
-            slistUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            sdictUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            cslistUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            cslistwUIntEnum.ContainsKey((TestUIntEnum)capacity);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                slistUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("SortedList<TestUIntEnum, int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                sdictUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("SortedDictionary<TestUIntEnum, int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslistUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("CircularSortedList<TestUIntEnum, int>.ContainsKey: {0} ms", watch.ElapsedMilliseconds);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                cslistwUIntEnum.ContainsKey((TestUIntEnum)capacity);
-            }
-            watch.Stop();
-            Console.WriteLine("CircularSortedList<TestUIntEnum, int>.ContainsKey (wrapped): {0} ms", watch.ElapsedMilliseconds);
-            Console.WriteLine();
-        }
+        #region Static Methods
 
         /// <summary>
         /// Creates a list with given conditions
@@ -457,24 +53,185 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var values = Reflector.GetField(result, "values");
             Reflector.SetField(values, "startIndex", startIndex);
 
-            Type typeKey = typeof(TKey);
-            if (typeKey.IsNullable())
-                typeKey = Nullable.GetUnderlyingType(typeKey);
-            Type typeValue = typeof(TValue);
-            if (typeValue.IsNullable())
-                typeValue = Nullable.GetUnderlyingType(typeValue);
-            bool keyEnum = typeKey.IsEnum;
-            bool valueEnum = typeValue.IsEnum;
-
             for (int i = 0; i < count; i++)
-            {
-                TKey key = keyEnum ? (TKey)Enum.ToObject(typeKey, i) : (TKey)Convert.ChangeType(i, typeKey);
-                TValue value = valueEnum ? (TValue)Enum.ToObject(typeValue, i) : (TValue)Convert.ChangeType(i, typeValue);
-                result.Add(key, value);
-            }
+                result.Add(i.Convert<TKey>(), i.Convert<TValue>());
 
             return result;
         }
 
+        #endregion
+
+        #region Instance Methods
+
+        [Test]
+        public void PopulateTest()
+        {
+            const int capacity = 1000;
+
+            new PerformanceTest { TestName = "Populate Test", Iterations = 1000 }
+                .AddCase(() =>
+                {
+                    var slist = new SortedList<int, string>(capacity);
+                    for (int i = 0; i < capacity; i++)
+                        slist.Add(i, null);
+                }, "Populating SortedList from sorted data")
+                .AddCase(() =>
+                {
+                    var sdict = new SortedDictionary<int, string>();
+                    for (int i = 0; i < capacity; i++)
+                        sdict.Add(i, null);
+                }, "Populating SortedDictionary from sorted data")
+                .AddCase(() =>
+                {
+                    var cslist = new CircularSortedList<int, string>(capacity);
+                    for (int i = 0; i < capacity; i++)
+                        cslist.Add(i, null);
+                }, "Populating CircularSortedList from sorted data")
+                .AddCase(() =>
+                {
+                    var slist = new SortedList<int, string>(capacity);
+                    for (int i = capacity - 1; i >= 0; i--)
+                        slist.Add(i, null);
+                }, "Populating SortedList from reverse sorted data")
+                .AddCase(() =>
+                {
+                    var sdict = new SortedDictionary<int, string>();
+                    for (int i = capacity - 1; i >= 0; i--)
+                        sdict.Add(i, null);
+                }, "Populating SortedDictionary from reverse sorted data")
+                .AddCase(() =>
+                {
+                    var cslist = new CircularSortedList<int, string>(capacity);
+                    for (int i = capacity - 1; i >= 0; i--)
+                        cslist.Add(i, null);
+                }, "Populating CircularSortedList from reverse sorted data")
+                .AddCase(() =>
+                {
+                    var rnd = new Random(0);
+                    var slist = new SortedList<int, string>(capacity);
+                    for (int i = 0; i < capacity; i++)
+                        slist[rnd.Next(Int32.MaxValue)] = null;
+                }, "Populating SortedList from random data")
+                .AddCase(() =>
+                {
+                    var rnd = new Random(0);
+                    var sdict = new SortedDictionary<int, string>();
+                    for (int i = 0; i < capacity; i++)
+                        sdict[rnd.Next(Int32.MaxValue)] = null;
+                }, "Populating SortedDictionary from random data")
+                .AddCase(() =>
+                {
+                    var rnd = new Random(0);
+                    var cslist = new CircularSortedList<int, string>(capacity);
+                    for (int i = 0; i < capacity; i++)
+                        cslist[rnd.Next(Int32.MaxValue)] = null;
+                }, "Populating CircularSortedList from random data")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void EnumeratingTest()
+        {
+            const int capacity = 1000;
+
+            CircularSortedList<int, string> cslistShifted = PrepareList<int, string>(capacity, capacity >> 1, capacity);
+            CircularSortedList<int, string> cslist = new CircularSortedList<int, string>(cslistShifted);
+            SortedList<int, string> slist = new SortedList<int, string>(cslist);
+            SortedDictionary<int, string> sdict = new SortedDictionary<int, string>(cslist);
+
+            new PerformanceTest { TestName = "Enumeration Test", Iterations = 10000 }
+                .AddCase(() =>
+                {
+                    foreach (var item in slist) { }
+                }, "Enumerating SortedList")
+                .AddCase(() =>
+                {
+                    foreach (var item in sdict) { }
+                }, "Enumerating SortedDictionary")
+                .AddCase(() =>
+                {
+                    foreach (var item in cslist) { }
+                }, "Enumerating CircularSortedList (0-aligned)")
+                .AddCase(() =>
+                {
+                    foreach (var item in cslistShifted) { }
+                }, "Enumerating CircularSortedList (shifted)")
+                .AddCase(() =>
+                {
+                    IEnumerable<KeyValuePair<int, string>> e = slist;
+                    foreach (var item in e) { }
+                }, "Enumerating SortedList as IEumerable")
+                .AddCase(() =>
+                {
+                    IEnumerable<KeyValuePair<int, string>> e = sdict;
+                    foreach (var item in e) { }
+                }, "Enumerating SortedDictionary as IEumerable")
+                .AddCase(() =>
+                {
+                    IEnumerable<KeyValuePair<int, string>> e = cslist;
+                    foreach (var item in e) { }
+                }, "Enumerating CircularSortedList (0-aligned) as IEumerable")
+                .AddCase(() =>
+                {
+                    IEnumerable<KeyValuePair<int, string>> e = cslistShifted;
+                    foreach (var item in e) { }
+                }, "Enumerating CircularSortedList (shifted) as IEumerable")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < slist.Count; i++)
+                    {
+                        var x = slist.Keys[i];
+                    }
+                }, "Enumerating SortedList.Keys (0-aligned) by indexer")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < cslist.Count; i++)
+                    {
+                        var x = cslist.Keys[i];
+                    }
+                }, "Enumerating CircularSortedList.Keys (0-aligned) by indexer")
+                .AddCase(() =>
+                {
+                    for (int i = 0; i < cslistShifted.Count; i++)
+                    {
+                        var x = cslistShifted.Keys[i];
+                    }
+                }, "Enumerating CircularSortedList.Keys (shifted) by indexer")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [Test]
+        public void SearchTest()
+        {
+            const int capacity = 10000;
+
+            CircularSortedList<int, int> cslistShifted = PrepareList<int, int>(capacity, capacity >> 1, capacity);
+            CircularSortedList<int, int> cslist = new CircularSortedList<int, int>(cslistShifted);
+            SortedList<int, int> slist = new SortedList<int, int>(cslist);
+            SortedDictionary<int, int> sdict = new SortedDictionary<int, int>(cslist);
+
+            CircularSortedList<LongEnum, int> cslistEnumShifted = PrepareList<LongEnum, int>(capacity, 0, capacity);
+            CircularSortedList<LongEnum, int> cslistEnum = new CircularSortedList<LongEnum, int>(cslistEnumShifted);
+            SortedList<LongEnum, int> slistEnum = new SortedList<LongEnum, int>(cslistEnum);
+            SortedDictionary<LongEnum, int> sdictEnum = new SortedDictionary<LongEnum, int>(cslistEnum);
+
+            new PerformanceTest { TestName = "Search Test", Iterations = 100000 }
+                .AddCase(() => slist.ContainsKey(capacity), "SortedList<int,int>.ContainsKey")
+                .AddCase(() => sdict.ContainsKey(capacity), "SortedDictionary<int,int>.ContainsKey")
+                .AddCase(() => cslist.ContainsKey(capacity), "CircularSortedList<int,int>.ContainsKey (0-aligned)")
+                .AddCase(() => cslistShifted.ContainsKey(capacity), "CircularSortedList<int,int>.ContainsKey (shifted)")
+                .AddCase(() => slistEnum.ContainsKey((LongEnum)capacity), "SortedList<LongEnum,int>.ContainsKey")
+                .AddCase(() => sdictEnum.ContainsKey((LongEnum)capacity), "SortedDictionary<LongEnum,int>.ContainsKey")
+                .AddCase(() => cslistEnum.ContainsKey((LongEnum)capacity), "CircularSortedList<LongEnum,int>.ContainsKey (0-aligned)")
+                .AddCase(() => cslistEnumShifted.ContainsKey((LongEnum)capacity), "CircularSortedList<LongEnum,int>.ContainsKey (shifted)")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        #endregion
+
+        #endregion
     }
 }

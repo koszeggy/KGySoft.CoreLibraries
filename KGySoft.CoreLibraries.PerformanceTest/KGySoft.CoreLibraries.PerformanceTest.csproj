@@ -108,7 +108,6 @@
     <Compile Include="PerformanceTests\Serialization\BinarySerializerPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Serialization\XmlSerializerPerformanceTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UnitTest1.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj">
