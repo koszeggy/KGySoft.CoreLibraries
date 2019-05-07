@@ -1,15 +1,41 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ProfilerPerformanceTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Diagnostics;
 using System.Reflection;
+
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
 {
     [TestFixture]
     public class ProfilerPerformanceTest
     {
+        #region Methods
+
+        #region Public Methods
+
         /// <summary>
         /// This test just compares the different profiling methods:
         /// - PerformanceTest solution (invoking delegates)
@@ -48,16 +74,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
 
             // warming up
             for (int i = 0; i < iterations; i++)
-            {
                 DoNothing();
-            }
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
             for (int i = 0; i < iterations; i++)
-            {
                 DoNothing();
-            }
+
             watch.Stop();
             Console.WriteLine("Total Time: {0:N2} ms", watch.Elapsed.TotalMilliseconds);
             Console.WriteLine();
@@ -73,7 +96,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
             GC.Collect();
             for (int i = 0; i < iterations; i++)
             {
-                using (Profiler.Measure("ProfilerTest", "WarmingUp")) { }
+                using (Profiler.Measure("ProfilerTest", "WarmingUp"))
+                {
+                }
             }
 
             GC.Collect();
@@ -81,7 +106,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
             GC.Collect();
             for (int i = 0; i < iterations; i++)
             {
-                using (Profiler.Measure("ProfilerTest", "SelfCostWithoutOp")) { }
+                using (Profiler.Measure("ProfilerTest", "SelfCostWithoutOp"))
+                {
+                }
             }
 
             GC.Collect();
@@ -92,9 +119,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
                 for (int i = 0; i < iterations; i++)
                 {
                     using (Profiler.Measure("ProfilerTest", "DoNothingCall"))
-                    {
                         DoNothing();
-                    }
                 }
             }
 
@@ -104,9 +129,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
             using (Profiler.Measure("ProfilerTest", "PureTotal"))
             {
                 for (int i = 0; i < iterations; i++)
-                {
                     DoNothing();
-                }
             }
 
             foreach (IMeasureItem item in Profiler.GetMeasurementResults("ProfilerTest"))
@@ -153,16 +176,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
 
             // warming up
             for (int i = 0; i < iterations; i++)
-            {
                 DoSomething();
-            }
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
             for (int i = 0; i < iterations; i++)
-            {
                 DoSomething();
-            }
+
             watch.Stop();
             Console.WriteLine("Total Time: {0:N2} ms", watch.Elapsed.TotalMilliseconds);
             Console.WriteLine();
@@ -177,7 +197,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
 
             for (int i = 0; i < iterations; i++)
             {
-                using (Profiler.Measure("ProfilerTest", "WarmingUp")) { }
+                using (Profiler.Measure("ProfilerTest", "WarmingUp"))
+                {
+                }
             }
 
             GC.Collect();
@@ -185,7 +207,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
             GC.Collect();
             for (int i = 0; i < iterations; i++)
             {
-                using (Profiler.Measure("ProfilerTest", "SelfCostWithoutOp")) { }
+                using (Profiler.Measure("ProfilerTest", "SelfCostWithoutOp"))
+                {
+                }
             }
 
             GC.Collect();
@@ -196,9 +220,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
                 for (int i = 0; i < iterations; i++)
                 {
                     using (Profiler.Measure("ProfilerTest", "DoSomethingCall"))
-                    {
                         DoSomething();
-                    }
                 }
             }
 
@@ -208,9 +230,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
             using (Profiler.Measure("ProfilerTest", "PureTotal"))
             {
                 for (int i = 0; i < iterations; i++)
-                {
                     DoSomething();
-                }
             }
 
             foreach (IMeasureItem item in Profiler.GetMeasurementResults("ProfilerTest"))
@@ -222,18 +242,26 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Diagnostics
             Console.WriteLine("In case of a costly operation the DirectTotal < PureTotal < DoTest < DoSomethingCall < TotalWithSubMeasures should have nearly the same value.");
         }
 
+        #endregion
+
+        #region Private Methods
+
         private int DoNothing() => 0;
 
         /// <summary>
-        /// Invoking DoNothing in an especially non-performant way.
+        /// Invoking DoNothing in an especially costly way.
         /// </summary>
         private int DoSomething()
         {
             Type t = GetType();
             MethodInfo mi = t.GetMethod(nameof(DoNothing), BindingFlags.Instance | BindingFlags.NonPublic);
-            MethodAccessor invoker = new FunctionMethodAccessor(mi);
+            MethodAccessor invoker = new FunctionMethodAccessor(mi); // using the internal constructor makes sure the delegates are re-created again and again
             int result = (int)invoker.Invoke(this, null);
             return result;
         }
+
+        #endregion
+
+        #endregion
     }
 }

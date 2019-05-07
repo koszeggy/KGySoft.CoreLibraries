@@ -27,9 +27,6 @@ using NUnit.Framework;
 
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
-    /// <summary>
-    /// Summary description for CacheTest
-    /// </summary>
     [TestFixture]
     public class CacheTest
     {

@@ -342,30 +342,39 @@ namespace KGySoft.Diagnostics
         /// <returns>The string representation of the specified <paramref name="result"/>.</returns>
         /// <remarks>
         /// <para>If <typeparamref name="TResult"/> is a <see cref="Array">byte[]</see>, then it is returned as a raw string with <see cref="Encoding.Default">Encoding.Default</see>
-        /// encoding (similarly to a HEX editor), while zero characters are replaced by square characters (<c>□</c>).</para>
+        /// encoding (similarly to a HEX editor), while non-whitespace control characters are replaced by square characters (<c>□</c>).</para>
         /// <para>Zero characters are replaced also if <typeparamref name="TResult"/> is <see cref="string"/>.</para>
         /// <para>If <typeparamref name="TResult"/> is <see cref="IEnumerable"/>, then the string representation of elements (simply by <see cref="Object.ToString">ToString</see>) are concatenated.</para>
         /// <para>In any other case returns the result of <see cref="Object.ToString">ToString</see> for <paramref name="result"/>, or a localized string for <c>null</c>, if <paramref name="result"/> is <see langword="null"/>.</para>
         /// </remarks>
         protected virtual string AsString(TResult result)
         {
-            const char square = '□';
+            string s;
             switch (result)
             {
                 case byte[] bytes:
-                    return Encoding.Default.GetString(bytes).Replace('\0', square);
-                case string s:
-                    return s.Replace('\0', square);
+                    s = Encoding.Default.GetString(bytes);
+                    break;
+                case string str:
+                    s = str;
+                    break;
                 case IEnumerable e:
-                    return String.Join(", ", e.Cast<object>()
+                    s = String.Join(", ", e.Cast<object>()
 #if NET35
                             .Select(o => o.ToString()).ToArray()
 #endif
-
                     );
+                    break;
                 default:
-                    return result?.ToString() ?? Res.NullReference;
+                    s = result?.ToString() ?? Res.NullReference;
+                    break;
             }
+
+            var chars = new char[s.Length];
+            var whitespaceControls = new[] { '\t', '\r', '\n' };
+            for (int i = 0; i < s.Length; i++)
+                chars[i] = s[i] < 32 && !s[i].In(whitespaceControls) ? '□' : s[i];
+            return new String(chars);
         }
 
         /// <summary>

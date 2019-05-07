@@ -2005,7 +2005,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         /// </remarks>
         /// <returns>
         /// A <see cref="string"/> instance that is good for visualizing a raw UTF-8 string.</returns>
-        private static string ToRawString(byte[] bytes) => Encoding.Default.GetString(bytes).Replace('\0', '\u25A1'); // "\0" to "□" in output
+        private static string ToRawString(byte[] bytes)
+        {
+            string s = Encoding.Default.GetString(bytes);
+            var chars = new char[s.Length];
+            var whitespaceControls = new[] { '\t', '\r', '\n' };
+            for (int i = 0; i < s.Length; i++)
+                chars[i] = s[i] < 32 && !s[i].In(whitespaceControls) ? '□' : s[i];
+            return new String(chars);
+        }
 
         #endregion
 
@@ -2819,14 +2827,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 BinaryFormatter bf = new BinaryFormatter();
                 BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-                Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+                Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
                 bf.SurrogateSelector = surrogate;
                 byte[] raw = SerializeObjects(referenceObjects, bf); // 1097
                 bf.SurrogateSelector = null;
                 object[] result = DeserializeObjects(raw, bf);
                 AssertItemsEqual(referenceObjects, result);
 
-                Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+                Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
                 bsf.SurrogateSelector = surrogate;
                 raw = SerializeObjects(referenceObjects, bsf); // 1017
                 bsf.SurrogateSelector = null;
@@ -2866,19 +2874,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             bf.Binder = binder;
             bsf.Binder = binder;
 
-            Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             byte[] raw = SerializeObjects(referenceObjects, bf);
             object[] result = DeserializeObjects(raw, bf);
             AssertItemsEqual(referenceObjects, result);
 
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
 
 #if NET40 || NET45
             Console.WriteLine("-------Serialization and deserialization with WeakAssemblySerializationBinder, OmitAssemblyNameOnSerialize enabled-------------");
-            Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
             bf.Binder = binder;
             bsf.Binder = binder;
@@ -2886,13 +2894,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             result = DeserializeObjects(raw, bf);
             AssertItemsEqual(referenceObjects, result);
 
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
@@ -2905,18 +2913,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             bf.Binder = binder;
             bsf.Binder = binder;
 
-            Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             raw = SerializeObjects(referenceObjects, bf);
             result = DeserializeObjects(raw, bf);
             AssertItemsEqual(referenceObjects, result);
 
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
@@ -3026,7 +3034,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             byte[] raw;
             object[] result;
 
-            Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             try
             {
                 raw = SerializeObjects(referenceObjects, bf);
@@ -3039,13 +3047,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Console.WriteLine("Error in system serializer: " + e);
             }
 
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
 
             bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
@@ -3054,7 +3062,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             bf.SurrogateSelector = selector;
             bsf.SurrogateSelector = selector;
 
-            Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             try
             {
                 raw = SerializeObjects(referenceObjects, bf);
@@ -3068,7 +3076,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Console.WriteLine("Error in system serializer: " + e);
             }
 
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             bsf.Options = BinarySerializationOptions.None;
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = null;
@@ -3077,7 +3085,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
             bsf.SurrogateSelector = selector;
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = null;
             result = DeserializeObjects(raw, bsf);
@@ -3087,7 +3095,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             bf.SurrogateSelector = null;
             bsf.SurrogateSelector = null;
 
-            Console.WriteLine("------------------System Binaryformatter (Items Count: {0})--------------------", referenceObjects.Length);
+            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             try
             {
                 raw = SerializeObjects(referenceObjects, bf);
@@ -3101,7 +3109,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Console.WriteLine("Error in system serializer: " + e);
             }
 
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             bsf.Options = BinarySerializationOptions.None;
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = selector;
@@ -3110,7 +3118,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
             bsf.SurrogateSelector = null;
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
             raw = SerializeObjects(referenceObjects, bsf);
             bsf.SurrogateSelector = selector;
             result = DeserializeObjects(raw, bsf);
@@ -3285,7 +3293,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         private void KGySerializeObject(object obj, BinarySerializationOptions options, bool safeCompare = false)
         {
             Type type = obj.GetType();
-            Console.WriteLine("------------------KGySoft BinarySerializer ({0} - {1})--------------------", type, options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer ({0} - {1})--------------------", type, options);
             try
             {
                 byte[] serObject; // = BinarySerializer.Serialize(obj, options);
@@ -3325,7 +3333,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         private void KGySerializeObjects(object[] referenceObjects, BinarySerializationOptions options, bool safeCompare = false)
         {
-            Console.WriteLine("------------------KGySoft BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, options);
+            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, options);
             BinarySerializationFormatter bsf = new BinarySerializationFormatter(options);
             try
             {

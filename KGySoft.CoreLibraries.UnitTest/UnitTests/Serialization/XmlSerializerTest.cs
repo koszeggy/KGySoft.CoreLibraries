@@ -997,7 +997,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 5)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 6)]
             private string stringProp;
 
             #endregion

@@ -101,8 +101,9 @@
     <Compile Include="PerformanceTests\Collections\CircularSortedListPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Collections\ObjectModel\FastBindingListPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Collections\ObjectModel\FastLookupCollectionPerformanceTest.cs" />
+    <Compile Include="PerformanceTests\CoreLibraries\EnumComparerPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Diagnostics\ProfilerPerformanceTest.cs" />
-    <Compile Include="PerformanceTests\Libraries\EnumPerformanceTest.cs" />
+    <Compile Include="PerformanceTests\CoreLibraries\EnumPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Reflection\ReflectorPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Resources\ResXResourceManagerPerformanceTest.cs" />
     <Compile Include="PerformanceTests\Serialization\BinarySerializerPerformanceTest.cs" />

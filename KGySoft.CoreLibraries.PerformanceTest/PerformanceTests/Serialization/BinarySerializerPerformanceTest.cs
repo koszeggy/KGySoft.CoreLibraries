@@ -1,80 +1,111 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializerPerformanceTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) {{author}}, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+
+using KGySoft.Collections;
 using KGySoft.Serialization;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
 {
-    /// <summary>
-    /// Summary description for BinarySerializerTest
-    /// </summary>
     [TestFixture]
     public class BinarySerializerPerformanceTest
     {
-        private static void DoTestBinarySerialize(object x)
+        #region Enumerations
+
+        private enum TestEnum
         {
-            const int iterations = 100000;
-            Console.WriteLine("=========={0} (iterations: {1:N0})===========", x.GetType(), iterations);
-
-            byte[] raw = new byte[0];
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                raw = BinarySerializer.Serialize(x, BinarySerializationOptions.RecursiveSerializationAsFallback);
-                var y = BinarySerializer.Deserialize(raw);
-            }
-            watch.Stop();
-            decimal time1 = watch.ElapsedMilliseconds;
-            decimal size1 = raw.Length;
-            Console.WriteLine("BinarySerializer time: " + time1);
-            Console.WriteLine("BinarySerializer size: " + size1);
-
-            watch.Reset();
-            watch.Start();
-            for (int i = 0; i < iterations; i++)
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                MemoryStream ms = new MemoryStream();
-                bf.Serialize(ms, x);
-                raw = ms.ToArray();
-
-                ms = new MemoryStream(raw);
-                var y = bf.Deserialize(ms);
-
-            }
-            watch.Stop();
-            Console.WriteLine("BinaryFormatter time: " + watch.ElapsedMilliseconds);
-            Console.WriteLine("BinaryFormatter size: " + raw.Length);
-            Console.WriteLine("Time performance: {0:P2}", time1 / watch.ElapsedMilliseconds);
-            Console.WriteLine("Size performance: {0:P2}", size1 / raw.Length);
+            One, Two
         }
 
-        [Test]
-        public void SerializerTest()
+        #endregion
+
+        #region Fields
+
+        private static readonly object[] serializerTestSource =
         {
-            //var x = new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }; // multidimensional byte array
-            //var x = new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }; // jagged byte array
-            //var x = Array.CreateInstance(typeof(byte), new int[] {3}, new int[]{-1}); // non-zero based array
-            //var x = new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }; // jagged crazy 1
-            //var x = new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }; // jagged crazy 2
-            //var x = 1;
-            //var x = new List<int>(new int[10]);
-            //var x = new HashSet<int> {1, 2, 3};
-            //var x = new HashSet<string>(StringComparer.CurrentCulture) { "alpha", "beta", "gamma" };
-            //var x = new HashSet<TestEnum>(EnumComparer<TestEnum>.Comparer) { TestEnum.One, TestEnum.Two };
-            //var x = new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null });
-            //var x = new Stack<int>(new int[] { 1, 2, 3 });
-            //var x = new BitArray(new[] {true, false, true});
-            //var x = new BitArray[]{ new BitArray(new[] {true, false, true}), null };
-            //var x = new Collection<int>(new int[10]);
-            //var x = new DictionaryEntry(new object(), "alpha");
-            var x = new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } };
-            //var x = new Cache<int, string>(Cache<int,string>.NullLoader) { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } };
-            DoTestBinarySerialize(x);
+            1,
+            new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, // multidimensional byte array
+            new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }, // jagged byte array
+            new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // jagged crazy 1
+            new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // jagged crazy 2
+            new List<int>(new int[10]),
+            new HashSet<int> { 1, 2, 3 },
+            new HashSet<string>(StringComparer.CurrentCulture) { "alpha", "beta", "gamma" },
+            new HashSet<TestEnum>(EnumComparer<TestEnum>.Comparer) { TestEnum.One, TestEnum.Two },
+            new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+            new Stack<int>(new int[] { 1, 2, 3 }),
+            new BitArray(new[] { true, false, true }),
+            new BitArray[] { new BitArray(new[] { true, false, true }), null },
+            new Collection<int>(new int[10]),
+            new DictionaryEntry(new object(), "alpha"),
+            new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+            new Cache<int, string>() { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+        };
+
+        #endregion
+
+        #region Methods
+
+        [TestCaseSource(nameof(serializerTestSource))]
+        public void SerializerTest(object testObj)
+        {
+            byte[] Serialize(IFormatter formatter, object o)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    formatter.Serialize(ms, o);
+                    return ms.ToArray();
+                }
+            }
+
+            object Deserialize(IFormatter formatter, byte[] data)
+            {
+                using (var ms = new MemoryStream(data))
+                    return formatter.Deserialize(ms);
+            }
+
+            var bf = new BinaryFormatter();
+            var bsf = new BinarySerializationFormatter();
+
+            new PerformanceTest<object> { TestName = $"Binary Serialization/Deserialization Speed Test - {testObj.GetType()}", Iterations = 10000 }
+                .AddCase(() => Deserialize(bf, Serialize(bf, testObj)), "BinaryFormatter")
+                .AddCase(() => Deserialize(bsf, Serialize(bsf, testObj)), "BinarySerializationFormatter")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            new PerformanceTest<byte[]> { TestName = $"Binary Serialization Size Test - {testObj.GetType()}", Iterations = 1, SortBySize = true }
+                .AddCase(() => Serialize(bf, testObj), "BinaryFormatter")
+                .AddCase(() => Serialize(bsf, testObj), "BinarySerializationFormatter")
+                .DoTest()
+                .DumpResults(Console.Out, dumpReturnValue: true);
         }
+
+        #endregion
     }
 }

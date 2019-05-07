@@ -11,9 +11,6 @@ using NUnit.Framework;
 
 namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 {
-    /// <summary>
-    /// Summary description for UnitTest1
-    /// </summary>
     [TestFixture]
     public class ReflectorPerformanceTest
     {
