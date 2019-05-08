@@ -3,7 +3,7 @@
 # KGy SOFT Core Libraries
 
 KGy SOFT Core Libraries features high-performance and handy general libraries.
-Many of them aims to replace some existing API of the original .NET framework with a more efficient version.
+Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
 
 Among others:
 - Useful [extensions](http://docs.kgysoft.net/corelibraries/html/N_KGySoft_CoreLibraries.htm) for simple types, collections, and others
