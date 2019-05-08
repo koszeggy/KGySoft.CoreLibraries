@@ -26,6 +26,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
 using System.Text;
 
 using KGySoft.Collections;
@@ -550,6 +551,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Writes AssemblyQiualifiedName of element types and array ranks if needed
         /// </summary>
+        [SecurityCritical]
         private static void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, BinarySerializationOptions options, SerializationManager manager)
         {
             // Enum, BinarySerializable, RawStruct, recursive serialization: type name
@@ -610,6 +612,7 @@ namespace KGySoft.Serialization
                 || type == Reflector.DictionaryEntryType; // encoded as a non-generic dictionary
         }
 
+        [SecurityCritical]
         private static IEnumerable<DataTypes> EncodeCollectionType(Type type, BinarySerializationOptions options, SerializationManager manager)
         {
             // array
@@ -817,6 +820,7 @@ namespace KGySoft.Serialization
             return DataTypes.Null;
         }
 
+        [SecurityCritical]
         private static DataTypes GetSupportedElementType(Type type, BinarySerializationOptions options, SerializationManager manager)
         {
             // a.) Natively supported primitive types
@@ -1180,6 +1184,7 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="data">The object to serialize</param>
         /// <returns>Serialized raw data of the object</returns>
+        [SecuritySafeCritical]
         public byte[] Serialize(object data)
         {
             try
@@ -1206,6 +1211,7 @@ namespace KGySoft.Serialization
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
+        [SecuritySafeCritical]
         public object Deserialize(byte[] rawData, int offset = 0)
         {
             using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
@@ -1228,6 +1234,7 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
+        [SecuritySafeCritical]
         public void SerializeToStream(Stream stream, object data)
         {
             try
@@ -1246,6 +1253,7 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+        [SecuritySafeCritical]
         public object DeserializeFromStream(Stream stream)
         {
             try
@@ -1270,6 +1278,7 @@ namespace KGySoft.Serialization
         /// </remarks>
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
+        [SecuritySafeCritical]
         public void SerializeByWriter(BinaryWriter writer, object data)
         {
             try
@@ -1291,6 +1300,7 @@ namespace KGySoft.Serialization
         /// </remarks>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+        [SecuritySafeCritical]
         public object DeserializeByReader(BinaryReader reader)
         {
             try
@@ -1316,6 +1326,7 @@ namespace KGySoft.Serialization
         /// <param name="data">The object to serialize</param>
         /// <param name="isRoot"><see langword="true"/>, when <paramref name="data"/> is the root level object.</param>
         /// <param name="manager">The serialization manager</param>
+        [SecurityCritical]
         private void Write(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
         {
             if (!isRoot)
@@ -1659,6 +1670,7 @@ namespace KGySoft.Serialization
                 || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
                 || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
 
+        [SecurityCritical]
         private void WriteCollection(BinaryWriter bw, CircularList<DataTypes> collectionTypeDescriptor, object obj,
             SerializationManager manager)
         {
@@ -1755,6 +1767,7 @@ namespace KGySoft.Serialization
             throw new InvalidOperationException("A supported collection expected here but other type found: " + collection.GetType());
         }
 
+        [SecurityCritical]
         private void WriteCollectionElements(BinaryWriter bw, IEnumerable collection, CircularList<DataTypes> elementCollectionDataTypes, DataTypes elementDataType,
             Type collectionElementType, SerializationManager manager)
         {
@@ -1762,6 +1775,7 @@ namespace KGySoft.Serialization
                 WriteElement(bw, element, elementCollectionDataTypes, elementDataType, collectionElementType, manager);
         }
 
+        [SecurityCritical]
         private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, CircularList<DataTypes> keyCollectionDataTypes, DataTypes keyDataType,
             CircularList<DataTypes> valueCollectionDataTypes, DataTypes valueDataType, Type collectionKeyType, Type collectionValueType, SerializationManager manager)
         {
@@ -1795,6 +1809,7 @@ namespace KGySoft.Serialization
         /// <param name="collectionElementType">Needed if <paramref name="elementDataType"/> is <see cref="DataTypes.BinarySerializable"/> or <see cref="DataTypes.RecursiveObjectGraph"/>.
         /// Contains the actual generic type parameter or array base type from which <see cref="IBinarySerializable"/> or the type of the recursively serialized object is assignable.</param>
         /// <param name="manager">An <see cref="SerializationManager"/> instance.</param>
+        [SecurityCritical]
         private void WriteElement(BinaryWriter bw, object element, CircularList<DataTypes> elementCollectionDataTypes, DataTypes elementDataType,
             Type collectionElementType, SerializationManager manager)
         {
@@ -2034,6 +2049,7 @@ namespace KGySoft.Serialization
             OnSerialized(instance, options);
         }
 
+        [SecurityCritical]
         private void WriteValueType(BinaryWriter bw, object data, BinarySerializationOptions options)
         {
             OnSerializing(data, options);
@@ -2050,6 +2066,7 @@ namespace KGySoft.Serialization
         /// <param name="data">The object to serialize</param>
         /// <param name="collectionElementType">Element type of collection or null if not in collection</param>
         /// <param name="manager">Serialization Manager.</param>
+        [SecurityCritical]
         private void WriteObjectGraph(BinaryWriter bw, object data, Type collectionElementType, SerializationManager manager)
         {
             // Common order: 1: not in a collection -> store type, 2: serialize
@@ -2077,6 +2094,7 @@ namespace KGySoft.Serialization
             OnSerialized(data, options);
         }
 
+        [SecurityCritical]
         private void WriteDefaultObjectGraph(BinaryWriter bw, object data, SerializationManager manager)
         {
             // true for IsDefault object graph
@@ -2116,6 +2134,7 @@ namespace KGySoft.Serialization
             bw.Write(String.Empty);
         }
 
+        [SecurityCritical]
         private void WriteCustomObjectGraph(BinaryWriter bw, object data, Type collectionElementType, BinarySerializationOptions options, SerializationManager manager, ISerializationSurrogate surrogate)
         {
             // Common order: 1: not in a collection -> store type, 2: serialize
@@ -2274,6 +2293,7 @@ namespace KGySoft.Serialization
         /// <param name="isRoot"><see langword="true"/>, when the object to deserialize is the root-level object</param>
         /// <param name="manager">The manager used for deserialization.</param>
         /// <returns>The deserialized object</returns>
+        [SecurityCritical]
         private object Read(BinaryReader br, bool isRoot, DeserializationManager manager)
         {
             object result;
@@ -2319,6 +2339,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Creates and populates array
         /// </summary>
+        [SecurityCritical]
         private object CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager)
         {
             // getting whether the current instance is in cache
@@ -2377,6 +2398,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Creates and populates a collection
         /// </summary>
+        [SecurityCritical]
         private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager)
         {
             if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
@@ -2449,6 +2471,7 @@ namespace KGySoft.Serialization
             return descriptor.IsReadOnly ? descriptor.GetAsReadOnly(collection) : collection;
         }
 
+        [SecurityCritical]
         private object ReadElement(BinaryReader br, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
             DataTypes elementDataType = collectionDescriptor.GetElementDataType(isTValue);
@@ -2500,6 +2523,7 @@ namespace KGySoft.Serialization
         /// <param name="manager">The manager used for deserialization.</param>
         /// <param name="isTValue"><see langword="true"/>, when element to deserialize is the value in a dictionary collection.</param>
         /// <returns>The deserialized object.</returns>
+        [SecurityCritical]
         private object ReadObject(BinaryReader br, bool isRoot, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
             bool is7BitEncoded = (dataType & DataTypes.Store7BitEncoded) != DataTypes.Null;
@@ -2785,6 +2809,7 @@ namespace KGySoft.Serialization
             }
         }
 
+        [SecurityCritical]
         private object ReadBinarySerializable(BinaryReader br, bool addToCache, Type type, BinarySerializationOptions origOptions, DeserializationManager manager)
         {
             byte[] serData = br.ReadBytes(Read7BitInt(br));
@@ -2816,6 +2841,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Deserializing object graph with options that was used on serialization.
         /// </summary>
+        [SecurityCritical]
         private object ReadObjectGraph(BinaryReader br, bool addToCache, Type type, DeserializationManager manager, bool refineType)
         {
             // a.) Graph method
@@ -2879,6 +2905,7 @@ namespace KGySoft.Serialization
             return result;
         }
 
+        [SecurityCritical]
         private void ReadDefaultObjectGraph(BinaryReader br, object obj, DeserializationManager manager)
         {
             Type type = obj.GetType();
@@ -2949,6 +2976,7 @@ namespace KGySoft.Serialization
             }
         }
 
+        [SecurityCritical]
         private void ReadCustomObjectGraph(BinaryReader br, object obj, DeserializationManager manager, ISerializationSurrogate surrogate, ISurrogateSelector selector)
         {
             Type type = obj.GetType();
@@ -2985,6 +3013,7 @@ namespace KGySoft.Serialization
             }
         }
 
+        [SecurityCritical]
         private void ReadDefaultObjectGraphAsCustom(BinaryReader br, object obj, DeserializationManager manager, ISerializationSurrogate surrogate, ISurrogateSelector selector)
         {
             Type type = obj.GetType();
@@ -3024,6 +3053,7 @@ namespace KGySoft.Serialization
             }
         }
 
+        [SecurityCritical]
         private void ReadCustomObjectGraphAsDefault(BinaryReader br, object obj, DeserializationManager manager)
         {
             int count = Read7BitInt(br);

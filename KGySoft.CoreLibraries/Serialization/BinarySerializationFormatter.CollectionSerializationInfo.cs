@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Security;
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -57,6 +58,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
             /// </summary>
+            [SecurityCritical]
             internal void WriteSpecificProperties(BinarySerializationFormatter owner, BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
                 if (IsSingleElement)
@@ -109,6 +111,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
+            [SecurityCritical]
             internal object InitializeCollection(BinarySerializationFormatter owner, BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
             {
                 if (IsSingleElement)

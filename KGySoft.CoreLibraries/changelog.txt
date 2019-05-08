@@ -5,10 +5,14 @@
 + New feature
 ===============================================================================
 
+* v4.6.0.0:
+~~~~~~~~~~~
+* Assembly: Applying SecurityRuleSet.Level2 and adjusting security critical calls in the whole assembly.
+  For a consumer assembly every public member is safe to call.
+
 * v4.5.1.0:
 ~~~~~~~~~~~
 Adjusting security settings.
-
 
 ! v4.5.0.0:
 ~~~~~~~~~~~

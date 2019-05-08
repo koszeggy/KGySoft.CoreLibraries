@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
-
+using System.Security;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -264,6 +264,7 @@ namespace KGySoft.Serialization
             /// 0..count - 1: known or already dumped type
             /// count + 1: new type (name is to be stored)
             /// </remarks>
+            [SecurityCritical]
             internal void WriteType(BinaryWriter bw, Type type)
             {
                 string binderAsmName = null;
@@ -534,6 +535,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Writes the generic parameters of a type.
             /// </summary>
+            [SecurityCritical]
             private void WriteGenericType(BinaryWriter bw, Type type)
             {
                 foreach (Type genericArgument in type.GetGenericArguments())

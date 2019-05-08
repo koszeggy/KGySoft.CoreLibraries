@@ -62,6 +62,7 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="selector">The next surrogate selector to examine.</param>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
+        [SecurityCritical]
         public void ChainSelector(ISurrogateSelector selector) => next = selector;
 
         /// <summary>
@@ -70,6 +71,7 @@ namespace KGySoft.Serialization
         /// <returns>
         /// The next surrogate selector in the chain or null.
         /// </returns>
+        [SecurityCritical]
         public ISurrogateSelector GetNextSelector() => next;
 
         /// <summary>
@@ -82,6 +84,7 @@ namespace KGySoft.Serialization
         /// <param name="context">The source or destination context for the current serialization.</param>
         /// <param name="selector">When this method returns, contains a <see cref="ISurrogateSelector"/> that holds a reference to the surrogate selector where the appropriate surrogate was found.</param>
         /// <exception cref="T:System.Security.SecurityException">The caller does not have the required permission.</exception>
+        [SecurityCritical]
         public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
             if (type == null)
@@ -105,6 +108,7 @@ namespace KGySoft.Serialization
 
         #region Explicitly Implemented Interface Methods
 
+        [SecurityCritical]
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null)
@@ -129,6 +133,7 @@ namespace KGySoft.Serialization
             }
         }
 
+        [SecurityCritical]
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
         {
             if (obj == null)

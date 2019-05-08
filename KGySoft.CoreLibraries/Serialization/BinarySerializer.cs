@@ -75,7 +75,6 @@ namespace KGySoft.Serialization
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized object.</returns>
-        [SecurityCritical]
         public static object Deserialize(byte[] rawData, int offset = 0) => new BinarySerializationFormatter().Deserialize(rawData, offset);
 
         /// <summary>
@@ -92,7 +91,6 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        [SecurityCritical]
         public static object DeserializeFromStream(Stream stream) => new BinarySerializationFormatter().DeserializeFromStream(stream);
 
         /// <summary>
@@ -117,7 +115,6 @@ namespace KGySoft.Serialization
         /// </remarks>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        [SecurityCritical]
         public static object DeserializeByReader(BinaryReader reader) => new BinarySerializationFormatter().DeserializeByReader(reader);
 
         /// <summary>
@@ -155,6 +152,7 @@ namespace KGySoft.Serialization
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
         /// <param name="result">The byte array representation of the <see cref="ValueType"/> object.</param>
         /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.</returns>
+        [SecuritySafeCritical]
         public static bool TrySerializeValueType(ValueType obj, out byte[] result)
         {
             result = null;
@@ -222,6 +220,7 @@ namespace KGySoft.Serialization
         /// <param name="result">The byte array representation of the <paramref name="array"/>.</param>
         /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.
         /// The <paramref name="array"/> can be serialized if <typeparamref name="T"/> contains only value type fields.</returns>
+        [SecuritySafeCritical]
         public static bool TrySerializeValueArray<T>(T[] array, out byte[] result) where T : struct
         {
             result = null;
@@ -287,6 +286,7 @@ namespace KGySoft.Serialization
         /// <param name="data">The byte array that contains the byte representation of the object.</param>
         /// <param name="offset">The offset that points to the beginning of the serialized data.</param>
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
+        [SecurityCritical]
         public static object DeserializeValueType(Type type, byte[] data, int offset)
         {
             if (type == null)

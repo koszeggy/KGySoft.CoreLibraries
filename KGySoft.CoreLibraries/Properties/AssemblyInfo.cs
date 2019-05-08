@@ -37,7 +37,5 @@ using System.Security;
 [assembly: AllowPartiallyTrustedCallers]
 
 #if !NET35
-// Cannot be level 2 because IFormatter.Deserialize is not SecurityCritical in the framework but must be SecurityCritical in BinarySerializationFormatter
-// because the call chain ends up in a FormatterServices.GetUninitializedObject call.
-[assembly: SecurityRules(SecurityRuleSet.Level1, SkipVerificationInFullTrust = true)]
+[assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
 #endif

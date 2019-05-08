@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
-
+using System.Security;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -96,6 +96,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Gets if a type can use a surrogate
             /// </summary>
+            [SecurityCritical]
             internal bool CanUseSurrogate(Type type)
             {
                 if (surrogateSelector == null)
@@ -110,6 +111,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Tries to get a surrogate for a type
             /// </summary>
+            [SecurityCritical]
             internal bool TryGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
             {
                 surrogate = null;

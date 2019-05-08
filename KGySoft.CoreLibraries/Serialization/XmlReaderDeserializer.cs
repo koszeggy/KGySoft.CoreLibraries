@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Security;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -200,6 +201,7 @@ namespace KGySoft.Serialization
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
+        [SecuritySafeCritical] // due to DeserializeValueType but is safe because serialized by safe version
         private static bool TryDeserializeObject(Type type, XmlReader reader, object existingInstance, out object result)
         {
             // null value

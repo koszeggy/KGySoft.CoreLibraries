@@ -22,6 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using KGySoft.Security.Cryptography;
 
@@ -1078,6 +1079,7 @@ namespace KGySoft.CoreLibraries
         /// never be reclaimed by the garbage collector. To avoid leaking memory generated delegates use an internal static <see cref="Random"/> instance.</note>
         /// </para>
         /// </remarks>
+        [SecuritySafeCritical]
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
             if (random == null)
@@ -1098,6 +1100,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An instance of <paramref name="type"/> or <see langword="null"/>&#160;if the type cannot be
         /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section of the <see cref="NextObject{T}"/> overload for details.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
+        [SecuritySafeCritical]
         public static object NextObject(this Random random, Type type, GenerateObjectSettings settings = null)
         {
             if (random == null)

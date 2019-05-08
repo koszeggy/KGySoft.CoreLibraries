@@ -24,6 +24,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.Serialization;
+using System.Security;
 using System.Text;
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -231,6 +232,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
+            [SecurityCritical]
             internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
             {
                 var context = new GeneratorContext(random, settings);
@@ -700,6 +702,7 @@ namespace KGySoft.CoreLibraries
                 return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length));
             }
 
+            [SecurityCritical]
             private static object GenerateObject(Type type, bool allowNull, ref GeneratorContext context)
             {
                 // null
@@ -814,6 +817,7 @@ namespace KGySoft.CoreLibraries
                 return null;
             }
 
+            [SecurityCritical]
             private static object InitializeObject(Type type, ref GeneratorContext context)
             {
                 if (context.IsGenerating(type))
@@ -849,6 +853,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static void InitializeMembers(object obj, ref GeneratorContext context)
             {
                 IList<PropertyInfo> properties = null;
@@ -910,6 +915,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static Array GenerateArray(Type arrayType, ref GeneratorContext context)
             {
                 if (arrayType == Reflector.ByteArrayType)
@@ -938,6 +944,7 @@ namespace KGySoft.CoreLibraries
                 return result;
             }
 
+            [SecurityCritical]
             private static void PopulateCollection(IEnumerable collection, Type elementType, bool isDictionary, ref GeneratorContext context)
             {
                 int count = context.Random.NextInt32(context.Settings.CollectionsLength.LowerBound, context.Settings.CollectionsLength.UpperBound, true);
@@ -976,6 +983,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [SecurityCritical]
             private static object GenerateCollectionByCtor(ConstructorInfo collectionCtor, Type elementType, bool isDictionary, ref GeneratorContext context)
             {
                 IEnumerable initializerCollection;
