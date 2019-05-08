@@ -1,4 +1,4 @@
-![KGy SOFT .net](http://docs.kgysoft.net/corelibraries/icons/logo.png)
+[![KGy SOFT .net](http://docs.kgysoft.net/corelibraries/icons/logo.png)](https://kgysoft.net)
 
 # KGy SOFT Core Libraries
 
