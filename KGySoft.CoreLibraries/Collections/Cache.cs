@@ -39,6 +39,7 @@ namespace KGySoft.Collections
     /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
     /// If the cache is full (elements <see cref="Count"/> reaches the <see cref="Capacity"/>) and a new element has to be stored, then
     /// the oldest or least recent used element (depends on the value of <see cref="Behavior"/>) is removed from the cache.
+    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the cache.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the cache.</typeparam>

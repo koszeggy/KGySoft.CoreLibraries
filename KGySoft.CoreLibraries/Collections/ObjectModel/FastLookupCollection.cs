@@ -35,7 +35,7 @@ namespace KGySoft.Collections.ObjectModel
     /// have O(1) access if the underlying collection is changed through only the <see cref="FastLookupCollection{T}"/> class.
     /// </summary>
     /// <remarks>
-    /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection directly but
+    /// <para>If <see cref="CheckConsistency"/> is <see langword="true"/>, then the <see cref="FastLookupCollection{T}"/> class is tolerant with direct modifications of the underlying collection but
     /// when inconsistency is detected, the cost of <see cref="VirtualCollection{T}.IndexOf">IndexOf</see> and <see cref="VirtualCollection{T}.Contains">Contains</see> methods can fall back to O(n)
     /// where n is the count of the elements in the collection.</para>
     /// </remarks>

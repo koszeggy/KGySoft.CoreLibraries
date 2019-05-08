@@ -60,6 +60,10 @@ Adjusting security settings.
   + IPersistableObject
   + ObservableObjectBase
   + PersistableObjectBase
+  + UndoableObjectBase
+  + EditableObjectBase
+  + ValidatingObjectBase
+  + ModelBase
 
 ! KGySoft.Libraries namespace:
 ==============================

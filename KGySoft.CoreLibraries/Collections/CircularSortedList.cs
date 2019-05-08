@@ -77,7 +77,7 @@ namespace KGySoft.Collections
     /// inserting at the first/last position are O(1) operations. Removing an element from the last/first position by the <see cref="Remove">Remove</see> method has an O(log n) cost, because the item is found by binary search.
     /// However, removing the first or last element by the <see cref="RemoveAt">RemoveAt</see> method is an O(1) operation. When an element is inserted/removed
     /// at any other position, it has generally O(n) cost, though the <see cref="CircularSortedList{TKey,TValue}"/> is designed so, that in worst case no more than half of the elements will be moved.</item>
-    /// <item><em>Populating from sorted data:</em> Inserting element to the end of to the first position is O(1) cost, so it is faster than any other sorted dictionary types, even if populating from reverse ordered data.</item>
+    /// <item><em>Populating from sorted data:</em> Inserting element to the end or to the first position is O(1) cost, so it is faster than any other sorted dictionary types, even if populating from reverse ordered data.</item>
     /// <item><em>Enumerating the collection:</em> Really fast, it is actually a traversal of arrays.</item>
     /// </list>
     /// </description></item>
