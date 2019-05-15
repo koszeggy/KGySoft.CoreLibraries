@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 
 #endregion
 
@@ -41,6 +42,7 @@ namespace KGySoft.CoreLibraries
 
         #region Public methods
 
+#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
         /// <summary>
         /// Returns the <see cref="string"/> representation of the given <see langword="enum"/>&#160;value specified in the <paramref name="value"/> parameter.
         /// </summary>
@@ -53,7 +55,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
         public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto, string separator = DefaultFormatSeparator)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.ToString(value, format, separator);
         }
@@ -66,7 +68,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (", ") separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         public static string ToString<TEnum>(this TEnum value, string separator)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.ToString(value, EnumFormattingOptions.Auto, separator);
         }
@@ -78,7 +80,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The enum value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         public static string GetName<TEnum>(this TEnum value)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.GetName(value);
         }
@@ -90,7 +92,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined<TEnum>(this TEnum value)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.IsDefined(value);
         }
@@ -105,7 +107,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined<TEnum>(this TEnum flags)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.AllFlagsDefined(flags);
         }
@@ -154,10 +156,11 @@ namespace KGySoft.CoreLibraries
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<TEnum> GetFlags<TEnum>(this TEnum flags, bool onlyDefinedValues)
-            where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             return Enum<TEnum>.GetFlags(flags, onlyDefinedValues);
         }
+#pragma warning restore CS3024 // Constraint type is not CLS-compliant
 
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <see langword="enum"/> type of <paramref name="flags"/>,
@@ -193,18 +196,19 @@ namespace KGySoft.CoreLibraries
 
         internal static ulong ToUInt64(this Enum value)
         {
+            IConvertible convertible = value;
             switch (value.GetTypeCode())
             {
                 case TypeCode.SByte:
-                    return (byte)Convert.ToSByte(value);
+                    return (byte)convertible.ToSByte(null);
                 case TypeCode.Int16:
-                    return (ushort)Convert.ToInt16(value);
+                    return (ushort)convertible.ToInt16(null);
                 case TypeCode.Int32:
-                    return (uint)Convert.ToInt32(value);
+                    return (uint)convertible.ToInt32(null);
                 case TypeCode.Int64:
-                    return (ulong)Convert.ToInt64(value);
+                    return (ulong)convertible.ToInt64(null);
                 default:
-                    return Convert.ToUInt64(value);
+                    return convertible.ToUInt64(null);
             }
         }
 

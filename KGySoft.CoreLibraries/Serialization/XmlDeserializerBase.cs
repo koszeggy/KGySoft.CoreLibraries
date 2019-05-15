@@ -58,16 +58,16 @@ namespace KGySoft.Serialization
             lowerBounds = new int[dims.Length];
             for (int i = 0; i < dims.Length; i++)
             {
-                int boundSep = dims[i].IndexOf("..", StringComparison.InvariantCulture);
+                int boundSep = dims[i].IndexOf("..", StringComparison.Ordinal);
                 if (boundSep == -1)
                 {
                     lowerBounds[i] = 0;
-                    lengths[i] = Int32.Parse(dims[i]);
+                    lengths[i] = Int32.Parse(dims[i], CultureInfo.InvariantCulture);
                 }
                 else
                 {
-                    lowerBounds[i] = Int32.Parse(dims[i].Substring(0, boundSep));
-                    lengths[i] = Int32.Parse(dims[i].Substring(boundSep + 2)) - lowerBounds[i] + 1;
+                    lowerBounds[i] = Int32.Parse(dims[i].Substring(0, boundSep), CultureInfo.InvariantCulture);
+                    lengths[i] = Int32.Parse(dims[i].Substring(boundSep + 2), CultureInfo.InvariantCulture) - lowerBounds[i] + 1;
                 }
             }
         }

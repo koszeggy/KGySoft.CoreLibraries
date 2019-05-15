@@ -25,6 +25,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 using KGySoft.Collections;
+using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
 #endregion
@@ -165,7 +166,7 @@ namespace KGySoft.Serialization
                 {
                     result = SerializeValueType(obj);
                 }
-                catch (Exception)
+                catch (Exception e) when (!e.IsCritical())
                 {
                     // CanSerializeStruct filters a sort of conditions but serialization may fail even in that case - this catch is to protect this case.
                     return false;
@@ -240,7 +241,7 @@ namespace KGySoft.Serialization
             {
                 result = SerializeValueArray(array);
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCritical())
             {
                 // CanSerializeStruct filters a sort of conditions but serialization may fail even in that case - this catch is to protect this case.
                 return false;

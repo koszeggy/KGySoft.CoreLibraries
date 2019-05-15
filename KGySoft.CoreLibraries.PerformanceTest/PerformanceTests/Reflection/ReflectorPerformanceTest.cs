@@ -1807,7 +1807,9 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
+#pragma warning disable CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null - false alarm, this is an Expression
                 mi = Reflector.MemberOf(() => default(List<int>).Find(default(Predicate<int>)));
+#pragma warning restore CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null
             }
             watch.Stop();
             Console.WriteLine("Reflector.MemberOf(() => default(List<int>).Find(default(Predicate<int>))): {0} ms", watch.ElapsedMilliseconds);
@@ -1873,7 +1875,9 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
+#pragma warning disable CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null - false alarm, this is an Expression
                 mi = Reflector.MemberOf(() => default(List<int>).Add(default(int)));
+#pragma warning restore CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null
             }
             watch.Stop();
             Console.WriteLine("Reflector.MemberOf(() => default(List<int>).Add(default(int))): {0} ms", watch.ElapsedMilliseconds);
@@ -1942,7 +1946,9 @@ Hit rate: 100,00 %
             watch.Start();
             for (int i = 0; i < iterations; i++)
             {
+#pragma warning disable CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null - false alarm, this is an Expression
                 mi = Reflector.MemberOf(() => default(string).Length);
+#pragma warning restore CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null
             }
             watch.Stop();
             Console.WriteLine("Reflector.MemberOf(() => default(string).Length): {0} ms", watch.ElapsedMilliseconds);

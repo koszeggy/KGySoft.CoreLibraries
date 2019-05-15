@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -57,7 +58,7 @@ namespace KGySoft.CoreLibraries
             StringBuilder result = new StringBuilder(bytes.Length * (2 + (separator ?? String.Empty).Length));
             for (int i = 0; i < bytes.Length; i++)
             {
-                result.Append(bytes[i].ToString("X2"));
+                result.Append(bytes[i].ToString("X2", CultureInfo.InvariantCulture));
                 if (useSeparator && i < bytes.Length - 1)
                     result.Append(separator);
             }
@@ -204,6 +205,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">The bytes to compress.</param>
         /// <returns>Compressed data. It is not guaranteed that compressed data is shorter than original one.</returns>
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "DeflateStream is created with leaveOpen = true")]
         public static byte[] Compress(this byte[] bytes)
         {
             if (bytes == null)
@@ -211,7 +213,7 @@ namespace KGySoft.CoreLibraries
 
             using (MemoryStream encStream = new MemoryStream())
             {
-                using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Compress))
+                using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Compress, true))
                 {
                     compStream.Write(bytes, 0, bytes.Length);
                     // stream must be closed here, otherwise, data would loss in encStream (simple Flush does not help!)
@@ -226,6 +228,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">The bytes to decompress.</param>
         /// <returns>Decompressed data. It is not guaranteed that compressed data is shorter than original one.</returns>
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "DeflateStream is created with leaveOpen = true")]
         public static byte[] Decompress(this byte[] bytes)
         {
             if (bytes == null)
@@ -233,7 +236,7 @@ namespace KGySoft.CoreLibraries
 
             using (MemoryStream result = new MemoryStream(), encStream = new MemoryStream(bytes))
             {
-                using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Decompress))
+                using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Decompress, true))
                 {
                     int b;
                     while ((b = compStream.ReadByte()) != -1)
@@ -256,6 +259,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">Key to be used for encryption.</param>
         /// <param name="iv">Initialization vector to be used for encryption.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "MemoryStream can be disposed multiple times safely (CryptoStream constructor with leaveOpen available from .NET 4.7.2)")]
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
         {
             if (bytes == null)
@@ -292,10 +296,12 @@ namespace KGySoft.CoreLibraries
         {
             if (password == null)
                 throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
+            if (algorithm == null)
+                throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-            Rfc2898DeriveBytes passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
-            return Encrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
+            using (var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt)))
+                return Encrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
         }
 
         /// <summary>
@@ -320,8 +326,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">Returns the automatically generated key used for encryption.</param>
         /// <param name="iv">Returns the automatically generated initialization vector used for encryption.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
+        [CLSCompliant(false)]
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, out byte[] key, out byte[] iv)
         {
+            if (algorithm == null)
+                throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
+
             algorithm.GenerateKey();
             algorithm.GenerateIV();
             key = algorithm.Key;
@@ -351,6 +361,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="key">Key of decryption.</param>
         /// <param name="iv">The initialization vector to be used for decryption.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "By this constructor CryptoStream does not leave the inner stream open")]
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
         {
             if (bytes == null)
@@ -403,12 +414,14 @@ namespace KGySoft.CoreLibraries
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
+            if (algorithm == null)
+                throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
             if (password == null)
                 throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-            Rfc2898DeriveBytes passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
-            return Decrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
+            using (var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt)))
+                return Decrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
         }
 
         /// <summary>

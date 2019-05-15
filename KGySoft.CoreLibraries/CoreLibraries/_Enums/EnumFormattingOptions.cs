@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -25,6 +26,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Formatting options for the <see cref="Enum{TEnum}.ToString(TEnum,EnumFormattingOptions,string)"><![CDATA[Enum<TEnum>.ToString(TEnum, EnumFormattingOptions, string)]]></see> method.
     /// </summary>
+    [SuppressMessage("Microsoft.Naming", "CA1717:OnlyFlagsEnumsShouldHavePluralNames", Justification = "Would be a breaking change")]
     public enum EnumFormattingOptions
     {
         /// <summary>

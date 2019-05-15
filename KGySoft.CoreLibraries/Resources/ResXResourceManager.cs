@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -732,8 +733,7 @@ namespace KGySoft.Resources
             if (rs == null)
                 return null;
 
-            ResXResourceSet resx = rs as ResXResourceSet;
-            if (resx != null)
+            if (rs is ResXResourceSet resx)
                 return resx;
 
             return ((ProxyResourceSet)rs).ResXResourceSet;
@@ -1072,10 +1072,9 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="ThrowException"/> are <see langword="true"/>&#160;and the .resx file of the neutral culture was not found.</exception>
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
-        {
-            return (ResourceSet)GetExpandoResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
-        }
+            => (ResourceSet)GetExpandoResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
 
         /// <summary>
         /// Retrieves the resource set for a particular culture, which can be dynamically modified.
@@ -1117,6 +1116,8 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
+        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm, rs is always re-obtained before each 'rs is ResXResourceSet' check.")]
         internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
             if (culture == null)
@@ -1156,8 +1157,7 @@ namespace KGySoft.Resources
                 if (resourceFound)
                 {
                     // a final result is found in the local cache
-                    ResXResourceSet resx = rs as ResXResourceSet;
-                    if (resx != null)
+                    if (rs is ResXResourceSet resx)
                     {
                         // since the first try above we have a result from another thread for the searched culture
                         if (Equals(culture, currentCultureInfo))
@@ -1221,11 +1221,10 @@ namespace KGySoft.Resources
                     if (foundProxyCulture != null)
                     {
                         Debug.Assert(!Equals(foundProxyCulture, foundCultureToAdd), "The culture to add is the same as the existing proxies.");
-                        List<string> keysToRemove;
 #if NET35
-                        keysToRemove = localResourceSets.Cast<DictionaryEntry>().Where(item => item.Value is ProxyResourceSet && IsParentCulture(foundCultureToAdd, item.Key.ToString())).Select(item => item.Key.ToString()).ToList();
+                        List<string> keysToRemove = localResourceSets.Cast<DictionaryEntry>().Where(item => item.Value is ProxyResourceSet && IsParentCulture(foundCultureToAdd, item.Key.ToString())).Select(item => item.Key.ToString()).ToList();
 #else
-                        keysToRemove = localResourceSets.Where(item => item.Value is ProxyResourceSet && IsParentCulture(foundCultureToAdd, item.Key)).Select(item => item.Key).ToList();
+                        List<string> keysToRemove = localResourceSets.Where(item => item.Value is ProxyResourceSet && IsParentCulture(foundCultureToAdd, item.Key)).Select(item => item.Key).ToList();
 #endif
 
                         foreach (string key in keysToRemove)
@@ -1261,6 +1260,8 @@ namespace KGySoft.Resources
         /// Creates an empty resource set for the given culture so it can be expanded.
         /// Does not make the resource set dirty until it is actually edited.
         /// </summary>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
+        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm due to Debug.Assert")]
         internal ResXResourceSet CreateResourceSet(CultureInfo culture)
         {
             ResourceSet result = new ResXResourceSet(basePath: GetResourceDirName());
@@ -1285,7 +1286,7 @@ namespace KGySoft.Resources
         /// <returns>
         /// The name that can be used for a resource file for the given <see cref="CultureInfo" /> object.
         /// </returns>
-        protected override string GetResourceFileName(CultureInfo culture) => GetResourceFileName(culture.Name);
+        protected override string GetResourceFileName(CultureInfo culture) => GetResourceFileName((culture ?? throw new ArgumentNullException(nameof(culture), Res.ArgumentNull)).Name);
 
         /// <summary>
         /// Provides the implementation for finding a resource set.
@@ -1298,6 +1299,7 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // Internally just call the internal GetResXResourceSet instead. Via public methods GetExpandoResourceSet is called, which adjusts safe mode of the result accordingly to this instance.
@@ -1448,6 +1450,7 @@ namespace KGySoft.Resources
             return Path.Combine(GetResourceDirName(), result.ToString());
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, created resource set is returned.")]
         private ResXResourceSet GrovelForResourceSet(CultureInfo culture, bool loadIfExists, out bool exists)
         {
             string fileName = GetExistingResourceFileName(culture);

@@ -18,9 +18,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Resources;
+using System.Threading;
 using System.Xml;
 
 namespace KGySoft.Resources
@@ -370,11 +372,12 @@ namespace KGySoft.Resources
     /// <seealso cref="HybridResourceManager"/>
     /// <seealso cref="DynamicResourceManager"/>
     [Serializable]
+    [SuppressMessage("Microsoft.Design", "CA1010:CollectionsShouldImplementGenericInterface", Justification = "Intended. DictionaryEnumerators are returned (just like in System.Resources.ResourceSet) and the type of the value depends on SafeMode.")]
     public sealed class ResXResourceSet : ResourceSet, IExpandoResourceSet, IResXResourceContainer, IExpandoResourceSetInternal, IEnumerable
     {
         #region Fields
 
-        private readonly string fileName;
+        private readonly string origFileName;
 
         private Dictionary<string, ResXDataNode> resources;
         [NonSerialized] private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
@@ -397,7 +400,7 @@ namespace KGySoft.Resources
         /// If this <see cref="ResXResourceSet"/> has been created from a file, returns the name of the original file.
         /// This property will not change if the <see cref="ResXResourceSet"/> is saved into another file.
         /// </summary>
-        public string FileName => fileName;
+        public string FileName => origFileName;
 
         /// <summary>
         /// Gets or sets whether the <see cref="ResXResourceSet"/> works in safe mode. In safe mode the retrieved
@@ -486,6 +489,8 @@ namespace KGySoft.Resources
         ICollection<KeyValuePair<string, string>> IResXResourceContainer.Aliases => aliases;
         bool IResXResourceContainer.SafeMode => safeMode;
         ITypeResolutionService IResXResourceContainer.TypeResolver => null;
+        
+        // ReSharper disable once InconsistentlySynchronizedField - not the field is intended to be locked but something that uses that (version is always changed by Interlocked)
         int IResXResourceContainer.Version => version;
 
         #endregion
@@ -505,10 +510,11 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <note type="tip">To create a <see cref="ResXResourceSet"/> from a string use the <see cref="FromFileContents">FromFileContents</see> method.</note>
         /// </remarks>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposed in Initialize.")]
         public ResXResourceSet(string fileName = null, string basePath = null)
             : this(basePath)
         {
-            this.fileName = fileName;
+            origFileName = fileName;
             if (fileName != null)
                 Initialize(new ResXResourceReader(fileName) { BasePath = basePath ?? Path.GetDirectoryName(fileName) });
         }
@@ -564,6 +570,8 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
+        #region Public Methods
+
         /// <summary>
         /// Creates a new <see cref="ResXResourceSet"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
         /// </summary>
@@ -572,7 +580,43 @@ namespace KGySoft.Resources
         /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns></returns>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "StringReader will be disposed by Initialize.")]
         public static ResXResourceSet FromFileContents(string fileContents, string basePath = null) => new ResXResourceSet(new StringReader(fileContents), basePath);
+
+        #endregion
+
+        #region Private Methods
+
+        private static Dictionary<string, ResXDataNode> InitCaseInsensitive(Dictionary<string, ResXDataNode> data)
+        {
+            var result = new Dictionary<string, ResXDataNode>(data.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (KeyValuePair<string, ResXDataNode> item in data)
+                result[item.Key] = item.Value;
+
+            return result;
+        }
+
+        private static bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
+        {
+            if (data == null)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+            lock (data)
+            {
+                if (data.ContainsKey(name))
+                    return true;
+
+                if (!ignoreCase)
+                    return false;
+
+                if (dataCaseInsensitive == null)
+                    dataCaseInsensitive = InitCaseInsensitive(data);
+
+                return dataCaseInsensitive.ContainsKey(name);
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -848,14 +892,14 @@ namespace KGySoft.Resources
 
             lock (dict)
             {
-                string asmName;
-                if (dict.TryGetValue(alias, out asmName) && asmName == assemblyName)
+                if (dict.TryGetValue(alias, out string asmName) && asmName == assemblyName)
                     return;
 
                 dict[alias] = assemblyName;
                 isModified = true;
-                version++;
             }
+
+            Interlocked.Increment(ref version);
         }
 
         /// <summary>
@@ -908,18 +952,17 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
+        /// <param name="newBasePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="newBasePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, it is in using.")]
+        public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
         {
-            using (var writer = new ResXResourceWriter(fileName) { BasePath = basePath ?? this.basePath, CompatibleFormat = compatibleFormat })
-            {
+            using (var writer = new ResXResourceWriter(fileName) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
                 Save(writer, forceEmbeddedResources);
-            }
         }
 
         /// <summary>
@@ -931,15 +974,15 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
+        /// <param name="newBasePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="newBasePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
+        public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
         {
-            using (var writer = new ResXResourceWriter(stream) { BasePath = basePath ?? this.basePath, CompatibleFormat = compatibleFormat })
+            using (var writer = new ResXResourceWriter(stream) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
             {
                 Save(writer, forceEmbeddedResources);
             }
@@ -954,15 +997,15 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="basePath"/>.
+        /// <param name="newBasePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original <see cref="BasePath"/> will be used. The file paths in the saved .resx file will be relative to the <paramref name="newBasePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
+        public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
         {
-            using (var writer = new ResXResourceWriter(textWriter) { BasePath = basePath ?? this.basePath, CompatibleFormat = compatibleFormat })
+            using (var writer = new ResXResourceWriter(textWriter) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
             {
                 Save(writer, forceEmbeddedResources);
             }
@@ -1006,13 +1049,13 @@ namespace KGySoft.Resources
         /// <param name="disposing">Indicates whether the objects contained in the current instance should be explicitly closed.</param>
         protected override void Dispose(bool disposing)
         {
-            // base.Dispose is not called because Table is nullified in ctor and Reader is never set
             resources = null;
             metadata = null;
             aliases = null;
             resourcesIgnoreCase = null;
             metadataIgnoreCase = null;
             basePath = null;
+            base.Dispose(disposing);
         }
 
         #endregion
@@ -1042,33 +1085,33 @@ namespace KGySoft.Resources
 
         private void Save(ResXResourceWriter writer, bool forceEmbeddedResources)
         {
-            var resources = this.resources;
-            var metadata = this.metadata;
-            var aliases = this.aliases;
+            Dictionary<string, ResXDataNode> resourcesLocal = resources;
+            Dictionary<string, ResXDataNode> metadataLocal = metadata;
+            Dictionary<string, string> aliasesLocal = aliases;
 
-            if ((resources ?? metadata ?? (object)aliases) == null)
+            if ((resourcesLocal ?? metadataLocal ?? (object)aliasesLocal) == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
             // 1. Adding existing aliases (writing them on-demand) - non existing ones will be auto-generated
-            lock (aliases)
+            lock (aliasesLocal)
             {
-                foreach (var alias in aliases)
+                foreach (var alias in aliasesLocal)
                     writer.AddAlias(alias.Key, alias.Value);
             }
 
             // ReSharper disable PossibleNullReferenceException - false alarm, ReSharper does not recognize the effect of ?? operator
             // 2. Adding resources (not freeing xml data during saving)
             bool adjustPath = basePath != null && basePath != writer.BasePath;
-            lock (resources)
+            lock (resourcesLocal)
             {
-                foreach (var resource in resources)
+                foreach (var resource in resourcesLocal)
                     writer.AddResource(GetNodeToSave(resource.Value, forceEmbeddedResources, adjustPath));
             }
 
             // 3. Adding metadata
-            lock (metadata)
+            lock (metadataLocal)
             {
-                foreach (var meta in metadata)
+                foreach (var meta in metadataLocal)
                     writer.AddMetadata(GetNodeToSave(meta.Value, forceEmbeddedResources, adjustPath));
             }
             // ReSharper restore PossibleNullReferenceException
@@ -1095,26 +1138,6 @@ namespace KGySoft.Resources
             return node;
         }
 
-        private bool ContainsInternal(string name, bool ignoreCase, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
-        {
-            if (data == null)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-
-            lock (data)
-            {
-                if (data.ContainsKey(name))
-                    return true;
-
-                if (!ignoreCase)
-                    return false;
-
-                if (dataCaseInsensitive == null)
-                    dataCaseInsensitive = InitCaseInsensitive(data);
-
-                return dataCaseInsensitive.ContainsKey(name);
-            }
-        }
-
         private object GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
         {
             if (data == null)
@@ -1125,8 +1148,7 @@ namespace KGySoft.Resources
 
             lock (data)
             {
-                ResXDataNode result;
-                if (data.TryGetValue(name, out result))
+                if (data.TryGetValue(name, out ResXDataNode result))
                     return result.GetValueInternal(asSafe, isString, autoFreeXmlData, basePath);
 
                 if (!ignoreCase)
@@ -1142,15 +1164,6 @@ namespace KGySoft.Resources
             return null;
         }
 
-        private Dictionary<string, ResXDataNode> InitCaseInsensitive(Dictionary<string, ResXDataNode> data)
-        {
-            var result = new Dictionary<string, ResXDataNode>(data.Count, StringComparer.OrdinalIgnoreCase);
-            foreach (KeyValuePair<string, ResXDataNode> item in data)
-                result[item.Key] = item.Value;
-
-            return result;
-        }
-
         private void SetValueInternal(string name, object value, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
         {
             if (data == null)
@@ -1161,10 +1174,8 @@ namespace KGySoft.Resources
 
             lock (data)
             {
-                ResXDataNode valueNode;
-
                 // optimization: if the deserialized value is the same reference, which is about to be added, returning
-                if (data.TryGetValue(name, out valueNode) && valueNode.ValueInternal == (value ?? ResXNullRef.Value))
+                if (data.TryGetValue(name, out ResXDataNode valueNode) && valueNode.ValueInternal == (value ?? ResXNullRef.Value))
                     return;
 
                 valueNode = new ResXDataNode(name, value);
@@ -1173,8 +1184,9 @@ namespace KGySoft.Resources
                     dataIgnoreCase[name] = valueNode;
 
                 isModified = true;
-                version++;
             }
+
+            Interlocked.Increment(ref version);
         }
 
         private void RemoveValueInternal(string name, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataIgnoreCase)
@@ -1194,8 +1206,9 @@ namespace KGySoft.Resources
                 data.Remove(name);
                 dataIgnoreCase = null;
                 isModified = true;
-                version++;
             }
+
+            Interlocked.Increment(ref version);
         }
 
         #endregion

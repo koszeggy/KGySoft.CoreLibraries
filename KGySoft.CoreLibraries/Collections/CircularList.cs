@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using KGySoft.CoreLibraries;
@@ -72,8 +73,6 @@ namespace KGySoft.Collections
     [Serializable]
     public sealed class CircularList<T> : ISupportsRangeList<T>, IList
     {
-        // ReSharper disable ParameterHidesMember
-
         #region Nested types
 
         #region ComparisonWrapper class
@@ -418,19 +417,21 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
+        private static readonly Type typeOfT = typeof(T);
         private static readonly T[] emptyArray = new T[0];
-        private static BinarySearchHelper<T> binarySearchHelper;
 
         // ReSharper disable StaticMemberInGenericType
-        private static readonly bool isEnum;
-        private static readonly bool isPrimitive;
-        private static readonly int elementSizeExponent;
+        private static readonly bool isEnum = typeOfT.IsEnum;
+        private static readonly bool isPrimitive = typeOfT.IsPrimitive;
+        private static readonly int elementSizeExponent = isPrimitive ? (int)Math.Log(Reflector.SizeOf<T>(), 2) : 0;
 #if NET40 || NET45
-        private static readonly bool isNonIntEnum;
+        private static readonly bool isNonIntEnum = isEnum && Enum.GetUnderlyingType(typeOfT) != Reflector.IntType;
 #elif !NET35
 #error .NET version is not set or not supported! - check EnumComparer performance in new framework
 #endif
         // ReSharper restore StaticMemberInGenericType
+
+        private static BinarySearchHelper<T> binarySearchHelper;
 
         #endregion
 
@@ -459,9 +460,9 @@ namespace KGySoft.Collections
             {
                 if (binarySearchHelper == null)
                 {
-                    if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
+                    if (typeof(IComparable<T>).IsAssignableFrom(typeOfT))
                     {
-                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeof(T));
+                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeOfT);
                         binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeHelper, true);
                     }
                     else
@@ -604,8 +605,8 @@ namespace KGySoft.Collections
             get => this[index];
             set
             {
-                if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                if (!typeOfT.CanAcceptValue(value))
+                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -617,28 +618,6 @@ namespace KGySoft.Collections
         #endregion
 
         #region Constructors
-
-        #region Static Constructor
-
-        static CircularList()
-        {
-            Type type = typeof(T);
-            isEnum = type.IsEnum;
-#if NET40 || NET45
-            if (isEnum)
-                isNonIntEnum = Enum.GetUnderlyingType(type) != Reflector.IntType;
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-
-            isPrimitive = type.IsPrimitive;
-            if (isPrimitive)
-                elementSizeExponent = (int)Math.Log(Reflector.SizeOf<T>(), 2);
-        }
-
-        #endregion
-
-        #region Instance Constructors
 
         /// <summary>
         /// Creates a new instance of <see cref="CircularList{T}"/>.
@@ -672,8 +651,6 @@ namespace KGySoft.Collections
             foreach (T item in collection)
                 AddLast(item);
         }
-
-        #endregion
 
         #endregion
 
@@ -1486,6 +1463,7 @@ namespace KGySoft.Collections
         /// <para>This method determines equality using the <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see> when <typeparamref name="T"/> is an <see langword="enum"/>&#160;type,
         /// or the default equality comparer <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other <typeparamref name="T"/> types.</para>
         /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
+        [SuppressMessage("Microsoft.Usage", "CA2233:OperationsShouldNotOverflow", MessageId = "index+1")]
         public int LastIndexOf(T item, int index) => LastIndexOf(item, index, index + 1);
 
         /// <summary>
@@ -1577,33 +1555,33 @@ namespace KGySoft.Collections
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based
         /// index of the first occurrence within the range of elements in the <see cref="CircularList{T}"/> that extends from the specified index to the last element.
         /// </summary>
-        /// <param name="startIndex">The zero-based starting index of the search.</param>
+        /// <param name="index">The zero-based starting index of the search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the first occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
-        public int FindIndex(int startIndex, Predicate<T> match) => FindIndex(startIndex, size - startIndex, match);
+        public int FindIndex(int index, Predicate<T> match) => FindIndex(index, size - index, match);
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of
         /// the first occurrence within the range of elements in the <see cref="CircularList{T}"/> that starts at the specified index and contains the specified number of elements.
         /// </summary>
-        /// <param name="startIndex">The zero-based starting index of the search.</param>
+        /// <param name="index">The zero-based starting index of the search.</param>
         /// <param name="count">The number of elements in the section to search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the first occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
-        public int FindIndex(int startIndex, int count, Predicate<T> match)
+        public int FindIndex(int index, int count, Predicate<T> match)
         {
-            if ((uint)startIndex > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.ArgumentOutOfRange);
-            if (count < 0 || startIndex > size - count)
+            if ((uint)index > (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+            if (count < 0 || index > size - count)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int capacity = items.Length;
-            int start = this.startIndex + startIndex;
+            int start = this.startIndex + index;
             int carry = start + count - capacity;
 
             if (start <= capacity)
@@ -1641,32 +1619,33 @@ namespace KGySoft.Collections
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index
         /// of the last occurrence within the range of elements in the <see cref="CircularList{T}"/> that extends from the first element to the specified index.
         /// </summary>
-        /// <param name="startIndex">The zero-based starting index of the backward search.</param>
+        /// <param name="index">The zero-based starting index of the backward search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the last occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
-        public int FindLastIndex(int startIndex, Predicate<T> match) => FindLastIndex(startIndex, startIndex + 1, match);
+        [SuppressMessage("Microsoft.Usage", "CA2233:OperationsShouldNotOverflow", MessageId = "index+1")]
+        public int FindLastIndex(int index, Predicate<T> match) => FindLastIndex(index, index + 1, match);
 
         /// <summary>
         /// Searches for an element that matches the conditions defined by the specified predicate, and returns the zero-based index of
         /// the last occurrence within the range of elements in the <see cref="CircularList{T}"/> that contains the specified number of elements and ends at the specified index.
         /// </summary>
-        /// <param name="startIndex">The zero-based starting index of the backward search.</param>
+        /// <param name="index">The zero-based starting index of the backward search.</param>
         /// <param name="count">The number of elements in the section to search.</param>
         /// <param name="match">A delegate that defines the conditions of the element to search for.</param>
         /// <returns>The zero-based index of the last occurrence of an element that matches the conditions defined by <paramref name="match"/>, if found; otherwise, –1.</returns>
         /// <remarks>This method performs a linear search; therefore, this method is an O(n) operation.</remarks>
-        public int FindLastIndex(int startIndex, int count, Predicate<T> match)
+        public int FindLastIndex(int index, int count, Predicate<T> match)
         {
-            if ((uint)startIndex > (uint)size)
-                throw new ArgumentOutOfRangeException(nameof(startIndex), Res.ArgumentOutOfRange);
-            if (count < 0 || startIndex - count + 1 < 0)
+            if ((uint)index > (uint)size)
+                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
+            if (count < 0 || index - count + 1 < 0)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (match == null)
                 throw new ArgumentNullException(nameof(match), Res.ArgumentNull);
 
             int capacity = items.Length;
-            int start = this.startIndex + startIndex;
+            int start = this.startIndex + index;
             int carry = start - capacity + 1;
 
             if (carry > 0)
@@ -2779,27 +2758,27 @@ namespace KGySoft.Collections
 
         int IList.Add(object value)
         {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+            if (!typeOfT.CanAcceptValue(value))
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
             AddLast((T)value);
             return size - 1;
         }
 
-        bool IList.Contains(object value) => typeof(T).CanAcceptValue(value) && Contains((T)value);
+        bool IList.Contains(object value) => typeOfT.CanAcceptValue(value) && Contains((T)value);
 
-        int IList.IndexOf(object value) => typeof(T).CanAcceptValue(value) ? IndexOf((T)value) : -1;
+        int IList.IndexOf(object value) => typeOfT.CanAcceptValue(value) ? IndexOf((T)value) : -1;
 
         void IList.Insert(int index, object value)
         {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+            if (!typeOfT.CanAcceptValue(value))
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
             Insert(index, (T)value);
         }
 
         void IList.Remove(object value)
         {
-            if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+            if (!typeOfT.CanAcceptValue(value))
+                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
             Remove((T)value);
         }
 

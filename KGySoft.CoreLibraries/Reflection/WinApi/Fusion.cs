@@ -17,6 +17,7 @@
 #region Usings
 
 using System.Runtime.InteropServices;
+using System.Security;
 
 #endregion
 
@@ -28,15 +29,47 @@ namespace KGySoft.Reflection.WinApi
     /// </summary>
     internal static class Fusion
     {
+        #region Nested classes
+
+        private static class NativeMethods
+        {
+            #region Methods
+
+            /// <summary>
+            /// Gets a pointer to a new <see cref="IAssemblyCache"/> instance that represents the global assembly cache.
+            /// </summary>
+            /// <param name="ppAsmCache">The returned <see cref="IAssemblyCache"/> pointer.</param>
+            /// <param name="dwReserved">Reserved for future extensibility. dwReserved must be 0 (zero).</param>
+            [DllImport("fusion.dll")]
+            internal static extern int CreateAssemblyCache(out IAssemblyCache ppAsmCache, int dwReserved);
+
+            #endregion
+        }
+
+        #endregion
+
         #region Methods
 
         /// <summary>
-        /// Gets a pointer to a new <see cref="IAssemblyCache"/> instance that represents the global assembly cache.
+        /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
         /// </summary>
-        /// <param name="ppAsmCache">The returned <see cref="IAssemblyCache"/> pointer.</param>
-        /// <param name="dwReserved">Reserved for future extensibility. dwReserved must be 0 (zero).</param>
-        [DllImport("fusion.dll")]
-        internal static extern int CreateAssemblyCache(out IAssemblyCache ppAsmCache, int dwReserved);
+        [SecurityCritical]
+        internal static string GetGacPath(string name)
+        {
+            var aInfo = new ASSEMBLY_INFO();
+            aInfo.cchBuf = 1024;
+            aInfo.currentAssemblyPath = new string('\0', aInfo.cchBuf);
+
+            int hresult = NativeMethods.CreateAssemblyCache(out IAssemblyCache ac, 0);
+            if (hresult >= 0)
+            {
+                hresult = ac.QueryAssemblyInfo(0, name, ref aInfo);
+                if (hresult < 0)
+                    return null;
+            }
+
+            return aInfo.currentAssemblyPath;
+        }
 
         #endregion
     }

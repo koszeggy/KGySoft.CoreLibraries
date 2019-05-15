@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using KGySoft.Annotations;
 using KGySoft.Diagnostics;
 
@@ -159,6 +160,7 @@ namespace KGySoft.Collections
             return oldHasNull;
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "1")]
         public bool TryGetValue([CanBeNull]TKey key, out TValue value)
         {
             if (key != null)
@@ -175,8 +177,16 @@ namespace KGySoft.Collections
             dict.Clear();
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Validation is forwarded to the embedded dictionary")]
         public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+            if (arrayIndex < 0 || arrayIndex > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+            if (array.Length - arrayIndex < Count)
+                throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
+
             ((ICollection<KeyValuePair<TKey, TValue>>)dict).CopyTo(array, arrayIndex);
             if (hasNullKey)
                 array[arrayIndex + dict.Count] = new KeyValuePair<TKey, TValue>(default(TKey), nullValue);

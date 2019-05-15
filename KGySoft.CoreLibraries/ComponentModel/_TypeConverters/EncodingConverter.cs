@@ -68,7 +68,7 @@ namespace KGySoft.ComponentModel
 
                 encodingByName = new Dictionary<string, Encoding>();
                 foreach (Encoding e in Encodings)
-                    encodingByName.Add($"{e.CodePage} | {e.EncodingName}", e);
+                    encodingByName.Add($"{e.CodePage.ToString(CultureInfo.InvariantCulture)} | {e.EncodingName}", e);
 
                 return encodingByName;
             }
@@ -106,7 +106,7 @@ namespace KGySoft.ComponentModel
                 return encoding.CodePage;
 
             if (destinationType == Reflector.StringType)
-                return $"{encoding.CodePage} | {encoding.EncodingName}";
+                return $"{encoding.CodePage.ToString(CultureInfo.InvariantCulture)} | {encoding.EncodingName}";
 
             return base.ConvertTo(context, culture, value, destinationType);
         }

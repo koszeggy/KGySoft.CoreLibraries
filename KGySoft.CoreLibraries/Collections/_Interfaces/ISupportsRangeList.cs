@@ -7,11 +7,11 @@ namespace KGySoft.Collections
     /// Represents a list that supports range operations.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the list.</typeparam>
-    /// <seealso cref="ISupportsRangeColletion{T}" />
+    /// <seealso cref="ISupportsRangeCollection{T}" />
     /// <seealso cref="IList{T}" />
     /// <seealso cref="IReadOnlyList{T}" />
     /// <seealso cref="CircularList{T}" />
-    public interface ISupportsRangeList<T> : ISupportsRangeColletion<T>, IList<T>
+    public interface ISupportsRangeList<T> : ISupportsRangeCollection<T>, IList<T>
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif

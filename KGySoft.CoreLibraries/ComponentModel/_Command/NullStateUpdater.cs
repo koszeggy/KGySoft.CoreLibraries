@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -28,7 +29,7 @@ namespace KGySoft.ComponentModel
     /// You can add this updater to a <see cref="ICommandBinding"/> first to disable any other possibly added updater.
     /// </summary>
     /// <seealso cref="ICommandStateUpdater" />
-    public class NullStateUpdater : ICommandStateUpdater
+    public sealed class NullStateUpdater : ICommandStateUpdater
     {
         #region Properties
 
@@ -49,6 +50,7 @@ namespace KGySoft.ComponentModel
 
         #region Methods
 
+        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Does nothing and the class is sealed.")]
         void IDisposable.Dispose()
         {
         }

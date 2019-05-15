@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -190,6 +191,7 @@ namespace KGySoft.Diagnostics
         /// </summary>
         /// <param name="del">The delegate to invoke.</param>
         /// <returns>In <see cref="PerformanceTest"/> class this method returns always <see langword="null"/>.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Intentionally unchecked for performance reasons. Normally called by base class, which checks the delegate.")]
         protected override object Invoke(Action del)
         {
             del.Invoke();

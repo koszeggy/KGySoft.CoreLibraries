@@ -21,6 +21,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -390,7 +392,58 @@ namespace KGySoft.Serialization
 
         #region Static Fields
 
-        private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo;
+        private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(EnumComparer<DataTypes>.Comparer)
+        {
+            // generic collections
+            { DataTypes.Array, CollectionSerializationInfo.Default }, // Could be IsGeneric, but does not matter as arrays are handled separately
+            { DataTypes.List, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
+            { DataTypes.LinkedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric } },
+            { DataTypes.HashSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
+                SpecificAddMethod = "Add", ComparerFieldName = "m_comparer"} },
+            { DataTypes.Queue, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric,
+                SpecificAddMethod = "Enqueue" } },
+            { DataTypes.Stack, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
+                SpecificAddMethod = "Push" } },
+            { DataTypes.CircularList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
+            { DataTypes.SortedSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
+                ComparerFieldName = "comparer" } },
+
+            // generic dictionaries
+            { DataTypes.Dictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                ComparerFieldName = "comparer"} },
+            { DataTypes.SortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                ComparerFieldName = "comparer" } },
+            { DataTypes.SortedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                ComparerFieldName = "_set.comparer.keyComparer" } },
+            { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+            { DataTypes.KeyValuePairNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+            { DataTypes.CircularSortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
+                ComparerFieldName = "comparer" } },
+
+            // non-generic collections
+            { DataTypes.ArrayList, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity } },
+            { DataTypes.QueueNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.None,
+                SpecificAddMethod = "Enqueue" } },
+            { DataTypes.StackNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.ReverseElements,
+                SpecificAddMethod = "Push" } },
+            { DataTypes.StringCollection, CollectionSerializationInfo.Default },
+
+            // non-generic dictionaries
+            { DataTypes.Hashtable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                ComparerFieldName = "_keycomparer" } },
+            { DataTypes.SortedListNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                ComparerFieldName = "comparer" } },
+            { DataTypes.ListDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, comparer and not equalitycomparer
+                ComparerFieldName = "comparer" } },
+            { DataTypes.HybridDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity } },
+            { DataTypes.OrderedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
+                ComparerFieldName = "_comparer"} },
+            { DataTypes.StringDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary,
+                SpecificAddMethod = "Add"} },
+            { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+            { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+        };
+
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
             = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
@@ -446,67 +499,6 @@ namespace KGySoft.Serialization
 
         #region Constructors
 
-        #region Static Constructor
-
-        static BinarySerializationFormatter()
-        {
-            serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(EnumComparer<DataTypes>.Comparer)
-            {
-                // generic collections
-                { DataTypes.Array, CollectionSerializationInfo.Default }, // Could be IsGeneric, but does not matter as arrays are handled separately
-                { DataTypes.List, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
-                { DataTypes.LinkedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric } },
-                { DataTypes.HashSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-                        SpecificAddMethod = "Add", ComparerFieldName = "m_comparer"} },
-                { DataTypes.Queue, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric,
-                        SpecificAddMethod = "Enqueue" } },
-                { DataTypes.Stack, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                        SpecificAddMethod = "Push" } },
-                { DataTypes.CircularList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
-                { DataTypes.SortedSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
-                        ComparerFieldName = "comparer" } },
-
-                // generic dictionaries
-                { DataTypes.Dictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                        ComparerFieldName = "comparer"} },
-                { DataTypes.SortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                        ComparerFieldName = "comparer" } },
-                { DataTypes.SortedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                        ComparerFieldName = "_set.comparer.keyComparer" } },
-                { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-                { DataTypes.KeyValuePairNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-                { DataTypes.CircularSortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
-                        ComparerFieldName = "comparer" } },
-
-                // non-generic collections
-                { DataTypes.ArrayList, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity } },
-                { DataTypes.QueueNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.None,
-                        SpecificAddMethod = "Enqueue" } },
-                { DataTypes.StackNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.ReverseElements,
-                        SpecificAddMethod = "Push" } },
-                { DataTypes.StringCollection, CollectionSerializationInfo.Default },
-
-                // non-generic dictionaries
-                { DataTypes.Hashtable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                        ComparerFieldName = "_keycomparer" } },
-                { DataTypes.SortedListNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                        ComparerFieldName = "comparer" } },
-                { DataTypes.ListDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, comparer and not equalitycomparer
-                        ComparerFieldName = "comparer" } },
-                { DataTypes.HybridDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity } },
-                { DataTypes.OrderedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
-                        ComparerFieldName = "_comparer"} },
-                { DataTypes.StringDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary,
-                        SpecificAddMethod = "Add"} },
-                { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-                { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            };
-        }
-
-        #endregion
-
-        #region Instance Constructors
-
         /// <summary>
         /// Creates a new instance of <see cref="BinarySerializationFormatter"/> class.
         /// </summary>
@@ -517,8 +509,6 @@ namespace KGySoft.Serialization
             Context = new StreamingContext(StreamingContextStates.All);
             Options = options;
         }
-
-        #endregion
 
         #endregion
 
@@ -577,6 +567,51 @@ namespace KGySoft.Serialization
                 foreach (Type genericArgument in type.GetGenericArguments())
                     WriteTypeNamesAndRanks(bw, genericArgument, options, manager);
             }
+        }
+
+        /// <summary>
+        /// Writes a <paramref name="length"/> bytes length value in the possible most compact form.
+        /// </summary>
+        private static void WriteDynamicInt(BinaryWriter bw, DataTypes dataType, int length, ulong value)
+        {
+            switch (length)
+            {
+                case 2:
+                    if (value >= (1UL << 7)) // up to 7 bits
+                    {
+                        bw.Write((ushort)dataType);
+                        bw.Write((ushort)value);
+                        return;
+                    }
+                    break;
+
+                case 4:
+                    if (value >= (1UL << 21)) // up to 3*7 bits
+                    {
+                        bw.Write((ushort)dataType);
+                        bw.Write((uint)value);
+                        return;
+                    }
+                    break;
+
+                case 8:
+                    if (value >= (1UL << 49)) // up to 7*7 bits
+                    {
+                        bw.Write((ushort)dataType);
+                        bw.Write(value);
+                        return;
+                    }
+                    break;
+
+                default:
+                    // should never occur, throwing internal error without resource
+                    throw new ArgumentOutOfRangeException(nameof(length));
+            }
+
+            // storing the value as 7-bit encoded int, which will be shorter
+            dataType |= DataTypes.Store7BitEncoded;
+            bw.Write((ushort)dataType);
+            Write7BitLong(bw, value);
         }
 
         /// <summary>
@@ -1003,6 +1038,12 @@ namespace KGySoft.Serialization
             return result;
         }
 
+        private static bool CanHaveRecursion(CircularList<DataTypes> collectionType)
+            => collectionType.Exists(dt =>
+                (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
+                || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
+                || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
+
         private static void Write7BitInt(BinaryWriter bw, int value)
         {
             uint v = (uint)value;
@@ -1065,6 +1106,12 @@ namespace KGySoft.Serialization
                 foreach (int i in value)
                     bw.Write(i);
             }
+        }
+
+        private static void WriteStringBuilder(BinaryWriter bw, StringBuilder sb)
+        {
+            Write7BitInt(bw, sb.Capacity);
+            bw.Write(sb.ToString());
         }
 
         private static void WriteSection(BinaryWriter bw, BitVector32.Section section)
@@ -1136,6 +1183,29 @@ namespace KGySoft.Serialization
             return result;
         }
 
+        private static long Read7BitLong(BinaryReader br)
+        {
+            long result = 0L;
+            int shift = 0;
+            byte b;
+            do
+            {
+                // Check for a corrupted stream. Max 9 * 7 bits are valid
+                if (shift == 70)
+                {
+                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
+                }
+
+                b = br.ReadByte();
+
+                result |= (b & 0x7FL) << shift;
+                shift += 7;
+            }
+            while ((b & 0x80) != 0);
+
+            return result;
+        }
+
         private static BinarySerializationOptions ReadOptions(BinaryReader br)
         {
             BinarySerializationOptions options = (BinarySerializationOptions)br.ReadByte();
@@ -1185,6 +1255,7 @@ namespace KGySoft.Serialization
         /// <param name="data">The object to serialize</param>
         /// <returns>Serialized raw data of the object</returns>
         [SecuritySafeCritical]
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryWriter constructor will not leave the stream open.")]
         public byte[] Serialize(object data)
         {
             try
@@ -1193,9 +1264,8 @@ namespace KGySoft.Serialization
                 using (BinaryWriter bw = new BinaryWriter(result = new MemoryStream()))
                 {
                     Write(bw, data, true, new SerializationManager(Context, Options, Binder, SurrogateSelector));
+                    return result.ToArray();
                 }
-
-                return result.ToArray();
             }
             finally
             {
@@ -1212,6 +1282,8 @@ namespace KGySoft.Serialization
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
         [SecuritySafeCritical]
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryReader constructor will not leave the stream open.")]
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "rawData will be checked by MemoryStream constructor.")]
         public object Deserialize(byte[] rawData, int offset = 0)
         {
             using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
@@ -1530,8 +1602,7 @@ namespace KGySoft.Serialization
             }
 
             // d.) enum: storing enum type, assembly qualified name and value: still shorter than binary formatter
-            Enum enumObject = data as Enum;
-            if (enumObject != null)
+            if (data is Enum enumObject)
             {
                 TypeCode enumType = enumObject.GetTypeCode();
                 DataTypes dataType = DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), options, manager);
@@ -1563,7 +1634,7 @@ namespace KGySoft.Serialization
                         break;
                     default:
                         // should never occur, throwing internal error without resource
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(data));
                 }
 
                 if (is7Bit)
@@ -1664,15 +1735,8 @@ namespace KGySoft.Serialization
             ThrowNotSupported(options, type);
         }
 
-        private bool CanHaveRecursion(CircularList<DataTypes> collectionType)
-            => collectionType.Exists(dt =>
-                (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
-                || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
-                || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
-
         [SecurityCritical]
-        private void WriteCollection(BinaryWriter bw, CircularList<DataTypes> collectionTypeDescriptor, object obj,
-            SerializationManager manager)
+        private void WriteCollection(BinaryWriter bw, CircularList<DataTypes> collectionTypeDescriptor, object obj, SerializationManager manager)
         {
             if (collectionTypeDescriptor.Count == 0)
                 // should never occur, throwing internal error without resource
@@ -1715,7 +1779,8 @@ namespace KGySoft.Serialization
 
             // other collections
             CollectionSerializationInfo serInfo = serializationInfo[collectionDataType & DataTypes.CollectionTypes];
-            IEnumerable collection = obj as IEnumerable ?? new object[] { obj };
+            var enumerable = obj as IEnumerable;
+            IEnumerable collection = enumerable ?? new object[] { obj };
             // as object[] for DictionaryEntry and KeyValuePair
 
             // 1. Write specific properties
@@ -1737,7 +1802,7 @@ namespace KGySoft.Serialization
             // 3.b.) generic dictionary
             if (serInfo.IsGenericDictionary)
             {
-                Type[] argTypes = (obj is IEnumerable ? collection : ((object[])collection)[0]).GetType().GetGenericArguments();
+                Type[] argTypes = (enumerable ?? ((object[])collection)[0]).GetType().GetGenericArguments();
                 Type keyType = argTypes[0];
                 Type valueType = argTypes[1];
 
@@ -1779,10 +1844,9 @@ namespace KGySoft.Serialization
         private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, CircularList<DataTypes> keyCollectionDataTypes, DataTypes keyDataType,
             CircularList<DataTypes> valueCollectionDataTypes, DataTypes valueDataType, Type collectionKeyType, Type collectionValueType, SerializationManager manager)
         {
-            IDictionary dictionary = collection as IDictionary;
-            if (dictionary != null)
+            if (collection is IDictionary dictionary)
             {
-                foreach (DictionaryEntry element in (IDictionary)collection)
+                foreach (DictionaryEntry element in dictionary)
                 {
                     WriteElement(bw, element.Key, keyCollectionDataTypes, keyDataType, collectionKeyType, manager);
                     WriteElement(bw, element.Value, valueCollectionDataTypes, valueDataType, collectionValueType, manager);
@@ -1989,57 +2053,6 @@ namespace KGySoft.Serialization
             }
         }
 
-        /// <summary>
-        /// Writes a <paramref name="length"/> bytes length value in the possible most compact form.
-        /// </summary>
-        private void WriteDynamicInt(BinaryWriter bw, DataTypes dataType, int length, ulong value)
-        {
-            switch (length)
-            {
-                case 2:
-                    if (value >= (1UL << 7)) // up to 7 bits
-                    {
-                        bw.Write((ushort)dataType);
-                        bw.Write((ushort)value);
-                        return;
-                    }
-                    break;
-
-                case 4:
-                    if (value >= (1UL << 21)) // up to 3*7 bits
-                    {
-                        bw.Write((ushort)dataType);
-                        bw.Write((uint)value);
-                        return;
-                    }
-                    break;
-
-                case 8:
-                    if (value >= (1UL << 49)) // up to 7*7 bits
-                    {
-                        bw.Write((ushort)dataType);
-                        bw.Write(value);
-                        return;
-                    }
-                    break;
-
-                default:
-                    // should never occur, throwing internal error without resource
-                    throw new ArgumentOutOfRangeException(nameof(length));
-            }
-
-            // storing the value as 7-bit encoded int, which will be shorter
-            dataType |= DataTypes.Store7BitEncoded;
-            bw.Write((ushort)dataType);
-            Write7BitLong(bw, value);
-        }
-
-        private void WriteStringBuilder(BinaryWriter bw, StringBuilder sb)
-        {
-            Write7BitInt(bw, sb.Capacity);
-            bw.Write(sb.ToString());
-        }
-
         private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, BinarySerializationOptions options)
         {
             OnSerializing(instance, options);
@@ -2124,7 +2137,7 @@ namespace KGySoft.Serialization
                         Type fieldType = field.FieldType;
                         object fieldValue = FieldAccessor.GetAccessor(field).Get(data);
                         if (fieldValue != null && fieldType.IsEnum)
-                            fieldValue = Convert.ChangeType(fieldValue, Enum.GetUnderlyingType(fieldType));
+                            fieldValue = Convert.ChangeType(fieldValue, Enum.GetUnderlyingType(fieldType), CultureInfo.InvariantCulture);
                         Write(bw, fieldValue, false, manager);
                     }
                 }
@@ -2487,29 +2500,6 @@ namespace KGySoft.Serialization
 
             // other nested collection
             return CreateCollection(br, !elementDescriptor.Type.IsValueType || elementDescriptor.Type.IsNullable(), elementDescriptor, manager);
-        }
-
-        private long Read7BitLong(BinaryReader br)
-        {
-            long result = 0L;
-            int shift = 0;
-            byte b;
-            do
-            {
-                // Check for a corrupted stream. Max 9 * 7 bits are valid
-                if (shift == 70)
-                {
-                    throw new InvalidOperationException(Res.BinarySerializationInvalidStreamData);
-                }
-
-                b = br.ReadByte();
-
-                result |= (b & 0x7FL) << shift;
-                shift += 7;
-            }
-            while ((b & 0x80) != 0);
-
-            return result;
         }
 
         /// <summary>
@@ -2957,7 +2947,7 @@ namespace KGySoft.Serialization
             }
 
             // checking end of hierarchy
-            if (br.ReadString() != String.Empty)
+            if (br.ReadString().Length != 0)
             {
                 if ((manager.Options & BinarySerializationOptions.IgnoreObjectChanges) == BinarySerializationOptions.None)
                     throw new SerializationException(Res.BinarySerializationObjectHierarchyChanged(type));
@@ -2972,7 +2962,7 @@ namespace KGySoft.Serialization
                         Read(br, false, manager);
                     }
                 }
-                while (br.ReadString() != String.Empty);
+                while (br.ReadString().Length != 0);
             }
         }
 
@@ -3032,7 +3022,7 @@ namespace KGySoft.Serialization
                 }
 
                 // end level is marked with empty string
-            } while (br.ReadString() != String.Empty);
+            } while (br.ReadString().Length != 0);
 
             manager.CheckReferences(si);
             if (surrogate == null)
@@ -3067,7 +3057,8 @@ namespace KGySoft.Serialization
                 if (!br.ReadBoolean())
                 {
                     Type elementType = manager.ReadType(br);
-                    value = Convert.ChangeType(value, elementType); // this is what FormatterConverter does as well on SerializationInfo.GetValue
+                    if (value != null && value.GetType() != elementType)
+                        value = Convert.ChangeType(value, elementType, CultureInfo.InvariantCulture); // this is what FormatterConverter does as well on SerializationInfo.GetValue
                 }
 
                 elements[name] = value;

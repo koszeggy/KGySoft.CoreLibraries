@@ -104,6 +104,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>An 8-bit signed integer that is greater than or equal to <see cref="SByte.MinValue">SByte.MinValue</see> and less or equal to <see cref="SByte.MaxValue">SByte.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random)
             => (sbyte)random.NextBytes(1)[0];
 
@@ -118,6 +119,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.</exception>
+        [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random, sbyte maxValue, bool inclusiveUpperBound = false)
             => (sbyte)random.NextInt64(0L, maxValue, inclusiveUpperBound);
 
@@ -133,6 +135,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        [CLSCompliant(false)]
         public static sbyte NextSByte(this Random random, sbyte minValue, sbyte maxValue, bool inclusiveUpperBound = false)
             => (sbyte)random.NextInt64(minValue, maxValue, inclusiveUpperBound);
 
@@ -219,6 +222,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 16-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt16.MaxValue">UInt16.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random)
             => BitConverter.ToUInt16(random.NextBytes(2), 0);
 
@@ -232,6 +236,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 16-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random, ushort maxValue, bool inclusiveUpperBound = false)
             => (ushort)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
 
@@ -247,6 +252,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        [CLSCompliant(false)]
         public static ushort NextUInt16(this Random random, ushort minValue, ushort maxValue, bool inclusiveUpperBound = false)
             => (ushort)random.NextUInt64(minValue, maxValue, inclusiveUpperBound);
 
@@ -296,6 +302,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt32.MaxValue">UInt32.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static uint NextUInt32(this Random random)
             => BitConverter.ToUInt32(random.NextBytes(4), 0);
 
@@ -309,6 +316,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 32-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static uint NextUInt32(this Random random, uint maxValue, bool inclusiveUpperBound = false)
             => (uint)random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
 
@@ -324,6 +332,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        [CLSCompliant(false)]
         public static uint NextUInt32(this Random random, uint minValue, uint maxValue, bool inclusiveUpperBound = false)
             => (uint)random.NextUInt64(minValue, maxValue, inclusiveUpperBound);
 
@@ -396,6 +405,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <see cref="UInt64.MaxValue">UInt64.MaxValue</see>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static ulong NextUInt64(this Random random)
             => BitConverter.ToUInt64(random.NextBytes(8), 0);
 
@@ -409,6 +419,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A 64-bit unsigned integer that is greater than or equal to 0 and less or equal to <paramref name="maxValue"/>.
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="maxValue"/> equals 0, then 0 is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        [CLSCompliant(false)]
         public static ulong NextUInt64(this Random random, ulong maxValue, bool inclusiveUpperBound = false)
             => random.NextUInt64(0UL, maxValue, inclusiveUpperBound);
 
@@ -424,6 +435,7 @@ namespace KGySoft.CoreLibraries
         /// If <paramref name="inclusiveUpperBound"/> is <see langword="false"/>, then <paramref name="maxValue"/> is an exclusive upper bound; however, if <paramref name="minValue"/> equals <paramref name="maxValue"/>, <paramref name="maxValue"/> is returned.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>.</exception>
+        [CLSCompliant(false)]
         public static ulong NextUInt64(this Random random, ulong minValue, ulong maxValue, bool inclusiveUpperBound = false)
         {
             if (random == null)
@@ -464,7 +476,12 @@ namespace KGySoft.CoreLibraries
         /// <returns>A single-precision floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         public static float NextSingle(this Random random)
-            => (float)random.NextDouble();
+        {
+            if (random == null)
+                throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
+
+            return (float)random.NextDouble();
+        }
 
         /// <summary>
         /// Returns a random <see cref="float"/> value that is less or equal to the specified <paramref name="maxValue"/>.
@@ -996,6 +1013,7 @@ namespace KGySoft.CoreLibraries
 
         #region Enum
 
+#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
         /// <summary>
         /// Returns a random <typeparamref name="TEnum"/> value.
         /// </summary>
@@ -1003,6 +1021,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <returns>A random <typeparamref name="TEnum"/> value or the default value of <typeparamref name="TEnum"/> if it has no defined values.</returns>
         public static TEnum NextEnum<TEnum>(this Random random)
+#pragma warning restore CS3024 // Constraint type is not CLS-compliant
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             if (random == null)

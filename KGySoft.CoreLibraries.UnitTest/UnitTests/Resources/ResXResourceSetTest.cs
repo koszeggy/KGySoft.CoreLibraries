@@ -32,6 +32,8 @@ using NUnit.Framework;
 
 #endregion
 
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode() - test types
+
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
@@ -328,7 +330,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // fileref paths are adjusted if BasePath is changed, even the original relative paths
             sb = new StringBuilder();
             string newPath = Path.Combine(path, "subdir");
-            rsReloaded.Save(new StringWriter(sb), basePath: newPath);
+            rsReloaded.Save(new StringWriter(sb), newBasePath: newPath);
             rsReloaded = new ResXResourceSet(new StringReader(sb.ToString())) { SafeMode = true };
             var filerefCheck2 = ((ResXDataNode)rsReloaded.GetObject("fileref")).FileRef;
             Assert.AreNotEqual(filerefCheck.FileName, filerefCheck2.FileName);
@@ -353,7 +355,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // no original basePath just a new one: the relative paths are not changed, full paths become relative
             sb = new StringBuilder();
-            rs.Save(new StringWriter(sb), basePath: path);
+            rs.Save(new StringWriter(sb), newBasePath: path);
             rsReloaded = new ResXResourceSet(new StringReader(sb.ToString())) { SafeMode = true };
             Assert.AreNotEqual(((ResXDataNode)rs.GetObject("filerefFull")).FileRef.FileName, ((ResXDataNode)rsReloaded.GetObject("filerefFull")).FileRef.FileName);
             Assert.IsFalse(Path.IsPathRooted(((ResXDataNode)rsReloaded.GetObject("filerefFull")).FileRef.FileName));

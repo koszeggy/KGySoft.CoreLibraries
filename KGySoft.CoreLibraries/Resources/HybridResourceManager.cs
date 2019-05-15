@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -225,7 +226,7 @@ namespace KGySoft.Resources
     /// <seealso cref="ResXResourceManager"/>
     /// <seealso cref="DynamicResourceManager"/>
     [Serializable]
-    public class HybridResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
+    public class HybridResourceManager : ResourceManager, IExpandoResourceManager
     {
         #region ProxyResourceSet class
 
@@ -507,6 +508,7 @@ namespace KGySoft.Resources
         /// <param name="explicitResXBaseFileName">When <see langword="null"/>&#160;the .resx file name will be constructed based on the
         /// <paramref name="resourceSource"/> parameter; otherwise, the given <see cref="string"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "resourceSource is checked by base")]
         public HybridResourceManager(Type resourceSource, string explicitResXBaseFileName = null)
             : base(resourceSource)
         {
@@ -530,7 +532,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Actually should be protected AND internal...
         /// </summary>
-        internal static ResourceSet Unwrap(ResourceSet rs)
+        internal /*private protected*/ static ResourceSet Unwrap(ResourceSet rs)
         {
             if (rs == null)
                 return null;
@@ -545,7 +547,15 @@ namespace KGySoft.Resources
         /// <summary>
         /// Actually should be protected AND internal...
         /// </summary>
-        internal static bool IsProxy(ResourceSet rs) => rs is ProxyResourceSet;
+        internal /*private protected*/ static bool IsProxy(ResourceSet rs) => rs is ProxyResourceSet;
+
+        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm due to Debug.Assert")]
+        internal /*private protected*/ static CultureInfo GetWrappedCulture(ResourceSet proxy)
+        {
+            Debug.Assert(proxy is ProxyResourceSet);
+            return ((ProxyResourceSet)proxy).WrappedCulture;
+        }
+
 
         #endregion
 
@@ -638,6 +648,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException"><paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are <see langword="true"/>&#160;and
         /// the resource of the neutral culture was not found.</exception>
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
         public override ResourceSet GetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             // base implementation must not be called because it wants to open main assembly in case of invariant culture
@@ -1013,15 +1024,11 @@ namespace KGySoft.Resources
             // methods, which call InternalGetResourceSet with LoadIfExists
             => ((ProxyResourceSet)proxy).HierarchyLoaded;
 
-        internal CultureInfo GetWrappedCulture(ResourceSet proxy)
-        {
-            Debug.Assert(proxy is ProxyResourceSet);
-            return ((ProxyResourceSet)proxy).WrappedCulture;
-        }
-
         /// <summary>
         /// Warning: It CAN return a proxy
         /// </summary>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
+        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm, result is re-obtained before all 'result as ProxyResourceSet' cast.")]
         internal ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
         {
             Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists,
@@ -1085,8 +1092,7 @@ namespace KGySoft.Resources
                                 foreach (CultureInfo updateCultureInfo in mgr)
                                 {
                                     // We have found again the first proxy in the hierarchy. This is now up-to-date for sure so returning.
-                                    ResourceSet rs;
-                                    if (resourceSets.TryGetValue(updateCultureInfo.Name, out rs))
+                                    if (resourceSets.TryGetValue(updateCultureInfo.Name, out ResourceSet rs))
                                     {
                                         Debug.Assert(rs is ProxyResourceSet, "A proxy is expected to be found here.");
                                         return result ?? rs;
@@ -1278,6 +1284,7 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
         protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
         {
             Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from CoreLibraries assembly.");

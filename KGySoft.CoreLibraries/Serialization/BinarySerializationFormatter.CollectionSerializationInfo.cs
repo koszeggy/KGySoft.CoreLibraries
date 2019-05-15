@@ -173,7 +173,7 @@ namespace KGySoft.Serialization
 
                 // should never occur for supported collections, throwing internal error without resource
                 if (ctor == null)
-                    throw new SerializationException(String.Format("Could not create type {0} because no appropriate constructor found", collectionType));
+                    throw new SerializationException($"Could not create type {collectionType.GetTypeName(false)} because no appropriate constructor found");
 
                 object result = Reflector.CreateInstance(ctor, ctorParams.ToArray());
                 if (addToCache)

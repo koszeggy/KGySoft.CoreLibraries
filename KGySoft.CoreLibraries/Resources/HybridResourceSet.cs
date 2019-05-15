@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Resources;
 
@@ -509,37 +510,38 @@ namespace KGySoft.Resources
             resx.RemoveAliasValue(alias);
         }
 
-        public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
+        public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            resx.Save(fileName, compatibleFormat, forceEmbeddedResources, basePath);
+            resx.Save(fileName, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
-        public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
+        public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            resx.Save(stream, compatibleFormat, forceEmbeddedResources, basePath);
+            resx.Save(stream, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
-        public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null)
+        public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null)
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            resx.Save(textWriter, compatibleFormat, forceEmbeddedResources, basePath);
+            resx.Save(textWriter, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
         #endregion
 
         #region Protected Methods
 
+        [SuppressMessage("Microsoft.Usage", "CA2215:Dispose methods should call base class dispose", Justification = "False alarm, it is called but only once.")]
         protected override void Dispose(bool disposing)
         {
             ResourceSet resx = resxResourceSet;

@@ -49,7 +49,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="collection">The collection to add to the <paramref name="target"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="collection"/> is <see langword="null"/>.</exception>
         /// <remarks>
-        /// <note>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <note>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> will be added one by one.</note>
         /// </remarks>
         public static void AddRange<T>(this ICollection<T> target, IEnumerable<T> collection)
@@ -61,7 +61,7 @@ namespace KGySoft.CoreLibraries
 
             switch (target)
             {
-                case ISupportsRangeColletion<T> supportsRangeColletion:
+                case ISupportsRangeCollection<T> supportsRangeColletion:
                     supportsRangeColletion.AddRange(collection);
                     return;
                 case List<T> list:

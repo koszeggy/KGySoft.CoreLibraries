@@ -41,6 +41,9 @@ using NUnit.Framework.Internal;
 
 #endregion
 
+#pragma warning disable 162
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode() - test types
+
 namespace KGySoft.CoreLibraries.UnitTests.Serialization
 {
     /// <summary>
@@ -538,7 +541,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Public Methods
 
-            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("Id", Id);
                 info.AddValue("Name", Name);
@@ -620,7 +623,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
-            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.SetType(typeof(CustomAdvancedSerializedClassHelper));
                 base.GetObjectData(info, context);
@@ -794,7 +797,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
+#pragma warning disable 649
             private string name;
+#pragma warning restore 649
 
             #endregion
 
@@ -1729,13 +1734,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Serializable]
         private struct BinarySerializableStruct : IBinarySerializable
         {
-            #region Fields
-
-            [NonSerialized]
-            private int nonSerializedInt;
-
-            #endregion
-
             #region Properties
 
             public int IntProp { get; set; }
@@ -1804,13 +1802,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Serializable]
         private struct SystemSerializableStruct
         {
-            #region Fields
-
-            [NonSerialized]
-            private int nonSerializedInt;
-
-            #endregion
-
             #region Properties
 
             public int IntProp { get; set; }
@@ -2737,7 +2728,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string>{{new int[] {1}, "key.value1"}}, new Dictionary<int, string>{ {1, "alpha"}, {2, "beta"}, {3, "gamma"}}}, {new Dictionary<int[], string>{{new int[] {2}, "key.value2"}}, new Dictionary<int, string>{ {1, "apple"}, {2, "frog"}, {3, "cat"}}} },
 
                     // dictionary with many non-system types
+#pragma warning disable CS0618 // Type or member is obsolete
                     new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable>{{BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}} }} },
+#pragma warning restore CS0618 // Type or member is obsolete
 
                     // object list vith various elements
                     new List<object> { 1, "alpha", new Version(13,0), new SystemSerializableClass{IntProp = 2, StringProp = "beta" }, new object[]{ new BinarySerializableClass{IntProp = 3, StringProp = "gamma"}}},

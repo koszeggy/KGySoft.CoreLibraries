@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using KGySoft.Annotations;
@@ -440,10 +441,16 @@ namespace KGySoft
         internal static string ArgumentMustBeBetween(object low, object high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
-        internal static string EnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name, FormatEnumValues<TEnum>());
+        internal static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumValues<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
-        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
+        internal static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
+
+        /// <summary>Enum instance of '{0}' type must be one of the defined values.</summary>
+        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
+
+        /// <summary>Enum instance of '{0}' type must consist of the defined flags.</summary>
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
@@ -913,7 +920,7 @@ namespace KGySoft
 
         #region Private Methods
 
-        private static string Get([NotNull]string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
+        private static string Get([NotNull]string id) => resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(CultureInfo.InvariantCulture, unavailableResource, id);
 
         private static string Get([NotNull]string id, params object[] args)
         {
@@ -956,7 +963,7 @@ namespace KGySoft
             }
             catch (FormatException)
             {
-                return String.Format(invalidResource, args.Length, format);
+                return String.Format(CultureInfo.InvariantCulture, invalidResource, args.Length, format);
             }
         }
 

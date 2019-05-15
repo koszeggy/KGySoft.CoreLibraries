@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -27,6 +28,8 @@ using System.Security;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("4d2e18aa-1e79-4f90-a2a0-fb68a6901de5")]
+
+[assembly: CLSCompliant(true)]
 
 [assembly: AssemblyVersion("4.5.1.0")]
 [assembly: AssemblyFileVersion("4.5.1.0")]

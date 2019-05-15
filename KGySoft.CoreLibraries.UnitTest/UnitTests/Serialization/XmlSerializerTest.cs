@@ -58,6 +58,8 @@ using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
 
 #endregion
 
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode() - test types
+
 namespace KGySoft.CoreLibraries.UnitTests.Serialization
 {
     /// <summary>
@@ -775,15 +777,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
-            public string item;
+            public new string item;
 
-            public string ConflictingField;
+            public new string ConflictingField;
 
             #endregion
 
             #region Properties
 
-            public string ConflictingProperty { get; set; }
+            public new string ConflictingProperty { get; set; }
 
             #endregion
 
@@ -814,7 +816,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Properties
 
-            public T item { get; set; }
+            public new T item { get; set; }
 
             public int Count => list.Count;
 
@@ -1067,13 +1069,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Serializable]
         public struct SystemSerializableStruct
         {
-            #region Fields
-
-            [NonSerialized]
-            private int nonSerializedInt;
-
-            #endregion
-
             #region Properties
 
             public int IntProp { get; set; }
@@ -1373,7 +1368,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // These values cannot be serialized with system serializer
             referenceObjects = new Enum[]
             {
+#pragma warning disable 618
                 BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.CoreLibraries enum, obsolete element
+#pragma warning restore 618
                 (BinarySerializationOptions)(-1), // KGySoft.CoreLibraries enum, non-existing value
             };
 

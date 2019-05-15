@@ -20,9 +20,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Security;
 using System.Text;
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -215,12 +217,14 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TConverter">The <see cref="TypeConverter"/> to be registered.</typeparam>
         /// <param name="type">The <see cref="Type"/> to be associated with the new <typeparamref name="TConverter"/>.</param>
         /// <remarks>
-        /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
+        /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(Type)">TypeDescriptor.GetConverter</see>
         /// method will return the converter defined in <typeparamref name="TConverter"/>.</para>
-        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(System.Type)">TypeDescriptor.GetConverter</see>
+        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(Type)">TypeDescriptor.GetConverter</see>
         /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
         /// after the registering may continue to return the original converter. So make sure you register your custom converters
         /// at the start of your application.</note></remarks>
+        [SecuritySafeCritical]
+        [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification = "Intended. Method<MyType>() is more simple than Method(typeof(MyType))")]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
             if (type == null)

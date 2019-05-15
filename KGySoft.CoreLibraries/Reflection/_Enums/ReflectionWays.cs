@@ -17,6 +17,7 @@
 #region Usings
 
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -25,6 +26,7 @@ namespace KGySoft.Reflection
     /// <summary>
     /// Represents the possible ways of reflection for the methods of the <see cref="Reflector"/> class.
     /// </summary>
+    [SuppressMessage("Microsoft.Naming", "CA1717:OnlyFlagsEnumsShouldHavePluralNames", Justification = "Would be a breaking change")]
     public enum ReflectionWays
     {
         /// <summary>

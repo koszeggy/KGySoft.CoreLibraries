@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using KGySoft.Collections;
@@ -28,6 +29,7 @@ namespace KGySoft.Security.Cryptography
     /// <summary>
     /// Implementation of the CRC-32 hash algorithm.
     /// </summary>
+    [CLSCompliant(false)]
     public class Crc32 : HashAlgorithm
     {
         #region Constants
@@ -97,6 +99,7 @@ namespace KGySoft.Security.Cryptography
         /// <param name="isBigEndian">If <see langword="true"/>, the byte order of the <see cref="O:System.Security.Cryptography.HashAlgorithm.ComputeHash">ComputeHash</see> methods and the <see cref="HashAlgorithm.Hash"/> property
         /// will be big endian, which is the standard CRC32 representation; otherwise, little endian. Does not affect the <see cref="uint"/> return values though. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
+        [CLSCompliant(false)]
         public Crc32(uint polynomial, uint initialCrc = 0U, bool isBigEndian = true)
         {
             HashSizeValue = 32;
@@ -268,13 +271,14 @@ namespace KGySoft.Security.Cryptography
         #region Protected Methods
 
         /// <summary>
-        /// Computes the CRC-32 hash for the specified <paramref name="buffer"/>.
+        /// Computes the CRC-32 hash for the specified <paramref name="array"/>.
         /// </summary>
-        /// <param name="buffer">The input to compute the hash code for.</param>
+        /// <param name="array">The input to compute the hash code for.</param>
         /// <param name="offset">The offset into the byte array from which to begin using data.</param>
         /// <param name="count">The number of bytes in the array to use as data.</param>
-        protected override void HashCore(byte[] buffer, int offset, int count) 
-            => hash = CalculateHash(table, hash, buffer, offset, count);
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", Justification = "Renaming was intended, base has unconventional Hungarian notation names.")]
+        protected override void HashCore(byte[] array, int offset, int count) 
+            => hash = CalculateHash(table, hash, array, offset, count);
 
         /// <summary>
         /// Gets the final result of the computed CRC-32 hash as a byte array.

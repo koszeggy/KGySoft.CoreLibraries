@@ -16,7 +16,7 @@
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>..\KGySoft.TestsAndTools.ruleset</CodeAnalysisRuleSet>
     <OutputPath>bin\$(Configuration)</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>latest</LangVersion>
@@ -31,12 +31,14 @@
     <Optimize>false</Optimize>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <DefineConstants>TRACE;DEBUG;NET35</DefineConstants>
+    <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_NET35|AnyCPU' ">
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;NET35</DefineConstants>
+    <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_NET40|AnyCPU'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -44,12 +46,14 @@
     <DefineConstants>TRACE;DEBUG;NET40</DefineConstants>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+    <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_NET40|AnyCPU'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <DefineConstants>TRACE;NET40</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_NET45|AnyCPU'">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -57,12 +61,14 @@
     <DefineConstants>TRACE;DEBUG;NET45</DefineConstants>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+    <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_NET45|AnyCPU'">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <DefineConstants>TRACE;NET45</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
+    <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -119,6 +125,9 @@
   <ItemGroup>
     <None Include="..\KGySoft.snk">
       <Link>KGySoft.snk</Link>
+    </None>
+    <None Include="..\KGySoft.TestsAndTools.ruleset">
+      <Link>KGySoft.TestsAndTools.ruleset</Link>
     </None>
     <None Include="packages.config" />
   </ItemGroup>

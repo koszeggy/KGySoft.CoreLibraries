@@ -19,9 +19,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 
 using KGySoft.Collections;
@@ -31,26 +33,60 @@ using KGySoft.Reflection;
 
 namespace KGySoft.CoreLibraries
 {
+#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
     /// <summary>
     /// Generic helper class for the <see cref="Enum"/> class.
     /// Provides faster solutions for already existing functionalities in the <see cref="Enum"/> class along with
     /// some additional functionality.
     /// </summary>
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
-    public static class Enum<TEnum> where TEnum: struct, IConvertible // replaced to System.Enum by RecompILer
+    [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
+    [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
+    public static class Enum<TEnum> where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+#pragma warning restore CS3024 // Constraint type is not CLS-compliant
     {
         #region Fields
 
         // ReSharper disable StaticMemberInGenericType - values are specific for TEnum
-        private static readonly Type enumType = typeof(TEnum);
-        private static readonly Type underlyingType;
-        private static readonly bool isFlags;
-        private static readonly bool isSigned;
-        private static readonly long min;
-        private static readonly ulong max;
-        private static readonly ulong sizeMask; // masking is needed because binary representation of (ulong)(1L << 31) != (1UL << 31), for example
+        private static readonly Type enumType =
+#if DEBUG
+            !typeof(TEnum).IsEnum ? throw new InvalidOperationException(Res.EnumTypeParameterInvalid) : // CA1065: in Release TEnum is constrainted well; otherwise, this is needed
+#endif
+                typeof(TEnum);
+
+        private static readonly TypeCode typeCode = Type.GetTypeCode(Enum.GetUnderlyingType(enumType));
+        private static readonly bool isFlags = enumType.IsFlagsEnum();
+        private static readonly bool isSigned = typeCode.In(TypeCode.SByte, TypeCode.Int16, TypeCode.Int32, TypeCode.Int64);
+
+        private static readonly long min
+            = typeCode == TypeCode.SByte ? SByte.MinValue
+            : typeCode == TypeCode.Int16 ? Int16.MinValue
+            : typeCode == TypeCode.Int32 ? Int32.MinValue
+            : typeCode == TypeCode.Int64 ? Int64.MinValue
+            : 0L;
+
+        private static readonly ulong max
+            = typeCode == TypeCode.SByte ? (ulong)SByte.MaxValue
+            : typeCode == TypeCode.Byte ? Byte.MaxValue
+            : typeCode == TypeCode.Int16 ? (ulong)Int16.MaxValue
+            : typeCode == TypeCode.UInt16 ? UInt16.MaxValue
+            : typeCode == TypeCode.Int32 ? Int32.MaxValue
+            : typeCode == TypeCode.UInt32 ? UInt32.MaxValue
+            : typeCode == TypeCode.Int64 ? Int64.MaxValue
+            : UInt64.MaxValue;
+
+        // masking is needed because binary representation of (ulong)(1L << 31) != (1UL << 31), for example
+        private static readonly ulong sizeMask
+            = typeCode == TypeCode.SByte ? Byte.MaxValue
+            : typeCode == TypeCode.Byte ? Byte.MaxValue
+            : typeCode == TypeCode.Int16 ? UInt16.MaxValue
+            : typeCode == TypeCode.UInt16 ? UInt16.MaxValue
+            : typeCode == TypeCode.Int32 ? UInt32.MaxValue
+            : typeCode == TypeCode.UInt32 ? UInt32.MaxValue
+            : UInt64.MaxValue;
+
         private static readonly object syncRoot = new object(); // locks are used so that multiple threads may assign a field multiple times but it is still faster than locking fields even on non-null access
-        private static readonly Func<ulong, TEnum> toEnum;
+        private static readonly Func<ulong, TEnum> toEnum = GenerateToEnum();
 
         private static TEnum[] values;
         private static string[] names;
@@ -109,7 +145,7 @@ namespace KGySoft.CoreLibraries
 #if NET35
                     comparer = EnumComparer<TEnum>.Comparer;
 #elif NET40 || NET45
-                    comparer = underlyingType == Reflector.IntType
+                    comparer = typeCode == TypeCode.Int32
                         ? (IEqualityComparer<TEnum>)EqualityComparer<TEnum>.Default
                         : EnumComparer<TEnum>.Comparer;
 #else
@@ -229,63 +265,6 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region Constructors
-
-        static Enum()
-        {
-            if (!typeof(TEnum).IsEnum)
-                throw new InvalidOperationException(Res.EnumTypeParameterInvalid);
-
-            underlyingType = Enum.GetUnderlyingType(enumType);
-            isFlags = enumType.IsFlagsEnum();
-            isSigned = underlyingType.In(Reflector.SByteType, Reflector.ShortType, Reflector.IntType, Reflector.LongType);
-            switch (Type.GetTypeCode(underlyingType))
-            {
-                case TypeCode.SByte:
-                    sizeMask = Byte.MaxValue;
-                    min = SByte.MinValue;
-                    max = (ulong)SByte.MaxValue;
-                    break;
-                case TypeCode.Byte:
-                    sizeMask = Byte.MaxValue;
-                    max = Byte.MaxValue;
-                    break;
-                case TypeCode.Int16:
-                    sizeMask = UInt16.MaxValue;
-                    min = Int16.MinValue;
-                    max = (ulong)Int16.MaxValue;
-                    break;
-                case TypeCode.UInt16:
-                    sizeMask = UInt16.MaxValue;
-                    max = UInt16.MaxValue;
-                    break;
-                case TypeCode.Int32:
-                    sizeMask = UInt32.MaxValue;
-                    min = Int32.MinValue;
-                    max = Int32.MaxValue;
-                    break;
-                case TypeCode.UInt32:
-                    sizeMask = UInt32.MaxValue;
-                    max = UInt32.MaxValue;
-                    break;
-                case TypeCode.Int64:
-                    sizeMask = UInt64.MaxValue;
-                    min = Int64.MinValue;
-                    max = Int64.MaxValue;
-                    break;
-                case TypeCode.UInt64:
-                    sizeMask = UInt64.MaxValue;
-                    max = UInt64.MaxValue;
-                    break;
-            }
-
-            ParameterExpression parameter = Expression.Parameter(Reflector.ULongType, "value");
-            LambdaExpression lambda = Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(parameter, typeof(TEnum)), parameter);
-            toEnum = (Func<ulong, TEnum>)lambda.Compile();
-        }
-
-        #endregion
-
         #region Methods
 
         #region Public Methods
@@ -344,6 +323,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value of the required field.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
+        [CLSCompliant(false)]
         public static string GetName(ulong value)
         {
             if (value > max)
@@ -385,6 +365,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a field whose value that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [CLSCompliant(false)]
         public static bool IsDefined(ulong value) => value <= max && NumValueNamePairs.ContainsKey(value);
 
         /// <summary>
@@ -424,6 +405,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/> and whether all bits that are set are defined in the <typeparamref name="TEnum"/> type.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is zero, or when the bits that are set in <paramref name="flags"/> are set in <paramref name="value"/>;
         /// otherwise, <see langword="false"/>.</returns>
+        [CLSCompliant(false)]
         public static bool HasFlag(TEnum value, ulong flags) => flags <= max && HasFlagCore(value, flags);
 
         /// <summary>
@@ -456,6 +438,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if <paramref name="value"/> falls into the range of <typeparamref name="TEnum"/> range
         /// and only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [CLSCompliant(false)]
         public static bool IsSingleFlag(ulong value)
         {
             if (value == 0UL || value > max)
@@ -500,6 +483,7 @@ namespace KGySoft.CoreLibraries
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
+        [CLSCompliant(false)]
         public static bool AllFlagsDefined(ulong flags) => flags <= max && AllFlagsDefinedCore(flags);
 
         /// <summary>
@@ -516,7 +500,7 @@ namespace KGySoft.CoreLibraries
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
-            
+
             // simple name match test
             if (NameValuePairs.TryGetValue(value, out result))
                 return true;
@@ -527,30 +511,10 @@ namespace KGySoft.CoreLibraries
                 return false;
 
             // simple numeric value
-            if ((value[0] >= '0' && value[0] <= '9') || value[0] == '-' || value[0] == '+')
+            if (((value[0] >= '0' && value[0] <= '9') || value[0] == '-' || value[0] == '+') && TryParseNumber(value, out ulong numericValue))
             {
-                if (isSigned)
-                {
-                    if (Int64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long numericValue))
-                    {
-                        if (numericValue < min || numericValue > (long)max)
-                            return false;
-                        result = toEnum.Invoke((ulong)numericValue);
-                        return true;
-                    }
-                }
-                else
-                {
-                    if (UInt64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong numericValue))
-                    {
-                        if (numericValue > max)
-                            return false;
-                        result = toEnum.Invoke(numericValue);
-                        return true;
-                    }
-                }
-
-                result = default(TEnum);
+                result = toEnum.Invoke(numericValue);
+                return true;
             }
 
             // rest: flags enum or ignored case
@@ -580,30 +544,10 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // checking if is numeric token
-                if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-' || token[0] == '+')
+                if (((token[0] >= '0' && token[0] <= '9') || token[0] == '-' || token[0] == '+') && TryParseNumber(token, out numericValue))
                 {
-                    if (isSigned)
-                    {
-                        if (Int64.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out long numericValue))
-                        {
-                            if (numericValue < min || numericValue > (long)max)
-                                return false;
-                            acc |= (ulong)numericValue;
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        if (UInt64.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong numericValue))
-                        {
-                            if (numericValue > max)
-                                return false;
-                            acc |= numericValue;
-                            continue;
-                        }
-                    }
-
-                    return false;
+                    acc |= numericValue;
+                    continue;
                 }
 
                 // none of above
@@ -658,9 +602,9 @@ namespace KGySoft.CoreLibraries
         /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> and <paramref name="separator"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
-        public static TEnum Parse(string value, string separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false) 
-            => !TryParse(value, separator, ignoreCase, out TEnum result) 
-                ? throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value)) 
+        public static TEnum Parse(string value, string separator = EnumExtensions.DefaultParseSeparator, bool ignoreCase = false)
+            => !TryParse(value, separator, ignoreCase, out TEnum result)
+                ? throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value))
                 : result;
 
         /// <summary>
@@ -671,9 +615,9 @@ namespace KGySoft.CoreLibraries
         /// <returns>The parsed <see langword="enum"/>&#160;value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> cannot be <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="value"/> cannot be parsed as <typeparamref name="TEnum"/>.</exception>
-        public static TEnum Parse(string value, bool ignoreCase) 
-            => !TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out TEnum result) 
-                ? throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value)) 
+        public static TEnum Parse(string value, bool ignoreCase)
+            => !TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out TEnum result)
+                ? throw new ArgumentException(Res.EnumValueCannotBeParsedAsEnum(value, enumType), nameof(value))
                 : result;
 
         /// <summary>
@@ -779,6 +723,14 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+        private static Func<ulong, TEnum> GenerateToEnum()
+        {
+            // This could be in a static constructor but moved to an initializer method due to performance reasons (CA1810)
+            var valueParamExpression = Expression.Parameter(Reflector.ULongType, "value");
+            var lambda = Expression.Lambda<Func<ulong, TEnum>>(Expression.Convert(valueParamExpression, typeof(TEnum)), valueParamExpression);
+            return lambda.Compile();
+        }
+
         private static bool AllFlagsDefinedCore(ulong flags)
         {
             if (flags == 0UL)
@@ -808,6 +760,27 @@ namespace KGySoft.CoreLibraries
 
             ulong rawValue = isSigned ? (ulong)value.ToInt64(null) & sizeMask : value.ToUInt64(null);
             return (rawValue & flags) == flags;
+        }
+
+        private static bool TryParseNumber(string value, out ulong result)
+        {
+            if (isSigned)
+            {
+                if (Int64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out long signedResult))
+                {
+                    result = (ulong)signedResult;
+                    return signedResult >= min && signedResult <= (long)max;
+                }
+
+                result = default;
+                return false;
+            }
+
+            if (UInt64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result))
+                return result <= max;
+
+            result = default;
+            return false;
         }
 
         private static string FormatDistinctFlags(TEnum e, string separator)
@@ -902,14 +875,15 @@ namespace KGySoft.CoreLibraries
             // eg. (int)-10: after the ulong->long conversion this is a bigger positive number as max
             unchecked
             {
-                if (underlyingType == Reflector.IntType)
-                    return ((int)nativeValue).ToString(CultureInfo.InvariantCulture);
-
-                if (underlyingType == Reflector.ShortType)
-                    return ((short)nativeValue).ToString(CultureInfo.InvariantCulture);
-
-                if (underlyingType == Reflector.SByteType)
-                    return ((sbyte)nativeValue).ToString(CultureInfo.InvariantCulture);
+                switch (typeCode)
+                {
+                    case TypeCode.Int32:
+                        return ((int)nativeValue).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.Int16:
+                        return ((short)nativeValue).ToString(CultureInfo.InvariantCulture);
+                    case TypeCode.SByte:
+                        return ((sbyte)nativeValue).ToString(CultureInfo.InvariantCulture);
+                }
             }
 
             // should never occur, throwing internal error without resource

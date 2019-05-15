@@ -155,7 +155,7 @@ namespace KGySoft.ComponentModel
             set
             {
                 if (key == nameof(Enabled) && !(value is bool))
-                    throw new ArgumentException(Res.ComponentModelEnabledMustBeBool);
+                    throw new ArgumentException(Res.ComponentModelEnabledMustBeBool, nameof(value));
 
                 bool differs;
                 stateProperties.Lock();
@@ -194,7 +194,7 @@ namespace KGySoft.ComponentModel
             foreach (var state in initialConfiguration)
             {
                 if (state.Key == nameof(Enabled) && !(state.Value is bool))
-                    throw new ArgumentException($"'{Enabled}' state must have a bool value", nameof(initialConfiguration));
+                    throw new ArgumentException(Res.ComponentModelEnabledMustBeBool, nameof(initialConfiguration));
                 stateProperties[state.Key] = state.Value;
             }
         }
@@ -265,6 +265,8 @@ namespace KGySoft.ComponentModel
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
+            if (binder == null)
+                throw new ArgumentNullException(nameof(binder), Res.ArgumentNull);
             this[binder.Name] = value;
             return true;
         }
@@ -278,6 +280,8 @@ namespace KGySoft.ComponentModel
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
+            if (binder == null)
+                throw new ArgumentNullException(nameof(binder), Res.ArgumentNull);
             result = this[binder.Name];
             return true;
         }

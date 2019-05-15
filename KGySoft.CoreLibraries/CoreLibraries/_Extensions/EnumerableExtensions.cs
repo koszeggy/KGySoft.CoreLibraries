@@ -238,7 +238,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
-        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> can only be added one by one.</para>
         /// </remarks>
         public static bool TryAddRange<T>([NoEnumeration]this IEnumerable<T> target, IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
@@ -280,7 +280,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be added to <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
-        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> can only be added one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryAddRange{T}"><![CDATA[TryAddRange<T>]]></see> overload for better performance.</note>
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
@@ -587,7 +587,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be inserted in the <paramref name="target"/> collection if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
-        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
         /// </remarks>
         public static bool TryInsertRange<T>([NoEnumeration]this IEnumerable<T> target, int index, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
@@ -630,7 +630,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if the whole <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be inserted in the <paramref name="target"/> collection if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
-        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryInsertRange{T}"><![CDATA[TryInsertRange<T>]]></see> overload for better performance.</note>
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
@@ -1216,7 +1216,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
-        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements can only be replaced one by one.</para>
         /// </remarks>
         public static bool TryReplaceRange<T>([NoEnumeration]this IEnumerable<T> target, int index, int count, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
@@ -1286,7 +1286,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if the whole range could be removed and <paramref name="collection"/> could be inserted into <paramref name="target"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
-        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeColletion{T}"/> implementation,
+        /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
         /// then the elements can only be replaced one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryReplaceRange{T}"><![CDATA[TryReplaceRange<T>]]></see> overload for better performance.</note>
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
@@ -1372,9 +1372,9 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#endregion
+        #endregion
 
-#region Lookup
+        #region Lookup
 
         /// <summary>
         /// Determines whether the specified <paramref name="source"/> is <see langword="null"/>&#160;or empty (has no elements).
@@ -1675,9 +1675,9 @@ namespace KGySoft.CoreLibraries
             return collection.Cast<object>().TryGetElementAt(index, out item, checkBounds, throwError);
         }
 
-#endregion
+        #endregion
 
-#region Conversion
+        #region Conversion
 
         /// <summary>
         /// Creates a <see cref="CircularList{T}"/> from an <see cref="IEnumerable{T}"/>.
@@ -1697,9 +1697,9 @@ namespace KGySoft.CoreLibraries
             return new CircularList<T>(source);
         }
 
-#endregion
+        #endregion
 
-#region Random
+        #region Random
 
         /// <summary>
         /// Shuffles an enumerable <paramref name="source"/> (randomizes its elements) using the provided <paramref name="seed"/> with a new <see cref="Random"/> instance.
@@ -1789,11 +1789,11 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Internal Methods
+        #region Internal Methods
 
         /// <summary>
         /// Adjusts the initializer collection created by <see cref="TypeExtensions.CreateInitializerCollection"/> after it is populated before calling the constructor.
@@ -1833,8 +1833,8 @@ namespace KGySoft.CoreLibraries
             return initializerArray;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

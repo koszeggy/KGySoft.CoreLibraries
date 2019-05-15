@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Resources;
@@ -224,6 +226,7 @@ namespace KGySoft.Resources
 
             #region Constructors
 
+            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Stream will be disposed in Dispose.")]
             internal ResXWriter(string fileName)
                 : this(new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.Read))
             {
@@ -316,7 +319,7 @@ namespace KGySoft.Resources
 
                             // none of above: entitizing (including invalid Unicode characters)
                             sb.Append("&#x");
-                            sb.Append(((int)c).ToString("X"));
+                            sb.Append(((int)c).ToString("X", CultureInfo.InvariantCulture));
                             sb.Append(';');
                             break;
                     }
@@ -353,6 +356,7 @@ namespace KGySoft.Resources
 
         #region Static Fields
 
+        [SuppressMessage("Microsoft.Performance", "CA1802:UseLiteralsWhereAppropriate", Justification = "False alarm, contains interpolation. BTW, such a huge constant is just better not to be inlined.")]
         private static readonly string resourceHeader = $@"
     <!-- 
     Microsoft ResX Schema 
@@ -408,6 +412,8 @@ namespace KGySoft.Resources
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->";
+
+        [SuppressMessage("Microsoft.Performance", "CA1802:UseLiteralsWhereAppropriate", Justification = "Such a huge string is just more nice not to be inlined")]
         private static readonly string resourceSchema = @"
     <xsd:schema id=""root"" xmlns="""" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:msdata=""urn:schemas-microsoft-com:xml-msdata"">
         <xsd:import namespace=""http://www.w3.org/XML/1998/namespace""/>
@@ -764,7 +770,12 @@ namespace KGySoft.Resources
         /// Adds a metadata node specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
         /// </summary>
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a metadata name/value pair.</param>
-        public void AddMetadata(ResXDataNode node) => AddDataRow(ResXCommon.MetadataStr, node.Name, node);
+        public void AddMetadata(ResXDataNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node), Res.ArgumentNull);
+            AddDataRow(ResXCommon.MetadataStr, node.Name, node);
+        }
 
         /// <summary>
         /// Adds a named resource specified as a byte array to the list of resources to write.
@@ -801,7 +812,12 @@ namespace KGySoft.Resources
         /// Adds a named resource specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
         /// </summary>
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a resource name/value pair.</param>
-        public void AddResource(ResXDataNode node) => AddDataRow(ResXCommon.DataStr, node.Name, node);
+        public void AddResource(ResXDataNode node)
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node), Res.ArgumentNull);
+            AddDataRow(ResXCommon.DataStr, node.Name, node);
+        }
 
         /// <summary>
         /// Releases all resources used by the <see cref="ResXResourceWriter"/>.
@@ -844,6 +860,7 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "XmlReader will close StringReader because created by CloseInput = true.")]
         private void InitializeWriter()
         {
             // otherwise, UTF-16 would have been dumped
@@ -856,13 +873,13 @@ namespace KGySoft.Resources
             writer.WriteStartElement("root");
             if (compatibleFormat || !omitHeader)
             {
-                XmlReader reader =
-                    XmlReader.Create(
-                        new StringReader(compatibleFormat
-                            ? (omitHeader ? resourceSchema : resourceHeader + resourceSchema)
-                            : resourceSchema),
-                        new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true });
-                writer.WriteNode(reader, true);
+                using (XmlReader reader = XmlReader.Create(new StringReader(compatibleFormat
+                        ? (omitHeader ? resourceSchema : resourceHeader + resourceSchema)
+                        : resourceSchema),
+                    new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true }))
+                {
+                    writer.WriteNode(reader, true);
+                }
             }
 
             if (!compatibleFormat && omitHeader)

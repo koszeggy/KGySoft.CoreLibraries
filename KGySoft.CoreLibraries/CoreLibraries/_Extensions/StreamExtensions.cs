@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 #endregion
@@ -84,6 +85,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">Source stream</param>
         /// <returns>A byte <see cref="Array"/> with the stream content.</returns>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, every new MemoryStream is in using")]
         public static byte[] ToArray(this Stream s)
         {
             if (s == null)

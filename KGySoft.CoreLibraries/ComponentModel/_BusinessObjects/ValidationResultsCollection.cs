@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 #endregion
@@ -34,7 +35,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private ValidationResult[] errors, warnings, infos;
+        private ReadOnlyCollection<ValidationResult> errors, warnings, infos;
 
         #endregion
 
@@ -45,35 +46,50 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets the validation results denoting an error.
         /// </summary>
-        public ValidationResult[] Errors => errors ?? (errors = this.Where(r => r.Severity == ValidationSeverity.Error).ToArray());
+#if NET35 || NET40
+        public IList<ValidationResult>
+#else
+        public IReadOnlyList<ValidationResult>
+#endif
+            Errors => errors ?? (errors = new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Error).ToArray()));
 
         /// <summary>
         /// Gets the validation results denoting a warning.
         /// </summary>
-        public ValidationResult[] Warnings => warnings ?? (warnings = this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray());
+#if NET35 || NET40
+        public IList<ValidationResult>
+#else
+        public IReadOnlyList<ValidationResult>
+#endif
+            Warnings => warnings ?? (warnings = new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Warning).ToArray()));
 
         /// <summary>
         /// Gets the validation results denoting an information.
         /// </summary>
-        public ValidationResult[] Infos => infos ?? (infos = this.Where(r => r.Severity == ValidationSeverity.Information).ToArray());
+#if NET35 || NET40
+        public IList<ValidationResult>
+#else
+        public IReadOnlyList<ValidationResult>
+#endif
+            Infos => infos ?? (infos = new ReadOnlyCollection<ValidationResult>(this.Where(r => r.Severity == ValidationSeverity.Information).ToArray()));
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has errors.
         /// </summary>
         /// <value><see langword="true"/>&#160;if this instance has errors; otherwise, <see langword="false"/>.</value>
-        public bool HasErrors => Errors.Length > 0;
+        public bool HasErrors => Errors.Count > 0;
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has warnings.
         /// </summary>
         /// <value><see langword="true"/>&#160;if this instance has warnings; otherwise, <see langword="false"/>.</value>
-        public bool HasWarnings => Warnings.Length > 0;
+        public bool HasWarnings => Warnings.Count > 0;
 
         /// <summary>
         /// Gets whether this <see cref="ValidationResultsCollection"/> has information entries.
         /// </summary>
         /// <value><see langword="true"/>&#160;if this instance has information entries; otherwise, <see langword="false"/>.</value>
-        public bool HasInfos => Infos.Length > 0;
+        public bool HasInfos => Infos.Count > 0;
 
         #endregion
 
@@ -85,7 +101,13 @@ namespace KGySoft.ComponentModel
         /// <param name="propertyName">Name of the property to get the validation results.</param>
         /// <param name="severity">The severity of the validation results to get. Specify <see langword="null"/>&#160;to get results of any severities. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        public ValidationResult[] this[string propertyName, ValidationSeverity? severity = null] => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
+        [SuppressMessage("Microsoft.Design", "CA1023:IndexersShouldNotBeMultidimensional", Justification = "Intentionally nonstandard indexer, but 2nd parameter is optional.")]
+#if NET35 || NET40
+        public IList<ValidationResult>
+#else
+        public IReadOnlyList<ValidationResult>
+#endif
+            this[string propertyName, ValidationSeverity? severity = null] => this.Where(r => r.PropertyName == propertyName && (severity == null || severity == r.Severity)).ToArray();
 
         #endregion
 

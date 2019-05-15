@@ -103,7 +103,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method for which the accessor is to be created.</param>
         protected MethodAccessor(MethodBase method) :
-            base(method, method.GetParameters().Select(p => p.ParameterType).ToArray())
+            base(method, method?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
 

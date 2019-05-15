@@ -150,7 +150,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property for which the accessor is to be created.</param>
         protected PropertyAccessor(PropertyInfo property) :
-            base(property, property.GetIndexParameters().Select(p => p.ParameterType).ToArray())
+            base(property, property?.GetIndexParameters().Select(p => p.ParameterType).ToArray())
         {
         }
 

@@ -182,6 +182,9 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
+
             if (PropertiesInternal.ContainsKey(e.PropertyName))
                 Undoable.HandlePropertyChanged(e);
 

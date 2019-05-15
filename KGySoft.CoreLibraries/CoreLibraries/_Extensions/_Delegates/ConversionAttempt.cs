@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 #endregion
@@ -31,5 +32,7 @@ namespace KGySoft.CoreLibraries
     /// <param name="culture">The used culture for the conversion. If <see langword="null"/>, then the conversion must use culture invariant conversion.</param>
     /// <param name="result">The result if the return value is <see langword="true"/>.</param>
     /// <returns><see langword="true"/>&#160;if the conversion was successful; otherwise, <see langword="false"/>.</returns>
+    [SuppressMessage("Microsoft.Design", "CA1021:AvoidOutParameters", Justification = "Try... pattern")]
+    [SuppressMessage("Microsoft.Design", "CA1007:UseGenericsWhereAppropriate", Justification = "Impossible, not called from generic context and all conversions are stored together.")]
     public delegate bool ConversionAttempt(object obj, Type targetType, CultureInfo culture, out object result);
 }

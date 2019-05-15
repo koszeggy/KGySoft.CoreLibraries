@@ -295,25 +295,25 @@ namespace KGySoft.Collections.ObjectModel
         public virtual IEnumerator<T> GetEnumerator() => items.GetEnumerator();
 
         /// <summary>
-        /// Copies the entire <see cref="VirtualCollection{T}"/> to a compatible one-dimensional <see cref="Array"/>, starting at the specified <paramref name="index"/> of the target <paramref name="array"/>.
+        /// Copies the entire <see cref="VirtualCollection{T}"/> to a compatible one-dimensional <see cref="Array"/>, starting at the specified <paramref name="arrayIndex"/> of the target <paramref name="array"/>.
         /// <br/>Calls the overridable <see cref="GetItem">GetItem</see> method for each index between zero and <see cref="Count"/>, excluding upper bound.
         /// </summary>
         /// <param name="array">The one-dimensional <see cref="Array" /> that is the destination of the elements copied from <see cref="VirtualCollection{T}"/>. The <see cref="Array" /> must have zero-based indexing.</param>
-        /// <param name="index">The zero-based index in <paramref name="array" /> at which copying begins.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
-        /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="index"/> to the end of the destination <paramref name="array"/>.</exception>
-        public void CopyTo(T[] array, int index)
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0 equal to or greater than the length of <paramref name="array"/>.</exception>
+        /// <exception cref="ArgumentException">The number of elements in the source list is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
+        public void CopyTo(T[] array, int arrayIndex)
         {
             int length = Count;
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
-            if (index < 0 || index > array.Length)
-                throw new ArgumentOutOfRangeException(nameof(index), Res.ArgumentOutOfRange);
-            if (array.Length - index < length)
+            if (arrayIndex < 0 || arrayIndex > array.Length)
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), Res.ArgumentOutOfRange);
+            if (array.Length - arrayIndex < length)
                 throw new ArgumentException(Res.ICollectionCopyToDestArrayShort, nameof(array));
             for (int i = 0; i < length; i++)
-                array[index++] = GetItem(i);
+                array[arrayIndex++] = GetItem(i);
         }
 
         #endregion

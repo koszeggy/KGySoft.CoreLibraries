@@ -304,13 +304,13 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
+        /// <param name="newBasePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="newBasePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
+        void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null);
 
         /// <summary>
         /// Saves the <see cref="IExpandoResourceSet"/> to the specified <paramref name="stream"/>. If the current <see cref="IExpandoResourceSet"/> instance
@@ -323,13 +323,13 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/></param>
         /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
+        /// <param name="newBasePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="newBasePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
+        void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null);
 
         /// <summary>
         /// Saves the <see cref="IExpandoResourceSet"/> by the specified <paramref name="textWriter"/>. If the current <see cref="IExpandoResourceSet"/> instance
@@ -342,13 +342,13 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/></param>
         /// <param name="forceEmbeddedResources">If set to <see langword="true"/>&#160;the resources using a file reference (<see cref="ResXFileRef"/>) will be replaced by embedded resources. This parameter is optional.
         /// <br/>Default value: <see langword="false"/></param>
-        /// <param name="basePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
-        /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="basePath"/>.
+        /// <param name="newBasePath">A new base path for the file paths specified in the <see cref="ResXFileRef"/> objects. If <see langword="null"/>,
+        /// the original base path will be used. The file paths in the saved .resx file will be relative to <paramref name="newBasePath"/>.
         /// Applicable if <paramref name="forceEmbeddedResources"/> is <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
-        void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string basePath = null);
+        void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string newBasePath = null);
 
         #endregion
     }

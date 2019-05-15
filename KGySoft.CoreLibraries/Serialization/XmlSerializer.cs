@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
@@ -360,20 +361,22 @@ namespace KGySoft.Serialization
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, used in using")]
         public static object Deserialize(string fileName)
         {
             if (fileName == null)
                 throw new ArgumentNullException(nameof(fileName), Res.ArgumentNull);
 
             // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
-            XmlTextReader xmlReader = new XmlTextReader(fileName)
+            using (var xmlReader = new XmlTextReader(fileName)
             {
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
                 XmlResolver = null,
-            };
-
-            return Deserialize(xmlReader);
+            })
+            {
+                return Deserialize(xmlReader);
+            }
         }
 
         /// <summary>

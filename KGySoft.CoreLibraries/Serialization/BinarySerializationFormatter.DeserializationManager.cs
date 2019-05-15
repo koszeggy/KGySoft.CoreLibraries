@@ -306,15 +306,15 @@ namespace KGySoft.Serialization
                     {
                         result = Assembly.Load(new AssemblyName(name));
                     }
-                    catch
+                    catch (Exception e) when (!e.IsCritical())
                     {
                         try
                         {
                             result = Assembly.Load(name);
                         }
-                        catch (Exception e)
+                        catch (Exception ex) when (!ex.IsCritical())
                         {
-                            throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), e);
+                            throw new SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
                         }
                     }
                 }

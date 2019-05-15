@@ -192,7 +192,7 @@ namespace KGySoft.CoreLibraries
                             throw new InvalidOperationException("Invalid conversion delegate type");
                     }
                 }
-                catch (Exception e)
+                catch (Exception e) when (!e.IsCritical())
                 {
                     context.Error = e;
                     value = null;
@@ -214,7 +214,7 @@ namespace KGySoft.CoreLibraries
                     return true;
 
                 }
-                catch (Exception e)
+                catch (Exception e) when (!e.IsCritical())
                 {
                     context.Error = e;
                     value = null;
@@ -237,7 +237,7 @@ namespace KGySoft.CoreLibraries
                         value = converter.ConvertFrom(null, context.Culture, source);
                         return true;
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (!e.IsCritical())
                     {
                         context.Error = e;
                     }
@@ -251,7 +251,7 @@ namespace KGySoft.CoreLibraries
                     {
                         value = converter.ConvertTo(null, context.Culture, source, targetType);
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (!e.IsCritical())
                     {
                         context.Error = e;
                         return false;
@@ -383,7 +383,7 @@ namespace KGySoft.CoreLibraries
 
                     return true;
                 }
-                catch (Exception e)
+                catch (Exception e) when (!e.IsCritical())
                 {
                     context.Error = e;
                     return false;

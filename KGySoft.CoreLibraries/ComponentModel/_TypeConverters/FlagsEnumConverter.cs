@@ -179,6 +179,8 @@ namespace KGySoft.ComponentModel
         /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
         public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
         {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value), Res.ArgumentNull);
             Type enumType = value.GetType();
             if (!enumType.IsEnum)
                 throw new ArgumentException(Res.NotAnInstanceOfType(Reflector.EnumType), nameof(value));

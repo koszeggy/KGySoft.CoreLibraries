@@ -56,7 +56,7 @@ namespace KGySoft.CoreLibraries
                 File.Delete(fileName);
                 return true;
             }
-            catch
+            catch (Exception e) when (!e.IsCriticalOr(e is ArgumentException))
             {
                 return false;
             }
@@ -126,7 +126,7 @@ namespace KGySoft.CoreLibraries
             int commonPathDepth = 0;
             for (int i = 0; i < Math.Min(basePathParts.Length, targetPathParts.Length); i++)
             {
-                if (!basePathParts[i].ToLowerInvariant().Equals(targetPathParts[i].ToLowerInvariant()))
+                if (!basePathParts[i].Equals(targetPathParts[i], StringComparison.OrdinalIgnoreCase))
                     break;
                 commonPathDepth++;
             }

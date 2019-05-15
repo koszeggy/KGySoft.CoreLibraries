@@ -87,6 +87,8 @@ namespace KGySoft.Serialization
         [SecurityCritical]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
+            if (info == null)
+                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
             info.AddValue("isWeak", useWeakBinding);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
             if (RemotingServices.IsTransparentProxy(obj))

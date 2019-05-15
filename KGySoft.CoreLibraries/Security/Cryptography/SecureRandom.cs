@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
 #endregion
@@ -55,6 +56,7 @@ namespace KGySoft.Security.Cryptography
         /// Initializes a new instance of the <see cref="SecureRandom"/> class.
         /// To generate cryptographically secure random numbers, an <see cref="RNGCryptoServiceProvider"/> will be used internally.
         /// </summary>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Provider will be disposed by Dispose.")]
         public SecureRandom()
             : this(new RNGCryptoServiceProvider())
         {

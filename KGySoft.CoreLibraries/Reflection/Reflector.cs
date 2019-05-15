@@ -21,12 +21,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
+using System.Security;
 using System.Text;
 
 using KGySoft.Collections;
@@ -1494,7 +1496,7 @@ namespace KGySoft.Reflection
                             mi = mi.MakeGenericMethod(genericParameters);
                             methodParams = mi.GetParameters();
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (!e.IsCritical())
                         {
                             if (throwError)
                                 lastException = e;
@@ -2359,7 +2361,7 @@ namespace KGySoft.Reflection
                         indices[i] = Convert.ToInt32(param, CultureInfo.InvariantCulture);
                         continue;
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (!e.IsCritical())
                     {
                         error = e;
                     }
@@ -2388,6 +2390,7 @@ namespace KGySoft.Reflection
         /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
         /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
         /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
+        [SecuritySafeCritical]
         public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
         {
             if (assemblyName == null)
@@ -2465,10 +2468,13 @@ namespace KGySoft.Reflection
         /// Loads the assembly with partial name. It is needed because Assembly.LoadWithPartialName is obsolete.
         /// </summary>
         /// <param name="assemblyName">Name of the assembly.</param>
+        [SecurityCritical]
+        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom",
+            Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
         private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
         {
             // 1. In case of a system assembly, returning it from the GAC
-            string gacPath = GetGacPath(assemblyName.Name);
+            string gacPath = Fusion.GetGacPath(assemblyName.Name);
             if (gacPath != null)
                 return Assembly.LoadFrom(gacPath);
 
@@ -2497,26 +2503,6 @@ namespace KGySoft.Reflection
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
-        /// </summary>
-        private static string GetGacPath(string name)
-        {
-            var aInfo = new ASSEMBLY_INFO();
-            aInfo.cchBuf = 1024;
-            aInfo.currentAssemblyPath = new string('\0', aInfo.cchBuf);
-
-            int hr = Fusion.CreateAssemblyCache(out IAssemblyCache ac, 0);
-            if (hr >= 0)
-            {
-                hr = ac.QueryAssemblyInfo(0, name, ref aInfo);
-                if (hr < 0)
-                    return null;
-            }
-
-            return aInfo.currentAssemblyPath;
         }
 
         #endregion
@@ -2994,8 +2980,12 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property to check.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
-        public static bool IsExplicitInterfaceImplementation(PropertyInfo property) 
-            => IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true) : property.GetSetMethod(true));
+        public static bool IsExplicitInterfaceImplementation(PropertyInfo property)
+        {
+            if (property == null)
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+            return IsExplicitInterfaceImplementation(property.CanRead ? property.GetGetMethod(true) : property.GetSetMethod(true));
+        }
 
         private static string GetDefaultMember(Type type)
         {

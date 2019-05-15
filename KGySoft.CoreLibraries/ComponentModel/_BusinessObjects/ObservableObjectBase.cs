@@ -509,6 +509,8 @@ namespace KGySoft.ComponentModel
         /// <param name="e">The <see cref="PropertyChangedExtendedEventArgs" /> instance containing the event data.</param>
         protected internal virtual void OnPropertyChanged(PropertyChangedExtendedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
             if (AffectsModifiedState(e.PropertyName))
                 SetModified(true);
             if (suspendCounter <= 0)

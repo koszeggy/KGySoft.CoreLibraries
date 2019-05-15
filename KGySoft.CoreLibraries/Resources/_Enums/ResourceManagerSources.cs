@@ -14,6 +14,8 @@
 
 #endregion
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace KGySoft.Resources
 {
     /// <summary>
@@ -23,6 +25,7 @@ namespace KGySoft.Resources
     /// <seealso cref="HybridResourceManager.Source"/>
     /// <seealso cref="LanguageSettings.DynamicResourceManagersSource"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
+    [SuppressMessage("Microsoft.Naming", "CA1717:OnlyFlagsEnumsShouldHavePluralNames", Justification = "Would be a breaking change")]
     public enum ResourceManagerSources
     {
         /// <summary>

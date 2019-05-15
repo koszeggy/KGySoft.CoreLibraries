@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -310,6 +311,7 @@ namespace KGySoft.Resources
     /// <seealso cref="HybridResourceManager"/>
     /// <seealso cref="DynamicResourceManager"/>
 #pragma warning restore 618
+    [SuppressMessage("Microsoft.Design", "CA1010:CollectionsShouldImplementGenericInterface", Justification = "Intended. DictionaryEnumerators are returned (just like in System.Resources.ResXResourceReader) and the type of the value depends on SafeMode.")]
     public sealed class ResXResourceReader : IResourceReader, IResXResourceContainer
     {
         #region Nested types
@@ -520,6 +522,7 @@ namespace KGySoft.Resources
                 WhitespaceHandling = WhitespaceHandling.Significant;
             }
 
+            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, stream is passed to the overloaded constructor.")]
             internal ResXReader(string fileName)
                 : this(File.OpenRead(fileName))
             {
@@ -824,6 +827,8 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
+        #region Public Methods
+
         /// <summary>
         /// Creates a new <see cref="ResXResourceReader"/> object and initializes it to read a string whose contents are in the form of an XML resource file.
         /// </summary>
@@ -831,11 +836,23 @@ namespace KGySoft.Resources
         /// <param name="fileContents">A string containing XML resource-formatted information.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        public static ResXResourceReader FromFileContents(string fileContents, ITypeResolutionService typeResolver = null)
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "StringReader will be disposed by Dispose.")]
+        public static ResXResourceReader FromFileContents(string fileContents, ITypeResolutionService typeResolver = null) => new ResXResourceReader(new StringReader(fileContents), typeResolver);
+
+        #endregion
+
+        #region Private Methods
+
+        private static void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
         {
-            ResXResourceReader result = new ResXResourceReader(new StringReader(fileContents), typeResolver);
-            return result;
+            var dict = collection as Dictionary<string, ResXDataNode>;
+            if (dict != null)
+                dict[key] = value;
+            else
+                collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
         }
+
+        #endregion
 
         #endregion
 
@@ -921,12 +938,12 @@ namespace KGySoft.Resources
         /// <summary>
         /// Special initialization for ResXResourceSet. No lock is needed because called from ctor. Reads raw xml content only.
         /// </summary>
-        internal void ReadAllInternal(Dictionary<string, ResXDataNode> resources, Dictionary<string, ResXDataNode> metadata, Dictionary<string, string> aliases)
+        internal void ReadAllInternal(Dictionary<string, ResXDataNode> linkedResources, Dictionary<string, ResXDataNode> linkedMetadata, Dictionary<string, string> linkedAliases)
         {
             Debug.Assert(state == States.Created);
-            this.resources = resources;
-            this.metadata = metadata;
-            this.aliases = activeAliases = aliases;
+            resources = linkedResources;
+            metadata = linkedMetadata;
+            aliases = activeAliases = linkedAliases;
             ReadAll();
         }
 
@@ -934,13 +951,14 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "reader", Justification = "False alarm, reader is disposed")]
         private void Dispose(bool disposing)
         {
             if (state == States.Disposed)
                 return;
 
             if (disposing)
-                reader?.Close();
+                reader?.Dispose();
 
             reader = null;
             aliases = null;
@@ -1219,15 +1237,6 @@ namespace KGySoft.Resources
             aliases.Add(new KeyValuePair<string, string>(key, assemblyName));
         }
 
-        private void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
-        {
-            var dict = collection as Dictionary<string, ResXDataNode>;
-            if (dict != null)
-                dict[key] = value;
-            else
-                collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
-        }
-
         /// <summary>
         /// Parses a data or metadata node.
         /// Calls must be in a lock or from a ctor.
@@ -1295,6 +1304,7 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Methods
 
+        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "There is the public Close method. Same as System.Resources.ResXResourceReader.")]
         void IDisposable.Dispose()
         {
             GC.SuppressFinalize(this);

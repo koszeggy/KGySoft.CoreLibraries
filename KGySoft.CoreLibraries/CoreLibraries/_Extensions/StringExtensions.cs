@@ -119,7 +119,7 @@ namespace KGySoft.CoreLibraries
             string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
             byte[] result = new byte[values.Length];
             for (int i = 0; i < values.Length; i++)
-                result[i] = Byte.Parse(values[i].Trim(), NumberStyles.HexNumber);
+                result[i] = Byte.Parse(values[i].Trim(), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 
             return result;
         }
@@ -146,7 +146,7 @@ namespace KGySoft.CoreLibraries
 
             byte[] result = new byte[s.Length >> 1];
             for (int i = 0; i < (s.Length >> 1); i++)
-                result[i] = Byte.Parse(s.Substring(i << 1, 2), NumberStyles.HexNumber);
+                result[i] = Byte.Parse(s.Substring(i << 1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 
             return result;
         }
@@ -172,10 +172,11 @@ namespace KGySoft.CoreLibraries
             string[] values = s.Split(new string[] { separator }, StringSplitOptions.None);
             byte[] result = new byte[values.Length];
             for (int i = 0; i < values.Length; i++)
-                result[i] = Byte.Parse(values[i].Trim());
+                result[i] = Byte.Parse(values[i].Trim(), CultureInfo.InvariantCulture);
             return result;
         }
 
+#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
         /// <summary>
         /// Tries to convert the specified <see cref="string">string</see> to an <see cref="Enum"/> value of <typeparamref name="TEnum"/> type.
         /// </summary>
@@ -185,6 +186,7 @@ namespace KGySoft.CoreLibraries
         /// If <see langword="false"/>, the result can be a non-defined value, too.</param>
         /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
         public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
+#pragma warning restore CS3024 // Constraint type is not CLS-compliant
             where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
         {
             if (s == null)
@@ -538,7 +540,7 @@ namespace KGySoft.CoreLibraries
 
                 return false;
             }
-            catch (Exception e)
+            catch (Exception e) when (!e.IsCritical())
             {
                 error = e;
                 value = null;

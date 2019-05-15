@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-
+using System.Diagnostics.CodeAnalysis;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -60,10 +60,12 @@ namespace KGySoft.ComponentModel
         /// <param name="initialState">The initial state of the binding.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, the disposable is returned (check in new versions if fixed)")]
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "4", Justification = "targets is checked by IsNullOrEmpty")]
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, IDictionary<string, object> initialState = null, params object[] targets)
         {
             ICommandBinding result = command.CreateBinding(initialState)
-                    .AddSource(source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull));
+                .AddSource(source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull), eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull));
             if (!targets.IsNullOrEmpty())
             {
                 foreach (object target in targets)
@@ -191,6 +193,8 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, the disposable is returned (check in new versions if fixed)")]
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "4", Justification = "targets is checked by IsNullOrEmpty")]
         public static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, params object[] targets)
         {
             if (source == null)
@@ -205,7 +209,8 @@ namespace KGySoft.ComponentModel
                     { stateTargetPropertyName, targetPropertyName },
                     { stateFormatValue, format }
                 };
-            var eventName = source is INotifyPropertyChanged ? nameof(INotifyPropertyChanged.PropertyChanged) : sourcePropertyName + "Changed";
+            bool isNotifyPropertyChanged = source is INotifyPropertyChanged;
+            var eventName = isNotifyPropertyChanged ? nameof(INotifyPropertyChanged.PropertyChanged) : sourcePropertyName + "Changed";
             ICommandBinding result = BindPropertyCommand.CreateBinding(state, true)
                     .AddStateUpdater(NullStateUpdater.Updater)
                     .AddSource(source, eventName);
@@ -213,7 +218,7 @@ namespace KGySoft.ComponentModel
             {
                 var commandSource = new CommandSource<EventArgs>
                 {
-                    EventArgs = source is INotifyPropertyChanged ? new PropertyChangedEventArgs(sourcePropertyName) : EventArgs.Empty,
+                    EventArgs = isNotifyPropertyChanged ? new PropertyChangedEventArgs(sourcePropertyName) : EventArgs.Empty,
                     Source = source,
                     TriggeringEvent = eventName
                 };

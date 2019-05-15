@@ -19,6 +19,7 @@
 using System;
 using System.Globalization;
 using System.Resources;
+using System.Security;
 using System.Threading;
 using KGySoft.CoreLibraries;
 using KGySoft.Resources;
@@ -210,6 +211,8 @@ namespace KGySoft
         public static bool CaptureSystemLocaleChange
         {
             get => captureSystemLocaleChange;
+
+            [SecuritySafeCritical]
             set
             {
                 if (captureSystemLocaleChange == value)
@@ -245,7 +248,7 @@ namespace KGySoft
                     return;
 
                 if (!value.IsDefined())
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRange(value));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRangeWithValues(value));
 
                 dynamicResourceManagersSource = value;
                 OnDynamicResourceManagersSourceChanged(EventArgs.Empty);
@@ -362,6 +365,7 @@ namespace KGySoft
 
         #region Event handlers
 
+        [SecuritySafeCritical]
         static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
             if (e.Category != UserPreferenceCategory.Locale)

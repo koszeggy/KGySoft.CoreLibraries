@@ -771,7 +771,6 @@ namespace KGySoft.CoreLibraries
                 if (!type.IsAbstract && type.IsDelegate())
                     return delegatesCache[type];
 
-
                 object result;
 
                 // 7.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
@@ -814,6 +813,7 @@ namespace KGySoft.CoreLibraries
                             return result;
                     }
                 }
+
                 return null;
             }
 
@@ -833,7 +833,7 @@ namespace KGySoft.CoreLibraries
                         {
                             result = Activator.CreateInstance(type, true);
                         }
-                        catch
+                        catch (Exception e) when (!e.IsCritical())
                         {
                             // the constructor threw an exception: skip
                             return null;
@@ -885,14 +885,17 @@ namespace KGySoft.CoreLibraries
                         context.PushMember(property.Name);
                         try
                         {
+                            // no sense to use Reflector.TrySetProperty because it also throws exception if the property setter itself throws an exception
                             PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, true, ref context));
                         }
-                        // ReSharper disable once EmptyGeneralCatchClause - we just skip the property if it cannot be set
-                        catch
+                        catch (Exception e) when (!e.IsCritical())
                         {
+                            // we just skip the property if it cannot be set
                         }
-
-                        context.PopMember();
+                        finally
+                        {
+                            context.PopMember();
+                        }
                     }
                 }
 
@@ -905,12 +908,14 @@ namespace KGySoft.CoreLibraries
                         {
                             FieldAccessor.GetAccessor(field).Set(obj, GenerateObject(field.FieldType, true, ref context));
                         }
-                        // ReSharper disable once EmptyGeneralCatchClause - we just skip the field if it cannot be set
-                        catch
+                        catch (Exception e) when (!e.IsCritical())
                         {
+                            // we just skip the field if it cannot be set
                         }
-
-                        context.PopMember();
+                        finally
+                        {
+                            context.PopMember();
+                        }
                     }
                 }
             }

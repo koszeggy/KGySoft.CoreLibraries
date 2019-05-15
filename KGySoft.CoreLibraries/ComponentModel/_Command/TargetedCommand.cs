@@ -28,7 +28,7 @@ namespace KGySoft.ComponentModel
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <seealso cref="ICommand" />
-    public class TargetedCommand<TTarget> : ICommand, IDisposable
+    public sealed class TargetedCommand<TTarget> : ICommand, IDisposable
     {
         #region Fields
 

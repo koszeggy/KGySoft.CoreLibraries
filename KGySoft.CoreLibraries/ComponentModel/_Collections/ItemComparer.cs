@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -49,6 +50,7 @@ namespace KGySoft.ComponentModel
 
         #region Methods
 
+        [SuppressMessage("Microsoft.Globalization", "CA1307:SpecifyStringComparison", MessageId = "System.String.CompareTo(System.String)", Justification = "The fallback string comparison is intended to be culture specific.")]
         public int Compare(SortIndex x, SortIndex y)
         {
             int sign = ascending ? 1 : -1;

@@ -15,12 +15,13 @@
     <DocumentationFile>bin\$(Configuration)\KGySoft.CoreLibraries.xml</DocumentationFile>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutputPath>bin\$(Configuration)</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>latest</LangVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_NET35|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -60,7 +61,6 @@
     <DefineConstants>TRACE;NET45</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
@@ -86,7 +86,7 @@
     <Compile Include="Collections\ObjectModel\FastLookupCollection.cs" />
     <Compile Include="Collections\_Interfaces\ICache.cs" />
     <Compile Include="Collections\_Interfaces\ICacheStatistics.cs" />
-    <Compile Include="Collections\_Interfaces\ISupportsRangeColletion.cs" />
+    <Compile Include="Collections\_Interfaces\ISupportsRangeCollection.cs" />
     <Compile Include="Collections\_Interfaces\ISupportsRangeList.cs" />
     <Compile Include="Collections\_Interfaces\IThreadSafeCacheAccessor.cs" />
     <Compile Include="Collections\_doc\NamespaceDoc.cs" />
@@ -139,6 +139,7 @@
     <Compile Include="ComponentModel\_Command\SourceAwareTargetedCommand.cs" />
     <Compile Include="ComponentModel\__doc\NamespaceDoc.cs" />
     <Compile Include="CoreLibraries\_Extensions\EnumeratorExtensions.cs" />
+    <Compile Include="CoreLibraries\_Extensions\ExceptionExtensions.cs" />
     <Compile Include="CoreLibraries\_Extensions\_Delegates\Conversion.cs" />
     <Compile Include="CoreLibraries\_Extensions\_Delegates\ConversionAttempt.cs" />
     <Compile Include="Diagnostics\CollectionDebugView.cs" />
@@ -188,6 +189,7 @@
     <Compile Include="Diagnostics\_Interfaces\IPerformanceTestResultCollection.cs" />
     <Compile Include="Diagnostics\_Interfaces\ITestCaseRepetition.cs" />
     <Compile Include="Diagnostics\_Interfaces\ITestCaseResult.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LanguageSettings.cs" />
     <Compile Include="CoreLibraries\ReferenceComparer.cs" />
     <Compile Include="NamespaceDoc.cs" />
@@ -271,6 +273,9 @@
     <Compile Include="System\ValueTuple.cs" />
     <Compile Include="_.cs" />
     <Compile Include="CoreLibraries\_Extensions\ObjectExtensions.ObjectConverter.cs" />
+    <None Include="..\KGySoft.TestsAndTools.ruleset">
+      <Link>KGySoft.TestsAndTools.ruleset</Link>
+    </None>
     <None Include="..\LICENSE">
       <Link>LICENSE</Link>
     </None>
@@ -299,7 +304,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

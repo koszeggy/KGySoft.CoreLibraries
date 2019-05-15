@@ -27,7 +27,7 @@ namespace KGySoft.ComponentModel
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <seealso cref="ICommand" />
-    public class SimpleCommand : ICommand, IDisposable
+    public sealed class SimpleCommand : ICommand, IDisposable
     {
         #region Fields
 

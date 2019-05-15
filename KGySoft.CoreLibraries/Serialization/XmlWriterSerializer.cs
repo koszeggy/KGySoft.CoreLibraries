@@ -47,6 +47,33 @@ namespace KGySoft.Serialization
 
         #region Methods
 
+        #region Static Methods
+
+        /// <summary>
+        /// Writer must be in parent element, which should be closed by the parent.
+        /// </summary>
+        private static void SerializeXmlSerializable(IXmlSerializable obj, XmlWriter writer)
+        {
+            writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueCustom);
+
+            Type objType = obj.GetType();
+            string contentName = null;
+            object[] attrs = objType.GetCustomAttributes(typeof(XmlRootAttribute), true);
+            if (attrs.Length > 0)
+                contentName = ((XmlRootAttribute)attrs[0]).ElementName;
+
+            if (String.IsNullOrEmpty(contentName))
+                contentName = objType.Name;
+
+            writer.WriteStartElement(contentName);
+            obj.WriteXml(writer);
+            writer.WriteFullEndElement();
+        }
+
+        #endregion
+
+        #region Instance Methods
+
         #region Public Methods
 
         public void Serialize(XmlWriter writer, object obj)
@@ -174,7 +201,7 @@ namespace KGySoft.Serialization
                     byte[] data = new byte[Buffer.ByteLength(array)];
                     Buffer.BlockCopy(array, 0, data, 0, data.Length);
                     if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                        writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
+                        writer.WriteAttributeString(XmlSerializer.AttributeCrc, Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture));
                     writer.WriteString(Convert.ToBase64String(data));
 
                     return;
@@ -230,7 +257,7 @@ namespace KGySoft.Serialization
                 return;
 
             // a.) If type can be natively parsed, simple writing
-            if (type.CanBeParsedNatively() && !(obj is Type && ((Type)obj).IsGenericParameter))
+            if (type.CanBeParsedNatively() && !(obj is Type t && t.IsGenericParameter))
             {
                 if (typeNeeded)
                     writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(type));
@@ -311,7 +338,7 @@ namespace KGySoft.Serialization
 
                 writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueStructBinary);
                 if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                    writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
+                    writer.WriteAttributeString(XmlSerializer.AttributeCrc, Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture));
                 writer.WriteString(Convert.ToBase64String(data));
                 return;
             }
@@ -431,27 +458,6 @@ namespace KGySoft.Serialization
         }
 
         /// <summary>
-        /// Writer must be in parent element, which should be closed by the parent.
-        /// </summary>
-        private void SerializeXmlSerializable(IXmlSerializable obj, XmlWriter writer)
-        {
-            writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueCustom);
-
-            Type objType = obj.GetType();
-            string contentName = null;
-            object[] attrs = objType.GetCustomAttributes(typeof(XmlRootAttribute), true);
-            if (attrs.Length > 0)
-                contentName = ((XmlRootAttribute)attrs[0]).ElementName;
-
-            if (String.IsNullOrEmpty(contentName))
-                contentName = objType.Name;
-
-            writer.WriteStartElement(contentName);
-            obj.WriteXml(writer);
-            writer.WriteFullEndElement();
-        }
-
-        /// <summary>
         /// Serializing binary content by XmlWriter
         /// </summary>
         private void SerializeBinary(object obj, XmlWriter writer)
@@ -465,7 +471,7 @@ namespace KGySoft.Serialization
             byte[] data = BinarySerializer.Serialize(obj, binSerOptions);
 
             if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
-                writer.WriteAttributeString(XmlSerializer.AttributeCrc, $"{Crc32.CalculateHash(data):X8}");
+                writer.WriteAttributeString(XmlSerializer.AttributeCrc, Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture));
             writer.WriteString(Convert.ToBase64String(data));
         }
 
@@ -482,6 +488,8 @@ namespace KGySoft.Serialization
 
         #endregion
 
+        #endregion
+        
         #endregion
     }
 }

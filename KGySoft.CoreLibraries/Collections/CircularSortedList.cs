@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
@@ -593,11 +594,12 @@ namespace KGySoft.Collections
 
         #region Static Fields
 
+        private static readonly Type typeKey = typeof(TKey);
+        private static readonly Type typeValue = typeof(TValue);
+
         // ReSharper disable StaticMemberInGenericType - they depend on type arguments
-        private static readonly bool isEnumKey;
-        private static readonly bool isEnumValue;
-        private static readonly Type typeKey;
-        private static readonly Type typeValue;
+        private static readonly bool isEnumKey = typeKey.IsEnum;
+        private static readonly bool isEnumValue = typeValue.IsEnum;
         // ReSharper restore StaticMemberInGenericType
 
         #endregion
@@ -852,20 +854,6 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        #region Static Constructor
-
-        static CircularSortedList()
-        {
-            typeKey = typeof(TKey);
-            typeValue = typeof(TValue);
-            isEnumKey = typeKey.IsEnum;
-            isEnumValue = typeValue.IsEnum;
-        }
-
-        #endregion
-
-        #region Instance Constructors
-
         /// <summary>
         /// Creates a new instance of <see cref="CircularSortedList{TKey,TValue}"/> with empty capacity and a default comparer.
         /// </summary>
@@ -951,8 +939,6 @@ namespace KGySoft.Collections
             foreach (KeyValuePair<TKey, TValue> item in dictionary)
                 Add(item.Key, item.Value);
         }
-
-        #endregion
 
         #endregion
 
@@ -1364,6 +1350,7 @@ namespace KGySoft.Collections
             return typeKey.CanAcceptValue(key) && ContainsKey((TKey)key);
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         IDictionaryEnumerator IDictionary.GetEnumerator() => new EnumeratorAsReference(this, false);
 
         void IDictionary.Remove(object key)

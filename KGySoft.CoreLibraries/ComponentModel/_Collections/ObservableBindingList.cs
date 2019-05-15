@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 using KGySoft.Annotations;
@@ -427,6 +428,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableBindingList{T}"/> class with a <see cref="SortableBindingList{T}"/> internally.
         /// </summary>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposed by Dispose method")]
         public ObservableBindingList() : this(new SortableBindingList<T>())
         {
         }
@@ -474,6 +476,7 @@ namespace KGySoft.ComponentModel
         /// <para>Otherwise, if <typeparamref name="T"/> is a value type or has a parameterless constructor, then a new item of <typeparamref name="T"/> is created and added to the list.</para>
         /// <para>Otherwise, an <see cref="InvalidOperationException"/> will be thrown.</para>
         /// </remarks>
+        [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Same as BindingList<T>.AddNew")]
         public T AddNew()
         {
             if (disposed)
@@ -1010,11 +1013,7 @@ namespace KGySoft.ComponentModel
         [NotifyPropertyChangedInvocator]
         private void FirePropertyChanged([CallerMemberName] string propertyName = null) => OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 
-        #endregion
-
-        #region Event handlers
-
-        private void NotifyCollectionChanged_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void ProcessCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
             void HookNewItems(IList newItems)
             {
@@ -1039,16 +1038,6 @@ namespace KGySoft.ComponentModel
                         UnhookPropertyChanged(t);
                 }
             }
-
-            if (isExplicitChanging)
-                return;
-
-            if (e.Action.In(NotifyCollectionChangedAction.Add, NotifyCollectionChangedAction.Remove, NotifyCollectionChangedAction.Reset))
-                EndNew();
-
-            // We can jump out early only if we don't need to maintain item subscriptions
-            if (!HookItemsPropertyChanged && !RaiseCollectionChangedEvents && !RaiseListChangedEvents)
-                return;
 
             using (BlockReentrancy())
             {
@@ -1103,20 +1092,8 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private void BindingList_ListChanged(object sender, ListChangedEventArgs e)
+        private void ProcessListChanged(ListChangedEventArgs e)
         {
-            // we don't maintain item subscriptions here because it is the inner IBindingList's task
-            if (isExplicitChanging)
-                return;
-
-            if (isAddingNew && e.ListChangedType == ListChangedType.ItemAdded)
-                addNewPos = e.NewIndex;
-            if (e.ListChangedType.In(ListChangedType.ItemAdded, ListChangedType.ItemDeleted, ListChangedType.Reset))
-                EndNew();
-
-            if (!RaiseCollectionChangedEvents && !RaiseListChangedEvents)
-                return;
-
             using (BlockReentrancy())
             {
                 if (RaiseListChangedEvents)
@@ -1150,6 +1127,42 @@ namespace KGySoft.ComponentModel
                         break;
                 }
             }
+        }
+
+        #endregion
+
+        #region Event handlers
+
+        private void NotifyCollectionChanged_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (isExplicitChanging)
+                return;
+
+            if (e.Action.In(NotifyCollectionChangedAction.Add, NotifyCollectionChangedAction.Remove, NotifyCollectionChangedAction.Reset))
+                EndNew();
+
+            // We can jump out early only if we don't need to maintain item subscriptions
+            if (!HookItemsPropertyChanged && !RaiseCollectionChangedEvents && !RaiseListChangedEvents)
+                return;
+
+            ProcessCollectionChanged(e);
+        }
+
+        private void BindingList_ListChanged(object sender, ListChangedEventArgs e)
+        {
+            // we don't maintain item subscriptions here because it is the inner IBindingList's task
+            if (isExplicitChanging)
+                return;
+
+            if (isAddingNew && e.ListChangedType == ListChangedType.ItemAdded)
+                addNewPos = e.NewIndex;
+            if (e.ListChangedType.In(ListChangedType.ItemAdded, ListChangedType.ItemDeleted, ListChangedType.Reset))
+                EndNew();
+
+            if (!RaiseCollectionChangedEvents && !RaiseListChangedEvents)
+                return;
+
+            ProcessListChanged(e);
         }
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)

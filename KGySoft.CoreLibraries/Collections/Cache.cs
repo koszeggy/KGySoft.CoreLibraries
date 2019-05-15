@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
@@ -232,7 +233,7 @@ namespace KGySoft.Collections
     /// <seealso cref="CacheBehavior"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}; Hit = {" + nameof(Cache<_,_>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ")}; TValue = {typeof(" + nameof(TValue) + ")}; Hit = {" + nameof(Cache<_, _>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
     public sealed class Cache<TKey, TValue> : IDictionary<TKey, TValue>, ICache, ISerializable
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
@@ -804,12 +805,25 @@ namespace KGySoft.Collections
         /// <seealso cref="Behavior"/>
         private static readonly Func<TKey, TValue> nullLoader = key => throw new KeyNotFoundException(Res.CacheNullLoaderInvoke);
 
+        private static readonly Type typeKey = typeof(TKey);
+        private static readonly Type typeValue = typeof(TValue);
+
         // ReSharper disable StaticMemberInGenericType
-        private static readonly bool useEnumKeyComparer;
-        private static readonly bool useEnumValueComparer;
-        private static readonly Type typeKey;
-        private static readonly Type typeValue;
-        // ReSharper restore StaticMemberInGenericType
+        private static readonly bool useEnumKeyComparer = typeKey.IsEnum
+#if NET40 || NET45
+            && Enum.GetUnderlyingType(typeKey) != Reflector.IntType
+#elif !NET35
+#error .NET version is not set or not supported!
+#endif
+            ;
+
+        private static readonly bool useEnumValueComparer = typeValue.IsEnum
+#if NET40 || NET45
+                && Enum.GetUnderlyingType(typeValue) != Reflector.IntType
+#elif !NET35
+#error .NET version is not set or not supported!
+#endif
+            ;
 
         #endregion
 
@@ -914,7 +928,7 @@ namespace KGySoft.Collections
             set
             {
                 if (!Enum<CacheBehavior>.IsDefined(value))
-                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRange(value));
+                    throw new ArgumentOutOfRangeException(nameof(value), Res.EnumOutOfRangeWithValues(value));
 
                 behavior = value;
             }
@@ -1146,31 +1160,6 @@ namespace KGySoft.Collections
 
         #region Constructors
 
-        #region Static Constructor
-
-        static Cache()
-        {
-            typeKey = typeof(TKey);
-            typeValue = typeof(TValue);
-            useEnumKeyComparer = typeKey.IsEnum;
-            useEnumValueComparer = typeValue.IsEnum;
-#if NET40 || NET45
-            Type intType = Reflector.IntType;
-            if (useEnumKeyComparer)
-                useEnumKeyComparer = Enum.GetUnderlyingType(typeKey) != intType;
-            if (useEnumValueComparer)
-                useEnumValueComparer = Enum.GetUnderlyingType(typeValue) != intType;
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-
-
-        }
-
-        #endregion
-
-        #region Instance Constructors
-
         #region Public Constructors
 
         /// <summary>
@@ -1318,8 +1307,6 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #endregion
-
         #region Methods
 
         #region Public Methods
@@ -1384,6 +1371,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="KeyNotFoundException">The <see cref="Cache{TKey,TValue}"/> has been initialized without an item loader.</exception>
         /// <seealso cref="P:KGySoft.Collections.Cache`2.Item(`0)"/>
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Uncached")]
         public TValue GetValueUncached(TKey key)
         {
             if (key == null)
@@ -1935,6 +1923,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// An <see cref="T:System.Collections.IDictionaryEnumerator"/> object for the <see cref="T:System.Collections.IDictionary"/> object.
         /// </returns>
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         IDictionaryEnumerator IDictionary.GetEnumerator() => new Enumerator(this, false);
 
         /// <summary>
@@ -2004,6 +1993,9 @@ namespace KGySoft.Collections
         [SecurityCritical]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
+            if (info == null)
+                throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
+
             // capacity
             info.AddValue(nameof(capacity), capacity);
             info.AddValue(nameof(ensureCapacity), ensureCapacity);

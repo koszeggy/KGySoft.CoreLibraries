@@ -323,7 +323,7 @@ namespace KGySoft.Serialization
                         : new byte[0];
                 if (attrCrc != null)
                 {
-                    if ($"{Crc32.CalculateHash(data):X8}" != attrCrc)
+                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
                         throw new ArgumentException(Res.XmlSerializationCrcError);
                 }
 
@@ -345,7 +345,7 @@ namespace KGySoft.Serialization
                     byte[] data = Convert.FromBase64String(reader.Value);
                     if (attrCrc != null)
                     {
-                        if ($"{Crc32.CalculateHash(data):X8}" != attrCrc)
+                        if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
                             throw new ArgumentException(Res.XmlSerializationCrcError);
                     }
 

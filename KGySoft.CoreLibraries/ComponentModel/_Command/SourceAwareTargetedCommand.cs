@@ -29,7 +29,7 @@ namespace KGySoft.ComponentModel
     /// <typeparam name="TEventArgs">The type of the event arguments of the triggering event.</typeparam>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <seealso cref="ICommand" />
-    public class SourceAwareTargetedCommand<TEventArgs, TTarget> : ICommand<TEventArgs>, IDisposable
+    public sealed class SourceAwareTargetedCommand<TEventArgs, TTarget> : ICommand<TEventArgs>, IDisposable
         where TEventArgs : EventArgs
     {
         #region Fields

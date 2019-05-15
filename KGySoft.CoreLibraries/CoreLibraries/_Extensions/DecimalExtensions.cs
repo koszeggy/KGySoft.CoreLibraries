@@ -86,23 +86,7 @@ namespace KGySoft.CoreLibraries
 
         #region Fields
 
-        private static readonly Dictionary<decimal, int> powerOf10;
-
-        #endregion
-
-        #region Constructors
-
-        static DecimalExtensions()
-        {
-            powerOf10 = new Dictionary<decimal, int> { [0m] = 1 };
-            decimal value = 1m;
-            for (int i = 0; i <= 28; i++)
-            {
-                powerOf10[value] = i;
-                if (i < 28)
-                    value *= 10m;
-            }
-        }
+        private static readonly Dictionary<decimal, int> powerOf10 = InitPowerOf10();
 
         #endregion
 
@@ -308,6 +292,24 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Private Methods
+
+        /// <summary>
+        /// Initialized the power of 10 cache.
+        /// Could be in static constructor but moved here for performance reasons (CA1810)
+        /// </summary>
+        private static Dictionary<decimal, int> InitPowerOf10()
+        {
+            var result = new Dictionary<decimal, int> { [0m] = 1 };
+            decimal value = 1m;
+            for (int i = 0; i <= 28; i++)
+            {
+                result[value] = i;
+                if (i < 28)
+                    value *= 10m;
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Calculates the natural base logarithm.

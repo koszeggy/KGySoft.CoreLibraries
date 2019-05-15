@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -154,6 +155,7 @@ namespace KGySoft.Diagnostics
 
         #region Constructors
 
+        [SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline", Justification = "Cannot initialize fully inline due to event subscriptions.")]
         static Profiler()
         {
             Enabled = true;
@@ -308,6 +310,7 @@ namespace KGySoft.Diagnostics
             return Path.Combine(Files.GetExecutingPath() ?? String.Empty, "Profiler");
         }
 
+        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object)", Justification = "False alarm, culture is specified")]
         private static void DumpResults()
         {
             var result = new XElement("ProfilerResult");

@@ -42,8 +42,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
         [Test]
         public void EnumComparerTest() => new PerformanceTest { TestName = "EnumComparer Test", Iterations = 10000000 }
+#pragma warning disable 219
             .AddCase(() => { bool eq = TestEnum.Min == TestEnum.Max; }, "Operator ==")
             .AddCase(() => { bool gt = TestEnum.Min > TestEnum.Max; }, "Operator >")
+#pragma warning restore 219
             .AddCase(() => TestEnum.Min.Equals(TestEnum.Max), "Enum.Equals(object)")
             .AddCase(() => TestEnum.Min.GetHashCode(), "Enum.GetHashCode()")
             .AddCase(() => TestEnum.Min.CompareTo(TestEnum.Max), "Enum.CompareTo(object)")

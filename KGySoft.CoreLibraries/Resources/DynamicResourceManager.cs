@@ -707,6 +707,77 @@ namespace KGySoft.Resources
 
         #region Methods
 
+        #region Static Methods
+
+        private static void ToDictionary(ResourceSet source, Dictionary<string, object> target)
+        {
+            var expandoRs = source as IExpandoResourceSetInternal;
+            IDictionaryEnumerator enumerator = source.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                // ReSharper disable once PossibleNullReferenceException
+                string key = enumerator.Key.ToString();
+                target[key] = expandoRs != null ? expandoRs.GetResource(key, false, false, true) : enumerator.Value;
+            }
+        }
+
+        private static object AsString(object value)
+        {
+            if (value is string result)
+                return result;
+
+            // even if a fileref contains a string, we cannot add prefix to the referenced file so returning null here
+            if (!(value is ResXDataNode node) || node.FileRef != null)
+                return null;
+
+            // already deserialized: returning the string or null
+            result = node.ValueInternal as string;
+            if (node.ValueInternal != null)
+                return result;
+
+            // the default way of storing a string
+            if (node.TypeName == null && node.MimeType == null && node.ValueData != null)
+                return node.ValueData;
+
+            // string type is explicitly defined
+            if (node.TypeName != null)
+            {
+                string[] typeParts = node.TypeName.Split(',');
+                string assembly = node.AssemblyAliasValue?.Split(',')[0] ?? (typeParts.Length > 1 ? typeParts[1] : null);
+                if (typeParts[0].Trim() == "System.String" && (assembly == null || assembly.Trim() == "mscorlib"))
+                    return node.ValueData;
+            }
+
+            // otherwise: non string (theoretically it could be a serialized string but the writer never creates it so)
+            return null;
+        }
+
+        private static void MergeResourceSet(Dictionary<string, object> source, IExpandoResourceSet target, bool rebuildSource)
+        {
+            string prefix = LanguageSettings.UntranslatedResourcePrefix;
+            foreach (KeyValuePair<string, object> resource in source)
+            {
+                if (target.ContainsResource(resource.Key))
+                    continue;
+
+                object newValue = AsString(resource.Value) is string strValue
+                    ? (strValue.StartsWith(prefix, StringComparison.Ordinal) ? strValue : prefix + strValue)
+                    : resource.Value;
+
+                target.SetObject(resource.Key, newValue);
+            }
+
+            if (rebuildSource)
+            {
+                source.Clear();
+                ToDictionary((ResourceSet)target, source);
+            }
+        }
+
+        #endregion
+
+        #region Instance Methods
+
         #region Public Methods
 
         /// <summary>
@@ -1004,10 +1075,10 @@ namespace KGySoft.Resources
             if (canAcceptProxy)
                 return true;
 
-            AutoAppendOptions autoAppend = AutoAppend;
+            AutoAppendOptions autoAppendOptions = AutoAppend;
 
             // There is no append for existing entries (only AddUnknownToInvariantCulture).
-            if ((autoAppend & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
+            if ((autoAppendOptions & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None)
                 return true;
 
             // traversing the cultures until wrapped culture in proxy is reached
@@ -1166,8 +1237,7 @@ namespace KGySoft.Resources
         /// </summary>
         private object GetObjectWithAppend(string name, CultureInfo culture, bool isString)
         {
-            object value;
-            ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out value);
+            ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out object value);
 
             // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
             if (value != null
@@ -1205,6 +1275,7 @@ namespace KGySoft.Resources
                 bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
                     && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
                 ResourceSet rs = InternalGetResourceSet(currentCulture, isMergeNeeded ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists, tryParents, isMergeNeeded);
+                var rsExpando = rs as IExpandoResourceSet;
 
                 // Proxies are considered only at TryGetFromCachedResourceSet.
                 // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
@@ -1223,7 +1294,7 @@ namespace KGySoft.Resources
                         }
                     }
                     // null from invariant can be returned. Stored null is never merged (even is requested as string) so ignoring toMerge if any.
-                    else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && (rs as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true)
+                    else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && rsExpando?.ContainsResource(name, IgnoreCase) == true)
                     {
                         SetCache(culture, toCache
                             ?? (Equals(culture, CultureInfo.InvariantCulture)
@@ -1243,7 +1314,7 @@ namespace KGySoft.Resources
                     break;
 
                 if (isMergeNeeded)
-                    toMerge.Push((IExpandoResourceSet)rs);
+                    toMerge.Push(rsExpando);
             }
 
             // Phase 2: handling null
@@ -1366,9 +1437,8 @@ namespace KGySoft.Resources
                 // crawling from specific to neutral...
                 foreach (CultureInfo currentCulture in mgr)
                 {
-                    bool merged;
                     // if culture is not up-to-date
-                    if (!mergedCultures.TryGetValue(currentCulture, out merged))
+                    if (!mergedCultures.TryGetValue(currentCulture, out bool merged))
                     {
                         bool isMergeNeeded = IsMergeNeeded(culture, currentCulture, isFirstNeutral);
                         if (isFirstNeutral && currentCulture.IsNeutralCulture)
@@ -1485,72 +1555,6 @@ namespace KGySoft.Resources
                 ;
         }
 
-        private void ToDictionary(ResourceSet source, Dictionary<string, object> target)
-        {
-            var expandoRs = source as IExpandoResourceSetInternal;
-            IDictionaryEnumerator enumerator = source.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                // ReSharper disable once PossibleNullReferenceException
-                string key = enumerator.Key.ToString();
-                target[key] = expandoRs != null ? expandoRs.GetResource(key, false, false, true) : enumerator.Value;
-            }
-        }
-
-        private void MergeResourceSet(Dictionary<string, object> source, IExpandoResourceSet target, bool rebuildSource)
-        {
-            string prefix = LanguageSettings.UntranslatedResourcePrefix;
-            foreach (KeyValuePair<string, object> resource in source)
-            {
-                if (target.ContainsResource(resource.Key))
-                    continue;
-
-                object newValue = AsString(resource.Value) is string strValue
-                    ? (strValue.StartsWith(prefix, StringComparison.Ordinal) ? strValue : prefix + strValue)
-                    : resource.Value;
-
-                target.SetObject(resource.Key, newValue);
-            }
-
-            if (rebuildSource)
-            {
-                source.Clear();
-                ToDictionary((ResourceSet)target, source);
-            }
-        }
-
-        private object AsString(object value)
-        {
-            string result = value as string;
-            if (result != null)
-                return result;
-
-            // even if a fileref contains a string, we cannot add prefix to the referenced file so returning null here
-            if (!(value is ResXDataNode node) || node.FileRef != null)
-                return null;
-
-            // already deserialized: returning the string or null
-            result = node.ValueInternal as string;
-            if (node.ValueInternal != null)
-                return result;
-
-            // the default way of storing a string
-            if (node.TypeName == null && node.MimeType == null && node.ValueData != null)
-                return node.ValueData;
-
-            // string type is explicitly defined
-            if (node.TypeName != null)
-            {
-                string[] typeParts = node.TypeName.Split(',');
-                string assembly = node.AssemblyAliasValue?.Split(',')[0] ?? (typeParts.Length > 1 ? typeParts[1] : null);
-                if (typeParts[0].Trim() == "System.String" && (assembly == null || assembly.Trim() == "mscorlib"))
-                    return node.ValueData;
-            }
-
-            // otherwise: non string (theoretically it could be a serialized string but the writer never creates it so)
-            return null;
-        }
-
         [OnDeserialized]
         private void OnDeserialized(StreamingContext ctx) => HookEvents();
 
@@ -1578,6 +1582,8 @@ namespace KGySoft.Resources
 
         #endregion
 
+        #endregion
+        
         #endregion
     }
 }

@@ -18,6 +18,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -40,6 +41,7 @@ namespace KGySoft.Diagnostics
         /// <summary>
         /// Gets the visible items in debugger view
         /// </summary>
+        [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Must be T[] but it is not a problem as always a new array is created.")]
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public T[] Items
         {

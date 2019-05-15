@@ -85,6 +85,8 @@ namespace KGySoft.Serialization
         /// </remarks>
         public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
+            if (serializedType == null)
+                throw new ArgumentNullException(nameof(serializedType), Res.ArgumentNull);
             base.BindToName(serializedType, out assemblyName, out typeName);
             if (OmitAssemblyNameOnSerialize)
             {

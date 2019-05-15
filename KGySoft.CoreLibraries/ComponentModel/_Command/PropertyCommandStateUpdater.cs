@@ -18,7 +18,7 @@
 
 using System;
 using System.ComponentModel;
-
+using System.Diagnostics.CodeAnalysis;
 using KGySoft.Reflection;
 
 #endregion
@@ -63,6 +63,7 @@ namespace KGySoft.ComponentModel
         bool ICommandStateUpdater.TryUpdateState(object commandSource, string stateName, object value)
             => Reflector.TrySetProperty(commandSource, stateName, value);
 
+        [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Does nothing and the class is sealed.")]
         void IDisposable.Dispose()
         {
         }

@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -28,9 +29,6 @@ namespace KGySoft.Collections
     /// Wraps a segment of an <see cref="IList{T}"/> for read-only purposes.
     /// </summary>
     internal sealed class ListSegment<T> : IList<T>
-#if !(NET35 || NET40)
-        , IReadOnlyList<T>
-#endif
     {
         #region Fields
 
@@ -81,9 +79,9 @@ namespace KGySoft.Collections
                 yield return this[i];
         }
 
+        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "Not checking bounds as we always create ListSegment for ourselves.")]
         public void CopyTo(T[] array, int arrayIndex)
         {
-            // Not checking bounds as we always create ListSegment for ourselves.
             int len = Count;
             for (int i = 0; i < len; i++)
                 array[arrayIndex + i] = list[offset + i];

@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -120,6 +121,7 @@ namespace KGySoft.Resources
                 return result;
             }
 
+            [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "MemoryStream must not be disposed if returned.")]
             internal static object ConvertFrom(string stringValue, Type objectType, string basePath)
             {
                 string[] parts = ParseResXFileRefString(stringValue);
@@ -158,11 +160,12 @@ namespace KGySoft.Resources
                 if (toCreate == Reflector.ByteArrayType)
                     return buffer;
 
-                MemoryStream memStream = new MemoryStream(buffer);
+                var memStream = new MemoryStream(buffer);
                 if (toCreate == typeof(MemoryStream))
                     return memStream;
 
-                return Reflector.CreateInstance(toCreate, ReflectionWays.Auto, memStream);
+                using (memStream)
+                    return Reflector.CreateInstance(toCreate, ReflectionWays.Auto, memStream);
             }
 
             #endregion
@@ -173,7 +176,7 @@ namespace KGySoft.Resources
 
             public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == Reflector.StringType;
 
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType == Reflector.StringType ? value.ToString() : null;
+            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType == Reflector.StringType ? value?.ToString() : null;
 
             public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
 

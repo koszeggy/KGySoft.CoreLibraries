@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-
+using System.Diagnostics.CodeAnalysis;
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
@@ -327,6 +327,7 @@ namespace KGySoft.ComponentModel
         /// <remarks>
         /// <para>To customize the behavior either subscribe the <see cref="AddingNew"/> event or override the <see cref="AddNewCore">AddNewCore</see> method in a derived class.</para>
         /// </remarks>
+        [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Same as BindingList<T>.AddNew")]
         public T AddNew()
         {
             if (disposed)
@@ -613,6 +614,9 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         protected virtual int FindCore(PropertyDescriptor property, object key)
         {
+            if (property == null)
+                throw new ArgumentNullException(nameof(property), Res.ArgumentNull);
+
             int length = Count;
             for (int i = 0; i < length; i++)
             {

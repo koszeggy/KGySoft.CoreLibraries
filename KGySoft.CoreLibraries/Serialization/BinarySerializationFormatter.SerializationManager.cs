@@ -93,6 +93,22 @@ namespace KGySoft.Serialization
 
             #endregion
 
+            #region Methods
+
+            #region Static Methods
+
+            private static bool IsComparedByValue(Type type)
+            {
+                // TODO: by hashset (lazy init?), maybe this method ban be deleted
+                return type.IsPrimitive || type.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
+                    type.In(Reflector.StringType, Reflector.UIntPtrType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType,
+                        Reflector.DateTimeOffsetType, typeof(Guid));
+            }
+
+            #endregion
+
+            #region Instance Methods
+
             #region Internal Methods
 
 #if NET35
@@ -524,14 +540,6 @@ namespace KGySoft.Serialization
 
             #region Private Methods
 
-            private bool IsComparedByValue(Type type)
-            {
-                // TODO: by hashset (lazy init?), maybe this method ban be deleted
-                return type.IsPrimitive || type.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
-                       type.In(Reflector.StringType, Reflector.UIntPtrType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType,
-                           Reflector.DateTimeOffsetType, typeof(Guid));
-            }
-
             /// <summary>
             /// Writes the generic parameters of a type.
             /// </summary>
@@ -542,6 +550,10 @@ namespace KGySoft.Serialization
                     WriteType(bw, genericArgument);
             }
 
+            #endregion
+
+            #endregion            
+            
             #endregion
         }
     }

@@ -57,12 +57,12 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Properties
+        #region Internal Properties
 
         /// <summary>
         /// Gets the type of parameters of the accessed member in the reflected type.
         /// </summary>
-        protected Type[] ParameterTypes { get; }
+        internal /*private protected*/ Type[] ParameterTypes { get; }
 
         #endregion
 
@@ -222,9 +222,9 @@ namespace KGySoft.Reflection
             }
 
             DynamicMethod dm = new DynamicMethod(methodName, // method name
-                    dmReturnType, // return type
-                    methodParameters.ToArray(), // parameters
-                    declaringType, true); // owner
+                dmReturnType, // return type
+                methodParameters.ToArray(), // parameters
+                declaringType, true); // owner
 
             ILGenerator il = dm.GetILGenerator();
 

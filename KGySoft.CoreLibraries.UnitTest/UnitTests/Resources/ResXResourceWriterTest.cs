@@ -50,6 +50,8 @@ using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
 
 #endregion
 
+#pragma warning disable 618
+
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]

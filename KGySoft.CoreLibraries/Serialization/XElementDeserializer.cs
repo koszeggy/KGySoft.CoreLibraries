@@ -20,6 +20,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -277,7 +279,7 @@ namespace KGySoft.Serialization
                 XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
                 if (attrCrc != null)
                 {
-                    if ($"{Crc32.CalculateHash(data):X8}" != attrCrc.Value)
+                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
                         throw new ArgumentException(Res.XmlSerializationCrcError);
                 }
 
@@ -296,7 +298,7 @@ namespace KGySoft.Serialization
                     XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
                     if (attrCrc != null)
                     {
-                        if ($"{Crc32.CalculateHash(data):X8}" != attrCrc.Value)
+                        if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
                             throw new ArgumentException(Res.XmlSerializationCrcError);
                     }
 
@@ -383,7 +385,7 @@ namespace KGySoft.Serialization
 
                 if (crc != null)
                 {
-                    if ($"{Crc32.CalculateHash(data):X8}" != crc)
+                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != crc)
                         throw new ArgumentException(Res.XmlSerializationCrcError);
                 }
 
@@ -431,6 +433,7 @@ namespace KGySoft.Serialization
             return array;
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "XmlReader will close StringReader because created by CloseInput = true.")]
         private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XContainer parent)
         {
             XElement content = parent.Elements().FirstOrDefault();
@@ -439,7 +442,8 @@ namespace KGySoft.Serialization
             using (XmlReader xr = XmlReader.Create(new StringReader(content.ToString()), new XmlReaderSettings
             {
                 ConformanceLevel = ConformanceLevel.Fragment,
-                IgnoreWhitespace = true
+                IgnoreWhitespace = true,
+                CloseInput = true
             }))
             {
                 xr.Read();

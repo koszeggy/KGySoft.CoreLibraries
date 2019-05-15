@@ -26,6 +26,8 @@ using NUnit.Framework;
 
 #endregion
 
+#pragma warning disable 649
+
 namespace KGySoft.CoreLibraries.UnitTests.Reflection
 {
     [TestFixture]
@@ -1538,11 +1540,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             MemberInfo fieldEmpty = Reflector.MemberOf(() => string.Empty); // FieldInfo: String.Empty
             Assert.AreEqual(typeof(string).GetField(nameof(String.Empty)), fieldEmpty);
 
+#pragma warning disable CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null - false alarm, this is an Expression
             MemberInfo propertyLength = Reflector.MemberOf(() => default(string).Length); // PropertyInfo: string.Length
             Assert.AreEqual(typeof(string).GetProperty(nameof(String.Length)), propertyLength);
 
             MethodInfo methodAdd = Reflector.MemberOf(() => default(List<int>).Add(default(int))); // MethodInfo: List<int>.Add()
             Assert.AreEqual(typeof(List<int>).GetMethod(nameof(List<int>.Add)), methodAdd);
+#pragma warning restore CS1720 // Expression will always cause a System.NullReferenceException because the type's default value is null
         }
 
         #endregion

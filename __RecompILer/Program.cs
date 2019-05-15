@@ -1,40 +1,45 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: Program.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 
+#endregion
+
 namespace RecompILer
 {
-    class Program
+    internal static class Program
     {
-        const string inputAssembly = "KGySoft.CoreLibraries.dll";
-        const string backupAssembly = "KGySoft.CoreLibraries.bak.dll";
-        const string outputAssembly = inputAssembly;
-        const string keyFile = @"..\..\..\KGySoft.snk";
+        #region Constants
 
-        const string patternEquals = "Equals(!TEnum x,";
-        const string patternGetHashCode = "GetHashCode(!TEnum";
-        const string patternCompare = "Compare(!TEnum x,";
+        private const string inputAssembly = "KGySoft.CoreLibraries.dll";
+        private const string backupAssembly = "KGySoft.CoreLibraries.bak.dll";
+        private const string outputAssembly = inputAssembly;
+        private const string keyFile = @"..\..\..\KGySoft.snk";
+        private const string patternEquals = "Equals(!TEnum x,";
+        private const string patternGetHashCode = "GetHashCode(!TEnum";
+        private const string patternCompare = "Compare(!TEnum x,";
+        private const string ilasm2 = @"..\Microsoft.NET\Framework\v2.0.50727\ilasm.exe";
+        private const string ilasm4 = @"..\Microsoft.NET\Framework\v4.0.30319\ilasm.exe";
 
-        const string ilasm2 = @"..\Microsoft.NET\Framework\v2.0.50727\ilasm.exe";
-        const string ilasm4 = @"..\Microsoft.NET\Framework\v4.0.30319\ilasm.exe";
-
-        private static readonly string[] ildasm35 = 
-        {
-            @"Microsoft SDKs\Windows\v6.0A\bin\ildasm.exe",
-            @"Microsoft SDKs\Windows\v7.0A\bin\ildasm.exe",
-            @"Microsoft SDKs\Windows\v7\bin\ildasm.exe"
-        };
-
-        private static readonly string[] ildasm4 =
-        {
-            @"Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\ildasm.exe",
-            @"Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\ildasm.exe",
-            @"Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\ildasm.exe",
-            @"Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\ildasm.exe",
-        };
-
-        const string bodyEquals = @"
+        private const string bodyEquals = @"
     .maxstack 2
     .locals init (int64 x)
     ldarg.1
@@ -46,7 +51,7 @@ namespace RecompILer
     call instance bool [mscorlib]System.Int64::Equals(int64)
     ret";
 
-        const string bodyGetHashCode = @"
+        private const string bodyGetHashCode = @"
     .maxstack 1
     .locals init (int32 obj)
     ldarg.1
@@ -56,7 +61,7 @@ namespace RecompILer
     call instance int32 [mscorlib]System.Int32::GetHashCode()
     ret";
 
-        const string bodyCompare = @"
+        private const string bodyCompare = @"
     .maxstack 3
     .locals init (int64 signedX, uint64 unsignedX)
     ldsfld bool class KGySoft.CoreLibraries.EnumComparer`1<!TEnum>::isUnsignedCompare
@@ -78,7 +83,30 @@ namespace RecompILer
     call instance int32 [mscorlib]System.UInt64::CompareTo(uint64)
     ret";
 
-        static int Main(string[] args)
+        #endregion
+
+        #region Fields
+
+        private static readonly string[] ildasm35 =
+            {
+                @"Microsoft SDKs\Windows\v6.0A\bin\ildasm.exe",
+                @"Microsoft SDKs\Windows\v7.0A\bin\ildasm.exe",
+                @"Microsoft SDKs\Windows\v7\bin\ildasm.exe"
+            };
+
+        private static readonly string[] ildasm4 =
+            {
+                @"Microsoft SDKs\Windows\v7.0A\bin\NETFX 4.0 Tools\ildasm.exe",
+                @"Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\ildasm.exe",
+                @"Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6 Tools\ildasm.exe",
+                @"Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\ildasm.exe",
+            };
+
+        #endregion
+
+        #region Methods
+
+        private static int Main(string[] args)
         {
             if (args.Length == 0)
                 Console.WriteLine("Framework version is not defined. Defaulting to v3.5");
@@ -220,5 +248,6 @@ namespace RecompILer
             return true;
         }
 
+        #endregion
     }
 }

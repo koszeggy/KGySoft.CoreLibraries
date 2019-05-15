@@ -820,11 +820,17 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="General_QuoteEnd" xml:space="preserve">
     <value>'</value>
   </data>
-  <data name="General_EnumOutOfRangeFormat" xml:space="preserve">
+  <data name="General_EnumOutOfRangeWithValuesFormat" xml:space="preserve">
     <value>Enum instance of '{0}' type must be one of the following values: {1}.</value>
   </data>
-  <data name="General_FlagsEnumOutOfRangeFormat" xml:space="preserve">
+  <data name="General_FlagsEnumOutOfRangeWithValuesFormat" xml:space="preserve">
     <value>Enum instance of '{0}' type must consist of the following flags: {1}.</value>
+  </data>
+  <data name="General_EnumOutOfRangeFormat" xml:space="preserve">
+    <value>Enum instance of '{0}' type must be one of the defined values.</value>
+  </data>
+  <data name="General_FlagsEnumOutOfRangeFormat" xml:space="preserve">
+    <value>Enum instance of '{0}' type must consist of the defined flags.</value>
   </data>
   <data name="ComponentModel_AddNewDisabled" xml:space="preserve">
     <value>Cannot add new item to the binding list because AllowNew is false.</value>

@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -264,7 +265,7 @@ namespace KGySoft.ComponentModel
         protected override void ApplySortCore(PropertyDescriptor property, ListSortDirection direction)
         {
             if (!Enum<ListSortDirection>.IsDefined(direction))
-                throw new ArgumentOutOfRangeException(nameof(direction), Res.EnumOutOfRange(direction));
+                throw new ArgumentOutOfRangeException(nameof(direction), Res.EnumOutOfRangeWithValues(direction));
 
             sortProperty = property;
             sortDirection = direction;
@@ -428,6 +429,7 @@ namespace KGySoft.ComponentModel
         /// </list>
         /// </para>
         /// </remarks>
+        [SuppressMessage("Microsoft.Usage", "CA2233:OperationsShouldNotOverflow", MessageId = "index+1")]
         protected override void InsertItem(int index, T item)
         {
             if (sortDirection == null)
@@ -583,6 +585,9 @@ namespace KGySoft.ComponentModel
         /// <inheritdoc/>
         protected override void OnListChanged(ListChangedEventArgs e)
         {
+            if (e == null)
+                throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
+
             if (isChanging)
                 return;
             base.OnListChanged(e);

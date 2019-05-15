@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -144,7 +145,12 @@ namespace KGySoft.Serialization
 
         #region Constructors
 
-        protected XmlSerializerBase(XmlSerializationOptions options) => Options = options;
+        protected XmlSerializerBase(XmlSerializationOptions options)
+        {
+            if (!options.AllFlagsDefined())
+                throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
+            Options = options;
+        }
 
         #endregion
 
@@ -153,6 +159,8 @@ namespace KGySoft.Serialization
         #region Static Methods
 
         #region Protected Methods
+
+        protected static bool IsTrustedType(Type type) => trustedTypesCache[type];
 
         protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
@@ -249,8 +257,6 @@ namespace KGySoft.Serialization
 
             return result;
         }
-
-        protected bool IsTrustedType(Type type) => trustedTypesCache[type];
 
         protected IEnumerable<Member> GetMembersToSerialize(object obj)
         {
@@ -405,7 +411,7 @@ namespace KGySoft.Serialization
                     if (escapedResult == null)
                         escapedResult = new StringBuilder(result.Substring(0, i).Replace(@"\", @"\\"));
 
-                    escapedResult.Append(@"\" + ((ushort)result[i]).ToString("X4"));
+                    escapedResult.Append(@"\" + ((ushort)result[i]).ToString("X4", CultureInfo.InvariantCulture));
                 }
                 else
                 {

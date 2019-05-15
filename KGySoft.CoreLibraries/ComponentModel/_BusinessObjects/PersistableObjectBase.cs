@@ -76,6 +76,9 @@ namespace KGySoft.ComponentModel
 
         void IPersistableObject.SetProperties(IDictionary<string, object> newProperties, bool triggerChangedEvent)
         {
+            if (newProperties == null)
+                throw new ArgumentNullException(nameof(newProperties), Res.ArgumentNull);
+
             // Using a separate lock makes possible to read the properties during the set.
             // This is desirable because OnChanging/changed events are raised during this process, which may cause that consumers read the values.
             lock (WriteLock)

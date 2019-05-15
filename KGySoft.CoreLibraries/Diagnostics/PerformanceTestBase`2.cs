@@ -21,8 +21,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading;
 
@@ -138,6 +140,9 @@ namespace KGySoft.Diagnostics
                     return Res.PerformanceTestDifference(sign, diff, unit, currentValue / baseValue);
                 }
 
+                if (writer == null)
+                    throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+
                 writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
                 if (dumpConfig)
                 {
@@ -243,6 +248,7 @@ namespace KGySoft.Diagnostics
 
         #region Constructors
 
+        [SuppressMessage("Microsoft.Design", "CA1065:DoNotRaiseExceptionsInUnexpectedLocations", Justification = "Delegate constraint works only in C# 7.3 and above")]
         static PerformanceTestBase()
         {
             if (!typeof(TDelegate).IsDelegate())
@@ -398,29 +404,33 @@ namespace KGySoft.Diagnostics
 
         #region Private Methods
 
+        [SecuritySafeCritical]
         private void Initialize()
         {
             OnInitialize();
             if (!IsValidAffinity())
                 return;
 
-            origAffinity = Process.GetCurrentProcess().ProcessorAffinity;
-            Process.GetCurrentProcess().ProcessorAffinity = new IntPtr(CpuAffinity.GetValueOrDefault());
-            origPriority = Process.GetCurrentProcess().PriorityClass;
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+            Process process = Process.GetCurrentProcess();
+            origAffinity = process.ProcessorAffinity;
+            process.ProcessorAffinity = new IntPtr(CpuAffinity.GetValueOrDefault());
+            origPriority = process.PriorityClass;
+            process.PriorityClass = ProcessPriorityClass.High;
             origThreadPrio = Thread.CurrentThread.Priority;
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
 
         private bool IsValidAffinity() => CpuAffinity.HasValue && CpuAffinity.Value < 2L << (Environment.ProcessorCount - 1);
 
+        [SecuritySafeCritical]
         private void TearDown()
         {
             if (!IsValidAffinity())
                 return;
 
-            Process.GetCurrentProcess().ProcessorAffinity = origAffinity;
-            Process.GetCurrentProcess().PriorityClass = origPriority;
+            Process process = Process.GetCurrentProcess();
+            process.ProcessorAffinity = origAffinity;
+            process.PriorityClass = origPriority;
             Thread.CurrentThread.Priority = origThreadPrio;
             OnTearDown();
         }
@@ -444,6 +454,8 @@ namespace KGySoft.Diagnostics
             while (stopwatch.ElapsedMilliseconds < TestTime);
         }
 
+        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect",
+            Justification = "Belongs to the performance test initialization and can be turned off. Important for getting reliable performance test results.")]
         private void DoCollect()
         {
             if (!Collect)

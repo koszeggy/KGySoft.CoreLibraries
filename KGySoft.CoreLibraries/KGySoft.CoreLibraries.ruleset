@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="Rules for KGySoft.CoreLibraries" Description="Code analysis rules for KGySoft.CoreLibraries.csproj." ToolsVersion="15.0">
+  <IncludeAll Action="Warning" />
+  <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
+    <Rule Id="CA1000" Action="None" />
+    <Rule Id="CA1006" Action="None" />
+    <Rule Id="CA1007" Action="None" />
+    <Rule Id="CA1011" Action="None" />
+    <Rule Id="CA1021" Action="None" />
+    <Rule Id="CA1024" Action="None" />
+    <Rule Id="CA1026" Action="None" />
+    <Rule Id="CA1031" Action="Error" />
+    <Rule Id="CA1033" Action="None" />
+    <Rule Id="CA1305" Action="Error" />
+    <Rule Id="CA1502" Action="Warning" />
+    <Rule Id="CA1505" Action="Warning" />
+    <Rule Id="CA1702" Action="None" />
+    <Rule Id="CA1703" Action="None" />
+    <Rule Id="CA1704" Action="None" />
+    <Rule Id="CA1709" Action="None" />
+    <Rule Id="CA1710" Action="None" />
+    <Rule Id="CA1716" Action="None" />
+    <Rule Id="CA1720" Action="None" />
+    <Rule Id="CA1726" Action="None" />
+    <Rule Id="CA1819" Action="Warning" />
+    <Rule Id="CA1822" Action="Error" />
+    <Rule Id="CA2130" Action="Error" />
+    <Rule Id="CA2131" Action="Error" />
+    <Rule Id="CA2140" Action="Error" />
+    <Rule Id="CA2141" Action="Error" />
+    <Rule Id="CA2149" Action="Error" />
+    <Rule Id="CA2151" Action="Error" />
+    <Rule Id="CA2204" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp" RuleNamespace="Microsoft.CodeAnalysis.CSharp">
+    <Rule Id="CS3000" Action="Error" />
+    <Rule Id="CS3001" Action="Error" />
+    <Rule Id="CS3002" Action="Error" />
+    <Rule Id="CS3003" Action="Error" />
+    <Rule Id="CS3005" Action="Error" />
+    <Rule Id="CS3006" Action="Error" />
+    <Rule Id="CS3007" Action="Error" />
+    <Rule Id="CS3008" Action="Error" />
+    <Rule Id="CS3009" Action="Error" />
+    <Rule Id="CS3010" Action="Error" />
+    <Rule Id="CS3011" Action="Error" />
+    <Rule Id="CS3014" Action="Error" />
+    <Rule Id="CS3015" Action="Error" />
+    <Rule Id="CS3016" Action="Error" />
+    <Rule Id="CS3018" Action="Error" />
+    <Rule Id="CS3024" Action="Error" />
+    <Rule Id="CS3026" Action="Error" />
+    <Rule Id="CS3027" Action="Error" />
+  </Rules>
+</RuleSet>
