@@ -370,26 +370,27 @@ namespace KGySoft.Reflection
                 return throwError ? throw new ReflectionException(Res.ReflectionPropertyNotFoundTypeDescriptor(propertyName, type)) : false;
             }
 
+            Exception lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
+                MemberInfo[] properties = checkedType.GetMember(propertyName, MemberTypes.Property, flags);
+                bool checkParams = properties.Length > 1; // for performance reasons we skip checking parameters if there is only one property of the given name
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
-                foreach (PropertyInfo property in checkedType.GetMember(propertyName, MemberTypes.Property, flags))
+                foreach (PropertyInfo property in properties)
                 {
-                    ParameterInfo[] indexParams = property.GetIndexParameters();
+                    ParameterInfo[] indexParams = checkParams ? property.GetIndexParameters() : null;
 
-                    // skip when parameter count is not correct
-                    if (indexParams.Length != indexParameters.Length)
+                    if (checkParams && !CheckParameters(indexParams, indexParameters))
                         continue;
 
-                    if (!CheckParameters(indexParams, indexParameters))
-                        continue;
+                    if (!throwError && !property.PropertyType.CanAcceptValue(instance))
+                        return false;
+
                     try
                     {
-                        if (!throwError && !property.PropertyType.CanAcceptValue(instance))
-                            return false;
                         SetProperty(instance, property, value, way, indexParameters);
                         return true;
                     }
@@ -399,6 +400,17 @@ namespace KGySoft.Reflection
                             throw;
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
+                    catch (Exception e) when (!checkParams && !e.IsCritical())
+                    {
+                        // if parameters check was omitted and the error is due to incorrect parameters we skip the property
+                        if (!CheckParameters(property.GetIndexParameters(), indexParameters))
+                        {
+                            lastException = e;
+                            continue;
+                        }
+
+                        throw;
+                    }
                 }
             }
 
@@ -406,8 +418,8 @@ namespace KGySoft.Reflection
                 return false;
 
             if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type));
-            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
+                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type), lastException);
+            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
         }
 
         #endregion
@@ -527,6 +539,7 @@ namespace KGySoft.Reflection
             }
 
             // Real indexers
+            Exception lastException = null;
             Type type = instance.GetType();
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
@@ -534,20 +547,23 @@ namespace KGySoft.Reflection
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
+                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                bool checkParams = indexers.Length > 1; // for performance reasons we skip checking parameters if there is only one indexer
+
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
-                foreach (PropertyInfo property in checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                foreach (PropertyInfo indexer in indexers)
                 {
-                    ParameterInfo[] indexParams = property.GetIndexParameters();
+                    ParameterInfo[] indexParams = checkParams ? indexer.GetIndexParameters() : null;
 
-                    // skip when parameter count is not correct
-                    if (indexParams.Length != indexParameters.Length)
+                    if (checkParams && !CheckParameters(indexParams, indexParameters))
                         continue;
 
-                    if (!CheckParameters(indexParams, indexParameters))
-                        continue;
+                    if (!throwError && !indexer.PropertyType.CanAcceptValue(instance))
+                        return false;
+
                     try
                     {
-                        SetProperty(instance, property, value, way, indexParameters);
+                        SetProperty(instance, indexer, value, way, indexParameters);
                         return true;
                     }
                     catch (TargetInvocationException e)
@@ -556,12 +572,23 @@ namespace KGySoft.Reflection
                             throw;
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
+                    catch (Exception e) when (!checkParams && !e.IsCritical())
+                    {
+                        // if parameters check was omitted and the error is due to incorrect parameters we skip the indexer
+                        if (!CheckParameters(indexer.GetIndexParameters(), indexParameters))
+                        {
+                            lastException = e;
+                            continue;
+                        }
+
+                        throw;
+                    }
                 }
             }
 
             if (!throwError)
                 return false;
-            throw new ReflectionException(Res.ReflectionIndexerNotFound(type));
+            throw new ReflectionException(Res.ReflectionIndexerNotFound(type), lastException);
         }
 
         #endregion
@@ -799,22 +826,22 @@ namespace KGySoft.Reflection
                 return throwError ? throw new ReflectionException(Res.ReflectionCannotGetPropertyTypeDescriptor(propertyName, type)) : false;
             }
 
+            Exception lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
+                MemberInfo[] properties = checkedType.GetMember(propertyName, MemberTypes.Property, flags);
+                bool checkParams = properties.Length > 1; // for performance reasons we skip checking parameters if there is only one property of the given name
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
-                foreach (PropertyInfo property in checkedType.GetMember(propertyName, MemberTypes.Property, flags))
+                foreach (PropertyInfo property in properties)
                 {
-                    ParameterInfo[] indexParams = property.GetIndexParameters();
+                    ParameterInfo[] indexParams = checkParams ? property.GetIndexParameters() : null;
 
-                    // skip when parameter count is not correct
-                    if (indexParams.Length != indexParameters.Length)
+                    if (checkParams && !CheckParameters(indexParams, indexParameters))
                         continue;
 
-                    if (!CheckParameters(indexParams, indexParameters))
-                        continue;
                     try
                     {
                         value = GetProperty(instance, property, way, indexParameters);
@@ -826,6 +853,17 @@ namespace KGySoft.Reflection
                             throw;
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
+                    catch (Exception e) when (!checkParams && !e.IsCritical())
+                    {
+                        // if parameters check was omitted and the error is due to incorrect parameters we skip the property
+                        if (!CheckParameters(property.GetIndexParameters(), indexParameters))
+                        {
+                            lastException = e;
+                            continue;
+                        }
+
+                        throw;
+                    }
                 }
             }
 
@@ -833,8 +871,8 @@ namespace KGySoft.Reflection
                 return false;
 
             if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type));
-            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
+                throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type), lastException);
+            throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
         }
 
         #endregion
@@ -952,6 +990,7 @@ namespace KGySoft.Reflection
             }
 
             // Real indexers
+            Exception lastException = null;
             Type type = instance.GetType();
             for (Type checkedType = type; checkedType != null; checkedType = checkedType.BaseType)
             {
@@ -959,20 +998,20 @@ namespace KGySoft.Reflection
                 if (String.IsNullOrEmpty(defaultMemberName))
                     continue;
 
+                MemberInfo[] indexers = checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                bool checkParams = indexers.Length > 1; // for performance reasons we skip checking parameters if there is only one indexer
+
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - properties are queried
-                foreach (PropertyInfo property in checkedType.GetMember(defaultMemberName, MemberTypes.Property, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                foreach (PropertyInfo indexer in indexers)
                 {
-                    ParameterInfo[] indexParams = property.GetIndexParameters();
+                    ParameterInfo[] indexParams = checkParams ? indexer.GetIndexParameters() : null;
 
-                    // skip when parameter count is not correct
-                    if (indexParams.Length != indexParameters.Length)
+                    if (checkParams && !CheckParameters(indexParams, indexParameters))
                         continue;
 
-                    if (!CheckParameters(indexParams, indexParameters))
-                        continue;
                     try
                     {
-                        value = GetProperty(instance, property, way, indexParameters);
+                        value = GetProperty(instance, indexer, way, indexParameters);
                         return true;
                     }
                     catch (TargetInvocationException e)
@@ -981,12 +1020,23 @@ namespace KGySoft.Reflection
                             throw;
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
+                    catch (Exception e) when (!checkParams && !e.IsCritical())
+                    {
+                        // if parameters check was omitted and the error is due to incorrect parameters we skip the indexer
+                        if (!CheckParameters(indexer.GetIndexParameters(), indexParameters))
+                        {
+                            lastException = e;
+                            continue;
+                        }
+
+                        throw;
+                    }
                 }
             }
 
             if (!throwError)
                 return false;
-            throw new ReflectionException(Res.ReflectionIndexerNotFound(type));
+            throw new ReflectionException(Res.ReflectionIndexerNotFound(type), lastException);
         }
 
         #endregion
@@ -1470,18 +1520,18 @@ namespace KGySoft.Reflection
             {
                 BindingFlags flags = type == checkedType ? BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy : BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 flags |= instance == null ? BindingFlags.Static : BindingFlags.Instance;
+                MemberInfo[] methods = checkedType.GetMember(methodName, MemberTypes.Method, flags);
+                bool checkParams = methods.Length > 1; // for performance reasons we skip checking parameters if there is only one method of the given name
 
                 // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop - methods are queried
-                foreach (MethodInfo method in checkedType.GetMember(methodName, MemberTypes.Method, flags))
+                foreach (MethodInfo method in methods)
                 {
-                    ParameterInfo[] methodParams = method.GetParameters();
-
-                    // skip when parameter count is not correct
-                    if (methodParams.Length != parameters.Length)
+                    ParameterInfo[] methodParams = checkParams ? method.GetParameters() : null;
+                    if (checkParams && methodParams.Length != parameters.Length)
                         continue;
 
-                    MethodInfo mi = method;
                     // if the method is generic we need the generic arguments and a constructed method with real types
+                    MethodInfo mi = method;
                     if (mi.IsGenericMethodDefinition)
                     {
                         Type[] genArgs = mi.GetGenericArguments();
@@ -1494,7 +1544,8 @@ namespace KGySoft.Reflection
                         try
                         {
                             mi = mi.MakeGenericMethod(genericParameters);
-                            methodParams = mi.GetParameters();
+                            if (checkParams)
+                                methodParams = mi.GetParameters();
                         }
                         catch (Exception e) when (!e.IsCritical())
                         {
@@ -1504,7 +1555,7 @@ namespace KGySoft.Reflection
                         }
                     }
 
-                    if (!CheckParameters(methodParams, parameters))
+                    if (checkParams && !CheckParameters(methodParams, parameters))
                         continue;
 
                     try
@@ -1518,18 +1569,26 @@ namespace KGySoft.Reflection
                             throw;
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     }
+                    catch (Exception e) when (!checkParams && !e.IsCritical())
+                    {
+                        // if parameters check was omitted and the error is due to incorrect parameters we skip the method
+                        if (!CheckParameters(mi.GetParameters(), parameters))
+                        {
+                            lastException = e;
+                            continue;
+                        }
+
+                        throw;
+                    }
                 }
             }
 
             if (!throwError)
                 return false;
 
-            if (lastException != null)
-                throw lastException;
-
             if (instance == null)
-                throw new ReflectionException(Res.ReflectionStaticMethodNotFound(methodName, type));
-            throw new ReflectionException(Res.ReflectionInstanceMethodNotFound(methodName, type));
+                throw new ReflectionException(Res.ReflectionStaticMethodNotFound(methodName, type), lastException);
+            throw new ReflectionException(Res.ReflectionInstanceMethodNotFound(methodName, type), lastException);
         }
 
         #endregion
@@ -1917,19 +1976,21 @@ namespace KGySoft.Reflection
                 }
             }
 
-            foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            Exception lastException = null;
+            ConstructorInfo[] ctors = type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            bool checkParams = ctors.Length > 1; // for performance reasons we skip checking parameters if there is only one constructor
+            foreach (ConstructorInfo ctor in ctors)
             {
-                ParameterInfo[] ctorParams = ctor.GetParameters();
-                if (ctorParams.Length != parameters.Length)
-                    continue;
-                if (!CheckParameters(ctorParams, parameters))
+                ParameterInfo[] ctorParams = checkParams ? ctor.GetParameters() : null;
+                if (checkParams && !CheckParameters(ctorParams, parameters))
                     continue;
 
                 try
                 {
                     if (way == ReflectionWays.TypeDescriptor)
                     {
-                        result = TypeDescriptor.CreateInstance(null, type, ctorParams.Select(p => p.ParameterType).ToArray(), parameters);
+                        // ReSharper disable once AssignNullToNotNullAttribute - argTypes can be null
+                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters);
                         return true;
                     }
 
@@ -1942,11 +2003,22 @@ namespace KGySoft.Reflection
                         ExceptionDispatchInfo.Capture(e.InnerException).Throw();
                     throw;
                 }
+                catch (Exception e) when (!checkParams && !e.IsCritical())
+                {
+                    // if parameters check was omitted and the error is due to incorrect parameters we skip the constructor
+                    if (!CheckParameters(ctor.GetParameters(), parameters))
+                    {
+                        lastException = e;
+                        continue;
+                    }
+
+                    throw;
+                }
             }
 
             if (!throwError)
                 return false;
-            throw new ReflectionException(Res.ReflectionCtorNotFound(type));
+            throw new ReflectionException(Res.ReflectionCtorNotFound(type), lastException);
         }
 
         #endregion
