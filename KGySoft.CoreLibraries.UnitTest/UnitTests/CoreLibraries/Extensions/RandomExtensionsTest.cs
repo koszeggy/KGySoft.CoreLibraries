@@ -363,62 +363,62 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Console.WriteLine($"Random {typeof(T).Name}: {rnd.NextObject<T>(settings)}");
             }
 
-            // native types
-            Test<bool>();
-            Test<byte>();
-            Test<sbyte>();
-            Test<char>();
-            Test<short>();
-            Test<ushort>();
-            Test<int>();
-            Test<uint>();
-            Test<long>();
-            Test<ulong>();
-            Test<float>();
-            Test<double>();
-            Test<decimal>();
-            Test<string>();
-            Test<StringBuilder>();
-            Test<Uri>();
-            Test<Guid>();
-            Test<DateTime>();
-            Test<DateTimeOffset>();
-            Test<TimeSpan>();
-            Test<IntPtr>();
-            Test<UIntPtr>();
-            Test<byte?>();
+            //// native types
+            //Test<bool>();
+            //Test<byte>();
+            //Test<sbyte>();
+            //Test<char>();
+            //Test<short>();
+            //Test<ushort>();
+            //Test<int>();
+            //Test<uint>();
+            //Test<long>();
+            //Test<ulong>();
+            //Test<float>();
+            //Test<double>();
+            //Test<decimal>();
+            //Test<string>();
+            //Test<StringBuilder>();
+            //Test<Uri>();
+            //Test<Guid>();
+            //Test<DateTime>();
+            //Test<DateTimeOffset>();
+            //Test<TimeSpan>();
+            //Test<IntPtr>();
+            //Test<UIntPtr>();
+            //Test<byte?>();
 
-            // enums
-            Test<EmptyEnum>();
-            Test<ConsoleColor>();
-            Test<Enum>();
+            //// enums
+            //Test<EmptyEnum>();
+            //Test<ConsoleColor>();
+            //Test<Enum>();
 
-            // arrays
-            Test<byte[]>();
-            Test<byte?[]>();
-            Test<byte[,]>();
+            //// arrays
+            //Test<byte[]>();
+            //Test<byte?[]>();
+            //Test<byte[,]>();
 
-            // collections
-            Test<List<int>>(); // populate
-            Test<Dictionary<int, string>>(); // populate
-            Test<ArrayList>(); // populate
-            Test<Hashtable>(); // populate
-            Test<BitArray>(); // array ctor
-            Test<ReadOnlyCollection<int>>(); // IList<T> ctor
-            Test<ArraySegment<int>>(); // array ctor
-            Test<Cache<int, int>>(); // populate
-            Test<Queue>(); // ICollection ctor
-            Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object
+            //// collections
+            //Test<List<int>>(); // populate
+            //Test<Dictionary<int, string>>(); // populate
+            //Test<ArrayList>(); // populate
+            //Test<Hashtable>(); // populate
+            //Test<BitArray>(); // array ctor
+            //Test<ReadOnlyCollection<int>>(); // IList<T> ctor
+            //Test<ArraySegment<int>>(); // array ctor
+            //Test<Cache<int, int>>(); // populate
+            //Test<Queue>(); // ICollection ctor
+            //Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object
 
-            // key-value
-            Test<DictionaryEntry>();
-            Test<KeyValuePair<int, string>>();
+            //// key-value
+            //Test<DictionaryEntry>();
+            //Test<KeyValuePair<int, string>>();
 
-            // reflection types
-            Test<Assembly>();
-            Test<Type>();
-            Test<MethodBase>();
-            Test<MemberInfo>();
+            //// reflection types
+            //Test<Assembly>();
+            //Test<Type>();
+            //Test<MethodBase>();
+            //Test<MemberInfo>();
 
             // base types
             var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true };

@@ -951,14 +951,18 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "reader", Justification = "False alarm, reader is disposed")]
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "reader", Justification = "False alarm, reader is disposed.")]
         private void Dispose(bool disposing)
         {
             if (state == States.Disposed)
                 return;
 
             if (disposing)
+#if NET35 || NET40
+                reader?.Close();
+#else
                 reader?.Dispose();
+#endif
 
             reader = null;
             aliases = null;
@@ -1300,9 +1304,9 @@ namespace KGySoft.Resources
             value = new ResXDataNode(nodeInfo);
         }
 
-        #endregion
+#endregion
 
-        #region Explicitly Implemented Interface Methods
+#region Explicitly Implemented Interface Methods
 
         [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "There is the public Close method. Same as System.Resources.ResXResourceReader.")]
         void IDisposable.Dispose()
@@ -1313,10 +1317,10 @@ namespace KGySoft.Resources
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

@@ -300,8 +300,13 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-            using (var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt)))
+            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
+#if !NET35
+            using (passwordKey)
+#endif
+            {
                 return Encrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
+            }
         }
 
         /// <summary>
@@ -420,8 +425,13 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-            using (var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt)))
+            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
+#if !NET35
+            using (passwordKey)
+#endif
+            {
                 return Decrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
+            }
         }
 
         /// <summary>
@@ -437,11 +447,11 @@ namespace KGySoft.CoreLibraries
                 return Decrypt(bytes, alg, password, salt);
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #region Private methods
+#region Private methods
 
         private static void CheckSalt(ref string salt)
         {
@@ -563,6 +573,6 @@ namespace KGySoft.CoreLibraries
             return result.ToString();
         }
 
-        #endregion
+#endregion
     }
 }

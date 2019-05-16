@@ -329,7 +329,7 @@ namespace KGySoft.CoreLibraries
                         : null;
 
                     // If we could not get the argument from provided type or it is not compatible with first constraint we put either first constraint or int/object
-                    if (arg == null || constraints.Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
+                    if (arg == null || constraints[i].Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
                         arg = constraints[i].Length >= 1 ? constraints[i][0] : valueTypeConstraint ? Reflector.IntType : Reflector.ObjectType;
 
                     // a last check for value type constraint...

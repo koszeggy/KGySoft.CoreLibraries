@@ -210,10 +210,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // TODO: re-enable after referencing KGySoft.Drawing from nuget
             //typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
-            ReadWriteReadResX(path, true, true);
-            ReadWriteReadResX(path, false, true);
-            ReadWriteReadResX(path, true, false);
+            //path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            //ReadWriteReadResX(path, true, true);
+            //ReadWriteReadResX(path, false, true);
+            //ReadWriteReadResX(path, true, false);
         }
 
         [Test]
