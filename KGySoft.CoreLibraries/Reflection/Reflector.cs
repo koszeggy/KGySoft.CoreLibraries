@@ -355,20 +355,7 @@ namespace KGySoft.Reflection
         {
             // type descriptor
             if (way == ReflectionWays.TypeDescriptor || (way == ReflectionWays.Auto && instance is ICustomTypeDescriptor && (indexParameters == null || indexParameters.Length == 0)))
-            {
-                if (instance == null)
-                    throw new NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
-                PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
-                if (property != null)
-                {
-                    if (!throwError && !property.PropertyType.CanAcceptValue(instance))
-                        return false;
-                    property.SetValue(instance, value);
-                    return true;
-                }
-
-                return throwError ? throw new ReflectionException(Res.ReflectionPropertyNotFoundTypeDescriptor(propertyName, type)) : false;
-            }
+                return DoTrySetPropertyByTypeDescriptor(propertyName, type, instance, value, throwError);
 
             Exception lastException = null;
             for (Type checkedType = type; checkedType.BaseType != null; checkedType = checkedType.BaseType)
@@ -420,6 +407,22 @@ namespace KGySoft.Reflection
             if (instance == null)
                 throw new ReflectionException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, type), lastException);
             throw new ReflectionException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type), lastException);
+        }
+
+        private static bool DoTrySetPropertyByTypeDescriptor(string propertyName, Type type, object instance, object value, bool throwError)
+        {
+            if (instance == null)
+                throw new NotSupportedException(Res.ReflectionCannotSetStaticPropertyTypeDescriptor);
+            PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
+            if (property != null)
+            {
+                if (!throwError && !property.PropertyType.CanAcceptValue(instance))
+                    return false;
+                property.SetValue(instance, value);
+                return true;
+            }
+
+            return throwError ? throw new ReflectionException(Res.ReflectionPropertyNotFoundTypeDescriptor(propertyName, type)) : false;
         }
 
         #endregion

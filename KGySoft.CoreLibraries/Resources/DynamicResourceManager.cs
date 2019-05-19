@@ -492,13 +492,55 @@ namespace KGySoft.Resources
     [Serializable]
     public class DynamicResourceManager : HybridResourceManager
     {
+        #region Nested Types
+
+        #region GetObjectWithAppendContext Struct
+
+        private struct GetObjectWithAppendContext
+        {
+            #region Fields
+
+            internal string Name;
+            internal CultureInfo Culture;
+            internal bool IsString;
+            internal AutoAppendOptions Options;
+
+            internal object Result;
+            internal ResourceSet CheckedResource;
+            internal ResourceSet ToCache;
+            internal Stack<IExpandoResourceSet> ToMerge;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region EnsureLoadedWithMergeContext Struct
+
+        private struct EnsureLoadedWithMergeContext
+        {
+            #region Fields
+
+            internal CultureInfo Culture;
+            internal AutoAppendOptions Options;
+
+            internal Stack<KeyValuePair<CultureInfo, bool>> ToMerge;
+            internal CultureInfo StopMerge;
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
         #region Fields
 
         private bool useLanguageSettings;
         private volatile bool canAcceptProxy = true;
         private AutoSaveOptions autoSave;
         private AutoAppendOptions autoAppend = LanguageSettings.AutoAppendDefault;
-        
+
         /// <summary>
         /// If <see cref="autoAppend"/> contains <see cref="AutoAppendOptions.AppendOnLoad"/> flag,
         /// contains the up-to-date cultures. Value is <see langword="true"/>&#160;if that culture is merged so it can be taken as a base for merge.
@@ -1237,120 +1279,136 @@ namespace KGySoft.Resources
         /// </summary>
         private object GetObjectWithAppend(string name, CultureInfo culture, bool isString)
         {
-            ResourceSet seen = TryGetFromCachedResourceSet(name, culture, isString, out object value);
+            #region Local Methods to reduce complexity
 
-            // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
-            if (value != null
-                || (seen != null
-                    && (Equals(culture, CultureInfo.InvariantCulture) || IsProxy(seen) && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
-                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+            bool TryGetFromCache(ref GetObjectWithAppendContext ctx)
             {
-                return value;
+                ctx.CheckedResource = TryGetFromCachedResourceSet(ctx.Name, ctx.Culture, ctx.IsString, out ctx.Result);
+
+                // There is a result, or a stored null is returned from invariant resource: it is never merged even if requested as string
+                return ctx.Result != null
+                    || (ctx.CheckedResource != null
+                        && (Equals(ctx.Culture, CultureInfo.InvariantCulture) || IsProxy(ctx.CheckedResource) && GetWrappedCulture(ctx.CheckedResource).Equals(CultureInfo.InvariantCulture))
+                        && (Unwrap(ctx.CheckedResource) as IExpandoResourceSet)?.ContainsResource(ctx.Name, IgnoreCase) == true);
             }
+
+            bool TryGetWhileTraverse(ref GetObjectWithAppendContext ctx)
+            {
+                ctx.ToMerge = new Stack<IExpandoResourceSet>();
+                bool isFirstNeutral = true;
+                ResourceFallbackManager mgr = new ResourceFallbackManager(ctx.Culture, NeutralResourcesCulture, true);
+
+                // Crawling from specific to neutral and collecting the cultures to merge
+                foreach (CultureInfo currentCulture in mgr)
+                {
+                    bool isMergeNeeded = IsMergeNeeded(ctx.Culture, currentCulture, isFirstNeutral);
+                    if (isFirstNeutral && currentCulture.IsNeutralCulture)
+                        isFirstNeutral = false;
+
+                    // can occur from the 2nd iteration: the proxy to cache will be invalidated so it should be re-created
+                    if (isMergeNeeded && IsProxy(ctx.ToCache) && !IsExpandoExists(currentCulture))
+                        ctx.ToCache = null;
+
+                    // using tryParents only if invariant is requested without appending so the exception can come from the base
+                    bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
+                        && (ctx.Options & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
+                    ResourceSet rs = InternalGetResourceSet(currentCulture, isMergeNeeded ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists, tryParents, isMergeNeeded);
+                    var rsExpando = rs as IExpandoResourceSet;
+
+                    // Proxies are considered only at TryGetFromCachedResourceSet.
+                    // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
+                    if (rs != null && rs != ctx.CheckedResource && !IsProxy(rs))
+                    {
+                        ctx.Result = GetResourceFromAny(rs, ctx.Name, ctx.IsString);
+
+                        // there is a result
+                        if (ctx.Result != null)
+                        {
+                            // returning the value immediately only if there is nothing to merge and to proxy
+                            if (ctx.ToMerge.Count == 0 && currentCulture.Equals(ctx.Culture))
+                            {
+                                SetCache(ctx.Culture, rs);
+                                return true;
+                            }
+                        }
+                        // null from invariant can be returned. Stored null is never merged (even if requested as string) so ignoring toMerge if any.
+                        else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && rsExpando?.ContainsResource(ctx.Name, IgnoreCase) == true)
+                        {
+                            SetCache(ctx.Culture, ctx.ToCache
+                                ?? (Equals(ctx.Culture, CultureInfo.InvariantCulture)
+                                    ? rs
+                                    : InternalGetResourceSet(ctx.Culture, ResourceSetRetrieval.LoadIfExists, true, false)));
+                            ctx.Result = null;
+                            return true;
+                        }
+
+                        // Unlike in base, no unwrapping for this check because proxies are skipped here
+                        ctx.CheckedResource = rs;
+                    }
+
+                    // The resource to cache normally should be the resource to which the requested culture belongs.
+                    // Since DRM does not use tryParents = true during the traversal, the cached proxies are created on caching.
+                    if (Equals(ctx.Culture, currentCulture))
+                        ctx.ToCache = rs;
+
+                    // returning false just means that the result is not returned immediately but there will be a merge
+                    if (ctx.Result != null)
+                        return false;
+
+                    if (isMergeNeeded)
+                        ctx.ToMerge.Push(rsExpando);
+                }
+
+                return false;
+            }
+
+            #endregion
+
+            var context = new GetObjectWithAppendContext { Name = name, Culture = culture, IsString = isString };
+            if (TryGetFromCache(ref context))
+                return context.Result;
 
             EnsureLoadedWithMerge(culture, ResourceSetRetrieval.CreateIfNotExists);
 
             // Phase 1: finding the resource and meanwhile collecting cultures to merge
-            AutoAppendOptions append = AutoAppend;
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
-            var toMerge = new Stack<IExpandoResourceSet>();
-            bool isFirstNeutral = true;
-
-            // The resource to cache normally should be the resource to which the requested culture belongs.
-            // Since DRM does not use tryParents = true during the traversal, the cached proxies are created on caching.
-            ResourceSet toCache = null;
-
-            // Crawling from specific to neutral and collecting the cultures to merge
-            foreach (CultureInfo currentCulture in mgr)
-            {
-                bool isMergeNeeded = IsMergeNeeded(culture, currentCulture, isFirstNeutral);
-                if (isFirstNeutral && currentCulture.IsNeutralCulture)
-                    isFirstNeutral = false;
-
-                // can occur from the 2nd iteration: the proxy to cache will be invalidated so it should be re-created
-                if (isMergeNeeded && IsProxy(toCache) && !IsExpandoExists(currentCulture))
-                    toCache = null;
-
-                // using tryParents only if invariant is requested without appending so the exception can come from the base
-                bool tryParents = ReferenceEquals(currentCulture, CultureInfo.InvariantCulture)
-                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
-                ResourceSet rs = InternalGetResourceSet(currentCulture, isMergeNeeded ? ResourceSetRetrieval.CreateIfNotExists : ResourceSetRetrieval.LoadIfExists, tryParents, isMergeNeeded);
-                var rsExpando = rs as IExpandoResourceSet;
-
-                // Proxies are considered only at TryGetFromCachedResourceSet.
-                // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
-                if (rs != null && rs != seen && !IsProxy(rs))
-                {
-                    value = GetResourceFromAny(rs, name, isString);
-
-                    // there is a result
-                    if (value != null)
-                    {
-                        // returning the value immediately only if there is nothing to merge and to proxy
-                        if (toMerge.Count == 0 && currentCulture.Equals(culture))
-                        {
-                            SetCache(culture, rs);
-                            return value;
-                        }
-                    }
-                    // null from invariant can be returned. Stored null is never merged (even is requested as string) so ignoring toMerge if any.
-                    else if (ReferenceEquals(currentCulture, CultureInfo.InvariantCulture) && rsExpando?.ContainsResource(name, IgnoreCase) == true)
-                    {
-                        SetCache(culture, toCache
-                            ?? (Equals(culture, CultureInfo.InvariantCulture)
-                                ? rs
-                                : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
-                        return null;
-                    }
-
-                    // Unlike in base, no unwrapping for this check because proxies are skipped here
-                    seen = rs;
-                }
-
-                if (Equals(culture, currentCulture))
-                    toCache = rs;
-
-                if (value != null)
-                    break;
-
-                if (isMergeNeeded)
-                    toMerge.Push(rsExpando);
-            }
+            context.Options = AutoAppend;
+            if (TryGetWhileTraverse(ref context))
+                return context.Result;
 
             // Phase 2: handling null
-            if (value == null)
+            if (context.Result == null)
             {
                 // no append of invariant: exit
-                if ((append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None)
+                if ((context.Options & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None)
                     return null;
 
                 IExpandoResourceSet inv = (IExpandoResourceSet)InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false, true);
 
                 // as string: adding unknown to invariant; otherwise, adding null explicitly
                 if (isString)
-                    value = LanguageSettings.UnknownResourcePrefix + name;
+                    context.Result = LanguageSettings.UnknownResourcePrefix + name;
 
-                inv.SetObject(name, value);
+                inv.SetObject(name, context.Result);
 
                 // if there is nothing to merge, returning (as object, null is never merged)
-                if (!isString || toMerge.Count == 0)
+                if (!isString || context.ToMerge.Count == 0)
                 {
-                    SetCache(culture, toCache
+                    SetCache(culture, context.ToCache
                         ?? (Equals(culture, CultureInfo.InvariantCulture)
                             ? (ResourceSet)inv
                             : InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false)));
-                    return value;
+                    return context.Result;
                 }
             }
 
             // Phase 3: processing the merge
             // Unlike in EnsureLoadedWithMerge, not merged levels are missing here because we can be sure that the resource does not exist at mid-level.
             string prefix = LanguageSettings.UntranslatedResourcePrefix;
-            foreach (IExpandoResourceSet rsToMerge in toMerge)
+            foreach (IExpandoResourceSet rsToMerge in context.ToMerge)
             {
-                if (AsString(value) is string strValue)
-                    value = strValue.StartsWith(prefix, StringComparison.Ordinal) ? strValue : prefix + strValue;
-                rsToMerge.SetObject(name, value);
+                if (AsString(context.Result) is string strValue)
+                    context.Result = strValue.StartsWith(prefix, StringComparison.Ordinal) ? strValue : prefix + strValue;
+                rsToMerge.SetObject(name, context.Result);
             }
 
             // If there is no loaded proxy at the moment (because rs creation above deleted all of them) resetting trust in proxies
@@ -1358,8 +1416,8 @@ namespace KGySoft.Resources
                 canAcceptProxy = true;
 
             // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
-            SetCache(culture, toCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
-            return value;
+            SetCache(culture, context.ToCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
+            return context.Result;
         }
 
         private void ReviseCanAcceptProxy(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
@@ -1404,35 +1462,28 @@ namespace KGySoft.Resources
         /// </summary>
         private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
         {
-            Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);
-            AutoAppendOptions append = AutoAppend;
+            #region Local Methods to reduce complexity
 
-            lock (SyncRoot)
-            {
-                // return if there is no append on load...
-                if ((append & AutoAppendOptions.AppendOnLoad) == AutoAppendOptions.None
+            bool CanSkipMerge(ref EnsureLoadedWithMergeContext ctx) =>
+                // can skip if there is no append on load...
+                ((ctx.Options & AutoAppendOptions.AppendOnLoad) == AutoAppendOptions.None
                     // ...or append flags are not set...
-                    || (append & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None
+                    || (ctx.Options & (AutoAppendOptions.AppendNeutralCultures | AutoAppendOptions.AppendSpecificCultures)) == AutoAppendOptions.None
                     // ...or the requested culture is invariant...
-                    || culture.Equals(CultureInfo.InvariantCulture)
+                    || ctx.Culture.Equals(CultureInfo.InvariantCulture)
                     // ...or only AppendSpecific is on but the requested culture is neutral...
-                    || (append & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && culture.IsNeutralCulture
+                    || (ctx.Options & AutoAppendOptions.AppendNeutralCultures) == AutoAppendOptions.None && ctx.Culture.IsNeutralCulture
                     // ...or merge status is already up-to-date
-                    || mergedCultures?.ContainsKey(culture) == true)
-                //// ...or culture is already loaded/created
-                //|| IsNonProxyLoaded(culture))
-                {
-                    return;
-                }
+                    || mergedCultures?.ContainsKey(ctx.Culture) == true)
+            //// ...or culture is already loaded/created
+            //|| IsNonProxyLoaded(culture))
+            ;
 
-                // Phase 1: collecting cultures to merge
-                Debug.Assert(Source != ResourceManagerSources.CompiledOnly);
-                if (mergedCultures == null)
-                    mergedCultures = new Dictionary<CultureInfo, bool> { { CultureInfo.InvariantCulture, true } };
-                ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
-                var toMerge = new Stack<KeyValuePair<CultureInfo, bool>>();
+            void CollectCulturesToMerge(ref EnsureLoadedWithMergeContext ctx)
+            {
+                ResourceFallbackManager mgr = new ResourceFallbackManager(ctx.Culture, NeutralResourcesCulture, true);
+                ctx.ToMerge = new Stack<KeyValuePair<CultureInfo, bool>>();
                 bool isFirstNeutral = true;
-                CultureInfo stopMerge = null;
 
                 // crawling from specific to neutral...
                 foreach (CultureInfo currentCulture in mgr)
@@ -1440,32 +1491,50 @@ namespace KGySoft.Resources
                     // if culture is not up-to-date
                     if (!mergedCultures.TryGetValue(currentCulture, out bool merged))
                     {
-                        bool isMergeNeeded = IsMergeNeeded(culture, currentCulture, isFirstNeutral);
+                        bool isMergeNeeded = IsMergeNeeded(ctx.Culture, currentCulture, isFirstNeutral);
                         if (isFirstNeutral && currentCulture.IsNeutralCulture)
                             isFirstNeutral = false;
 
-                        toMerge.Push(new KeyValuePair<CultureInfo, bool>(currentCulture, isMergeNeeded));
+                        ctx.ToMerge.Push(new KeyValuePair<CultureInfo, bool>(currentCulture, isMergeNeeded));
 
                         // storing the last culture to be merged in this hierarchy
-                        if (isMergeNeeded && stopMerge == null)
-                            stopMerge = currentCulture;
+                        if (isMergeNeeded && ctx.StopMerge == null)
+                            ctx.StopMerge = currentCulture;
                     }
                     // we reached an up-to-date culture: searching for a merged one to take a base or invariant
                     else
                     {
-                        toMerge.Push(new KeyValuePair<CultureInfo, bool>(currentCulture, merged));
+                        ctx.ToMerge.Push(new KeyValuePair<CultureInfo, bool>(currentCulture, merged));
                         if (merged)
                             break;
                     }
                 }
+            }
+
+            #endregion
+
+            Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists || behavior == ResourceSetRetrieval.CreateIfNotExists);
+
+            var context = new EnsureLoadedWithMergeContext { Culture = culture, Options = AutoAppend };
+            lock (SyncRoot)
+            {
+                if (CanSkipMerge(ref context))
+                    return;
+
+                // Phase 1: collecting cultures to merge
+                Debug.Assert(Source != ResourceManagerSources.CompiledOnly);
+                if (mergedCultures == null)
+                    mergedCultures = new Dictionary<CultureInfo, bool> { { CultureInfo.InvariantCulture, true } };
+
+                CollectCulturesToMerge(ref context);
 
                 // Phase 2: Performing the merge
-                Debug.Assert(toMerge.Count > 0 && toMerge.Peek().Value, "A merged culture is expected as top element on the stack ");
+                Debug.Assert(context.ToMerge.Count > 0 && context.ToMerge.Peek().Value, "A merged culture is expected as top element on the stack ");
 
                 // actually there is nothing to merge: updating mergedCultures and exit
-                if (stopMerge == null)
+                if (context.StopMerge == null)
                 {
-                    foreach (KeyValuePair<CultureInfo, bool> item in toMerge)
+                    foreach (KeyValuePair<CultureInfo, bool> item in context.ToMerge)
                     {
                         if (!mergedCultures.ContainsKey(item.Key))
                         {
@@ -1479,15 +1548,15 @@ namespace KGySoft.Resources
 
                 // taking the first element of the stack, which is merged (or is the invariant culture) and doing the merges
                 // tryParents is always true in callers; otherwise, there would be no merge.
-                bool tryParents = ThrowException && ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture)
-                    && (append & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
-                ResourceSet rs = InternalGetResourceSet(toMerge.Peek().Key, ResourceSetRetrieval.LoadIfExists, tryParents, false);
-                Debug.Assert(rs != null || ReferenceEquals(toMerge.Peek().Key, CultureInfo.InvariantCulture), "A merged culture is expected to be exist. Only invariant can be missing.");
-                Debug.Assert(rs == null || IsNonProxyLoaded(toMerge.Peek().Key), "The base culture for merge should not be a proxy");
+                bool tryParents = ThrowException && ReferenceEquals(context.ToMerge.Peek().Key, CultureInfo.InvariantCulture)
+                    && (context.Options & AutoAppendOptions.AddUnknownToInvariantCulture) == AutoAppendOptions.None;
+                ResourceSet rs = InternalGetResourceSet(context.ToMerge.Peek().Key, ResourceSetRetrieval.LoadIfExists, tryParents, false);
+                Debug.Assert(rs != null || ReferenceEquals(context.ToMerge.Peek().Key, CultureInfo.InvariantCulture), "A merged culture is expected to be exist. Only invariant can be missing.");
+                Debug.Assert(rs == null || IsNonProxyLoaded(context.ToMerge.Peek().Key), "The base culture for merge should not be a proxy");
 
                 // populating an accumulator with the first, fully merged resource
-                toMerge.Pop();
-                Debug.Assert(toMerge.Count > 0, "Cultures to be merged are expected on the stack");
+                context.ToMerge.Pop();
+                Debug.Assert(context.ToMerge.Count > 0, "Cultures to be merged are expected on the stack");
                 KeyValuePair<CultureInfo, bool> current;
                 Dictionary<string, object> acc = new Dictionary<string, object>();
                 if (rs != null)
@@ -1497,7 +1566,7 @@ namespace KGySoft.Resources
 
                 do
                 {
-                    current = toMerge.Pop();
+                    current = context.ToMerge.Pop();
                     ResourceSet rsTarget = InternalGetResourceSet(current.Key,
                         behavior == ResourceSetRetrieval.CreateIfNotExists && current.Value
                             ? ResourceSetRetrieval.CreateIfNotExists
@@ -1517,19 +1586,19 @@ namespace KGySoft.Resources
                     // merging accumulator to target resource set
                     if (current.Value)
                     {
-                        MergeResourceSet(acc, (IExpandoResourceSet)rsTarget, !ReferenceEquals(current.Key, stopMerge));
+                        MergeResourceSet(acc, (IExpandoResourceSet)rsTarget, !ReferenceEquals(current.Key, context.StopMerge));
                     }
                     // updating accumulator
-                    else if (!ReferenceEquals(current.Key, stopMerge))
+                    else if (!ReferenceEquals(current.Key, context.StopMerge))
                     {
                         ToDictionary(rsTarget, acc);
                     }
 
                     mergedCultures[current.Key] = current.Value;
-                } while (!ReferenceEquals(current.Key, stopMerge));
+                } while (!ReferenceEquals(current.Key, context.StopMerge));
 
                 // updating mergedCultures with the rest of the cultures (they are not merged)
-                foreach (KeyValuePair<CultureInfo, bool> item in toMerge)
+                foreach (KeyValuePair<CultureInfo, bool> item in context.ToMerge)
                 {
                     mergedCultures[item.Key] = false;
                 }
@@ -1583,7 +1652,7 @@ namespace KGySoft.Resources
         #endregion
 
         #endregion
-        
+
         #endregion
     }
 }

@@ -1342,34 +1342,8 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            IEnumerator enumerator = collection.GetEnumerator();
-            try
-            {
-                // Copying elements while possible
-                int elementsCopied = 0;
-                while (count > 0 && enumerator.MoveNext())
-                {
-                    if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
-                        return false;
-                    count--;
-                }
-
-                // all inserted, removing the rest
-                if (count > 0)
-                    return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
-
-                // all removed (overwritten), inserting the rest
-                IList<object> rest = collection is IList<object> list ? new ListSegment<object>(list, elementsCopied) : enumerator.RestToList();
-                if (rest.Count > 0)
-                    return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
-
-                // elements to replace had the same size
-                return true;
-            }
-            finally
-            {
-                (enumerator as IDisposable)?.Dispose();
-            }
+            // One by one
+            return TryReplaceRangeDefault(target, index, count, collection, checkReadOnlyAndBounds, throwError);
         }
 
         #endregion
@@ -1831,6 +1805,47 @@ namespace KGySoft.CoreLibraries
             Array initializerArray = Array.CreateInstance(parameterType.GetElementType(), coll.Count);
             coll.CopyTo(initializerArray, 0);
             return initializerArray;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Tries to remove <paramref name="count"/> amount of items from the <paramref name="target"/> at the specified <paramref name="index"/>, and
+        /// to insert the specified <paramref name="collection"/> at the same position. The number of elements in <paramref name="collection"/> can be different from the amount of removed items.
+        /// This method performs the replace one by one.
+        /// </summary>
+        private static bool TryReplaceRangeDefault(IEnumerable target, int index, int count, IEnumerable collection, bool checkReadOnlyAndBounds, bool throwError)
+        {
+            IEnumerator enumerator = collection.GetEnumerator();
+            try
+            {
+                // Copying elements while possible
+                int elementsCopied = 0;
+                while (count > 0 && enumerator.MoveNext())
+                {
+                    if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
+                        return false;
+                    count--;
+                }
+
+                // all inserted, removing the rest
+                if (count > 0)
+                    return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
+
+                // all removed (overwritten), inserting the rest
+                IList<object> rest = collection is IList<object> list ? new ListSegment<object>(list, elementsCopied) : enumerator.RestToList();
+                if (rest.Count > 0)
+                    return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
+
+                // elements to replace had the same size
+                return true;
+            }
+            finally
+            {
+                (enumerator as IDisposable)?.Dispose();
+            }
         }
 
         #endregion

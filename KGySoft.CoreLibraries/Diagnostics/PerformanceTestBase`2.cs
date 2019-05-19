@@ -140,12 +140,10 @@ namespace KGySoft.Diagnostics
                     return Res.PerformanceTestDifference(sign, diff, unit, currentValue / baseValue);
                 }
 
-                if (writer == null)
-                    throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
-
-                writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
-                if (dumpConfig)
+                void DumpConfig()
                 {
+                    if (!dumpConfig)
+                        return;
                     writer.WriteLine(test.Iterations > 0 ? Res.PerformanceTestIterations(test.Iterations) : Res.PerformanceTestTestTime(test.TestTime));
                     writer.WriteLine(Res.PerformanceTestWarmingUp(test.WarmUp));
                     writer.WriteLine(Res.PerformanceTestTestCases(test.cases.Count));
@@ -158,6 +156,11 @@ namespace KGySoft.Diagnostics
                     writer.WriteLine(Res.PerformanceTestSeparator);
                 }
 
+                if (writer == null)
+                    throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
+
+                writer.WriteLine(Res.PerformanceTestHeader(test.TestName ?? Res.PerformanceTestDefaultName));
+                DumpConfig();
                 var baseLine = (TestResult)Items[0];
                 int baseLength = test.GetLength(baseLine.Result);
                 for (int i = 0; i < Items.Count; i++)

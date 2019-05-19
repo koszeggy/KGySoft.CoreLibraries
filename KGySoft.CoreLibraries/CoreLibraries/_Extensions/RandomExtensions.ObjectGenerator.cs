@@ -172,7 +172,7 @@ namespace KGySoft.CoreLibraries
             private static readonly MethodInfo nextObjectGenMethod = ((MethodInfo)typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) }));
 
             private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
-                    new Dictionary<Type, GenerateKnownType>
+                new Dictionary<Type, GenerateKnownType>
                 {
                     // primitive types
                     { Reflector.BoolType, GenerateBoolean },
@@ -709,28 +709,60 @@ namespace KGySoft.CoreLibraries
                 if (allowNull && context.Settings.ChanceOfNull > 0 && type.CanAcceptValue(null) && context.Random.NextDouble() > context.Settings.ChanceOfNull)
                     return null;
 
-                // nullable
-                if (type.IsNullable())
-                    type = Nullable.GetUnderlyingType(type);
+                type = Nullable.GetUnderlyingType(type) ?? type;
 
                 // object substitution
                 if (type == Reflector.ObjectType && context.Settings.SubstitutionForObjectType != null)
                     type = context.Settings.SubstitutionForObjectType;
 
-                // ReSharper disable once AssignNullToNotNullAttribute
                 // 1.) known type
-                if (knownTypes.TryGetValue(type, out var knownGenerator))
+                if (knownTypes.TryGetValue(type, out GenerateKnownType knownGenerator))
                     return knownGenerator.Invoke(ref context);
 
                 // 2.) enum
                 if (type.IsEnum)
                     return PickRandomEnum(type, ref context);
 
-                // 3.) array
-                if (type.IsArray)
-                    return GenerateArray(type, ref context);
+                // 3.) collections
+                if (TryGenerateCollection(type, ref context, out object result))
+                    return result;
 
-                // 4.) supported collection
+                // 4.) key-value pair (because its properties are read-only)
+                if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
+                {
+                    var args = type.GetGenericArguments();
+                    context.PushMember(nameof(KeyValuePair<_, _>.Key));
+                    var key = GenerateObject(args[0], true, ref context);
+                    context.PopMember();
+                    context.PushMember(nameof(KeyValuePair<_, _>.Value));
+                    var value = GenerateObject(args[1], true, ref context);
+                    context.PopMember();
+                    return Reflector.CreateInstance(type, key, value);
+                }
+
+                // 5.) Delegate
+                if (!type.IsAbstract && type.IsDelegate())
+                    return delegatesCache[type];
+
+                // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
+                if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
+                    return result;
+
+                // 7.) any object
+                return GenerateAnyObject(type, ref context);
+            }
+
+            [SecurityCritical]
+            private static bool TryGenerateCollection(Type type, ref GeneratorContext context, out object result)
+            {
+                // array
+                if (type.IsArray)
+                {
+                    result = GenerateArray(type, ref context);
+                    return true;
+                }
+
+                // supported collection
                 if (type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary)
                     || context.Settings.AllowCreateObjectWithoutConstructor && type.IsCollection())
                 {
@@ -746,38 +778,25 @@ namespace KGySoft.CoreLibraries
                     if (collection != null && type.IsReadWriteCollection(collection))
                     {
                         PopulateCollection(collection, elementType, isDictionary, ref context);
-                        return collection;
+                        result = collection;
+                        return true;
                     }
 
                     // As a fallback using collectionCtor if possible
                     if (collectionCtor != null)
-                        return GenerateCollectionByCtor(collectionCtor, elementType, isDictionary, ref context);
+                    {
+                        result = GenerateCollectionByCtor(collectionCtor, elementType, isDictionary, ref context);
+                        return true;
+                    }
                 }
 
-                // 5.) key-value pair (because its properties are read-only)
-                if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
-                {
-                    var args = type.GetGenericArguments();
-                    context.PushMember(nameof(KeyValuePair<_, _>.Key));
-                    var key = GenerateObject(args[0], true, ref context);
-                    context.PopMember();
-                    context.PushMember(nameof(KeyValuePair<_, _>.Value));
-                    var value = GenerateObject(args[1], true, ref context);
-                    context.PopMember();
-                    return Reflector.CreateInstance(type, key, value);
-                }
+                result = null;
+                return false;
+            }
 
-                // 6.) Delegate
-                if (!type.IsAbstract && type.IsDelegate())
-                    return delegatesCache[type];
-
-                object result;
-
-                // 7.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
-                if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
-                    return result;
-
-                // 8.) any object
+            [SecurityCritical]
+            private static object GenerateAnyObject(Type type, ref GeneratorContext context)
+            {
                 bool resolveType = false;
                 if (type.IsAbstract || type.IsInterface)
                 {
@@ -798,7 +817,7 @@ namespace KGySoft.CoreLibraries
                         return null;
                 }
 
-                result = typeToCreate == type ? InitializeObject(typeToCreate, ref context) : GenerateObject(typeToCreate, false, ref context);
+                object result = typeToCreate == type ? InitializeObject(typeToCreate, ref context) : GenerateObject(typeToCreate, false, ref context);
                 if (result != null || !resolveType)
                     return result;
 

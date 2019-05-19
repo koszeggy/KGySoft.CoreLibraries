@@ -179,6 +179,118 @@ namespace KGySoft.Reflection
         /// </returns>
         internal /*private protected*/ DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
+            #region Local Methods
+
+            (string name, List<Type> parameters) GetNameAndParams(MethodBase methodOrCtor, DynamicMethodOptions o)
+            {
+                List<Type> parameters = new List<Type>();
+                string name;
+                bool forceMethod = (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
+                if (methodOrCtor is ConstructorInfo && !forceMethod)
+                {
+                    // ReSharper disable once PossibleNullReferenceException - already checked by caller
+                    name = $"<Create>__{methodOrCtor.DeclaringType.Name}";
+                    parameters.Add(typeof(object[])); // ctor parameters
+                }
+                else
+                {
+                    name = $"<RunMethod>__{methodOrCtor.Name}";
+                    parameters.Add(Reflector.ObjectType); // instance parameter
+
+                    // not a property setter
+                    if ((o & DynamicMethodOptions.TreatAsPropertySetter) == DynamicMethodOptions.None)
+                    {
+                        if ((o & DynamicMethodOptions.OmitParameters) == DynamicMethodOptions.None)
+                            parameters.Add(typeof(object[])); // method parameters
+                    }
+                    // property setter
+                    else
+                    {
+                        parameters.Add(Reflector.ObjectType); // value
+                        if (ParameterTypes.Length > 0)
+                            parameters.Add(typeof(object[])); // indexer parameters
+                    }
+                }
+
+                return (name, parameters);
+            }
+
+            void GenerateLocalsForRefParams(MethodBase methodorCtor, ILGenerator il, DynamicMethodOptions o)
+            {
+                if ((o & DynamicMethodOptions.HandleByRefParameters) == DynamicMethodOptions.None)
+                    return;
+
+                ParameterInfo[] parameters = methodorCtor.GetParameters();
+                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
+                {
+                    if (!ParameterTypes[i].IsByRef)
+                        continue;
+
+                    Type paramType = ParameterTypes[i].GetElementType();
+
+                    // ReSharper disable once AssignNullToNotNullAttribute - not null because of the if above
+                    il.DeclareLocal(paramType);
+
+                    // initializing locals of ref (non-out) parameters
+                    if (!parameters[i].IsOut)
+                    {
+                        il.Emit(methodorCtor is MethodInfo || (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
+                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                        il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
+                        il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
+                        il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
+                    }
+
+                    localsIndex++;
+                }
+            }
+
+            void LoadParameters(MethodBase methodOrCtor, ILGenerator il, DynamicMethodOptions o)
+            {
+                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
+                {
+                    // ref/out parameters: from local variables
+                    if (ParameterTypes[i].IsByRef)
+                    {
+                        il.Emit(OpCodes.Ldloca, localsIndex++); // loading address of local variable
+                    }
+                    // normal parameters: from object[] parameters argument
+                    else
+                    {
+                        // loading parameters argument
+                        il.Emit(methodOrCtor is ConstructorInfo && (o & DynamicMethodOptions.TreatCtorAsMethod) == DynamicMethodOptions.None
+                            ? OpCodes.Ldarg_0
+                            : (o & DynamicMethodOptions.TreatAsPropertySetter) == DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
+                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                        il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
+                        il.Emit(ParameterTypes[i].IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, ParameterTypes[i]);
+                    }
+                }
+            }
+
+            void AssignRefParams(MethodBase methodOrCtor, ILGenerator il, DynamicMethodOptions o)
+            {
+                if ((options & DynamicMethodOptions.HandleByRefParameters) != DynamicMethodOptions.None)
+                {
+                    for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
+                    {
+                        if (!ParameterTypes[i].IsByRef)
+                            continue;
+                        Type paramType = ParameterTypes[i].GetElementType();
+                        il.Emit(methodOrCtor is MethodInfo || (o & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
+                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                        il.Emit(OpCodes.Ldloc, localsIndex++); // loading local variable
+
+                        // ReSharper disable once PossibleNullReferenceException - not null because of the if above
+                        if (paramType.IsValueType)
+                            il.Emit(OpCodes.Box, paramType); // boxing value type into object
+                        il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
+                    }
+                }
+            }
+
+            #endregion
+
             if (methodBase == null)
                 throw new ArgumentNullException(nameof(methodBase), Res.ArgumentNull);
             Type declaringType = methodBase.DeclaringType;
@@ -193,84 +305,31 @@ namespace KGySoft.Reflection
             Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? Reflector.VoidType : declaringType;
             Type dmReturnType = returnType == Reflector.VoidType ? Reflector.VoidType : Reflector.ObjectType;
 
-            List<Type> methodParameters = new List<Type>();
-            string methodName;
-
-            if (ctor != null && !treatCtorAsMethod)
-            {
-                methodName = $"<Create>__{declaringType.Name}";
-                methodParameters.Add(typeof(object[])); // ctor parameters
-            }
-            else
-            {
-                methodName = $"<RunMethod>__{methodBase.Name}";
-                methodParameters.Add(Reflector.ObjectType); // instance parameter
-
-                // not a property setter
-                if ((options & DynamicMethodOptions.TreatAsPropertySetter) == DynamicMethodOptions.None)
-                {
-                    if ((options & DynamicMethodOptions.OmitParameters) == DynamicMethodOptions.None)
-                        methodParameters.Add(typeof(object[])); // method parameters
-                }
-                // property setter
-                else
-                {
-                    methodParameters.Add(Reflector.ObjectType); // value
-                    if (ParameterTypes.Length > 0)
-                        methodParameters.Add(typeof(object[])); // indexer parameters
-                }
-            }
+            (string methodName, List<Type> methodParameters) = GetNameAndParams(methodBase, options);
 
             DynamicMethod dm = new DynamicMethod(methodName, // method name
                 dmReturnType, // return type
                 methodParameters.ToArray(), // parameters
                 declaringType, true); // owner
 
-            ILGenerator il = dm.GetILGenerator();
+            ILGenerator ilGenerator = dm.GetILGenerator();
 
             // generating local variables for ref/out parameters and initializing ref parameters
-            if ((options & DynamicMethodOptions.HandleByRefParameters) != DynamicMethodOptions.None)
-            {
-                ParameterInfo[] parameters = methodBase.GetParameters();
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
-                {
-                    if (!ParameterTypes[i].IsByRef)
-                        continue;
+            GenerateLocalsForRefParams(methodBase, ilGenerator, options);
 
-                    Type paramType = ParameterTypes[i].GetElementType();
-
-                    // ReSharper disable once AssignNullToNotNullAttribute - not null because of the if above
-                    il.DeclareLocal(paramType);
-                        
-                    // initializing locals of ref (non-out) parameters
-                    if (!parameters[i].IsOut)
-                    {
-                        il.Emit(method != null || treatCtorAsMethod ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
-                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                        il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
-                        il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
-                        il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
-                    }
-
-                    localsIndex++;
-                }
-            }
-
-            LocalBuilder returnValue = null;
             // return value is the last local variable
-            if (returnType != Reflector.VoidType)
-                returnValue = il.DeclareLocal(returnType);
+            LocalBuilder returnValue = returnType == Reflector.VoidType ? null : ilGenerator.DeclareLocal(returnType);
 
             // if instance method:
             if ((method != null && !method.IsStatic) || treatCtorAsMethod)
             {
-                il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
+                ilGenerator.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
                 if (declaringType.IsValueType)
                 {
                     // Note: this is a tricky solution that could not be made in C#:
                     // We are just unboxing the value type without storing it in a typed local variable
                     // This makes possible to preserve the modified content of a value type without using ref parameter
-                    il.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
+                    ilGenerator.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
 
                     // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
                     //LocalBuilder unboxedInstance = il.DeclareLocal(declaringType);
@@ -282,23 +341,8 @@ namespace KGySoft.Reflection
                 }
             }
 
-            // loading parameters (property setter: indexer parameters)
-            for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
-            {
-                // ref/out parameters: from local variables
-                if (ParameterTypes[i].IsByRef)
-                {
-                    il.Emit(OpCodes.Ldloca, localsIndex++); // loading address of local variable
-                }
-                // normal parameters: from object[] parameters argument
-                else
-                {
-                    il.Emit(ctor != null ? OpCodes.Ldarg_0 : (options & DynamicMethodOptions.TreatAsPropertySetter) == DynamicMethodOptions.None ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2); // loading parameters argument
-                    il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                    il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
-                    il.Emit(ParameterTypes[i].IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, ParameterTypes[i]);
-                }
-            }
+            // loading parameters for the method call (property setter: indexer parameters)
+            LoadParameters(methodBase, ilGenerator, options);
 
             // property value is the last parameter in a setter method
             if ((options & DynamicMethodOptions.TreatAsPropertySetter) != DynamicMethodOptions.None)
@@ -306,22 +350,22 @@ namespace KGySoft.Reflection
                 PropertyInfo pi = MemberInfo as PropertyInfo;
                 if (pi == null)
                     throw new InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
-                il.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
-                il.Emit(pi.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType);
+                ilGenerator.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
+                ilGenerator.Emit(pi.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType);
             }
 
             if (ctor != null)
             {
                 if (treatCtorAsMethod)
                     // calling the constructor as method
-                    il.Emit(ctor.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, ctor);
+                    ilGenerator.Emit(ctor.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, ctor);
                 else
                     // invoking the constructor
-                    il.Emit(OpCodes.Newobj, ctor);
+                    ilGenerator.Emit(OpCodes.Newobj, ctor);
             }
             else
                 // calling the method
-                il.Emit(methodBase.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
+                ilGenerator.Emit(methodBase.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method);
 
             // If instance parameter was a ref parameter, then local variable should be boxed back:
             //il.Emit(OpCodes.Ldarg_0); // loading instance parameter
@@ -330,36 +374,20 @@ namespace KGySoft.Reflection
             //il.Emit(OpCodes.Stind_Ref); // storing the boxed object value
 
             // assigning back ref/out parameters
-            if ((options & DynamicMethodOptions.HandleByRefParameters) != DynamicMethodOptions.None)
-            {
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
-                {
-                    if (!ParameterTypes[i].IsByRef)
-                        continue;
-                    Type paramType = ParameterTypes[i].GetElementType();
-                    il.Emit(ctor != null ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1); // loading parameters argument
-                    il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                    il.Emit(OpCodes.Ldloc, localsIndex++); // loading local variable
-                    
-                    // ReSharper disable once PossibleNullReferenceException - not null because of the if above
-                    if (paramType.IsValueType)
-                        il.Emit(OpCodes.Box, paramType); // boxing value type into object
-                    il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
-                }
-            }
+            AssignRefParams(methodBase, ilGenerator, options);
 
             // setting return value
             if (returnValue != null)
             {
-                il.Emit(OpCodes.Stloc, returnValue); // storing return value to local variable
+                ilGenerator.Emit(OpCodes.Stloc, returnValue); // storing return value to local variable
 
-                il.Emit(OpCodes.Ldloc, returnValue); // loading return value from its local variable
+                ilGenerator.Emit(OpCodes.Ldloc, returnValue); // loading return value from its local variable
                 if (returnType.IsValueType)
-                    il.Emit(OpCodes.Box, returnType); // boxing if value type
+                    ilGenerator.Emit(OpCodes.Box, returnType); // boxing if value type
             }
 
             // returning
-            il.Emit(OpCodes.Ret);
+            ilGenerator.Emit(OpCodes.Ret);
             return dm;
         }
 

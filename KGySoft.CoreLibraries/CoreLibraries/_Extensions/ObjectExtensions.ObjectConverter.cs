@@ -133,20 +133,7 @@ namespace KGySoft.CoreLibraries
                     context.FailedAttempts = new HashSet<(object, Type, Type)>();
                 context.FailedAttempts.Add((obj, sourceType, targetType));
 
-                // if there are registered converters to the target type, then we try to convert the value for those
-                IList<Type> sourceTypes = targetType.GetConversionSourceTypes();
-                if (sourceTypes.Count == 0)
-                    return false;
-
-                foreach (Type intermediateType in sourceTypes)
-                {
-                    if (intermediateType.IsAbstract || intermediateType.IsInterface || intermediateType.IsAssignableFrom(targetType))
-                        continue;
-                    if (DoConvert(ref context, obj, intermediateType, out object intermediateResult) && DoConvert(ref context, intermediateResult, targetType, out value))
-                        return true;
-                }
-
-                return false;
+                return TryConvertByIntermediateTypes(ref context, obj, targetType, out value);
             }
 
             private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj, Type targetType, out object value, bool exactTypeMatch)
@@ -388,6 +375,26 @@ namespace KGySoft.CoreLibraries
                     context.Error = e;
                     return false;
                 }
+            }
+
+            private static bool TryConvertByIntermediateTypes(ref ConversionContext context, object obj, Type targetType, out object value)
+            {
+                value = null;
+
+                // if there are registered converters to the target type, then we try to convert the value for those
+                IList<Type> sourceTypes = targetType.GetConversionSourceTypes();
+                if (sourceTypes.Count == 0)
+                    return false;
+
+                foreach (Type intermediateType in sourceTypes)
+                {
+                    if (intermediateType.IsAbstract || intermediateType.IsInterface || intermediateType.IsAssignableFrom(targetType))
+                        continue;
+                    if (DoConvert(ref context, obj, intermediateType, out object intermediateResult) && DoConvert(ref context, intermediateResult, targetType, out value))
+                        return true;
+                }
+
+                return false;
             }
         }
     }

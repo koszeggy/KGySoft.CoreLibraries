@@ -1026,6 +1026,8 @@ namespace KGySoft.Resources
             // we can already throw an exception. But type is checked once again at the end, after deserialization.
             string stringName = Reflector.StringType.FullName;
             string aqn = AssemblyQualifiedName;
+
+            // ReSharper disable once AssignNullToNotNullAttribute - string has a full name
             if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
 
@@ -1339,128 +1341,19 @@ namespace KGySoft.Resources
             if (dataNodeInfo.ValueData == null)
                 return ResXNullRef.Value;
 
-            string mimeTypeName = dataNodeInfo.MimeType;
-            string typeName = AssemblyQualifiedName;
-            Type type;
-
             // from MIME type
-            if (!String.IsNullOrEmpty(mimeTypeName))
-            {
-                // 1.) BinaryFormatter
-                if (mimeTypeName.In(ResXCommon.BinSerializedMimeTypes))
-                {
-                    byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
+            if (!String.IsNullOrEmpty(dataNodeInfo.MimeType))
+                return NodeInfoToObjectByMime(dataNodeInfo, typeResolver);
 
-                    var binaryFormatter = new BinaryFormatter();
-                    binaryFormatter.Binder = typeResolver != null
-                        ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
-                        : new WeakAssemblySerializationBinder();
-
-                    object result = null;
-                    if (serializedData != null && serializedData.Length > 0)
-                    {
-                        using (var ms = new MemoryStream(serializedData))
-                            result = binaryFormatter.Deserialize(ms);
-                        if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
-                            result = ResXNullRef.Value;
-                    }
-
-                    return result;
-                }
-
-                // 2.) By TypeConverter from byte[]
-                if (String.Equals(mimeTypeName, ResXCommon.ByteArraySerializedObjectMimeType))
-                {
-                    if (String.IsNullOrEmpty(typeName))
-                        throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
-
-                    type = ResolveType(typeName, typeResolver);
-                    if (type == null)
-                    {
-                        string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
-                        XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
-                        TypeLoadException newTle = new TypeLoadException(newMessage, xml);
-                        throw newTle;
-                    }
-
-                    TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
-                    if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
-                    {
-                        string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
-                        XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
-                        NotSupportedException newNse = new NotSupportedException(message, xml);
-                        throw newNse;
-                    }
-
-                    byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
-                    if (serializedData == null)
-                        return null;
-
-                    try
-                    {
-                        return byteArrayConverter.ConvertFrom(serializedData);
-                    }
-                    catch (NotSupportedException e)
-                    {
-                        string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
-                        XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
-                        NotSupportedException newNse = new NotSupportedException(message, xml);
-                        throw newNse;
-                    }
-                }
-
-                // 3.) BinarySerializationFormatter
-                if (mimeTypeName == ResXCommon.KGySoftSerializedObjectMimeType)
-                {
-                    string text = dataNodeInfo.ValueData;
-                    byte[] serializedData = FromBase64WrappedString(text);
-
-                    var serializer = new BinarySerializationFormatter();
-                    serializer.Binder = typeResolver != null
-                        ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
-                        : new WeakAssemblySerializationBinder();
-
-                    object result = null;
-                    if (serializedData != null && serializedData.Length > 0)
-                    {
-                        result = serializer.Deserialize(serializedData);
-                        if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
-                            result = ResXNullRef.Value;
-                    }
-
-                    return result;
-                }
-
-                // 4.) SoapFormatter. We do not reference it explicitly. If cannot be loaded, NotSupportedException will be thrown.
-                if (mimeTypeName.In(ResXCommon.SoapSerializedMimeTypes))
-                {
-                    string text = dataNodeInfo.ValueData;
-                    var serializedData = FromBase64WrappedString(text);
-
-                    if (serializedData != null && serializedData.Length > 0)
-                    {
-                        IFormatter formatter = ResXCommon.GetSoapFormatter();
-                        if (formatter != null)
-                        {
-                            object result;
-                            using (var ms = new MemoryStream(serializedData))
-                                result = formatter.Deserialize(ms);
-                            if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
-                                result = ResXNullRef.Value;
-                            return result;
-                        }
-                    }
-                }
-
-                throw new NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeTypeName, dataNodeInfo.Line, dataNodeInfo.Column));
-            }
-
-            // No MIME type
+            string typeName = AssemblyQualifiedName;
             Debug.Assert(typeName != null, "If there is no MIME type, typeName is expected to be string");
+
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm due to the Assert
+            // ReSharper disable once HeuristicUnreachableCode - false alarm due to the Assert
             if (typeName == null)
                 return dataNodeInfo.ValueData;
 
-            type = ResolveType(typeName, typeResolver);
+            Type type = ResolveType(typeName, typeResolver);
             if (type == null)
             {
                 string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
@@ -1469,19 +1362,19 @@ namespace KGySoft.Resources
                 throw newTle;
             }
 
-            // 5.) Native type - type converter is slower and will not convert negative zeros, for example.
+            // 1.) Native type - type converter is slower and will not convert negative zeros, for example.
             if (type.CanBeParsedNatively())
                 return dataNodeInfo.ValueData.Parse(type);
 
-            // 6.) null
+            // 2.) null
             if (type == typeof(ResXNullRef))
                 return ResXNullRef.Value;
 
-            // 7.) byte[]
+            // 3.) byte[]
             if (type == Reflector.ByteArrayType)
                 return FromBase64WrappedString(dataNodeInfo.ValueData);
 
-            // 8.) By TypeConverter from string
+            // 4.) By TypeConverter from string
             TypeConverter tc = TypeDescriptor.GetConverter(type);
             if (!tc.CanConvertFrom(Reflector.StringType))
             {
@@ -1502,6 +1395,125 @@ namespace KGySoft.Resources
                 NotSupportedException newNse = new NotSupportedException(message, xml);
                 throw newNse;
             }
+        }
+
+        private object NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService typeResolver)
+        {
+            string mimeType = dataNodeInfo.MimeType;
+
+            // 1.) BinaryFormatter
+            if (mimeType.In(ResXCommon.BinSerializedMimeTypes))
+            {
+                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
+
+                var binaryFormatter = new BinaryFormatter();
+                binaryFormatter.Binder = typeResolver != null
+                    ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
+                    : new WeakAssemblySerializationBinder();
+
+                object result = null;
+                if (serializedData != null && serializedData.Length > 0)
+                {
+                    using (var ms = new MemoryStream(serializedData))
+                        result = binaryFormatter.Deserialize(ms);
+                    if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
+                        result = ResXNullRef.Value;
+                }
+
+                return result;
+            }
+
+            // 2.) By TypeConverter from byte[]
+            if (String.Equals(mimeType, ResXCommon.ByteArraySerializedObjectMimeType))
+            {
+                string typeName = AssemblyQualifiedName;
+                if (String.IsNullOrEmpty(typeName))
+                    throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
+
+                Type type = ResolveType(typeName, typeResolver);
+                if (type == null)
+                {
+                    string newMessage = Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
+                    XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
+                    TypeLoadException newTle = new TypeLoadException(newMessage, xml);
+                    throw newTle;
+                }
+
+                TypeConverter byteArrayConverter = TypeDescriptor.GetConverter(type);
+                if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
+                {
+                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
+                    XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
+                    NotSupportedException newNse = new NotSupportedException(message, xml);
+                    throw newNse;
+                }
+
+                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData);
+                if (serializedData == null)
+                    return null;
+
+                try
+                {
+                    return byteArrayConverter.ConvertFrom(serializedData);
+                }
+                catch (NotSupportedException e)
+                {
+                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
+                    XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
+                    NotSupportedException newNse = new NotSupportedException(message, xml);
+                    throw newNse;
+                }
+            }
+
+            // 3.) BinarySerializationFormatter
+            if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
+            {
+                string text = dataNodeInfo.ValueData;
+                byte[] serializedData = FromBase64WrappedString(text);
+
+                var serializer = new BinarySerializationFormatter();
+                serializer.Binder = typeResolver != null
+                    ? (SerializationBinder)new ResXSerializationBinder(typeResolver)
+                    : new WeakAssemblySerializationBinder();
+
+                object result = null;
+                if (serializedData != null && serializedData.Length > 0)
+                {
+                    result = serializer.Deserialize(serializedData);
+                    if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
+                        result = ResXNullRef.Value;
+                }
+
+                return result;
+            }
+
+            // 4.) SoapFormatter. We do not reference it explicitly. If cannot be loaded, NotSupportedException will be thrown.
+            if (mimeType.In(ResXCommon.SoapSerializedMimeTypes) && TryDeserializeBySoapFormatter(dataNodeInfo, out object value))
+                return value;
+
+            throw new NotSupportedException(Res.ResourcesMimeTypeNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
+        }
+
+        private static bool TryDeserializeBySoapFormatter(DataNodeInfo dataNodeInfo, out object result)
+        {
+            string text = dataNodeInfo.ValueData;
+            var serializedData = FromBase64WrappedString(text);
+
+            if (serializedData != null && serializedData.Length > 0)
+            {
+                IFormatter formatter = ResXCommon.GetSoapFormatter();
+                if (formatter != null)
+                {
+                    using (var ms = new MemoryStream(serializedData))
+                        result = formatter.Deserialize(ms);
+                    if (result != ResXNullRef.Value && IsNullRef(result.GetType().AssemblyQualifiedName))
+                        result = ResXNullRef.Value;
+                    return true;
+                }
+            }
+
+            result = null;
+            return false;
         }
 
         #endregion

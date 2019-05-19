@@ -283,8 +283,10 @@ namespace KGySoft.Resources
     /// <seealso cref="HybridResourceManager"/>
     /// <seealso cref="DynamicResourceManager"/>
     [Serializable]
-    public class ResXResourceManager : ResourceManager, IExpandoResourceManager, IDisposable
+    public class ResXResourceManager : ResourceManager, IExpandoResourceManager
     {
+        #region Nested Types
+
         #region ProxyResourceSet class
 
         /// <summary>
@@ -361,6 +363,34 @@ namespace KGySoft.Resources
 
             #endregion
         }
+
+        #endregion
+
+        #region GetResXResourceSetContext struct
+
+        private struct GetResXResourceSetContext
+        {
+            #region Fields
+
+            internal CultureInfo Culture;
+            internal ResourceSetRetrieval Behavior;
+            internal bool TryParents;
+
+#if NET35
+            internal Hashtable ResourceSets;
+#else
+            internal Dictionary<string, ResourceSet> ResourceSets;
+#endif
+            internal ResourceSet Result;
+            internal ProxyResourceSet Proxy;
+            internal CultureInfo FoundCultureToAdd;
+            internal CultureInfo FoundProxyCulture;
+            internal ResourceFallbackManager FallbackManager;
+
+            #endregion
+        }
+
+        #endregion
 
         #endregion
 
@@ -1117,143 +1147,157 @@ namespace KGySoft.Resources
         #region Internal Methods
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
-        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm, rs is always re-obtained before each 'rs is ResXResourceSet' check.")]
         internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
-            if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
-            var localResourceSets = ResourceSets; // var is Hashtable in .NET 3.5 and is Dictionary above
-            ResourceSet rs;
-            bool resourceFound;
-            lock (SyncRoot)
-            {
-                resourceFound = TryGetResource(localResourceSets, culture.Name, out rs);
-            }
+            #region Local Methods to reduce complexity
 
-            ProxyResourceSet proxy;
-            if (resourceFound)
+            bool TryGetCachedResourceSet(ref GetResXResourceSetContext ctx)
             {
-                // returning the cached resource if that is not a proxy or when the proxy does not have to be (possibly) replaced
-                if (rs is ResXResourceSet // result is not a proxy but an actual resource
-                    || behavior == ResourceSetRetrieval.GetIfAlreadyLoaded // nothing new should be loaded
-                    || (behavior == ResourceSetRetrieval.LoadIfExists
-                        && ((proxy = (ProxyResourceSet)rs).HierarchyLoaded // nothing new can be loaded in the hierarchy
-                            || !tryParents && !proxy.FileExists))) // though there can be unloaded parents, only the child is required, which cannot be loaded
+                lock (SyncRoot)
                 {
-                    return GetResXResourceSet(rs);
-                }
-            }
-
-            CultureInfo foundCultureToAdd = null;
-            CultureInfo foundProxyCulture = null;
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, tryParents);
-            foreach (CultureInfo currentCultureInfo in mgr)
-            {
-                lock (syncRoot)
-                {
-                    resourceFound = TryGetResource(localResourceSets, currentCultureInfo.Name, out rs);
+                    if (!TryGetResource(ctx.ResourceSets, ctx.Culture.Name, out ctx.Result))
+                        return false;
                 }
 
-                if (resourceFound)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse - false alarm, returned by the out parameter above and can have a derived type
+                // returning whether the cached resource is not a proxy or if the proxy does not have to be (possibly) replaced
+                return ctx.Result is ResXResourceSet // result is not a proxy but an actual resource
+                    || ctx.Behavior == ResourceSetRetrieval.GetIfAlreadyLoaded // nothing new should be loaded
+                    || (ctx.Behavior == ResourceSetRetrieval.LoadIfExists
+                        // ReSharper disable once PossibleInvalidCastException - if not ResXResourceSet, then proxy
+                        && ((ctx.Proxy = (ProxyResourceSet)ctx.Result).HierarchyLoaded // nothing new can be loaded in the hierarchy
+                            || !ctx.TryParents && !ctx.Proxy.FileExists));
+            }
+
+            bool TryGetResourceWhileTraverse(ref GetResXResourceSetContext ctx)
+            {
+                ctx.FallbackManager = new ResourceFallbackManager(ctx.Culture, NeutralResourcesCulture, ctx.TryParents);
+                foreach (CultureInfo currentCultureInfo in ctx.FallbackManager)
                 {
-                    // a final result is found in the local cache
-                    if (rs is ResXResourceSet resx)
+                    bool resourceFound;
+                    lock (syncRoot)
                     {
-                        // since the first try above we have a result from another thread for the searched culture
-                        if (Equals(culture, currentCultureInfo))
-                            return resx;
-
-                        // after some proxies, a parent culture has been found: simply return if this was the proxied culture in the children
-                        if (Equals(currentCultureInfo, foundProxyCulture))
-                            return resx;
-
-                        // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
-                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
-                        foundCultureToAdd = currentCultureInfo;
-                        break;
+                        resourceFound = TryGetResource(ctx.ResourceSets, currentCultureInfo.Name, out ctx.Result);
                     }
 
-                    // proxy is found
-                    proxy = (ProxyResourceSet)rs;
-                    Debug.Assert(foundProxyCulture == null || Equals(foundProxyCulture, proxy.WrappedCulture), "Proxied cultures are different in the hierarchy.");
-                    if (foundProxyCulture == null)
-                        foundProxyCulture = proxy.WrappedCulture;
+                    if (resourceFound)
+                    {
+                        // a final result is found in the local cache
+                        if (ctx.Result is ResXResourceSet)
+                        {
+                            // since the first try above we have a result from another thread for the searched culture
+                            if (Equals(ctx.Culture, currentCultureInfo))
+                                return true;
 
-                    // if we traversing here because last time the proxy has been loaded by
-                    // ResourceSetRetrieval.GetIfAlreadyLoaded, but now we load the possible parents, we clear the
-                    // CanHaveLoadableParent flag in the hierarchy. Unless no new proxy is created (and thus the descendant proxies are deleted),
-                    // this will prevent the redundant traversal next time.
-                    if (tryParents && behavior == ResourceSetRetrieval.LoadIfExists)
-                        proxy.CanHaveLoadableParent = false;
+                            // after some proxies, a parent culture has been found: simply return if this was the proxied culture in the children
+                            if (Equals(currentCultureInfo, ctx.FoundProxyCulture))
+                                return true;
+
+                            // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
+                            Debug.Assert(ctx.FoundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
+                            ctx.FoundCultureToAdd = currentCultureInfo;
+                            return false;
+                        }
+
+                        // proxy is found
+                        ctx.Proxy = (ProxyResourceSet)ctx.Result;
+
+                        // ReSharper disable once PossibleNullReferenceException - if not ResXResourceSet, then proxy
+                        Debug.Assert(ctx.FoundProxyCulture == null || Equals(ctx.FoundProxyCulture, ctx.Proxy.WrappedCulture), "Proxied cultures are different in the hierarchy.");
+
+                        // ReSharper disable once PossibleNullReferenceException - if not ResXResourceSet, then proxy
+                        if (ctx.FoundProxyCulture == null)
+                            ctx.FoundProxyCulture = ctx.Proxy.WrappedCulture;
+
+                        // if we traversing here because last time the proxy has been loaded by
+                        // ResourceSetRetrieval.GetIfAlreadyLoaded, but now we load the possible parents, we clear the
+                        // CanHaveLoadableParent flag in the hierarchy. Unless no new proxy is created (and thus the descendant proxies are deleted),
+                        // this will prevent the redundant traversal next time.
+                        if (ctx.TryParents && ctx.Behavior == ResourceSetRetrieval.LoadIfExists)
+                            ctx.Proxy.CanHaveLoadableParent = false;
+                    }
+
+                    Debug.Assert(ctx.FoundProxyCulture == null || ctx.Result != null, "There is a proxy without parent in the hierarchy.");
+                    ctx.Result = GrovelForResourceSet(currentCultureInfo, ctx.Behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, out bool exists);
+
+                    if (ThrowException && ctx.TryParents && !exists && ctx.Behavior != ResourceSetRetrieval.CreateIfNotExists
+                        && Equals(currentCultureInfo, CultureInfo.InvariantCulture))
+                    {
+                        throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
+                    }
+
+                    // a new ResourceSet has been loaded; we're done
+                    if (ctx.Result != null)
+                    {
+                        ctx.FoundCultureToAdd = currentCultureInfo;
+                        return false;
+                    }
+
+                    // no resource is found but we need to create one
+                    if (ctx.Behavior == ResourceSetRetrieval.CreateIfNotExists)
+                    {
+                        ctx.FoundCultureToAdd = currentCultureInfo;
+                        ctx.Result = new ResXResourceSet(basePath: GetResourceDirName());
+                        return false;
+                    }
                 }
 
-                Debug.Assert(foundProxyCulture == null || rs != null, "There is a proxy without parent in the hierarchy.");
-                rs = GrovelForResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, out bool exists);
-
-                if (ThrowException && tryParents && !exists && behavior != ResourceSetRetrieval.CreateIfNotExists
-                    && Equals(currentCultureInfo, CultureInfo.InvariantCulture))
-                {
-                    throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(GetResourceFileName(currentCultureInfo)));
-                }
-
-                // a new ResourceSet has been loaded; we're done
-                if (rs != null)
-                {
-                    foundCultureToAdd = currentCultureInfo;
-                    break;
-                }
-
-                // no resource is found but we need to create one
-                if (behavior == ResourceSetRetrieval.CreateIfNotExists)
-                {
-                    foundCultureToAdd = currentCultureInfo;
-                    rs = new ResXResourceSet(basePath: GetResourceDirName());
-                    break;
-                }
+                return false;
             }
 
+            #endregion
+
+            if (culture == null)
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+            var context = new GetResXResourceSetContext { Culture = culture, Behavior = behavior, TryParents = tryParents, ResourceSets = ResourceSets };
+            if (TryGetCachedResourceSet(ref context))
+                return GetResXResourceSet(context.Result);
+
+            if (TryGetResourceWhileTraverse(ref context))
+                return GetResXResourceSet(context.Result);
+
             // there is a culture to be added to the cache
-            if (foundCultureToAdd != null)
+            if (context.FoundCultureToAdd != null)
             {
                 lock (syncRoot)
                 {
                     // we replace a proxy: we must delete proxies, which are children of the found resource.
-                    if (foundProxyCulture != null)
+                    if (context.FoundProxyCulture != null)
                     {
-                        Debug.Assert(!Equals(foundProxyCulture, foundCultureToAdd), "The culture to add is the same as the existing proxies.");
+                        Debug.Assert(!Equals(context.FoundProxyCulture, context.FoundCultureToAdd), "The culture to add is the same as the existing proxies.");
 #if NET35
-                        List<string> keysToRemove = localResourceSets.Cast<DictionaryEntry>().Where(item => item.Value is ProxyResourceSet && IsParentCulture(foundCultureToAdd, item.Key.ToString())).Select(item => item.Key.ToString()).ToList();
+                        List<string> keysToRemove = context.ResourceSets.Cast<DictionaryEntry>().Where(item => item.Value is ProxyResourceSet && IsParentCulture(context.FoundCultureToAdd, item.Key.ToString())).Select(item => item.Key.ToString()).ToList();
 #else
-                        List<string> keysToRemove = localResourceSets.Where(item => item.Value is ProxyResourceSet && IsParentCulture(foundCultureToAdd, item.Key)).Select(item => item.Key).ToList();
+                        List<string> keysToRemove = context.ResourceSets.Where(item => item.Value is ProxyResourceSet && IsParentCulture(context.FoundCultureToAdd, item.Key)).Select(item => item.Key).ToList();
 #endif
 
                         foreach (string key in keysToRemove)
-                            localResourceSets.Remove(key);
+                            context.ResourceSets.Remove(key);
                     }
 
                     // Add entries to the cache for the cultures we have gone through.
-                    // foundCultureToAdd now refers to the culture that had resources.
+                    // context.FoundCultureToAdd now refers to the culture that had resources.
                     // Update cultures starting from requested culture up to the culture
                     // that had resources, but in place of non-found resources we will place a proxy.
-                    foreach (CultureInfo updateCultureInfo in mgr)
+                    foreach (CultureInfo updateCultureInfo in context.FallbackManager)
                     {
                         // stop when we've added current or reached invariant (top of chain)
-                        if (ReferenceEquals(updateCultureInfo, foundCultureToAdd))
+                        if (ReferenceEquals(updateCultureInfo, context.FoundCultureToAdd))
                         {
-                            AddResourceSet(localResourceSets, updateCultureInfo.Name, ref rs);
+                            AddResourceSet(context.ResourceSets, updateCultureInfo.Name, ref context.Result);
                             break;
                         }
 
-                        ResourceSet newProxy = new ProxyResourceSet(GetResXResourceSet(rs), foundCultureToAdd,
+                        ResourceSet newProxy = new ProxyResourceSet(GetResXResourceSet(context.Result), context.FoundCultureToAdd,
                             GetExistingResourceFileName(updateCultureInfo) != null, behavior == ResourceSetRetrieval.GetIfAlreadyLoaded);
-                        AddResourceSet(localResourceSets, updateCultureInfo.Name, ref newProxy);
+                        AddResourceSet(context.ResourceSets, updateCultureInfo.Name, ref newProxy);
                     }
 
                     lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
                 }
             }
 
-            return GetResXResourceSet(rs);
+            return GetResXResourceSet(context.Result);
         }
 
         /// <summary>
@@ -1425,7 +1469,7 @@ namespace KGySoft.Resources
                     return lastUsedResourceSet.Value;
 
                 // Look in the ResourceSet table
-                var localResourceSets = ResourceSets; // this is HashTable in .NET 3.5, Dictionary above
+                var localResourceSets = ResourceSets; // this is Hashtable in .NET 3.5, Dictionary above
                 ResourceSet rs;
                 if (!TryGetResource(localResourceSets, culture.Name, out rs))
                     return null;
@@ -1511,8 +1555,8 @@ namespace KGySoft.Resources
                     .Cast<DictionaryEntry>()
 #endif
 
-                    where !(res.Value is ResXResourceSet) || !((ResXResourceSet)res.Value).IsModified
-                    select res.Key;
+                           where !(res.Value is ResXResourceSet) || !((ResXResourceSet)res.Value).IsModified
+                           select res.Key;
 
                 foreach (var key in keys.ToList()) // key is object in .NET 3.5, and is string above
                     resources.Remove(key);

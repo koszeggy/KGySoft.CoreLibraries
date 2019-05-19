@@ -552,7 +552,7 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static double NextDouble(this Random random, double maxValue, FloatScale scale = FloatScale.Auto)
             => random.NextDouble(0d, maxValue, scale);
-
+        
         /// <summary>
         /// Returns a random <see cref="double"/> value that is within a specified range.
         /// </summary>
@@ -574,8 +574,6 @@ namespace KGySoft.CoreLibraries
         [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
         public static double NextDouble(this Random random, double minValue, double maxValue, FloatScale scale = FloatScale.Auto)
         {
-            double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
-
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
 
@@ -590,57 +588,7 @@ namespace KGySoft.CoreLibraries
             if (!Enum<FloatScale>.IsDefined(scale))
                 throw new ArgumentOutOfRangeException(nameof(scale), Res.ArgumentOutOfRange);
 
-            minValue = AdjustValue(minValue);
-            maxValue = AdjustValue(maxValue);
-            if (minValue == maxValue)
-                return minValue;
-
-            bool posAndNeg = minValue < 0d && maxValue > 0d;
-            double minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
-            double maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
-
-            // if linear scaling is forced...
-            if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
-                || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
-            {
-                return NextDoubleLinear(random, minValue, maxValue);
-            }
-
-            int sign;
-            if (!posAndNeg)
-                sign = minValue < 0d ? -1 : 1;
-            else
-            {
-                // if both negative and positive results are expected we select the sign based on the size of the ranges
-                double sample = random.NextDouble();
-                var rate = minAbs / maxAbs;
-                var absMinValue = Math.Abs(minValue);
-                bool isNeg = absMinValue <= maxValue
-                    ? rate / 2d > sample
-                    : rate / 2d < sample;
-                sign = isNeg ? -1 : 1;
-
-                // now adjusting the limits for 0..[selected range]
-                minAbs = 0d;
-                maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
-            }
-
-            // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
-            // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
-            double minExponent = minAbs == 0d ? -16d : Math.Log(minAbs, 2d);
-            double maxExponent = Math.Log(maxAbs, 2d);
-            if (minExponent == maxExponent)
-                return minValue;
-
-            // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
-            if (maxExponent < minExponent)
-                minExponent = maxExponent - 4;
-
-            double result = sign * Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
-
-            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
-            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+            return DoGetNextDouble(random, minValue, maxValue, scale);
         }
 
         /// <summary>
@@ -1132,6 +1080,66 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Private Methods
+
+#if !NET35 && !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        private static double DoGetNextDouble(Random random, double minValue, double maxValue, FloatScale scale)
+        {
+            double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
+
+            minValue = AdjustValue(minValue);
+            maxValue = AdjustValue(maxValue);
+            if (minValue == maxValue)
+                return minValue;
+
+            bool posAndNeg = minValue < 0d && maxValue > 0d;
+            double minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
+            double maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
+
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
+            {
+                return NextDoubleLinear(random, minValue, maxValue);
+            }
+
+            int sign;
+            if (!posAndNeg)
+                sign = minValue < 0d ? -1 : 1;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                double sample = random.NextDouble();
+                var rate = minAbs / maxAbs;
+                var absMinValue = Math.Abs(minValue);
+                bool isNeg = absMinValue <= maxValue
+                    ? rate / 2d > sample
+                    : rate / 2d < sample;
+                sign = isNeg ? -1 : 1;
+
+                // now adjusting the limits for 0..[selected range]
+                minAbs = 0d;
+                maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
+            }
+
+            // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
+            double minExponent = minAbs == 0d ? -16d : Math.Log(minAbs, 2d);
+            double maxExponent = Math.Log(maxAbs, 2d);
+            if (minExponent == maxExponent)
+                return minValue;
+
+            // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - 4;
+
+            double result = sign * Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
 
 #if !NET35 && !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

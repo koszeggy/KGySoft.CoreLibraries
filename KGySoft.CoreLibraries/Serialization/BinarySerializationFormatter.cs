@@ -784,7 +784,7 @@ namespace KGySoft.Serialization
 
             if (type.IsNullable())
             {
-                switch (GetSupportedCollectionType(Nullable.GetUnderlyingType(type)))
+                switch (GetSupportedCollectionType(type.GetGenericArguments()[0]))
                 {
                     case DataTypes.DictionaryEntry:
                         return DataTypes.DictionaryEntryNullable;
@@ -893,7 +893,7 @@ namespace KGySoft.Serialization
             // b.) nullable (must be before surrogate-support checks)
             if (type.IsNullable())
             {
-                DataTypes elementType = GetSupportedElementType(Nullable.GetUnderlyingType(type), options, manager);
+                DataTypes elementType = GetSupportedElementType(type.GetGenericArguments()[0], options, manager);
                 if (elementType == DataTypes.Null)
                     return elementType;
                 return DataTypes.Nullable | elementType;

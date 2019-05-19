@@ -228,6 +228,8 @@ namespace KGySoft.Resources
     [Serializable]
     public class HybridResourceManager : ResourceManager, IExpandoResourceManager
     {
+        #region Nested Types
+
         #region ProxyResourceSet class
 
         /// <summary>
@@ -296,6 +298,31 @@ namespace KGySoft.Resources
 
             #endregion
         }
+
+        #endregion
+
+        #region InternalGetResourceSetContext struct
+
+        private struct InternalGetResourceSetContext
+        {
+            #region Fields
+
+            internal CultureInfo Culture;
+            internal ResourceSetRetrieval Behavior;
+            internal bool TryParents;
+            internal bool ForceExpandoResult;
+
+            internal ResourceSet Result;
+            internal bool ResourceFound;
+            internal ProxyResourceSet Proxy;
+            internal CultureInfo FoundCultureToAdd;
+            internal CultureInfo FoundProxyCulture;
+            internal ResourceFallbackManager FallbackManager;
+
+            #endregion
+        }
+
+        #endregion
 
         #endregion
 
@@ -1007,8 +1034,7 @@ namespace KGySoft.Resources
         internal object GetResourceFromAny(ResourceSet rs, string name, bool isString)
         {
             ResourceSet realRs = Unwrap(rs);
-            var expandoRs = realRs as IExpandoResourceSetInternal;
-            return expandoRs != null
+            return realRs is IExpandoResourceSetInternal expandoRs
                 ? expandoRs.GetResource(name, IgnoreCase, isString, SafeMode)
                 : (isString ? realRs.GetString(name, IgnoreCase) : realRs.GetObject(name, IgnoreCase));
         }
@@ -1028,175 +1054,177 @@ namespace KGySoft.Resources
         /// Warning: It CAN return a proxy
         /// </summary>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
-        [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm, result is re-obtained before all 'result as ProxyResourceSet' cast.")]
         internal ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
         {
-            Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists,
-                "Behavior can be CreateIfNotExists only if expando is requested.");
+            #region Local Methods to reduce complexity
 
-            if (culture == null)
-                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
-
-            ResourceSet result = null;
-            bool resourceFound;
-            lock (SyncRoot)
-                resourceFound = resourceSets?.TryGetValue(culture.Name, out result) == true;
-
-            ProxyResourceSet proxy;
-            if (resourceFound)
+            bool TryGetCachedResourceSet(ref InternalGetResourceSetContext ctx)
             {
-                // returning the cached resource if that is not a proxy or when the proxy does not have to be (possibly) replaced
-                // if result is not a proxy but an actual resource...
-                if ((((proxy = result as ProxyResourceSet) == null)
-                        // ...or is a proxy but nothing new should be loaded...
-                        || behavior == ResourceSetRetrieval.GetIfAlreadyLoaded
-                        // ...or is a proxy but nothing new can be loaded in the hierarchy
-                        || (behavior == ResourceSetRetrieval.LoadIfExists && proxy.HierarchyLoaded))
-                    // AND not expando is requested or result (wraps) an expando.
-                    // Due to the conditions above it will not return proxied expando with Create behavior.
-                    && (!forceExpandoResult || Unwrap(result) is IExpandoResourceSet))
+                lock (SyncRoot)
+                    ctx.ResourceFound = resourceSets?.TryGetValue(ctx.Culture.Name, out ctx.Result) == true;
+
+                if (ctx.ResourceFound)
                 {
-                    return result;
+                    // returning the cached resource if that is not a proxy or when the proxy does not have to be (possibly) replaced
+                    // if result is not a proxy but an actual resource...
+                    if ((((ctx.Proxy = ctx.Result as ProxyResourceSet) == null)
+                            // ...or is a proxy but nothing new should be loaded...
+                            || ctx.Behavior == ResourceSetRetrieval.GetIfAlreadyLoaded
+                            // ...or is a proxy but nothing new can be loaded in the hierarchy
+                            || (ctx.Behavior == ResourceSetRetrieval.LoadIfExists && ctx.Proxy.HierarchyLoaded))
+                        // AND not expando is requested or result (wraps) an expando.
+                        // Due to the conditions above it will not return proxied expando with Create behavior.
+                        && (!ctx.ForceExpandoResult || Unwrap(ctx.Result) is IExpandoResourceSet))
+                    {
+                        return true;
+                    }
                 }
+
+                return false;
             }
 
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, tryParents);
-            CultureInfo foundCultureToAdd = null;
-            CultureInfo foundProxyCulture = null;
-            foreach (CultureInfo currentCultureInfo in mgr)
+            bool TryGetResourceWhileTraverse(ref InternalGetResourceSetContext ctx)
             {
-                proxy = null;
-                lock (SyncRoot)
+                ctx.FallbackManager = new ResourceFallbackManager(ctx.Culture, NeutralResourcesCulture, ctx.TryParents);
+                foreach (CultureInfo currentCultureInfo in ctx.FallbackManager)
                 {
-                    resourceFound = resourceSets?.TryGetValue(currentCultureInfo.Name, out result) == true;
-                }
+                    ctx.Proxy = null;
+                    lock (SyncRoot)
+                        ctx.ResourceFound = resourceSets?.TryGetValue(currentCultureInfo.Name, out ctx.Result) == true;
 
-                if (resourceFound)
-                {
-                    // a returnable result (non-proxy) is found in the local cache
-                    proxy = result as ProxyResourceSet;
-                    if (proxy == null && (!forceExpandoResult || result is IExpandoResourceSet))
+                    if (ctx.ResourceFound)
                     {
-                        // since the first try above we have a result from another thread for the searched culture
-                        if (Equals(culture, currentCultureInfo))
-                            return result;
-
-                        // after some proxies, a parent culture has been found: returning a proxy for this if this was the proxied culture in the children
-                        if (Equals(currentCultureInfo, foundProxyCulture))
+                        // a returnable result (non-proxy) is found in the local cache
+                        ctx.Proxy = ctx.Result as ProxyResourceSet;
+                        if (ctx.Proxy == null && (!ctx.ForceExpandoResult || ctx.Result is IExpandoResourceSet))
                         {
-                            // The hierarchy is now up-to-date. Creating the possible missing proxies and returning the one for the requested culture
-                            lock (SyncRoot)
-                            {
-                                ResourceSet toWrap = result;
-                                result = null;
-                                foreach (CultureInfo updateCultureInfo in mgr)
-                                {
-                                    // We have found again the first proxy in the hierarchy. This is now up-to-date for sure so returning.
-                                    if (resourceSets.TryGetValue(updateCultureInfo.Name, out ResourceSet rs))
-                                    {
-                                        Debug.Assert(rs is ProxyResourceSet, "A proxy is expected to be found here.");
-                                        return result ?? rs;
-                                    }
+                            // since the first try above we have a result from another thread for the searched context
+                            if (Equals(ctx.Culture, currentCultureInfo))
+                                return true;
 
-                                    // There is at least one non-existing key (most specific elements in the hierarchy): new proxy creation is needed
-                                    ResourceSet newProxy = new ProxyResourceSet(toWrap, foundProxyCulture, behavior == ResourceSetRetrieval.LoadIfExists);
-                                    AddResourceSet(updateCultureInfo.Name, ref newProxy);
-                                    if (result == null)
-                                        result = newProxy;
+                            // after some proxies, a parent culture has been found: returning a proxy for this if this was the proxied culture in the children
+                            if (Equals(currentCultureInfo, ctx.FoundProxyCulture))
+                            {
+                                // The hierarchy is now up-to-date. Creating the possible missing proxies and returning the one for the requested culture
+                                lock (SyncRoot)
+                                {
+                                    ResourceSet toWrap = ctx.Result;
+                                    ctx.Result = null;
+                                    foreach (CultureInfo updateCultureInfo in ctx.FallbackManager)
+                                    {
+                                        // We have found again the first context.Proxy in the hierarchy. This is now up-to-date for sure so returning.
+                                        if (resourceSets.TryGetValue(updateCultureInfo.Name, out ResourceSet rs))
+                                        {
+                                            Debug.Assert(rs is ProxyResourceSet, "A context.Proxy is expected to be found here.");
+                                            if (ctx.Result == null)
+                                                ctx.Result = rs;
+                                            return true;
+                                        }
+
+                                        // There is at least one non-existing key (most specific elements in the hierarchy): new context.Proxy creation is needed
+                                        ResourceSet newProxy = new ProxyResourceSet(toWrap, ctx.FoundProxyCulture, ctx.Behavior == ResourceSetRetrieval.LoadIfExists);
+                                        AddResourceSet(updateCultureInfo.Name, ref newProxy);
+                                        if (ctx.Result == null)
+                                            ctx.Result = newProxy;
+                                    }
                                 }
+                            }
+
+                            // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
+                            Debug.Assert(ctx.FoundProxyCulture == null, "There is a context.Proxy with an inconsistent parent in the hierarchy.");
+                            ctx.FoundCultureToAdd = currentCultureInfo;
+                            break;
+                        }
+
+                        // context.Proxy is found
+                        if (ctx.Proxy != null)
+                        {
+                            Debug.Assert(ctx.FoundProxyCulture == null || Equals(ctx.FoundProxyCulture, ctx.Proxy.WrappedCulture), "Proxied cultures are different in the hierarchy.");
+                            if (ctx.FoundProxyCulture == null)
+                                ctx.FoundProxyCulture = ctx.Proxy.WrappedCulture;
+
+                            // if we traversing here because last time the proxy has been loaded by
+                            // ResourceSetRetrieval.GetIfAlreadyLoaded, but now we load the possible parents, we set the
+                            // HierarchyLoaded flag in the hierarchy. Unless no new context.Proxy is created (and thus the descendant proxies are deleted),
+                            // this will prevent the redundant traversal next time.
+                            if (ctx.TryParents && ctx.Behavior == ResourceSetRetrieval.LoadIfExists)
+                            {
+                                ctx.Proxy.HierarchyLoaded = true;
                             }
                         }
 
-                        // otherwise, we found a parent: we need to re-create the proxies in the cache to the children
-                        Debug.Assert(foundProxyCulture == null, "There is a proxy with an inconsistent parent in the hierarchy.");
-                        foundCultureToAdd = currentCultureInfo;
+                        // if none of above, we have a non-proxy result, which must be replaced by an expando result
+                    }
+
+                    ctx.Result = null;
+
+                    // from resx
+                    ResXResourceSet resx = null;
+                    if (source != ResourceManagerSources.CompiledOnly)
+                        resx = resxResources.GetResXResourceSet(currentCultureInfo, ctx.Behavior, false);
+
+                    // from assemblies
+                    ResourceSet compiled = null;
+                    if (source != ResourceManagerSources.ResXOnly)
+                    {
+                        // otherwise, disposed state is checked by ResXResourceSet
+                        if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed)
+                            throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                        compiled = base.InternalGetResourceSet(currentCultureInfo, ctx.Behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+                    }
+
+                    // result found
+                    if (resx != null || compiled != null)
+                    {
+                        ctx.FoundCultureToAdd = currentCultureInfo;
+
+                        // single result - no merge is needed, unless expando is forced and context.Result is compiled
+                        if (resx == null || compiled == null)
+                        {
+                            ctx.Result = resx ?? compiled;
+
+                            if (!ctx.ForceExpandoResult)
+                                break;
+
+                            if (resx == null)
+                            {
+                                // there IS a result, which we cannot return because it is not expando, so returning null
+                                // this is ok because neither fallback nor missing manifest is needed in this case - GetExpandoResourceSet returns null instead of ResourceSet
+                                if (source == ResourceManagerSources.CompiledOnly)
+                                {
+                                    ctx.Result = null;
+                                    return true;
+                                }
+
+                                resx = resxResources.CreateResourceSet(ctx.Culture);
+                            }
+                        }
+
+                        // creating a merged resource set (merge is applied only when enumerated)
+                        if (resx != null && compiled != null)
+                            ctx.Result = new HybridResourceSet(resx, compiled);
+
                         break;
                     }
 
-                    // proxy is found
-                    if (proxy != null)
+                    // context.Behavior is LoadIfExists, context.TryParents = false, hierarchy is not loaded, but still no loadable content has been found
+                    if (!ctx.TryParents && ctx.Proxy != null)
                     {
-                        Debug.Assert(foundProxyCulture == null || Equals(foundProxyCulture, proxy.WrappedCulture), "Proxied cultures are different in the hierarchy.");
-                        if (foundProxyCulture == null)
-                            foundProxyCulture = proxy.WrappedCulture;
-
-                        // if we traversing here because last time the proxy has been loaded by
-                        // ResourceSetRetrieval.GetIfAlreadyLoaded, but now we load the possible parents, we set the
-                        // HierarchyLoaded flag in the hierarchy. Unless no new proxy is created (and thus the descendant proxies are deleted),
-                        // this will prevent the redundant traversal next time.
-                        if (tryParents && behavior == ResourceSetRetrieval.LoadIfExists)
-                        {
-                            proxy.HierarchyLoaded = true;
-                        }
+                        Debug.Assert(ctx.Behavior == ResourceSetRetrieval.LoadIfExists && !ctx.Proxy.HierarchyLoaded);
+                        ctx.Result = ctx.Proxy.WrappedResourceSet;
+                        return true;
                     }
-
-                    // if none of above, we have a non-proxy result, which must be replaced by an expando result
                 }
 
-                result = null;
-
-                // from resx
-                ResXResourceSet resx = null;
-                if (source != ResourceManagerSources.CompiledOnly)
-                    resx = resxResources.GetResXResourceSet(currentCultureInfo, behavior, false);
-
-                // from assemblies
-                ResourceSet compiled = null;
-                if (source != ResourceManagerSources.ResXOnly)
-                {
-                    // otherwise, disposed state is checked by ResXResourceSet
-                    if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed)
-                        throw new ObjectDisposedException(null, Res.ObjectDisposed);
-                    compiled = base.InternalGetResourceSet(currentCultureInfo, behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
-                }
-
-                // result found
-                if (resx != null || compiled != null)
-                {
-                    foundCultureToAdd = currentCultureInfo;
-
-                    // single result - no merge is needed, unless expando is forced and result is compiled
-                    if (resx == null || compiled == null)
-                    {
-                        result = resx ?? compiled;
-
-                        if (!forceExpandoResult)
-                            break;
-
-                        if (resx == null)
-                        {
-                            // there IS a result, which we cannot return because it is not expando, so returning null
-                            // this is ok because neither fallback nor missing manifest is needed in this case - GetExpandoResourceSet returns null instead of ResourceSet
-                            if (source == ResourceManagerSources.CompiledOnly)
-                                return null;
-
-                            resx = resxResources.CreateResourceSet(culture);
-                        }
-                    }
-
-                    // creating a merged resource set (merge is applied only when enumerated)
-                    if (resx != null && compiled != null)
-                        result = new HybridResourceSet(resx, compiled);
-
-                    break;
-                }
-
-                // behavior is LoadIfExists, tryParents = false, hierarchy is not loaded, but still no loadable content has been found
-                if (!tryParents && proxy != null)
-                {
-                    Debug.Assert(behavior == ResourceSetRetrieval.LoadIfExists && !proxy.HierarchyLoaded);
-                    return proxy.WrappedResourceSet;
-                }
+                return false;
             }
 
-            // The code above never throws MissingManifest exception because the wrapped managers are always called with tryParents=false.
-            // This block ensures compatible behavior if ThrowException is enabled.
-            if (throwException && result == null && tryParents)
+            void CheckNullResult(ref InternalGetResourceSetContext ctx)
             {
-                bool raiseException = behavior != ResourceSetRetrieval.GetIfAlreadyLoaded;
+                bool raiseException = ctx.Behavior != ResourceSetRetrieval.GetIfAlreadyLoaded;
 
                 // if behavior is not GetIfAlreadyLoaded, we cannot decide whether manifest is really missing so calling the methods
-                // again and ignoring any result just catching the exception if any. Calling with createIfNotExists=false,
+                // again and ignoring any context.Result just catching the exception if any. Calling with createIfNotExists=false,
                 // so no new resources will be loaded. Because of tryParents=true, exception will be thrown if manifest is missing.
                 if (!raiseException)
                 {
@@ -1225,20 +1253,40 @@ namespace KGySoft.Resources
                 }
             }
 
-            if (foundCultureToAdd == null)
+            #endregion
+
+            Debug.Assert(forceExpandoResult || behavior != ResourceSetRetrieval.CreateIfNotExists, "Behavior can be CreateIfNotExists only if expando is requested.");
+
+            if (culture == null)
+                throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
+
+            var context = new InternalGetResourceSetContext { Culture = culture, Behavior = behavior, TryParents = tryParents, ForceExpandoResult = forceExpandoResult };
+            if (TryGetCachedResourceSet(ref context))
+                return context.Result;
+
+            if (TryGetResourceWhileTraverse(ref context))
+                return context.Result;
+
+
+            // The code above never throws MissingManifest exception because the wrapped managers are always called with tryParents = false.
+            // This block ensures compatible behavior if ThrowException is enabled.
+            if (throwException && context.Result == null && tryParents)
+                CheckNullResult(ref context);
+
+            if (context.FoundCultureToAdd == null)
                 return null;
 
             lock (SyncRoot)
             {
                 ResourceSet toReturn = null;
 
-                // we replace a proxy: we must delete proxies, which are children of the found resource.
-                if (foundProxyCulture != null && resourceSets != null)
+                // we replace a context.Proxy: we must delete proxies, which are children of the found resource.
+                if (context.FoundProxyCulture != null && resourceSets != null)
                 {
-                    Debug.Assert(forceExpandoResult || !Equals(foundProxyCulture, foundCultureToAdd), "The culture to add is the same as the existing proxies, while no expando result is forced.");
+                    Debug.Assert(forceExpandoResult || !Equals(context.FoundProxyCulture, context.FoundCultureToAdd), "The culture to add is the same as the existing proxies, while no expando context.Result is forced.");
 
                     List<string> keysToRemove = resourceSets.Where(item =>
-                            item.Value is ProxyResourceSet && ResXResourceManager.IsParentCulture(foundCultureToAdd, item.Key))
+                            item.Value is ProxyResourceSet && ResXResourceManager.IsParentCulture(context.FoundCultureToAdd, item.Key))
                         .Select(item => item.Key).ToList();
 
                     foreach (string key in keysToRemove)
@@ -1248,18 +1296,18 @@ namespace KGySoft.Resources
                 }
 
                 // add entries to the cache for the cultures we have gone through
-                foreach (CultureInfo updateCultureInfo in mgr)
+                foreach (CultureInfo updateCultureInfo in context.FallbackManager)
                 {
                     // stop when we've added current or reached invariant (top of chain)
-                    if (ReferenceEquals(updateCultureInfo, foundCultureToAdd))
+                    if (ReferenceEquals(updateCultureInfo, context.FoundCultureToAdd))
                     {
-                        AddResourceSet(updateCultureInfo.Name, ref result);
+                        AddResourceSet(updateCultureInfo.Name, ref context.Result);
                         if (toReturn == null)
-                            toReturn = result;
+                            toReturn = context.Result;
                         break;
                     }
 
-                    ResourceSet newProxy = new ProxyResourceSet(result, foundCultureToAdd, behavior == ResourceSetRetrieval.LoadIfExists);
+                    ResourceSet newProxy = new ProxyResourceSet(context.Result, context.FoundCultureToAdd, behavior == ResourceSetRetrieval.LoadIfExists);
                     AddResourceSet(updateCultureInfo.Name, ref newProxy);
                     if (toReturn == null)
                         toReturn = newProxy;
@@ -1424,7 +1472,7 @@ namespace KGySoft.Resources
             // back into the ResourceManager in unexpectedly on the same thread.
             ResourceSet lostRace;
             if (resourceSets == null)
-                resourceSets = new Dictionary<string, ResourceSet> {{cultureName, rs}};
+                resourceSets = new Dictionary<string, ResourceSet> { { cultureName, rs } };
             else if (resourceSets.TryGetValue(cultureName, out lostRace))
             {
                 if (!ReferenceEquals(lostRace, rs))
