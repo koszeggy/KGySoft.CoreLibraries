@@ -1046,7 +1046,9 @@ namespace KGySoft.CoreLibraries
         /// never be reclaimed by the garbage collector. To avoid leaking memory generated delegates use an internal static <see cref="Random"/> instance.</note>
         /// </para>
         /// </remarks>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public static T NextObject<T>(this Random random, GenerateObjectSettings settings = null)
         {
             if (random == null)
@@ -1067,7 +1069,9 @@ namespace KGySoft.CoreLibraries
         /// <returns>An instance of <paramref name="type"/> or <see langword="null"/>&#160;if the type cannot be
         /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section of the <see cref="NextObject{T}"/> overload for details.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public static object NextObject(this Random random, Type type, GenerateObjectSettings settings = null)
         {
             if (random == null)

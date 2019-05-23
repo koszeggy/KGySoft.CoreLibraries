@@ -1163,7 +1163,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(1);
                 if (log)
-                    Console.WriteLine("bool: {0} ({1}) - {2}", value, Convert.ToInt32(value), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"bool: {value} ({Convert.ToInt32(value)}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1176,7 +1176,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     string name = frames[1].GetMethod().Name;
                     if (name == "Write7BitInt")
                         name += " (" + frames[2].GetMethod().Name + ")";
-                    Console.WriteLine("byte: {0} ({0:X2}) - {1}", value, name);
+                    Console.WriteLine($"byte: {value} ({value:X2}) - {name}");
                 }
                 base.Write(value);
             }
@@ -1185,7 +1185,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(buffer.Length);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", buffer.Length, buffer.ToDecimalValuesString(), buffer.ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{buffer.Length} bytes: {buffer.ToDecimalValuesString()} ({buffer.ToHexValuesString(",")}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(buffer);
             }
 
@@ -1193,7 +1193,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(count);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", count, buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString(), buffer.Skip(index).Take(count).ToArray().ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{count} bytes: {buffer.Skip(index).Take(count).ToArray().ToDecimalValuesString()} ({buffer.Skip(index).Take(count).ToArray().ToHexValuesString(",")}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(buffer, index, count);
             }
 
@@ -1201,7 +1201,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(2);
                 if (log)
-                    Console.WriteLine("char: {0} ({1:X4}) - {2}", ch, (uint)ch, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"char: {ch} ({(uint)ch:X4}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(ch);
             }
 
@@ -1209,7 +1209,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(2 * chars.Length); // depends on encoding but is alright for comparison
                 if (log)
-                    Console.WriteLine("{0} chars: {1} - {2}", chars.Length, new string(chars), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{chars.Length} chars: {new string(chars)} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(chars);
             }
 
@@ -1217,7 +1217,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(2 * count); // depends on encoding but is alright for comparison
                 if (log)
-                    Console.WriteLine("{0} chars: {1} - {2}", count, new string(chars.Skip(index).Take(count).ToArray()), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{count} chars: {new string(chars.Skip(index).Take(count).ToArray())} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(chars, index, count);
             }
 
@@ -1225,7 +1225,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(16);
                 if (log)
-                    Console.WriteLine("decimal: {0} - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"decimal: {value} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1233,7 +1233,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(8);
                 if (log)
-                    Console.WriteLine("double: {0:R} - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"double: {value:R} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1241,7 +1241,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(4);
                 if (log)
-                    Console.WriteLine("float: {0:R} - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"float: {value:R} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1249,7 +1249,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(4);
                 if (log)
-                    Console.WriteLine("int: {0} ({0:X8}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"int: {value} ({value:X8}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1257,7 +1257,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(8);
                 if (log)
-                    Console.WriteLine("long: {0} ({0:X16}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"long: {value} ({value:X16}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1265,7 +1265,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(1);
                 if (log)
-                    Console.WriteLine("sbyte: {0} ({0:X2}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"sbyte: {value} ({value:X2}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1273,7 +1273,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(2);
                 if (log)
-                    Console.WriteLine("short: {0} ({0:X4}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"short: {value} ({value:X4}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1282,14 +1282,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 base.Write(value);
                 Advance(value.Length); // depends on encoding but is alright for comparison
                 if (log)
-                    Console.WriteLine("string: {0} - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"string: {value} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
             }
 
             public override void Write(uint value)
             {
                 Advance(4);
                 if (log)
-                    Console.WriteLine("uint: {0} ({0:X8}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"uint: {value} ({value:X8}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1297,7 +1297,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(8);
                 if (log)
-                    Console.WriteLine("ulong: {0} ({0:X16}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"ulong: {value} ({value:X16}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1305,7 +1305,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 Advance(2);
                 if (log)
-                    Console.WriteLine("ushort: {0} ({0:X4}) - {1}", value, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"ushort: {value} ({value:X4}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 base.Write(value);
             }
 
@@ -1316,7 +1316,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             private void Advance(int offset)
             {
                 if (log)
-                    Console.Write("{0:X8} ", pos);
+                    Console.Write($"{pos:X8} ");
                 pos += offset;
             }
 
@@ -1357,7 +1357,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.Read();
                 Advance(result >= 0 ? 1 : 0);
                 if (log)
-                    Console.WriteLine("int char: {0} ({0:X}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"int char: {result} ({result:X}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1366,7 +1366,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.Read(buffer, index, count);
                 Advance(result);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", result, buffer.Skip(index).Take(result).ToArray().ToDecimalValuesString(), buffer.Skip(index).Take(result).ToArray().ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{result} bytes: {buffer.Skip(index).Take(result).ToArray().ToDecimalValuesString()} ({buffer.Skip(index).Take(result).ToArray().ToHexValuesString(",")}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1375,7 +1375,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.Read(buffer, index, count);
                 Advance(result * 2); // depends on encoding but ok for comparison
                 if (log)
-                    Console.WriteLine("{0} chars: {1} - {2}", result, new string(buffer.Skip(index).Take(result).ToArray()), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{result} chars: {new string(buffer.Skip(index).Take(result).ToArray())} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1384,7 +1384,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadBoolean();
                 Advance(1);
                 if (log)
-                    Console.WriteLine("bool: {0} ({1}) - {2}", result, Convert.ToInt32(result), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"bool: {result} ({Convert.ToInt32(result)}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1398,7 +1398,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     string name = frames[1].GetMethod().Name;
                     if (name == "Read7BitInt")
                         name += " (" + frames[2].GetMethod().Name + ")";
-                    Console.WriteLine("byte: {0} ({0:X2}) - {1}", result, name);
+                    Console.WriteLine($"byte: {result} ({result:X2}) - {name}");
                 }
                 return result;
             }
@@ -1408,7 +1408,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadBytes(count);
                 Advance(count);
                 if (log)
-                    Console.WriteLine("{0} bytes: {1} ({2}) - {3}", result.Length, result.ToDecimalValuesString(), result.ToHexValuesString(","), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{result.Length} bytes: {result.ToDecimalValuesString()} ({result.ToHexValuesString(",")}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1417,7 +1417,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadChar();
                 Advance(2);
                 if (log)
-                    Console.WriteLine("char: {0} ({1:X2}) - {2}", result, (uint)result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"char: {result} ({(uint)result:X2}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1426,7 +1426,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadChars(count);
                 Advance(2 * count); // depends on encoding but ok for comparison
                 if (log)
-                    Console.WriteLine("{0} chars: {1} - {2}", result.Length, new string(result), new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"{result.Length} chars: {new string(result)} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1435,7 +1435,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadDecimal();
                 Advance(16);
                 if (log)
-                    Console.WriteLine("decimal: {0} - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"decimal: {result} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1444,7 +1444,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadDouble();
                 Advance(8);
                 if (log)
-                    Console.WriteLine("double: {0:R} - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"double: {result:R} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1453,7 +1453,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadInt16();
                 Advance(2);
                 if (log)
-                    Console.WriteLine("short: {0} ({0:X4}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"short: {result} ({result:X4}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1462,7 +1462,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadInt32();
                 Advance(4);
                 if (log)
-                    Console.WriteLine("int: {0} ({0:X8}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"int: {result} ({result:X8}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1471,7 +1471,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadInt64();
                 Advance(8);
                 if (log)
-                    Console.WriteLine("long: {0} ({0:X16}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"long: {result} ({result:X16}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1480,7 +1480,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadSByte();
                 Advance(1);
                 if (log)
-                    Console.WriteLine("sbyte: {0} ({0:X2}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"sbyte: {result} ({result:X2}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1489,7 +1489,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadSingle();
                 Advance(4);
                 if (log)
-                    Console.WriteLine("float: {0:R} - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"float: {result:R} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1498,7 +1498,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadString();
                 Advance(result.Length); // depends on encoding but ok for comparison
                 if (log)
-                    Console.WriteLine("string: {0} - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"string: {result} - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1507,7 +1507,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadUInt16();
                 Advance(2);
                 if (log)
-                    Console.WriteLine("ushort: {0} ({0:X4}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"ushort: {result} ({result:X4}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1516,7 +1516,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadUInt32();
                 Advance(4);
                 if (log)
-                    Console.WriteLine("uint: {0} ({0:X8}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"uint: {result} ({result:X8}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1525,7 +1525,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 var result = base.ReadUInt64();
                 Advance(8);
                 if (log)
-                    Console.WriteLine("ulong: {0} ({0:X16}) - {1}", result, new StackTrace().GetFrames()[1].GetMethod().Name);
+                    Console.WriteLine($"ulong: {result} ({result:X16}) - {new StackTrace().GetFrames()[1].GetMethod().Name}");
                 return result;
             }
 
@@ -1536,7 +1536,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             private void Advance(int offset)
             {
                 if (log)
-                    Console.Write("{0:X8} ", pos);
+                    Console.Write($"{pos:X8} ");
                 pos += offset;
             }
 

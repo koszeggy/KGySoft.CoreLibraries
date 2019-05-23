@@ -407,7 +407,9 @@ namespace KGySoft.Diagnostics
 
         #region Private Methods
 
+#if !NET35
         [SecuritySafeCritical]
+#endif
         private void Initialize()
         {
             OnInitialize();
@@ -425,7 +427,9 @@ namespace KGySoft.Diagnostics
 
         private bool IsValidAffinity() => CpuAffinity.HasValue && CpuAffinity.Value < 2L << (Environment.ProcessorCount - 1);
 
+#if !NET35
         [SecuritySafeCritical]
+#endif
         private void TearDown()
         {
             if (!IsValidAffinity())

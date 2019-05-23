@@ -207,6 +207,7 @@ namespace KGySoft.Serialization
     /// only after restoring the whole content so fields will be already restored.</note>
     /// </para>
     /// </remarks>
+    [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
     public sealed partial class BinarySerializationFormatter : IFormatter
     {
         #region Enumerations
@@ -447,9 +448,81 @@ namespace KGySoft.Serialization
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
             = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
+        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes> // including non-primitives such as string and UIntPtr
+        {
+            { Reflector.BoolType, DataTypes.Bool },
+            { Reflector.ByteType, DataTypes.UInt8 },
+            { Reflector.SByteType, DataTypes.Int8 },
+            { Reflector.ShortType, DataTypes.Int16 },
+            { Reflector.UShortType, DataTypes.UInt16 },
+            { Reflector.IntType, DataTypes.Int32 },
+            { Reflector.UIntType, DataTypes.UInt32 },
+            { Reflector.LongType, DataTypes.Int64 },
+            { Reflector.ULongType, DataTypes.UInt64 },
+            { Reflector.CharType, DataTypes.Char },
+            { Reflector.StringType, DataTypes.String },
+            { Reflector.FloatType, DataTypes.Single },
+            { Reflector.DoubleType, DataTypes.Double },
+            { Reflector.IntPtrType, DataTypes.IntPtr },
+            { Reflector.UIntPtrType, DataTypes.UIntPtr },
+        };
+
+        private static readonly Dictionary<Type, DataTypes> supportedNonPrimitiveElementTypes = new Dictionary<Type, DataTypes>
+        {
+            { Reflector.DecimalType, DataTypes.Decimal },
+            { Reflector.DateTimeType, DataTypes.DateTime },
+            { Reflector.DateTimeOffsetType, DataTypes.DateTimeOffset },
+            { Reflector.TimeSpanType, DataTypes.TimeSpan },
+            { Reflector.ObjectType, DataTypes.Object },
+            { typeof(DBNull), DataTypes.DBNull },
+            { typeof(Version), DataTypes.Version },
+            { typeof(Guid), DataTypes.Guid },
+            { typeof(Uri), DataTypes.Uri },
+            { typeof(StringBuilder), DataTypes.StringBuilder },
+            { typeof(BitArray), DataTypes.BitArray },
+            { typeof(BitVector32), DataTypes.BitVector32 },
+            { typeof(BitVector32.Section), DataTypes.BitVector32Section },
+        };
+
+
+        private static readonly Dictionary<Type, DataTypes> supportedCollections = new Dictionary<Type, DataTypes>
+        {
+            { typeof(Array), DataTypes.Array },
+            { typeof(List<>), DataTypes.List },
+            { typeof(Queue<>), DataTypes.Queue },
+            { typeof(Stack<>), DataTypes.Stack },
+            { typeof(LinkedList<>), DataTypes.LinkedList },
+            { typeof(HashSet<>), DataTypes.HashSet },
+#if NET40 || NET45
+            { typeof(SortedSet<>), DataTypes.SortedSet },
+#elif !NET35
+#error .NET version is not set or not supported!
+#endif
+
+            { typeof(Dictionary<,>), DataTypes.Dictionary },
+            { typeof(SortedList<,>), DataTypes.SortedList },
+            { typeof(SortedDictionary<,>), DataTypes.SortedDictionary },
+            { typeof(CircularSortedList<,>), DataTypes.CircularSortedList },
+
+            { typeof(ArrayList), DataTypes.ArrayList },
+            { typeof(Queue), DataTypes.QueueNonGeneric },
+            { typeof(Stack), DataTypes.StackNonGeneric },
+            { typeof(StringCollection), DataTypes.StringCollection },
+
+            { typeof(Hashtable), DataTypes.Hashtable },
+            { typeof(SortedList), DataTypes.SortedListNonGeneric },
+            { typeof(ListDictionary), DataTypes.ListDictionary },
+            { typeof(HybridDictionary), DataTypes.HybridDictionary },
+            { typeof(OrderedDictionary), DataTypes.OrderedDictionary },
+            { typeof(StringDictionary), DataTypes.StringDictionary },
+
+            { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
+            { Reflector.DictionaryEntryType, DataTypes.DictionaryEntry },
+        };
+
         #endregion
 
-        #region Instance Fields
+            #region Instance Fields
 
         private List<IDeserializationCallback> deserRegObjects;
         private BinarySerializationOptions serializationOptions;
@@ -624,27 +697,8 @@ namespace KGySoft.Serialization
             if (type.IsValueType)
                 type = Nullable.GetUnderlyingType(type) ?? type;
             if (type.IsGenericType)
-            {
-                Type typeDef = type.GetGenericTypeDefinition();
-                return typeDef == typeof(List<>) || typeDef == typeof(Dictionary<,>)
-                    || typeDef == typeof(HashSet<>)
-                    || typeDef == typeof(CircularList<>) || typeDef == typeof(CircularSortedList<,>)
-                    || typeDef == typeof(SortedList<,>) || typeDef == typeof(SortedDictionary<,>)
-                    || typeDef == typeof(Queue<>) || typeDef == typeof(Stack<>)
-#if NET40 || NET45
-                    || typeDef == typeof(SortedSet<>)
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-
-                    || typeDef == typeof(LinkedList<>)
-                    || typeDef == Reflector.KeyValuePairType; // not actually a collection but can be encoded more easily as a dictionary
-            }
-
-            return type == typeof(ArrayList) || type == typeof(Queue) || type == typeof(Stack)
-                || type == typeof(Hashtable) || type == typeof(SortedList) || type == typeof(ListDictionary) || type == typeof(HybridDictionary) || type == typeof(OrderedDictionary)
-                || type == typeof(StringCollection) || type == typeof(StringDictionary)
-                || type == Reflector.DictionaryEntryType; // encoded as a non-generic dictionary
+                type = type.GetGenericTypeDefinition();
+            return supportedCollections.ContainsKey(type);
         }
 
         [SecurityCritical]
@@ -652,135 +706,135 @@ namespace KGySoft.Serialization
         {
             // array
             if (type.IsArray)
-            {
-                Type elementType = type.GetElementType();
-                if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None
-                    && manager.CanUseSurrogate(elementType))
-                {
-                    DataTypes[] result = { DataTypes.Array | DataTypes.RecursiveObjectGraph };
-                    if (elementType.IsNullable())
-                        result[0] |= DataTypes.Nullable;
-                    return result;
-                }
-
-                DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
-                if (elementDataType != DataTypes.Null)
-                    return new[] { DataTypes.Array | elementDataType };
-
-                if (IsSupportedCollection(elementType))
-                {
-                    IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
-                    if (innerType != null)
-                        return (new[] { DataTypes.Array }).Concat(innerType);
-                }
-                return null;
-            }
+                return EncodeArray(type, options, manager);
 
             DataTypes collectionType = GetSupportedCollectionType(type);
             type = Nullable.GetUnderlyingType(type) ?? type;
 
             // generic type
             if (type.IsGenericType)
-            {
-                if (collectionType == DataTypes.Null)
-                    return null;
-
-                Type[] args = type.GetGenericArguments();
-                Type elementType = args[0];
-                DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
-
-                // generics with 1 argument
-                if (args.Length == 1)
-                {
-                    if (elementDataType != DataTypes.Null)
-                        return new[] { collectionType | elementDataType };
-
-                    if (IsSupportedCollection(elementType))
-                    {
-                        IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
-                        if (innerType != null)
-                            return (new[] { collectionType }).Concat(innerType);
-                    }
-                    return null;
-                }
-
-                // dictionaries
-                Type valueType = args[1];
-                DataTypes valueDataType = GetSupportedElementType(valueType, options, manager);
-
-                IEnumerable<DataTypes> keyTypes;
-                IEnumerable<DataTypes> valueTypes;
-
-                // key
-                if (elementDataType != DataTypes.Null)
-                    keyTypes = new DataTypes[] { collectionType | elementDataType };
-                else if (IsSupportedCollection(elementType))
-                {
-                    keyTypes = EncodeCollectionType(elementType, options, manager);
-                    if (keyTypes == null)
-                        return null;
-                    keyTypes = (new DataTypes[] { collectionType }).Concat(keyTypes);
-                }
-                else
-                    return null;
-
-                // value
-                if (valueDataType != DataTypes.Null)
-                    valueTypes = new DataTypes[] { valueDataType };
-                else if (IsSupportedCollection(valueType))
-                {
-                    valueTypes = EncodeCollectionType(valueType, options, manager);
-                    if (valueTypes == null)
-                        return null;
-                }
-                else
-                    return null;
-
-                return keyTypes.Concat(valueTypes);
-            }
+                return EncodeGenericCollection(type, collectionType, options, manager);
 
             // non-generic types
-            else
+            switch (collectionType)
             {
-                switch (collectionType)
-                {
-                    case DataTypes.ArrayList:
-                    case DataTypes.QueueNonGeneric:
-                    case DataTypes.StackNonGeneric:
-                        return new DataTypes[] { collectionType | DataTypes.Object };
+                case DataTypes.ArrayList:
+                case DataTypes.QueueNonGeneric:
+                case DataTypes.StackNonGeneric:
+                    return new[] { collectionType | DataTypes.Object };
 
-                    case DataTypes.Hashtable:
-                    case DataTypes.SortedListNonGeneric:
-                    case DataTypes.ListDictionary:
-                    case DataTypes.HybridDictionary:
-                    case DataTypes.OrderedDictionary:
-                    case DataTypes.DictionaryEntry:
-                    case DataTypes.DictionaryEntryNullable:
-                        return new DataTypes[] { collectionType | DataTypes.Object, DataTypes.Object };
+                case DataTypes.Hashtable:
+                case DataTypes.SortedListNonGeneric:
+                case DataTypes.ListDictionary:
+                case DataTypes.HybridDictionary:
+                case DataTypes.OrderedDictionary:
+                case DataTypes.DictionaryEntry:
+                case DataTypes.DictionaryEntryNullable:
+                    return new[] { collectionType | DataTypes.Object, DataTypes.Object };
 
-                    case DataTypes.StringCollection:
-                        return new DataTypes[] { collectionType | DataTypes.String };
+                case DataTypes.StringCollection:
+                    return new[] { collectionType | DataTypes.String };
 
-                    case DataTypes.StringDictionary:
-                        return new DataTypes[] { collectionType | DataTypes.String, DataTypes.String };
-                    default:
-                        // should never occur, throwing internal error without resource
-                        throw new InvalidOperationException("Element type of non-generic collection is not defined: " + ToString(collectionType));
-                }
+                case DataTypes.StringDictionary:
+                    return new[] { collectionType | DataTypes.String, DataTypes.String };
+                default:
+                    // should never occur, throwing internal error without resource
+                    throw new InvalidOperationException("Element type of non-generic collection is not defined: " + ToString(collectionType));
             }
+        }
+
+        [SecurityCritical]
+        private static IEnumerable<DataTypes> EncodeArray(Type type, BinarySerializationOptions options, SerializationManager manager)
+        {
+            Type elementType = type.GetElementType();
+            if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None
+                && manager.CanUseSurrogate(elementType))
+            {
+                DataTypes[] result = { DataTypes.Array | DataTypes.RecursiveObjectGraph };
+                if (elementType.IsNullable())
+                    result[0] |= DataTypes.Nullable;
+                return result;
+            }
+
+            DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
+            if (elementDataType != DataTypes.Null)
+                return new[] { DataTypes.Array | elementDataType };
+
+            if (IsSupportedCollection(elementType))
+            {
+                IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
+                if (innerType != null)
+                    return (new[] { DataTypes.Array }).Concat(innerType);
+            }
+
+            return null;
+        }
+
+        [SecurityCritical]
+        private static IEnumerable<DataTypes> EncodeGenericCollection(Type type, DataTypes collectionType, BinarySerializationOptions options, SerializationManager manager)
+        {
+            if (collectionType == DataTypes.Null)
+                return null;
+
+            Type[] args = type.GetGenericArguments();
+            Type elementType = args[0];
+            DataTypes elementDataType = GetSupportedElementType(elementType, options, manager);
+
+            // generics with 1 argument
+            if (args.Length == 1)
+            {
+                if (elementDataType != DataTypes.Null)
+                    return new[] { collectionType | elementDataType };
+
+                if (IsSupportedCollection(elementType))
+                {
+                    IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, options, manager);
+                    if (innerType != null)
+                        return (new[] { collectionType }).Concat(innerType);
+                }
+
+                return null;
+            }
+
+            // dictionaries
+            Type valueType = args[1];
+            DataTypes valueDataType = GetSupportedElementType(valueType, options, manager);
+
+            IEnumerable<DataTypes> keyTypes;
+            IEnumerable<DataTypes> valueTypes;
+
+            // key
+            if (elementDataType != DataTypes.Null)
+                keyTypes = new DataTypes[] { collectionType | elementDataType };
+            else if (IsSupportedCollection(elementType))
+            {
+                keyTypes = EncodeCollectionType(elementType, options, manager);
+                if (keyTypes == null)
+                    return null;
+                keyTypes = (new DataTypes[] { collectionType }).Concat(keyTypes);
+            }
+            else
+                return null;
+
+            // value
+            if (valueDataType != DataTypes.Null)
+                valueTypes = new DataTypes[] { valueDataType };
+            else if (IsSupportedCollection(valueType))
+            {
+                valueTypes = EncodeCollectionType(valueType, options, manager);
+                if (valueTypes == null)
+                    return null;
+            }
+            else
+                return null;
+
+            return keyTypes.Concat(valueTypes);
         }
 
         private static DataTypes GetSupportedCollectionType(Type type)
         {
             if (type.IsArray)
                 return DataTypes.Array;
-
-            if (type == Reflector.DictionaryEntryType)
-                return DataTypes.DictionaryEntry;
-
-            Type genType = type.IsGenericType ? type.GetGenericTypeDefinition() : null;
-            if (genType == Reflector.KeyValuePairType)
-                return DataTypes.KeyValuePair;
 
             if (type.IsNullable())
             {
@@ -795,109 +849,28 @@ namespace KGySoft.Serialization
                 }
             }
 
-            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
-                return DataTypes.Null;
-
-            if (genType != null)
-            {
-                if (genType == typeof(List<>))
-                    return DataTypes.List;
-                if (genType == typeof(Dictionary<,>))
-                    return DataTypes.Dictionary;
-                if (genType == typeof(HashSet<>))
-                    return DataTypes.HashSet;
-                if (genType == typeof(CircularList<>))
-                    return DataTypes.CircularList;
-                if (genType == typeof(CircularSortedList<,>))
-                    return DataTypes.CircularSortedList;
-                if (genType == typeof(LinkedList<>))
-                    return DataTypes.LinkedList;
-                if (genType == typeof(SortedList<,>))
-                    return DataTypes.SortedList;
-                if (genType == typeof(SortedDictionary<,>))
-                    return DataTypes.SortedDictionary;
-                if (genType == typeof(Queue<>))
-                    return DataTypes.Queue;
-                if (genType == typeof(Stack<>))
-                    return DataTypes.Stack;
-#if NET40 || NET45
-                if (genType == typeof(SortedSet<>))
-                    return DataTypes.SortedSet;
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-
-
-                return DataTypes.Null;
-            }
-
-            if (type == typeof(ArrayList))
-                return DataTypes.ArrayList;
-            if (type == typeof(Hashtable))
-                return DataTypes.Hashtable;
-            if (type == typeof(Queue))
-                return DataTypes.QueueNonGeneric;
-            if (type == typeof(Stack))
-                return DataTypes.StackNonGeneric;
-            if (type == typeof(StringCollection))
-                return DataTypes.StringCollection;
-            if (type == typeof(SortedList))
-                return DataTypes.SortedListNonGeneric;
-            if (type == typeof(ListDictionary))
-                return DataTypes.ListDictionary;
-            if (type == typeof(HybridDictionary))
-                return DataTypes.HybridDictionary;
-            if (type == typeof(OrderedDictionary))
-                return DataTypes.OrderedDictionary;
-            if (type == typeof(StringDictionary))
-                return DataTypes.StringDictionary;
-
-            return DataTypes.Null;
+            if (type.IsGenericType)
+                type = type.GetGenericTypeDefinition();
+            return supportedCollections.GetValueOrDefault(type);
         }
 
         [SecurityCritical]
         private static DataTypes GetSupportedElementType(Type type, BinarySerializationOptions options, SerializationManager manager)
         {
-            // a.) Natively supported primitive types
-            if (type == Reflector.BoolType)
-                return DataTypes.Bool;
-            if (type == Reflector.ByteType)
-                return DataTypes.UInt8;
-            if (type == Reflector.SByteType)
-                return DataTypes.Int8;
-            if (type == Reflector.ShortType)
-                return DataTypes.Int16;
-            if (type == Reflector.UShortType)
-                return DataTypes.UInt16;
-            if (type == Reflector.IntType)
-                return DataTypes.Int32;
-            if (type == Reflector.UIntType)
-                return DataTypes.UInt32;
-            if (type == Reflector.LongType)
-                return DataTypes.Int64;
-            if (type == Reflector.ULongType)
-                return DataTypes.UInt64;
-            if (type == Reflector.CharType)
-                return DataTypes.Char;
-            if (type == Reflector.StringType)
-                return DataTypes.String;
-            if (type == Reflector.FloatType)
-                return DataTypes.Single;
-            if (type == Reflector.DoubleType)
-                return DataTypes.Double;
-            if (type == Reflector.IntPtrType)
-                return DataTypes.IntPtr;
-            if (type == Reflector.UIntPtrType)
-                return DataTypes.UIntPtr;
+            DataTypes elementType;
 
-            // b.) nullable (must be before surrogate-support checks)
+            // a.) nullable (must be before surrogate-support checks)
             if (type.IsNullable())
             {
-                DataTypes elementType = GetSupportedElementType(type.GetGenericArguments()[0], options, manager);
+                elementType = GetSupportedElementType(type.GetGenericArguments()[0], options, manager);
                 if (elementType == DataTypes.Null)
                     return elementType;
                 return DataTypes.Nullable | elementType;
             }
+
+            // b.) Natively supported primitive types
+            if (primitiveTypes.TryGetValue(type, out elementType))
+                return elementType;
 
             // c.) surrogate for any type: check even for sub-collections
             if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None && manager.CanUseSurrogate(type))
@@ -907,44 +880,17 @@ namespace KGySoft.Serialization
             if (GetSupportedCollectionType(type) != DataTypes.Null)
                 return DataTypes.Null;
 
-            // d.) Natively supported non-primitive types
-            if (type == Reflector.DecimalType)
-                return DataTypes.Decimal;
-            if (type == Reflector.DateTimeType)
-                return DataTypes.DateTime;
-            if (type == Reflector.ObjectType)
-                return DataTypes.Object;
-            if (type == typeof(DBNull))
-                return DataTypes.DBNull;
-            if (type == typeof(Version))
-                return DataTypes.Version;
-            if (type == typeof(Guid))
-                return DataTypes.Guid;
-            if (type == Reflector.TimeSpanType)
-                return DataTypes.TimeSpan;
-            if (type == Reflector.DateTimeOffsetType)
-                return DataTypes.DateTimeOffset;
-            if (type == typeof(Uri))
-                return DataTypes.Uri;
-            if (type == typeof(BitArray))
-                return DataTypes.BitArray;
-            if (type == typeof(BitVector32))
-                return DataTypes.BitVector32;
-            if (type == typeof(BitVector32.Section))
-                return DataTypes.BitVector32Section;
-            if (type == typeof(StringBuilder))
-                return DataTypes.StringBuilder;
-
-            // e.) enum
+            // d.) enum
             if (type.IsEnum)
                 return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), options, manager);
 
+            // e.) Natively supported non-primitive types
+            if (supportedNonPrimitiveElementTypes.TryGetValue(type, out elementType))
+                return elementType;
+
             // f.) IBinarySerializable implementation
-            if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None)
-                && typeof(IBinarySerializable).IsAssignableFrom(type))
-            {
+            if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None) && typeof(IBinarySerializable).IsAssignableFrom(type))
                 return DataTypes.BinarySerializable;
-            }
 
             // g.) Any struct if can be serialized
             if ((options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
@@ -970,6 +916,7 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Gets the element types for a dictionary
         /// </summary>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many common cases")]
         private static CircularList<DataTypes> GetDictionaryValueTypes(CircularList<DataTypes> collectionTypeDescriptor)
         {
             // descriptor must refer a generic dictionary type here
@@ -1068,6 +1015,180 @@ namespace KGySoft.Serialization
             }
 
             bw.Write((byte)value);
+        }
+
+        private static bool TryWritePrimitive(BinaryWriter bw, object data)
+        {
+            if (data == null)
+            {
+                bw.Write((ushort)DataTypes.Null);
+                return true;
+            }
+
+            switch (primitiveTypes.GetValueOrDefault(data.GetType()))
+            {
+                case DataTypes.Bool:
+                    bw.Write((ushort)DataTypes.Bool);
+                    bw.Write((bool)data);
+                    return true;
+                case DataTypes.UInt8:
+                    bw.Write((ushort)DataTypes.UInt8);
+                    bw.Write((byte)data);
+                    return true;
+                case DataTypes.Int8:
+                    bw.Write((ushort)DataTypes.Int8);
+                    bw.Write((sbyte)data);
+                    return true;
+                case DataTypes.Int16:
+                    WriteDynamicInt(bw, DataTypes.Int16, 2, (ulong)(short)data);
+                    return true;
+                case DataTypes.UInt16:
+                    WriteDynamicInt(bw, DataTypes.UInt16, 2, (ushort)data);
+                    return true;
+                case DataTypes.Int32:
+                    WriteDynamicInt(bw, DataTypes.Int32, 4, (ulong)(int)data);
+                    return true;
+                case DataTypes.UInt32:
+                    WriteDynamicInt(bw, DataTypes.UInt32, 4, (uint)data);
+                    return true;
+                case DataTypes.Int64:
+                    WriteDynamicInt(bw, DataTypes.Int64, 8, (ulong)(long)data);
+                    return true;
+                case DataTypes.UInt64:
+                    WriteDynamicInt(bw, DataTypes.UInt64, 8, (ulong)data);
+                    return true;
+                case DataTypes.Char:
+                    WriteDynamicInt(bw, DataTypes.Char, 2, (char)data);
+                    return true;
+                case DataTypes.String:
+                    bw.Write((ushort)DataTypes.String);
+                    bw.Write((string)data);
+                    return true;
+                case DataTypes.Single:
+                    bw.Write((ushort)DataTypes.Single);
+                    bw.Write((float)data);
+                    return true;
+                case DataTypes.Double:
+                    bw.Write((ushort)DataTypes.Double);
+                    bw.Write((double)data);
+                    return true;
+                case DataTypes.IntPtr:
+                    bw.Write((ushort)DataTypes.IntPtr);
+                    bw.Write(((IntPtr)data).ToInt64());
+                    return true;
+                case DataTypes.UIntPtr:
+                    bw.Write((ushort)DataTypes.UIntPtr);
+                    bw.Write(((UIntPtr)data).ToUInt64());
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool TryWriteSimpleNonPrimitive(BinaryWriter bw, object data)
+        {
+            switch (supportedNonPrimitiveElementTypes.GetValueOrDefault(data.GetType()))
+            {
+                case DataTypes.Decimal:
+                    bw.Write((ushort)DataTypes.Decimal);
+                    bw.Write((decimal)data);
+                    return true;
+                case DataTypes.DateTime:
+                    bw.Write((ushort)DataTypes.DateTime);
+                    WriteDateTime(bw, (DateTime)data);
+                    return true;
+                case DataTypes.DateTimeOffset:
+                    bw.Write((ushort)DataTypes.DateTimeOffset);
+                    WriteDateTimeOffset(bw, (DateTimeOffset)data);
+                    return true;
+                case DataTypes.TimeSpan:
+                    bw.Write((ushort)DataTypes.TimeSpan);
+                    bw.Write(((TimeSpan)data).Ticks);
+                    return true;
+                case DataTypes.DBNull:
+                    bw.Write((ushort)DataTypes.DBNull);
+                    return true;
+                case DataTypes.Guid:
+                    bw.Write((ushort)DataTypes.Guid);
+                    bw.Write(((Guid)data).ToByteArray());
+                    return true;
+                case DataTypes.BitVector32:
+                    bw.Write((ushort)DataTypes.BitVector32);
+                    bw.Write(((BitVector32)data).Data);
+                    return true;
+                case DataTypes.BitVector32Section:
+                    bw.Write((ushort)DataTypes.BitVector32Section);
+                    WriteSection(bw, (BitVector32.Section)data);
+                    return true;
+                case DataTypes.Version:
+                    bw.Write((ushort)DataTypes.Version);
+                    WriteVersion(bw, (Version)data);
+                    return true;
+                case DataTypes.BitArray:
+                    bw.Write((ushort)DataTypes.BitArray);
+                    WriteBitArray(bw, (BitArray)data);
+                    return true;
+                case DataTypes.StringBuilder:
+                    bw.Write((ushort)DataTypes.StringBuilder);
+                    WriteStringBuilder(bw, (StringBuilder)data);
+                    return true;
+                case DataTypes.Object:
+                    bw.Write((ushort)DataTypes.Object);
+                    return true;
+                case DataTypes.Uri:
+                    bw.Write((ushort)DataTypes.Uri);
+                    WriteUri(bw, (Uri)data);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        [SecurityCritical]
+        private static void WriteEnum(BinaryWriter bw, object enumObject, SerializationManager manager)
+        {
+            Type type = enumObject.GetType();
+            DataTypes dataType = primitiveTypes.GetValueOrDefault(Enum.GetUnderlyingType(type));
+
+            ulong enumValue = dataType == DataTypes.UInt64 ? (ulong)enumObject : (ulong)((IConvertible)enumObject).ToInt64(null);
+
+            bool is7Bit = false;
+            int size = 1;
+            switch (dataType)
+            {
+                case DataTypes.Int8:
+                case DataTypes.UInt8:
+                    break;
+                case DataTypes.Int16:
+                case DataTypes.UInt16:
+                    size = 2;
+                    is7Bit = enumValue < (1UL << 7);
+                    break;
+                case DataTypes.Int32:
+                case DataTypes.UInt32:
+                    size = 4;
+                    is7Bit = enumValue < (1UL << 21);
+                    break;
+                case DataTypes.Int64:
+                case DataTypes.UInt64:
+                    size = 8;
+                    is7Bit = enumValue < (1UL << 49);
+                    break;
+                default:
+                    // should never occur, throwing internal error without resource
+                    throw new ArgumentOutOfRangeException(nameof(enumObject));
+            }
+
+            dataType |= DataTypes.Enum;
+            if (is7Bit)
+                dataType |= DataTypes.Store7BitEncoded;
+
+            bw.Write((ushort)dataType);
+            manager.WriteType(bw, type);
+            if (is7Bit)
+                Write7BitLong(bw, enumValue);
+            else
+                bw.Write(BitConverter.GetBytes(enumValue), 0, size);
         }
 
         private static void WriteDateTime(BinaryWriter bw, DateTime dateTime)
@@ -1206,6 +1327,39 @@ namespace KGySoft.Serialization
             return result;
         }
 
+        private static object ReadEnum(BinaryReader br, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        {
+            Type enumType = collectionDescriptor == null
+                ? manager.ReadType(br)
+                : collectionDescriptor.GetElementType(isTValue);
+            bool is7BitEncoded = (dataType & DataTypes.Store7BitEncoded) != DataTypes.Null;
+            switch (dataType & DataTypes.SimpleTypes)
+            {
+                case DataTypes.Int8:
+                    return Enum.ToObject(enumType, br.ReadSByte());
+                case DataTypes.UInt8:
+                    return Enum.ToObject(enumType, br.ReadByte());
+                case DataTypes.Int16:
+                    return Enum.ToObject(enumType,
+                        is7BitEncoded ? (short)Read7BitInt(br) : br.ReadInt16());
+                case DataTypes.UInt16:
+                    return Enum.ToObject(enumType,
+                        is7BitEncoded ? (ushort)Read7BitInt(br) : br.ReadUInt16());
+                case DataTypes.Int32:
+                    return Enum.ToObject(enumType, is7BitEncoded ? Read7BitInt(br) : br.ReadInt32());
+                case DataTypes.UInt32:
+                    return Enum.ToObject(enumType,
+                        is7BitEncoded ? (uint)Read7BitInt(br) : br.ReadUInt32());
+                case DataTypes.Int64:
+                    return Enum.ToObject(enumType, is7BitEncoded ? Read7BitLong(br) : br.ReadInt64());
+                case DataTypes.UInt64:
+                    return Enum.ToObject(enumType,
+                        is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
+                default:
+                    throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(ToString(dataType & DataTypes.SimpleTypes)));
+            }
+        }
+
         private static BinarySerializationOptions ReadOptions(BinaryReader br)
         {
             BinarySerializationOptions options = (BinarySerializationOptions)br.ReadByte();
@@ -1254,7 +1408,9 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="data">The object to serialize</param>
         /// <returns>Serialized raw data of the object</returns>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryWriter constructor will not leave the stream open.")]
         public byte[] Serialize(object data)
         {
@@ -1281,7 +1437,9 @@ namespace KGySoft.Serialization
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "This BinaryReader constructor will not leave the stream open.")]
         [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "rawData will be checked by MemoryStream constructor.")]
         public object Deserialize(byte[] rawData, int offset = 0)
@@ -1306,7 +1464,9 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public void SerializeToStream(Stream stream, object data)
         {
             try
@@ -1325,7 +1485,9 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public object DeserializeFromStream(Stream stream)
         {
             try
@@ -1350,7 +1512,9 @@ namespace KGySoft.Serialization
         /// </remarks>
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public void SerializeByWriter(BinaryWriter writer, object data)
         {
             try
@@ -1372,7 +1536,9 @@ namespace KGySoft.Serialization
         /// </remarks>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public object DeserializeByReader(BinaryReader reader)
         {
             try
@@ -1401,108 +1567,18 @@ namespace KGySoft.Serialization
         [SecurityCritical]
         private void Write(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
         {
-            if (!isRoot)
-            {
-                // if an existing id found, returning
-                if (manager.WriteId(bw, data))
-                    return;
-            }
+            // if an existing id found, returning
+            if (!isRoot && manager.WriteId(bw, data))
+                return;
 
             // a.) Natively supported primitive types including string and uintptr (no need for distinct nullables here as they are boxed)
-            if (data == null)
-            {
-                bw.Write((ushort)DataTypes.Null);
+            if (TryWritePrimitive(bw, data))
                 return;
-            }
-            if (data is bool)
-            {
-                bw.Write((ushort)DataTypes.Bool);
-                bw.Write((bool)data);
-                return;
-            }
-            if (data is byte)
-            {
-                bw.Write((ushort)DataTypes.UInt8);
-                bw.Write((byte)data);
-                return;
-            }
-            if (data is sbyte)
-            {
-                bw.Write((ushort)DataTypes.Int8);
-                bw.Write((sbyte)data);
-                return;
-            }
-            if (data is short)
-            {
-                WriteDynamicInt(bw, DataTypes.Int16, 2, (ulong)(short)data);
-                return;
-            }
-            if (data is ushort)
-            {
-                WriteDynamicInt(bw, DataTypes.UInt16, 2, (ushort)data);
-                return;
-            }
-            if (data is int)
-            {
-                WriteDynamicInt(bw, DataTypes.Int32, 4, (ulong)(int)data);
-                return;
-            }
-            if (data is uint)
-            {
-                WriteDynamicInt(bw, DataTypes.UInt32, 4, (uint)data);
-                return;
-            }
-            if (data is long)
-            {
-                WriteDynamicInt(bw, DataTypes.Int64, 8, (ulong)(long)data);
-                return;
-            }
-            if (data is ulong)
-            {
-                WriteDynamicInt(bw, DataTypes.UInt64, 8, (ulong)data);
-                return;
-            }
-            if (data is char)
-            {
-                WriteDynamicInt(bw, DataTypes.Char, 2, (char)data);
-                return;
-            }
-            string stringData = data as string;
-            if (stringData != null)
-            {
-                bw.Write((ushort)DataTypes.String);
-                bw.Write(stringData);
-                return;
-            }
-            if (data is float)
-            {
-                bw.Write((ushort)DataTypes.Single);
-                bw.Write((float)data);
-                return;
-            }
-            if (data is double)
-            {
-                bw.Write((ushort)DataTypes.Double);
-                bw.Write((double)data);
-                return;
-            }
-            if (data is IntPtr)
-            {
-                bw.Write((ushort)DataTypes.IntPtr);
-                bw.Write(((IntPtr)data).ToInt64());
-                return;
-            }
-            if (data is UIntPtr)
-            {
-                bw.Write((ushort)DataTypes.UIntPtr);
-                bw.Write(((UIntPtr)data).ToUInt64());
-                return;
-            }
 
             // b.) Surrogate selector for any type
-            Type type = null;
+            Type type = data.GetType();
             BinarySerializationOptions options = manager.Options;
-            if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None && manager.CanUseSurrogate(type = data.GetType()))
+            if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None && manager.CanUseSurrogate(type))
             {
                 bw.Write((ushort)DataTypes.RecursiveObjectGraph);
 
@@ -1518,166 +1594,22 @@ namespace KGySoft.Serialization
             }
 
             // c.) Natively supported non-primitive single types
-            if (data is decimal)
-            {
-                bw.Write((ushort)DataTypes.Decimal);
-                bw.Write((decimal)data);
+            if (TryWriteSimpleNonPrimitive(bw, data))
                 return;
-            }
-            if (data is DateTime)
-            {
-                bw.Write((ushort)DataTypes.DateTime);
-                WriteDateTime(bw, (DateTime)data);
-                return;
-            }
-            if (data is TimeSpan)
-            {
-                bw.Write((ushort)DataTypes.TimeSpan);
-                bw.Write(((TimeSpan)data).Ticks);
-                return;
-            }
-            if (data is DateTimeOffset)
-            {
-                bw.Write((ushort)DataTypes.DateTimeOffset);
-                WriteDateTimeOffset(bw, (DateTimeOffset)data);
-                return;
-            }
-            if (data is DBNull)
-            {
-                bw.Write((ushort)DataTypes.DBNull);
-                return;
-            }
-            if (data is Guid)
-            {
-                bw.Write((ushort)DataTypes.Guid);
-                bw.Write(((Guid)data).ToByteArray());
-                return;
-            }
-            if (data is BitVector32)
-            {
-                bw.Write((ushort)DataTypes.BitVector32);
-                bw.Write(((BitVector32)data).Data);
-                return;
-            }
-            if (data is BitVector32.Section)
-            {
-                bw.Write((ushort)DataTypes.BitVector32Section);
-                WriteSection(bw, (BitVector32.Section)data);
-                return;
-            }
-            Version version = data as Version;
-            if (version != null)
-            {
-                bw.Write((ushort)DataTypes.Version);
-                WriteVersion(bw, version);
-                return;
-            }
-            BitArray bitArray = data as BitArray;
-            if (bitArray != null)
-            {
-                bw.Write((ushort)DataTypes.BitArray);
-                WriteBitArray(bw, bitArray);
-                return;
-            }
-            StringBuilder sb = data as StringBuilder;
-            if (sb != null)
-            {
-                bw.Write((ushort)DataTypes.StringBuilder);
-                WriteStringBuilder(bw, sb);
-                return;
-            }
 
-            // non-sealed types below
-            type = type ?? data.GetType();
-            if (type == Reflector.ObjectType)
+            // d.) enum: storing enum type, assembly qualified name and value: still shorter than by BinaryFormatter
+            if (data is Enum)
             {
-                bw.Write((ushort)DataTypes.Object);
-                return;
-            }
-            if (type == typeof(Uri))
-            {
-                bw.Write((ushort)DataTypes.Uri);
-                WriteUri(bw, (Uri)data);
-                return;
-            }
-
-            // d.) enum: storing enum type, assembly qualified name and value: still shorter than binary formatter
-            if (data is Enum enumObject)
-            {
-                TypeCode enumType = enumObject.GetTypeCode();
-                DataTypes dataType = DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), options, manager);
-                // ReSharper disable PossibleInvalidCastException
-                ulong enumValue = enumType == TypeCode.UInt64 ? (ulong)data : (ulong)((IConvertible)enumObject).ToInt64(null);
-                // ReSharper restore PossibleInvalidCastException
-
-                bool is7Bit = false;
-                int size = 1;
-                switch (enumType)
-                {
-                    case TypeCode.SByte:
-                    case TypeCode.Byte:
-                        break;
-                    case TypeCode.Int16:
-                    case TypeCode.UInt16:
-                        size = 2;
-                        is7Bit = enumValue < (1UL << 7);
-                        break;
-                    case TypeCode.Int32:
-                    case TypeCode.UInt32:
-                        size = 4;
-                        is7Bit = enumValue < (1UL << 21);
-                        break;
-                    case TypeCode.Int64:
-                    case TypeCode.UInt64:
-                        size = 8;
-                        is7Bit = enumValue < (1UL << 49);
-                        break;
-                    default:
-                        // should never occur, throwing internal error without resource
-                        throw new ArgumentOutOfRangeException(nameof(data));
-                }
-
-                if (is7Bit)
-                    dataType |= DataTypes.Store7BitEncoded;
-                bw.Write((ushort)dataType);
-                manager.WriteType(bw, type);
-                if (is7Bit)
-                    Write7BitLong(bw, enumValue);
-                else
-                    bw.Write(BitConverter.GetBytes(enumValue), 0, size);
+                WriteEnum(bw, data, manager);
                 return;
             }
 
             // e.) Supported collection or compound of collections
-            if (IsSupportedCollection(type))
-            {
-                IEnumerable<DataTypes> collectionType = EncodeCollectionType(type, options, manager);
-                if (collectionType != null)
-                {
-                    CircularList<DataTypes> collectionTypeList = new CircularList<DataTypes>(collectionType);
-                    foreach (DataTypes dataType in collectionTypeList)
-                    {
-                        bw.Write((ushort)dataType);
-                    }
-
-                    // on root level writing the id after datatype if the collection may have recursion because its reference can be re-used
-                    if (isRoot && CanHaveRecursion(collectionTypeList))
-                    {
-                        if (manager.WriteId(bw, data))
-                            Debug.Fail("Id of recursive object should be unknown on top level.");
-                    }
-
-                    WriteOptions(bw, collectionTypeList, options);
-                    WriteTypeNamesAndRanks(bw, type, options, manager);
-                    WriteCollection(bw, collectionTypeList, data, manager);
-                    return;
-                }
-            }
+            if (TryWriteCollection(bw, data, isRoot, manager))
+                return;
 
             // f.) BinarySerializable
-            IBinarySerializable binarySerializable;
-            if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None)
-                && (binarySerializable = data as IBinarySerializable) != null)
+            if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None) && data is IBinarySerializable binarySerializable)
             {
                 bw.Write((ushort)DataTypes.BinarySerializable);
 
@@ -1704,22 +1636,8 @@ namespace KGySoft.Serialization
             }
 
             // h.) Recursive serialization: if enabled or surrogate selector supports the type, or when type is serializable
-            if ((options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None || manager.CanUseSurrogate(type)
-                || type.IsSerializable && !type.IsArray) // array is serializable so array with non-serializable element type would be a problem
-            {
-                bw.Write((ushort)DataTypes.RecursiveObjectGraph);
-
-                // on root level writing the id after datatype even if the object is value type because the boxed reference can be shared
-                if (isRoot)
-                {
-                    if (manager.WriteId(bw, data))
-                        Debug.Fail("Id of recursive object should be unknown on top level.");
-                }
-
-                WriteOptions(bw, null, options);
-                WriteObjectGraph(bw, data, null, manager);
+            if (TryWriteRecursively(bw, data, isRoot, manager))
                 return;
-            }
 
 #pragma warning disable 618, 612
             // i.) Any struct (obsolete but still supported as backward compatibility)
@@ -1733,6 +1651,35 @@ namespace KGySoft.Serialization
 #pragma warning restore 618, 612
 
             ThrowNotSupported(options, type);
+        }
+
+        [SecurityCritical]
+        private bool TryWriteCollection(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
+        {
+            Type type = data.GetType();
+
+            if (!IsSupportedCollection(type))
+                return false;
+
+            IEnumerable<DataTypes> collectionType = EncodeCollectionType(type, manager.Options, manager);
+            if (collectionType == null)
+                return false;
+
+            CircularList<DataTypes> collectionTypeList = new CircularList<DataTypes>(collectionType);
+            foreach (DataTypes dataType in collectionTypeList)
+                bw.Write((ushort)dataType);
+
+            // on root level writing the id after data type if the collection may have recursion because its reference can be re-used
+            if (isRoot && CanHaveRecursion(collectionTypeList))
+            {
+                if (manager.WriteId(bw, data))
+                    Debug.Fail("Id of recursive object should be unknown on top level.");
+            }
+
+            WriteOptions(bw, collectionTypeList, manager.Options);
+            WriteTypeNamesAndRanks(bw, type, manager.Options, manager);
+            WriteCollection(bw, collectionTypeList, data, manager);
+            return true;
         }
 
         [SecurityCritical]
@@ -1874,6 +1821,7 @@ namespace KGySoft.Serialization
         /// Contains the actual generic type parameter or array base type from which <see cref="IBinarySerializable"/> or the type of the recursively serialized object is assignable.</param>
         /// <param name="manager">An <see cref="SerializationManager"/> instance.</param>
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Simple switch with many cases")]
         private void WriteElement(BinaryWriter bw, object element, CircularList<DataTypes> elementCollectionDataTypes, DataTypes elementDataType,
             Type collectionElementType, SerializationManager manager)
         {
@@ -2072,6 +2020,27 @@ namespace KGySoft.Serialization
             OnSerialized(data, options);
         }
 
+        [SecurityCritical]
+        private bool TryWriteRecursively(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
+        {
+            Type type = data.GetType();
+            if ((manager.Options & BinarySerializationOptions.RecursiveSerializationAsFallback) == BinarySerializationOptions.None && !manager.CanUseSurrogate(type) && (!type.IsSerializable || type.IsArray))
+                return false;
+
+            bw.Write((ushort)DataTypes.RecursiveObjectGraph);
+
+            // on root level writing the id after data type even if the object is value type because the boxed reference can be shared
+            if (isRoot)
+            {
+                if (manager.WriteId(bw, data))
+                    Debug.Fail("Id of recursive object should be unknown on top level.");
+            }
+
+            WriteOptions(bw, null, manager.Options);
+            WriteObjectGraph(bw, data, null, manager);
+            return true;
+        }
+
         /// <summary>
         /// Serializes an object graph.
         /// </summary>
@@ -2087,9 +2056,7 @@ namespace KGySoft.Serialization
             OnSerializing(data, options);
 
             Type type = data.GetType();
-            ISerializationSurrogate surrogate;
-            ISurrogateSelector selector;
-            if (manager.TryGetSurrogate(type, out surrogate, out selector) || ((options & BinarySerializationOptions.IgnoreISerializable) == BinarySerializationOptions.None && data is ISerializable))
+            if (manager.TryGetSurrogate(type, out ISerializationSurrogate surrogate, out var _) || ((options & BinarySerializationOptions.IgnoreISerializable) == BinarySerializationOptions.None && data is ISerializable))
                 WriteCustomObjectGraph(bw, data, collectionElementType, options, manager, surrogate);
             else
             {
@@ -2514,6 +2481,7 @@ namespace KGySoft.Serialization
         /// <param name="isTValue"><see langword="true"/>, when element to deserialize is the value in a dictionary collection.</param>
         /// <returns>The deserialized object.</returns>
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
         private object ReadObject(BinaryReader br, bool isRoot, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
             bool is7BitEncoded = (dataType & DataTypes.Store7BitEncoded) != DataTypes.Null;
@@ -2665,84 +2633,11 @@ namespace KGySoft.Serialization
 
                     // IBinarySerializable
                     case DataTypes.BinarySerializable:
-                        // occurs on root level: object id is stored only after data type
-                        if (isRoot)
-                        {
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                            {
-                                Debug.Fail("Root level object is not expected in the cache");
-                                return cachedResult;
-                            }
-                        }
-
-                        BinarySerializationOptions origOptions = collectionDescriptor?.SerializationOptions ?? ReadOptions(br);
-
-                        // checking instance id
-                        Type elementType = null;
-                        if (collectionDescriptor != null &&
-                            (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
-                        {
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                        }
-
-                        Type objType;
-                        if (collectionDescriptor == null)
-                            objType = manager.ReadType(br);
-                        else
-                        {
-                            // Common order: 1: qualify -> is element type, 2: different type -> read type, 3: deserialize
-                            // 1. If elements should be qualified and element is not the same as collection element type
-                            if (collectionDescriptor.AreAllElementsQualified(isTValue) && !br.ReadBoolean())
-                            {
-                                // 2. then read type
-                                objType = manager.ReadType(br);
-                            }
-                            else
-                                objType = elementType ?? collectionDescriptor.GetElementType(isTValue);
-                        }
-
-                        // 3. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
-                        return ReadBinarySerializable(br, addToCache || isRoot, objType, origOptions, manager);
+                        return ReadBinarySerializable(br, isRoot, addToCache, collectionDescriptor, manager, isTValue);
 
                     // recursive graph
                     case DataTypes.RecursiveObjectGraph:
-                        {
-                            // When element types may differ, reading element with data type
-                            if (collectionDescriptor != null && collectionDescriptor.AreAllElementsQualified(isTValue))
-                                return Read(br, false, manager);
-
-                            // occurs on root level: object id is stored only after data type
-                            if (isRoot)
-                            {
-                                if (manager.TryGetCachedObject(br, out cachedResult))
-                                {
-                                    Debug.Fail("Root level object is not expected in the cache");
-                                    return cachedResult;
-                                }
-                            }
-
-                            // TODO: options is not used here anymore
-                            if (collectionDescriptor?.SerializationOptions == null)
-                                ReadOptions(br); // just reading it to pass through but not used
-
-                            // checking instance id
-                            elementType = null;
-                            if (collectionDescriptor != null &&
-                                (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
-                            {
-                                if (manager.TryGetCachedObject(br, out cachedResult))
-                                    return cachedResult;
-                            }
-
-                            // in collection, type is already known, otherwise, reading it
-                            objType = collectionDescriptor == null
-                                ? manager.ReadType(br)
-                                : (elementType ?? collectionDescriptor.GetElementType(isTValue));
-
-                            // 2. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
-                            return ReadObjectGraph(br, addToCache || isRoot, objType, manager, collectionDescriptor != null);
-                        }
+                        return ReadObjectGraph(br, isRoot, addToCache, collectionDescriptor, manager, isTValue);
 
                     // raw structure
                     case DataTypes.RawStruct:
@@ -2758,36 +2653,7 @@ namespace KGySoft.Serialization
                     default:
                         // enum
                         if ((dataType & DataTypes.Enum) == DataTypes.Enum)
-                        {
-                            Type enumType = collectionDescriptor == null
-                                    ? manager.ReadType(br)
-                                    : collectionDescriptor.GetElementType(isTValue);
-                            switch (dataType & DataTypes.SimpleTypes)
-                            {
-                                case DataTypes.Int8:
-                                    return result = Enum.ToObject(enumType, br.ReadSByte());
-                                case DataTypes.UInt8:
-                                    return result = Enum.ToObject(enumType, br.ReadByte());
-                                case DataTypes.Int16:
-                                    return result = Enum.ToObject(enumType,
-                                        is7BitEncoded ? (short)Read7BitInt(br) : br.ReadInt16());
-                                case DataTypes.UInt16:
-                                    return result = Enum.ToObject(enumType,
-                                        is7BitEncoded ? (ushort)Read7BitInt(br) : br.ReadUInt16());
-                                case DataTypes.Int32:
-                                    return result = Enum.ToObject(enumType, is7BitEncoded ? Read7BitInt(br) : br.ReadInt32());
-                                case DataTypes.UInt32:
-                                    return result = Enum.ToObject(enumType,
-                                        is7BitEncoded ? (uint)Read7BitInt(br) : br.ReadUInt32());
-                                case DataTypes.Int64:
-                                    return result = Enum.ToObject(enumType, is7BitEncoded ? Read7BitLong(br) : br.ReadInt64());
-                                case DataTypes.UInt64:
-                                    return result = Enum.ToObject(enumType,
-                                        is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
-                                default:
-                                    throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(ToString(dataType & DataTypes.SimpleTypes)));
-                            }
-                        }
+                            return result = ReadEnum(br, dataType, collectionDescriptor, manager, isTValue);
 
                         throw new InvalidOperationException(Res.BinarySerializationCannotDeserializeObject(ToString(dataType)));
                 }
@@ -2800,7 +2666,53 @@ namespace KGySoft.Serialization
         }
 
         [SecurityCritical]
-        private object ReadBinarySerializable(BinaryReader br, bool addToCache, Type type, BinarySerializationOptions origOptions, DeserializationManager manager)
+        private object ReadBinarySerializable(BinaryReader br, bool isRoot, bool addToCache, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        {
+            object cachedResult;
+
+            // occurs on root level: object id is stored only after data type
+            if (isRoot)
+            {
+                if (manager.TryGetCachedObject(br, out cachedResult))
+                {
+                    Debug.Fail("Root level object is not expected in the cache");
+                    return cachedResult;
+                }
+            }
+
+            BinarySerializationOptions origOptions = collectionDescriptor?.SerializationOptions ?? ReadOptions(br);
+
+            // checking instance id
+            Type elementType = null;
+            if (collectionDescriptor != null &&
+                (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
+            {
+                if (manager.TryGetCachedObject(br, out cachedResult))
+                    return cachedResult;
+            }
+
+            Type objType;
+            if (collectionDescriptor == null)
+                objType = manager.ReadType(br);
+            else
+            {
+                // Common order: 1: qualify -> is element type, 2: different type -> read type, 3: deserialize
+                // 1. If elements should be qualified and element is not the same as collection element type
+                if (collectionDescriptor.AreAllElementsQualified(isTValue) && !br.ReadBoolean())
+                {
+                    // 2. then read type
+                    objType = manager.ReadType(br);
+                }
+                else
+                    objType = elementType ?? collectionDescriptor.GetElementType(isTValue);
+            }
+
+            // 3. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
+            return DoReadBinarySerializable(br, addToCache || isRoot, objType, origOptions, manager);
+        }
+
+        [SecurityCritical]
+        private object DoReadBinarySerializable(BinaryReader br, bool addToCache, Type type, BinarySerializationOptions origOptions, DeserializationManager manager)
         {
             byte[] serData = br.ReadBytes(Read7BitInt(br));
 
@@ -2828,11 +2740,51 @@ namespace KGySoft.Serialization
             return result;
         }
 
+        [SecurityCritical]
+        private object ReadObjectGraph(BinaryReader br, bool isRoot, bool addToCache, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        {
+            // When element types may differ, reading element with data type
+            if (collectionDescriptor != null && collectionDescriptor.AreAllElementsQualified(isTValue))
+                return Read(br, false, manager);
+
+            // occurs on root level: object id is stored only after data type
+            object cachedResult;
+            if (isRoot)
+            {
+                if (manager.TryGetCachedObject(br, out cachedResult))
+                {
+                    Debug.Fail("Root level object is not expected in the cache");
+                    return cachedResult;
+                }
+            }
+
+            // TODO: options is not used here anymore
+            if (collectionDescriptor?.SerializationOptions == null)
+                ReadOptions(br); // just reading it to pass through but not used
+
+            // checking instance id
+            Type elementType = null;
+            if (collectionDescriptor != null &&
+                (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
+            {
+                if (manager.TryGetCachedObject(br, out cachedResult))
+                    return cachedResult;
+            }
+
+            // in collection, type is already known, otherwise, reading it
+            Type objType = collectionDescriptor == null
+                ? manager.ReadType(br)
+                : (elementType ?? collectionDescriptor.GetElementType(isTValue));
+
+            // 2. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
+            return DoReadObjectGraph(br, addToCache || isRoot, objType, manager, collectionDescriptor != null);
+        }
+
         /// <summary>
         /// Deserializing object graph with options that was used on serialization.
         /// </summary>
         [SecurityCritical]
-        private object ReadObjectGraph(BinaryReader br, bool addToCache, Type type, DeserializationManager manager, bool refineType)
+        private object DoReadObjectGraph(BinaryReader br, bool addToCache, Type type, DeserializationManager manager, bool refineType)
         {
             // a.) Graph method
             bool isDefaultObjectGraph = br.ReadBoolean();

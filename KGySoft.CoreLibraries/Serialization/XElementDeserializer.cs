@@ -45,6 +45,22 @@ namespace KGySoft.Serialization
     /// </summary>
     internal abstract class XElementDeserializer : XmlDeserializerBase
     {
+        #region TryDeserializeObjectContext Struct
+
+        private struct TryDeserializeObjectContext
+        {
+            #region Fields
+
+            internal Type Type;
+            internal XElement Element;
+            internal object ExistingInstance;
+            internal object Result;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Methods
 
         #region Public Methods
@@ -192,9 +208,117 @@ namespace KGySoft.Serialization
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
-        [SecuritySafeCritical] // due to DeserializeValueType but is safe because serialized by safe version
         private static bool TryDeserializeObject(Type type, XElement element, object existingInstance, out object result)
         {
+            #region Local Methods to reduce complexity
+
+            bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
+            {
+                if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
+                {
+                    // key
+                    XElement xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Key));
+                    if (xItem == null)
+                        throw new ArgumentException(Res.XmlSerializationKeyValueMissingKey);
+                    XAttribute xType = xItem.Attribute(XmlSerializer.AttributeType);
+                    Type keyType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[0];
+                    if (!TryDeserializeObject(keyType, xItem, null, out object key))
+                    {
+                        if (xType != null && keyType == null)
+                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
+                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
+                    }
+
+                    // value
+                    xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Value));
+                    if (xItem == null)
+                        throw new ArgumentException(Res.XmlSerializationKeyValueMissingValue);
+                    xType = xItem.Attribute(XmlSerializer.AttributeType);
+                    Type valueType = xType != null ? Reflector.ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[1];
+                    if (!TryDeserializeObject(valueType, xItem, null, out object value))
+                    {
+                        if (xType != null && valueType == null)
+                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
+                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
+                    }
+
+                    var ctor = ctx.Type.GetConstructor(new[] { keyType, valueType });
+                    ctx.Result = Reflector.CreateInstance(ctor, key, value);
+                    return true;
+                }
+
+                return false;
+            }
+
+            void DeserializeBinary(ref TryDeserializeObjectContext ctx)
+            {
+                if (ctx.Element.IsEmpty)
+                    return;
+                byte[] data = Convert.FromBase64String(ctx.Element.Value);
+                XAttribute attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
+                if (attrCrc != null)
+                {
+                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
+                        throw new ArgumentException(Res.XmlSerializationCrcError);
+                }
+
+                ctx.Result = BinarySerializer.Deserialize(data);
+            }
+
+            bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
+            {
+                if (ctx.Type != null && !ctx.Element.IsEmpty)
+                {
+                    // 1.) array (both existing and new)
+                    if (ctx.Type.IsArray)
+                    {
+                        ctx.Result = DeserializeArray(ctx.ExistingInstance as Array, ctx.Type.GetElementType(), ctx.Element, true);
+                        return true;
+                    }
+
+                    // 2.) existing read-write collection
+                    if (ctx.Type.IsReadWriteCollection(ctx.ExistingInstance))
+                    {
+                        DeserializeContent(ctx.Element, ctx.ExistingInstance);
+                        ctx.Result = ctx.ExistingInstance;
+                        return true;
+                    }
+
+                    bool isCollection = ctx.Type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
+
+                    // 3.) New collection by collectionCtor (only if there is no defaultCtor)
+                    if (isCollection && defaultCtor == null && !ctx.Type.IsValueType)
+                    {
+                        ctx.Result = DeserializeContentByInitializerCollection(ctx.Element, collectionCtor, elementType, isDictionary);
+                        return true;
+                    }
+
+                    ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
+                            ? Reflector.CreateInstance(ctx.Type)
+                            : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
+
+                    // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
+                    if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
+                    {
+                        if (collectionCtor != null)
+                        {
+                            ctx.Result = DeserializeContentByInitializerCollection(ctx.Element, collectionCtor, elementType, isDictionary);
+                            return true;
+                        }
+
+                        throw new SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
+                    }
+
+                    // 5.) Newly created collection or any other object (both existing and new)
+                    DeserializeContent(ctx.Element, ctx.Result);
+                    return true;
+                }
+
+                return false;
+            }
+
+            #endregion
+
             // null value
             if (element.IsEmpty && (type == null || !type.IsValueType || type.IsNullable()))
             {
@@ -238,125 +362,56 @@ namespace KGySoft.Serialization
                 }
             }
 
+            var context = new TryDeserializeObjectContext { Type = type, Element = element, ExistingInstance = existingInstance };
+
             // d.) KeyValuePair (DictionaryEntry is deserialized recursively because its properties are settable)
-            if (type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
+            if (TryDeserializeKeyValue(ref context))
             {
-                // key
-                XElement xItem = element.Element(nameof(KeyValuePair<_, _>.Key));
-                if (xItem == null)
-                    throw new ArgumentException(Res.XmlSerializationKeyValueMissingKey);
-                XAttribute xType = xItem.Attribute(XmlSerializer.AttributeType);
-                Type keyType = xType != null ? Reflector.ResolveType(xType.Value) : type.GetGenericArguments()[0];
-                if (!TryDeserializeObject(keyType, xItem, null, out object key))
-                {
-                    if (xType != null && keyType == null)
-                        throw new ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
-                    throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
-                }
-
-                // value
-                xItem = element.Element(nameof(KeyValuePair<_, _>.Value));
-                if (xItem == null)
-                    throw new ArgumentException(Res.XmlSerializationKeyValueMissingValue);
-                xType = xItem.Attribute(XmlSerializer.AttributeType);
-                Type valueType = xType != null ? Reflector.ResolveType(xType.Value) : type.GetGenericArguments()[1];
-                if (!TryDeserializeObject(valueType, xItem, null, out object value))
-                {
-                    if (xType != null && valueType == null)
-                        throw new ReflectionException(Res.XmlSerializationCannotResolveType(xType.Value));
-                    throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
-                }
-
-                var ctor = type.GetConstructor(new[] { keyType, valueType });
-                result = Reflector.CreateInstance(ctor, key, value);
+                result = context.Result;
                 return true;
             }
 
             // e.) ValueType as binary
             if (type != null && format == XmlSerializer.AttributeValueStructBinary && type.IsValueType)
             {
-                byte[] data = Convert.FromBase64String(element.Value);
-                XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
-                if (attrCrc != null)
-                {
-                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
-                        throw new ArgumentException(Res.XmlSerializationCrcError);
-                }
-
-                result = BinarySerializer.DeserializeValueType(type, data);
+                DeserializeStructBinary(ref context);
+                result = context.Result;
                 return true;
             }
 
             // f.) Binary
             if (format == XmlSerializer.AttributeValueBinary)
             {
-                if (element.IsEmpty)
-                    result = null;
-                else
-                {
-                    byte[] data = Convert.FromBase64String(element.Value);
-                    XAttribute attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
-                    if (attrCrc != null)
-                    {
-                        if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
-                            throw new ArgumentException(Res.XmlSerializationCrcError);
-                    }
-
-                    result = BinarySerializer.Deserialize(data);
-                }
+                DeserializeBinary(ref context);
+                result = context.Result;
                 return true;
             }
 
             // g.) recursive deserialization (including collections)
-            if (type != null && !element.IsEmpty)
+            if (TryDeserializeComplexObject(ref context))
             {
-                // g/1.) array (both existing and new)
-                if (type.IsArray)
-                {
-                    result = DeserializeArray(existingInstance as Array, type.GetElementType(), element, true);
-                    return true;
-                }
-
-                // g/2.) existing read-write collection
-                if (type.IsReadWriteCollection(existingInstance))
-                {
-                    DeserializeContent(element, existingInstance);
-                    result = existingInstance;
-                    return true;
-                }
-
-                bool isCollection = type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
-
-                // g/3.) New collection by collectionCtor (only if there is no defaultCtor)
-                if (isCollection && defaultCtor == null && !type.IsValueType)
-                {
-                    result = DeserializeContentByInitializerCollection(element, collectionCtor, elementType, isDictionary);
-                    return true;
-                }
-
-                result = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                        ? Reflector.CreateInstance(type)
-                        : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
-
-                // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
-                if (isCollection && !type.IsReadWriteCollection(result))
-                {
-                    if (collectionCtor != null)
-                    {
-                        result = DeserializeContentByInitializerCollection(element, collectionCtor, elementType, isDictionary);
-                        return true;
-                    }
-
-                    throw new SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(type));
-                }
-
-                // g/5.) Newly created collection or any other object (both existing and new)
-                DeserializeContent(element, result);
+                result = context.Result;
                 return true;
             }
 
             result = null;
             return false;
+        }
+
+#if !NET35
+        [SecuritySafeCritical]
+#endif
+        private static void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
+        {
+            byte[] data = Convert.FromBase64String(ctx.Element.Value);
+            XAttribute attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
+            if (attrCrc != null)
+            {
+                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
+                    throw new ArgumentException(Res.XmlSerializationCrcError);
+            }
+
+            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type, data);
         }
 
         /// <summary>

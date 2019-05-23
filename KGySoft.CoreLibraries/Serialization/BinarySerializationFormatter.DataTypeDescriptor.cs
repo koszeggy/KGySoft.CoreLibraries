@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
@@ -275,6 +276,7 @@ namespace KGySoft.Serialization
 
             #region Private Methods
 
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
             private Type GetElementType(DataTypes dataType, BinaryReader br, DeserializationManager manager)
             {
                 switch (dataType)
@@ -355,6 +357,7 @@ namespace KGySoft.Serialization
                 }
             }
 
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
             private Type GetCollectionType(DataTypes collectionDataType)
             {
                 switch (collectionDataType)

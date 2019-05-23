@@ -42,6 +42,22 @@ namespace KGySoft.Serialization
     /// </summary>
     internal abstract class XmlReaderDeserializer : XmlDeserializerBase
     {
+        #region TryDeserializeObjectContext Struct
+
+        private struct TryDeserializeObjectContext
+        {
+            #region Fields
+
+            internal Type Type;
+            internal XmlReader Reader;
+            internal object ExistingInstance;
+            internal object Result;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Methods
 
         #region Public Methods
@@ -201,9 +217,148 @@ namespace KGySoft.Serialization
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
-        [SecuritySafeCritical] // due to DeserializeValueType but is safe because serialized by safe version
         private static bool TryDeserializeObject(Type type, XmlReader reader, object existingInstance, out object result)
         {
+            #region Local Methods to reduce complexity
+
+            bool TryDeserializeKeyValue(ref TryDeserializeObjectContext ctx)
+            {
+                if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) != true)
+                    return false;
+
+                bool keyRead = false;
+                bool valueRead = false;
+                object key = null;
+                object value = null;
+                Type keyType = null, valueType = null;
+
+                while (true)
+                {
+                    ReadToNodeType(ctx.Reader, XmlNodeType.Element, XmlNodeType.EndElement);
+                    switch (ctx.Reader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            switch (ctx.Reader.Name)
+                            {
+                                case nameof(KeyValuePair<_, _>.Key):
+                                    if (keyRead)
+                                        throw new ArgumentException(Res.XmlSerializationMultipleKeys);
+
+                                    keyRead = true;
+                                    string attrType = ctx.Reader[XmlSerializer.AttributeType];
+                                    keyType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[0];
+                                    if (!TryDeserializeObject(keyType, ctx.Reader, null, out key))
+                                    {
+                                        if (attrType != null && keyType == null)
+                                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
+                                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
+                                    }
+                                    break;
+
+                                case nameof(KeyValuePair<_, _>.Value):
+                                    if (valueRead)
+                                        throw new ArgumentException(Res.XmlSerializationMultipleValues);
+
+                                    valueRead = true;
+                                    attrType = ctx.Reader[XmlSerializer.AttributeType];
+                                    valueType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[1];
+                                    if (!TryDeserializeObject(valueType, ctx.Reader, null, out value))
+                                    {
+                                        if (attrType != null && valueType == null)
+                                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
+                                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
+                                    }
+                                    break;
+
+                                default:
+                                    throw new ArgumentException(Res.XmlSerializationUnexpectedElement(ctx.Reader.Name));
+                            }
+                            break;
+
+                        case XmlNodeType.EndElement:
+                            // end of KeyValue: checking whether both key and value have been read
+                            if (!keyRead)
+                                throw new ArgumentException(Res.XmlSerializationKeyValueMissingKey);
+                            if (!valueRead)
+                                throw new ArgumentException(Res.XmlSerializationKeyValueMissingValue);
+
+                            var ctor = ctx.Type.GetConstructor(new[] { keyType, valueType });
+                            ctx.Result = Reflector.CreateInstance(ctor, key, value);
+                            return true;
+                    }
+                }
+            }
+
+            void DeserializeBinary(ref TryDeserializeObjectContext ctx)
+            {
+                if (ctx.Reader.IsEmptyElement)
+                    return;
+
+                string attrCrc = ctx.Reader[XmlSerializer.AttributeCrc];
+                ReadToNodeType(ctx.Reader, XmlNodeType.Text);
+                byte[] data = Convert.FromBase64String(ctx.Reader.Value);
+                if (attrCrc != null)
+                {
+                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
+                        throw new ArgumentException(Res.XmlSerializationCrcError);
+                }
+
+                ctx.Result = BinarySerializer.Deserialize(data);
+                ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
+            }
+
+            bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
+            {
+                if (ctx.Type == null || ctx.Reader.IsEmptyElement)
+                    return false;
+
+                // 1.) array (both existing and new)
+                if (ctx.Type.IsArray)
+                {
+                    ctx.Result = DeserializeArray(ctx.ExistingInstance as Array, ctx.Type.GetElementType(), ctx.Reader, true);
+                    return true;
+                }
+
+                // 2.) existing read-write collection
+                if (ctx.Type.IsReadWriteCollection(ctx.ExistingInstance))
+                {
+                    DeserializeContent(ctx.Reader, ctx.ExistingInstance);
+                    ctx.Result = ctx.ExistingInstance;
+                    return true;
+                }
+
+                bool isCollection = ctx.Type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
+
+                // 3.) New collection by collectionCtor (only if there is no defaultCtor)
+                if (isCollection && defaultCtor == null && !ctx.Type.IsValueType)
+                {
+                    ctx.Result = DeserializeContentByInitializerCollection(ctx.Reader, collectionCtor, elementType, isDictionary);
+                    return true;
+                }
+
+                ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
+                    ? Reflector.CreateInstance(ctx.Type)
+                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
+
+                // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
+                if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
+                {
+                    if (collectionCtor != null)
+                    {
+                        ctx.Result = DeserializeContentByInitializerCollection(ctx.Reader, collectionCtor, elementType, isDictionary);
+                        return true;
+                    }
+
+                    throw new SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
+                }
+
+                // 5.) Newly created collection or any other object (both existing and new)
+                DeserializeContent(ctx.Reader, ctx.Result);
+                return true;
+            }
+
+            #endregion
+
             // null value
             if (reader.IsEmptyElement && (type == null || !type.IsValueType || type.IsNullable()))
             {
@@ -227,8 +382,8 @@ namespace KGySoft.Serialization
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                            ? Reflector.CreateInstance(type)
-                            : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                    ? Reflector.CreateInstance(type)
+                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));
                 DeserializeXmlSerializable(xmlSerializable, reader);
@@ -247,164 +402,61 @@ namespace KGySoft.Serialization
                 }
             }
 
+            var context = new TryDeserializeObjectContext { Type = type, Reader = reader, ExistingInstance = existingInstance };
+
             // d.) KeyValuePair (DictionaryEntry is deserialized recursively because its properties are settable)
-            if (type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
+            if (TryDeserializeKeyValue(ref context))
             {
-                bool keyRead = false;
-                bool valueRead = false;
-                object key = null;
-                object value = null;
-                Type keyType = null, valueType = null;
-
-                while (true)
-                {
-                    ReadToNodeType(reader, XmlNodeType.Element, XmlNodeType.EndElement);
-                    switch (reader.NodeType)
-                    {
-                        case XmlNodeType.Element:
-                            switch (reader.Name)
-                            {
-                                case nameof(KeyValuePair<_, _>.Key):
-                                    if (keyRead)
-                                        throw new ArgumentException(Res.XmlSerializationMultipleKeys);
-
-                                    keyRead = true;
-                                    string attrType = reader[XmlSerializer.AttributeType];
-                                    keyType = attrType != null ? Reflector.ResolveType(attrType) : type.GetGenericArguments()[0];
-                                    if (!TryDeserializeObject(keyType, reader, null, out key))
-                                    {
-                                        if (attrType != null && keyType == null)
-                                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-                                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
-                                    }
-                                    break;
-
-                                case nameof(KeyValuePair<_, _>.Value):
-                                    if (valueRead)
-                                        throw new ArgumentException(Res.XmlSerializationMultipleValues);
-
-                                    valueRead = true;
-                                    attrType = reader[XmlSerializer.AttributeType];
-                                    valueType = attrType != null ? Reflector.ResolveType(attrType) : type.GetGenericArguments()[1];
-                                    if (!TryDeserializeObject(valueType, reader, null, out value))
-                                    {
-                                        if (attrType != null && valueType == null)
-                                            throw new ReflectionException(Res.XmlSerializationCannotResolveType(attrType));
-                                        throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
-                                    }
-                                    break;
-
-                                default:
-                                    throw new ArgumentException(Res.XmlSerializationUnexpectedElement(reader.Name));
-                            }
-                            break;
-
-                        case XmlNodeType.EndElement:
-                            // end of KeyValue: checking whether both key and value have been read
-                            if (!keyRead)
-                                throw new ArgumentException(Res.XmlSerializationKeyValueMissingKey);
-                            if (!valueRead)
-                                throw new ArgumentException(Res.XmlSerializationKeyValueMissingValue);
-
-                            var ctor = type.GetConstructor(new[] { keyType, valueType });
-                            result = Reflector.CreateInstance(ctor, key, value);
-                            return true;
-                    }
-                }
+                result = context.Result;
+                return true;
             }
 
             // e.) ValueType as binary
             if (type != null && format == XmlSerializer.AttributeValueStructBinary && type.IsValueType)
             {
-                string attrCrc = reader[XmlSerializer.AttributeCrc];
-                ReadToNodeType(reader, XmlNodeType.Text, XmlNodeType.EndElement);
-                byte[] data = reader.NodeType == XmlNodeType.Text
-                        ? Convert.FromBase64String(reader.Value)
-                        : new byte[0];
-                if (attrCrc != null)
-                {
-                    if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
-                        throw new ArgumentException(Res.XmlSerializationCrcError);
-                }
-
-                result = BinarySerializer.DeserializeValueType(type, data);
-                if (data.Length > 0)
-                    ReadToNodeType(reader, XmlNodeType.EndElement);
+                DeserializeStructBinary(ref context);
+                result = context.Result;
                 return true;
             }
 
             // f.) Binary
             if (format == XmlSerializer.AttributeValueBinary)
             {
-                if (reader.IsEmptyElement)
-                    result = null;
-                else
-                {
-                    string attrCrc = reader[XmlSerializer.AttributeCrc];
-                    ReadToNodeType(reader, XmlNodeType.Text);
-                    byte[] data = Convert.FromBase64String(reader.Value);
-                    if (attrCrc != null)
-                    {
-                        if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
-                            throw new ArgumentException(Res.XmlSerializationCrcError);
-                    }
-
-                    result = BinarySerializer.Deserialize(data);
-                    ReadToNodeType(reader, XmlNodeType.EndElement);
-                }
+                DeserializeBinary(ref context);
+                result = context.Result;
                 return true;
             }
 
             // g.) recursive deserialization (including collections)
-            if (type != null && !reader.IsEmptyElement)
+            if (TryDeserializeComplexObject(ref context))
             {
-                // g/1.) array (both existing and new)
-                if (type.IsArray)
-                {
-                    result = DeserializeArray(existingInstance as Array, type.GetElementType(), reader, true);
-                    return true;
-                }
-
-                // g/2.) existing read-write collection
-                if (type.IsReadWriteCollection(existingInstance))
-                {
-                    DeserializeContent(reader, existingInstance);
-                    result = existingInstance;
-                    return true;
-                }
-
-                bool isCollection = type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary);
-
-                // g/3.) New collection by collectionCtor (only if there is no defaultCtor)
-                if (isCollection && defaultCtor == null && !type.IsValueType)
-                {
-                    result = DeserializeContentByInitializerCollection(reader, collectionCtor, elementType, isDictionary);
-                    return true;
-                }
-
-                result = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                        ? Reflector.CreateInstance(type)
-                        : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
-
-                // g/4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
-                if (isCollection && !type.IsReadWriteCollection(result))
-                {
-                    if (collectionCtor != null)
-                    {
-                        result = DeserializeContentByInitializerCollection(reader, collectionCtor, elementType, isDictionary);
-                        return true;
-                    }
-
-                    throw new SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(type));
-                }
-
-                // g/5.) Newly created collection or any other object (both existing and new)
-                DeserializeContent(reader, result);
+                result = context.Result;
                 return true;
             }
 
             result = null;
             return false;
+        }
+
+#if !NET35
+        [SecuritySafeCritical]
+#endif
+        private static void DeserializeStructBinary(ref TryDeserializeObjectContext context)
+        {
+            string attrCrc = context.Reader[XmlSerializer.AttributeCrc];
+            ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
+            byte[] data = context.Reader.NodeType == XmlNodeType.Text
+                ? Convert.FromBase64String(context.Reader.Value)
+                : new byte[0];
+            if (attrCrc != null)
+            {
+                if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)
+                    throw new ArgumentException(Res.XmlSerializationCrcError);
+            }
+
+            context.Result = BinarySerializer.DeserializeValueType(context.Type, data);
+            if (data.Length > 0)
+                ReadToNodeType(context.Reader, XmlNodeType.EndElement);
         }
 
         /// <summary>

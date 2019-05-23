@@ -153,7 +153,9 @@ namespace KGySoft.Serialization
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
         /// <param name="result">The byte array representation of the <see cref="ValueType"/> object.</param>
         /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.</returns>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public static bool TrySerializeValueType(ValueType obj, out byte[] result)
         {
             result = null;
@@ -221,7 +223,9 @@ namespace KGySoft.Serialization
         /// <param name="result">The byte array representation of the <paramref name="array"/>.</param>
         /// <returns><see langword="true"/>, if serialization was successful; otherwise, <see langword="false"/>.
         /// The <paramref name="array"/> can be serialized if <typeparamref name="T"/> contains only value type fields.</returns>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public static bool TrySerializeValueArray<T>(T[] array, out byte[] result) where T : struct
         {
             result = null;

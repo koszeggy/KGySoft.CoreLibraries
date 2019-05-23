@@ -42,6 +42,7 @@ namespace KGySoft.Reflection
     /// <summary>
     /// Provides reflection routines on objects that are in most case faster than standard System.Reflection ways.
     /// </summary>
+    [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
     public static class Reflector
     {
         #region Fields
@@ -2465,7 +2466,9 @@ namespace KGySoft.Reflection
         /// <exception cref="FileNotFoundException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> cannot be found.</exception>
         /// <exception cref="FileLoadException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> could not be loaded.</exception>
         /// <exception cref="BadImageFormatException"><paramref name="tryToLoad"/> is <see langword="true"/>&#160;and the assembly to load from <paramref name="assemblyName"/> has invalid format.</exception>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         public static Assembly ResolveAssembly(string assemblyName, bool tryToLoad, bool matchBySimpleName)
         {
             if (assemblyName == null)

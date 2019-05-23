@@ -376,7 +376,11 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseTimeSpan(string s, CultureInfo culture, out object value)
             {
+#if NET35
+                if (!TimeSpan.TryParse(s, out TimeSpan result))
+#else
                 if (!TimeSpan.TryParse(s, culture, out TimeSpan result))
+#endif
                 {
                     value = null;
                     return false;
@@ -412,13 +416,13 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-            #endregion
+#endregion
 
-            #endregion
+#endregion
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

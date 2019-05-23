@@ -40,6 +40,23 @@ namespace KGySoft.Serialization
 {
     internal class XElementSerializer : XmlSerializerBase
     {
+        #region SerializeObjectContext Struct
+
+        private struct SerializeObjectContext
+        {
+            #region Fields
+
+            internal object Object;
+            internal Type Type;
+            internal bool TypeNeeded;
+            internal XElement Parent;
+            internal DesignerSerializationVisibility Visibility;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Constructors
 
         public XElementSerializer(XmlSerializationOptions options) : base(options)
@@ -109,8 +126,7 @@ namespace KGySoft.Serialization
             if (obj == null)
                 return result;
 
-            Type objType = obj.GetType();
-            SerializeObject(obj, true, result, objType, DesignerSerializationVisibility.Visible);
+            SerializeObject(obj, true, result, DesignerSerializationVisibility.Visible);
             return result;
         }
 
@@ -237,9 +253,8 @@ namespace KGySoft.Serialization
                 foreach (var item in array)
                 {
                     XElement child = new XElement(XmlSerializer.ElementItem);
-                    Type itemType = null;
                     if (item != null)
-                        SerializeObject(item, elementType.CanBeDerived() && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility);
+                        SerializeObject(item, elementType.CanBeDerived() && item.GetType() != elementType, child, visibility);
                     parent.Add(child);
                 }
 
@@ -257,9 +272,8 @@ namespace KGySoft.Serialization
             foreach (var item in collection)
             {
                 XElement child = new XElement(XmlSerializer.ElementItem);
-                Type itemType = null;
                 if (item != null)
-                    SerializeObject(item, elementType.CanBeDerived() && (itemType = item.GetType()) != elementType, child, itemType ?? item.GetType(), visibility);
+                    SerializeObject(item, elementType.CanBeDerived() && item.GetType() != elementType, child, visibility);
                 parent.Add(child);
             }
         }
@@ -268,10 +282,89 @@ namespace KGySoft.Serialization
         /// Serializes a whole object. May throw exceptions on invalid or inappropriate options.
         /// XElement version.
         /// </summary>
-        private void SerializeObject(object obj, bool typeNeeded, XElement parent, Type type, DesignerSerializationVisibility visibility)
+        private void SerializeObject(object obj, bool typeNeeded, XElement parent, DesignerSerializationVisibility visibility)
         {
+            #region Local Methods to reduce complexity
+
+            bool TrySerializeKeyValue(ref SerializeObjectContext ctx)
+            {
+                // 1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
+                if (ctx.Type == Reflector.DictionaryEntryType)
+                {
+                    if (ctx.TypeNeeded)
+                        ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
+
+                    SerializeMembers(ctx.Object, ctx.Parent);
+                    return true;
+                }
+
+                // 2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
+                if (ctx.Type.IsGenericTypeOf(Reflector.KeyValuePairType))
+                {
+                    if (ctx.TypeNeeded)
+                        ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
+
+                    object key = Reflector.GetProperty(ctx.Object, nameof(KeyValuePair<_, _>.Key));
+                    object value = Reflector.GetProperty(ctx.Object, nameof(KeyValuePair<_, _>.Value));
+                    XElement xKey = new XElement(nameof(KeyValuePair<_, _>.Key));
+                    XElement xValue = new XElement(nameof(KeyValuePair<_, _>.Value));
+                    ctx.Parent.Add(xKey, xValue);
+                    if (key != null)
+                        SerializeObject(key, key.GetType() != ctx.Type.GetGenericArguments()[0], xKey, ctx.Visibility);
+
+                    if (value != null)
+                        SerializeObject(value, value.GetType() != ctx.Type.GetGenericArguments()[1], xValue, ctx.Visibility);
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            bool TrySerializeComplexObject(ref SerializeObjectContext ctx)
+            {
+                // 1.) collection
+                if (ctx.Object is IEnumerable enumerable)
+                {
+                    Type elementType = null;
+
+                    // if can be trusted in all circumstances
+                    if (IsTrustedCollection(ctx.Type)
+                        // or recursive is requested
+                        || ((ctx.Visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                            // and is a supported collection or serialization is forced
+                            && (ForceReadonlyMembersAndCollections || ctx.Type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
+                    {
+                        SerializeCollection(enumerable, elementType ?? ctx.Type.GetCollectionElementType(), ctx.TypeNeeded, ctx.Parent, ctx.Visibility);
+                        return true;
+                    }
+
+                    if (ctx.Visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
+                        throw new SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
+                    throw new SerializationException(Res.XmlSerializationCannotSerializeCollection(ctx.Type, Options));
+                }
+
+                // 2.) recursive serialization, if enabled
+                if (IsRecursiveSerializationEnabled || ctx.Visibility == DesignerSerializationVisibility.Content
+                    // or when it has public properties/fields only
+                    || IsTrustedType(ctx.Type))
+                {
+                    if (ctx.TypeNeeded)
+                        ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
+
+                    SerializeMembers(ctx.Object, ctx.Parent);
+                    return true;
+                }
+
+                return false;
+            }
+
+            #endregion
+
             if (obj == null)
                 return;
+
+            Type type = obj.GetType();
 
             // a.) If type can be natively parsed, simple adding
             if (type.CanBeParsedNatively() && !(obj is Type t && t.IsGenericParameter))
@@ -302,41 +395,11 @@ namespace KGySoft.Serialization
                 return;
             }
 
-            // d/1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
-            if (type == Reflector.DictionaryEntryType)
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
+            var context = new SerializeObjectContext { Object = obj, Type = type, TypeNeeded = typeNeeded, Parent = parent, Visibility = visibility };
 
-                SerializeMembers(obj, parent);
+            // d.) Key/Value
+            if (TrySerializeKeyValue(ref context))
                 return;
-            }
-
-            // d/2.) KeyValue 2: KeyValuePair: properties are read-only so special support needed
-            if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
-            {
-                if (typeNeeded)
-                    parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
-
-                object key = Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key));
-                object value = Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value));
-                XElement xKey = new XElement(nameof(KeyValuePair<_, _>.Key));
-                XElement xValue = new XElement(nameof(KeyValuePair<_, _>.Value));
-                parent.Add(xKey, xValue);
-                if (key != null)
-                {
-                    Type keyType = key.GetType();
-                    SerializeObject(key, keyType != type.GetGenericArguments()[0], xKey, keyType, visibility);
-                }
-
-                if (value != null)
-                {
-                    Type valueType = value.GetType();
-                    SerializeObject(value, valueType != type.GetGenericArguments()[1], xValue, valueType, visibility);
-                }
-
-                return;
-            }
 
             // e.) value type as binary only if enabled
             if (type.IsValueType && IsCompactSerializationValueTypesEnabled && BinarySerializer.TrySerializeValueType((ValueType)obj, out byte[] data))
@@ -368,38 +431,9 @@ namespace KGySoft.Serialization
             RegisterSerializedObject(obj);
             try
             {
-                // g.) collection
-                if (obj is IEnumerable enumerable)
-                {
-                    Type elementType = null;
-
-                    // if can be trusted in all circumstances
-                    if (IsTrustedCollection(type)
-                        // or recursive is requested
-                        || ((visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                            // and is a supported collection or serialization is forced
-                            && (ForceReadonlyMembersAndCollections || type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
-                    {
-                        SerializeCollection(enumerable, elementType ?? type.GetCollectionElementType(), typeNeeded, parent, visibility);
-                        return;
-                    }
-
-                    if (visibility == DesignerSerializationVisibility.Content || IsRecursiveSerializationEnabled)
-                        throw new SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(type, Options));
-                    throw new SerializationException(Res.XmlSerializationCannotSerializeCollection(type, Options));
-                }
-
-                // h.) recursive serialization, if enabled
-                if (IsRecursiveSerializationEnabled || visibility == DesignerSerializationVisibility.Content
-                    // or when it has public properties/fields only
-                    || IsTrustedType(type))
-                {
-                    if (typeNeeded)
-                        parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
-
-                    SerializeMembers(obj, parent);
+                // g.) collections and other complex objects
+                if (TrySerializeComplexObject(ref context))
                     return;
-                }
             }
             finally
             {
@@ -453,7 +487,7 @@ namespace KGySoft.Serialization
                 }
 
                 // b.) any object
-                SerializeObject(value, memberType != actualType, memberElement, actualType, visibility);
+                SerializeObject(value, memberType != actualType, memberElement, visibility);
                 parent.Add(memberElement);
             }
         }
@@ -487,7 +521,7 @@ namespace KGySoft.Serialization
         #endregion
 
         #endregion
-        
+
         #endregion
     }
 }

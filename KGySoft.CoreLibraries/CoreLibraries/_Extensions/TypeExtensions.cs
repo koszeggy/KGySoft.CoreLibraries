@@ -223,7 +223,9 @@ namespace KGySoft.CoreLibraries
         /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
         /// after the registering may continue to return the original converter. So make sure you register your custom converters
         /// at the start of your application.</note></remarks>
+#if !NET35
         [SecuritySafeCritical]
+#endif
         [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter", Justification = "Intended. Method<MyType>() is more simple than Method(typeof(MyType))")]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {

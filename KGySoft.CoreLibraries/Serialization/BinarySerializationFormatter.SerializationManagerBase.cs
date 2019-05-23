@@ -119,8 +119,7 @@ namespace KGySoft.Serialization
                 if (surrogateSelector == null)
                     return false;
 
-                KeyValuePair<ISerializationSurrogate, ISurrogateSelector> result;
-                if (surrogates.TryGetValue(type, out result))
+                if (surrogates.TryGetValue(type, out KeyValuePair<ISerializationSurrogate, ISurrogateSelector> result))
                 {
                     if (result.Key == null)
                         return false;

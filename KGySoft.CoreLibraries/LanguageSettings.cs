@@ -212,7 +212,9 @@ namespace KGySoft
         {
             get => captureSystemLocaleChange;
 
+#if !NET35
             [SecuritySafeCritical]
+#endif
             set
             {
                 if (captureSystemLocaleChange == value)
@@ -365,7 +367,9 @@ namespace KGySoft
 
         #region Event handlers
 
+#if !NET35
         [SecuritySafeCritical]
+#endif
         static void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
             if (e.Category != UserPreferenceCategory.Locale)

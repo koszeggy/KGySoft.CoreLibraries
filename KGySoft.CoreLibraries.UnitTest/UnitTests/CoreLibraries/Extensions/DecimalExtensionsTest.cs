@@ -57,8 +57,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Instance Methods
 
-        #region Public Methods
-
         [TestCaseSource(nameof(logETestSource))]
         public void LogETest(decimal value)
         {
@@ -105,12 +103,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void PowETestOverflow() => Throws<OverflowException>(() => PowETest(66.6m));
 
-        #endregion
-
-        #region Private Methods
-
         [TestCaseSource(nameof(powTestSource))]
-        private void PowTest(decimal value)
+        public void PowTest(decimal value)
         {
             void TestPow(decimal d, decimal power)
             {
@@ -144,8 +138,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             TestPow(value, 28);
             TestPow(value, -28);
         }
-
-        #endregion
 
         #endregion
 
