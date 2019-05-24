@@ -217,15 +217,14 @@ namespace KGySoft.Serialization
         /// One of the simple types can be combined with one of the collection types and the flags.
         /// </summary>
         [Flags]
-        [DebuggerDisplay("{BinarySerializationFormatter.ToString(this)}")]
+        [DebuggerDisplay("{BinarySerializationFormatter.ToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
         enum DataTypes : ushort
         {
             // ------ simple types:
             Null = 0,
             Object,
-            // ReSharper disable InconsistentNaming
+            // ReSharper disable once InconsistentNaming
             DBNull,
-            // ReSharper restore InconsistentNaming
 
             Bool = 3,
             Int8,
