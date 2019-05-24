@@ -1,19 +1,32 @@
 ﻿Legend:
 ! Breaking change
-* Compatible changes inside
+* Compatible change
 - Bugfix
 + New feature
 ===============================================================================
 
-* v4.6.0.0:
 ~~~~~~~~~~~
-* Assembly: Applying SecurityRuleSet.Level2 and adjusting security critical calls in the whole assembly.
-  For a consumer assembly every public member is safe to call.
+! v4.6.0.0:
+~~~~~~~~~~~
 
+! Assembly: Applying SecurityRuleSet.Level2 and adjusting security critical calls in the whole assembly.
+  This is a breaking change for .NET4.0 and above only if the caller assembly is partially trusted or is
+  security transparent and tries to call the few of the public methods, which are security critical.
+
+* KGySoft.CoreLibraries namespace:
+==================================
+* Enum<TEnum>: Improving performance of parsing with insensitive case
+
+* KGySoft.Reflection namespace:
+===============================
+* Reflector class: Improving the performance of invoke by name if there are no multiple members of the same name.
+
+~~~~~~~~~~~
 * v4.5.1.0:
 ~~~~~~~~~~~
 Adjusting security settings.
 
+~~~~~~~~~~~
 ! v4.5.0.0:
 ~~~~~~~~~~~
 
