@@ -2552,7 +2552,7 @@ namespace KGySoft.Reflection
         private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
         {
             // 1. In case of a system assembly, returning it from the GAC
-            string gacPath = Fusion.GetGacPath(assemblyName.Name);
+            string gacPath = GetGacPath(assemblyName.Name);
             if (gacPath != null)
                 return Assembly.LoadFrom(gacPath);
 
@@ -2581,6 +2581,30 @@ namespace KGySoft.Reflection
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
+        /// </summary>
+        [SecurityCritical]
+        private static string GetGacPath(string name)
+        {
+            const int bufSize = 1024;
+
+            if (Fusion.CreateAssemblyCache(out IAssemblyCache ac))
+            {
+                var aInfo = new ASSEMBLY_INFO
+                {
+                    cchBuf = bufSize,
+                    currentAssemblyPath = new string('\0', bufSize)
+                };
+
+                int hresult = ac.QueryAssemblyInfo(0, name, ref aInfo);
+                if (hresult >= 0)
+                    return aInfo.currentAssemblyPath;
+            }
+
+            return null;
         }
 
         #endregion

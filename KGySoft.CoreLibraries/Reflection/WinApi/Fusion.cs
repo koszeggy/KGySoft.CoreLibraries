@@ -27,6 +27,7 @@ namespace KGySoft.Reflection.WinApi
     /// The fusion API enables a runtime host to access the properties of an application's resources in order to locate
     /// the correct versions of those resources for the application.
     /// </summary>
+    [SecurityCritical]
     internal static class Fusion
     {
         #region Nested classes
@@ -40,6 +41,7 @@ namespace KGySoft.Reflection.WinApi
             /// </summary>
             /// <param name="ppAsmCache">The returned <see cref="IAssemblyCache"/> pointer.</param>
             /// <param name="dwReserved">Reserved for future extensibility. dwReserved must be 0 (zero).</param>
+            /// <returns>HRESULT</returns>
             [DllImport("fusion.dll")]
             internal static extern int CreateAssemblyCache(out IAssemblyCache ppAsmCache, int dwReserved);
 
@@ -50,26 +52,7 @@ namespace KGySoft.Reflection.WinApi
 
         #region Methods
 
-        /// <summary>
-        /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
-        /// </summary>
-        [SecurityCritical]
-        internal static string GetGacPath(string name)
-        {
-            var aInfo = new ASSEMBLY_INFO();
-            aInfo.cchBuf = 1024;
-            aInfo.currentAssemblyPath = new string('\0', aInfo.cchBuf);
-
-            int hresult = NativeMethods.CreateAssemblyCache(out IAssemblyCache ac, 0);
-            if (hresult >= 0)
-            {
-                hresult = ac.QueryAssemblyInfo(0, name, ref aInfo);
-                if (hresult < 0)
-                    return null;
-            }
-
-            return aInfo.currentAssemblyPath;
-        }
+        internal static bool CreateAssemblyCache(out IAssemblyCache assemblyCache) => NativeMethods.CreateAssemblyCache(out assemblyCache, 0) >= 0;
 
         #endregion
     }
