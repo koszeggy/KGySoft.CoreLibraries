@@ -52,7 +52,28 @@ namespace KGySoft.Reflection.WinApi
 
         #region Methods
 
-        internal static bool CreateAssemblyCache(out IAssemblyCache assemblyCache) => NativeMethods.CreateAssemblyCache(out assemblyCache, 0) >= 0;
+        /// <summary>
+        /// Gets the path for an assembly if it is in the GAC. Returns the path of the newest available version.
+        /// </summary>
+        internal static string GetGacPath(string name)
+        {
+            const int bufSize = 1024;
+
+            if (NativeMethods.CreateAssemblyCache(out IAssemblyCache assemblyCache, 0) >= 0)
+            {
+                var aInfo = new ASSEMBLY_INFO
+                {
+                    cchBuf = bufSize,
+                    currentAssemblyPath = new string('\0', bufSize)
+                };
+
+                int hresult = assemblyCache.QueryAssemblyInfo(0, name, ref aInfo);
+                if (hresult >= 0)
+                    return aInfo.currentAssemblyPath;
+            }
+
+            return null;
+        }
 
         #endregion
     }
