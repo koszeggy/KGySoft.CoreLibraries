@@ -188,7 +188,7 @@ namespace KGySoft.Serialization
         /// <note>Read-only collections witch recognizable collection initializer constructor are serializable even without this option.</note>
         /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
         /// Deserialization will fail if the read-only property returns a <see langword="null"/>&#160;value or its content cannot be restored (eg. it has a simple type or is a read-only collection).
-        /// Use this option only if and object has to be serialized only for information (eg. in logs) and deserialization is not necessary.</note>
+        /// Use this option only if an object has to be serialized only for information (eg. in logs) and deserialization is not necessary.</note>
         /// </para>
         /// <para>Default at serialization methods: <strong>Disabled</strong></para>
         /// </summary>

@@ -1111,12 +1111,12 @@ namespace KGySoft.Resources
 
         private void InitFromWinForms(object other)
         {
-            cachedValue = Accessors.ResXDataNode_value_Get(other);
-            comment = Accessors.ResXDataNode_comment_Get(other);
-            object fileRefWinForms = Accessors.ResXDataNode_fileRef_Get(other);
+            cachedValue = Accessors.ResXDataNode_GetValue(other);
+            comment = Accessors.ResXDataNode_GetComment(other);
+            object fileRefWinForms = Accessors.ResXDataNode_GetFileRef(other);
             if (fileRefWinForms != null)
                 fileRef = ResXFileRef.InitFromWinForms(fileRefWinForms);
-            object nodeInfoWinForms = Accessors.ResXDataNode_nodeInfo_Get(other);
+            object nodeInfoWinForms = Accessors.ResXDataNode_GetNodeInfo(other);
             if (nodeInfoWinForms != null)
                 nodeInfo = DataNodeInfo.InitFromWinForms(nodeInfoWinForms);
 

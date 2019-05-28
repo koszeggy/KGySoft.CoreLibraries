@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -40,6 +41,12 @@ namespace KGySoft.CoreLibraries
         #region Constants
 
         private const string indexerName = "Item";
+
+        #endregion
+
+        #region Fields
+
+        private static IThreadSafeCacheAccessor<Type, Type> genericEnumerableCache;
 
         #endregion
 
@@ -116,10 +123,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -187,21 +192,21 @@ namespace KGySoft.CoreLibraries
 
                 // 5.) ICollection<T>
                 Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
                 {
-                    if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                    if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                         return false;
-                    var genericArgument = closedGenericType.GetGenericArguments()[0];
+                    var genericArgument = genericCollectionInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
                         return false;
-                    MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(ICollection<_>.Add))).Invoke(collection, item);
+                    collection.Add(genericCollectionInterface, item);
                     return true;
                 }
 
 #if !NET35
                 // 6.) IProducerConsumerCollection<T>
-                if (collType.IsImplementationOfGenericType(typeof(IProducerConsumerCollection<>), out closedGenericType))
-                    return (bool)MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))).Invoke(collection, item);
+                if (collType.IsImplementationOfGenericType(typeof(IProducerConsumerCollection<>), out genericCollectionInterface))
+                    return collection.TryAddToProducerConsumerCollection(genericCollectionInterface, item);
 #endif
 
 #if NET35
@@ -217,10 +222,8 @@ namespace KGySoft.CoreLibraries
                 return true;
 #endif
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -258,10 +261,8 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -304,24 +305,23 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // ICollection<T>: CollectionExtensions.AddRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
                         {
-                            MethodAccessor addRange = Accessors.CollectionExtensions_AddRange(closedGenericType.GetGenericArguments()[0]);
-                            if (!((MethodInfo)addRange.MemberInfo).GetParameters()[1].ParameterType.CanAcceptValue(collection))
+                            Type t = genericCollectionInterface.GetGenericArguments()[0];
+                            if (!collection.IsGenericEnumerableOf(t))
                                 break;
-                            if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
+
+                            if (checkReadOnly && target.IsReadOnly(genericCollectionInterface))
                                 return false;
-                            addRange.Invoke(null, target, collection);
+                            target.AddRange(t, collection);
                             return true;
                         }
 
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -370,10 +370,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -417,21 +415,19 @@ namespace KGySoft.CoreLibraries
                         genericCollection.Clear();
                         return true;
                     default:
-                        if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                        if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
                         {
-                            if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                            if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                                 return false;
-                            MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(ICollection<_>.Clear))).Invoke(collection);
+                            collection.Clear(genericCollectionInterface);
                             return true;
                         }
 
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -477,10 +473,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -543,12 +537,12 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
-                        int count = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
-                        if (index > count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
+                        if (index > count || collection.IsReadOnly(genericCollectionInterface))
                             return false;
                     }
 
-                    MethodAccessor.GetAccessor(genericListInterface.GetMethod(nameof(IList<_>.Insert))).Invoke(collection, index, item);
+                    collection.Insert(genericListInterface, index, item);
                     return true;
                 }
 
@@ -565,10 +559,8 @@ namespace KGySoft.CoreLibraries
                 return true;
 #endif
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -607,10 +599,8 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -656,32 +646,31 @@ namespace KGySoft.CoreLibraries
                         }
                     default:
                         // IList<T>: ListExtensions.InsertRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
                         {
-                            MethodAccessor insertRange = Accessors.ListExtensions_InsertRange(closedGenericType.GetGenericArguments()[0]);
-                            if (!((MethodInfo)insertRange.MemberInfo).GetParameters()[2].ParameterType.CanAcceptValue(collection))
+                            Type t = genericListInterface.GetGenericArguments()[0];
+                            if (!collection.IsGenericEnumerableOf(t))
                                 break;
+
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = closedGenericType.GetInterface(Reflector.ICollectionGenType.Name);
-                                int count = target is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(target);
-                                if (index > count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
+                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                                int count = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
+                                if (index > count || target.IsReadOnly(genericCollectionInterface))
                                     return false;
                             }
 
-                            insertRange.Invoke(null, target, index, collection);
+                            target.InsertRange(t, index, collection);
                             return true;
                         }
 
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -730,10 +719,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -787,14 +774,14 @@ namespace KGySoft.CoreLibraries
                     return genericCollection.Remove(item);
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type closedGenericType))
+                if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type genericCollectionInterface))
                 {
-                    if (checkReadOnly && (bool)PropertyAccessor.GetAccessor(closedGenericType.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                    if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                         return false;
-                    var genericArgument = closedGenericType.GetGenericArguments()[0];
+                    var genericArgument = genericCollectionInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
                         return false;
-                    return (bool)MethodAccessor.GetAccessor(closedGenericType.GetMethod(nameof(ICollection<_>.Remove))).Invoke(collection, item);
+                    return collection.Remove(genericCollectionInterface, item);
                 }
 
 #if NET35
@@ -813,10 +800,8 @@ namespace KGySoft.CoreLibraries
                 return true;
 #endif
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -861,10 +846,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -912,21 +895,19 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
-                        int count = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
-                        if (index >= count || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
+                        if (index >= count || collection.IsReadOnly(genericCollectionInterface))
                             return false;
                     }
 
-                    MethodAccessor.GetAccessor(genericListInterface.GetMethod(nameof(IList<_>.RemoveAt))).Invoke(collection, index);
+                    collection.RemoveAt(genericListInterface, index);
                     return true;
                 }
 
                 return false;
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -965,10 +946,8 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -1016,29 +995,27 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // IList<T>: ListExtensions.RemoveRange<T>
-                        if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                        if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
                         {
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = closedGenericType.GetInterface(Reflector.ICollectionGenType.Name);
-                                int collCount = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
-                                if ((uint)index >= (uint)collCount || index + count > collCount || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection))
+                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                                int collCount = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
+                                if ((uint)index >= (uint)collCount || index + count > collCount || collection.IsReadOnly(genericCollectionInterface))
                                     return false;
                             }
 
-                            collection.RemoveRange(closedGenericType.GetGenericArguments()[0], index, count);
+                            collection.RemoveRange(genericListInterface.GetGenericArguments()[0], index, count);
                             return true;
                         }
 
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -1092,10 +1069,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -1166,16 +1141,18 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
-                        int count = collection is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(collection);
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index >= count || (
 #if NET35
                             !(collection is Array) && 
 #endif
-                            (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(collection)))
+                            collection.IsReadOnly(genericCollectionInterface)))
+                        {
                             return false;
+                        }
                     }
 
-                    PropertyAccessor.GetAccessor(genericListInterface.GetProperty(indexerName)).Set(collection, item, index);
+                    collection.SetElementAt(genericListInterface, index, item);
                     return true;
                 }
 
@@ -1192,10 +1169,8 @@ namespace KGySoft.CoreLibraries
                 return true;
 #endif
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -1239,10 +1214,8 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -1313,32 +1286,30 @@ namespace KGySoft.CoreLibraries
                         return true;
                     default:
                         // IList<T>: ListExtensions.ReplaceRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type closedGenericType))
+                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type genericListInterface))
                         {
-                            MethodAccessor replaceRange = Accessors.ListExtensions_ReplaceRange(closedGenericType.GetGenericArguments()[0]);
-                            if (!((MethodInfo)replaceRange.MemberInfo).GetParameters()[3].ParameterType.CanAcceptValue(collection))
+                            Type t = genericListInterface.GetGenericArguments()[0];
+                            if (!collection.IsGenericEnumerableOf(t))
                                 break;
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = closedGenericType.GetInterface(Reflector.ICollectionGenType.Name);
-                                int targetCount = target is ICollection coll ? coll.Count : (int)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.Count))).Get(target);
-                                if ((uint)index >= (uint)targetCount || index + count > targetCount || (bool)PropertyAccessor.GetAccessor(genericCollectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly))).Get(target))
+                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name);
+                                int targetCount = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
+                                if ((uint)index >= (uint)targetCount || index + count > targetCount || target.IsReadOnly(genericCollectionInterface))
                                     return false;
                             }
 
-                            replaceRange.Invoke(null, target, index, count, collection);
+                            target.ReplaceRange(t, index, count, collection);
                             return true;
                         }
 
                         break;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -1583,10 +1554,8 @@ namespace KGySoft.CoreLibraries
                         return false;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
         }
@@ -1639,10 +1608,8 @@ namespace KGySoft.CoreLibraries
                         return true;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!e.IsCriticalOr(throwError))
             {
-                if (throwError)
-                    throw;
                 return false;
             }
 
@@ -1810,6 +1777,13 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Private Methods
+
+        internal static bool IsGenericEnumerableOf([NoEnumeration]this IEnumerable collection, Type genericArgument)
+        {
+            if (genericEnumerableCache == null)
+                Interlocked.CompareExchange(ref genericEnumerableCache, new Cache<Type, Type>(t => Reflector.IEnumerableGenType.MakeGenericType(t)).GetThreadSafeAccessor(), null);
+            return genericEnumerableCache[genericArgument].IsInstanceOfType(collection);
+        }
 
         /// <summary>
         /// Tries to remove <paramref name="count"/> amount of items from the <paramref name="target"/> at the specified <paramref name="index"/>, and

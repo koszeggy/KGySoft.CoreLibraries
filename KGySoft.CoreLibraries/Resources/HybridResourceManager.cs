@@ -475,8 +475,8 @@ namespace KGySoft.Resources
         /// Gets the <see cref="CultureInfo"/> that is specified as neutral culture in the <see cref="Assembly"/>
         /// used to initialized this instance, or the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> if no such culture is defined.
         /// </summary>
-        protected CultureInfo NeutralResourcesCulture
-            => neutralResourcesCulture ?? (neutralResourcesCulture = (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this) ?? CultureInfo.InvariantCulture);
+        protected CultureInfo NeutralResourcesCulture 
+            => neutralResourcesCulture ?? (neutralResourcesCulture = this.GetNeutralResourcesCulture() ?? CultureInfo.InvariantCulture);
 
         #endregion
 
@@ -492,10 +492,9 @@ namespace KGySoft.Resources
 #elif NET40 || NET45
         private Dictionary<string, ResourceSet> CompiledResourceSets
         {
-            get => (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this);
-            set => Accessors.ResourceManager_resourceSets.Set(this, value);
+            get => this.GetResourceSets();
+            set => this.SetResourceSets(value);
         }
-
 #else
 #error .NET version is not set or not supported!
 #endif
@@ -523,7 +522,7 @@ namespace KGySoft.Resources
             resxResources = new ResXResourceManager(explicitResXBaseFileName ?? baseName, assembly);
 #if NET35
             // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
-            Accessors.ResourceManager_neutralResourcesCulture.Set(this, GetNeutralResourcesLanguage(assembly));
+            this.SetNeutralResourcesCulture(GetNeutralResourcesLanguage(assembly));
 #endif // elif not needed because this will not be needed in newer versions
         }
 
@@ -546,7 +545,7 @@ namespace KGySoft.Resources
                 : new ResXResourceManager(explicitResXBaseFileName, resourceSource.Assembly);
 #if NET35
             // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
-            Accessors.ResourceManager_neutralResourcesCulture.Set(this, GetNeutralResourcesLanguage(resourceSource.Assembly));
+            this.SetNeutralResourcesCulture(GetNeutralResourcesLanguage(resourceSource.Assembly));
 #endif // elif not needed because this will not be needed in newer versions
         }
 

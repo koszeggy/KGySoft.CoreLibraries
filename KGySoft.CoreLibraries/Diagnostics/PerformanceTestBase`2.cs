@@ -375,7 +375,7 @@ namespace KGySoft.Diagnostics
                     );
                     break;
                 default:
-                    s = result?.ToString() ?? Res.NullReference;
+                    s = result?.ToString() ?? Res.Null;
                     break;
             }
 

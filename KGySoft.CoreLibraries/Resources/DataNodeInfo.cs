@@ -46,17 +46,17 @@ namespace KGySoft.Resources
 
         internal static DataNodeInfo InitFromWinForms(object nodeInfoWinForms)
         {
-            object pos = Accessors.DataNodeInfo_ReaderPosition_Get(nodeInfoWinForms);
+            object pos = Accessors.DataNodeInfo_GetReaderPosition(nodeInfoWinForms);
             return new DataNodeInfo
             {
                 CompatibleFormat = true,
-                Name = Accessors.DataNodeInfo_Name_Get(nodeInfoWinForms),
-                Comment = Accessors.DataNodeInfo_Comment_Get(nodeInfoWinForms),
-                TypeName = Accessors.DataNodeInfo_TypeName_Get(nodeInfoWinForms),
-                MimeType = Accessors.DataNodeInfo_MimeType_Get(nodeInfoWinForms),
-                ValueData = Accessors.DataNodeInfo_ValueData_Get(nodeInfoWinForms),
-                Line = Accessors.Point_Y_Get(pos),
-                Column = Accessors.Point_X_Get(pos)
+                Name = Accessors.DataNodeInfo_GetName(nodeInfoWinForms),
+                Comment = Accessors.DataNodeInfo_GetComment(nodeInfoWinForms),
+                TypeName = Accessors.DataNodeInfo_GetTypeName(nodeInfoWinForms),
+                MimeType = Accessors.DataNodeInfo_GetMimeType(nodeInfoWinForms),
+                ValueData = Accessors.DataNodeInfo_GetValueData(nodeInfoWinForms),
+                Line = Accessors.Point_GetY(pos),
+                Column = Accessors.Point_GetX(pos)
             };
         }
 

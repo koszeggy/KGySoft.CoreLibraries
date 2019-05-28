@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
@@ -88,12 +89,26 @@ namespace KGySoft.Reflection
         private static MethodInfo removeRangeExtensionMethod;
         private static MethodInfo replaceRangeExtensionMethod;
 
+        private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_IsReadOnly;
+        private static IDictionary<Type, ActionMethodAccessor> methodsICollection_Add;
+        private static IDictionary<Type, ActionMethodAccessor> methodsICollection_Clear;
+        private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_Count;
+        private static IDictionary<Type, FunctionMethodAccessor> methodsICollection_Remove;
+
+#if !NET35
+        private static IDictionary<Type, FunctionMethodAccessor> methodsIProducerConsumerCollection_TryAdd;
+#endif
+
+        private static IDictionary<Type, ActionMethodAccessor> methodsIList_Insert;
+        private static IDictionary<Type, ActionMethodAccessor> methodsIList_RemoveAt;
+        private static IDictionary<Type, IndexerAccessor> methodsIList_Item;
+
         #endregion
 
-        #region Accessor Factory Properties and Methods
+        #region Accessor Factories
 
         #region For Non-Public Members
-#if NET35 || NET40 || NET45 // Make sure this condition covers the whole region. Include all supported versions in the condition after checking the members.
+#if NET35 || NET40 || NET45 // Make sure this condition covers the whole region. Include all supported versions in the condition after checking the member names.
 
         #region Exception
 
@@ -256,11 +271,142 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region ICollection<T>
+
+        private static SimplePropertyAccessor ICollection_IsReadOnly(Type collectionInterface)
+        {
+            if (propertiesICollection_IsReadOnly == null)
+                Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly, new LockingDictionary<Type, SimplePropertyAccessor>(), null);
+            if (!propertiesICollection_IsReadOnly.TryGetValue(collectionInterface, out SimplePropertyAccessor accessor))
+            {
+                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.IsReadOnly)));
+                propertiesICollection_IsReadOnly[collectionInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        private static ActionMethodAccessor ICollection_Add(Type collectionInterface)
+        {
+            if (methodsICollection_Add == null)
+                Interlocked.CompareExchange(ref methodsICollection_Add, new LockingDictionary<Type, ActionMethodAccessor>(), null);
+            if (!methodsICollection_Add.TryGetValue(collectionInterface, out ActionMethodAccessor accessor))
+            {
+                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Add)));
+                methodsICollection_Add[collectionInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        private static ActionMethodAccessor ICollection_Clear(Type collectionInterface)
+        {
+            if (methodsICollection_Clear == null)
+                Interlocked.CompareExchange(ref methodsICollection_Clear, new LockingDictionary<Type, ActionMethodAccessor>(), null);
+            if (!methodsICollection_Clear.TryGetValue(collectionInterface, out ActionMethodAccessor accessor))
+            {
+                accessor = new ActionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Clear)));
+                methodsICollection_Clear[collectionInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        private static SimplePropertyAccessor ICollection_Count(Type collectionInterface)
+        {
+            if (propertiesICollection_Count == null)
+                Interlocked.CompareExchange(ref propertiesICollection_Count, new LockingDictionary<Type, SimplePropertyAccessor>(), null);
+            if (!propertiesICollection_Count.TryGetValue(collectionInterface, out SimplePropertyAccessor accessor))
+            {
+                accessor = new SimplePropertyAccessor(collectionInterface.GetProperty(nameof(ICollection<_>.Count)));
+                propertiesICollection_Count[collectionInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        private static FunctionMethodAccessor ICollection_Remove(Type collectionInterface)
+        {
+            if (methodsICollection_Remove == null)
+                Interlocked.CompareExchange(ref methodsICollection_Remove, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
+            if (!methodsICollection_Remove.TryGetValue(collectionInterface, out FunctionMethodAccessor accessor))
+            {
+                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(ICollection<_>.Remove)));
+                methodsICollection_Remove[collectionInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        #endregion
+
+        #region IProducerConsumerCollection<T>
+
+#if !NET35
+        private static FunctionMethodAccessor IProducerConsumerCollection_TryAdd(Type collectionInterface)
+        {
+            if (methodsIProducerConsumerCollection_TryAdd == null)
+                Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd, new LockingDictionary<Type, FunctionMethodAccessor>(), null);
+            if (!methodsIProducerConsumerCollection_TryAdd.TryGetValue(collectionInterface, out FunctionMethodAccessor accessor))
+            {
+                accessor = new FunctionMethodAccessor(collectionInterface.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd)));
+                methodsIProducerConsumerCollection_TryAdd[collectionInterface] = accessor;
+            }
+
+            return accessor;
+        }
+#endif
+
+        #endregion
+
+        #region IList<T>
+
+        private static ActionMethodAccessor IList_Insert(Type listInterface)
+        {
+            if (methodsIList_Insert == null)
+                Interlocked.CompareExchange(ref methodsIList_Insert, new LockingDictionary<Type, ActionMethodAccessor>(), null);
+            if (!methodsIList_Insert.TryGetValue(listInterface, out ActionMethodAccessor accessor))
+            {
+                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.Insert)));
+                methodsIList_Insert[listInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        private static ActionMethodAccessor IList_RemoveAt(Type listInterface)
+        {
+            if (methodsIList_RemoveAt == null)
+                Interlocked.CompareExchange(ref methodsIList_RemoveAt, new LockingDictionary<Type, ActionMethodAccessor>(), null);
+            if (!methodsIList_RemoveAt.TryGetValue(listInterface, out ActionMethodAccessor accessor))
+            {
+                accessor = new ActionMethodAccessor(listInterface.GetMethod(nameof(IList<_>.RemoveAt)));
+                methodsIList_RemoveAt[listInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        private static IndexerAccessor IList_Item(Type listInterface)
+        {
+            if (methodsIList_Item == null)
+                Interlocked.CompareExchange(ref methodsIList_Item, new LockingDictionary<Type, IndexerAccessor>(), null);
+            if (!methodsIList_Item.TryGetValue(listInterface, out IndexerAccessor accessor))
+            {
+                accessor = new IndexerAccessor(listInterface.GetProperty("Item"));
+                methodsIList_Item[listInterface] = accessor;
+            }
+
+            return accessor;
+        }
+
+        #endregion
+
         #endregion
 
         #endregion
 
-        #region Accessor Extension Methods
+        #region Internal Accessor Methods
 
         #region Exception
 
@@ -349,6 +495,32 @@ namespace KGySoft.Reflection
 
         internal static int Point_GetX(object point) => (int)Point_X(point).Get(point);
         internal static int Point_GetY(object point) => (int)Point_Y(point).Get(point);
+
+        #endregion
+
+        #region ICollection<T>
+
+        internal static bool IsReadOnly([NoEnumeration] this IEnumerable collection, Type collectionInterface) => (bool)ICollection_IsReadOnly(collectionInterface).Get(collection);
+        internal static void Add([NoEnumeration] this IEnumerable collection, Type collectionInterface, object item) => ICollection_Add(collectionInterface).Invoke(collection, item);
+        internal static void Clear([NoEnumeration] this IEnumerable collection, Type collectionInterface) => ICollection_Clear(collectionInterface).Invoke(collection);
+        internal static int Count([NoEnumeration] this IEnumerable collection, Type collectionInterface) => (int)ICollection_Count(collectionInterface).Get(collection);
+        internal static bool Remove([NoEnumeration] this IEnumerable collection, Type collectionInterface, object item) => (bool)ICollection_Remove(collectionInterface).Invoke(collection, item);
+
+        #endregion
+
+        #region IProducerConsumerCollection<T>
+
+#if !NET35
+        internal static bool TryAddToProducerConsumerCollection([NoEnumeration] this IEnumerable collection, Type collectionInterface, object item) => (bool)IProducerConsumerCollection_TryAdd(collectionInterface).Invoke(collection, item);
+#endif
+
+        #endregion
+
+        #region IList<T>
+
+        internal static void Insert([NoEnumeration] this IEnumerable list, Type listInterface, int index, object item) => IList_Insert(listInterface).Invoke(list, index, item);
+        internal static void RemoveAt([NoEnumeration] this IEnumerable list, Type listInterface, int index) => IList_RemoveAt(listInterface).Invoke(list, index);
+        internal static void SetElementAt([NoEnumeration] this IEnumerable list, Type listInterface, int index, object item) => IList_Item(listInterface).Set(list, item, index);
 
         #endregion
 

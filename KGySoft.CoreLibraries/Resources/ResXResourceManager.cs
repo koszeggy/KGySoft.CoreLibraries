@@ -542,7 +542,6 @@ namespace KGySoft.Resources
             }
             set { base.ResourceSets = value; }
         }
-
 #elif NET40 || NET45
         private new Dictionary<string, ResourceSet> ResourceSets
         {
@@ -555,7 +554,7 @@ namespace KGySoft.Resources
             }
             set
             {
-                Accessors.ResourceManager_resourceSets.Set(this, value);
+                this.SetResourceSets(value);
                 resourceSets = value;
             }
         }
@@ -574,7 +573,7 @@ namespace KGySoft.Resources
         }
 
         private CultureInfo NeutralResourcesCulture
-            => neutralResourcesCulture ?? (neutralResourcesCulture = (CultureInfo)Accessors.ResourceManager_neutralResourcesCulture.Get(this) ?? CultureInfo.InvariantCulture);
+            => neutralResourcesCulture ?? (neutralResourcesCulture = this.GetNeutralResourcesCulture() ?? CultureInfo.InvariantCulture);
 
         #endregion
 
@@ -605,7 +604,7 @@ namespace KGySoft.Resources
             // - _neutralResourcesCulture is initialized from assembly (> .NET4 only)
 #if NET35
             // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
-            Accessors.ResourceManager_neutralResourcesCulture.Set(this, GetNeutralResourcesLanguage(assembly));
+            this.SetNeutralResourcesCulture(GetNeutralResourcesLanguage(assembly));
 #endif // #elif not needed because this will not be needed in newer versions
         }
 
@@ -628,7 +627,7 @@ namespace KGySoft.Resources
             : this(baseName, Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly())
         {
             if (neutralResourcesLanguage != null)
-                Accessors.ResourceManager_neutralResourcesCulture.Set(this, neutralResourcesLanguage);
+                this.SetNeutralResourcesCulture(neutralResourcesLanguage);
         }
 
         /// <summary>
@@ -1388,7 +1387,7 @@ namespace KGySoft.Resources
 #if NET35
         private Hashtable GetBaseResources() => base.ResourceSets;
 #elif NET40 || NET45
-        private Dictionary<string, ResourceSet> GetBaseResources() => (Dictionary<string, ResourceSet>)Accessors.ResourceManager_resourceSets.Get(this);
+        private Dictionary<string, ResourceSet> GetBaseResources() => this.GetResourceSets();
 #else
 #error .NET version is not set or not supported!
 #endif

@@ -68,7 +68,7 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (length < 0)
-                throw new ArgumentOutOfRangeException(nameof(length), Res.ArgumentMustBeGreaterOrEqualThan(0));
+                throw new ArgumentOutOfRangeException(nameof(length), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (length == 0)
                 return new byte[0];
 
@@ -752,7 +752,7 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minLength < 0)
-                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterOrEqualThan(0));
+                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (maxLength < minLength)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
             if (allowedCharacters == null)
@@ -783,7 +783,7 @@ namespace KGySoft.CoreLibraries
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);
             if (minLength < 0)
-                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterOrEqualThan(0));
+                throw new ArgumentOutOfRangeException(nameof(minLength), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (maxLength < minLength)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
             if (!Enum<StringCreation>.IsDefined(strategy))

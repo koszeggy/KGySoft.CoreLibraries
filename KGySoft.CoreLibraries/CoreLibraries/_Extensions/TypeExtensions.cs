@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Security;
 using System.Text;
+using System.Threading;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -42,7 +43,6 @@ namespace KGySoft.CoreLibraries
 
         private static readonly string collectionGenTypeName = Reflector.ICollectionGenType.Name;
 
-        private static readonly IThreadSafeCacheAccessor<Type, int> sizeOfCache = new Cache<Type, int>(GetSize).GetThreadSafeAccessor();
         private static readonly HashSet<Type> nativelyParsedTypes =
             new HashSet<Type>
             {
@@ -58,6 +58,8 @@ namespace KGySoft.CoreLibraries
         /// Main key is the target type, the inner one is the source type.
         /// </summary>
         private static readonly IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
+
+        private static IThreadSafeCacheAccessor<Type, int> sizeOfCache;
 
         #endregion
 
@@ -519,7 +521,12 @@ namespace KGySoft.CoreLibraries
         internal static bool CanBeCreatedWithoutParameters(this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
 
-        internal static int SizeOf(this Type type) => sizeOfCache[type];
+        internal static int SizeOf(this Type type)
+        {
+            if (sizeOfCache == null)
+                Interlocked.CompareExchange(ref sizeOfCache, new Cache<Type, int>(GetSize).GetThreadSafeAccessor(), null);
+            return sizeOfCache[type];
+        }
 
         internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
         {
@@ -596,7 +603,7 @@ namespace KGySoft.CoreLibraries
                 return Buffer.ByteLength(array);
             }
 
-            // Emitting the SizeOf OpCode for the type
+            // Emitting the SizeOf OpCode for the type (TODO: use TypedReferene instead and drop cache)
             var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
             ILGenerator gen = dm.GetILGenerator();
             gen.Emit(OpCodes.Sizeof, type);

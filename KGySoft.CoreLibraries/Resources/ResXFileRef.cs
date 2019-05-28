@@ -357,9 +357,9 @@ namespace KGySoft.Resources
         }
 
         internal static ResXFileRef InitFromWinForms(object other) => new ResXFileRef(
-            Accessors.ResXFileRef_fileName_Get(other),
-            Accessors.ResXFileRef_typeName_Get(other),
-            Accessors.ResXFileRef_textFileEncoding_Get(other)?.WebName);
+            Accessors.ResXFileRef_GetFileName(other),
+            Accessors.ResXFileRef_GetTypeName(other),
+            Accessors.ResXFileRef_GetTextFileEncoding(other)?.WebName);
 
         #endregion
 

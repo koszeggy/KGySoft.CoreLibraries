@@ -1770,10 +1770,8 @@ namespace KGySoft.Reflection
                 {
                     type = type.MakeGenericType(genericParameters);
                 }
-                catch (Exception)
+                catch (Exception e) when (!e.IsCriticalOr(throwError))
                 {
-                    if (throwError)
-                        throw;
                     return false;
                 }
             }
@@ -1972,10 +1970,8 @@ namespace KGySoft.Reflection
                 {
                     type = type.MakeGenericType(genericParameters);
                 }
-                catch (Exception)
+                catch (Exception e) when (!e.IsCriticalOr(throwError))
                 {
-                    if (throwError)
-                        throw;
                     return false;
                 }
             }

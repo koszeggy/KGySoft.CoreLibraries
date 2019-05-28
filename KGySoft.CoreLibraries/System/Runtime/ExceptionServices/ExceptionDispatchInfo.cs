@@ -8,13 +8,13 @@ namespace System.Runtime.ExceptionServices
     {
         private readonly Exception exception;
         private readonly string stackTrace;
-        private readonly object source;
+        private readonly string source;
 
         private ExceptionDispatchInfo(Exception source)
         {
             exception = source ?? throw new ArgumentNullException(nameof(source));
             stackTrace = source.StackTrace + Environment.NewLine;
-            this.source = Accessors.Exception_source.Get(source);
+            this.source = source.GetSource();
         }
 
         internal static ExceptionDispatchInfo Capture(Exception source) => new ExceptionDispatchInfo(source);
@@ -28,8 +28,8 @@ namespace System.Runtime.ExceptionServices
             catch
             {
                 exception.InternalPreserveStackTrace();
-                Accessors.Exception_remoteStackTraceString.Set(exception, stackTrace);
-                Accessors.Exception_source.Set(exception, source);
+                exception.SetRemoteStackTraceString(stackTrace);
+                exception.SetSource(source);
                 throw;
             }
         }

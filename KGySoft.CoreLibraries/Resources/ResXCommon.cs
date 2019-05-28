@@ -166,8 +166,8 @@ namespace KGySoft.Resources
         internal static XmlException CreateXmlException(string message, int line, int pos, Exception innerException = null)
         {
             var result = new XmlException(message, innerException);
-            Accessors.XmlException_lineNumber.Set(result, line);
-            Accessors.XmlException_linePosition.Set(result, pos);
+            result.SetLineNumber(line);
+            result.SetLinePosition(pos);
             return result;
         }
 
