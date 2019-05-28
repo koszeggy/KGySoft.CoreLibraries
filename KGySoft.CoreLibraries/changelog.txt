@@ -13,6 +13,10 @@
   This is a breaking change for .NET4.0 and above only if the caller assembly is partially trusted or is
   security transparent and tries to call the few of the public methods, which are security critical.
 
++ KGySoft namespace:
+==================================
++ PublicResources class: Provides localizable public string resources that can be used in any project.
+
 * KGySoft.CoreLibraries namespace:
 ==================================
 * Enum<TEnum>: Improving performance of parsing with insensitive case

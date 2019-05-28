@@ -56,13 +56,6 @@ namespace KGySoft
 
         #region Properties
 
-        #region Private Properties
-
-        private static string QuoteStart => Get("General_QuoteStart");
-        private static string QuoteEnd => Get("General_QuoteEnd");
-
-        #endregion
-
         #region Internal Properties
 
         #region General
@@ -71,7 +64,7 @@ namespace KGySoft
         internal static string Undefined => Get("General_Undefined");
 
         /// <summary>&lt;null&gt;</summary>
-        internal static string NullReference => Get("General_NullReference");
+        internal static string Null => Get("General_Null");
 
         /// <summary>Value cannot be null.</summary>
         internal static string ArgumentNull => Get("General_ArgumentNull");
@@ -108,6 +101,12 @@ namespace KGySoft
 
         /// <summary>No</summary>
         internal static string No => Get("General_No");
+
+        /// <summary>'</summary>
+        internal static string QuoteStart => Get("General_QuoteStart");
+
+        /// <summary>'</summary>
+        internal static string QuoteEnd => Get("General_QuoteEnd");
 
         /// <summary>ms</summary>
         internal static string Millisecond => Get("General_Millisecond");
@@ -434,11 +433,20 @@ namespace KGySoft
 
         #region General
 
-        /// <summary>Specified argument must be greater or equal than {0}.</summary>
-        internal static string ArgumentMustBeGreaterOrEqualThan(object limit) => Get("General_ArgumentMustBeGreaterOrEqualThanFormat", limit);
+        /// <summary>Specified argument must be greater than {0}.</summary>
+        internal static string ArgumentMustBeGreaterThan<T>(T limit) => Get("General_ArgumentMustBeGreaterThanFormat", limit);
+
+        /// <summary>Specified argument must be greater than or equal to {0}.</summary>
+        internal static string ArgumentMustBeGreaterThanOrEqualTo<T>(T limit) => Get("General_ArgumentMustBeGreaterThanOrEqualToFormat", limit);
+
+        /// <summary>Specified argument must be less than {0}.</summary>
+        internal static string ArgumentMustBeLessThan<T>(T limit) => Get("General_ArgumentMustBeGreaterThanFormat", limit);
+
+        /// <summary>Specified argument must be less than or equal to {0}.</summary>
+        internal static string ArgumentMustBeLessThanOrEqualTo<T>(T limit) => Get("General_ArgumentMustBeLessThanOrEqualToFormat", limit);
 
         /// <summary>Specified argument must be between {0} and {1}.</summary>
-        internal static string ArgumentMustBeBetween(object low, object high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
+        internal static string ArgumentMustBeBetween<T>(T low, T high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
         internal static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumValues<TEnum>());
@@ -951,7 +959,7 @@ namespace KGySoft
                 int i = Array.IndexOf(args, null);
                 if (i >= 0)
                 {
-                    string nullRef = NullReference;
+                    string nullRef = Null;
                     for (; i < args.Length; i++)
                     {
                         if (args[i] == null)

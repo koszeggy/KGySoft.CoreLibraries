@@ -126,8 +126,17 @@
   <data name="General_ArgumentOutOfRange" xml:space="preserve">
     <value>Specified argument was out of the range of valid values.</value>
   </data>
-  <data name="General_ArgumentMustBeGreaterOrEqualThanFormat" xml:space="preserve">
-    <value>Specified argument must be greater or equal than {0}.</value>
+  <data name="General_ArgumentMustBeGreaterThanFormat" xml:space="preserve">
+    <value>Specified argument must be greater than {0}.</value>
+  </data>
+  <data name="General_ArgumentMustBeGreaterThanOrEqualToFormat" xml:space="preserve">
+    <value>Specified argument must be greater than or equal to {0}.</value>
+  </data>
+  <data name="General_ArgumentMustBeLessThanFormat" xml:space="preserve">
+    <value>Specified argument must be less than {0}.</value>
+  </data>
+  <data name="General_ArgumentMustBeLessThanOrEqualToFormat" xml:space="preserve">
+    <value>Specified argument must be less than or equal to {0}.</value>
   </data>
   <data name="General_ArgumentMustBeBetweenFormat" xml:space="preserve">
     <value>Specified argument must be between {0} and {1}.</value>
@@ -544,7 +553,7 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_MissingFieldSurrogateFormat" xml:space="preserve">
     <value>Number of serializable fields in type "{0}" has been decreased since serialization so cannot deserialize type "{1}".</value>
   </data>
-  <data name="General_NullReference" xml:space="preserve">
+  <data name="General_Null" xml:space="preserve">
     <value>&lt;null&gt;</value>
   </data>
   <data name="BinarySerialization_ObjectHierarchyChangedSurrogateFormat" xml:space="preserve">

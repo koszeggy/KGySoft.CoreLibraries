@@ -30,14 +30,77 @@ using Microsoft.Win32;
 namespace KGySoft
 {
     /// <summary>
-    /// Represents the language settings of the current thread. Use this class if you want to be notified on
+    /// Represents the language settings of the current thread. Use this class also when you want to be notified on
     /// language changes and to control the behavior of those <see cref="DynamicResourceManager"/> instances,
     /// which are configured to use centralized settings.
+    /// <br/>See the <strong>Remarks</strong> section for details and an example.
     /// </summary>
-    /// <seealso cref="DynamicResourceManager"/>
+    /// <seealso cref="PublicResources"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
-    /// <remarks>For an example to see how to configure a dynamic resource manager for a class library
-    /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</remarks>
+    /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
+    /// <remarks>
+    /// <para>If you use <c>KGySoft.CoreLibraries</c> in a class library, then you do not really need to use this class. Just use the publicly available resources via
+    /// the <see cref="PublicResources"/> class and let the consumers of your library adjusting the language settings by this class in their applications.</para>
+    /// <para>If you use <c>KGySoft.CoreLibraries</c> or other class libraries dependent on <c>KGySoft.CoreLibraries</c> in an application, then use this class to
+    /// set the language of your application and the behavior of centralized resource managers. The <c>KGySoft.CoreLibraries</c> contains one centralized resource manager
+    /// for the string resources used in the library. Some of these strings can be publicly accessed via the <see cref="PublicResources"/> members. See also the example below.</para>
+    /// </remarks>
+    /// <example>
+    /// The following example demonstrates how to generate resource files in your application for any language.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Globalization;
+    /// using KGySoft;
+    /// using KGySoft.Resources;
+    /// 
+    /// class Example
+    /// {
+    ///     static void Main(string[] args)
+    ///     {
+    ///         LanguageSettings.DisplayLanguage = CultureInfo.GetCultureInfo("de-DE");
+    /// 
+    ///         // Even though we set the language above centralized resources still return the built-in compiled resources.
+    ///         // Of course, if you use compiled resources in your application with the selected language, then they will be considered.
+    ///         Console.WriteLine("Non-localized resource:");
+    ///         Console.WriteLine(PublicResources.ArgumentNull);
+    ///         Console.WriteLine();
+    /// 
+    ///         // In an application that uses KGySoft.CoreLibraries you can opt-in to use dynamic resources from .resx files.
+    ///         LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
+    /// 
+    ///         // Next line tells that whenever a resource is requested, which does not exist in the resource file of the display
+    ///         // language, then its resource file will be dynamically created and/or expanded by the requested resource.
+    ///         LanguageSettings.DynamicResourceManagersAutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
+    /// 
+    ///         // Actually the default value is AutoAppendOptions.AppendFirstNeutralCulture | AutoAppendOptions.AppendOnLoad,
+    ///         // which causes to add not just the requested resource but all of the missing ones to the target resource file.
+    ///         // Delete the line above to see the difference.
+    /// 
+    ///         Console.WriteLine("Localized resource:");
+    ///         Console.WriteLine(PublicResources.ArgumentNull);
+    ///     }
+    /// }
+    /// 
+    /// // When this example is executed for the first time it produces the following output:
+    /// 
+    /// // Non-localized resource:
+    /// // Value cannot be null.
+    /// // 
+    /// // Localized resource:
+    /// // [T]Value cannot be null.]]></code>
+    /// <para>The <c>[T]</c> before a resource indicates that a new resource has been generated, which is not translated yet. In the <c>Resources</c> subfolder of your compiled project
+    /// now there must be a new file named <c>KGySoft.CoreLibraries.Messages.de.resx</c> (the exact name depends on the display language and the appending strategy). Its content now must be the following:</para>
+    /// <code lang="XML"><![CDATA[
+    /// <?xml version="1.0"?>
+    /// <root>
+    ///   <data name = "General_ArgumentNull">
+    ///     <value>[T]Value cannot be null.</value>
+    ///   </data>
+    /// </root>]]></code>
+    /// <para>Search for the <c>[T]</c> values in the generated file to find the untranslated resources and feel free to change them. If you change the resource and execute the example again it will now show the translation you provided.</para>
+    /// <note type="tip">To see how to add a dynamic resource manager to your own class library
+    /// see the <em>Recommended usage for string resources in a class library</em> section in the description of the <see cref="DynamicResourceManager"/> class.</note>
+    /// </example>
     public static class LanguageSettings
     {
         #region Constants
@@ -142,7 +205,8 @@ namespace KGySoft
         #region Properties
 
         /// <summary>
-        /// Gets or sets the formatting language of the current <see cref="Thread"/> (<see cref="Thread.CurrentCulture">Thread.CurrentThread.CurrentCulture</see>).
+        /// Gets or sets the formatting language of the current <see cref="Thread"/>, which is used for formatting and parsing numbers,
+        /// date and time values, currency, etc.
         /// When set, <see cref="FormattingLanguageChanged"/> and <see cref="FormattingLanguageChangedGlobal"/> events are triggered.
         /// </summary>
         /// <remarks>
@@ -171,7 +235,7 @@ namespace KGySoft
         }
 
         /// <summary>
-        /// Gets or sets the display language of the current <see cref="Thread"/> (<see cref="Thread.CurrentUICulture">Thread.CurrentThread.CurrentUICulture</see>).
+        /// Gets or sets the display language of the current <see cref="Thread"/>, which is used for looking up localizable resources.
         /// When set, <see cref="DisplayLanguageChanged"/> and <see cref="DisplayLanguageChangedGlobal"/> events are triggered.
         /// <br/>Default value: The display culture of the operating system.
         /// </summary>
