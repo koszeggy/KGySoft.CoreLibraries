@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;

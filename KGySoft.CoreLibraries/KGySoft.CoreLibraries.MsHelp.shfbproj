@@ -32,10 +32,11 @@
     <MissingTags>Summary, Parameter, Returns, AutoDocumentCtors, Namespace, TypeParameter, AutoDocumentDispose</MissingTags>
     <NamespaceSummaries>
       <NamespaceSummaryItem name="KGySoft.ComponentModel" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft.CoreLibraries" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True" />
-<NamespaceSummaryItem name="KGySoft" isDocumented="True" /></NamespaceSummaries>
+      <NamespaceSummaryItem name="KGySoft.CoreLibraries" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Security.Cryptography" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft.Collections" isDocumented="True" />
+      <NamespaceSummaryItem name="KGySoft" isDocumented="True" />
+    </NamespaceSummaries>
     <SyntaxFilters>Standard</SyntaxFilters>
     <CleanIntermediates>True</CleanIntermediates>
     <ApiFilter>
@@ -81,6 +82,8 @@
       <Argument Key="maxVersionParts" Value="" />
       <Argument Key="defaultLanguage" Value="cs" />
     </TransformComponentArguments>
+    <HeaderText>
+    </HeaderText>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional

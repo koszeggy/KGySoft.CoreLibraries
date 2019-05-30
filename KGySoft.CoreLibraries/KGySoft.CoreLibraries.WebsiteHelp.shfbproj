@@ -67,7 +67,7 @@
     <PlugInConfigurations />
     <VisibleItems>Attributes, InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected, EditorBrowsableNever, NonBrowsable</VisibleItems>
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
-    <HelpFileVersion>4.5.0.0</HelpFileVersion>
+    <HelpFileVersion>4.6.0</HelpFileVersion>
     <MaximumGroupParts>2</MaximumGroupParts>
     <NamespaceGrouping>False</NamespaceGrouping>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
