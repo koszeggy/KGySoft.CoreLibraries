@@ -129,10 +129,14 @@ namespace KGySoft.Serialization
                     return true;
                 }
 
-                surrogate = surrogateSelector.GetSurrogate(type, context, out selector);
+                DoGetSurrogate(type, out surrogate, out selector);
                 surrogates[type] = new KeyValuePair<ISerializationSurrogate, ISurrogateSelector>(surrogate, selector);
                 return surrogate != null;
             }
+
+            [SecurityCritical]
+            private void DoGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
+                => surrogate = surrogateSelector.GetSurrogate(type, context, out selector);
 
             #endregion
         }

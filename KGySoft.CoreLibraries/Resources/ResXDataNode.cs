@@ -1521,6 +1521,7 @@ namespace KGySoft.Resources
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo si, StreamingContext context)
         {
             if (si == null)

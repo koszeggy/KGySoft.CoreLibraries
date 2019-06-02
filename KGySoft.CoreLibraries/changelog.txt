@@ -6,6 +6,18 @@
 ===============================================================================
 
 ~~~~~~~~~~~
+* v4.6.1.0:
+~~~~~~~~~~~
+- Assembly: Resetting SecurityRuleSet.Level1 because otherwise types that implement ISerializable
+  cannot be even instantiated from a partially trusted domain.
+  See also: See also https://stackoverflow.com/questions/48355591/how-can-i-implement-iserializable-in-net-4-without-violating-inheritance-secur
+
+* KGySoft.CoreLibraries namespace:
+==================================
+- EnumComparer<TEnum>: Using a different Equals/GetHashCode/Compare method when executed from partially trusted domain to
+  avoid System.Security.VerificationException.
+
+~~~~~~~~~~~
 ! v4.6.0.0:
 ~~~~~~~~~~~
 

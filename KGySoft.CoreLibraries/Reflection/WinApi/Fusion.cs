@@ -16,6 +16,7 @@
 
 #region Usings
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -43,6 +44,7 @@ namespace KGySoft.Reflection.WinApi
             /// <param name="dwReserved">Reserved for future extensibility. dwReserved must be 0 (zero).</param>
             /// <returns>HRESULT</returns>
             [DllImport("fusion.dll")]
+            [SuppressMessage("Microsoft.Security", "CA5122:PInvokesShouldNotBeSafeCriticalFxCopRule", Justification = "False alarm, SecurityCriticalAttribute is applied to container class")]
             internal static extern int CreateAssemblyCache(out IAssemblyCache ppAsmCache, int dwReserved);
 
             #endregion
