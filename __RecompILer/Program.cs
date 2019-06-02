@@ -33,28 +33,23 @@ namespace RecompILer
         private const string backupAssembly = "KGySoft.CoreLibraries.bak.dll";
         private const string outputAssembly = inputAssembly;
         private const string keyFile = @"..\..\..\KGySoft.snk";
-        private const string patternEquals = "Equals(!TEnum x,";
-        private const string patternGetHashCode = "GetHashCode(!TEnum";
-        private const string patternCompare = "Compare(!TEnum x,";
+        private const string patternEquals = "EqualsFast(!TEnum x,";
+        private const string patternGetHashCode = "GetHashCodeFast(!TEnum";
+        private const string patternCompare = "CompareFast(!TEnum x,";
         private const string ilasm2 = @"..\Microsoft.NET\Framework\v2.0.50727\ilasm.exe";
         private const string ilasm4 = @"..\Microsoft.NET\Framework\v4.0.30319\ilasm.exe";
 
         private const string bodyEquals = @"
-    .maxstack 2
-    .locals init (int64 x)
-    ldarg.1
-    conv.i8
-    stloc.0
-    ldloca.s x
-    ldarg.2
-    conv.i8
-    call instance bool [mscorlib]System.Int64::Equals(int64)
-    ret";
+    .maxstack 8
+    L_0000: ldarg.0
+    L_0001: ldarg.1
+    L_0002: ceq
+    L_0004: ret";
 
         private const string bodyGetHashCode = @"
     .maxstack 1
     .locals init (int32 obj)
-    ldarg.1
+    ldarg.0
     conv.i4
     stloc.0
     ldloca.s obj
@@ -66,19 +61,19 @@ namespace RecompILer
     .locals init (int64 signedX, uint64 unsignedX)
     ldsfld bool class KGySoft.CoreLibraries.EnumComparer`1<!TEnum>::isUnsignedCompare
     brtrue.s CompareAsUnsigned
-    ldarg.1
+    ldarg.0
     conv.i8
     stloc.0
     ldloca.s signedX
-    ldarg.2
+    ldarg.1
     conv.i8
     call instance int32 [mscorlib]System.Int64::CompareTo(int64)
     ret
-    CompareAsUnsigned: ldarg.1
+    CompareAsUnsigned: ldarg.0
     conv.i8
     stloc.1
     ldloca.s unsignedX
-    ldarg.2
+    ldarg.1
     conv.i8
     call instance int32 [mscorlib]System.UInt64::CompareTo(uint64)
     ret";
