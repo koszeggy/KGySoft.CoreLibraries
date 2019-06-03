@@ -29,27 +29,33 @@ namespace RecompILer
     {
         #region Constants
 
+        private const bool decompileOnly = false;
+        private const bool removeChangedSource = true;
+
         private const string inputAssembly = "KGySoft.CoreLibraries.dll";
         private const string backupAssembly = "KGySoft.CoreLibraries.bak.dll";
         private const string outputAssembly = inputAssembly;
         private const string keyFile = @"..\..\..\KGySoft.snk";
-        private const string patternEquals = "EqualsFast(!TEnum x,";
-        private const string patternGetHashCode = "GetHashCodeFast(!TEnum";
-        private const string patternCompare = "CompareFast(!TEnum x,";
+        private const string patternEquals = "Equals(!TEnum x,";
+        private const string equalsOrigSize = "20 (0x14)";
+        private const string patternGetHashCode = "GetHashCode(!TEnum";
+        private const string getHashCodeOrigSize = "14 (0xe)";
+        private const string patternCompare = "Compare(!TEnum x,";
+        private const string compareOrigSize = "23 (0x17)";
         private const string ilasm2 = @"..\Microsoft.NET\Framework\v2.0.50727\ilasm.exe";
         private const string ilasm4 = @"..\Microsoft.NET\Framework\v4.0.30319\ilasm.exe";
 
         private const string bodyEquals = @"
     .maxstack 8
-    L_0000: ldarg.0
-    L_0001: ldarg.1
+    L_0000: ldarg.1
+    L_0001: ldarg.2
     L_0002: ceq
     L_0004: ret";
 
         private const string bodyGetHashCode = @"
     .maxstack 1
     .locals init (int32 obj)
-    ldarg.0
+    ldarg.1
     conv.i4
     stloc.0
     ldloca.s obj
@@ -59,21 +65,21 @@ namespace RecompILer
         private const string bodyCompare = @"
     .maxstack 3
     .locals init (int64 signedX, uint64 unsignedX)
-    ldsfld bool class KGySoft.CoreLibraries.EnumComparer`1<!TEnum>::isUnsignedCompare
+    ldsfld bool class KGySoft.CoreLibraries.EnumComparer`1/FullyTrustedEnumComparer<!TEnum>::isUnsignedCompare
     brtrue.s CompareAsUnsigned
-    ldarg.0
+    ldarg.1
     conv.i8
     stloc.0
     ldloca.s signedX
-    ldarg.1
+    ldarg.2
     conv.i8
     call instance int32 [mscorlib]System.Int64::CompareTo(int64)
     ret
-    CompareAsUnsigned: ldarg.0
+    CompareAsUnsigned: ldarg.1
     conv.i8
     stloc.1
     ldloca.s unsignedX
-    ldarg.1
+    ldarg.2
     conv.i8
     call instance int32 [mscorlib]System.UInt64::CompareTo(uint64)
     ret";
@@ -126,6 +132,9 @@ namespace RecompILer
             try
             {
                 string ilFile = Decompile(ildasmExe);
+                if (decompileOnly)
+                    return 0;
+
                 if (!ChangeIL(ilFile))
                 {
                     return 1;
@@ -136,8 +145,11 @@ namespace RecompILer
                     return 1;
                 }
 
-                File.Delete(ilFile);
-                File.Delete(Path.ChangeExtension(ilFile, ".res"));
+                if (removeChangedSource)
+                {
+                    File.Delete(ilFile);
+                    File.Delete(Path.ChangeExtension(ilFile, ".res"));
+                }
             }
             catch (Exception e)
             {
@@ -214,33 +226,41 @@ namespace RecompILer
             content.Replace("([mscorlib]System.IConvertible, [mscorlib]System.ValueType)", "([mscorlib]System.Enum)");
 
             // changing method bodies
-            if (!ReplaceBody(content, patternEquals, bodyEquals))
+            if (!ReplaceBody(content, patternEquals, equalsOrigSize, bodyEquals))
                 return false;
-            if (!ReplaceBody(content, patternGetHashCode, bodyGetHashCode))
+            if (!ReplaceBody(content, patternGetHashCode, getHashCodeOrigSize, bodyGetHashCode))
                 return false;
-            if (!ReplaceBody(content, patternCompare, bodyCompare))
+            if (!ReplaceBody(content, patternCompare, compareOrigSize, bodyCompare))
                 return false;
 
             File.WriteAllText(ilFile, content.ToString());
             return true;
         }
 
-        private static bool ReplaceBody(StringBuilder sb, string pattern, string newBody)
+        private static bool ReplaceBody(StringBuilder sb, string pattern, string origSize, string newBody)
         {
+
             string s = sb.ToString();
-            int index = s.IndexOf(pattern, StringComparison.Ordinal);
-            if (index < 0)
+            int start = s.IndexOf(pattern, StringComparison.Ordinal);
+            while (start >= 0)
             {
-                Console.WriteLine("Error: \"{0}\" not found in source code", pattern);
-                return false;
+                start = s.IndexOf('{', start);
+                int end = s.IndexOf('}', start);
+                if (s.IndexOf(origSize, start, end - start, StringComparison.Ordinal) >= 0)
+                {
+                    sb.Remove(start + 1, end - start - 1);
+                    sb.Insert(start + 1, Environment.NewLine);
+                    sb.Insert(start + 1, newBody);
+                    sb.Insert(start + 1, Environment.NewLine);
+                    return true;
+                }
+
+                start = s.IndexOf(pattern, end + 1, StringComparison.Ordinal);
             }
-            index = s.IndexOf('{', index);
-            int indexEnd = s.IndexOf('}', index);
-            sb.Remove(index + 1, indexEnd - index - 1);
-            sb.Insert(index + 1, Environment.NewLine);
-            sb.Insert(index + 1, newBody);
-            sb.Insert(index + 1, Environment.NewLine);
-            return true;
+
+
+            Console.WriteLine($"Error: \"{pattern}\" of size \"{origSize}\" not found in source code");
+            return false;
         }
 
         #endregion
