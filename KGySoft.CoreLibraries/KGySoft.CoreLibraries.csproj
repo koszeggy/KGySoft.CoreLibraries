@@ -305,12 +305,12 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>if $(ConfigurationName) == Release_NET35 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
-if $(ConfigurationName) == Release_NET40 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
-if $(ConfigurationName) == Release_NET45 $(SolutionDir)__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)</PostBuildEvent>
+    <PostBuildEvent>if $(ConfigurationName) == Release_NET35 $(ProjectDir)..\__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
+if $(ConfigurationName) == Release_NET40 $(ProjectDir)..\__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)
+if $(ConfigurationName) == Release_NET45 $(ProjectDir)..\__RecompILer\bin\$(ConfigurationName)\RecompILer $(TargetFrameworkVersion)</PostBuildEvent>
   </PropertyGroup>
 </Project>
