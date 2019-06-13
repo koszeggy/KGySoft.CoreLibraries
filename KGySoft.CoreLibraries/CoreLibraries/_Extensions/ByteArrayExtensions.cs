@@ -447,11 +447,11 @@ namespace KGySoft.CoreLibraries
                 return Decrypt(bytes, alg, password, salt);
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region Private methods
+        #region Private methods
 
         private static void CheckSalt(ref string salt)
         {
@@ -573,6 +573,6 @@ namespace KGySoft.CoreLibraries
             return result.ToString();
         }
 
-#endregion
+        #endregion
     }
 }
