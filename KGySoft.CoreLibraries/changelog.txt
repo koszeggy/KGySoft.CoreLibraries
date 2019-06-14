@@ -14,8 +14,8 @@
 
 * KGySoft.CoreLibraries namespace:
 ==================================
-- EnumComparer<TEnum>: Using a different Equals/GetHashCode/Compare method when executed from partially trusted domain to
-  avoid System.Security.VerificationException.
+- EnumComparer<TEnum>: It is an abstract class now and using different implementations for fully and partially trusted domains
+  to avoid System.Security.VerificationException.
 
 ~~~~~~~~~~~
 ! v4.6.0.0:
