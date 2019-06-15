@@ -75,6 +75,7 @@
     <Compile Include="Collections\CircularList.BinarySearchHelper.cs" />
     <Compile Include="Collections\Cache.cs" />
     <Compile Include="Collections\ListSegment.cs" />
+    <Compile Include="Collections\PrimeHelper.cs" />
     <Compile Include="Collections\_Enums\CacheBehavior.cs" />
     <Compile Include="Collections\CircularList.cs" />
     <Compile Include="Collections\CircularSortedList.cs" />

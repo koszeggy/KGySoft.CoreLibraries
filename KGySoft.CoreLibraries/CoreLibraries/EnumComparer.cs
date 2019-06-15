@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using System.Runtime.Serialization;
+using System.Security;
 using System.Threading;
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -55,7 +57,7 @@ namespace KGySoft.CoreLibraries
         #region PartiallyTrustedEnumComparer class
 
         [Serializable]
-        private sealed class PartiallyTrustedEnumComparer : EnumComparer<TEnum>
+        private sealed class PartiallyTrustedEnumComparer : EnumComparer<TEnum>, IObjectReference
         {
             #region Fields
 
@@ -136,6 +138,9 @@ namespace KGySoft.CoreLibraries
                 return compare.Invoke(x, y);
             }
 
+            [SecurityCritical]
+            public object GetRealObject(StreamingContext context) => Comparer;
+
             #endregion
 
             #endregion
@@ -146,7 +151,7 @@ namespace KGySoft.CoreLibraries
         #region FullyTrustedEnumComparer class
 
         [Serializable]
-        private sealed class FullyTrustedEnumComparer : EnumComparer<TEnum>
+        private sealed class FullyTrustedEnumComparer : EnumComparer<TEnum>, IObjectReference
         {
             #region Fields
 
@@ -180,6 +185,9 @@ namespace KGySoft.CoreLibraries
                 // Allowed to be used in fully trusted domain only; otherwise, a VerificationException will be thrown at JIT time: Operation could destabilize the runtime.
                 return ((IComparable)x).CompareTo(y);
             }
+
+            [SecurityCritical]
+            public object GetRealObject(StreamingContext context) => Comparer;
 
             #endregion
         }
@@ -231,7 +239,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
         /// <returns><see langword="true"/>&#160;if the specified <see cref="object" /> is equal to this instance; otherwise, <see langword="false"/>.</returns>
-        public override bool Equals(object obj) => obj?.GetType() == GetType();
+        public override bool Equals(object obj) => obj is EnumComparer<TEnum>;
 
         /// <summary>
         /// Returns a hash code for this instance.
@@ -239,7 +247,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
         /// </returns>
-        public override int GetHashCode() => GetType().GetHashCode();
+        public override int GetHashCode() => typeof(EnumComparer<TEnum>).GetHashCode();
 
         #endregion
 

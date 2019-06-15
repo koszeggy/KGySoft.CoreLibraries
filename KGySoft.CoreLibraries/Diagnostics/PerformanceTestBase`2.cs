@@ -403,6 +403,16 @@ namespace KGySoft.Diagnostics
         /// </summary>
         protected virtual void OnTearDown() { }
 
+        /// <summary>
+        /// Called before each repetition of a test case.
+        /// </summary>
+        protected virtual void OnBeforeCase() { }
+
+        /// <summary>
+        /// Called after each repetition of a test case.
+        /// </summary>
+        protected virtual void OnAfterCase() { }
+
         #endregion
 
         #region Private Methods
@@ -483,11 +493,13 @@ namespace KGySoft.Diagnostics
 
                 for (int r = 0; r < Repeat; r++)
                 {
+                    OnBeforeCase();
                     DoCollect();
                     if (Iterations > 0)
                         DoTestByIterations(testCase.Case, testResult);
                     else
                         DoTestByTime(testCase.Case, testResult);
+                    OnAfterCase();
                 }
 
                 for (int r = 0; r < Repeat; r++)
