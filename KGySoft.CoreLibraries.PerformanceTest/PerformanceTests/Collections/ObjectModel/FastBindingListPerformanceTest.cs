@@ -87,14 +87,13 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
             // ReSharper disable PossibleMultipleEnumeration - intended to prevent sharing elements
             var collReference = new BindingList<TestItem>(new List<TestItem>(range.ToList()));
             var collTest = new FastBindingList<TestItem>(new List<TestItem>(range.ToList()));
-            var rnd = new Random(0);
-            new PerformanceTest
+            new RandomizedPerformanceTest
                 {
                     Iterations = 1000,
                     Repeat = 5
                 }
-                .AddCase(() => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
-                .AddCase(() => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")
+                .AddCase(rnd => collReference[rnd.Next(collReference.Count)].IntProp = rnd.Next(), "BindingList.ItemChanged")
+                .AddCase(rnd => collTest[rnd.Next(collTest.Count)].IntProp = rnd.Next(), "FastBindingList.ItemChanged")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

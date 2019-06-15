@@ -55,12 +55,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         {
             var cacheRemoveOldest = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveOldestElement };
             var cacheRemoveLeastRecent = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
-            var rndRemoveOldest = new Random(0);
-            var rndRemoveLeastRecent = new Random(0);
 
-            new PerformanceTest<string> { Iterations = iterations, TestName = "Using cache without dropping elements" }
-                .AddCase(() => cacheRemoveOldest[rndRemoveOldest.Next(capacity)], $"{nameof(cacheRemoveOldest.Behavior)} = {cacheRemoveOldest.Behavior}")
-                .AddCase(() => cacheRemoveLeastRecent[rndRemoveLeastRecent.Next(capacity)], $"{nameof(cacheRemoveLeastRecent.Behavior)} = {cacheRemoveLeastRecent.Behavior}")
+            new RandomizedPerformanceTest<string> { Iterations = iterations, TestName = "Using cache without dropping elements" }
+                .AddCase(rnd => cacheRemoveOldest[rnd.Next(capacity)], $"{nameof(cacheRemoveOldest.Behavior)} = {cacheRemoveOldest.Behavior}")
+                .AddCase(rnd => cacheRemoveLeastRecent[rnd.Next(capacity)], $"{nameof(cacheRemoveLeastRecent.Behavior)} = {cacheRemoveLeastRecent.Behavior}")
                 .DoTest()
                 .DumpResults(Console.Out);
 
@@ -75,13 +73,11 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         {
             var cacheRemoveOldest = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveOldestElement };
             var cacheRemoveLeastRecent = new Cache<int, string>(loader, capacity) { Behavior = CacheBehavior.RemoveLeastRecentUsedElement };
-            var rndRemoveOldest = new Random(0);
-            var rndRemoveLeastRecent = new Random(0);
             int range = (int)(capacity * 1.5);
 
-            new PerformanceTest<string> { Iterations = iterations, TestName = "Using cache with dropping elements" }
-                .AddCase(() => cacheRemoveOldest[rndRemoveOldest.Next(range)], $"{nameof(cacheRemoveOldest.Behavior)} = {cacheRemoveOldest.Behavior}")
-                .AddCase(() => cacheRemoveLeastRecent[rndRemoveLeastRecent.Next(range)], $"{nameof(cacheRemoveLeastRecent.Behavior)} = {cacheRemoveLeastRecent.Behavior}")
+            new RandomizedPerformanceTest<string> { Iterations = iterations, TestName = "Using cache with dropping elements" }
+                .AddCase(rnd => cacheRemoveOldest[rnd.Next(range)], $"{nameof(cacheRemoveOldest.Behavior)} = {cacheRemoveOldest.Behavior}")
+                .AddCase(rnd => cacheRemoveLeastRecent[rnd.Next(range)], $"{nameof(cacheRemoveLeastRecent.Behavior)} = {cacheRemoveLeastRecent.Behavior}")
                 .DoTest()
                 .DumpResults(Console.Out);
 

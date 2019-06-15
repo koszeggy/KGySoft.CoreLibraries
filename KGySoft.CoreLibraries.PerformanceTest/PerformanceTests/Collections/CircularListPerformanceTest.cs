@@ -66,53 +66,51 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         public void PopulateTest()
         {
             const int count = 1000;
-            new PerformanceTest { TestName = "Populate Lists Test", Iterations = 10000 }
-                .AddCase(() =>
+            new RandomizedPerformanceTest { TestName = "Populate Lists Test", Iterations = 10000 }
+                .AddCase(rnd =>
                 {
                     var list = new List<int>(count);
                     for (int i = 0; i < count; i++)
                         list.Add(i);
                 }, "Add to List end")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var llist = new LinkedList<int>();
                     for (int i = 0; i < count; i++)
                         llist.AddLast(i);
                 }, "Add to LinkedList end")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var clist = new CircularList<int>(count);
                     for (int i = 0; i < count; i++)
                         clist.Add(i);
                 }, "Add to CircularList end")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var list = new List<int>(count);
                     for (int i = 0; i < count; i++)
                         list.Insert(0, i);
                 }, "Add to List head")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var llist = new LinkedList<int>();
                     for (int i = 0; i < count; i++)
                         llist.AddFirst(i);
                 }, "Add to LinkedList head")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var clist = new CircularList<int>(count);
                     for (int i = 0; i < count; i++)
                         clist.Insert(0, i);
                 }, "Add to CircularList head")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    var rnd = new Random(0);
                     var list = new List<int>(count);
                     for (int i = 0; i < count; i++)
                         list.Insert(rnd.Next(i), i);
                 }, "Insert to List randomly")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    var rnd = new Random(0);
                     var llist = new LinkedList<int>();
                     for (int i = 0; i < count; i++)
                     {
@@ -128,9 +126,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                             llist.AddLast(i);
                     }
                 }, "Insert to LinkedList randomly")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    var rnd = new Random(0);
                     var clist = new CircularList<int>(count);
                     for (int i = 0; i < count; i++)
                         clist.Insert(0, i);
@@ -219,61 +216,56 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             LinkedList<int> llist = new LinkedList<int>(list);
             const int lastIndex = count - 1;
 
-            // 3 instances of random of the same seed making sure the cases get the same numbers
-            Random rndList = new Random(0);
-            Random rndLList = new Random(0);
-            Random rndCList = new Random(0);
-
-            new PerformanceTest { TestName = "Remove Item Test", Iterations = 100000 }
-                .AddCase(() =>
+            new RandomizedPerformanceTest { TestName = "Remove Item Test", Iterations = 100000 }
+                .AddCase(rnd =>
                 {
-                    rndList.Next(count); // result not used here but makes cases comparable
+                    rnd.Next(count); // result not used here but makes cases comparable
                     list.RemoveAt(lastIndex);
                     list.Add(lastIndex);
                 }, "Remove and re-insert last item - List")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    rndLList.Next(count); // result not used here but makes cases comparable
+                    rnd.Next(count); // result not used here but makes cases comparable
                     llist.RemoveLast();
                     llist.AddLast(lastIndex);
                 }, "Remove and re-insert last item - LinkedList")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    rndCList.Next(count); // result not used here but makes cases comparable
+                    rnd.Next(count); // result not used here but makes cases comparable
                     clist.RemoveAt(lastIndex);
                     clist.Add(lastIndex);
                 }, "Remove and re-insert last item - CircularList")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    rndList.Next(count); // result not used here but makes cases comparable
+                    rnd.Next(count); // result not used here but makes cases comparable
                     int e = list[0];
                     list.RemoveAt(0);
                     list.Insert(0, e);
                 }, "Remove and re-insert first item - List")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    rndLList.Next(count); // result not used here but makes cases comparable
+                    rnd.Next(count); // result not used here but makes cases comparable
                     int e = llist.First.Value;
                     llist.RemoveFirst();
                     llist.AddFirst(e);
                 }, "Remove and re-insert first item - LinkedList")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    rndCList.Next(count); // result not used here but makes cases comparable
+                    rnd.Next(count); // result not used here but makes cases comparable
                     int e = clist[0];
                     clist.RemoveAt(0);
                     clist.AddFirst(e);
                 }, "Remove and re-insert first item - CircularList")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    int i = rndList.Next(count);
+                    int i = rnd.Next(count);
                     int e = list[i];
                     list.RemoveAt(i);
                     list.Insert(i, e);
                 }, "Remove and re-insert random element - List")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    int i = rndLList.Next(count);
+                    int i = rnd.Next(count);
                     LinkedListNode<int> node = llist.First;
                     for (int j = 0; j < i; j++)
                         node = node.Next;
@@ -286,9 +278,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                     else
                         llist.AddAfter(prev, e);
                 }, "Remove and re-insert random element - LinkedList")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    int i = rndCList.Next(count);
+                    int i = rnd.Next(count);
                     int e = clist[i];
                     clist.RemoveAt(i);
                     clist.Insert(i, e);

@@ -40,16 +40,15 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections.ObjectModel
             var collReference = new Collection<int>(list);
             var collTest = new FastLookupCollection<int>(list);
             var collTestNoCheck = new FastLookupCollection<int>(list) { CheckConsistency = false };
-            var rnd = new Random();
 
-            new PerformanceTest
+            new RandomizedPerformanceTest
                 {
                     TestTime = 200,
                     Repeat = 5,
                 }
-                .AddCase(() => collReference.IndexOf(rnd.Next(collReference.Count)), "Collection.IndexOf")
-                .AddCase(() => collTest.IndexOf(rnd.Next(collTest.Count)), "FastLookupCollection.IndexOf, Consistency check ON")
-                .AddCase(() => collTest.IndexOf(rnd.Next(collTestNoCheck.Count)), "FastLookupCollection.IndexOf, Consistency check OFF")
+                .AddCase(rnd => collReference.IndexOf(rnd.Next(collReference.Count)), "Collection.IndexOf")
+                .AddCase(rnd => collTest.IndexOf(rnd.Next(collTest.Count)), "FastLookupCollection.IndexOf, Consistency check ON")
+                .AddCase(rnd => collTest.IndexOf(rnd.Next(collTestNoCheck.Count)), "FastLookupCollection.IndexOf, Consistency check OFF")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

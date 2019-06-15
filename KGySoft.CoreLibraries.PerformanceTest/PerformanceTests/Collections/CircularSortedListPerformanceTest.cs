@@ -68,60 +68,57 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         {
             const int capacity = 1000;
 
-            new PerformanceTest { TestName = "Populate Test", Iterations = 1000 }
-                .AddCase(() =>
+            new RandomizedPerformanceTest { TestName = "Populate Test", Iterations = 1000 }
+                .AddCase(rnd =>
                 {
                     var slist = new SortedList<int, string>(capacity);
                     for (int i = 0; i < capacity; i++)
                         slist.Add(i, null);
                 }, "Populating SortedList from sorted data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var sdict = new SortedDictionary<int, string>();
                     for (int i = 0; i < capacity; i++)
                         sdict.Add(i, null);
                 }, "Populating SortedDictionary from sorted data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var cslist = new CircularSortedList<int, string>(capacity);
                     for (int i = 0; i < capacity; i++)
                         cslist.Add(i, null);
                 }, "Populating CircularSortedList from sorted data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var slist = new SortedList<int, string>(capacity);
                     for (int i = capacity - 1; i >= 0; i--)
                         slist.Add(i, null);
                 }, "Populating SortedList from reverse sorted data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var sdict = new SortedDictionary<int, string>();
                     for (int i = capacity - 1; i >= 0; i--)
                         sdict.Add(i, null);
                 }, "Populating SortedDictionary from reverse sorted data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
                     var cslist = new CircularSortedList<int, string>(capacity);
                     for (int i = capacity - 1; i >= 0; i--)
                         cslist.Add(i, null);
                 }, "Populating CircularSortedList from reverse sorted data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    var rnd = new Random(0);
                     var slist = new SortedList<int, string>(capacity);
                     for (int i = 0; i < capacity; i++)
                         slist[rnd.Next(Int32.MaxValue)] = null;
                 }, "Populating SortedList from random data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    var rnd = new Random(0);
                     var sdict = new SortedDictionary<int, string>();
                     for (int i = 0; i < capacity; i++)
                         sdict[rnd.Next(Int32.MaxValue)] = null;
                 }, "Populating SortedDictionary from random data")
-                .AddCase(() =>
+                .AddCase(rnd =>
                 {
-                    var rnd = new Random(0);
                     var cslist = new CircularSortedList<int, string>(capacity);
                     for (int i = 0; i < capacity; i++)
                         cslist[rnd.Next(Int32.MaxValue)] = null;

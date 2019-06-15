@@ -112,6 +112,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(1, cache.Count());
             Assert.AreEqual(1, cache.Keys.Count());
             Assert.AreEqual(1, cache.Values.Count());
+
+            //throw new NotImplementedException();
+            // remove all, clear
         }
 
         [Test]
@@ -181,6 +184,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             var values = cache.Select(c => c.Value);
             Assert.IsTrue(values.SequenceEqual(cache.Values));
         }
+
+        //[Test]
+        //public void ChangeCapacityTest()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //[Test]
+        //public void SerializationTest()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         #endregion
     }
