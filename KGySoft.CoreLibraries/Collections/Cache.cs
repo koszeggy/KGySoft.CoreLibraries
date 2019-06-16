@@ -2154,6 +2154,7 @@ namespace KGySoft.Collections
             info.AddValue(nameof(ensureCapacity), ensureCapacity);
             info.AddValue(nameof(comparer), IsDefaultComparer(comparer) ? null : comparer);
             info.AddValue(nameof(itemLoader), itemLoader.Equals(nullLoader) ? null : itemLoader);
+            info.AddValue(nameof(behavior), (byte)behavior);
             info.AddValue(nameof(disposeDroppedValues), disposeDroppedValues);
 
             int count = Count;
@@ -2197,6 +2198,7 @@ namespace KGySoft.Collections
             ensureCapacity = info.GetBoolean(nameof(ensureCapacity));
             comparer = (IEqualityComparer<TKey>)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>))
                 ?? (useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default);
+            behavior = (CacheBehavior)info.GetByte(nameof(behavior));
             itemLoader = (Func<TKey, TValue>)info.GetValue(nameof(itemLoader), typeof(Func<TKey, TValue>)) ?? nullLoader;
             disposeDroppedValues = info.GetBoolean(nameof(disposeDroppedValues));
 

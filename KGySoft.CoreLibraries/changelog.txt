@@ -24,7 +24,7 @@
     are stored in value type entries for better performance and smaller memory consumption.
   * Not a sealed class anymore. Similarly to Dictionary<TKey, TValue>, only serialization-related members are virtual.
   + New protected GetObjectData and OnDeserialization methods.
-  + DiposeDroppedItems property: If an item is removed from the cache (or a concurrently loaded item is discarded
+  + DisposeDroppedValues property: If an item is removed from the cache internally (or a concurrently loaded item is discarded
     by an IThreadSafeCacheAccessor) and the item is IDisposable, then it can be disposed if this property is true.
 
 + KGySoft.Diagnostics namespace:

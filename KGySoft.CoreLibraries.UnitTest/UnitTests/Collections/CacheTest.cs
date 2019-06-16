@@ -86,35 +86,66 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Console.WriteLine(cache["epsilon"]);
 
             // remove middle
-            cache.Remove("gamma");
+            Assert.IsTrue(cache.Remove("gamma"));
             Assert.AreEqual(4, cache.Count);
             Assert.AreEqual(4, cache.Count());
             Assert.AreEqual(4, cache.Keys.Count());
             Assert.AreEqual(4, cache.Values.Count());
 
             // remove first
-            cache.Remove("alpha");
+            Assert.IsTrue(cache.Remove("alpha"));
             Assert.AreEqual(3, cache.Count);
             Assert.AreEqual(3, cache.Count());
             Assert.AreEqual(3, cache.Keys.Count());
             Assert.AreEqual(3, cache.Values.Count());
 
             // remove last
-            cache.Remove("epsilon");
+            Assert.IsTrue(cache.Remove("epsilon"));
             Assert.AreEqual(2, cache.Count);
             Assert.AreEqual(2, cache.Count());
             Assert.AreEqual(2, cache.Keys.Count());
             Assert.AreEqual(2, cache.Values.Count());
 
             // remove first, when there are 2 elements
-            cache.Remove("beta");
+            Assert.IsTrue(cache.Remove("beta"));
             Assert.AreEqual(1, cache.Count);
             Assert.AreEqual(1, cache.Count());
             Assert.AreEqual(1, cache.Keys.Count());
             Assert.AreEqual(1, cache.Values.Count());
 
-            //throw new NotImplementedException();
-            // remove all, clear
+            // remove the only element, count and traversal still work properly
+            Assert.IsTrue(cache.Remove(cache.Keys.First()));
+            Assert.AreEqual(0, cache.Count);
+            Assert.AreEqual(0, cache.Count());
+            Assert.AreEqual(0, cache.Keys.Count());
+            Assert.AreEqual(0, cache.Values.Count());
+
+            // new elements are now added in place of removed ones
+            Console.WriteLine(cache["alpha"]);
+            Console.WriteLine(cache["beta"]);
+            Assert.AreEqual(2, cache.Count);
+            Assert.AreEqual(2, cache.Count());
+            Assert.AreEqual(2, cache.Keys.Count());
+            Assert.AreEqual(2, cache.Values.Count());
+
+            Console.WriteLine(cache["gamma"]);
+            Console.WriteLine(cache["delta"]);
+            Console.WriteLine(cache["epsilon"]);
+            Assert.AreEqual(5, cache.Count);
+            Assert.AreEqual(5, cache.Count());
+            Assert.AreEqual(5, cache.Keys.Count());
+            Assert.AreEqual(5, cache.Values.Count());
+
+            // no more removed items, following items are written into unused entries
+            Console.WriteLine(cache["zeta"]);
+            Console.WriteLine(cache["eta"]);
+
+            // clearing nullifies the storages, no deleted entries are maintained
+            cache.Clear();
+            Assert.AreEqual(0, cache.Count);
+            Assert.AreEqual(0, cache.Count());
+            Assert.AreEqual(0, cache.Keys.Count());
+            Assert.AreEqual(0, cache.Values.Count());
         }
 
         [Test]
@@ -180,22 +211,61 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             var keys = cache.Select(c => c.Key);
             Assert.IsTrue(keys.SequenceEqual(cache.Keys));
-
             var values = cache.Select(c => c.Value);
+            Assert.IsTrue(values.SequenceEqual(cache.Values));
+
+            Assert.IsTrue(cache.Remove("beta"));
+            keys = cache.Select(c => c.Key);
+            Assert.IsTrue(keys.SequenceEqual(cache.Keys));
+            values = cache.Select(c => c.Value);
             Assert.IsTrue(values.SequenceEqual(cache.Values));
         }
 
-        //[Test]
-        //public void ChangeCapacityTest()
-        //{
-        //    throw new NotImplementedException();
-        //}
+        [Test]
+        public void ChangeCapacityTest()
+        {
+            var cache = new Cache<string, string>(s => s.ToUpperInvariant()) { EnsureCapacity = true };
+            Console.WriteLine(cache["alpha"]);
+            Console.WriteLine(cache["beta"]);
+            Console.WriteLine(cache["gamma"]);
+            Console.WriteLine(cache["delta"]);
+            Console.WriteLine(cache["epsilon"]);
+            Assert.IsTrue(cache.Remove("beta"));
+            Assert.AreEqual(4, cache.Count);
 
-        //[Test]
-        //public void SerializationTest()
-        //{
-        //    throw new NotImplementedException();
-        //}
+            cache.Capacity = 3;
+            Assert.AreEqual(3, cache.Count);
+            Assert.AreEqual(3, cache.Count());
+            Assert.IsFalse(cache.ContainsKey("alpha"));
+            Assert.IsFalse(cache.ContainsKey("beta"));
+        }
+
+        [Test]
+        public void SerializationTest()
+        {
+            var cache = new Cache<string, string>(s => s.ToUpperInvariant(), 13, StringComparer.OrdinalIgnoreCase)
+            {
+                EnsureCapacity = true,
+                Behavior = CacheBehavior.RemoveOldestElement,
+                DisposeDroppedValues = true
+            };
+            Console.WriteLine(cache["alpha"]);
+            Console.WriteLine(cache["beta"]);
+            Console.WriteLine(cache["gamma"]);
+            Assert.IsTrue(cache.Remove("beta"));
+
+            var cacheCopy = cache.DeepClone();
+            Assert.AreNotSame(cache, cacheCopy);
+            Assert.AreEqual(cache.Count, cacheCopy.Count);
+            Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
+            Assert.AreEqual(cache.Behavior, cacheCopy.Behavior);
+            Assert.AreEqual(cache.DisposeDroppedValues, cacheCopy.DisposeDroppedValues);
+            Assert.AreEqual(cache.EnsureCapacity, cacheCopy.EnsureCapacity);
+
+            Assert.IsTrue(cache.SequenceEqual(cacheCopy));
+            Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
+            Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
+        }
 
         #endregion
     }
