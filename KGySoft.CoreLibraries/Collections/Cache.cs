@@ -1289,6 +1289,32 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
+        /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/> and <paramref name="comparer"/> using default capacity of 128.
+        /// </summary>
+        /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by reading the
+        /// <see cref="P:KGySoft.Collections.Cache`2.Item(`0)">indexer</see>.
+        /// If <see langword="null"/>, then similarly to a regular <see cref="Dictionary{TKey,TValue}"/>, a <see cref="KeyNotFoundException"/> will be thrown on accessing a non-existing key.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. When <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
+        /// will be used for <see langword="enum"/>&#160;key types, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> for other types. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <para>Every key in a <see cref="Cache{TKey,TValue}"/> must be unique according to the specified comparer.</para>
+        /// <para>When <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> reaches <see cref="Capacity"/>) and a new element is about to be stored, then an
+        /// element will be dropped out from the cache. The strategy is controlled by <see cref="Behavior"/> property.</para>
+        /// <para>If you want to add elements manually to the <see cref="Cache{TKey,TValue}"/>, then you can pass <see langword="null"/>&#160;to the <paramref name="itemLoader"/> parameter. In this case
+        /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey">ContainsKey</see>
+        /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
+        /// </remarks>
+        /// <overloads><see cref="Cache{TKey,TValue}"/> type has four different public constructors for initializing the item loader delegate, capacity and key comparer.</overloads>
+        /// <seealso cref="Capacity"/>
+        /// <seealso cref="EnsureCapacity"/>
+        /// <seealso cref="Behavior"/>
+        [CollectionAccess(CollectionAccessType.UpdatedContent)]
+        public Cache(Func<TKey, TValue> itemLoader, IEqualityComparer<TKey> comparer) : this(itemLoader, defaultCapacity, comparer)
+        {
+        }
+
+        /// <summary>
         /// Creates a new <see cref="Cache{TKey,TValue}"/> instance with the given <paramref name="itemLoader"/>, <paramref name="capacity"/> and <paramref name="comparer"/>.
         /// </summary>
         /// <param name="itemLoader">A delegate that contains the item loader routine. This delegate is accessed whenever a non-cached item is about to be loaded by reading the
@@ -1666,15 +1692,15 @@ namespace KGySoft.Collections
 
         #region Private Methods
 
-        private void Initialize(int initialCapacity)
+        private void Initialize(int suggestedCapacity)
         {
-            int bucketSize = PrimeHelper.GetPrime(initialCapacity);
+            int bucketSize = PrimeHelper.GetPrime(suggestedCapacity);
             buckets = new int[bucketSize];
             for (int i = 0; i < buckets.Length; i++)
                 buckets[i] = -1;
 
-            // initialCapacity <= bucketSize!
-            items = new CacheItem[initialCapacity];
+            // items.Length <= bucketSize!
+            items = new CacheItem[capacity < bucketSize ? capacity : bucketSize];
             usedCount = 0;
             deletedCount = 0;
             first = -1;
@@ -1877,17 +1903,17 @@ namespace KGySoft.Collections
             version++;
         }
 
-        private void Resize(int newSize)
+        private void Resize(int suggestedSize)
         {
-            int newBucketSize = PrimeHelper.GetPrime(newSize);
+            int newBucketSize = PrimeHelper.GetPrime(suggestedSize);
             var newBuckets = new int[newBucketSize];
             for (int i = 0; i < newBuckets.Length; i++)
                 newBuckets[i] = -1;
 
-            var newItems = new CacheItem[newSize];
+            var newItems = new CacheItem[capacity < newBucketSize ? capacity : newBucketSize];
 
             // if increasing capacity, then keeping also the deleted entries.
-            if (newSize >= items.Length)
+            if (newItems.Length >= items.Length)
                 Array.Copy(items, 0, newItems, 0, usedCount);
             else
             {

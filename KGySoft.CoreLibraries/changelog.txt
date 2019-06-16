@@ -22,6 +22,7 @@
 * Cache<TKey, TValue>:
   * Instead of wrapping a Dictionary with a CacheItem reference type, now implements hashing directly where keys and values
     are stored in value type entries for better performance and smaller memory consumption.
+  + A new constructor overload.
   * Not a sealed class anymore. Similarly to Dictionary<TKey, TValue>, only serialization-related members are virtual.
   + New protected GetObjectData and OnDeserialization methods.
   + DisposeDroppedValues property: If an item is removed from the cache internally (or a concurrently loaded item is discarded
@@ -29,7 +30,7 @@
 
 + KGySoft.Diagnostics namespace:
 ================================
-+ PerformanceTestBase<TDelegate, TResult>: New OnBeforeCase and OnAfterCase methods.
++ PerformanceTestBase<TDelegate, TResult>: New OnBeforeCase and OnAfterCase protected methods.
 
 ~~~~~~~~~~~
 ! v4.6.0.0:

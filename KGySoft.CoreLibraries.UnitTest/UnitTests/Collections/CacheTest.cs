@@ -243,7 +243,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void SerializationTest()
         {
-            var cache = new Cache<string, string>(s => s.ToUpperInvariant(), 13, StringComparer.OrdinalIgnoreCase)
+            var cache = new Cache<string, string>(s => s.ToUpperInvariant(), StringComparer.OrdinalIgnoreCase)
             {
                 EnsureCapacity = true,
                 Behavior = CacheBehavior.RemoveOldestElement,

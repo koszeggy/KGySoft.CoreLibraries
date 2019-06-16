@@ -16,7 +16,7 @@
 
 #region Usings
 
-using System;
+using System.Linq;
 
 #endregion
 
@@ -26,6 +26,9 @@ namespace KGySoft.Collections
     {
         #region Constants
 
+        /// <summary>
+        /// The maximum prime value smaller than 0x7FEFFFFF, which is the value of Array.MaxArrayLength.
+        /// </summary>
         private const int maxPrime = 0x7FEFFFFD;
 
         #endregion
@@ -34,13 +37,22 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Contains nearest primes for 2 and 10 powers can be used for typical cache capacities
+        /// as well as "near enough" primes for dynamically increased capacities.
         /// </summary>
-        private static readonly int[] primes =
+        private static readonly int[] primes = new[]
         {
-            2, 5, 11, 17, 37, 67, 101, 131, 257, 521, 1009, 1031, 2053, 4099, 8209, 10007, 16411, 32771, 65537,
-            100003, 131101, 262147, 524309, 1000003, 1048583, 2097169, 4194319, 8388617, 10000019, 16777259,
-            33554467, 67108879, 100000007, 134217757, 268435459, 536870923, 1000000007, 1073741827
-        };
+            // Nearest primes of powers of 2. Applied when full capacity is allocated at once for powers of 2.
+            2, 5, 11, 17, 37, 67, 131, 257, 521, 1031, 2053, 4099, 8209, 16411, 32771, 65537,
+            131101, 262147, 524309, 1048583, 2097169, 4194319, 8388617, 16777259,
+            33554467, 67108879, 134217757, 268435459, 536870923, 1073741827,
+
+            // Nearest primes of powers of 10. Applied when full capacity is allocated at once for powers of 10.
+            101, 1009, 10007, 100003, 1000003, 10000019, 100000007, 1000000007,
+
+            // Primes applied when capacity is expanded to a near enough prime twice as large as previous capacity.
+            1049, 2099, 4201, 8419, 16843, 33703, 67409, 134837, 269683, 539389, 1078787, 2157587, 4315183,
+            8630387, 17260781, 34521589, 69043189, 138086407, 276172823, 552345671, 1104691373
+        }.OrderBy(p => p).ToArray();
 
         #endregion
 
@@ -53,9 +65,8 @@ namespace KGySoft.Collections
             if (min >= maxPrime)
                 return maxPrime;
 
-            for (int i = 0; i < primes.Length; i++)
+            foreach (int prime in primes)
             {
-                int prime = primes[i];
                 if (prime < min)
                     continue;
 
@@ -76,14 +87,14 @@ namespace KGySoft.Collections
 
         private static int GetNextPrime(int min)
         {
-            for (int i = min | 1; i < Int32.MaxValue; i += 2)
+            for (int i = min | 1; i < maxPrime; i += 2)
             {
                 if (IsPrime(i))
                     return i;
             }
 
-            // no larger prime in Int32 range than min
-            return min;
+            // Int32.MaxValue is also a prime value so it would be correct to return that in a public method
+            return maxPrime;
         }
 
         /// <summary>
@@ -117,9 +128,13 @@ namespace KGySoft.Collections
             return MillerTest(7, r, d, n) && MillerTest(61, r, d, n);
         }
 
+        /// <summary>
+        /// Prime test for a number n-1 = d * 2^r with an arbitrary a value.
+        /// If returns false, n is composite for sure. If returns true, n is probably prime.
+        /// </summary>
         private static bool MillerTest(int a, int r, int d, int n)
         {
-            var x = Power(a, d, n);
+            int x = Power(a, d, n);
             if (x == 1 || x == n - 1)
                 return true;
 
@@ -139,7 +154,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Returns (x^y) % p
         /// </summary>
-        private static int Power(int x, int y, int p)
+        private static int Power(long x, int y, int p)
         {
             long result = 1;
             while (y > 0)
