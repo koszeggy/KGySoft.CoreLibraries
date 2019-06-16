@@ -204,15 +204,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new TestRandom();
 
             // edge cases
-            Test(rnd, double.MinValue, double.MaxValue);
-            Test(rnd, double.NegativeInfinity, double.PositiveInfinity);
-            Test(rnd, 0, double.PositiveInfinity);
-            Test(rnd, double.MaxValue, double.PositiveInfinity);
-            Test(rnd, double.NegativeInfinity, double.MinValue);
-            Throws<ArgumentOutOfRangeException>(() => Test(rnd, double.PositiveInfinity, double.PositiveInfinity));
-            Throws<ArgumentOutOfRangeException>(() => Test(rnd, double.NegativeInfinity, double.NegativeInfinity));
-            Throws<ArgumentOutOfRangeException>(() => Test(rnd, 0, double.NaN));
-            Test(rnd, 0, double.Epsilon);
+            //Test(rnd, Double.MinValue, Double.MaxValue);
+            //Test(rnd, Double.NegativeInfinity, Double.PositiveInfinity);
+            //Test(rnd, 0, Double.PositiveInfinity);
+            //Test(rnd, Double.MaxValue, Double.PositiveInfinity);
+            //Test(rnd, Double.NegativeInfinity, Double.MinValue);
+            Test(rnd, 1.7976931348623155E+308, Double.MaxValue);
+            Throws<ArgumentOutOfRangeException>(() => Test(rnd, Double.PositiveInfinity, Double.PositiveInfinity));
+            Throws<ArgumentOutOfRangeException>(() => Test(rnd, Double.NegativeInfinity, Double.NegativeInfinity));
+            Throws<ArgumentOutOfRangeException>(() => Test(rnd, 0, Double.NaN));
+            Test(rnd, 0, Double.Epsilon);
             Test(rnd, Double.Epsilon, Double.Epsilon * 4);
             Test(rnd, Double.MaxValue / 4, Double.MaxValue);
             Test(rnd, Double.MaxValue / 2, Double.MaxValue);
@@ -221,18 +222,18 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(rnd, 10000, 11000);
 
             // big range
-            Test(rnd, long.MinValue, long.MaxValue);
-            Test(rnd, long.MinValue, 0);
-            Test(rnd, long.MaxValue, float.MaxValue);
-            Test(rnd, -0.1, ulong.MaxValue); // very imbalanced positive-negative ranges
+            Test(rnd, Int64.MinValue, Int64.MaxValue);
+            Test(rnd, Int64.MinValue, 0);
+            Test(rnd, Int64.MaxValue, float.MaxValue);
+            Test(rnd, -0.1, UInt64.MaxValue); // very imbalanced positive-negative ranges
             Test(rnd, 1L << 52, (1L << 54) + 10); // narrow exponent range
-            Test(rnd, long.MaxValue, (double)long.MaxValue * 4 + 10000); // small exponent range
-            Test(rnd, (double)long.MaxValue * 1024, (double)long.MaxValue * 4100); // small exponent range
-            Test(rnd, (double)long.MinValue * 4100, (double)long.MinValue * 1024); // small exponent range
+            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4 + 10000); // small exponent range
+            Test(rnd, (double)Int64.MaxValue * 1024, (double)Int64.MaxValue * 4100); // small exponent range
+            Test(rnd, (double)Int64.MinValue * 4100, (double)Int64.MinValue * 1024); // small exponent range
 
             // small range
-            Test(rnd, long.MaxValue, (double)long.MaxValue * 4);
-            Test(rnd, long.MaxValue, (double)long.MaxValue * 4 + 1000);
+            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4);
+            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4 + 1000);
             Test(rnd, 1L << 53, (1L << 53) + 2);
             Test(rnd, 1L << 52, 1L << 53);
         }
@@ -262,17 +263,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             }
 
             var rnd = new TestRandom();
-            Test(rnd.WithNextDoubles(1d), float.MinValue, float.MaxValue);
-            Test(rnd.WithNextDoubles(null), float.MinValue, float.MaxValue);
-            Test(rnd, 0, float.Epsilon);
-            Test(rnd, float.MaxValue, float.PositiveInfinity);
-            Test(rnd, float.NegativeInfinity, float.PositiveInfinity);
+            Test(rnd.WithNextDoubles(1d), Single.MinValue, Single.MaxValue);
+            Test(rnd.WithNextDoubles(null), Single.MinValue, Single.MaxValue);
+            Test(rnd, 0, Single.Epsilon);
+            Test(rnd, Single.MaxValue, Single.PositiveInfinity);
+            Test(rnd, Single.NegativeInfinity, Single.PositiveInfinity);
         }
 
         [Test]
         public void NextDecimalTest()
         {
             var rnd = new Random();
+            //rnd = new TestRandom()
+            //    .WithNextBytes(255, 255, 255, 255, 255, 255, 255, 255)
+            //    .WithNextIntegers(542100000);
             void Test(decimal min, decimal max)
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
@@ -295,8 +299,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             }
 
             // edge cases
-            Test(decimal.MinValue, decimal.MaxValue);
-            Test(0, decimal.MaxValue);
+            Test(Decimal.MinValue, Decimal.MaxValue);
+            Test(0, Decimal.MaxValue);
             Test(0, DecimalExtensions.Epsilon);
             Test(DecimalExtensions.Epsilon, DecimalExtensions.Epsilon * 4);
             Test(Decimal.MaxValue / 2, Decimal.MaxValue);
@@ -307,17 +311,17 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(10000, 11000);
 
             // big range
-            Test(long.MinValue, long.MaxValue);
-            Test(long.MinValue, 0);
-            Test(-0.1m, ulong.MaxValue); // very imbalanced positive-negative ranges
+            Test(Int64.MinValue, Int64.MaxValue);
+            Test(Int64.MinValue, 0);
+            Test(-0.1m, UInt64.MaxValue); // very imbalanced positive-negative ranges
             Test(1L << 52, (1L << 54) + 10); // narrow exponent range
-            Test(long.MaxValue, (decimal)long.MaxValue * 4 + 10000); // small exponent range
-            Test((decimal)long.MaxValue * 1024, (decimal)long.MaxValue * 4100); // small exponent range
-            Test((decimal)long.MinValue * 4100, (decimal)long.MinValue * 1024); // small exponent range
+            Test(Int64.MaxValue, (decimal)Int64.MaxValue * 4 + 10000); // small exponent range
+            Test((decimal)Int64.MaxValue * 1024, (decimal)Int64.MaxValue * 4100); // small exponent range
+            Test((decimal)Int64.MinValue * 4100, (decimal)Int64.MinValue * 1024); // small exponent range
 
             // small range
-            Test(long.MaxValue, (decimal)long.MaxValue * 4);
-            Test(long.MaxValue, (decimal)long.MaxValue * 4 + 1000);
+            Test(Int64.MaxValue, (decimal)Int64.MaxValue * 4);
+            Test(Int64.MaxValue, (decimal)Int64.MaxValue * 4 + 1000);
             Test(1L << 53, (1L << 53) + 2);
             Test(1L << 52, 1L << 53);
         }
@@ -363,62 +367,62 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Console.WriteLine($"Random {typeof(T).Name}: {rnd.NextObject<T>(settings)}");
             }
 
-            //// native types
-            //Test<bool>();
-            //Test<byte>();
-            //Test<sbyte>();
-            //Test<char>();
-            //Test<short>();
-            //Test<ushort>();
-            //Test<int>();
-            //Test<uint>();
-            //Test<long>();
-            //Test<ulong>();
-            //Test<float>();
-            //Test<double>();
-            //Test<decimal>();
-            //Test<string>();
-            //Test<StringBuilder>();
-            //Test<Uri>();
-            //Test<Guid>();
-            //Test<DateTime>();
-            //Test<DateTimeOffset>();
-            //Test<TimeSpan>();
-            //Test<IntPtr>();
-            //Test<UIntPtr>();
-            //Test<byte?>();
+            // native types
+            Test<bool>();
+            Test<byte>();
+            Test<sbyte>();
+            Test<char>();
+            Test<short>();
+            Test<ushort>();
+            Test<int>();
+            Test<uint>();
+            Test<long>();
+            Test<ulong>();
+            Test<float>();
+            Test<double>();
+            Test<decimal>();
+            Test<string>();
+            Test<StringBuilder>();
+            Test<Uri>();
+            Test<Guid>();
+            Test<DateTime>();
+            Test<DateTimeOffset>();
+            Test<TimeSpan>();
+            Test<IntPtr>();
+            Test<UIntPtr>();
+            Test<byte?>();
 
-            //// enums
-            //Test<EmptyEnum>();
-            //Test<ConsoleColor>();
-            //Test<Enum>();
+            // enums
+            Test<EmptyEnum>();
+            Test<ConsoleColor>();
+            Test<Enum>();
 
-            //// arrays
-            //Test<byte[]>();
-            //Test<byte?[]>();
-            //Test<byte[,]>();
+            // arrays
+            Test<byte[]>();
+            Test<byte?[]>();
+            Test<byte[,]>();
 
-            //// collections
-            //Test<List<int>>(); // populate
-            //Test<Dictionary<int, string>>(); // populate
-            //Test<ArrayList>(); // populate
-            //Test<Hashtable>(); // populate
-            //Test<BitArray>(); // array ctor
-            //Test<ReadOnlyCollection<int>>(); // IList<T> ctor
-            //Test<ArraySegment<int>>(); // array ctor
-            //Test<Cache<int, int>>(); // populate
-            //Test<Queue>(); // ICollection ctor
-            //Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object
+            // collections
+            Test<List<int>>(); // populate
+            Test<Dictionary<int, string>>(); // populate
+            Test<ArrayList>(); // populate
+            Test<Hashtable>(); // populate
+            Test<BitArray>(); // array ctor
+            Test<ReadOnlyCollection<int>>(); // IList<T> ctor
+            Test<ArraySegment<int>>(); // array ctor
+            Test<Cache<int, int>>(); // populate
+            Test<Queue>(); // ICollection ctor
+            Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object
 
-            //// key-value
-            //Test<DictionaryEntry>();
-            //Test<KeyValuePair<int, string>>();
+            // key-value
+            Test<DictionaryEntry>();
+            Test<KeyValuePair<int, string>>();
 
-            //// reflection types
-            //Test<Assembly>();
-            //Test<Type>();
-            //Test<MethodBase>();
-            //Test<MemberInfo>();
+            // reflection types
+            Test<Assembly>();
+            Test<Type>();
+            Test<MethodBase>();
+            Test<MemberInfo>();
 
             // base types
             var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true };

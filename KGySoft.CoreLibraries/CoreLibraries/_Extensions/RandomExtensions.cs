@@ -1160,7 +1160,11 @@ namespace KGySoft.CoreLibraries
         private static decimal NextDecimalLinear(Random random, decimal minValue, decimal maxValue)
         {
             decimal sample = random.NextDecimal();
-            return (maxValue * sample) + (minValue * (1m - sample));
+            return Math.Sign(minValue) * Math.Sign(maxValue) >= 0 
+                // ranged version (because the other branch may overflow by 0.5 if both min and max are near MaxValue)
+                ? (maxValue - minValue) * sample + minValue
+                // wide-range proof version (max - min can be larger than MaxValue)
+                : (maxValue * sample) + (minValue * (1m - sample));
         }
 
         private static string GenerateString(Random random, int length, string allowedCharacters, bool checkInvalid = false)

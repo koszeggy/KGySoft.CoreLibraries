@@ -14,8 +14,9 @@
 
 - KGySoft.CoreLibraries namespace:
 ==================================
-- EnumComparer<TEnum>: It is an abstract class now using different implementations for fully and partially trusted domains
-  to avoid System.Security.VerificationException.
+- EnumComparer<TEnum>: It is an abstract class now and uses different implementations for fully and partially trusted domains
+  to avoid System.Security.VerificationException for emitted IL code.
+- RandomExtensions.NextDecimal: Fixing overflow exception for an edge case.
 
 * KGySoft.Collections namespace:
 ================================
