@@ -33,3 +33,7 @@ Find the project site at [kgysoft.net](https://kgysoft.net/corelibraries/)
 
 * [Online documentation](https://docs.kgysoft.net/corelibraries)
 * [Offline .chm documentation](https://github.com/koszeggy/KGySoft.CoreLibraries/raw/master/KGySoft.CoreLibraries/Help/KGySoft.CoreLibraries.chm)
+
+## Release Notes
+
+See the [change log](https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt).

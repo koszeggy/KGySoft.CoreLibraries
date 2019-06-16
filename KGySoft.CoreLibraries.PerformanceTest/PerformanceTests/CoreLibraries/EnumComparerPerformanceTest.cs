@@ -30,10 +30,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     {
         #region Enumerations
 
-        private enum TestEnum : byte
+        private enum TestEnum : long
         {
-            Min = Byte.MinValue,
-            Max = Byte.MaxValue,
+            Min = Int64.MinValue,
+            Max = Int64.MaxValue,
         }
 
         #endregion
