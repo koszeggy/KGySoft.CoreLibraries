@@ -38,6 +38,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
+        /// <br/>See the <strong>Examples</strong> section of the generic <see cref="In{T}(T,T[])"/> overload for an example.
         /// </summary>
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
@@ -64,6 +65,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets whether <paramref name="item"/> is among the elements of <paramref name="set"/>.
+        /// <br/>See the <strong>Examples</strong> section for an example.
         /// </summary>
         /// <param name="item">The item to search for in <paramref name="set"/>.</param>
         /// <param name="set">The set of items in which to search the specified <paramref name="item"/>.</param>
@@ -74,6 +76,28 @@ namespace KGySoft.CoreLibraries
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
         /// <note>If elements of <paramref name="set"/> are complex expressions consider to use the <see cref="In{T}(T,Func{T}[])"/> overload instead to prevent evaluating all elements until they are actually compared.</note></para>
         /// </remarks>
+        /// <example>
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/llrIJx" target="_blank">online</a></note>
+        /// <code lang="C#"><![CDATA[
+        /// using System;
+        /// using KGySoft.CoreLibraries;
+        /// 
+        /// public class Example
+        /// {
+        ///     public static void Main()
+        ///     {
+        ///         string stringValue = "blah";
+        /// 
+        ///         // standard way:
+        ///         if (stringValue == "something" || stringValue == "something else" || stringValue == "maybe some other value" || stringValue == "or...")
+        ///             DoSomething();
+        /// 
+        ///         // In method:
+        ///         if (stringValue.In("something", "something else", "maybe some other value", "or..."))
+        ///             DoSomething();
+        ///     }
+        /// }]]></code>
+        /// </example>
         public static bool In<T>(this T item, params T[] set)
         {
             int length;
@@ -142,14 +166,14 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
+        /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.
         /// </summary>
-        /// <typeparam name="TTargetType">The desired type of the return value.</typeparam>
+        /// <typeparam name="TTarget">The desired type of the return value.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
-        /// <returns>An object of <typeparamref name="TTargetType"/>, which is the result of the conversion.</returns>
-        /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <typeparamref name="TTargetType"/>.</exception>
+        /// <returns>An object of <typeparamref name="TTarget"/>, which is the result of the conversion.</returns>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> cannot be converted to <typeparamref name="TTarget"/>.</exception>
         /// <remarks>
         /// <para>The method firstly tries to use registered direct conversions between source and target types, then attempts to perform the conversion via <see cref="IConvertible"/> types and registered <see cref="TypeConverter"/>s.
         /// If these attempts fail, then the registered conversions tried to be used for intermediate steps, if possible.</para>
@@ -157,16 +181,103 @@ namespace KGySoft.CoreLibraries
         /// <para>A <see cref="TypeConverter"/> can be registered by the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see>&#160;<see cref="Type"/> extension method.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
-        /// <para><typeparamref name="TTargetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
+        /// <para><typeparamref name="TTarget"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
-        public static TTargetType Convert<TTargetType>(this object obj, CultureInfo culture = null)
-            => ObjectConverter.TryConvert(obj, typeof(TTargetType), culture, out object result, out Exception error) && (result is TTargetType || typeof(TTargetType).CanAcceptValue(result))
-                ? (TTargetType)result
-                : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTargetType)), nameof(obj), error);
+        /// <example>
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/r04jpf" target="_blank">online</a></note>
+        /// <code lang="C#"><![CDATA[
+        /// using System;
+        /// using System.Collections;
+        /// using System.Collections.Generic;
+        /// using System.Collections.ObjectModel;
+        /// using System.Linq;
+        /// using KGySoft.CoreLibraries;
+        /// 
+        /// public class Example
+        /// {
+        ///     public static void Main()
+        ///     {
+        ///         // between convertible types: like the Convert class but supports also enums in both ways
+        ///         ConvertTo<int>("123"); // culture can be specified, default is InvariantCulture
+        ///         ConvertTo<float>(ConsoleColor.Blue);
+        ///         ConvertTo<ConsoleColor>(13); // this would fail by Convert.ChangeType
+        /// 
+        ///         // TypeConverters are used if possible:
+        ///         ConvertTo<Guid>("AADC78003DAB4906826EFD8B2D5CF33D");
+        /// 
+        ///         // New conversions can be registered:
+        ///         ConvertTo<IntPtr>(42L); // fail
+        ///         typeof(long).RegisterConversion(typeof(IntPtr), (obj, type, culture) => new IntPtr((long)obj));
+        ///         ConvertTo<IntPtr>(42L); // success
+        /// 
+        ///         // Registered conversions can be used as intermediate steps:
+        ///         ConvertTo<IntPtr>('x'); // char => long => IntPtr
+        /// 
+        ///         // Collection conversion is also supported:
+        ///         ConvertTo<bool[]>(new List<int> { 1, 0, 0, 1 });
+        ///         ConvertTo<List<int>>("Blah"); // works because string is an IEnumerable<char>
+        ///         ConvertTo<string>(new[] { 'h', 'e', 'l', 'l', 'o' }); // because string has a char[] constructor
+        ///         ConvertTo<ReadOnlyCollection<string>>(new[] { 1.0m, 2, -1 }); // via the IList<T> constructor
+        /// 
+        ///         // even between non-generic collections:
+        ///         ConvertTo<ArrayList>(new HashSet<int> { 1, 2, 3 });
+        ///         ConvertTo<Dictionary<ConsoleColor, string>>(new Hashtable { { 1, "One" }, { "Black", 'x' } });
+        ///     }
+        /// 
+        ///     private static void ConvertTo<T>(object source)
+        ///     {
+        ///         Console.Write($"{source.GetType().Name} => {typeof(T).Name}: {AsString(source)} => ");
+        ///         try
+        ///         {
+        ///             T result = source.Convert<T>(); // a culture can be specified here for string conversions
+        ///             Console.WriteLine(AsString(result));
+        ///         }
+        ///         catch (Exception e)
+        ///         {
+        ///             Console.WriteLine(e.Message.Replace(Environment.NewLine, " "));
+        ///         }
+        ///     }
+        /// 
+        ///     private static string AsString(object obj)
+        ///     {
+        ///         if (obj == null)
+        ///             return "<null>";
+        /// 
+        ///         // KeyValuePair has a similar ToString to this one
+        ///         if (obj is DictionaryEntry de)
+        ///             return $"[{de.Key}, {de.Value}]";
+        /// 
+        ///         if (!(obj is IEnumerable) || obj is string)
+        ///             return obj.ToString();
+        /// 
+        ///         return String.Join(", ", ((IEnumerable)obj).Cast<object>().Select(AsString));
+        ///     }
+        /// }
+        /// 
+        /// // This example produces the following output:
+        /// // String => Int32: 123 => 123
+        /// // ConsoleColor => Single: Blue => 9
+        /// // Int32 => ConsoleColor: 13 => Magenta
+        /// // String => Guid: AADC78003DAB4906826EFD8B2D5CF33D => aadc7800-3dab-4906-826e-fd8b2d5cf33d
+        /// // Int64 => IntPtr: 42 => The specified argument cannot be converted to type System.IntPtr. Parameter name: obj
+        /// // Int64 => IntPtr: 42 => 42
+        /// // Char => IntPtr: x => 120
+        /// // List`1 => Boolean[]: 1, 0, 0, 1 => True, False, False, True
+        /// // String => List`1: Blah => 66, 108, 97, 104
+        /// // Char[] => String: h, e, l, l, o => hello
+        /// // Decimal[] => ReadOnlyCollection`1: 1.0, 2, -1 => 1.0, 2, -1
+        /// // HashSet`1 => ArrayList: 1, 2, 3 => 1, 2, 3
+        /// // Hashtable => Dictionary`2: [1, One], [Black, x] => [DarkBlue, One], [Black, x]]]></code>
+        /// </example>
+        public static TTarget Convert<TTarget>(this object obj, CultureInfo culture = null)
+            => ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object result, out Exception error) && (result is TTarget || typeof(TTarget).CanAcceptValue(result))
+                ? (TTarget)result
+                : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(typeof(TTarget)), nameof(obj), error);
 
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
+        /// <br/>See the <strong>Examples</strong> section of the generic <see cref="Convert{TTarget}"/> overload for an example.
         /// </summary>
         /// <param name="targetType">The desired type of the return value.</param>
         /// <param name="obj">The object to convert.</param>
@@ -187,23 +298,24 @@ namespace KGySoft.CoreLibraries
                 : throw new ArgumentException(Res.ObjectExtensionsCannotConvertToType(targetType), nameof(obj), error);
 
         /// <summary>
-        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
+        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="Convert{TTarget}"/> method for a related example.
         /// </summary>
-        /// <typeparam name="TTargetType">The desired type of the returned <paramref name="value"/>.</typeparam>
+        /// <typeparam name="TTarget">The desired type of the returned <paramref name="value"/>.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="culture">The culture to use for the conversion. If <see langword="null"/>, then the <see cref="CultureInfo.InvariantCulture"/> will be used.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
-        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTargetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert<TTargetType>(this object obj, CultureInfo culture, out TTargetType value)
+        public static bool TryConvert<TTarget>(this object obj, CultureInfo culture, out TTarget value)
         {
-            if (TryConvert(obj, typeof(TTargetType), culture, out object result) && (result is TTargetType || typeof(TTargetType).CanAcceptValue(result)))
+            if (TryConvert(obj, typeof(TTarget), culture, out object result) && (result is TTarget || typeof(TTarget).CanAcceptValue(result)))
             {
-                value = (TTargetType)result;
+                value = (TTarget)result;
                 return true;
             }
 
@@ -212,18 +324,19 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTargetType"/>.
+        /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="Convert{TTarget}"/> method for a related example.
         /// </summary>
-        /// <typeparam name="TTargetType">The desired type of the returned <paramref name="value"/>.</typeparam>
+        /// <typeparam name="TTarget">The desired type of the returned <paramref name="value"/>.</typeparam>
         /// <param name="obj">The object to convert.</param>
         /// <param name="value">When this method returns with <see langword="true"/>&#160;result, then this parameter contains the result of the conversion.</param>
-        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTargetType"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/>, if <paramref name="obj"/> could be converted to <typeparamref name="TTarget"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <remarks>
         /// <para>New conversions can be registered by the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see>&#160;<see cref="Type"/> extension methods.</para>
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
         /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert<TTargetType>(this object obj, out TTargetType value) => TryConvert(obj, null, out value);
+        public static bool TryConvert<TTarget>(this object obj, out TTarget value) => TryConvert(obj, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.

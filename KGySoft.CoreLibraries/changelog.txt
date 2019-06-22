@@ -5,9 +5,17 @@
 + New feature
 ===============================================================================
 
-~~~~~~~~~~~
-* v4.6.1.0:
-~~~~~~~~~~~
+~~~~~~~~~
+* v4.6.2:
+~~~~~~~~~
+
+* KGySoft.CoreLibraries namespace:
+==================================
++ ObjectExtensions.[Try]Convert methods: New pre-registered conversions to use long/ulong as intermediate steps if possible.
+
+~~~~~~~~~
+* v4.6.1:
+~~~~~~~~~
 - Assembly: Resetting SecurityRuleSet.Level1 because otherwise types that implement ISerializable
   cannot be even instantiated from a partially trusted domain.
   See also: See also https://stackoverflow.com/questions/48355591/how-can-i-implement-iserializable-in-net-4-without-violating-inheritance-secur
@@ -33,9 +41,9 @@
 ================================
 + PerformanceTestBase<TDelegate, TResult>: New OnBeforeCase and OnAfterCase protected methods.
 
-~~~~~~~~~~~
-! v4.6.0.0:
-~~~~~~~~~~~
+~~~~~~~~~
+! v4.6.0:
+~~~~~~~~~
 
 ! Assembly: Applying SecurityRuleSet.Level2 and adjusting security critical calls in the whole assembly.
   This is a breaking change for .NET4.0 and above only if the caller assembly is partially trusted or is
@@ -53,14 +61,14 @@
 ===============================
 * Reflector class: Improving the performance of invoke by name if there are no multiple members of the same name.
 
-~~~~~~~~~~~
-* v4.5.1.0:
-~~~~~~~~~~~
+~~~~~~~~~
+* v4.5.1:
+~~~~~~~~~
 Adjusting security settings.
 
-~~~~~~~~~~~
-! v4.5.0.0:
-~~~~~~~~~~~
+~~~~~~~~~
+! v4.5.0:
+~~~~~~~~~
 
 ! KGySoft.CoreLibraries namespace:
 ==================================

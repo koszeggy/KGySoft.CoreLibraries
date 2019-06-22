@@ -15,6 +15,12 @@ namespace KGySoft.CoreLibraries
         {
             static ObjectConverter()
             {
+                // Practically the [u]long -> IConvertible conversion makes no sense but these make possible every IConvertible
+                // conversion via an intermediate [u]long step. Thus float types -> char/enum conversions are also possible.
+                Reflector.LongType.RegisterConversion(typeof(IConvertible), (obj, type, culture) => obj);
+                Reflector.ULongType.RegisterConversion(typeof(IConvertible), (obj, type, culture) => obj);
+
+                // KeyValuePair and Dictionary entry conversions
                 Reflector.KeyValuePairType.RegisterConversion(Reflector.KeyValuePairType, TryConvertKeyValuePair);
                 Reflector.DictionaryEntryType.RegisterConversion(Reflector.KeyValuePairType, TryConvertDictionaryEntryToKeyValuePair);
                 Reflector.KeyValuePairType.RegisterConversion(Reflector.DictionaryEntryType, ConvertKeyValuePairToDictionaryEntry);

@@ -406,7 +406,7 @@ namespace KGySoft.CoreLibraries
         internal static bool IsCollection(this Type type)
         {
             return Reflector.IListType.IsAssignableFrom(type) || Reflector.IDictionaryType.IsAssignableFrom(type)
-                || type.GetInterfaces().Any(i => i.Name == collectionGenTypeName && i.IsGenericTypeOf(Reflector.ICollectionGenType));
+                || type.IsGenericTypeOf(Reflector.ICollectionGenType) || type.GetInterfaces().Any(i => i.Name == collectionGenTypeName && i.IsGenericTypeOf(Reflector.ICollectionGenType));
         }
 
         /// <summary>
@@ -430,12 +430,14 @@ namespace KGySoft.CoreLibraries
             if (Reflector.IDictionaryType.IsAssignableFrom(type))
                 return !((IDictionary)instance).IsReadOnly;
 
-            foreach (Type i in type.GetInterfaces())
+            foreach (Type i in new[] { type }.Concat(type.GetInterfaces())) // including self type
             {
                 if (i.Name != collectionGenTypeName)
                     continue;
                 if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
                 {
+                    if (instance is Array) // checked just here because type can be a non-collection
+                        return true;
                     PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly));
                     return !(bool)PropertyAccessor.GetAccessor(pi).Get(instance);
                 }
