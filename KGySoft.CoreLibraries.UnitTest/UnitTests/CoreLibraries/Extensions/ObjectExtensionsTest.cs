@@ -47,6 +47,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(1, "1");
             Test(1.0, 1);
             Test("1", true); // Parse
+            Test(100.12, 'x'); // double -> long -> char
+            Test(13.45m, ConsoleColor.Magenta); // decimal -> long -> enum
 
             // Registered conversions
             Throws<ArgumentException>(() => Test(1L, new IntPtr(1)));

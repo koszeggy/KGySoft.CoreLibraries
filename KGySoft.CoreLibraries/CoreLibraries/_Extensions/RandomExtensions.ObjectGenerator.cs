@@ -424,6 +424,7 @@ namespace KGySoft.CoreLibraries
             private static Delegate CreateDelegate(Type type)
             {
                 MethodInfo mi = type.GetMethod(nameof(Action.Invoke));
+                // ReSharper disable once PossibleNullReferenceException
                 Type returnType = mi.ReturnType;
                 var parameters = mi.GetParameters();
 
@@ -772,8 +773,8 @@ namespace KGySoft.CoreLibraries
                     // CreateInstance is faster than obtaining object factory by the constructor
                     if (defaultCtor != null || type.IsValueType)
                         collection = (IEnumerable)Activator.CreateInstance(type, true);
-                    else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor)
-                        collection = (IEnumerable)FormatterServices.GetUninitializedObject(type);
+                    else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor && Reflector.TryCreateUninitializedObject(type, out object uninitialized))
+                        collection = (IEnumerable)uninitialized;
 
                     if (collection != null && type.IsReadWriteCollection(collection))
                     {
@@ -823,7 +824,7 @@ namespace KGySoft.CoreLibraries
 
                 // We check all of the compatible types in random order.
                 // The try above could be in this foreach below but we try to avoid the shuffling if possible
-                if (!type.IsSealed && (context.Settings.TryResolveInterfacesAndAbstractTypes || context.Settings.AllowNegativeValues))
+                if (!type.IsSealed && (context.Settings.TryResolveInterfacesAndAbstractTypes || context.Settings.AllowDerivedTypesForNonSealedClasses))
                 {
                     foreach (Type candidateType in typeCandidates.Except(new[] { typeToCreate }).Shuffle(context.Random))
                     {
@@ -845,25 +846,10 @@ namespace KGySoft.CoreLibraries
                 context.PushType(type);
                 try
                 {
-                    object result = null;
-                    if (type.CanBeCreatedWithoutParameters())
-                    {
-                        try
-                        {
-                            result = Activator.CreateInstance(type, true);
-                        }
-                        catch (Exception e) when (!e.IsCritical())
-                        {
-                            // the constructor threw an exception: skip
-                            return null;
-                        }
-                    }
-                    else if (context.Settings.AllowCreateObjectWithoutConstructor)
-                        result = FormatterServices.GetUninitializedObject(type);
+                    if (!Reflector.TryCreateEmptyObject(type, true, context.Settings.AllowCreateObjectWithoutConstructor, out object result))
+                        return null;
 
-                    if (result != null)
-                        InitializeMembers(result, ref context);
-
+                    InitializeMembers(result, ref context);
                     return result;
                 }
                 finally
@@ -884,7 +870,7 @@ namespace KGySoft.CoreLibraries
                         fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
                         goto case ObjectInitialization.PublicProperties;
                     case ObjectInitialization.PublicProperties:
-                        properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && p.CanWrite).ToArray();
+                        properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.CanRead && (p.CanWrite || p.PropertyType.IsCollection())).ToArray();
                         break;
                     case ObjectInitialization.Fields:
                         var result = new List<FieldInfo>();
@@ -905,7 +891,27 @@ namespace KGySoft.CoreLibraries
                         try
                         {
                             // no sense to use Reflector.TrySetProperty because it also throws exception if the property setter itself throws an exception
-                            PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, true, ref context));
+                            if (property.CanWrite)
+                            {
+                                PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, true, ref context));
+                                continue;
+                            }
+
+                            // collection of read-only property
+                            IEnumerable collection = (IEnumerable)PropertyAccessor.GetAccessor(property).Get(obj);
+                            if (collection == null)
+                                continue;
+
+                            if (collection is Array array)
+                            {
+                                PopulateArray(array, ref context);
+                                continue;
+                            }
+
+                            Type collectionType = collection.GetType();
+                            if (!(collectionType.IsReadWriteCollection(collection) && collectionType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out bool isDictionary)))
+                                continue;
+                            PopulateCollection(collection, elementType, isDictionary, ref context);
                         }
                         catch (Exception e) when (!e.IsCritical())
                         {
@@ -952,20 +958,25 @@ namespace KGySoft.CoreLibraries
 
                 // ReSharper disable once AssignNullToNotNullAttribute
                 var result = Array.CreateInstance(elementType, lengths);
-                if (lengths.Length == 1)
+                PopulateArray(result, ref context);
+                return result;
+            }
+
+            [SecurityCritical]
+            private static void PopulateArray(Array array, ref GeneratorContext context)
+            {
+                Type elementType = array.GetType().GetElementType();
+                if (array.Rank == 1)
                 {
-                    int length = lengths[0];
+                    int length = array.Length;
                     for (int i = 0; i < length; i++)
-                        result.SetValue(GenerateObject(elementType, true, ref context), i);
-                }
-                else
-                {
-                    var indexer = new ArrayIndexer(lengths);
-                    while (indexer.MoveNext())
-                        result.SetValue(GenerateObject(elementType, true, ref context), indexer.Current);
+                        array.SetValue(GenerateObject(elementType, true, ref context), i);
+                    return;
                 }
 
-                return result;
+                var indexer = new ArrayIndexer(array);
+                while (indexer.MoveNext())
+                    array.SetValue(GenerateObject(elementType, true, ref context), indexer.Current);
             }
 
             [SecurityCritical]
@@ -988,15 +999,30 @@ namespace KGySoft.CoreLibraries
 
                 for (int i = 0; i < count; i++)
                 {
+                    object key, value;
                     context.PushMember(nameof(DictionaryEntry.Key));
-                    var key = GenerateObject(keyValue[0], true, ref context);
-                    context.PopMember();
+                    try
+                    {
+                        key = GenerateObject(keyValue[0], true, ref context);
+                    }
+                    finally
+                    {
+                        context.PopMember();
+                    }
+
                     if (key == null)
                         continue;
 
                     context.PushMember(nameof(DictionaryEntry.Value));
-                    var value = GenerateObject(keyValue[1], true, ref context);
-                    context.PopMember();
+                    try
+                    {
+                        value = GenerateObject(keyValue[1], true, ref context);
+                    }
+                    finally
+                    {
+                        context.PopMember();
+                    }
+
                     if (dictionary != null)
                     {
                         dictionary[key] = value;

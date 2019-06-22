@@ -308,14 +308,14 @@ namespace KGySoft.Serialization
             return result;
         }
 
-        protected bool SkipMember(object obj, MemberInfo member, out object value, out DesignerSerializationVisibility visibility)
+        protected bool SkipMember(object obj, MemberInfo member, out object value, ref DesignerSerializationVisibility visibility)
         {
             value = null;
 
             // skipping non-serializable members
             // Skip 1.) hidden by DesignerSerializationVisibility
             Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(DesignerSerializationVisibilityAttribute), true);
-            visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : DesignerSerializationVisibilityAttribute.Default.Visibility;
+            visibility = attrs.Length > 0 ? ((DesignerSerializationVisibilityAttribute)attrs[0]).Visibility : visibility;
             if (visibility == DesignerSerializationVisibility.Hidden)
                 return true;
 

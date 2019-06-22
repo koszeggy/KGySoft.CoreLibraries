@@ -77,6 +77,7 @@ namespace KGySoft.Collections
     /// </threadsafety>
     /// <example>
     /// The following example shows the suggested usage of <see cref="Cache{TKey,TValue}"/>.
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/wTqCoa" target="_blank">online</a></note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections.Generic;
@@ -1662,6 +1663,9 @@ namespace KGySoft.Collections
         /// but it can happen that values for same key are loaded multiple times and all but one will be discarded. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
+        /// <remarks>
+        /// <note type="tip">To access the whole <see cref="Cache{TKey,TValue}"/> in a thread-safe manner use it via a <see cref="LockingDictionary{TKey,TValue}"/> instance.</note>
+        /// </remarks>
         public IThreadSafeCacheAccessor<TKey, TValue> GetThreadSafeAccessor(bool protectItemLoader = false)
         {
             if (syncRootForThreadSafeAccessor == null)

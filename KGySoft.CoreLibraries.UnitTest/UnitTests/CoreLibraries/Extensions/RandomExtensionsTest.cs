@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Security.Permissions;
 using System.Text;
 
 using KGySoft.Collections;
@@ -135,6 +136,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #endregion
 
+        #region Sandbox class
+
+        private partial class Sandbox : MarshalByRefObject
+        {
+            internal void NextObjectTest() => new RandomExtensionsTest().NextObjectTest();
+        }
+
+        #endregion
+
         #endregion
 
         #endregion
@@ -204,11 +214,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new TestRandom();
 
             // edge cases
-            //Test(rnd, Double.MinValue, Double.MaxValue);
-            //Test(rnd, Double.NegativeInfinity, Double.PositiveInfinity);
-            //Test(rnd, 0, Double.PositiveInfinity);
-            //Test(rnd, Double.MaxValue, Double.PositiveInfinity);
-            //Test(rnd, Double.NegativeInfinity, Double.MinValue);
+            Test(rnd, Double.MinValue, Double.MaxValue);
+            Test(rnd, Double.NegativeInfinity, Double.PositiveInfinity);
+            Test(rnd, 0, Double.PositiveInfinity);
+            Test(rnd, Double.MaxValue, Double.PositiveInfinity);
+            Test(rnd, Double.NegativeInfinity, Double.MinValue);
             Test(rnd, 1.7976931348623155E+308, Double.MaxValue);
             Throws<ArgumentOutOfRangeException>(() => Test(rnd, Double.PositiveInfinity, Double.PositiveInfinity));
             Throws<ArgumentOutOfRangeException>(() => Test(rnd, Double.NegativeInfinity, Double.NegativeInfinity));
@@ -274,9 +284,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void NextDecimalTest()
         {
             var rnd = new Random();
-            //rnd = new TestRandom()
-            //    .WithNextBytes(255, 255, 255, 255, 255, 255, 255, 255)
-            //    .WithNextIntegers(542100000);
             void Test(decimal min, decimal max)
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
@@ -441,6 +448,18 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // recursive type
             Test<Recursive>();
+        }
+
+        [Test]
+        public void NextObjectTest_PartiallyTrusted()
+        {
+            var domain = CreateSandboxDomain(
+                new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
+                new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.ControlEvidence),
+                new EventLogPermission());
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
+            var sandbox = (Sandbox)handle.Unwrap();
+            sandbox.NextObjectTest();
         }
 
         #endregion

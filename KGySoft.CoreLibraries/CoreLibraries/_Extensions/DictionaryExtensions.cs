@@ -33,12 +33,59 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section for an example.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        /// <example>
+        /// The following example demonstrates how to use the <see cref="O:KGySoft.CoreLibraries.DictionaryExtensions.GetValueOrDefault">GetValueOrDefault</see> overloads.
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/XDjrOB" target="_blank">online</a></note>
+        /// <code lang="C#"><![CDATA[
+        /// using System;
+        /// using System.Collections.Generic;
+        /// using KGySoft.CoreLibraries;
+        /// 
+        /// public class Example
+        /// {
+        ///     public static void Main()
+        ///     {
+        ///         var dict = new Dictionary<string, object>
+        ///         {
+        ///             { "Int", 42 },
+        ///             { "String", "Blah" },
+        ///         };
+        /// 
+        ///         // old way:
+        ///         object obj;
+        ///         int intValue;
+        ///         if (dict.TryGetValue("Int", out obj) && obj is int)
+        ///             intValue = (int)obj;
+        /// 
+        ///         // C# 7.0 way:
+        ///         if (dict.TryGetValue("Int", out object o) && o is int i)
+        ///             intValue = i;
+        /// 
+        ///         // GetValueOrDefault ways:
+        /// 
+        ///         // TValue return type (which is object now)
+        ///         intValue = (int)dict.GetValueOrDefault("Int");
+        /// 
+        ///         // by defining a default value the actual type (and return type) can be specified
+        ///         intValue = dict.GetValueOrDefault("Int", 0);
+        /// 
+        ///         // an alternative syntax for string-object dictionaries (a default value still can be specified)
+        ///         intValue = dict.GetValueOrDefault<int>("Int");
+        /// 
+        ///         // using nullable int actual type to get null if "Unknown" does not exist or is not an int
+        ///         int? intOrNull = dict.GetValueOrDefault<int?>("Unknown");
+        /// 
+        ///         Console.WriteLine($"{nameof(intValue)}: {intValue}; {nameof(intOrNull)}: {intOrNull}");
+        ///     }
+        /// }]]></code>
+        /// </example>
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
         {
             if (dictionary == null)
@@ -49,6 +96,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TKey,TValue}"/> overload for an example.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
@@ -68,6 +116,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/>&#160;<paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TKey,TValue}"/> overload for an example.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>

@@ -178,7 +178,7 @@ namespace KGySoft.Serialization
                     }
 
                     // 3.) Any object
-                    SerializeMembers(obj, parent);
+                    SerializeMembers(obj, parent, DesignerSerializationVisibility.Visible);
                 }
                 finally
                 {
@@ -266,7 +266,7 @@ namespace KGySoft.Serialization
                 parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(collection.GetType())));
 
             // serializing main properties first
-            SerializeMembers(collection, parent);
+            SerializeMembers(collection, parent, visibility);
 
             // serializing items
             foreach (var item in collection)
@@ -294,7 +294,7 @@ namespace KGySoft.Serialization
                     if (ctx.TypeNeeded)
                         ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
 
-                    SerializeMembers(ctx.Object, ctx.Parent);
+                    SerializeMembers(ctx.Object, ctx.Parent, ctx.Visibility);
                     return true;
                 }
 
@@ -352,7 +352,7 @@ namespace KGySoft.Serialization
                     if (ctx.TypeNeeded)
                         ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
 
-                    SerializeMembers(ctx.Object, ctx.Parent);
+                    SerializeMembers(ctx.Object, ctx.Parent, ctx.Visibility);
                     return true;
                 }
 
@@ -443,14 +443,14 @@ namespace KGySoft.Serialization
             throw new SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
-        private void SerializeMembers(object obj, XContainer parent)
+        private void SerializeMembers(object obj, XContainer parent, DesignerSerializationVisibility visibility)
         {
             // signing that object is not null
             parent.Add(String.Empty);
 
             foreach (Member member in GetMembersToSerialize(obj))
             {
-                if (SkipMember(obj, member.MemberInfo, out object value, out DesignerSerializationVisibility visibility))
+                if (SkipMember(obj, member.MemberInfo, out object value, ref visibility))
                     continue;
 
                 PropertyInfo property = member.Property;

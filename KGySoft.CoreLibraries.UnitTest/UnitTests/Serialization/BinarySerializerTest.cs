@@ -2100,9 +2100,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     UInt32.MaxValue,
 
                     // 4 bytes compressed
-                    (int)TestEnumInt.Limit,   // 5
-                    UInt32.MinValue,          // 3
-                    (uint)TestEnumUInt.Limit, // 5
+                    (int)TestEnumInt.Limit,
+                    UInt32.MinValue,
+                    (uint)TestEnumUInt.Limit,
 
                     // 8 bytes
                     Int64.MinValue,
@@ -2112,9 +2112,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     UInt64.MaxValue,
 
                     // 8 bytes compressed
-                    (long)TestEnumLong.Limit,   // 9
-                    UInt64.MinValue,            // 3
-                    (ulong)TestEnumULong.Limit, // 9
+                    (long)TestEnumLong.Limit,
+                    UInt64.MinValue,
+                    (ulong)TestEnumULong.Limit,
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -3123,7 +3123,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object one = 1;
             string s1 = "alpha";
-            string s2 = String.Format("{0}{1}", "al", "ma");
+            string s2 = String.Format("{0}{1}", "al", "pha");
             SystemSerializableClass tc = new SystemSerializableClass { IntProp = 10, StringProp = "s1" };
             object ts = new SystemSerializableStruct { IntProp = 10, StringProp = "s1" };
             object[] referenceObjects =

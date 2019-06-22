@@ -14,6 +14,12 @@
 
 #endregion
 
+#region Usings
+
+using System;
+
+#endregion
+
 namespace KGySoft.Serialization
 {
     /// <summary>
@@ -49,6 +55,27 @@ namespace KGySoft.Serialization
         #endregion
 
         #region Constructors
+
+        internal ArrayIndexer(Array array)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
+
+            totalLength = array.Length;
+            int rank = array.Rank;
+            lengths = new int[rank];
+            lowerBounds = new int[rank];
+            for (int i = 0; i < rank; i++)
+            {
+                lengths[i] = array.GetLength(i);
+                lowerBounds[i] = array.GetLowerBound(i);
+            }
+
+            lastIndexLength = lengths[rank - 1];
+            currentZeroBased = new int[rank];
+            current = -1;
+
+        }
 
         internal ArrayIndexer(int[] lengths, int[] lowerBounds = null)
         {

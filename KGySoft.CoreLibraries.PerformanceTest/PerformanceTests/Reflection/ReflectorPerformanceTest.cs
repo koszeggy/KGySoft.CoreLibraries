@@ -391,8 +391,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             CreateInstanceAccessor accessorCtorParams = CreateInstanceAccessor.GetAccessor(ciParams);
 
             new PerformanceTest<TestClass> { TestName = "Create Class", Iterations = 1_000_000 }
-                .AddCase(() => new TestClass(), "Direct constructor invoke (default)")
-                .AddCase(() => new TestClass(p1, p2), "Direct constructor invoke (parameterized)")
+                //.AddCase(() => new TestClass(), "Direct constructor invoke (default)")
+                //.AddCase(() => new TestClass(p1, p2), "Direct constructor invoke (parameterized)")
 
                 .AddCase(() => (TestClass)ciDefault.Invoke(null), "ConstructorInfo.Invoke (default)")
                 .AddCase(() => (TestClass)ciParams.Invoke(new object[] { p1, p2 }), "ConstructorInfo.Invoke (parameterized)")
@@ -432,8 +432,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             CreateInstanceAccessor accessorCtor = CreateInstanceAccessor.GetAccessor(ci);
 
             new PerformanceTest<TestStruct> { TestName = "Create Struct", Iterations = 1_000_000 }
-                .AddCase(() => new TestStruct(), "Direct default initialization")
-                .AddCase(() => new TestStruct(p1, p2), "Direct constructor invoke")
+                //.AddCase(() => new TestStruct(), "Direct default initialization")
+                //.AddCase(() => new TestStruct(p1, p2), "Direct constructor invoke")
 
                 .AddCase(() => (TestStruct)ci.Invoke(new object[] { p1, p2 }), "ConstructorInfo.Invoke")
 

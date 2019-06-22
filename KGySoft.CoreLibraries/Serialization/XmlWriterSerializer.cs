@@ -157,7 +157,7 @@ namespace KGySoft.Serialization
                 }
 
                 // 3.) Any object
-                SerializeMembers(obj, writer);
+                SerializeMembers(obj, writer, DesignerSerializationVisibility.Visible);
             }
             finally
             {
@@ -244,7 +244,7 @@ namespace KGySoft.Serialization
                 writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
 
             // serializing main properties first
-            SerializeMembers(collection, writer);
+            SerializeMembers(collection, writer, visibility);
 
             // serializing items
             foreach (var item in collection)
@@ -277,7 +277,7 @@ namespace KGySoft.Serialization
                     if (ctx.TypeNeeded)
                         ctx.Writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(ctx.Type));
 
-                    SerializeMembers(ctx.Object, ctx.Writer);
+                    SerializeMembers(ctx.Object, ctx.Writer, ctx.Visibility);
                     return true;
                 }
 
@@ -345,7 +345,7 @@ namespace KGySoft.Serialization
                     if (ctx.TypeNeeded)
                         ctx.Writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(ctx.Type));
 
-                    SerializeMembers(ctx.Object, ctx.Writer);
+                    SerializeMembers(ctx.Object, ctx.Writer, ctx.Visibility);
                     return true;
                 }
 
@@ -439,11 +439,11 @@ namespace KGySoft.Serialization
             throw new SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
-        private void SerializeMembers(object obj, XmlWriter writer)
+        private void SerializeMembers(object obj, XmlWriter writer, DesignerSerializationVisibility visibility)
         {
             foreach (Member member in GetMembersToSerialize(obj))
             {
-                if (SkipMember(obj, member.MemberInfo, out object value, out DesignerSerializationVisibility visibility))
+                if (SkipMember(obj, member.MemberInfo, out object value, ref visibility))
                     continue;
 
                 PropertyInfo property = member.Property;

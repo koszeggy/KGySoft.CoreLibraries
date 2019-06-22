@@ -1246,11 +1246,8 @@ namespace KGySoft.Serialization
 
             lock (cacheItem)
             {
-                IEnumerable<MethodInfo> cachedResult;
-                if (cacheItem.TryGetValue(attribute, out cachedResult))
-                {
+                if (cacheItem.TryGetValue(attribute, out IEnumerable<MethodInfo> cachedResult))
                     return cachedResult;
-                }
 
                 List<MethodInfo> result = new List<MethodInfo>();
                 for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
@@ -2275,8 +2272,7 @@ namespace KGySoft.Serialization
         [SecurityCritical]
         private object Read(BinaryReader br, bool isRoot, DeserializationManager manager)
         {
-            object result;
-            if (!isRoot && manager.TryGetCachedObject(br, out result))
+            if (!isRoot && manager.TryGetCachedObject(br, out object result))
                 return result;
 
             DataTypes dataType = (DataTypes)br.ReadUInt16();
@@ -2324,8 +2320,7 @@ namespace KGySoft.Serialization
             // getting whether the current instance is in cache
             if (descriptor.ParentDescriptor != null)
             {
-                object cachedResult;
-                if (manager.TryGetCachedObject(br, out cachedResult))
+                if (manager.TryGetCachedObject(br, out object cachedResult))
                     return cachedResult;
             }
 
@@ -2386,8 +2381,7 @@ namespace KGySoft.Serialization
             // getting whether the current instance is in cache
             if (descriptor.ParentDescriptor != null && (!descriptor.Type.IsValueType || descriptor.Type.IsNullable()))
             {
-                object cachedResult;
-                if (manager.TryGetCachedObject(br, out cachedResult))
+                if (manager.TryGetCachedObject(br, out object cachedResult))
                     return cachedResult;
             }
 
@@ -2715,8 +2709,9 @@ namespace KGySoft.Serialization
         {
             byte[] serData = br.ReadBytes(Read7BitInt(br));
 
-            // Creating an uninitialized instance if OnSerializing methods are needed to be invoked before constructor
-            object result = FormatterServices.GetUninitializedObject(type);
+            if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
+                throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+
             if (addToCache)
                 manager.AddObjectToCache(result);
             OnDeserializing(result);
@@ -2793,7 +2788,8 @@ namespace KGySoft.Serialization
                 type = manager.ReadType(br);
 
             // c.) Reading members
-            object result = FormatterServices.GetUninitializedObject(type);
+            if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
+                throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
             int id = 0;
             if (addToCache)
                 manager.AddObjectToCache(result, out id);
@@ -2831,16 +2827,12 @@ namespace KGySoft.Serialization
             OnDeserialized(result);
 
             // if type result is IObjectReference, then calling its GetRealObject to return something
-            if ((manager.Options & BinarySerializationOptions.IgnoreIObjectReference) == BinarySerializationOptions.None)
+            if ((manager.Options & BinarySerializationOptions.IgnoreIObjectReference) == BinarySerializationOptions.None && result is IObjectReference objRef)
             {
-                IObjectReference objRef = result as IObjectReference;
-                if (objRef != null)
-                {
-                    result = objRef.GetRealObject(Context);
-                    manager.UpdateReferences(objRef, result);
-                    if (addToCache)
-                        manager.ReplaceObjectInCache(id, result);
-                }
+                result = objRef.GetRealObject(Context);
+                manager.UpdateReferences(objRef, result);
+                if (addToCache)
+                    manager.ReplaceObjectInCache(id, result);
             }
 
             return result;

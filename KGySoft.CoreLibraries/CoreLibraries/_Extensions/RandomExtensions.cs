@@ -32,7 +32,95 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Contains extension methods for the <see cref="Random"/> type.
+    /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
+    /// <example>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/hQRVoZ" target="_blank">online</a></note>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.Collections.Generic;
+    /// using System.Globalization;
+    /// using System.Linq;
+    /// using System.Reflection;
+    /// using KGySoft.CoreLibraries;
+    /// 
+    /// public static class Example
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         var rnd = new Random();
+    /// 
+    ///         // Next... for all simple types:
+    ///         Console.WriteLine(rnd.NextBoolean());
+    ///         Console.WriteLine(rnd.NextDouble(Double.PositiveInfinity)); // see also the overloads
+    ///         Console.WriteLine(rnd.NextString()); // see also the overloads
+    ///         Console.WriteLine(rnd.NextDateTime()); // also NextDate, NextDateTimeOffset, NextTimeSpan
+    ///         Console.WriteLine(rnd.NextEnum<ConsoleColor>());
+    ///         // and NextByte, NextSByte, NextInt16, NextDecimal, etc.
+    /// 
+    ///         // NextObject: for practically anything. See also GenerateObjectSettings.
+    ///         Console.WriteLine(rnd.NextObject<Person>().Dump()); // custom type
+    ///         Console.WriteLine(rnd.NextObject<(int, string)>()); // tuple
+    ///         Console.WriteLine(rnd.NextObject<IConvertible>()); // interface implementation
+    ///         Console.WriteLine(rnd.NextObject<MarshalByRefObject>()); // abstract type implementation
+    ///         Console.WriteLine(rnd.NextObject<int[]>().Dump()); // array
+    ///         Console.WriteLine(rnd.NextObject<IList<IConvertible>>().Dump()); // some collection of an interface
+    ///         Console.WriteLine(rnd.NextObject<Func<DateTime>>().Invoke()); // delegate with random result
+    /// 
+    ///         // specific type for object (useful for non-generic collections)
+    ///         Console.WriteLine(rnd.NextObject<ArrayList>(new GenerateObjectSettings
+    ///         {
+    ///             SubstitutionForObjectType = typeof(ConsoleColor)
+    ///         }).Dump());
+    /// 
+    ///         // literally any random object
+    ///         Console.WriteLine(rnd.NextObject<object>(new GenerateObjectSettings
+    ///         {
+    ///             AllowDerivedTypesForNonSealedClasses = true
+    ///         })/*.Dump()*/); // dump may end up in an exception for property getters or even in an endless recursion
+    ///     }
+    /// 
+    ///     private static string Dump(this object o)
+    ///     {
+    ///         if (o == null)
+    ///             return "<null>";
+    /// 
+    ///         if (o is IConvertible convertible)
+    ///             return convertible.ToString(CultureInfo.InvariantCulture);
+    /// 
+    ///         if (o is IEnumerable enumerable)
+    ///             return $"[{String.Join(", ", enumerable.Cast<object>().Select(Dump))}]";
+    /// 
+    ///         return $"{{{String.Join("; ", o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}"))}}}";
+    ///     }
+    /// }
+    /// 
+    /// public class Person
+    /// {
+    ///     public string FirstName { get; set; }
+    ///     public string LastName { get; set; }
+    ///     public DateTime BirthDate { get; set; }
+    ///     public List<string> PhoneNumbers { get; set; }
+    /// }
+    /// 
+    /// // A possible output of the code above can be the following:
+    /// // False
+    /// // 1,65543763243888E+266
+    /// // }\&qc54# d
+    /// // 8806. 02. 18. 6:25:21
+    /// // White
+    /// // {FirstName = Jemp; LastName = Aeltep; BirthDate = 07/04/2003 00:00:00; PhoneNumbers = [17251827, 7099649772]}
+    /// // (1168349297, oufos)
+    /// // Renegotiated
+    /// // System.Net.Sockets.NetworkStream
+    /// // [336221768]
+    /// // [Off, Invalid]
+    /// // 1956. 08. 24. 4:28:57
+    /// // [Yellow, Gray]
+    /// // System.Xml.XmlCharCheckingReader+<ReadElementContentAsBinHexAsync>d__40 *
+    /// ]]></code>
+    /// </example>
     public static partial class RandomExtensions
     {
         #region Constants
@@ -1009,8 +1097,9 @@ namespace KGySoft.CoreLibraries
         #region Object
 
         /// <summary>
-        /// Returns a random object of type <typeparamref name="T"/> or <see langword="null"/>&#160;
+        /// Returns a random object of type <typeparamref name="T"/> or the default value of <typeparamref name="T"/>
         /// if <typeparamref name="T"/> cannot be instantiated with the provided <paramref name="settings"/>.
+        /// <br/>See the <strong>Remarks</strong> section for details.
         /// </summary>
         /// <typeparam name="T">The type of the object to be created. If <see cref="GenerateObjectSettings.TryResolveInterfacesAndAbstractTypes"/> property
         /// in <paramref name="settings"/> is <see langword="true"/>, then it can be also an interface or abstract type;
@@ -1045,6 +1134,7 @@ namespace KGySoft.CoreLibraries
         /// <note>The generated delegates do not use the specified <paramref name="random"/> instance because in that case the <paramref name="random"/> instance could
         /// never be reclaimed by the garbage collector. To avoid leaking memory generated delegates use an internal static <see cref="Random"/> instance.</note>
         /// </para>
+        /// <note type="tip">See the <strong>Examples</strong> section of the <see cref="RandomExtensions"/> class for some examples.</note>
         /// </remarks>
 #if !NET35
         [SecuritySafeCritical]

@@ -12,6 +12,22 @@
 * KGySoft.CoreLibraries namespace:
 ==================================
 + ObjectExtensions.[Try]Convert methods: New pre-registered conversions to use long/ulong as intermediate steps if possible.
+* RandomExtensions:
+  - Avoiding SecurityException from partially trusted domain if possible
+  + Generating collections for read-only properties is possible
+
+- KGySoft.Diagnostic namespace:
+===============================
+- PerformanceTestBase: Avoiding SecurityException from partially trusted domain if possible
+
+* KGySoft.Reflection namespace:
+===============================
+* Changing default strategy for ReflectionWays.Auto in some CreateInstance overload
+
+- KGySoft.Serialization namespace:
+==================================
+- BinarySerializationFormatter: Avoiding SecurityException from partially trusted domain if possible
+- XmlSerializer: Fixing serialization visibility inheritance of properties
 
 ~~~~~~~~~
 * v4.6.1:

@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -262,6 +263,21 @@ namespace KGySoft.Diagnostics
 
         #region Methods
 
+        #region Static Methods
+
+        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect",
+            Justification = "Belongs to the performance test initialization and can be turned off. Important for getting reliable performance test results.")]
+        private static void DoCollect()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+
+        #endregion
+
+        #region Instance Methods
+
         #region Public Methods
 
         /// <summary>
@@ -425,7 +441,13 @@ namespace KGySoft.Diagnostics
             OnInitialize();
             if (!IsValidAffinity())
                 return;
+            SetCpuAffinity();
+        }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [SecurityCritical]
+        private void SetCpuAffinity()
+        {
             Process process = Process.GetCurrentProcess();
             origAffinity = process.ProcessorAffinity;
             process.ProcessorAffinity = new IntPtr(CpuAffinity.GetValueOrDefault());
@@ -435,21 +457,26 @@ namespace KGySoft.Diagnostics
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
 
-        private bool IsValidAffinity() => CpuAffinity.HasValue && CpuAffinity.Value < 2L << (Environment.ProcessorCount - 1);
+        private bool IsValidAffinity() => CpuAffinity.HasValue && CpuAffinity.Value > 0 && CpuAffinity.Value < 2L << (Environment.ProcessorCount - 1);
 
 #if !NET35
         [SecuritySafeCritical]
 #endif
         private void TearDown()
         {
-            if (!IsValidAffinity())
-                return;
+            if (IsValidAffinity())
+                ResetCpuAffinity();
+            OnTearDown();
+        }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [SecurityCritical]
+        private void ResetCpuAffinity()
+        {
             Process process = Process.GetCurrentProcess();
             process.ProcessorAffinity = origAffinity;
             process.PriorityClass = origPriority;
             Thread.CurrentThread.Priority = origThreadPrio;
-            OnTearDown();
         }
 
         private void DoWarmUp(TDelegate testCase)
@@ -471,17 +498,6 @@ namespace KGySoft.Diagnostics
             while (stopwatch.ElapsedMilliseconds < TestTime);
         }
 
-        [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect",
-            Justification = "Belongs to the performance test initialization and can be turned off. Important for getting reliable performance test results.")]
-        private void DoCollect()
-        {
-            if (!Collect)
-                return;
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
-
         private List<TestResult> DoTestCases()
         {
             var results = new List<TestResult>();
@@ -494,7 +510,8 @@ namespace KGySoft.Diagnostics
                 for (int r = 0; r < Repeat; r++)
                 {
                     OnBeforeCase();
-                    DoCollect();
+                    if (Collect)
+                        DoCollect();
                     if (Iterations > 0)
                         DoTestByIterations(testCase.Case, testResult);
                     else
@@ -562,6 +579,8 @@ namespace KGySoft.Diagnostics
                             : (Comparison<TestResult>)((x, y) => -Comparer<double>.Default.Compare(x.AverageIterations, y.AverageIterations));
             testResults.Sort(comparison);
         }
+
+        #endregion
 
         #endregion
 

@@ -532,6 +532,9 @@ namespace KGySoft
         /// <summary>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</summary>
         internal static string BinarySerializationUnexpectedFieldType(Type type, object value, Type declaringType, string fieldName) => Get("BinarySerialization_UnexpectedFieldTypeFormat", type, value, declaringType, fieldName);
 
+        /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
+        internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_BinarySerializationCannotCreateUninitializedObjectFormat", type);
+
         #endregion
 
         #region Cache<TKey, TValue>

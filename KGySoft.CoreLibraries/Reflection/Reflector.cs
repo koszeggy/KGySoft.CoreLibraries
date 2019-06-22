@@ -27,7 +27,9 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 
@@ -46,7 +48,9 @@ namespace KGySoft.Reflection
     public static class Reflector
     {
         #region Fields
-        
+
+        #region Internal Fields
+
         internal static readonly object[] EmptyObjects = new object[0];
 
         internal static readonly Type VoidType = typeof(void);
@@ -101,7 +105,6 @@ namespace KGySoft.Reflection
         internal static readonly Type TypeInfo = typeof(TypeInfo);
 #endif
 
-
         internal static readonly Assembly MsCorlibAssembly = ObjectType.Assembly;
         internal static readonly Assembly SystemAssembly = typeof(Queue<>).Assembly;
         internal static readonly Assembly SystemCoreAssembly = typeof(HashSet<>).Assembly;
@@ -111,6 +114,14 @@ namespace KGySoft.Reflection
         private static LockingDictionary<string, Assembly> assemblyCache;
         private static LockingDictionary<string, Type> typeCacheByString;
         private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
+
+        #endregion
+
+        #region Private Fields
+
+        private static bool? canCreateUninitializedObject;
+
+        #endregion
 
         #endregion
 
@@ -1672,7 +1683,8 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>If you are not sure whether the type can be created without constructor parameters or by the provided <paramref name="genericParameters"/>, then you can use the
         /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
+        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
         public static object CreateInstance(Type type, Type[] genericParameters, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -1706,7 +1718,8 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the instance could be created; <see langword="false"/>, if <paramref name="type"/> cannot be created without parameters or <paramref name="genericParameters"/> do not match to the generic type definition.</returns>
         /// <remarks>
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.SystemReflection"/> way, which will use the <see cref="Activator"/> class.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way for reference types,
+        /// and the <see cref="ReflectionWays.SystemReflection"/> way for value types, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
         public static bool TryCreateInstance(Type type, Type[] genericParameters, ReflectionWays way, out object result)
         {
@@ -1781,10 +1794,14 @@ namespace KGySoft.Reflection
 
             switch (way)
             {
+                case ReflectionWays.Auto:
+                    if (type.IsValueType)
+                        goto case ReflectionWays.SystemReflection;
+                    else
+                        goto case ReflectionWays.DynamicDelegate;
                 case ReflectionWays.DynamicDelegate:
                     result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
                     return true;
-                case ReflectionWays.Auto:
                 case ReflectionWays.SystemReflection:
                     try
                     {
@@ -1807,6 +1824,63 @@ namespace KGySoft.Reflection
                     throw new ArgumentOutOfRangeException(nameof(way), Res.EnumOutOfRange(way));
             }
         }
+
+        [SecurityCritical]
+        internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowCreateWithoutCtor, out object result)
+        {
+            if (type.IsValueType)
+            {
+                result = Activator.CreateInstance(type);
+                return true;
+            }
+
+            bool? hasDefaultCtor = null;
+            if (preferCtor && (hasDefaultCtor = type.CanBeCreatedWithoutParameters()) == true)
+            {
+                result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                return true;
+            }
+
+            if (allowCreateWithoutCtor && TryCreateUninitializedObject(type, out result))
+                return true;
+
+            if (hasDefaultCtor ?? type.CanBeCreatedWithoutParameters())
+            {
+                result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                return true;
+            }
+
+            result = null;
+            return false;
+        }
+
+        [SecurityCritical]
+        internal static bool TryCreateUninitializedObject(Type type, out object result)
+        {
+            result = null;
+            if (canCreateUninitializedObject == false)
+                return false;
+
+            try
+            {
+                result = DoCreateUninitializedObject(type);
+                canCreateUninitializedObject = true;
+                return true;
+            }
+            catch (SecurityException)
+            {
+                canCreateUninitializedObject = false;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// At JIT-time this method may throw a SecurityEception from a partially trusted domain. A separate method because
+        /// the exception is thrown without even executing the code just by recognizing GetUninitializedObject in the method.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [SecurityCritical]
+        private static object DoCreateUninitializedObject(Type t) => FormatterServices.GetUninitializedObject(t);
 
         #endregion
 
