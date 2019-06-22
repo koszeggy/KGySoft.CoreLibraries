@@ -43,7 +43,7 @@ namespace KGySoft.ComponentModel
 
         #region Properties
 
-        private static ICommand BindPropertyCommand { get; } = new SourceAwareTargetedCommand<EventArgs, object>(OnBindPropertyCommand);
+        private static ICommand UpdatePropertyCommand { get; } = new SourceAwareTargetedCommand<EventArgs, object>(OnUpdatePropertyCommand);
 
         #endregion
 
@@ -193,9 +193,15 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
-        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, the disposable is returned (check in new versions if fixed)")]
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "4", Justification = "targets is checked by IsNullOrEmpty")]
         public static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, params object[] targets)
+            => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true);
+
+        #endregion
+
+        #region Internal Methods
+
+        [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, the disposable is returned (check in new versions if fixed)")]
+        internal static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, object[] targets, bool syncTargets)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
@@ -203,39 +209,29 @@ namespace KGySoft.ComponentModel
                 throw new ArgumentNullException(nameof(sourcePropertyName), Res.ArgumentNull);
             if (targetPropertyName == null)
                 throw new ArgumentNullException(nameof(targetPropertyName), Res.ArgumentNull);
+
             var state = new CommandState
-                {
-                    { stateSourcePropertyName, sourcePropertyName },
-                    { stateTargetPropertyName, targetPropertyName },
-                    { stateFormatValue, format }
-                };
+            {
+                { stateSourcePropertyName, sourcePropertyName },
+                { stateTargetPropertyName, targetPropertyName },
+                { stateFormatValue, format }
+            };
             bool isNotifyPropertyChanged = source is INotifyPropertyChanged;
-            var eventName = isNotifyPropertyChanged ? nameof(INotifyPropertyChanged.PropertyChanged) : sourcePropertyName + "Changed";
-            ICommandBinding result = BindPropertyCommand.CreateBinding(state, true)
-                    .AddStateUpdater(NullStateUpdater.Updater)
-                    .AddSource(source, eventName);
+            string eventName = isNotifyPropertyChanged ? nameof(INotifyPropertyChanged.PropertyChanged) : sourcePropertyName + "Changed";
+            ICommandBinding result = UpdatePropertyCommand.CreateBinding(state, true)
+                .AddStateUpdater(NullStateUpdater.Updater)
+                .AddSource(source, eventName);
             if (!targets.IsNullOrEmpty())
             {
-                var commandSource = new CommandSource<EventArgs>
-                {
-                    EventArgs = isNotifyPropertyChanged ? new PropertyChangedEventArgs(sourcePropertyName) : EventArgs.Empty,
-                    Source = source,
-                    TriggeringEvent = eventName
-                };
-
                 foreach (object target in targets)
-                {
                     result.AddTarget(target);
-                    OnBindPropertyCommand(commandSource, state, target);
-                }
+
+                if (syncTargets)
+                    result.InvokeCommand(source, eventName, isNotifyPropertyChanged ? new PropertyChangedEventArgs(sourcePropertyName) : EventArgs.Empty);
             }
 
             return result;
         }
-
-        #endregion
-
-        #region Internal Methods
 
         internal static ICommandSource<T> Cast<T>(this ICommandSource orig) where T : EventArgs
             => new CommandSource<T>
@@ -249,7 +245,7 @@ namespace KGySoft.ComponentModel
 
         #region Private Methods
 
-        private static void OnBindPropertyCommand(ICommandSource src, ICommandState state, object target)
+        private static void OnUpdatePropertyCommand(ICommandSource src, ICommandState state, object target)
         {
             string sourcePropertyName = state.GetValueOrDefault<string>(stateSourcePropertyName) ?? throw new InvalidOperationException(Res.ComponentModelMissingState(stateSourcePropertyName));
             string targetPropertyName = state.GetValueOrDefault<string>(stateTargetPropertyName) ?? throw new InvalidOperationException(Res.ComponentModelMissingState(stateTargetPropertyName));

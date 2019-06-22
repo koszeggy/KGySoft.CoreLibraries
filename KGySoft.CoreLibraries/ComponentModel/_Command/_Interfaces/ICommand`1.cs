@@ -24,7 +24,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// This interface exists just because in <see cref="CommandBinding"/> we already create a strongly typed delegate for EventArgs
-    /// so we can keep this strongly typed attribute in source aware commands.
+    /// so we can re-use this strongly typed nature in source aware commands.
     /// </summary>
     /// <typeparam name="TEventArgs">The type of the event arguments.</typeparam>
     internal interface ICommand<in TEventArgs> : ICommand where TEventArgs : EventArgs

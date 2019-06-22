@@ -31,7 +31,7 @@ namespace KGySoft.ComponentModel
         #region Properties
 
         /// <summary>
-        /// Gets the source if the invocation, which is the object that triggered the event.
+        /// Gets the source of the invocation, which is the object that triggered the event.
         /// </summary>
         object Source { get; }
 

@@ -53,7 +53,7 @@ namespace KGySoft.ComponentModel
         #region SubscriptionInfo<TEventArgs> class
 
         /// <summary>
-        /// For providing a matching signature for any event handler.
+        /// To provide a matching signature for any event handler.
         /// </summary>
         private sealed class SubscriptionInfo<TEventArgs> : SubscriptionInfo
             where TEventArgs : EventArgs
@@ -68,9 +68,9 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region CommandGenericWrapper struct
+        #region CommandGenericWrapper class
 
-        private struct CommandGenericWrapper<TEventArgs> : ICommand<TEventArgs> where TEventArgs : EventArgs
+        private sealed class CommandGenericWrapper<TEventArgs> : ICommand<TEventArgs> where TEventArgs : EventArgs
         {
             #region Fields
 
@@ -115,14 +115,35 @@ namespace KGySoft.ComponentModel
         private readonly CircularList<ICommandStateUpdater> stateUpdaters = new CircularList<ICommandStateUpdater>();
 
         private bool disposed;
+        private EventHandler<ExecuteCommandEventArgs> executing;
+        private EventHandler<ExecuteCommandEventArgs> executed;
 
         #endregion
+
+        #endregion
+
+        #region Events
+
+        public event EventHandler<ExecuteCommandEventArgs> Executing
+        {
+            add => executing += value;
+            remove => executing -= value;
+        }
+
+        public event EventHandler<ExecuteCommandEventArgs> Executed
+        {
+            add => executed += value;
+            remove => executed -= value;
+        }
 
         #endregion
 
         #region Properties
 
         public ICommandState State => state;
+        public IDictionary<object, string[]> Sources => sources?.ToDictionary(i => i.Key, i => i.Value.Values.Select(si => si.EventName).ToArray());
+        public IList<object> Targets => targets?.ToArray();
+        public IList<ICommandStateUpdater> StateUpdaters => stateUpdaters.ToArray();
 
         #endregion
 
@@ -149,6 +170,8 @@ namespace KGySoft.ComponentModel
             disposed = true;
 
             state.PropertyChanged -= State_PropertyChanged;
+            executing = null;
+            executed = null;
 
             foreach (object source in sources.Keys.ToArray())
                 RemoveSource(source);
@@ -164,6 +187,8 @@ namespace KGySoft.ComponentModel
 
         public ICommandBinding AddSource(object source, string eventName)
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (source == null)
                 throw new ArgumentNullException(nameof(source), Res.ArgumentNull);
             if (eventName == null)
@@ -175,6 +200,8 @@ namespace KGySoft.ComponentModel
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
             ParameterInfo[] parameters = invokeMethod?.GetParameters();
+
+            // ReSharper disable once PossibleNullReferenceException - if parameters is null the first condition will match
             if (invokeMethod?.ReturnType != Reflector.VoidType || parameters.Length != 2 || parameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
                 throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
 
@@ -203,6 +230,8 @@ namespace KGySoft.ComponentModel
 
         public bool RemoveSource(object source)
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             if (!sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions))
                 return false;
 
@@ -212,28 +241,55 @@ namespace KGySoft.ComponentModel
             return sources.Remove(source);
         }
 
-        public ICommandBinding AddStateUpdater(ICommandStateUpdater updater)
+        public ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources)
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             stateUpdaters.Add(updater);
+            if (updateSources && sources.Count > 0)
+                sources.Keys.ForEach(UpdateSource);
             return this;
         }
 
         public bool RemoveStateUpdater(ICommandStateUpdater updater)
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             return stateUpdaters.Remove(updater);
         }
 
         public ICommandBinding AddTarget(object target)
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             targets.Add(target ?? throw new ArgumentNullException(nameof(target), Res.ArgumentNull));
             return this;
         }
 
-        public ICommandBinding AddTarget(Func<object> getTarget) => AddTarget((object)getTarget);
+        public ICommandBinding AddTarget(Func<object> getTarget)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            return AddTarget((object)getTarget);
+        }
 
         public bool RemoveTarget(object target)
         {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
             return targets.Remove(target);
+        }
+
+        public void InvokeCommand(object source, string eventName, EventArgs eventArgs)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            InvokeCommand(new CommandSource<EventArgs>
+            {
+                Source = source ?? throw new ArgumentNullException(nameof(source), Res.ArgumentNull),
+                TriggeringEvent = eventName ?? throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull),
+                EventArgs = eventArgs ?? EventArgs.Empty
+            });
         }
 
         #endregion
@@ -261,23 +317,42 @@ namespace KGySoft.ComponentModel
         private void InvokeCommand<TEventArgs>(CommandSource<TEventArgs> source)
             where TEventArgs : EventArgs
         {
-            if (disposed || !state.Enabled)
+            if (disposed)
                 return;
 
             ICommand<TEventArgs> cmd = command as ICommand<TEventArgs> ?? new CommandGenericWrapper<TEventArgs>(command);
-            if (targets.IsNullOrEmpty())
-                cmd.Execute(source, state, null);
-            else
+            var e = new ExecuteCommandEventArgs(source, state);
+            OnExecuting(e);
+            if (disposed || !state.Enabled)
+                return;
+            try
             {
-                foreach (object targetEntry in targets)
+                if (targets.IsNullOrEmpty())
+                    cmd.Execute(source, state, null);
+                else
                 {
-                    object target = targetEntry is Func<object> factory ? factory.Invoke() : targetEntry;
-                    cmd.Execute(source, state, target);
-                    if (disposed || !state.Enabled)
-                        return;
+                    foreach (object targetEntry in targets)
+                    {
+                        object target = targetEntry is Func<object> factory ? factory.Invoke() : targetEntry;
+                        cmd.Execute(source, state, target);
+                        if (disposed || !state.Enabled)
+                            return;
+                    }
                 }
             }
+            finally
+            {
+                if (!disposed)
+                    OnExecuted(e);
+            }
         }
+
+        #endregion
+
+        #region Private Methods
+
+        private void OnExecuting(ExecuteCommandEventArgs e) => executing?.Invoke(this, e);
+        private void OnExecuted(ExecuteCommandEventArgs e) => executed?.Invoke(this, e);
 
         #endregion
 
@@ -285,7 +360,7 @@ namespace KGySoft.ComponentModel
 
         private void State_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            foreach (IComponent component in sources.Keys)
+            foreach (object component in sources.Keys)
                 UpdateSource(component, e.PropertyName);
         }
 

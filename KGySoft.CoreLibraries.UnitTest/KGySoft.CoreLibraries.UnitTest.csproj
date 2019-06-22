@@ -112,6 +112,7 @@
     <Compile Include="UnitTests\Collections\CircularListTest.cs" />
     <Compile Include="UnitTests\Collections\CircularSortedListTest.cs" />
     <Compile Include="UnitTests\Collections\ObjectModel\FastLookupCollectionTest.cs" />
+    <Compile Include="UnitTests\ComponentModel\CommandsTest.cs" />
     <Compile Include="UnitTests\ComponentModel\FastBindingListTest.cs" />
     <Compile Include="UnitTests\ComponentModel\ObservableBindingListTest.cs" />
     <Compile Include="UnitTests\ComponentModel\SortableBindingListTest.cs" />

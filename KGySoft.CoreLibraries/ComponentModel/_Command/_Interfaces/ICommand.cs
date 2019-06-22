@@ -40,30 +40,28 @@ namespace KGySoft.ComponentModel
     /// <example>
     /// The following examples demonstrate how to define different kind of commands:
     /// <code lang="C#"><![CDATA[
-    /// public static class MyCommands
+    /// public static partial class MyCommands
     /// {
     ///     // A simple command with no target and ignored source: (assumes we have an ExitCode state)
-    ///     // Note that commands are lazy initialized
-    ///     private static ICommand closeApplicationCommand;
-    ///     public static ICommand CloseApplication => closeApplicationCommand ?? (closeApplicationCommand =
-    ///         new SimpleCommand(state => Environment.Exit((int)state["ExitCode"]))); // or: .Exit(state.AsDynamic.ExitCode)
+    ///     public static ICommand CloseApplicationCommand =>
+    ///         new SimpleCommand(state => Environment.Exit((int)state["ExitCode"])); // or: .Exit(state.AsDynamic.ExitCode)
     /// 
     ///     // A source aware command, which can access the source object and the triggering event data
-    ///     private static ICommand logMouseCommand;
-    ///     public static ICommand LogMouse => logMouseCommand ?? (logMouseCommand =
-    ///         new SourceAwareCommand<MouseEventArgs>((source, state) => Debug.WriteLine($"Mouse coordinates: {source.EventArgs.X}; {source.EventArgs.Y}")));
-    ///
+    ///     public static ICommand LogMouseCommand =>
+    ///         new SourceAwareCommand<MouseEventArgs>((source, state) => Debug.WriteLine($"Mouse coordinates: {source.EventArgs.X}; {source.EventArgs.Y}"));
+    /// 
     ///     // A targeted command (also demonstrates how to change the command state of another command):
-    ///     private static ICommand toggleEnabledCommand;
-    ///     public static ICommand ToggleCommandEnabled => toggleEnabledCommand ?? (toggleEnabledCommand =
-    ///         new TargetedCommand<ICommandState>((state, targetState) => targetState.Enabled = !targetState.Enabled));
-    ///
+    ///     public static ICommand ToggleCommandEnabled =>
+    ///         new TargetedCommand<ICommandState>((state, targetState) => targetState.Enabled = !targetState.Enabled);
+    /// 
     ///     // A source aware targeted command:
-    ///     private static ICommand processKeysCommand;
-    ///     public static ICommand ProcessKeys => processKeysCommand ?? (processKeysCommand =
-    ///         new SourceAwareTargetedCommand<KeyEventArgs, Control>((source, state, target) => HandleKeys(source.EventArgs.KeyData, target)));
-    /// }
-    /// ]]></code>
+    ///     public static ICommand ProcessKeysCommand => new SourceAwareTargetedCommand<KeyEventArgs, Control>(OnProcessKeysCommand);
+    /// 
+    ///     private static void OnProcessKeysCommand(ICommandSource<KeyEventArgs> source, ICommandState state, Control target)
+    ///     {
+    ///         // do something with target by source.EventArgs
+    ///     }
+    /// }]]></code>
     /// And a binding for a command can be created in an application, with any kind of UI, which uses events, or even without any UI: only event sources are needed.
     /// <code lang="C#"><![CDATA[
     /// public class MyView : SomeViewBaseWithEvents // base can be a Window in WPF or a Form in WindowsForms or simply any component with events.
@@ -80,7 +78,7 @@ namespace KGySoft.ComponentModel
     ///         // Below we assume we have a menu item with a Click event.
     ///         // We set also the initial status. By adding the property state updater the
     ///         // states will be applied on the source as properties.
-    ///         exitBinding = MyCommands.CloseApplication.CreateBinding(
+    ///         exitBinding = MyCommands.CloseApplicationCommand.CreateBinding(
     ///             new Dictionary<string, object>
     ///             {
     ///                 { "Text", "Exit Application" },
@@ -95,10 +93,10 @@ namespace KGySoft.ComponentModel
     /// 
     ///         // We can create a binding by the Add methods of the collection, too:
     ///         // As we added the property state updater to the exitBinding the menuItemExit.Enabled property will reflect the command state.
-    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled, buttonToggle, "Click", exitBinding.State);
+    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabledCommand, buttonToggle, "Click", exitBinding.State);
     /// 
     ///         // The line above can be written by a more descriptive fluent syntax (and that's how multiple sources can be added):
-    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabled)
+    ///         var toggleEnabledBinding = commandBindings.Add(MyCommands.ToggleCommandEnabledCommand)
     ///             .AddSource(buttonToggle, nameof(Button.Click))
     ///             .AddTarget(exitBinding.State);
     /// 
@@ -117,8 +115,7 @@ namespace KGySoft.ComponentModel
     ///         if (disposing)
     ///             commandBindings.Dispose();
     ///     }
-    /// }
-    /// ]]></code>
+    /// }]]></code>
     /// </example>
     /// </remarks>
     /// <seealso cref="ICommandBinding"/>

@@ -114,6 +114,7 @@
     <Compile Include="ComponentModel\_BusinessObjects\_Interfaces\IValidatingObject.cs" />
     <Compile Include="ComponentModel\_Collections\FastBindingList.cs" />
     <Compile Include="ComponentModel\_Command\PropertyCommandStateUpdater.cs" />
+    <Compile Include="ComponentModel\_Command\_EventArgs\ExecuteCommandEventArgs.cs" />
     <Compile Include="ComponentModel\_TypeConverters\BinaryTypeConverter.cs" />
     <Compile Include="ComponentModel\_Command\CommandState.cs" />
     <Compile Include="ComponentModel\_Command\_Extensions\Command.cs" />
@@ -302,7 +303,9 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="changelog.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>

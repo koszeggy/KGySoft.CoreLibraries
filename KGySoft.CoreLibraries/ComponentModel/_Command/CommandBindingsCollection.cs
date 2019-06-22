@@ -109,11 +109,7 @@ namespace KGySoft.ComponentModel
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
         public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, params object[] targets)
-        {
-            ICommandBinding result = Command.CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets);
-            Add(result);
-            return result;
-        }
+            => AddPropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets);
 
         /// <summary>
         /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>, which allows to update the
@@ -139,8 +135,17 @@ namespace KGySoft.ComponentModel
         /// </remarks>
         public ICommandBinding AddPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object, object> format, params object[] targets)
         {
-            ICommandBinding result = Command.CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets);
+            ICommandBinding result = Command.CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, false);
             Add(result);
+
+            // syncing the targets only after adding the binding to the collection so a possible derived type can subscribe the binding events in InsertItem
+            if (!targets.IsNullOrEmpty())
+            {
+                bool isNotifyPropertyChanged = source is INotifyPropertyChanged;
+                string eventName = isNotifyPropertyChanged ? nameof(INotifyPropertyChanged.PropertyChanged) : sourcePropertyName + "Changed";
+                result.InvokeCommand(source, eventName, isNotifyPropertyChanged ? new PropertyChangedEventArgs(sourcePropertyName) : EventArgs.Empty);
+            }
+
             return result;
         }
 

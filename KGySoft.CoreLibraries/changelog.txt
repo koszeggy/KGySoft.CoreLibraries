@@ -12,9 +12,17 @@
 * KGySoft.CoreLibraries namespace:
 ==================================
 + ObjectExtensions.[Try]Convert methods: New pre-registered conversions to use long/ulong as intermediate steps if possible.
-* RandomExtensions:
-  - Avoiding SecurityException from partially trusted domain if possible
-  + Generating collections for read-only properties is possible
+* RandomExtensions.NextObject:
+  - Avoiding SecurityException better from partially trusted domain
+  + Collections for read-only properties can be generated in more cases
+
+* KGySoft.ComponentModel namespace:
+===================================
++ ICommandBinding:
+  + New Executing and Executed events
+  + New Sources, Targets and StateUpdaters properties
+  * AddStateUpdater method: new optional parameter
+  + New InvokeCommand method
 
 - KGySoft.Diagnostic namespace:
 ===============================

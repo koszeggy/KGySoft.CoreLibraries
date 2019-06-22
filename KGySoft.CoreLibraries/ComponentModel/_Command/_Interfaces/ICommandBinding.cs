@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 
 #endregion
 
@@ -39,6 +40,21 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="CommandBindingsCollection" />
     public interface ICommandBinding : IDisposable
     {
+        #region Events
+
+        /// <summary>
+        /// Occurs when the associated <see cref="ICommand"/> is about to be executed.
+        /// Command states, including the <see cref="ICommandState.Enabled"/> state still can be adjusted here.
+        /// </summary>
+        event EventHandler<ExecuteCommandEventArgs> Executing;
+
+        /// <summary>
+        /// Occurs when the associated <see cref="ICommand"/> has been executed.
+        /// </summary>
+        event EventHandler<ExecuteCommandEventArgs> Executed;
+
+        #endregion
+
         #region Properties
 
         /// <summary>
@@ -52,6 +68,21 @@ namespace KGySoft.ComponentModel
         /// to set and get state entries as properties.
         /// </value>
         ICommandState State { get; }
+
+        /// <summary>
+        /// Gets a copy of the sources of this <see cref="ICommandBinding"/> along with the bound event names.
+        /// </summary>
+        IDictionary<object, string[]> Sources { get; }
+
+        /// <summary>
+        /// Gets a copy of the targets of this <see cref="ICommandBinding"/>.
+        /// </summary>
+        IList<object> Targets { get; }
+
+        /// <summary>
+        /// Gets a copy of the state updaters of this <see cref="ICommandBinding"/>.
+        /// </summary>
+        IList<ICommandStateUpdater> StateUpdaters { get; }
 
         #endregion
 
@@ -89,8 +120,10 @@ namespace KGySoft.ComponentModel
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommandStateUpdater"/> interface for details.
         /// </summary>
         /// <param name="updater">The updater to add.</param>
+        /// <param name="updateSources"><see langword="true"/>&#160;to update the sources immediately; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
-        ICommandBinding AddStateUpdater(ICommandStateUpdater updater);
+        ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources = false);
 
         /// <summary>
         /// Removes the specified <paramref name="source"/> from this <see cref="ICommandBinding"/> instance. The used events of the removed source will be released.
@@ -112,6 +145,14 @@ namespace KGySoft.ComponentModel
         /// <param name="updater">The updater to remove.</param>
         /// <returns><see langword="true"/>, if the updater was successfully removed; otherwise, <see langword="false"/>.</returns>
         bool RemoveStateUpdater(ICommandStateUpdater updater);
+
+        /// <summary>
+        /// Invokes the underlying <see cref="ICommand"/> for all of the added targets using the specified source, event name and arguments.
+        /// </summary>
+        /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>.</param>
+        /// <param name="eventName">Name of the event. It is not checked whether this is en existing event.</param>
+        /// <param name="eventArgs">The <see cref="EventArgs"/> instance containing the event data.</param>
+        void InvokeCommand(object source, string eventName, EventArgs eventArgs);
 
         #endregion
     }
