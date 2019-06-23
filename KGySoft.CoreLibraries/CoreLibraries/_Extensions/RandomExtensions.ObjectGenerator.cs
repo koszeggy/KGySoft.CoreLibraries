@@ -19,11 +19,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.Serialization;
+using System.Runtime.Remoting.Messaging;
 using System.Security;
 using System.Text;
 using KGySoft.Collections;
@@ -92,6 +93,7 @@ namespace KGySoft.CoreLibraries
                 public override bool Equals(object obj) => obj is DefaultGenericTypeKey key && Equals(key);
                 public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
                 public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
+                public override string ToString() => $"{GenericType.Name}[{String.Join(", ", SuggestedArguments)}]";
 
                 #endregion
             }
@@ -106,6 +108,7 @@ namespace KGySoft.CoreLibraries
 
                 #region Internal Fields
 
+                private readonly Type requestedType;
                 internal readonly Random Random;
                 internal readonly GenerateObjectSettings Settings;
 
@@ -113,8 +116,11 @@ namespace KGySoft.CoreLibraries
 
                 #region Private Fields
 
-                private readonly Stack<string> memberNameStack;
-                private readonly HashSet<Type> typesBeingGenerated;
+                private readonly List<string> membersChain;
+                private readonly List<Type> generatedTypes;
+
+                private Type root;
+                private int recursionLevel;
 
                 #endregion
 
@@ -122,29 +128,78 @@ namespace KGySoft.CoreLibraries
 
                 #region Properties
 
-                public string MemberName => memberNameStack.Count == 0 ? null : memberNameStack.Peek();
+                public string ParentMemberName => membersChain.Count == 0 ? null : membersChain.Last();
 
                 #endregion
 
                 #region Constructors
 
-                public GeneratorContext(Random random, GenerateObjectSettings settings)
+                public GeneratorContext(Type type, Random random, GenerateObjectSettings settings)
                 {
+                    requestedType = type;
                     Random = random;
                     Settings = settings;
-                    memberNameStack = new Stack<string>();
-                    typesBeingGenerated = new HashSet<Type>();
+                    membersChain = new List<string>();
+                    generatedTypes = new List<Type>();
+                    recursionLevel = 0;
+                    root = null;
                 }
 
                 #endregion
 
                 #region Methods
 
-                internal void PushMember(string memberName) => memberNameStack.Push(memberName);
-                internal void PopMember() => memberNameStack.Pop();
-                internal bool IsGenerating(Type type) => typesBeingGenerated.Contains(type);
-                internal void PushType(Type type) => typesBeingGenerated.Add(type);
-                internal void PopType(Type type) => typesBeingGenerated.Remove(type);
+                #region Public Methods
+
+                [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object,System.Object)",
+                    Justification = "False alarm, types and a string are passed")]
+                public override string ToString()
+                {
+                    if (root == null)
+                        return requestedType?.ToString() ?? base.ToString();
+
+                    return $"{requestedType} [{root}->{String.Join("->", membersChain)}]";
+                }
+
+                #endregion
+
+                #region Internal Methods
+
+                internal bool TrySetRoot(Type type)
+                {
+                    // if the real root is a collection, then it can be set multiple times
+                    if (root != null)
+                        return false;
+                    root = type;
+                    return true;
+                }
+
+                internal void ClearRoot() => root = null;
+                internal void PushMember(string memberName) => membersChain.Add(memberName);
+                internal void PopMember() => membersChain.RemoveAt(membersChain.Count - 1);
+
+                internal bool TryPushType(Type type)
+                {
+                    if (generatedTypes.Any(t => t.IsAssignableFrom(type)))
+                    {
+                        if (recursionLevel >= Settings.MaxRecursionLevel)
+                            return false;
+                        recursionLevel++;
+                    }
+
+                    generatedTypes.Add(type);
+                    return true;
+                }
+
+                internal void PopType()
+                {
+                    Type type = generatedTypes.Last();
+                    generatedTypes.RemoveAt(generatedTypes.Count - 1);
+                    if (generatedTypes.Any(t => t.IsAssignableFrom(type)))
+                        recursionLevel--;
+                }
+
+                #endregion
 
                 #endregion
             }
@@ -235,8 +290,8 @@ namespace KGySoft.CoreLibraries
             [SecurityCritical]
             internal static object GenerateObject(Random random, Type type, GenerateObjectSettings settings)
             {
-                var context = new GeneratorContext(random, settings);
-                return GenerateObject(type, true, ref context);
+                var context = new GeneratorContext(type, random, settings);
+                return TryGenerateObject(type, ref context, out object result) ? result : null;
             }
 
             #endregion
@@ -461,7 +516,16 @@ namespace KGySoft.CoreLibraries
                 }
 
                 il.Emit(OpCodes.Ret);
-                return dm.CreateDelegate(type);
+
+                try
+                {
+                    // may throw exceptions from partially trusted domain
+                    return dm.CreateDelegate(type);
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    return null;
+                }
             }
 
             private static object GenerateBoolean(ref GeneratorContext context) => context.Random.NextBoolean();
@@ -490,7 +554,7 @@ namespace KGySoft.CoreLibraries
             {
                 Range<int> range = context.Settings.StringsLength;
                 StringCreation strategy;
-                string memberName = context.MemberName;
+                string memberName = context.ParentMemberName;
                 if (memberName != null && context.Settings.StringCreation == null)
                 {
                     if (memberName.ContainsAny(StringComparison.OrdinalIgnoreCase, "name", "address", "street", "city", "country", "county", "author", "title"))
@@ -530,7 +594,7 @@ namespace KGySoft.CoreLibraries
             private static object GenerateDateTime(ref GeneratorContext context)
             {
                 bool? pastOnly = context.Settings.PastDateTimes;
-                string memberName = context.MemberName;
+                string memberName = context.ParentMemberName;
                 if (pastOnly == null && memberName != null)
                 {
                     if (memberName.Contains("birth", StringComparison.OrdinalIgnoreCase))
@@ -704,53 +768,112 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
-            private static object GenerateObject(Type type, bool allowNull, ref GeneratorContext context)
+            private static bool TryGenerateObject(Type type, ref GeneratorContext context, out object result, bool checkingDerivedType = false)
             {
-                // null
-                if (allowNull && context.Settings.ChanceOfNull > 0 && type.CanAcceptValue(null) && context.Random.NextDouble() > context.Settings.ChanceOfNull)
-                    return null;
+                result = null;
 
-                type = Nullable.GetUnderlyingType(type) ?? type;
+                // null (if this call is for an implementation of a parent type, then it was already checked previously)
+                if (!checkingDerivedType && context.Settings.ChanceOfNull > 0 && type.CanAcceptValue(null) && context.Random.NextDouble() > context.Settings.ChanceOfNull)
+                    return true;
 
-                // object substitution
-                if (type == Reflector.ObjectType && context.Settings.SubstitutionForObjectType != null)
-                    type = context.Settings.SubstitutionForObjectType;
-
-                // 1.) known type
-                if (knownTypes.TryGetValue(type, out GenerateKnownType knownGenerator))
-                    return knownGenerator.Invoke(ref context);
-
-                // 2.) enum
-                if (type.IsEnum)
-                    return PickRandomEnum(type, ref context);
-
-                // 3.) collections
-                if (TryGenerateCollection(type, ref context, out object result))
-                    return result;
-
-                // 4.) key-value pair (because its properties are read-only)
-                if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
+                if (!checkingDerivedType)
                 {
-                    var args = type.GetGenericArguments();
-                    context.PushMember(nameof(KeyValuePair<_, _>.Key));
-                    var key = GenerateObject(args[0], true, ref context);
-                    context.PopMember();
-                    context.PushMember(nameof(KeyValuePair<_, _>.Value));
-                    var value = GenerateObject(args[1], true, ref context);
-                    context.PopMember();
-                    return Reflector.CreateInstance(type, key, value);
+                    if (!context.TryPushType(type))
+                        return type.CanAcceptValue(null);
                 }
 
-                // 5.) Delegate
-                if (!type.IsAbstract && type.IsDelegate())
-                    return delegatesCache[type];
+                try
+                {
+                    type = Nullable.GetUnderlyingType(type) ?? type;
 
-                // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
-                if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
-                    return result;
+                    // object substitution
+                    if (type == Reflector.ObjectType && context.Settings.SubstitutionForObjectType != null)
+                        type = context.Settings.SubstitutionForObjectType;
 
-                // 7.) any object
-                return GenerateAnyObject(type, ref context);
+                    // 1.) known type
+                    if (knownTypes.TryGetValue(type, out GenerateKnownType knownGenerator))
+                    {
+                        result = knownGenerator.Invoke(ref context);
+                        return true;
+                    }
+
+                    // 2.) enum
+                    if (type.IsEnum)
+                    {
+                        result = PickRandomEnum(type, ref context);
+                        return true;
+                    }
+
+                    // 3.) collections
+                    if (TryGenerateCollection(type, ref context, out result))
+                        return true;
+
+                    // 4.) key-value pair (because its properties are read-only)
+                    if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
+                    {
+                        Type[] args = type.GetGenericArguments();
+                        object key, value = null;
+
+                        // if key or value cannot be created just returning a default instance (by Activator, which is fast for value types)
+                        context.PushMember(nameof(KeyValuePair<_, _>.Key));
+                        try
+                        {
+                            if (!TryGenerateObject(args[0], ref context, out key))
+                            {
+                                result = Activator.CreateInstance(type);
+                                return true;
+                            }
+                        }
+                        finally
+                        {
+                            context.PopMember();
+                        }
+
+                        context.PushMember(nameof(KeyValuePair<_, _>.Value));
+                        try
+                        {
+                            if (!TryGenerateObject(args[1], ref context, out value))
+                            {
+                                result = Activator.CreateInstance(type);
+                                return true;
+                            }
+                        }
+                        finally
+                        {
+                            context.PopMember();
+                        }
+
+                        result = Reflector.CreateInstance(type, key, value);
+                        return true;
+                    }
+
+                    // 5.) Delegate
+                    if (!type.IsAbstract && type.IsDelegate())
+                    {
+                        result = delegatesCache[type];
+                        return true;
+                    }
+
+                    // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
+                    if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
+                        return true;
+
+                    // 7.) any object
+                    if (TryGenerateCustomObject(type, ref context, out result))
+                        return true;
+
+                    // 8.) null if allowed
+                    return !checkingDerivedType && type.CanAcceptValue(null);
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    return !checkingDerivedType && type.CanAcceptValue(null);
+                }
+                finally
+                {
+                    if (!checkingDerivedType)
+                        context.PopType();
+                }
             }
 
             [SecurityCritical]
@@ -763,46 +886,49 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                // supported collection
-                if (type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary)
-                    || context.Settings.AllowCreateObjectWithoutConstructor && type.IsCollection())
+                result = null;
+                if (!type.IsSupportedCollectionForReflection(out var defaultCtor, out var collectionCtor, out var elementType, out bool isDictionary)
+                    && (!context.Settings.AllowCreateObjectWithoutConstructor || !type.IsCollection()))
                 {
-                    IEnumerable collection = null;
-
-                    // preferring default constructor and populating
-                    // CreateInstance is faster than obtaining object factory by the constructor
-                    if (defaultCtor != null || type.IsValueType)
-                        collection = (IEnumerable)Activator.CreateInstance(type, true);
-                    else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor && Reflector.TryCreateUninitializedObject(type, out object uninitialized))
-                        collection = (IEnumerable)uninitialized;
-
-                    if (collection != null && type.IsReadWriteCollection(collection))
-                    {
-                        PopulateCollection(collection, elementType, isDictionary, ref context);
-                        result = collection;
-                        return true;
-                    }
-
-                    // As a fallback using collectionCtor if possible
-                    if (collectionCtor != null)
-                    {
-                        result = GenerateCollectionByCtor(collectionCtor, elementType, isDictionary, ref context);
-                        return true;
-                    }
+                    return false;
                 }
 
-                result = null;
+                // supported collection
+                IEnumerable collection = null;
+
+                // preferring default constructor and populating
+                // CreateInstance is faster than obtaining object factory by the constructor
+                if (defaultCtor != null || type.IsValueType)
+                    collection = (IEnumerable)CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                else if (collectionCtor == null && context.Settings.AllowCreateObjectWithoutConstructor && Reflector.TryCreateUninitializedObject(type, out object uninitialized))
+                    collection = (IEnumerable)uninitialized;
+
+                if (collection != null && type.IsReadWriteCollection(collection))
+                {
+                    PopulateCollection(collection, elementType, isDictionary, ref context);
+                    result = collection;
+                    return true;
+                }
+
+                // As a fallback using collectionCtor if possible
+                if (collectionCtor != null)
+                {
+                    result = GenerateCollectionByCtor(collectionCtor, elementType, isDictionary, ref context);
+                    return true;
+                }
+
                 return false;
             }
 
             [SecurityCritical]
-            private static object GenerateAnyObject(Type type, ref GeneratorContext context)
+            private static bool TryGenerateCustomObject(Type type, ref GeneratorContext context, out object result)
             {
+                result = null;
                 bool resolveType = false;
                 if (type.IsAbstract || type.IsInterface)
                 {
                     if (!context.Settings.TryResolveInterfacesAndAbstractTypes)
-                        return null;
+                        return false;
                     resolveType = true;
                 }
                 else if (!type.IsSealed && context.Settings.AllowDerivedTypesForNonSealedClasses)
@@ -815,12 +941,17 @@ namespace KGySoft.CoreLibraries
                     typeCandidates = typeImplementorsCache[type];
                     typeToCreate = typeCandidates.GetRandomElement(context.Random, true);
                     if (typeToCreate == null)
-                        return null;
+                        return false;
                 }
 
-                object result = typeToCreate == type ? InitializeObject(typeToCreate, ref context) : GenerateObject(typeToCreate, false, ref context);
-                if (result != null || !resolveType)
-                    return result;
+                if (typeToCreate == type && TryCreateConcreteObject(typeToCreate, ref context, out result)
+                    || typeToCreate != type && TryGenerateObject(typeToCreate, ref context, out result, true))
+                {
+                    return true;
+                }
+
+                if (!resolveType)
+                    return false;
 
                 // We check all of the compatible types in random order.
                 // The try above could be in this foreach below but we try to avoid the shuffling if possible
@@ -828,41 +959,41 @@ namespace KGySoft.CoreLibraries
                 {
                     foreach (Type candidateType in typeCandidates.Except(new[] { typeToCreate }).Shuffle(context.Random))
                     {
-                        result = candidateType == type ? InitializeObject(candidateType, ref context) : GenerateObject(candidateType, false, ref context);
-                        if (result != null)
-                            return result;
+                        if (candidateType == type && TryCreateConcreteObject(candidateType, ref context, out result)
+                            || candidateType != type && TryGenerateObject(candidateType, ref context, out result, true))
+                        {
+                            return true;
+                        }
                     }
                 }
 
-                return null;
+                return false;
             }
 
             [SecurityCritical]
-            private static object InitializeObject(Type type, ref GeneratorContext context)
+            private static bool TryCreateConcreteObject(Type type, ref GeneratorContext context, out object result)
             {
-                if (context.IsGenerating(type))
-                    return null;
-
-                context.PushType(type);
+                bool isRoot = context.TrySetRoot(type);
                 try
                 {
-                    if (!Reflector.TryCreateEmptyObject(type, true, context.Settings.AllowCreateObjectWithoutConstructor, out object result))
-                        return null;
+                    if (!Reflector.TryCreateEmptyObject(type, true, context.Settings.AllowCreateObjectWithoutConstructor, out result))
+                        return false;
 
                     InitializeMembers(result, ref context);
-                    return result;
+                    return true;
                 }
                 finally
                 {
-                    context.PopType(type);
+                    if (isRoot)
+                        context.ClearRoot();
                 }
             }
 
             [SecurityCritical]
             private static void InitializeMembers(object obj, ref GeneratorContext context)
             {
-                IList<PropertyInfo> properties = null;
-                IList<FieldInfo> fields = null;
+                IList<PropertyInfo> properties = new PropertyInfo[0];
+                IList<FieldInfo> fields = new FieldInfo[0];
                 Type type = obj.GetType();
                 switch (context.Settings.ObjectInitialization)
                 {
@@ -880,67 +1011,65 @@ namespace KGySoft.CoreLibraries
                         break;
                 }
 
-                if (properties != null)
+                foreach (PropertyInfo property in properties)
                 {
-                    foreach (PropertyInfo property in properties)
+                    if (property.GetIndexParameters().Length > 0)
+                        continue;
+
+                    context.PushMember(property.Name);
+                    try
                     {
-                        if (property.GetIndexParameters().Length > 0)
+                        // no sense to use Reflector.TrySetProperty because it also throws exception if the property setter itself throws an exception
+                        if (property.CanWrite)
+                        {
+                            if (!TryGenerateObject(property.PropertyType, ref context, out object value))
+                                continue;
+                            PropertyAccessor.GetAccessor(property).Set(obj, value);
+                            continue;
+                        }
+
+                        // collection of read-only property
+                        IEnumerable collection = (IEnumerable)PropertyAccessor.GetAccessor(property).Get(obj);
+                        if (collection == null)
                             continue;
 
-                        context.PushMember(property.Name);
-                        try
+                        if (collection is Array array)
                         {
-                            // no sense to use Reflector.TrySetProperty because it also throws exception if the property setter itself throws an exception
-                            if (property.CanWrite)
-                            {
-                                PropertyAccessor.GetAccessor(property).Set(obj, GenerateObject(property.PropertyType, true, ref context));
-                                continue;
-                            }
-
-                            // collection of read-only property
-                            IEnumerable collection = (IEnumerable)PropertyAccessor.GetAccessor(property).Get(obj);
-                            if (collection == null)
-                                continue;
-
-                            if (collection is Array array)
-                            {
-                                PopulateArray(array, ref context);
-                                continue;
-                            }
-
-                            Type collectionType = collection.GetType();
-                            if (!(collectionType.IsReadWriteCollection(collection) && collectionType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out bool isDictionary)))
-                                continue;
-                            PopulateCollection(collection, elementType, isDictionary, ref context);
+                            PopulateArray(array, ref context);
+                            continue;
                         }
-                        catch (Exception e) when (!e.IsCritical())
-                        {
-                            // we just skip the property if it cannot be set
-                        }
-                        finally
-                        {
-                            context.PopMember();
-                        }
+
+                        Type collectionType = collection.GetType();
+                        if (!(collectionType.IsReadWriteCollection(collection) && collectionType.IsSupportedCollectionForReflection(out var _, out var _, out Type elementType, out bool isDictionary)))
+                            continue;
+                        PopulateCollection(collection, elementType, isDictionary, ref context);
+                    }
+                    catch (Exception e) when (!e.IsCritical())
+                    {
+                        // we just skip the property if it cannot be set
+                    }
+                    finally
+                    {
+                        context.PopMember();
                     }
                 }
 
-                if (fields != null)
+                foreach (FieldInfo field in fields)
                 {
-                    foreach (FieldInfo field in fields)
+                    context.PushMember(field.Name);
+                    try
                     {
-                        context.PushMember(field.Name);
-                        try
-                        {
-                            FieldAccessor.GetAccessor(field).Set(obj, GenerateObject(field.FieldType, true, ref context));
-                        }
-                        catch (Exception e) when (!e.IsCritical())
-                        {
-                            // we just skip the field if it cannot be set
-                        }
-                        finally
-                        {
-                            context.PopMember();
-                        }
+                        if (!TryGenerateObject(field.FieldType, ref context, out object value))
+                            continue;
+                        FieldAccessor.GetAccessor(field).Set(obj, value);
+                    }
+                    catch (Exception e) when (!e.IsCritical())
+                    {
+                        // we just skip the field if it cannot be set
+                    }
+                    finally
+                    {
+                        context.PopMember();
                     }
                 }
             }
@@ -970,13 +1099,21 @@ namespace KGySoft.CoreLibraries
                 {
                     int length = array.Length;
                     for (int i = 0; i < length; i++)
-                        array.SetValue(GenerateObject(elementType, true, ref context), i);
+                    {
+                        if (!TryGenerateObject(elementType, ref context, out object value))
+                            continue;
+                        array.SetValue(value, i);
+                    }
                     return;
                 }
 
                 var indexer = new ArrayIndexer(array);
                 while (indexer.MoveNext())
-                    array.SetValue(GenerateObject(elementType, true, ref context), indexer.Current);
+                {
+                    if (!TryGenerateObject(elementType, ref context, out object value))
+                        continue;
+                    array.SetValue(value, indexer.Current);
+                }
             }
 
             [SecurityCritical]
@@ -988,7 +1125,11 @@ namespace KGySoft.CoreLibraries
                 if (!isDictionary)
                 {
                     for (int i = 0; i < count; i++)
-                        collection.TryAdd(GenerateObject(elementType, true, ref context), false);
+                    {
+                        if (!TryGenerateObject(elementType, ref context, out object value))
+                            continue;
+                        collection.TryAdd(value, false);
+                    }
 
                     return;
                 }
@@ -1003,20 +1144,19 @@ namespace KGySoft.CoreLibraries
                     context.PushMember(nameof(DictionaryEntry.Key));
                     try
                     {
-                        key = GenerateObject(keyValue[0], true, ref context);
+                        if (!TryGenerateObject(keyValue[0], ref context, out key) || key == null)
+                            continue;
                     }
                     finally
                     {
                         context.PopMember();
                     }
 
-                    if (key == null)
-                        continue;
-
                     context.PushMember(nameof(DictionaryEntry.Value));
                     try
                     {
-                        value = GenerateObject(keyValue[1], true, ref context);
+                        if (!TryGenerateObject(keyValue[1], ref context, out value))
+                            continue;
                     }
                     finally
                     {
@@ -1036,11 +1176,11 @@ namespace KGySoft.CoreLibraries
             [SecurityCritical]
             private static object GenerateCollectionByCtor(ConstructorInfo collectionCtor, Type elementType, bool isDictionary, ref GeneratorContext context)
             {
-                IEnumerable initializerCollection;
+                IEnumerable initializerCollection;s
                 if (isDictionary)
                 {
                     Type[] args = GetKeyValueTypes(elementType);
-                    initializerCollection = (IEnumerable)Activator.CreateInstance(Reflector.DictionaryGenType.MakeGenericType(args[0], args[1]));
+                    initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.DictionaryGenType.MakeGenericType(args[0], args[1])).CreateInstance();
                     PopulateCollection(initializerCollection, elementType, true, ref context);
                 }
                 else if (collectionCtor.GetParameters()[0].ParameterType.IsAssignableFrom(elementType.MakeArrayType()))
@@ -1049,7 +1189,7 @@ namespace KGySoft.CoreLibraries
                 }
                 else // for non-dictionaries array or list must be accepted by constructor
                 {
-                    initializerCollection = (IEnumerable)Activator.CreateInstance(Reflector.ListGenType.MakeGenericType(elementType));
+                    initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.ListGenType.MakeGenericType(elementType)).CreateInstance();
                     PopulateCollection(initializerCollection, elementType, false, ref context);
                 }
 

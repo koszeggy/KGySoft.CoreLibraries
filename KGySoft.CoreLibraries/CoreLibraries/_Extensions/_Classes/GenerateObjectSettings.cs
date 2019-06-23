@@ -36,6 +36,7 @@ namespace KGySoft.CoreLibraries
         private FloatScale floatScale;
         private StringCreation? stringCreation;
         private ObjectInitialization objectInitialization;
+        private int maxRecursionLevel = 1;
 
         #endregion
 
@@ -189,6 +190,16 @@ namespace KGySoft.CoreLibraries
         /// then a random derived type can be used for every generated instance.</para>
         /// </remarks>
         public Type SubstitutionForObjectType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum level of allowed recursion when generating objects, which contain members or elements of assignable types from their container types.
+        /// <br/>Default value: <c>1</c>.
+        /// </summary>
+        public int MaxRecursionLevel
+        {
+            get => maxRecursionLevel;
+            set => maxRecursionLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+        }
 
         #endregion
 

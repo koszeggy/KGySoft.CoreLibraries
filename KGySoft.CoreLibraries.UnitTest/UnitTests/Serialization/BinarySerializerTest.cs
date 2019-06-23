@@ -29,6 +29,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
 using System.Security.Policy;
 using System.Text;
 
@@ -541,6 +542,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Public Methods
 
+            [SecurityCritical]
             public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("Id", Id);
@@ -623,6 +625,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
+            [SecurityCritical]
             public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.SetType(typeof(CustomAdvancedSerializedClassHelper));
@@ -660,11 +663,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Public Methods
 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context)
             {
                 return toDeserialize;
             }
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 throw new NotImplementedException("Never executed");
@@ -746,6 +751,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 return ReferenceEquals(obj, instance);
             }
 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context)
             {
                 return instance;
@@ -771,6 +777,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("name", Name);
@@ -805,6 +812,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context)
             {
                 return new CustomGraphDefaultObjRef { Name = name };
@@ -1037,6 +1045,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
+            [SecurityCritical]
             public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("name", Name);
@@ -1074,6 +1083,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
+            [SecurityCritical]
             public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 base.GetObjectData(info, context);
@@ -1118,11 +1128,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Methods
 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context)
             {
                 return new SelfReferencerEvil(name);
             }
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 throw new NotImplementedException();
@@ -1596,16 +1608,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Public Methods
 
+            [SecurityCritical]
             public void ChainSelector(ISurrogateSelector selector)
             {
                 next = selector;
             }
 
+            [SecurityCritical]
             public ISurrogateSelector GetNextSelector()
             {
                 return next;
             }
 
+            [SecurityCritical]
             public ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
             {
                 if (type == null)
@@ -1633,6 +1648,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Explicitly Implemented Interface Methods
 
+            [SecurityCritical]
             void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
             {
                 if (obj == null)
@@ -1652,6 +1668,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 }
             }
 
+            [SecurityCritical]
             object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
             {
                 if (obj == null)
@@ -1851,6 +1868,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             #region Public Methods
 
+            [SecurityCritical]
             public void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 info.AddValue("Int", IntProp);

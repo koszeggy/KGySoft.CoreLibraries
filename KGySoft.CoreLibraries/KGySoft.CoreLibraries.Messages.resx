@@ -565,7 +565,7 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_UnexpectedFieldTypeFormat" xml:space="preserve">
     <value>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</value>
   </data>
-  <data name="BinarySerialization_BinarySerializationCannotCreateUninitializedObjectFormat" xml:space="preserve">
+  <data name="BinarySerialization_CannotCreateUninitializedObjectFormat" xml:space="preserve">
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
   </data>
   <data name="BinarySerialization_UnexpectedSerializationInfoElementFormat" xml:space="preserve">

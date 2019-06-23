@@ -1828,29 +1828,61 @@ namespace KGySoft.Reflection
         [SecurityCritical]
         internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowCreateWithoutCtor, out object result)
         {
+            result = null;
+
+            // 1.) Value type: fails only if the type cannot be created from this domain
             if (type.IsValueType)
             {
-                result = Activator.CreateInstance(type);
-                return true;
+                try
+                {
+                    result = Activator.CreateInstance(type);
+                    return true;
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    return false;
+                }
             }
 
+            // 2.) By default constructor if preferred
             bool? hasDefaultCtor = null;
             if (preferCtor && (hasDefaultCtor = type.CanBeCreatedWithoutParameters()) == true)
             {
-                result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
-                return true;
+                try
+                {
+                    result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                    return true;
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    if (!allowCreateWithoutCtor)
+                        return false;
+                }
             }
 
+            // 3.) Without constructor if allowed
             if (allowCreateWithoutCtor && TryCreateUninitializedObject(type, out result))
                 return true;
 
-            if (hasDefaultCtor ?? type.CanBeCreatedWithoutParameters())
+            // default constructor was already checked
+            if (hasDefaultCtor.HasValue)
+                return false;
+
+            // 4.) By default constructor as a fallback
+            if (type.CanBeCreatedWithoutParameters())
             {
-                result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
-                return true;
+                try
+                {
+                    result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                    return true;
+
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    return false;
+                }
             }
 
-            result = null;
             return false;
         }
 

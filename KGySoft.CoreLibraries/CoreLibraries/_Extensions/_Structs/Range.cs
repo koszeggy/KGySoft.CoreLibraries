@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 #endregion
 
@@ -139,6 +141,16 @@ namespace KGySoft.CoreLibraries
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
         public override int GetHashCode() => ((comparer.GetHashCode(UpperBound) & 0xFFFF) << 16) | (comparer.GetHashCode(LowerBound) & 0xFFFF);
+
+        /// <summary>
+        /// Gets the string representation of this <see cref="Range{T}"/> instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="string" /> that represents this <see cref="Range{T}"/> instance.
+        /// </returns>
+        [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object)",
+            Justification = "Possible usage of current culture is preferred here.")]
+        public override string ToString() => $"[{LowerBound}..{UpperBound}]";
 
         #endregion
     }

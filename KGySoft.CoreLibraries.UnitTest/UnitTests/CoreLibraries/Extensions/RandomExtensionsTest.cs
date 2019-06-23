@@ -22,9 +22,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Security;
 using System.Security.Permissions;
 using System.Text;
-
+using System.Xml.Schema;
 using KGySoft.Collections;
 
 using NUnit.Framework;
@@ -132,6 +133,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             public Recursive Child { get; set; }
 
             #endregion
+        }
+
+        #endregion
+
+        #region RecursiveCollection class
+
+        private class RecursiveCollection : Collection<RecursiveCollection>
+        {
         }
 
         #endregion
@@ -371,7 +380,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test<T>(GenerateObjectSettings settings = null)
             {
-                Console.WriteLine($"Random {typeof(T).Name}: {rnd.NextObject<T>(settings)}");
+                var obj = rnd.NextObject<T>(settings);
+                //  Console.WriteLine($"Random {typeof(T).Name}: {obj}");
             }
 
             // native types
@@ -434,7 +444,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // base types
             var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true };
             Test<EventArgs>(cfg);
-            Test<Exception>(cfg);
 
             // abstract types/interfaces
             Test<Enum>();
@@ -446,20 +455,31 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<Func<int>>();
             Test<OutDelegate>();
 
-            // recursive type
-            Test<Recursive>();
+            // recursive types
+            Test<Recursive>(); // contains self as member
+            Test<RecursiveCollection>(); // contains self as collection item
+            Test<XmlSchemaObject>(); // contains self as abstract class
         }
 
         [Test]
+        [SecuritySafeCritical]
         public void NextObjectTest_PartiallyTrusted()
         {
             var domain = CreateSandboxDomain(
                 new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
-                new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.ControlEvidence),
-                new EventLogPermission());
+                new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlPolicy | SecurityPermissionFlag.SkipVerification),
+                new EventLogPermission(PermissionState.Unrestricted));
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
             var sandbox = (Sandbox)handle.Unwrap();
-            sandbox.NextObjectTest();
+            try
+            {
+                sandbox.NextObjectTest();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         #endregion

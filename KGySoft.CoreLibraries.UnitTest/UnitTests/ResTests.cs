@@ -52,7 +52,7 @@ namespace KGySoft.CoreLibraries.UnitTests
         #region Methods
 
         #region Public Methods
-
+        
         [OneTimeSetUp]
         public void Initialize() => LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
 

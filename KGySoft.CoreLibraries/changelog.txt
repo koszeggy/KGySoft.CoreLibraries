@@ -12,6 +12,7 @@
 * KGySoft.CoreLibraries namespace:
 ==================================
 + ObjectExtensions.[Try]Convert methods: New pre-registered conversions to use long/ulong as intermediate steps if possible.
++ GenerateObjectSettings: New MaxRecursionLevel property.
 * RandomExtensions.NextObject:
   - Avoiding SecurityException better from partially trusted domain
   + Collections for read-only properties can be generated in more cases
