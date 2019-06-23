@@ -1176,7 +1176,7 @@ namespace KGySoft.CoreLibraries
             [SecurityCritical]
             private static object GenerateCollectionByCtor(ConstructorInfo collectionCtor, Type elementType, bool isDictionary, ref GeneratorContext context)
             {
-                IEnumerable initializerCollection;s
+                IEnumerable initializerCollection;
                 if (isDictionary)
                 {
                     Type[] args = GetKeyValueTypes(elementType);
