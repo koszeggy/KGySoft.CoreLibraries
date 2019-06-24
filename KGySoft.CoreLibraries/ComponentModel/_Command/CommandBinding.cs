@@ -174,7 +174,7 @@ namespace KGySoft.ComponentModel
             executed = null;
 
             foreach (object source in sources.Keys.ToArray())
-                RemoveSource(source);
+                DoRemoveSource(source);
 
             foreach (ICommandStateUpdater stateUpdater in stateUpdaters)
                 stateUpdater.Dispose();
@@ -232,13 +232,7 @@ namespace KGySoft.ComponentModel
         {
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (!sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions))
-                return false;
-
-            foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
-                Reflector.InvokeMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
-
-            return sources.Remove(source);
+            return DoRemoveSource(source);
         }
 
         public ICommandBinding AddStateUpdater(ICommandStateUpdater updater, bool updateSources)
@@ -350,6 +344,17 @@ namespace KGySoft.ComponentModel
         #endregion
 
         #region Private Methods
+
+        private bool DoRemoveSource(object source)
+        {
+            if (!sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions))
+                return false;
+
+            foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
+                Reflector.InvokeMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
+
+            return sources.Remove(source);
+        }
 
         private void OnExecuting(ExecuteCommandEventArgs e) => executing?.Invoke(this, e);
         private void OnExecuted(ExecuteCommandEventArgs e) => executed?.Invoke(this, e);
