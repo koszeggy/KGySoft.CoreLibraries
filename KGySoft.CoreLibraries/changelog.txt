@@ -32,6 +32,7 @@
 * KGySoft.Reflection namespace:
 ===============================
 * Changing default strategy for ReflectionWays.Auto in some CreateInstance overload
+- Reflector class: Fixing value test compatibility in TrySetProperty overloads
 
 - KGySoft.Serialization namespace:
 ==================================

@@ -385,7 +385,7 @@ namespace KGySoft.Reflection
                     if (checkParams && !CheckParameters(indexParams, indexParameters))
                         continue;
 
-                    if (!throwError && !property.PropertyType.CanAcceptValue(instance))
+                    if (!throwError && !property.PropertyType.CanAcceptValue(value))
                         return false;
 
                     try
@@ -428,7 +428,7 @@ namespace KGySoft.Reflection
             PropertyDescriptor property = TypeDescriptor.GetProperties(instance)[propertyName];
             if (property != null)
             {
-                if (!throwError && !property.PropertyType.CanAcceptValue(instance))
+                if (!throwError && !property.PropertyType.CanAcceptValue(value))
                     return false;
                 property.SetValue(instance, value);
                 return true;
@@ -573,7 +573,7 @@ namespace KGySoft.Reflection
                     if (checkParams && !CheckParameters(indexParams, indexParameters))
                         continue;
 
-                    if (!throwError && !indexer.PropertyType.CanAcceptValue(instance))
+                    if (!throwError && !indexer.PropertyType.CanAcceptValue(value))
                         return false;
 
                     try
