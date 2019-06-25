@@ -38,10 +38,36 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a base class for performance tests.
-    /// <br/>See the <strong>Examples</strong> section of the <see cref="PerformanceTest"/> class for some examples.
+    /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <typeparam name="TDelegate">The delegate type of the test cases.</typeparam>
     /// <typeparam name="TResult">The type of the result.</typeparam>
+    /// <example>
+    /// The following example demonstrates how to derive this class to create parameterized performance tests.
+    /// <code lang="C#"><![CDATA[
+    /// public class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>
+    /// {
+    ///     private Random random;
+    /// 
+    ///     // a fix seed can be specified to be used
+    ///     public int Seed { get; set; }
+    /// 
+    ///     protected override T Invoke(Func<Random, T> del) => del.Invoke(random);
+    /// 
+    ///     // resetting the random instance with the specified seed before executing each case
+    ///     protected override void OnBeforeCase() => random = new Random(Seed);
+    /// }]]></code>
+    /// And now the delegate of the <see cref="AddCase">AddCase</see> method will have a <see cref="Random"/> parameter can be used in the test cases:
+    /// <code lang="C#"><![CDATA[
+    /// new RandomizedPerformanceTest<string> { Seed = 0, Iterations = 1_000_000 }
+    ///     .AddCase(rnd => rnd.NextEnum<ConsoleColor>().ToString(), "Enum.ToString")
+    ///     .AddCase(rnd => Enum<ConsoleColor>.ToString(rnd.NextEnum<ConsoleColor>()), "Enum<TEnum>.ToString")
+    ///     .DoTest()
+    ///     .DumpResults(Console.Out);]]></code> 
+    /// <note>See also the <strong>Examples</strong> section of the <see cref="PerformanceTest"/> and <see cref="PerformanceTest{TResult}"/> classes for some further examples.</note>
+    /// </example>
+    /// <seealso cref="PerformanceTest"/>
+    /// <seealso cref="PerformanceTest{TResult}"/>
     public abstract class PerformanceTestBase<TDelegate, TResult> : PerformanceTestBase
     {
         #region Nested classes
@@ -505,7 +531,9 @@ namespace KGySoft.Diagnostics
             {
                 var testResult = new TestResult { Case = testCase };
                 results.Add(testResult);
+                OnBeforeCase();
                 DoWarmUp(testCase.Case);
+                OnAfterCase();
 
                 for (int r = 0; r < Repeat; r++)
                 {

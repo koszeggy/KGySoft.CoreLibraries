@@ -88,6 +88,7 @@ namespace KGySoft.Diagnostics
     /// </para>
     /// <note type="tip">If the test focuses on size performance set <see cref="PerformanceTestBase.Iterations"/> to <c>1</c> and <see cref="PerformanceTestBase.SortBySize"/> to <see langword="true"/>.</note>
     /// <note>See some further examples in the <see cref="PerformanceTest"/> class.</note>
+    /// <note type="tip">See also the <strong>Examples</strong> section of the <see cref="PerformanceTestBase{TDelegate,TResult}"/> class to see how to create a custom type for parameterized performance tests.</note>
     /// </example>
     /// <seealso cref="PerformanceTest" />
     public class PerformanceTest<TResult> : PerformanceTestBase<Func<TResult>, TResult>

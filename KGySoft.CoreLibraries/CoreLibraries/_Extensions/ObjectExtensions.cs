@@ -77,7 +77,6 @@ namespace KGySoft.CoreLibraries
         /// <note>If elements of <paramref name="set"/> are complex expressions consider to use the <see cref="In{T}(T,Func{T}[])"/> overload instead to prevent evaluating all elements until they are actually compared.</note></para>
         /// </remarks>
         /// <example>
-        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/llrIJx" target="_blank">online</a></note>
         /// <code lang="C#"><![CDATA[
         /// using System;
         /// using KGySoft.CoreLibraries;
@@ -185,7 +184,7 @@ namespace KGySoft.CoreLibraries
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
         /// <example>
-        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/r04jpf" target="_blank">online</a></note>
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/r04jpf" target="_blank">online</a>.</note>
         /// <code lang="C#"><![CDATA[
         /// using System;
         /// using System.Collections;

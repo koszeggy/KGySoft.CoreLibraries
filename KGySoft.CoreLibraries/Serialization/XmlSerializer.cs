@@ -101,6 +101,67 @@ namespace KGySoft.Serialization
     /// <seealso cref="XmlSerializationOptions"/>
     /// <seealso cref="BinarySerializer"/>
     /// <seealso cref="BinaryTypeConverter"/>
+    /// <example>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.IO;
+    /// using System.Text;
+    /// using System.ComponentModel;
+    /// using System.Collections.Generic;
+    /// using System.Collections.ObjectModel;
+    /// using System.Xml.Linq;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Serialization;
+    /// 
+    /// // A good candidate for XML serialization:
+    /// public class Person
+    /// {
+    ///     public string FirstName { get; set; }
+    /// 
+    ///     [DefaultValue(null)] // will not be serialized if null
+    ///     public string MiddleName { get; set; }
+    /// 
+    ///     public string LastName { get; set; }
+    /// 
+    ///     public DateTime BirthDate { get; set; }
+    /// 
+    ///     // System serializer fails here: the property has no setter and its type cannot be instantiated.
+    ///     public IList<string> PhoneNumbers { get; } = new Collection<string>();
+    /// }
+    /// 
+    /// public class Program
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         var person = ThreadSafeRandom.Instance.NextObject<Person>();
+    ///         var options = XmlSerializationOptions.RecursiveSerializationAsFallback;
+    /// 
+    ///         // serializing into XElement
+    ///         XElement element = XmlSerializer.Serialize(person, options);
+    ///         var clone = (Person)XmlSerializer.Deserialize(element);
+    /// 
+    ///         // serializing into file/Stream/TextWriter/XmlWriter are also supported: An XmlWriter will be used
+    ///         var sb = new StringBuilder();
+    ///         XmlSerializer.Serialize(new StringWriter(sb), person, options);
+    ///         clone = (Person)XmlSerializer.Deserialize(new StringReader(sb.ToString()));
+    /// 
+    ///         Console.WriteLine(sb);
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces a similar output to this one:
+    /// // <?xml version="1.0" encoding="utf-16"?>
+    /// // <object type="Person">
+    /// //   <FirstName>Uehaccuj</FirstName>
+    /// //   <MiddleName>Rnig</MiddleName>
+    /// //   <LastName>Iuvmozu</LastName>
+    /// //   <BirthDate>1996-06-02T00:00:00Z</BirthDate>
+    /// //   <PhoneNumbers type="System.Collections.ObjectModel.Collection`1[System.String]">
+    /// //     <item>694677853</item>
+    /// //     <item>6344</item>
+    /// //   </PhoneNumbers>
+    /// // </object>]]></code>
+    /// </example>
     public static class XmlSerializer
     {
         #region Constants

@@ -130,7 +130,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
                 {
                     var clist = new CircularList<int>(count);
                     for (int i = 0; i < count; i++)
-                        clist.Insert(0, i);
+                        clist.Insert(rnd.Next(i), i);
                 }, "Insert to CircularList randomly")
                 .DoTest()
                 .DumpResults(Console.Out);

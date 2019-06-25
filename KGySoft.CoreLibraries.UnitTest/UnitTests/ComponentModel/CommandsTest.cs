@@ -1,18 +1,54 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: CommandsTest.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using KGySoft.ComponentModel;
+
 using NUnit.Framework;
+
+#endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 {
     [TestFixture]
     public class CommandsTest
     {
+        #region Nested classes
+
+        #region TestClass class
+
+        private class TestClass : ObservableObjectBase
+        {
+            #region Properties
+
+            public string TestProp { get => Get<string>(); set => Set(value); }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Fields
+
         public static readonly ICommand LogPropChangeCommand
             = new SourceAwareTargetedCommand<PropertyChangedExtendedEventArgs, TextWriter>((src, state, writer) =>
             {
@@ -20,10 +56,9 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 state.AsDynamic.TriggerCount = state.GetValueOrDefault<int>("TriggerCount") + 1;
             });
 
-        private class TestClass : ObservableObjectBase
-        {
-            public string TestProp { get => Get<string>(); set => Set(value); }
-        }
+        #endregion
+
+        #region Methods
 
         [Test]
         public void CreateBindingAndTriggerCommand()
@@ -59,8 +94,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             var test = new TestClass();
             var bindings = new CommandBindingsCollection();
             ICommandBinding binding = bindings.Add(LogPropChangeCommand)
-                .AddSource(test, nameof(test.PropertyChanged))
-                .AddTarget(Console.Out);
+                    .AddSource(test, nameof(test.PropertyChanged))
+                    .AddTarget(Console.Out);
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             test.TestProp = "Alpha";
@@ -85,8 +120,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             var test = new TestClass();
             var state = new CommandState { Enabled = false };
             ICommandBinding binding = LogPropChangeCommand.CreateBinding(state)
-                .AddSource(test, nameof(test.PropertyChanged))
-                .AddTarget(Console.Out);
+                    .AddSource(test, nameof(test.PropertyChanged))
+                    .AddTarget(Console.Out);
 
             // Disabled command is not executed
             Assert.IsFalse(state.ContainsKey("TriggerCount"));
@@ -109,9 +144,9 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             var test = new TestClass();
             ICommandBinding binding = LogPropChangeCommand.CreateBinding()
-                .AddSource(test, nameof(test.PropertyChanged))
-                .AddTarget(Console.Out)
-                .AddStateUpdater(PropertyCommandStateUpdater.Updater);
+                    .AddSource(test, nameof(test.PropertyChanged))
+                    .AddTarget(Console.Out)
+                    .AddStateUpdater(PropertyCommandStateUpdater.Updater);
 
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
@@ -125,8 +160,8 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             var test = new TestClass();
             ICommandBinding binding = LogPropChangeCommand.CreateBinding()
-                .AddSource(test, nameof(test.PropertyChanged))
-                .AddTarget(() => Console.Out);
+                    .AddSource(test, nameof(test.PropertyChanged))
+                    .AddTarget(() => Console.Out);
 
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
@@ -154,5 +189,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             source.TestProp = "Delta";
             Assert.AreNotEqual(source.TestProp, target.TestProp);
         }
+
+        #endregion
     }
 }

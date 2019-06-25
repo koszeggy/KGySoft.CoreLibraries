@@ -207,6 +207,71 @@ namespace KGySoft.Serialization
     /// only after restoring the whole content so fields will be already restored.</note>
     /// </para>
     /// </remarks>
+    /// <example>
+    /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/Q6t0le" target="_blank">online</a>.</note>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.Collections.Generic;
+    /// using System.Globalization;
+    /// using System.IO;
+    /// using System.Linq;
+    /// using System.Reflection;
+    /// using System.Runtime.Serialization;
+    /// using System.Runtime.Serialization.Formatters.Binary;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Serialization;
+    /// 
+    /// public static class Example
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         var instance = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
+    ///         Console.WriteLine("Generated object:   " + GetDeepContent(instance));
+    /// 
+    ///         using (var ms = new MemoryStream())
+    ///         {
+    ///             // serializing by KGy SOFT version:
+    ///             IFormatter formatter = new BinarySerializationFormatter();
+    ///             formatter.Serialize(ms, instance);
+    /// 
+    ///             // deserialization:
+    ///             ms.Position = 0L;
+    ///             object deserialized = formatter.Deserialize(ms);
+    /// 
+    ///             Console.WriteLine("Deserialized object " + GetDeepContent(deserialized));
+    ///             Console.WriteLine("Length by BinarySerializationFormatter: " + ms.Length);
+    /// 
+    ///             // serializing by System version:
+    ///             formatter = new BinaryFormatter();
+    ///             formatter.Serialize(ms, instance);
+    ///             Console.WriteLine("Length by BinaryFormatter: " + ms.Length);
+    ///         }
+    ///     }
+    /// 
+    ///     private static string GetDeepContent(object o)
+    ///     {
+    ///         if (o == null)
+    ///             return "<null>";
+    /// 
+    ///         if (o is IConvertible convertible)
+    ///             return convertible.ToString(CultureInfo.InvariantCulture);
+    /// 
+    ///         if (o is IEnumerable enumerable)
+    ///             return $"[{String.Join(", ", enumerable.Cast<object>().Select(GetDeepContent))}]";
+    /// 
+    ///         return $"{{{String.Join("; ", o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {GetDeepContent(p.GetValue(o))}"))}}}";
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces a similar output to this one:
+    /// // Generated object:   [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
+    /// // Deserialized object [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
+    /// // Length by BinarySerializationFormatter: 43
+    /// // Length by BinaryFormatter: 2214]]></code>
+    /// </example>
+    /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
     public sealed partial class BinarySerializationFormatter : IFormatter
     {

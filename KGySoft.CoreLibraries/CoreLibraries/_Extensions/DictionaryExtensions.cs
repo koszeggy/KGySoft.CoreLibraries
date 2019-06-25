@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         /// <example>
         /// The following example demonstrates how to use the <see cref="O:KGySoft.CoreLibraries.DictionaryExtensions.GetValueOrDefault">GetValueOrDefault</see> overloads.
-        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/XDjrOB" target="_blank">online</a></note>
+        /// <note type="tip">Try also <a href="https://dotnetfiddle.net/XDjrOB" target="_blank">online</a>.</note>
         /// <code lang="C#"><![CDATA[
         /// using System;
         /// using System.Collections.Generic;

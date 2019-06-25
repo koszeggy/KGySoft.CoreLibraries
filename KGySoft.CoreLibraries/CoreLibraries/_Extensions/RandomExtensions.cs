@@ -35,7 +35,7 @@ namespace KGySoft.CoreLibraries
     /// <br/>See the <strong>Examples</strong> section for an example.
     /// </summary>
     /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/hQRVoZ" target="_blank">online</a></note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/hQRVoZ" target="_blank">online</a>.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections;

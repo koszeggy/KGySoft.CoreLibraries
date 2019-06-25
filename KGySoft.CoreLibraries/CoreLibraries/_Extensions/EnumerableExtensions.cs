@@ -242,7 +242,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
-        /// then the elements of <paramref name="collection"/> can only be added one by one.</para>
+        /// then the elements of <paramref name="collection"/> will only be added one by one.</para>
         /// </remarks>
         public static bool TryAddRange<T>([NoEnumeration]this IEnumerable<T> target, IEnumerable<T> collection, bool checkReadOnly = true, bool throwError = true)
         {
@@ -282,7 +282,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The <paramref name="collection"/> can be added to the <paramref name="target"/> collection if that is either an <see cref="ICollection{T}"/>, <see cref="IProducerConsumerCollection{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
-        /// then the elements of <paramref name="collection"/> can only be added one by one.</para>
+        /// then the elements of <paramref name="collection"/> will only be added one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryAddRange{T}"><![CDATA[TryAddRange<T>]]></see> overload for better performance.</note>
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
         /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
@@ -580,7 +580,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be inserted in the <paramref name="target"/> collection if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
-        /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
+        /// then the elements of <paramref name="collection"/> will only be inserted one by one.</para>
         /// </remarks>
         public static bool TryInsertRange<T>([NoEnumeration]this IEnumerable<T> target, int index, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
@@ -621,7 +621,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The specified <paramref name="collection"/> can be inserted in the <paramref name="target"/> collection if that is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
-        /// then the elements of <paramref name="collection"/> can only be inserted one by one.</para>
+        /// then the elements of <paramref name="collection"/> will only be inserted one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryInsertRange{T}"><![CDATA[TryInsertRange<T>]]></see> overload for better performance.</note>
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
         /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
@@ -927,7 +927,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <note>If <paramref name="collection"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeList{T}"/> implementation,
-        /// then the elements can only be removed one by one.</note>
+        /// then the elements will only be removed one by one.</note>
         /// </remarks>
         public static bool TryRemoveRange<T>([NoEnumeration]this IEnumerable<T> collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
@@ -974,7 +974,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <note>If <paramref name="collection"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeList{T}"/> implementation,
-        /// then the elements can only be removed one by one.</note>
+        /// then the elements will only be removed one by one.</note>
         /// <note>Whenever possible, try to use the generic <see cref="TryRemoveRange{T}"><![CDATA[TryRemoveRange<T>]]></see> overload for better performance.</note>
         /// </remarks>
         public static bool TryRemoveRange([NoEnumeration]this IEnumerable collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
@@ -1192,7 +1192,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
-        /// then the elements can only be replaced one by one.</para>
+        /// then the elements will only be replaced one by one.</para>
         /// </remarks>
         public static bool TryReplaceRange<T>([NoEnumeration]this IEnumerable<T> target, int index, int count, IEnumerable<T> collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
@@ -1260,7 +1260,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>The replacement can be performed if the <paramref name="target"/> collection is either an <see cref="IList{T}"/> or <see cref="IList"/> implementation.</para>
         /// <para>If <paramref name="target"/> is neither a <see cref="List{T}"/> nor an <see cref="ISupportsRangeCollection{T}"/> implementation,
-        /// then the elements can only be replaced one by one.</para>
+        /// then the elements will only be replaced one by one.</para>
         /// <note>Whenever possible, try to use the generic <see cref="TryReplaceRange{T}"><![CDATA[TryReplaceRange<T>]]></see> overload for better performance.</note>
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
         /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>

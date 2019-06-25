@@ -292,6 +292,8 @@ namespace KGySoft.ComponentModel
 
         private void UpdateSource(object source)
         {
+            if (stateUpdaters.Count == 0)
+                return;
             foreach (string propertyName in ((IDictionary<string, object>)state).Keys)
                 UpdateSource(source, propertyName);
         }
@@ -365,8 +367,10 @@ namespace KGySoft.ComponentModel
 
         private void State_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            foreach (object component in sources.Keys)
-                UpdateSource(component, e.PropertyName);
+            if (stateUpdaters.Count == 0)
+                return;
+            foreach (object source in sources.Keys)
+                UpdateSource(source, e.PropertyName);
         }
 
         #endregion

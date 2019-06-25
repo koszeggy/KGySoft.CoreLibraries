@@ -70,7 +70,7 @@ namespace KGySoft.Diagnostics
     ///     {
     ///         new PerformanceTest
     ///             {
-    ///                 TestName = "System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum> Results",
+    ///                 TestName = "System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum>",
     ///                 TestTime = 2000,
     ///                 WarmUp = false,
     ///                 Repeat = 2
@@ -83,7 +83,7 @@ namespace KGySoft.Diagnostics
     /// }
     ///
     /// // This code example produces an output similar to the following one:
-    /// // ==[System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum> Results Results]================================================
+    /// // ==[System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum> Results]================================================
     /// // Test Time: 2,000 ms
     /// // Warming up: No
     /// // Test cases: 2
@@ -103,6 +103,7 @@ namespace KGySoft.Diagnostics
     /// </para>
     /// <para>By specifying <see cref="PerformanceTestBase.Iterations"/> you can constrain to execute the test cases for a fix number of times instead of
     /// executing them for the specified time period:
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/PCcVuD" target="_blank">online</a>.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using KGySoft.CoreLibraries;
@@ -180,6 +181,8 @@ namespace KGySoft.Diagnostics
     /// //   #5           4.85 ms
     /// //   Worst-Best difference: 1.58 ms (35.86 %)]]></code>
     /// </para>
+    /// <note>See a further example in the <see cref="PerformanceTest{TResult}"/> class.</note>
+    /// <note type="tip">See also the <strong>Examples</strong> section of the <see cref="PerformanceTestBase{TDelegate,TResult}"/> class to see how to create a custom type for parameterized performance tests.</note>
     /// </example>
     /// <seealso cref="PerformanceTest{TResult}" />
     public class PerformanceTest : PerformanceTestBase<Action, object>

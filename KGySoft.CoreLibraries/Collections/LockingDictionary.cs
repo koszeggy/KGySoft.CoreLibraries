@@ -66,10 +66,10 @@ namespace KGySoft.Collections
     /// <para>To avoid confusion, the non-generic <see cref="IDictionary"/> interface is not implemented by the <see cref="LockingDictionary{TKey,TValue}"/> class because it uses a different aspect of synchronization.</para>
     /// <para>The <see cref="LockingCollection{T}.GetEnumerator">GetEnumerator</see> method and <see cref="Keys"/> and <see cref="Values"/> properties create a snapshot of the underlying collections so obtaining
     /// these members have an O(n) cost on this class.</para>
-    /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for many parallel readers by using separate locks for entries or for a set of entries, in many
-    /// situations they perform worse than simple locking on a collection, especially if the collection to lock uses a fast accessible storage (eg. an array) inside. It also may worth to mention that some
-    /// members (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
-    /// So it always depends on the concrete scenario which one is more beneficial to use.</note>
+    /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries,
+    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members
+    /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
+    /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
     /// <note type="tip">For a <see cref="Cache{TKey,TValue}"/> use this class only if you want a thread-safe wrapper for all <see cref="IDictionary{TKey,TValue}"/> members and if it is not a problem if the cache remains locked
     /// during the invocation of the item loader delegate passed to the appropriate <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
     /// Otherwise, it may worth to use an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instead, which can be obtained by the <see cref="Cache{TKey,TValue}.GetThreadSafeAccessor">GetThreadSafeAccessor</see> method.</note>

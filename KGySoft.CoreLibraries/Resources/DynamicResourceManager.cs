@@ -327,15 +327,15 @@ namespace KGySoft.Resources
     /// using System;
     /// using KGySoft;
     /// using KGySoft.Resources;
-    ///
+    /// 
     /// namespace ClassLibrary1
     /// {
     ///     internal static class Res
     ///     {
-    ///         private const string nullReference = "NullReference";
+    ///         // internal resources for errors
     ///         private const string unavailableResource = "Resource ID not found: {0}";
     ///         private const string invalidResource = "Resource text is not valid for {0} arguments: {1}";
-    ///
+    /// 
     ///         private static readonly DynamicResourceManager resourceManager =
     ///             // the name of the compiled resources must match (see also point 5)
     ///             new DynamicResourceManager("ClassLibrary1.Messages", typeof(Res).Assembly)
@@ -345,16 +345,21 @@ namespace KGySoft.Resources
     ///                 ThrowException = false,
     ///                 // CompatibleFormat = true // use this if you want to edit the result files with VS resource editor
     ///             };
-    ///
-    ///         internal static string Get(string id) =>
+    /// 
+    ///         // Here will be the properties for the resources. This one is private because used from this class.
+    ///         private static string NullReference => Get(nameof(NullReference));
+    /// 
+    ///         // [...] Your resources can be added here (see point 8. and 9.)
+    /// 
+    ///         private static string Get(string id) =>
     ///             resourceManager.GetString(id, LanguageSettings.DisplayLanguage) ?? String.Format(unavailableResource, id);
-    ///
-    ///         internal static string Get(string id, params object[] args)
+    /// 
+    ///         private static string Get(string id, params object[] args)
     ///         {
     ///             string format = Get(id);
     ///             return args == null || args.Length == 0 ? format : SafeFormat(format, args);
     ///         }
-    ///
+    /// 
     ///         private static string SafeFormat(string format, object[] args)
     ///         {
     ///             try
@@ -362,14 +367,14 @@ namespace KGySoft.Resources
     ///                 int i = Array.IndexOf(args, null);
     ///                 if (i >= 0)
     ///                 {
-    ///                     string nullRef = Get(nullReference);
+    ///                     string nullRef = Get(NullReference);
     ///                     for (; i < args.Length; i++)
     ///                     {
     ///                         if (args[i] == null)
     ///                             args[i] = nullRef;
     ///                     }
     ///                 }
-    ///
+    /// 
     ///                 return String.Format(LanguageSettings.FormattingLanguage, format, args);
     ///             }
     ///             catch (FormatException)
@@ -405,10 +410,13 @@ namespace KGySoft.Resources
     /// <item>In Solution Explorer double click on <c>Resource1.resx</c> and add any resource entries you want to use in your library.
     /// Add <c>NullReference</c> key as well as it is used by the default <c>Res</c> implementation.
     /// <br/><img src="../Help/Images/DynamicResourceManager_ExampleResources.png" alt="Example resources"/></item>
-    /// <item>Define a constant for all of your resource names in the <c>Res</c> class. For example:
+    /// <item>Define a property for all of your simple resources and a method for the format strings with placeholders in the <c>Res</c> class. For example:
     /// <code lang="C#"><![CDATA[
-    /// internal const string MyResourceExample = nameof(MyResourceExample);
-    /// internal const string MyResourceFormatExample = nameof(MyResourceFormatExample);]]></code></item>
+    /// // simple resource: can be a property
+    /// internal static string MyResourceExample => Get(nameof(MyResourceExample));
+    /// 
+    /// // resource format string with placeholders: can be a method
+    /// internal static string MyResourceFormatExample(int arg1, string arg2) => Get(nameof(MyResourceFormatExample), arg1, arg2);]]></code></item>
     /// <item>You can retrieve any resources in your library as it is shown in the example below:
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -421,10 +429,10 @@ namespace KGySoft.Resources
     ///         {
     ///             if (someParameter == 42)
     ///                 // simple resource
-    ///                 throw new InvalidOperationException(Res.Get(Res.MyResourceExample));
+    ///                 throw new InvalidOperationException(Res.MyResourceExample);
     ///             if (someParameter == -42)
     ///                 // formatted resource - enough arguments must be specified for placeholders (though errors are handled in Res)
-    ///                 throw new ArgumentException(Res.Get(Res.MyResourceFormatExample, "x", 123), nameof(someParameter));
+    ///                 throw new ArgumentException(Res.MyResourceFormatExample(123, "x"), nameof(someParameter));
     ///         }
     ///     }
     /// }]]></code></item>
