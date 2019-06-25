@@ -24,15 +24,35 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Represents a thread-safe pseudo-random number generator.
+    /// Provides also a shared instance accessible via the static <see cref="Instance"/> property.
     /// </summary>
     /// <seealso cref="Random" />
     public class ThreadSafeRandom : Random
     {
-       // NOTE: Starting with .NET 2.0 the different methods do not necessarily rely on the Sample method so we have to overload every public method.
+        // NOTE: Starting with .NET 2.0 the different methods do not necessarily rely on the Sample method so we have to overload every public method.
 
         #region Fields
 
+        #region Static Fields
+
+        private static ThreadSafeRandom staticInstance;
+
+        #endregion
+
+        #region Instance Fields
+
         private readonly object syncRoot = new object();
+
+        #endregion
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Gets a thread-safe <see cref="Random"/> instance initialized by a time-dependent default seed value.
+        /// </summary>
+        public static ThreadSafeRandom Instance => staticInstance ?? (staticInstance = new ThreadSafeRandom());
 
         #endregion
 

@@ -16,6 +16,7 @@
 * RandomExtensions.NextObject:
   - Avoiding SecurityException better from partially trusted domain
   + Collections for read-only properties can be generated in more cases
++ ThreadSafeRandom class: Adding a new static Instance property.
 
 * KGySoft.ComponentModel namespace:
 ===================================
