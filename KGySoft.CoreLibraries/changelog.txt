@@ -34,6 +34,7 @@
 ===============================
 * Changing default strategy for ReflectionWays.Auto in some CreateInstance overload
 - Reflector class: Fixing value test compatibility in TrySetProperty overloads
+- MemberAccessor classes: Detecting security settings conflict and providing a more informative message for the caught VerificationException.
 
 - KGySoft.Serialization namespace:
 ==================================

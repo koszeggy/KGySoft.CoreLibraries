@@ -340,6 +340,12 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_DeclaringTypeExpected" xml:space="preserve">
     <value>DeclaringType of the provided member should not be null.</value>
   </data>
+  <data name="Reflection_SecuritySettingsConfict" xml:space="preserve">
+    <value>This operation is not supported if the executing assembly specifies both the AllowPartiallyTrustedCallersAttribute and the SecurityRulesAttribute with SecurityRuleSet.Level2 (which is the default if not defined). You can try the following options:
+- Use the SecurityRulesAttribute with SecurityRuleSet.Level1. This is the recommended solution.
+- Use the SecurityRulesAttribute with SkipVerificationInFullTrust = true. If used with SecurityRuleSet.Level2 this will not solve the problem from a partially trusted domain though.
+- Remove the AllowPartiallyTrustedCallersAttribute. This will not allow partially trusted callers to use your assembly though.</value>
+  </data>
   <data name="IList_InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>

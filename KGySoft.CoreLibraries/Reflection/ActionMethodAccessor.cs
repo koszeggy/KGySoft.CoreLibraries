@@ -21,6 +21,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Security;
 
 #endregion
 
@@ -55,8 +56,15 @@ namespace KGySoft.Reflection
 
         public override object Invoke(object instance, params object[] parameters)
         {
-            ((AnyAction)Invoker)(instance, parameters);
-            return null;
+            try
+            {
+                ((AnyAction)Invoker)(instance, parameters);
+                return null;
+            }
+            catch (VerificationException e) when (IsSecurityConflict(e))
+            {
+                throw new NotSupportedException(Res.ReflectionSecuritySettingsConfict, e);
+            }
         }
 
         #endregion

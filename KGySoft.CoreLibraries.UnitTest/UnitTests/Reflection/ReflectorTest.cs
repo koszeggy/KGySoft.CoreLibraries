@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-
+using System.Security;
 using KGySoft.Reflection;
 
 using NUnit.Framework;

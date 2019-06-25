@@ -20,6 +20,7 @@ using System;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Security;
 
 #endregion
 
@@ -111,6 +112,12 @@ namespace KGySoft.Reflection
         /// Represents a non-generic getter that can be used for any fields.
         /// </summary>
         private delegate object FieldGetter(object instance);
+
+        #endregion
+
+        #region Constants
+
+        private const string setterPrefix = "<SetField>__";
 
         #endregion
 
@@ -216,7 +223,17 @@ namespace KGySoft.Reflection
         /// method but further calls are much faster.
         /// </note>
         /// </remarks>
-        public void Set(object instance, object value) => Setter.Invoke(instance, value);
+        public void Set(object instance, object value)
+        {
+            try
+            {
+                Setter.Invoke(instance, value);
+            }
+            catch (VerificationException e) when (IsSecurityConflict(e, setterPrefix))
+            {
+                throw new NotSupportedException(Res.ReflectionSecuritySettingsConfict, e);
+            }
+        }
 
         /// <summary>
         /// Gets the value of the field.
@@ -263,9 +280,9 @@ namespace KGySoft.Reflection
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             // Expressions would not work for value types so using always dynamic methods
-            DynamicMethod dm = new DynamicMethod($"<SetField>__{field.Name}", // setter method name
-                    Reflector.VoidType, // return type
-                    new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType, true); // instance and value parameters
+            DynamicMethod dm = new DynamicMethod(setterPrefix + field.Name, // setter method name
+                Reflector.VoidType, // return type
+                new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType, true); // instance and value parameters
 
             ILGenerator il = dm.GetILGenerator();
 

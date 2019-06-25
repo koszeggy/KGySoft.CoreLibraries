@@ -256,9 +256,9 @@ namespace KGySoft.CoreLibraries
 
                 // TODO: reference KGySoft.Drawing from nuget
                 if (typeRef == typeof(Metafile))
-                    return true;//return CheckImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
+                    return true; //return CheckImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
                 if (typeRef == typeof(Icon))
-                    return true;//return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
+                    return true; //return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
 
                 if (typeRef == typeof(ImageListStreamer))
                 {
@@ -384,6 +384,7 @@ namespace KGySoft.CoreLibraries
 
                 reference.Position = 0L;
             }
+
             if (origPosCheck != 0L)
             {
                 if (!check.CanSeek)
@@ -437,17 +438,17 @@ namespace KGySoft.CoreLibraries
             if (!result)
                 Assert.Fail(String.Join(Environment.NewLine, errors
 #if NET35
-                            .ToArray()
+                        .ToArray()
 #endif
 
-                    ));
+                ));
             else if (errors.Count > 0)
                 Assert.Inconclusive(String.Join(Environment.NewLine, errors
 #if NET35
-                            .ToArray()
+                        .ToArray()
 #endif
 
-                    ));
+                ));
         }
 
         private static bool Check(bool condition, string message, List<string> errors)
@@ -462,8 +463,12 @@ namespace KGySoft.CoreLibraries
         private static PermissionSet GetPermissionSet(IPermission[] permissions)
         {
             var evidence = new Evidence();
+#if !NET35
             evidence.AddHostEvidence(new Zone(SecurityZone.Internet));
             var result = SecurityManager.GetStandardSandbox(evidence);
+#else
+            var result = new PermissionSet(PermissionState.None);
+#endif
             foreach (var permission in permissions)
                 result.AddPermission(permission);
             return result;

@@ -56,8 +56,6 @@ namespace KGySoft
 
         #region Properties
 
-        #region Internal Properties
-
         #region General
 
         /// <summary>&lt;undefined&gt;</summary>
@@ -351,6 +349,12 @@ namespace KGySoft
         /// <summary>DeclaringType of the provided member should not be null.</summary>
         internal static string ReflectionDeclaringTypeExpected => Get("Reflection_DeclaringTypeExpected");
 
+        /// <summary>This operation is not supported if the executing assembly specifies both the AllowPartiallyTrustedCallersAttribute and the SecurityRulesAttribute with SecurityRuleSet.Level2 (which is the default if not defined). You can try the following options:
+        /// - Use the SecurityRulesAttribute with SecurityRuleSet.Level1. This is the recommended solution.
+        /// - Use the SecurityRulesAttribute with SkipVerificationInFullTrust = true. If used with SecurityRuleSet.Level2 this will not solve the problem from a partially trusted domain though.
+        /// - Remove the AllowPartiallyTrustedCallersAttribute. This will not allow partially trusted callers to use your assembly though.</summary>
+        internal static string ReflectionSecuritySettingsConfict => Get("Reflection_SecuritySettingsConfict");
+
         #endregion
 
         #region Resources
@@ -420,8 +424,6 @@ namespace KGySoft
 
         /// <summary>Unexpected end of XML content.</summary>
         internal static string XmlSerializationUnexpectedEnd => Get("XmlSerialization_UnexpectedEnd");
-
-        #endregion
 
         #endregion
 

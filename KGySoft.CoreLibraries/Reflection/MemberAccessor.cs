@@ -18,10 +18,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
-
+using System.Security;
 using KGySoft.Collections;
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -37,6 +39,13 @@ namespace KGySoft.Reflection
     /// <seealso cref="CreateInstanceAccessor"/>
     public abstract class MemberAccessor
     {
+        #region Constants
+
+        private const string methodInvokerPrefix = "<InvokeMethod>__";
+        private const string ctorInvokerPrefix = "<InvokeCtor>__";
+
+        #endregion
+
         #region Fields
 
         /// <summary>
@@ -95,6 +104,27 @@ namespace KGySoft.Reflection
         /// <param name="memberInfo">The <see cref="MemberInfo"/> for which the accessor is to be obtained.</param>
         /// <returns>A <see cref="MemberAccessor"/> instance for the specified <paramref name="memberInfo"/>.</returns>
         protected static MemberAccessor GetCreateAccessor(MemberInfo memberInfo) => accessorCache[memberInfo];
+
+        #endregion
+
+        #region Private Protected Methods
+
+        internal /*private protected*/ static bool IsSecurityConflict(VerificationException ve, string accessorPrefix = null)
+        {
+            try
+            {
+                var stackTrace = new StackTrace(ve);
+                string methodName = stackTrace.FrameCount > 0 ? stackTrace.GetFrame(0).GetMethod().Name : null;
+                if (methodName == null)
+                    return false;
+                return accessorPrefix == null ? methodName.ContainsAny(methodInvokerPrefix, ctorInvokerPrefix) : methodName.StartsWith(accessorPrefix, StringComparison.Ordinal);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                // if we cannot obtain the stack trace we assume the VerificationException is due to the used security settings
+                return true;
+            }
+        }
 
         #endregion
 
@@ -189,12 +219,12 @@ namespace KGySoft.Reflection
                 if (methodOrCtor is ConstructorInfo && !forceMethod)
                 {
                     // ReSharper disable once PossibleNullReferenceException - already checked by caller
-                    name = $"<Create>__{methodOrCtor.DeclaringType.Name}";
+                    name = ctorInvokerPrefix + methodOrCtor.DeclaringType.Name;
                     parameters.Add(typeof(object[])); // ctor parameters
                 }
                 else
                 {
-                    name = $"<RunMethod>__{methodOrCtor.Name}";
+                    name = methodInvokerPrefix + methodOrCtor.Name;
                     parameters.Add(Reflector.ObjectType); // instance parameter
 
                     // not a property setter

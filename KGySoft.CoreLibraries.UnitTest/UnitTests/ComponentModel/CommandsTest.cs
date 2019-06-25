@@ -53,7 +53,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             = new SourceAwareTargetedCommand<PropertyChangedExtendedEventArgs, TextWriter>((src, state, writer) =>
             {
                 writer.WriteLine($"{src.EventArgs.PropertyName}: {src.EventArgs.OldValue} -> {src.EventArgs.NewValue}");
-                state.AsDynamic.TriggerCount = state.GetValueOrDefault<int>("TriggerCount") + 1;
+                state["TriggerCount"] = state.GetValueOrDefault<int>("TriggerCount") + 1;
             });
 
         #endregion
@@ -68,12 +68,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             test.TestProp = "Alpha";
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount); // IsModified, TestProp
+            Assert.AreEqual(2, binding.State["TriggerCount"]); // IsModified, TestProp
 
             // not triggered again after disposing
             binding.Dispose();
             test.TestProp = "Beta";
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount);
+            Assert.AreEqual(2, binding.State["TriggerCount"]);
 
             // creating alternatively (command itself was not disposed)
             binding = LogPropChangeCommand.CreateBinding()
@@ -82,10 +82,10 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             test.TestProp = "Gamma";
-            Assert.AreEqual(1, binding.State.AsDynamic.TriggerCount); // new state, only TestProp changed
+            Assert.AreEqual(1, binding.State["TriggerCount"]); // new state, only TestProp changed
 
             binding.InvokeCommand(this, "Fake event name", new PropertyChangedExtendedEventArgs("old", "new", "Fake property name"));
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount); // our manual trigger
+            Assert.AreEqual(2, binding.State["TriggerCount"]); // our manual trigger
         }
 
         [Test]
@@ -99,12 +99,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             test.TestProp = "Alpha";
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount); // IsModified, TestProp
+            Assert.AreEqual(2, binding.State["TriggerCount"]); // IsModified, TestProp
 
             // not triggered again after disposing the collection
             bindings.Dispose();
             test.TestProp = "Beta";
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount);
+            Assert.AreEqual(2, binding.State["TriggerCount"]);
 
             // explicit dispose before disposing the collection is not a problem
             binding = bindings.Add(LogPropChangeCommand)
@@ -131,12 +131,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             // enabling by push
             state.Enabled = true;
             test.TestProp = "Beta";
-            Assert.AreEqual(1, binding.State.AsDynamic.TriggerCount);
+            Assert.AreEqual(1, binding.State["TriggerCount"]);
 
             // disabling by poll
             binding.Executing += (sender, args) => args.State.Enabled = false;
             test.TestProp = "Gamma";
-            Assert.AreEqual(1, binding.State.AsDynamic.TriggerCount);
+            Assert.AreEqual(1, binding.State["TriggerCount"]);
         }
 
         [Test]
@@ -152,7 +152,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             binding.State[nameof(test.TestProp)] = "ByUpdater";
             Assert.AreEqual("ByUpdater", test.TestProp);
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount);
+            Assert.AreEqual(2, binding.State["TriggerCount"]);
         }
 
         [Test]
@@ -166,7 +166,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             // setting state property, which is synced back to source
             Assert.IsFalse(binding.State.ContainsKey("TriggerCount"));
             test.TestProp = "Alpha";
-            Assert.AreEqual(2, binding.State.AsDynamic.TriggerCount); // IsModified, TestProp
+            Assert.AreEqual(2, binding.State["TriggerCount"]); // IsModified, TestProp
         }
 
         [Test]

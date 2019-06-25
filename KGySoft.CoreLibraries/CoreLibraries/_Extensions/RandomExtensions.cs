@@ -1241,7 +1241,10 @@ namespace KGySoft.CoreLibraries
         private static double NextDoubleLinear(Random random, double minValue, double maxValue)
         {
             double sample = random.NextDouble();
-            return (maxValue * sample) + (minValue * (1d - sample));
+            var result = (maxValue * sample) + (minValue * (1d - sample));
+
+            // protecting ourselves against inaccurate calculations; occurs only near MaxValue.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
 
 #if !NET35 && !NET40

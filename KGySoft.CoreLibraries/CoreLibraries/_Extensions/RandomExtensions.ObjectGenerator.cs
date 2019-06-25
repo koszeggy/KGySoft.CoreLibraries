@@ -20,11 +20,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.Remoting.Messaging;
 using System.Security;
 using System.Text;
 using KGySoft.Collections;
@@ -93,7 +93,11 @@ namespace KGySoft.CoreLibraries
                 public override bool Equals(object obj) => obj is DefaultGenericTypeKey key && Equals(key);
                 public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
                 public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
+#if NET35 || NET40
+                public override string ToString() => $"{GenericType.Name}[{SuggestedArguments.Count.ToString(CultureInfo.InvariantCulture)}]";
+#else
                 public override string ToString() => $"{GenericType.Name}[{String.Join(", ", SuggestedArguments)}]";
+#endif
 
                 #endregion
             }
@@ -158,7 +162,7 @@ namespace KGySoft.CoreLibraries
                     if (root == null)
                         return requestedType?.ToString() ?? base.ToString();
 
-                    return $"{requestedType} [{root}->{String.Join("->", membersChain)}]";
+                    return $"{requestedType} [{root}->{String.Join("->", membersChain.ToArray())}]";
                 }
 
                 #endregion
@@ -224,7 +228,7 @@ namespace KGySoft.CoreLibraries
             private static readonly Random randomForDelegates = new Random();
 
             private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates);
-            private static readonly MethodInfo nextObjectGenMethod = ((MethodInfo)typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) }));
+            private static readonly MethodInfo nextObjectGenMethod = (typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) }));
 
             private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
                 new Dictionary<Type, GenerateKnownType>
@@ -811,39 +815,7 @@ namespace KGySoft.CoreLibraries
                     // 4.) key-value pair (because its properties are read-only)
                     if (type.IsGenericTypeOf(Reflector.KeyValuePairType))
                     {
-                        Type[] args = type.GetGenericArguments();
-                        object key, value = null;
-
-                        // if key or value cannot be created just returning a default instance (by Activator, which is fast for value types)
-                        context.PushMember(nameof(KeyValuePair<_, _>.Key));
-                        try
-                        {
-                            if (!TryGenerateObject(args[0], ref context, out key))
-                            {
-                                result = Activator.CreateInstance(type);
-                                return true;
-                            }
-                        }
-                        finally
-                        {
-                            context.PopMember();
-                        }
-
-                        context.PushMember(nameof(KeyValuePair<_, _>.Value));
-                        try
-                        {
-                            if (!TryGenerateObject(args[1], ref context, out value))
-                            {
-                                result = Activator.CreateInstance(type);
-                                return true;
-                            }
-                        }
-                        finally
-                        {
-                            context.PopMember();
-                        }
-
-                        result = Reflector.CreateInstance(type, key, value);
+                        result = GenerateKeyValuePair(type, ref context);
                         return true;
                     }
 
@@ -874,6 +846,38 @@ namespace KGySoft.CoreLibraries
                     if (!checkingDerivedType)
                         context.PopType();
                 }
+            }
+
+            [SecurityCritical]
+            private static object GenerateKeyValuePair(Type type, ref GeneratorContext context)
+            {
+                Type[] args = type.GetGenericArguments();
+                object key, value;
+
+                // if key or value cannot be created just returning a default instance (by Activator, which is fast for value types)
+                context.PushMember(nameof(KeyValuePair<_, _>.Key));
+                try
+                {
+                    if (!TryGenerateObject(args[0], ref context, out key))
+                        return Activator.CreateInstance(type);
+                }
+                finally
+                {
+                    context.PopMember();
+                }
+
+                context.PushMember(nameof(KeyValuePair<_, _>.Value));
+                try
+                {
+                    if (!TryGenerateObject(args[1], ref context, out value))
+                        return Activator.CreateInstance(type);
+                }
+                finally
+                {
+                    context.PopMember();
+                }
+
+                return Reflector.CreateInstance(type, key, value);
             }
 
             [SecurityCritical]

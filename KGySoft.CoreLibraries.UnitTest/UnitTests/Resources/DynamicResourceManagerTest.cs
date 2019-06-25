@@ -23,6 +23,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using System.Security;
 using System.Security.Policy;
 
 using KGySoft.Reflection;
@@ -102,12 +103,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         #endregion
 
         #region Methods
-
+        
         #region Public Methods
 
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
+#if !NET35
+        [SecuritySafeCritical]
+#endif
         [OneTimeSetUp]
         public void CreateCustomCultures()
         {
@@ -175,13 +179,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
             CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
             CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
-        }
-
-        [SetUp]
-        [TearDown]
-        public void Cleanup()
-        {
-
         }
 
         [Test]
