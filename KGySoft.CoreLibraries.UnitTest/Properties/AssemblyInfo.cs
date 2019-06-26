@@ -23,12 +23,6 @@ using System.Security;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("518516cf-e7fd-4ac2-995e-76f14ec8e9b7")]
 
-// To allow the sandbox tests to use the types of the test project
-[assembly: AllowPartiallyTrustedCallers]
-
-// To avoid VerificationException from reflection
-[assembly: SecurityRules(SecurityRuleSet.Level1, SkipVerificationInFullTrust = true)]
-
 // Version information for an assembly consists of the following four values:
 //
 //      Major Version
@@ -40,3 +34,11 @@ using System.Security;
 // by using the '*' as shown below:
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+
+// To allow the sandbox tests to use the types of the test project
+[assembly: AllowPartiallyTrustedCallers]
+
+#if !NET35
+// To avoid VerificationException from reflection
+[assembly: SecurityRules(SecurityRuleSet.Level1, SkipVerificationInFullTrust = true)]
+#endif
