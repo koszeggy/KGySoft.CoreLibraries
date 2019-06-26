@@ -98,10 +98,8 @@ namespace KGySoft.Serialization
     /// </list>
     /// </para>
     /// </remarks>
-    /// <seealso cref="XmlSerializationOptions"/>
-    /// <seealso cref="BinarySerializer"/>
-    /// <seealso cref="BinaryTypeConverter"/>
     /// <example>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/37YDns" target="_blank">online</a>.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.IO;
@@ -162,6 +160,9 @@ namespace KGySoft.Serialization
     /// //   </PhoneNumbers>
     /// // </object>]]></code>
     /// </example>
+    /// <seealso cref="XmlSerializationOptions"/>
+    /// <seealso cref="BinarySerializer"/>
+    /// <seealso cref="BinaryTypeConverter"/>
     public static class XmlSerializer
     {
         #region Constants

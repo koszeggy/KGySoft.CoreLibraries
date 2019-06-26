@@ -228,7 +228,7 @@ namespace KGySoft.Serialization
     ///     public static void Main()
     ///     {
     ///         var instance = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
-    ///         Console.WriteLine("Generated object:   " + GetDeepContent(instance));
+    ///         Console.WriteLine("Generated object:   " + Dump(instance));
     /// 
     ///         using (var ms = new MemoryStream())
     ///         {
@@ -240,7 +240,7 @@ namespace KGySoft.Serialization
     ///             ms.Position = 0L;
     ///             object deserialized = formatter.Deserialize(ms);
     /// 
-    ///             Console.WriteLine("Deserialized object " + GetDeepContent(deserialized));
+    ///             Console.WriteLine("Deserialized object " + Dump(deserialized));
     ///             Console.WriteLine("Length by BinarySerializationFormatter: " + ms.Length);
     /// 
     ///             // serializing by System version:
@@ -250,7 +250,7 @@ namespace KGySoft.Serialization
     ///         }
     ///     }
     /// 
-    ///     private static string GetDeepContent(object o)
+    ///     private static string Dump(object o)
     ///     {
     ///         if (o == null)
     ///             return "<null>";
@@ -259,9 +259,9 @@ namespace KGySoft.Serialization
     ///             return convertible.ToString(CultureInfo.InvariantCulture);
     /// 
     ///         if (o is IEnumerable enumerable)
-    ///             return $"[{String.Join(", ", enumerable.Cast<object>().Select(GetDeepContent))}]";
+    ///             return $"[{String.Join(", ", enumerable.Cast<object>().Select(Dump))}]";
     /// 
-    ///         return $"{{{String.Join("; ", o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {GetDeepContent(p.GetValue(o))}"))}}}";
+    ///         return $"{{{String.Join("; ", o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}"))}}}";
     ///     }
     /// }
     /// 

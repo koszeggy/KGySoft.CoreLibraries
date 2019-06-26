@@ -328,7 +328,7 @@ public class Person
     public DateTime BirthDate { get; set; }
 
     // System serializer fails here: the property has no setter and its type cannot be instantiated.
-    public IList<string> PhoneNumbers { get; } = new HashSet<string>();
+    public IList<string> PhoneNumbers { get; } = new Collection<string>();
 }
 ```
 
@@ -499,6 +499,8 @@ public static class MyCommands
 ```
 
 To use a command it has to be bound to one or more sources (and to some targets if the command is targeted). To create a binding the `CreateBinding` extension method can be used:
+
+_Tip:_ Try also [online](https://dotnetfiddle.net/jg4OXS).
 
 ```cs
 var binding = MyCommands.PasteCommand.CreateBinding(menuItemPaste, "Click", textBox);
@@ -771,6 +773,8 @@ Cases are sorted by time (quickest first)
 ```
 
 If you need to use parameterized tests you can simply derive the `PerformanceTestBase<TDelegate, TResult>` class. Override the `OnBeforeCase` method to reset the parameter for each test cases. For example, this is how you can use a prepared `Random` instance in a performance test:
+
+> _Tip:_ Try also [online](https://dotnetfiddle.net/GSeBq6).
 
 ```cs
 public class RandomizedPerformanceTest<T> : PerformanceTestBase<Func<Random, T>, T>

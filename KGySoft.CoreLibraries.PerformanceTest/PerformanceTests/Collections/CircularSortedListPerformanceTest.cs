@@ -214,7 +214,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             SortedList<LongEnum, int> slistEnum = new SortedList<LongEnum, int>(cslistEnum);
             SortedDictionary<LongEnum, int> sdictEnum = new SortedDictionary<LongEnum, int>(cslistEnum);
 
-            new PerformanceTest { TestName = "Search Test", Iterations = 100000 }
+            new PerformanceTest<bool> { TestName = "Search Test", Iterations = 100000 }
                 .AddCase(() => slist.ContainsKey(capacity), "SortedList<int,int>.ContainsKey")
                 .AddCase(() => sdict.ContainsKey(capacity), "SortedDictionary<int,int>.ContainsKey")
                 .AddCase(() => cslist.ContainsKey(capacity), "CircularSortedList<int,int>.ContainsKey (0-aligned)")
