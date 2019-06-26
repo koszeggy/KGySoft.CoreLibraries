@@ -3000,7 +3000,7 @@ namespace KGySoft.Serialization
                 if (ci == null)
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
-                Reflector.InvokeMethod(ci, "SerializationInvoke", obj, si, Context);
+                ci.SerializationInvoke(obj, si, Context);
             }
             else
             {
@@ -3040,7 +3040,7 @@ namespace KGySoft.Serialization
                 if (ci == null)
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
-                Reflector.InvokeMethod(ci, "SerializationInvoke", obj, si, Context);
+                ci.SerializationInvoke(obj, si, Context);
             }
             else
             {

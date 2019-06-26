@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 using System.Xml;
@@ -103,7 +104,9 @@ namespace KGySoft.Reflection
 
         private static IDictionary<Type, ActionMethodAccessor> methodsIList_Insert;
         private static IDictionary<Type, ActionMethodAccessor> methodsIList_RemoveAt;
-        private static IDictionary<Type, IndexerAccessor> methodsIList_Item;
+        private static IDictionary<Type, IndexerAccessor> propertiesIList_Item;
+
+        private static ActionMethodAccessor methodRuntimeConstructorInfo_SerializationInvoke;
 
         #endregion
 
@@ -180,6 +183,12 @@ namespace KGySoft.Reflection
         private static FieldAccessor DataNodeInfo_MimeType(object nodeInfo) => fieldDataNodeInfo_MimeType ?? (fieldDataNodeInfo_MimeType = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("MimeType", BindingFlags.Instance | BindingFlags.NonPublic)));
         private static FieldAccessor DataNodeInfo_ValueData(object nodeInfo) => fieldDataNodeInfo_ValueData ?? (fieldDataNodeInfo_ValueData = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ValueData", BindingFlags.Instance | BindingFlags.NonPublic)));
         private static FieldAccessor DataNodeInfo_ReaderPosition(object nodeInfo) => fieldDataNodeInfo_ReaderPosition ?? (fieldDataNodeInfo_ReaderPosition = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ReaderPosition", BindingFlags.Instance | BindingFlags.NonPublic)));
+
+        #endregion
+
+        #region RuntimeConstructorInfo
+
+        private static ActionMethodAccessor RuntimeConstructorInfo_SerializationInvoke(ConstructorInfo ci) => methodRuntimeConstructorInfo_SerializationInvoke ?? (methodRuntimeConstructorInfo_SerializationInvoke = new ActionMethodAccessor(ci.GetType().GetMethod("SerializationInvoke", BindingFlags.Instance | BindingFlags.NonPublic)));
 
         #endregion
 
@@ -391,12 +400,12 @@ namespace KGySoft.Reflection
 
         private static IndexerAccessor IList_Item(Type listInterface)
         {
-            if (methodsIList_Item == null)
-                Interlocked.CompareExchange(ref methodsIList_Item, new LockingDictionary<Type, IndexerAccessor>(), null);
-            if (!methodsIList_Item.TryGetValue(listInterface, out IndexerAccessor accessor))
+            if (propertiesIList_Item == null)
+                Interlocked.CompareExchange(ref propertiesIList_Item, new LockingDictionary<Type, IndexerAccessor>(), null);
+            if (!propertiesIList_Item.TryGetValue(listInterface, out IndexerAccessor accessor))
             {
                 accessor = new IndexerAccessor(listInterface.GetProperty("Item"));
-                methodsIList_Item[listInterface] = accessor;
+                propertiesIList_Item[listInterface] = accessor;
             }
 
             return accessor;
@@ -523,6 +532,12 @@ namespace KGySoft.Reflection
         internal static void Insert([NoEnumeration] this IEnumerable list, Type listInterface, int index, object item) => IList_Insert(listInterface).Invoke(list, index, item);
         internal static void RemoveAt([NoEnumeration] this IEnumerable list, Type listInterface, int index) => IList_RemoveAt(listInterface).Invoke(list, index);
         internal static void SetElementAt([NoEnumeration] this IEnumerable list, Type listInterface, int index, object item) => IList_Item(listInterface).Set(list, item, index);
+
+        #endregion
+
+        #region RuntimeConstructorInfo
+
+        internal static void SerializationInvoke(this ConstructorInfo ci, object target, SerializationInfo info, StreamingContext context) => RuntimeConstructorInfo_SerializationInvoke(ci).Invoke(ci, target, info, context);
 
         #endregion
 
