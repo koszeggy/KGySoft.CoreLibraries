@@ -6,7 +6,7 @@ KGy SOFT Core Libraries features high-performance and handy general libraries.
 Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
 
 [![Website](https://img.shields.io/website/https/kgysoft.net/corelibraries.svg)](https://kgysoft.net/corelibraries)
-[![Help](https://img.shields.io/badge/help-corelibraries-informational.svg)](https://docs.kgysoft.net/corelibraries)
+[![Website](https://img.shields.io/website/https/docs.kgysoft.net/corelibraries.svg?label=online%20help&up_message=available)](https://docs.kgysoft.net/corelibraries)
 [![GitHub repo size](https://img.shields.io/github/repo-size/koszeggy/KGySoft.CoreLibraries.svg?label=github)](https://github.com/koszeggy/KGySoft.CoreLibraries)
 [![Nuget](https://img.shields.io/nuget/v/KGySoft.CoreLibraries.svg)](https://www.nuget.org/packages/KGySoft.CoreLibraries)
 
@@ -751,7 +751,7 @@ The result of `DoTest()` can be processed wither manually or can be dumped in an
 
 ```
 ==[System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum> Results]================================================
-Iterations: 1 000 000
+Iterations: 1Â 000Â 000
 Warming up: Yes
 Test cases: 2
 Repeats: 2
@@ -763,7 +763,7 @@ Cases are sorted by time (quickest first)
   #1          29,40 ms   <---- Worst
   #2          23,80 ms   <---- Best
   Worst-Best difference: 5,60 ms (23,55%)
-2. Enum.ToString: average time: 460,78 ms (+434,18 ms / 1 732,36%)
+2. Enum.ToString: average time: 460,78 ms (+434,18 ms / 1Â 732,36%)
   #1         456,18 ms   <---- Best
   #2         465,37 ms   <---- Worst
   Worst-Best difference: 9,19 ms (2,01%)
