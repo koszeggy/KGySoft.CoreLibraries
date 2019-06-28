@@ -66,22 +66,24 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // to collection
             Test(new int[] { 1, 2, 3 }, new List<string> { "1", "2", "3" }); // populatable
             Test(new int[] { 1, 2, 3 }, new ReadOnlyCollection<string>(new List<string> { "1", "2", "3" })); // by ctor, accepts list
-            Test(new int[] { 1, 2, 3 }, new ArraySegment<string>(new[] { "1", "2", "3" })); // by ctor, accepts array
+#if !NET35
+                        Test(new int[] { 1, 2, 3 }, new ArraySegment<string>(new[] { "1", "2", "3" })); // by ctor, accepts array
+#endif
             Test(new List<int> { 1, 2, 3 }, new ArrayList { 1, 2, 3 }); // gen -> non-gen
             Test(new ArrayList { 1, 2, 3 }, new List<int> { 1, 2, 3 }); // non-gen -> gen
 
             Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new Dictionary<string, int> { { "1", 2 }, { "3", 4 } }); // dictionary, populatable
 #if !(NET35 || NET40)
-            Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new ReadOnlyDictionary<string, int>(new Dictionary<string, int> { { "1", 2 }, { "3", 4 } })); // dictionary, by another dictionary
+                        Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new ReadOnlyDictionary<string, int>(new Dictionary<string, int> { { "1", 2 }, { "3", 4 } })); // dictionary, by another dictionary
 #endif
 
             Test(new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }, new Hashtable { { 1, "2" }, { 3, "4" } }); // gen -> non-gen
-            Test(new Hashtable { { 1, "2" }, { 3, "4" } }, new Dictionary<int, string> { { 1, "2" }, { 3, "4" } }); // non-gen -> gen
+            Test(new SortedList { { 1, "2" }, { 3, "4" } }, new SortedList<int, string> { { 1, "2" }, { 3, "4" } }); // non-gen -> gen
 
             // enumerable to string
             Test(new List<char> { 'a', 'b', 'c' }, "abc");
         }
 
-        #endregion
+#endregion
     }
 }

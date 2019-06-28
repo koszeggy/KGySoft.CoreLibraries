@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public void TestAssemblyPartialResolve()
         {
-            string asmName = "System.Windows.Forms";
+            string asmName = "System.Design";
             if (Reflector.ResolveAssembly(asmName, false, true) != null)
             {
                 Assert.Inconclusive("Assembly {0} is already loaded, test is ignored. Try to run this test alone.", asmName);

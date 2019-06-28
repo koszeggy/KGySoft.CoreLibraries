@@ -880,6 +880,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region StrongBox class
+#if NET35
+
+        private class StrongBox<T> : System.Runtime.CompilerServices.StrongBox<T>
+        {
+            public StrongBox() : base(default(T)) { }
+            public StrongBox(T value) : base(value) { }
+        }
+
+#endif
+        #endregion
+
         #endregion
 
         #region Nested structs

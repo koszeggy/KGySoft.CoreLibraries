@@ -85,8 +85,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<HashSet<int>>(true, true, typeof(IEnumerable<int>), typeof(int), false);
             Test<SortedList<int, string>>(true, true, typeof(IDictionary<int, string>), typeof(KeyValuePair<int, string>), true);
             Test<Cache<int, string>>(true, true, null, typeof(KeyValuePair<int, string>), true);
-            Test<ArraySegment<int>>(true, false, typeof(int[]), typeof(int), false);
 #if !NET35
+            Test<ArraySegment<int>>(true, false, typeof(int[]), typeof(int), false);
             Test<ConcurrentDictionary<int, string>>(true, true, typeof(IEnumerable<KeyValuePair<int, string>>), typeof(KeyValuePair<int, string>), true);
             Test<ConcurrentQueue<int>>(true, false, typeof(IEnumerable<int>), typeof(int), false);
 #endif

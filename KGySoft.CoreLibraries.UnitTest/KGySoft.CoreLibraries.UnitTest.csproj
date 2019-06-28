@@ -22,6 +22,10 @@
     </NuGetPackageImportStamp>
     <!--<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>-->
     <OldToolsVersion>4.0</OldToolsVersion>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_NET35|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
