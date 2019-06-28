@@ -38,7 +38,7 @@
 
 - KGySoft.Serialization namespace:
 ==================================
-- BinarySerializationFormatter: Avoiding SecurityException from partially trusted domain if possible
+- BinarySerializationFormatter: Avoiding SecurityException from a partially trusted domain if possible
 - XmlSerializer: Fixing serialization visibility inheritance of properties
 
 ~~~~~~~~~
