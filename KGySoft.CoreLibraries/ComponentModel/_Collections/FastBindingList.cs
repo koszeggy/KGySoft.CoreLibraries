@@ -44,7 +44,7 @@ namespace KGySoft.ComponentModel
     /// <para><strong>Incompatibility</strong> with <see cref="BindingList{T}"/>:
     /// <list type="bullet">
     /// <item><see cref="BindingList{T}"/> is derived from <see cref="Collection{T}"/>, whereas <see cref="FastBindingList{T}"/> is derived from <see cref="FastLookupCollection{T}"/>, which is derived from <see cref="VirtualCollection{T}"/>.
-    /// Both type implement the <see cref="IList{T}"/> interface though.</item>
+    /// Both types implement the <see cref="IList{T}"/> interface though.</item>
     /// <item><see cref="BindingList{T}.AddingNew"><![CDATA[BindingList<T>.AddingNew]]></see> event has <see cref="AddingNewEventHandler"/> type, which uses <see cref="AddingNewEventArgs"/>,
     /// whereas in <see cref="FastBindingList{T}"/> the <see cref="AddingNew"/> event has <see cref="EventHandler{TEventArgs}"/> type where <em>TEventArgs</em> is <see cref="AddingNewEventArgs{T}"/>. The main difference between the two event arguments
     /// that the latter is generic.</item>

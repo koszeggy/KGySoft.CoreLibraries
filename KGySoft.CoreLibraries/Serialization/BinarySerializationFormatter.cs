@@ -208,8 +208,8 @@ namespace KGySoft.Serialization
     /// </para>
     /// </remarks>
     /// <example>
-    /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
     /// <note type="tip">Try also <a href="https://dotnetfiddle.net/Q6t0le" target="_blank">online</a>.</note>
+    /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections;
@@ -227,6 +227,7 @@ namespace KGySoft.Serialization
     /// {
     ///     public static void Main()
     ///     {
+    ///         // feel free to change the type in NextObject<>
     ///         var instance = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
     ///         Console.WriteLine("Generated object:   " + Dump(instance));
     /// 

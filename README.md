@@ -750,7 +750,7 @@ new PerformanceTest
     .DumpResults(Console.Out);
 ```
 
-The result of `DoTest()` can be processed wither manually or can be dumped in any `TextWriter`. The example above dumps it on the console and produces a result similar to this one:
+The result of the `DoTest` method can be processed either manually or can be dumped in any `TextWriter`. The example above dumps it on the console and produces a result similar to this one:
 
 ```
 ==[System.Enum vs. KGySoft.CoreLibraries.Enum<TEnum> Results]================================================
