@@ -17,4 +17,4 @@ Among others:
 - Performance measurement and other [diagnostic tools](https://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_Diagnostics.htm)
 - and more...
 
-See the [online help](https://docs.kgysoft.net/corelibraries) for the complete documentation or the [GitHub repo](https://github.com/koszeggy/KGySoft.CoreLibraries) for some highlighted code examples.
+See the [online help](https://docs.kgysoft.net/corelibraries) for the complete documentation or the [project site](https://kgysoft.net/corelibraries) for some highlighted code examples.

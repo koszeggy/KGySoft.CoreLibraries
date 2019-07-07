@@ -393,7 +393,7 @@ namespace KGySoft.ComponentModel
         /// <br/>For an example, see the <strong>Remarks</strong> section of the <see cref="ObservableObjectBase"/> class.
         /// </summary>
         /// <param name="value">The value to set.</param>
-        /// <param name="invokeChangedEvent">If <see langword="true"/>, and the <paramref name="value"/> is different to the previously stored value, then invokes the <see cref="PropertyChanged"/> event.</param>
+        /// <param name="invokeChangedEvent">If <see langword="true"/>, and the <paramref name="value"/> is different from the previously stored value, then invokes the <see cref="PropertyChanged"/> event.</param>
         /// <param name="propertyName">Name of the property to set. This parameter is optional.
         /// <br/>Default value: The name of the caller member.</param>
         /// <returns><see langword="true"/>&#160;if property has been set (change occurred); otherwise, <see langword="false"/>.</returns>

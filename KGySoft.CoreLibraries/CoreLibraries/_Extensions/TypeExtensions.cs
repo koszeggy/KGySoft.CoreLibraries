@@ -172,7 +172,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <param name="genericTypeDefinition">The generic type definition.</param>
-        /// <param name="genericType">When this method returns <see langword="true"/>, the this parameter contains the found implementation of the specified <paramref name="genericTypeDefinition"/>.</param>
+        /// <param name="genericType">When this method returns <see langword="true"/>, then this parameter contains the found implementation of the specified <paramref name="genericTypeDefinition"/>.</param>
         /// <returns><see langword="true"/>&#160;if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
         public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, out Type genericType)
