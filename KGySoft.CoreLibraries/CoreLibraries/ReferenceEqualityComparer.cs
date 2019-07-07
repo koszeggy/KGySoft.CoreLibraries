@@ -14,38 +14,12 @@
 
 #endregion
 
-#region Usings
-
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-
-#endregion
-
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Forces objects to be compared by reference.
     /// </summary>
-    internal sealed class ReferenceEqualityComparer : IEqualityComparer<object>
+    internal sealed class ReferenceEqualityComparer : ReferenceEqualityComparer<object>
     {
-        #region Fields
-
-        private static ReferenceEqualityComparer comparer;
-
-        #endregion
-
-        #region Properties
-
-        internal static ReferenceEqualityComparer Comparer => comparer ?? (comparer = new ReferenceEqualityComparer());
-
-        #endregion
-
-        #region Methods
-
-        bool IEqualityComparer<object>.Equals(object x, object y) => ReferenceEquals(x, y);
-
-        int IEqualityComparer<object>.GetHashCode(object obj) => RuntimeHelpers.GetHashCode(obj);
-
-        #endregion
     }
 }

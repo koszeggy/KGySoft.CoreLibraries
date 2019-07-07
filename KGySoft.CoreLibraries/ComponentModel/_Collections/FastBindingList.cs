@@ -92,6 +92,9 @@ namespace KGySoft.ComponentModel
 
         #region Instance Fields
 
+        // For tracking actually subscribed elements. Not an issue that is not serialized because the clone's inner list is not accessible from outside.
+        [NonSerialized] private readonly HashSet<T> trackedSubscriptions;
+
         private bool disposed;
         private bool allowNew;
         private bool allowEdit;
@@ -308,7 +311,13 @@ namespace KGySoft.ComponentModel
         /// <note>Do not wrap another <see cref="IBindingList"/> or <see cref="ObservableCollection{T}"/> as their events are not captured by the <see cref="FastBindingList{T}"/> class.
         /// To capture and generate events for both wrapped and self list operations use <see cref="ObservableBindingList{T}"/> instead.</note>
         /// </remarks>
-        public FastBindingList(IList<T> list) : base(list) => Initialize();
+        public FastBindingList(IList<T> list) : base(list)
+        {
+            // whether we track items depends also on CheckConsistency, which is initialized by true from this constructor but can be turned off.
+            if (canRaiseItemChange && !typeof(T).IsValueType)
+                trackedSubscriptions = new HashSet<T>(ReferenceEqualityComparer<T>.Comparer);
+            Initialize();
+        }
 
         #endregion
 
@@ -646,6 +655,15 @@ namespace KGySoft.ComponentModel
         {
         }
 
+        /// <inheritdoc/>
+        protected override T GetItem(int index)
+        {
+            T result = base.GetItem(index);
+            if (CheckConsistency && trackedSubscriptions?.Contains(result) == false)
+                HookPropertyChanged(result);
+            return result;
+        }
+
         /// <summary>
         /// Replaces the <paramref name="item" /> at the specified <paramref name="index" />.
         /// </summary>
@@ -752,11 +770,7 @@ namespace KGySoft.ComponentModel
                 throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
-            if (canRaiseItemChange)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
+            UnhookItemsPropertyChanged();
 
             base.ClearItems();
             FireListChanged(ListChangedType.Reset, -1);
@@ -772,11 +786,7 @@ namespace KGySoft.ComponentModel
                 return;
 
             raiseListChangedEvents = false;
-            if (canRaiseItemChange)
-            {
-                foreach (T item in Items)
-                    UnhookPropertyChanged(item);
-            }
+            UnhookItemsPropertyChanged();
 
             (Items as IDisposable)?.Dispose();
             listChangedHandler = null;
@@ -808,11 +818,7 @@ namespace KGySoft.ComponentModel
             allowEdit = true; //Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
 
             raiseListChangedEvents = true;
-            if (!canRaiseItemChange)
-                return;
-
-            foreach (T item in Items)
-                HookPropertyChanged(item);
+            HookItemsPropertyChanged();
         }
 
         private void HookPropertyChanged(T item)
@@ -821,6 +827,8 @@ namespace KGySoft.ComponentModel
                 return;
 
             notifyPropertyChanged.PropertyChanged += Item_PropertyChanged;
+            if (CheckConsistency)
+                trackedSubscriptions?.Add(item);
         }
 
         private void UnhookPropertyChanged(T item)
@@ -829,6 +837,29 @@ namespace KGySoft.ComponentModel
                 return;
 
             notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
+            if (CheckConsistency)
+                trackedSubscriptions?.Remove(item);
+        }
+
+        private void HookItemsPropertyChanged()
+        {
+            if (!canRaiseItemChange)
+                return;
+            foreach (T item in Items)
+                HookPropertyChanged(item);
+        }
+
+        private void UnhookItemsPropertyChanged()
+        {
+            if (!canRaiseItemChange)
+                return;
+            foreach (T item in Items)
+                UnhookPropertyChanged(item);
+            if (trackedSubscriptions?.Count > 0)
+            {
+                foreach (T item in trackedSubscriptions)
+                    HookPropertyChanged(item);
+            }
         }
 
         #endregion

@@ -139,6 +139,7 @@
     <Compile Include="ComponentModel\_BusinessObjects\ObservableObjectBase.cs" />
     <Compile Include="ComponentModel\_Command\SourceAwareTargetedCommand.cs" />
     <Compile Include="ComponentModel\__doc\NamespaceDoc.cs" />
+    <Compile Include="CoreLibraries\ReferenceEqualityComparer`1.cs" />
     <Compile Include="CoreLibraries\_Extensions\EnumeratorExtensions.cs" />
     <Compile Include="CoreLibraries\_Extensions\ExceptionExtensions.cs" />
     <Compile Include="CoreLibraries\_Extensions\StringExtensions.Parser.cs" />
@@ -193,7 +194,7 @@
     <Compile Include="Diagnostics\_Interfaces\ITestCaseResult.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LanguageSettings.cs" />
-    <Compile Include="CoreLibraries\ReferenceComparer.cs" />
+    <Compile Include="CoreLibraries\ReferenceEqualityComparer.cs" />
     <Compile Include="NamespaceDoc.cs" />
     <Compile Include="Collections\ObjectModel\VirtualCollection.cs" />
     <Compile Include="Collections\ObjectModel\_doc\NamespaceDoc.cs" />
@@ -315,7 +316,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
+      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

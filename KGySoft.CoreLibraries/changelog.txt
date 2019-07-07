@@ -6,12 +6,14 @@
 ===============================================================================
 
 ~~~~~~~~~
-- v4.6.3:
+* v4.6.3:
 ~~~~~~~~~
 
-- KGySoft.ComponentModel namespace:
+* KGySoft.ComponentModel namespace:
 ===================================
 - Command.CreatePropertyBinding: The underlying command must not be disposed.
++ FastBindingList: If initialized by a wrapped list of INotifyPropertyChanged items, and CheckConsistency is true, then
+  the subscription for PropertyChange event is checked whenever an item is accessed.
 
 ~~~~~~~~~
 * v4.6.2:
