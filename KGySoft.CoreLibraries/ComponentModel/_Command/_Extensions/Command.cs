@@ -218,7 +218,7 @@ namespace KGySoft.ComponentModel
             };
             bool isNotifyPropertyChanged = source is INotifyPropertyChanged;
             string eventName = isNotifyPropertyChanged ? nameof(INotifyPropertyChanged.PropertyChanged) : sourcePropertyName + "Changed";
-            ICommandBinding result = UpdatePropertyCommand.CreateBinding(state, true)
+            ICommandBinding result = UpdatePropertyCommand.CreateBinding(state)
                 .AddStateUpdater(NullStateUpdater.Updater)
                 .AddSource(source, eventName);
             if (!targets.IsNullOrEmpty())
