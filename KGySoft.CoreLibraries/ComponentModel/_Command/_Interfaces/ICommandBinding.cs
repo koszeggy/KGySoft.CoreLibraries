@@ -89,11 +89,11 @@ namespace KGySoft.ComponentModel
         #region Methods
 
         /// <summary>
-        /// Adds a source to this <see cref="ICommandBinding"/> instance.
+        /// Adds a source to this <see cref="ICommandBinding"/> instance. For static events pass a <see cref="Type"/> as <paramref name="source"/>.
         /// If state updaters were added to the binding by the <see cref="AddStateUpdater">AddStateUpdater</see> method, then the <see cref="State"/> entries will be applied to the new source.
         /// At least one source has to be added to the binding to be able to invoke the underlying <see cref="ICommand"/>.
         /// </summary>
-        /// <param name="source">The new source to add.</param>
+        /// <param name="source">The new source to add. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">The name of the event on the source, which will trigger the underlying <see cref="ICommand"/>.</param>
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
         /// <seealso cref="ICommand"/>
@@ -149,7 +149,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Invokes the underlying <see cref="ICommand"/> for all of the added targets using the specified source, event name and arguments.
         /// </summary>
-        /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>.</param>
+        /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">Name of the event. It is not checked whether this is en existing event.</param>
         /// <param name="eventArgs">The <see cref="EventArgs"/> instance containing the event data.</param>
         void InvokeCommand(object source, string eventName, EventArgs eventArgs);

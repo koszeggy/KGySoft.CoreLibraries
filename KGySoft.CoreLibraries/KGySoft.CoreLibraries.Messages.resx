@@ -863,9 +863,12 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</value>
   </data>
   <data name="ComponentModel_MissingEventFormat" xml:space="preserve">
-    <value>There is no event '{0}' in component '{1}'.</value>
+    <value>There is no public event '{0}' in component '{1}'.</value>
   </data>
   <data name="ComponentModel_InvalidEventFormat" xml:space="preserve">
     <value>Event '{0}' does not have regular event handler delegate type.</value>
+  </data>
+  <data name="ComponentModel_InvalidCommandSource" xml:space="preserve">
+    <value>Source must be an object instance for instance events and a Type for static events.</value>
   </data>
 </root>

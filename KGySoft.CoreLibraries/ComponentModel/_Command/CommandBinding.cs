@@ -101,7 +101,7 @@ namespace KGySoft.ComponentModel
         #region Static Fields
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<string, EventInfo>> eventsCache = new Cache<Type, Dictionary<string, EventInfo>>(t =>
-            t.GetEvents(BindingFlags.Public | BindingFlags.Instance).ToDictionary(e => e.Name, e => e)).GetThreadSafeAccessor();
+            t.GetEvents().ToDictionary(e => e.Name, e => e)).GetThreadSafeAccessor();
 
         #endregion
 
@@ -194,9 +194,12 @@ namespace KGySoft.ComponentModel
             if (eventName == null)
                 throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull);
 
-            Type sourceType = source.GetType();
+            Type sourceType = source as Type ?? source.GetType();
+            bool isStatic = ReferenceEquals(source, sourceType);
             if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
                 throw new ArgumentException(Res.ComponentModelMissingEvent(eventName, sourceType), nameof(eventName));
+            if (eventInfo.AddMethod.IsStatic ^ isStatic)
+                throw new ArgumentException(Res.ComponentModelInvalidCommandSource, nameof(source));
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
             ParameterInfo[] parameters = invokeMethod?.GetParameters();
@@ -210,14 +213,14 @@ namespace KGySoft.ComponentModel
                 return this;
 
             // creating generic info by reflection because the signature must match and EventArgs can vary
-            var info = (SubscriptionInfo)Activator.CreateInstance(typeof(SubscriptionInfo<>).MakeGenericType(parameters[1].ParameterType));
+            var info = (SubscriptionInfo)Reflector.CreateInstance(typeof(SubscriptionInfo<>).MakeGenericType(parameters[1].ParameterType));
             info.Source = source;
             info.EventName = eventName;
             info.Binding = this;
 
             // subscribing the event by info.Execute
             info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
-            Reflector.InvokeMethod(source, eventInfo.GetAddMethod(), info.Delegate);
+            Reflector.InvokeMethod(isStatic ? null : source, eventInfo.GetAddMethod(), info.Delegate);
 
             if (subscriptions == null)
                 sources[source] = new Dictionary<EventInfo, SubscriptionInfo> { { eventInfo, info } };
@@ -225,6 +228,47 @@ namespace KGySoft.ComponentModel
                 subscriptions[eventInfo] = info;
 
             UpdateSource(source);
+            return this;
+        }
+
+        public ICommandBinding AddSource(Type sourceType, string eventName)
+        {
+            if (disposed)
+                throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (sourceType == null)
+                throw new ArgumentNullException(nameof(sourceType), Res.ArgumentNull);
+            if (eventName == null)
+                throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull);
+
+            if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
+                throw new ArgumentException(Res.ComponentModelMissingEvent(eventName, sourceType), nameof(eventName));
+
+            MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
+            ParameterInfo[] parameters = invokeMethod?.GetParameters();
+
+            // ReSharper disable once PossibleNullReferenceException - if parameters is null the first condition will match
+            if (invokeMethod?.ReturnType != Reflector.VoidType || parameters.Length != 2 || parameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
+                throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
+
+            // already added
+            if (sources.TryGetValue(sourceType, out Dictionary<EventInfo, SubscriptionInfo> subscriptions) && subscriptions.ContainsKey(eventInfo))
+                return this;
+
+            // creating generic info by reflection because the signature must match and EventArgs can vary
+            var info = (SubscriptionInfo)Activator.CreateInstance(typeof(SubscriptionInfo<>).MakeGenericType(parameters[1].ParameterType));
+            info.Source = sourceType;
+            info.EventName = eventName;
+            info.Binding = this;
+
+            // subscribing the event by info.Execute
+            info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
+            Reflector.InvokeMethod(null, eventInfo.GetAddMethod(), info.Delegate);
+
+            if (subscriptions == null)
+                sources[sourceType] = new Dictionary<EventInfo, SubscriptionInfo> { { eventInfo, info } };
+            else
+                subscriptions[eventInfo] = info;
+
             return this;
         }
 
@@ -241,7 +285,7 @@ namespace KGySoft.ComponentModel
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
             stateUpdaters.Add(updater);
             if (updateSources && sources.Count > 0)
-                sources.Keys.ForEach(UpdateSource);
+                GetInstanceSources().ForEach(UpdateSource);
             return this;
         }
 
@@ -353,10 +397,12 @@ namespace KGySoft.ComponentModel
                 return false;
 
             foreach (KeyValuePair<EventInfo, SubscriptionInfo> subscriptionInfo in subscriptions)
-                Reflector.InvokeMethod(source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
+                Reflector.InvokeMethod(source is Type ? null : source, subscriptionInfo.Key.GetRemoveMethod(), subscriptionInfo.Value.Delegate);
 
             return sources.Remove(source);
         }
+
+        private IEnumerable<object> GetInstanceSources() => sources.Keys.Where(k => !(k is Type));
 
         private void OnExecuting(ExecuteCommandEventArgs e) => executing?.Invoke(this, e);
         private void OnExecuted(ExecuteCommandEventArgs e) => executed?.Invoke(this, e);
@@ -369,7 +415,7 @@ namespace KGySoft.ComponentModel
         {
             if (stateUpdaters.Count == 0)
                 return;
-            foreach (object source in sources.Keys)
+            foreach (object source in GetInstanceSources())
                 UpdateSource(source, e.PropertyName);
         }
 

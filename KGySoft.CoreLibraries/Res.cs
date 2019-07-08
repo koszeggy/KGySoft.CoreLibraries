@@ -222,6 +222,9 @@ namespace KGySoft
         /// <summary>'Enabled' state must have a boolean value.</summary>
         internal static string ComponentModelEnabledMustBeBool => Get("ComponentModel_EnabledMustBeBool");
 
+        /// <summary>Source must be an object instance for instance events and a Type for static events.</summary>
+        internal static string ComponentModelInvalidCommandSource => Get("ComponentModel_InvalidCommandSource");
+        
         #endregion
 
         #region Enum/EnumComparer
@@ -577,7 +580,7 @@ namespace KGySoft
         /// <summary>The property binding command state does not contain the expected entry '{0}'.</summary>
         internal static string ComponentModelMissingState(string stateName) => Get("ComponentModel_MissingStateFormat", stateName);
 
-        /// <summary>There is no event '{0}' in type '{1}'.</summary>
+        /// <summary>There is no public event '{0}' in type '{1}'.</summary>
         internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type);
 
         /// <summary>Event '{0}' does not have regular event handler delegate type.</summary>

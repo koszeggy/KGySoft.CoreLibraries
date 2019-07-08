@@ -55,7 +55,7 @@ namespace KGySoft.ComponentModel
         /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/> as well as the optionally provided initial state of the binding.
         /// </summary>
         /// <param name="command">The command to bind.</param>
-        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="source">The source, which can trigger the command. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
         /// <param name="initialState">The initial state of the binding.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
@@ -79,7 +79,7 @@ namespace KGySoft.ComponentModel
         /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
         /// </summary>
         /// <param name="command">The command to bind.</param>
-        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="source">The source, which can trigger the command. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>

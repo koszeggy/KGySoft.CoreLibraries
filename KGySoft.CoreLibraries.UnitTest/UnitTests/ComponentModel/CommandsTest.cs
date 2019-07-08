@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Globalization;
 using System.IO;
 
 using KGySoft.ComponentModel;
@@ -56,6 +57,14 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 state["TriggerCount"] = state.GetValueOrDefault<int>("TriggerCount") + 1;
             });
 
+        public static readonly ICommand LogLanguageChangeCommand
+            = new TargetedCommand<TextWriter>((state, writer) =>
+            {
+                writer.WriteLine($"New display language: {LanguageSettings.DisplayLanguage.Name}");
+                state[nameof(LanguageSettings.DisplayLanguage)] = LanguageSettings.DisplayLanguage.Name;
+            });
+
+
         #endregion
 
         #region Methods
@@ -86,6 +95,15 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             binding.InvokeCommand(this, "Fake event name", new PropertyChangedExtendedEventArgs("old", "new", "Fake property name"));
             Assert.AreEqual(2, binding.State["TriggerCount"]); // our manual trigger
+
+            // binding to static event
+            binding.Dispose();
+            binding = LogLanguageChangeCommand.CreateBinding(typeof(LanguageSettings), nameof(LanguageSettings.DisplayLanguageChanged), Console.Out);
+            CultureInfo origLanguage = LanguageSettings.DisplayLanguage;
+            LanguageSettings.DisplayLanguage = CultureInfo.InvariantCulture;
+            LanguageSettings.DisplayLanguage = origLanguage;
+            Assert.AreEqual(origLanguage.Name, binding.State[nameof(LanguageSettings.DisplayLanguage)]);
+            binding.Dispose();
         }
 
         [Test]

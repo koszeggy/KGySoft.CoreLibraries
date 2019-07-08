@@ -18,9 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -35,7 +35,7 @@ namespace KGySoft.ComponentModel
     /// </summary>
     /// <seealso cref="ICommand" />
     /// <seealso cref="ICommandBinding" />
-    public class CommandBindingsCollection : Collection<ICommandBinding>, IDisposable
+    public class CommandBindingsCollection : FastLookupCollection<ICommandBinding>, IDisposable
     {
         #region Methods
 
@@ -68,7 +68,7 @@ namespace KGySoft.ComponentModel
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="command">The command to bind.</param>
-        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="source">The source, which can trigger the command. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
         /// <param name="initialState">The initial state of the binding. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
@@ -154,7 +154,7 @@ namespace KGySoft.ComponentModel
         /// The created binding will be added to this <see cref="CommandBindingsCollection"/>.
         /// </summary>
         /// <param name="command">The command to bind.</param>
-        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="source">The source, which can trigger the command. Can be a <see cref="Type"/> for static events.</param>
         /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>

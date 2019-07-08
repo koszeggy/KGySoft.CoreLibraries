@@ -6,14 +6,28 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v4.6.3:
+! v4.6.3:
 ~~~~~~~~~
 
-* KGySoft.ComponentModel namespace:
++ KGySoft.Collections.ObjectModel namespace:
+============================================
++ FastLookupCollection<T>: New OnMapRebuilt virtual method so derived classes can react to detected inconsistencies.
+
+! KGySoft.ComponentModel namespace:
 ===================================
-- Command.CreatePropertyBinding: The underlying command must not be disposed.
-+ FastBindingList: If initialized by a wrapped list of INotifyPropertyChanged items, and CheckConsistency is true, then
-  the subscription for PropertyChange event is checked whenever an item is accessed.
+! CommandBindingsCollection is now derived from FastLookupCollection<T> instead of Collection<T>
+- Command.CreatePropertyBinding: The underlying command was disposed incorrectly.
++ ICommandBinding.AddSource, Command.CreateBinding, CommandBindingsCollection.Add: The source can be a Type for static events.
+! FastBindingList<T>:
+  ! SetItem: Invoking ListChange event with ListChangedType.ItemChanged even if setting the same instance again (compatibility with BindingList<T>).
+  - SetItem: Fixing consistency check so inner map is now not rebuilt that often.
+  - Property changes of elements were not tracked in a deserialized instance.
+  + If CheckConsistency is true, then subscription of element property changes can be initialized even for elements added directly
+    to the wrapped collection when they are accessed.
+  - Fixing consistency check in SetItem
+! SortableBindingList<T>:
+  ! SetItem: Invoking ListChange event with ListChangedType.ItemChanged even if setting the same instance again (compatibility with BindingList<T>).
+  - SetItem: Fixing consistency check so inner map is now not rebuilt that often.
 
 ~~~~~~~~~
 * v4.6.2:
