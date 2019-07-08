@@ -85,9 +85,10 @@ namespace KGySoft.Collections.ObjectModel
         /// <see langword="false"/>&#160;to not check whether the wrapped <paramref name="list"/> changed. It can be <see langword="false"/>&#160;if the wrapped list is not changed outside of this <see cref="FastLookupCollection{T}"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null" />.</exception>
+        [SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors", Justification = "False alarm, OnMapRebuilt is not called when the constructor calls BuildIndexMap")]
         public FastLookupCollection(IList<T> list, bool checkConsistency = true) : base(list)
         {
-            BuildIndexMap();
+            BuildIndexMap(false);
             CheckConsistency = checkConsistency;
         }
 
@@ -271,10 +272,13 @@ namespace KGySoft.Collections.ObjectModel
         /// </remarks>
         protected override void SetItem(int index, T item)
         {
-            if (CheckConsistency && !ContainsIndex(itemToIndex, item, index))
-                BuildIndexMap();
-
             T original = base.GetItem(index);
+            if (CheckConsistency && !ContainsIndex(itemToIndex, original, index))
+            {
+                BuildIndexMap();
+                original = base.GetItem(index);
+            }
+
             if (ReferenceEquals(original, item))
                 return;
 
@@ -358,14 +362,21 @@ namespace KGySoft.Collections.ObjectModel
             itemToIndex.Clear();
         }
 
+        /// <summary>
+        /// Called after the internal index map has been rebuilt either when inconsistency has been detected or when <see cref="InnerListChanged">InnerListChanged</see> has been called.
+        /// </summary>
+        protected virtual void OnMapRebuilt()
+        {
+        }
+
         #endregion
 
         #region Private Methods
 
         [OnDeserialized]
-        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap();
+        private void OnDeserialized(StreamingContext ctx) => BuildIndexMap(false);
 
-        private void BuildIndexMap()
+        private void BuildIndexMap(bool rebuild = true)
         {
             if (itemToIndex.Count > 0)
                 itemToIndex = new AllowNullDictionary<T, CircularList<int>>();
@@ -375,6 +386,9 @@ namespace KGySoft.Collections.ObjectModel
                 T item = base.GetItem(i);
                 AddIndex(itemToIndex, item, i);
             }
+
+            if (rebuild)
+                OnMapRebuilt();
         }
 
         #endregion

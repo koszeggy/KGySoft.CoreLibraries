@@ -58,7 +58,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        [NonSerialized] private bool isChanging;
+        [NonSerialized] private bool isChangingOrRaisingChanged;
         [NonSerialized] private bool sortPending; // indicates that the list is sorted but contains unsorted elements due to insertion
         [NonSerialized] private PropertyDescriptor sortProperty;
         private string sortPropertyName; // for serialization
@@ -69,7 +69,6 @@ namespace KGySoft.ComponentModel
         private bool sortOnChange;
         private int addNewPos = -1;
         [NonSerialized] private bool isCancelingNew;
-        [NonSerialized] private bool isMoving;
 
         #endregion
 
@@ -171,7 +170,7 @@ namespace KGySoft.ComponentModel
         {
             base.InnerListChanged();
             if (sortDirection != null)
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
         }
 
         /// <inheritdoc/>
@@ -180,7 +179,7 @@ namespace KGySoft.ComponentModel
             if (sortDirection != null && sortedToBaseIndex.Count != Count)
             {
                 // if there is inconsistency there will be an EndNew instead of cancel because we cannot be sure what to remove
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 return;
             }
 
@@ -204,7 +203,7 @@ namespace KGySoft.ComponentModel
         {
             if (sortDirection != null && sortedToBaseIndex.Count != Count)
             {
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 return;
             }
 
@@ -281,36 +280,15 @@ namespace KGySoft.ComponentModel
                 return;
 
             EndNew();
-            var previousSortIndex = sortedToBaseIndex;
             sortedToBaseIndex = null;
             itemToSortedIndex = null;
             sortProperty = null;
             sortDirection = null;
             sortPending = false;
-            if (!RaiseListChangedEvents)
-                return;
 
-            isMoving = true;
-            try
-            {
-                int length = Count;
-                for (int i = 0; i < length; i++)
-                {
-                    int baseIndex = previousSortIndex[i].Key;
-                    if (baseIndex >= length)
-                    {
-                        FireListChanged(ListChangedType.Reset, -1);
-                        break;
-                    }
-
-                    if (i != baseIndex)
-                        OnListChanged(new ListChangedEventArgs(ListChangedType.ItemMoved, i, baseIndex));
-                }
-            }
-            finally
-            {
-                isMoving = false;
-            }
+            // In theory, also Moved could be used, which actually solves the problem of uncommitted edits in WinForms but
+            // a.) WPF does not tolerate it b.) IBindingList docs say ApplySort must raise a ListChanged event with the Reset enumeration.
+            FireListChanged(ListChangedType.Reset, -1);
         }
 
         /// <summary>
@@ -379,20 +357,12 @@ namespace KGySoft.ComponentModel
                 return;
             }
 
-            if (isMoving) // in some technologies if the list is bound to an object without a specific property name (the whole element is bound), then on moving the currency manager may try to set the elements back.
-                return;
-
-            if (Count != sortedToBaseIndex.Count || CheckConsistency && !ContainsIndex(itemToSortedIndex, item, index))
-                BuildSortedIndexMap(true);
-
             T original = GetItemBySortedIndex(index);
-            if (ReferenceEquals(original, item))
-                return;
 
             // here we can't ignore inconsistency because we need to update the maintained indices
             if (!RemoveIndex(itemToSortedIndex, original, index) || !AddIndex(itemToSortedIndex, item, index))
             {
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 RemoveIndex(itemToSortedIndex, original, index);
                 AddIndex(itemToSortedIndex, item, index);
             }
@@ -400,14 +370,14 @@ namespace KGySoft.ComponentModel
                 sortedToBaseIndex[index] = new SortIndex(sortedToBaseIndex[index].Key, sortProperty == null ? item : sortProperty.GetValue(item));
 
             int baseIndex = GetBaseIndex(index);
-            isChanging = true;
+            isChangingOrRaisingChanged = true;
             try
             {
                 base.SetItem(baseIndex, item);
             }
             finally
             {
-                isChanging = false;
+                isChangingOrRaisingChanged = false;
             }
 
             FireListChanged(ListChangedType.ItemChanged, index);
@@ -441,21 +411,21 @@ namespace KGySoft.ComponentModel
             }
 
             // index refers the sorted list here so in the underlying collection we just add to the last position
-            isChanging = true;
+            isChangingOrRaisingChanged = true;
             try
             {
                 base.InsertItem(Count, item);
             }
             finally
             {
-                isChanging = false;
+                isChangingOrRaisingChanged = false;
             }
 
             if (IsAddingNew)
                 addNewPos = index;
             int newLength = Count;
             if (newLength != sortedToBaseIndex.Count + 1)
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
             else
             {
                 // no need to adjust indices in sortedToBaseIndex because we added the item to the last position in underlying list
@@ -467,14 +437,14 @@ namespace KGySoft.ComponentModel
                     {
                         if (!AdjustIndex(itemToSortedIndex, GetItemBySortedIndexUnchecked(i), index, 1, adjustedValues))
                         {
-                            BuildSortedIndexMap(true);
+                            BuildSortedIndexMap();
                             return;
                         }
                     }
                 }
 
                 if (!AddIndex(itemToSortedIndex, item, index))
-                    BuildSortedIndexMap(true);
+                    BuildSortedIndexMap();
             }
 
             FireListChanged(ListChangedType.ItemAdded, index);
@@ -507,7 +477,7 @@ namespace KGySoft.ComponentModel
             {
                 // Possible issue here: in case of inconsistency after the resort the removed element is actually random
                 // But if canceling a new element we addNewPos is reset do we must return here.
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 if (isCancelingNew)
                     return;
             }
@@ -516,20 +486,20 @@ namespace KGySoft.ComponentModel
             T original = GetItemBySortedIndex(index);
             int baseIndex = GetBaseIndex(index);
 
-            isChanging = true;
+            isChangingOrRaisingChanged = true;
             try
             {
                 base.RemoveItem(baseIndex);
             }
             finally
             {
-                isChanging = false;
+                isChangingOrRaisingChanged = false;
             }
 
             // here we can't ignore inconsistency because we need to update the maintained indices
             if (!RemoveIndex(itemToSortedIndex, original, index))
             {
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 return;
             }
 
@@ -555,7 +525,7 @@ namespace KGySoft.ComponentModel
                     // Getting as unchecked to avoid possible double rebuild. Count difference were already checked above anyway.
                     if (!AdjustIndex(itemToSortedIndex, GetItemBySortedIndexUnchecked(i), index, -1, adjustedValues))
                     {
-                        BuildSortedIndexMap(true);
+                        BuildSortedIndexMap();
                         return;
                     }
                 }
@@ -588,9 +558,18 @@ namespace KGySoft.ComponentModel
             if (e == null)
                 throw new ArgumentNullException(nameof(e), Res.ArgumentNull);
 
-            if (isChanging)
+            if (isChangingOrRaisingChanged)
                 return;
-            base.OnListChanged(e);
+            isChangingOrRaisingChanged = true;
+            try
+            {
+                base.OnListChanged(e);
+            }
+            finally
+            {
+                isChangingOrRaisingChanged = false;
+            }
+
             if (sortDirection != null && (e.ListChangedType == ListChangedType.ItemAdded
                     || (e.ListChangedType == ListChangedType.ItemChanged && (e.PropertyDescriptor == null || e.PropertyDescriptor?.Name == sortProperty?.Name))))
             {
@@ -628,14 +607,14 @@ namespace KGySoft.ComponentModel
         {
             EndNew();
             itemComparer = CreateComparer(sortDirection.GetValueOrDefault() == ListSortDirection.Ascending, sortProperty == null ? typeof(T) : sortProperty.PropertyType);
-            BuildSortedIndexMap(true);
+            BuildSortedIndexMap();
 
             // In theory, also Moved could be used, which actually solves the problem of uncommitted edits in WinForms but
             // a.) WPF does not tolerate it b.) IBindingList docs say ApplySort must raise a ListChanged event with the Reset enumeration.
             FireListChanged(ListChangedType.Reset, -1);
         }
 
-        private void BuildSortedIndexMap(bool reset)
+        private void BuildSortedIndexMap()
         {
             // sortedIndex -> origIndex
             if (sortedToBaseIndex == null)
@@ -643,9 +622,10 @@ namespace KGySoft.ComponentModel
             else
                 sortedToBaseIndex.Reset();
 
-            for (var i = 0; i < Items.Count; i++)
+            int count = Count;
+            for (var i = 0; i < count; i++)
             {
-                T item = Items[i];
+                T item = base.GetItem(i);
                 sortedToBaseIndex.AddLast(new SortIndex(i, sortProperty == null ? item : sortProperty.GetValue(item)));
             }
 
@@ -662,18 +642,15 @@ namespace KGySoft.ComponentModel
             }
 
             sortPending = false;
-            if (reset)
-            {
-                FireListChanged(ListChangedType.Reset, -1);
-                EndNew();
-            }
+            FireListChanged(ListChangedType.Reset, -1);
+            EndNew();
         }
 
         private int GetSortedItemIndex(T item)
         {
             if (sortedToBaseIndex.Count != Count)
             {
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 return GetFirstIndex(itemToSortedIndex, item);
             }
 
@@ -685,25 +662,25 @@ namespace KGySoft.ComponentModel
             if (count == sortedToBaseIndex.Count && (result < 0 || result < count && AreEqual(item, GetItemBySortedIndex(result))))
                 return result;
 
-            BuildSortedIndexMap(true);
+            BuildSortedIndexMap();
             return GetFirstIndex(itemToSortedIndex, item);
         }
 
         private int GetBaseIndex(int sortedIndex) => sortedToBaseIndex[sortedIndex].Key;
 
-        private T GetItemBySortedIndexUnchecked(int index) => Items[GetBaseIndex(index)];
+        private T GetItemBySortedIndexUnchecked(int index) => base.GetItem(GetBaseIndex(index));
 
         private T GetItemBySortedIndex(int index)
         {
             if (sortedToBaseIndex.Count != Count)
             {
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 return GetItemBySortedIndexUnchecked(index);
             }
 
             T result = GetItemBySortedIndexUnchecked(index);
             if (CheckConsistency && !ContainsIndex(itemToSortedIndex, result, index))
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
 
             return result;
         }
@@ -712,7 +689,7 @@ namespace KGySoft.ComponentModel
         {
             if (index >= sortedToBaseIndex.Count)
             {
-                BuildSortedIndexMap(true);
+                BuildSortedIndexMap();
                 return;
             }
 

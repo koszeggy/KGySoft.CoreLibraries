@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.Serialization;
 using KGySoft.Collections;
 using KGySoft.Collections.ObjectModel;
 using KGySoft.CoreLibraries;
@@ -677,13 +679,13 @@ namespace KGySoft.ComponentModel
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            // ReSharper disable once RedundantBaseQualifier - not redundant: it is a virtual member and we prevent to call a possible derived method
-            T originalItem = base.GetItem(index);
-            if (ReferenceEquals(originalItem, item))
-                return;
-
-            if (canRaiseItemChange)
-                UnhookPropertyChanged(originalItem);
+            if (canRaiseItemChange || CheckConsistency)
+            {
+                // ReSharper disable once RedundantBaseQualifier - not redundant: it is a virtual member and we prevent to call a possible derived method
+                T originalItem = base.GetItem(index);
+                if (canRaiseItemChange)
+                    UnhookPropertyChanged(originalItem);
+            }
 
             base.SetItem(index, item);
 
@@ -770,9 +772,21 @@ namespace KGySoft.ComponentModel
                 throw new InvalidOperationException(Res.ComponentModelRemoveDisabled);
 
             EndNew();
-            UnhookItemsPropertyChanged();
+            UnhookPropertyChangedAll();
 
             base.ClearItems();
+            FireListChanged(ListChangedType.Reset, -1);
+        }
+
+        /// <inheritdoc/>
+        protected override void OnMapRebuilt()
+        {
+            if (CheckConsistency)
+            {
+                UnhookPropertyChangedAll();
+                HookPropertyChangedAll();
+            }
+
             FireListChanged(ListChangedType.Reset, -1);
         }
 
@@ -786,7 +800,7 @@ namespace KGySoft.ComponentModel
                 return;
 
             raiseListChangedEvents = false;
-            UnhookItemsPropertyChanged();
+            UnhookPropertyChangedAll();
 
             (Items as IDisposable)?.Dispose();
             listChangedHandler = null;
@@ -818,7 +832,7 @@ namespace KGySoft.ComponentModel
             allowEdit = true; //Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
 
             raiseListChangedEvents = true;
-            HookItemsPropertyChanged();
+            HookPropertyChangedAll();
         }
 
         private void HookPropertyChanged(T item)
@@ -837,11 +851,10 @@ namespace KGySoft.ComponentModel
                 return;
 
             notifyPropertyChanged.PropertyChanged -= Item_PropertyChanged;
-            if (CheckConsistency)
-                trackedSubscriptions?.Remove(item);
+            trackedSubscriptions?.Remove(item);
         }
 
-        private void HookItemsPropertyChanged()
+        private void HookPropertyChangedAll()
         {
             if (!canRaiseItemChange)
                 return;
@@ -849,7 +862,7 @@ namespace KGySoft.ComponentModel
                 HookPropertyChanged(item);
         }
 
-        private void UnhookItemsPropertyChanged()
+        private void UnhookPropertyChangedAll()
         {
             if (!canRaiseItemChange)
                 return;
@@ -857,10 +870,13 @@ namespace KGySoft.ComponentModel
                 UnhookPropertyChanged(item);
             if (trackedSubscriptions?.Count > 0)
             {
-                foreach (T item in trackedSubscriptions)
-                    HookPropertyChanged(item);
+                foreach (T item in trackedSubscriptions.ToList())
+                    UnhookPropertyChanged(item);
             }
         }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx) => HookPropertyChangedAll();
 
         #endregion
 

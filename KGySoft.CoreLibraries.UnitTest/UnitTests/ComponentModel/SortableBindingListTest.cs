@@ -133,12 +133,12 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             coll.ApplySort(ListSortDirection.Ascending);
 
             // causing inconsistency
-            inner[2] = null;
+            inner[0] = null;
             Throws<AssertionException>(() => AssertConsistency(coll));
 
             // inconsistency detected and fixed on next set
             coll.CheckConsistency = true;
-            coll[2] = "x";
+            coll[0] = "x";
             AssertConsistency(coll);
         }
 

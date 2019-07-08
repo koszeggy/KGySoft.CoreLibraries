@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
 using KGySoft.ComponentModel;
 
 using NUnit.Framework;
