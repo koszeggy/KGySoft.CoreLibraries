@@ -750,6 +750,7 @@ namespace KGySoft.Resources
         ITypeResolutionService IResXResourceContainer.TypeResolver => typeResolver;
         bool IResXResourceContainer.AutoFreeXmlData => false;
         int IResXResourceContainer.Version => 0;
+        bool IResXResourceContainer.CloneValues => false;
 
         #endregion
 

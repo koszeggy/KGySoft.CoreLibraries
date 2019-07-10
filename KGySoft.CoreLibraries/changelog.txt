@@ -29,6 +29,21 @@
   ! SetItem: Invoking ListChange event with ListChangedType.ItemChanged even if setting the same instance again (compatibility with BindingList<T>).
   - SetItem: Fixing consistency check so inner map is now not rebuilt that often.
 
+! KGySoft.Resources namespace:
+==============================
++ ResXDataNode: Implements ICloneable
++ IExpandoResourceSet: New CloneValues property
++ ResXResourceSet: New CloneValues property
++ IExpandoResourceManager: New CloneValues property
+! ResXResourceManager:
+  + New CloneValues property
+  ! To be compatible with ResourceManager the default value of CloneValues is true, so Get[Meta]Object and Get[Meta]Enumerator will return a copy
+    of the stored objects by default. For compatibility with earlier behavior set CloneValues to false.
+! HybridResourceManager (and thus DynamicResourceManager):
+  + New CloneValues property
+  ! To be compatible with ResourceManager the default value of CloneValues is true, so Get[Meta]Object and Get[Meta]Enumerator will return a copy
+    of the stored objects by default. For compatibility with earlier behavior set CloneValues to false.
+
 ~~~~~~~~~
 * v4.6.2:
 ~~~~~~~~~

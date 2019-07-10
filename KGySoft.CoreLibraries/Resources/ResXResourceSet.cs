@@ -389,6 +389,7 @@ namespace KGySoft.Resources
         private string basePath;
         private bool isModified;
         private int version;
+        private bool cloneValues;
 
         #endregion
 
@@ -455,12 +456,17 @@ namespace KGySoft.Resources
         /// a resource or metadata item is obtained by <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
         /// <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> or <see cref="GetMetaString">GetMetaString</see> methods.
         /// The raw XML data is re-generated on demand if needed, it is transparent to the user.</para>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, this property has no effect and the clean-up can be controlled by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
+        /// <para>If <see cref="SafeMode"/> or <see cref="CloneValues"/> properties are <see langword="true"/>, this property has no effect.</para>
         /// </remarks>
         public bool AutoFreeXmlData
         {
             get => autoFreeXmlData;
-            set => autoFreeXmlData = value;
+            set
+            {
+                if (resources == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                autoFreeXmlData = value;
+            }
         }
 
         /// <summary>
@@ -477,6 +483,30 @@ namespace KGySoft.Resources
                 if (resources == null)
                     throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return isModified;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
+        /// and <see cref="GetEnumerator">GetEnumerator</see>/<see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return always a new copy of the stored values.
+        /// <br/>Default value: <see langword="false" />.
+        /// </summary>
+        /// <exception cref="NotImplementedException">
+        /// </exception>
+        /// <remarks>
+        /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResXResourceSet" target="_blank">System.Resources.ResXResourceSet</a> this
+        /// property is <see langword="false"/>&#160;by default. However, it can be a problem for mutable types if the returned value is changed by the consumer.</para>
+        /// <para>To be compatible with <see cref="ResourceSet"/> set this property to <see langword="true"/>.</para>
+        /// <para>Some known immutable types are not cloned.</para>
+        /// </remarks>
+        public bool CloneValues
+        {
+            get => cloneValues;
+            set
+            {
+                if (resources == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+                cloneValues = value;
             }
         }
 
@@ -713,7 +743,7 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
-        public override object GetObject(string name) => GetValueInternal(name, false, false, safeMode, resources, ref resourcesIgnoreCase);
+        public override object GetObject(string name) => GetValueInternal(name, false, false, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
         /// Searches for a resource object with the specified <paramref name="name"/>.
@@ -730,7 +760,7 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
-        public override object GetObject(string name, bool ignoreCase) => GetValueInternal(name, ignoreCase, false, safeMode, resources, ref resourcesIgnoreCase);
+        public override object GetObject(string name, bool ignoreCase) => GetValueInternal(name, ignoreCase, false, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
         /// Searches for a <see cref="string" /> resource with the specified <paramref name="name"/>.
@@ -747,7 +777,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is not <see cref="string"/>.</exception>
-        public override string GetString(string name) => (string)GetValueInternal(name, false, true, safeMode, resources, ref resourcesIgnoreCase);
+        public override string GetString(string name) => (string)GetValueInternal(name, false, true, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
         /// Searches for a <see cref="string" /> resource with the specified <paramref name="name"/>.
@@ -765,7 +795,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is not <see cref="string"/>.</exception>
-        public override string GetString(string name, bool ignoreCase) => (string)GetValueInternal(name, ignoreCase, true, safeMode, resources, ref resourcesIgnoreCase);
+        public override string GetString(string name, bool ignoreCase) => (string)GetValueInternal(name, ignoreCase, true, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
         /// Searches for a metadata object with the specified <paramref name="name"/>.
@@ -783,7 +813,7 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
-        public object GetMetaObject(string name, bool ignoreCase = false) => GetValueInternal(name, ignoreCase, false, safeMode, metadata, ref metadataIgnoreCase);
+        public object GetMetaObject(string name, bool ignoreCase = false) => GetValueInternal(name, ignoreCase, false, safeMode, cloneValues, metadata, ref metadataIgnoreCase);
 
         /// <summary>
         /// Searches for a <see cref="string" /> metadata with the specified <paramref name="name"/>.
@@ -799,7 +829,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is not <see cref="string"/>.</exception>
-        public string GetMetaString(string name, bool ignoreCase = false) => (string)GetValueInternal(name, ignoreCase, true, safeMode, metadata, ref metadataIgnoreCase);
+        public string GetMetaString(string name, bool ignoreCase = false) => (string)GetValueInternal(name, ignoreCase, true, safeMode, cloneValues, metadata, ref metadataIgnoreCase);
 
         /// <summary>
         /// Gets the assembly name for the specified <paramref name="alias"/>.
@@ -1033,11 +1063,11 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
-        internal object GetResourceInternal(string name, bool ignoreCase, bool isString, bool asSafe)
-            => GetValueInternal(name, ignoreCase, isString, asSafe, resources, ref resourcesIgnoreCase);
+        internal object GetResourceInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
+            => GetValueInternal(name, ignoreCase, isString, asSafe, cloneValue, resources, ref resourcesIgnoreCase);
 
-        internal object GetMetaInternal(string name, bool ignoreCase, bool isString, bool asSafe)
-            => GetValueInternal(name, ignoreCase, isString, asSafe, metadata, ref metadataIgnoreCase);
+        internal object GetMetaInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
+            => GetValueInternal(name, ignoreCase, isString, asSafe, cloneValue, metadata, ref metadataIgnoreCase);
 
         #endregion
 
@@ -1127,7 +1157,7 @@ namespace KGySoft.Resources
                 return node;
 
             if (forceEmbeddedResources)
-                node = new ResXDataNode(node.Name, node.GetValue(null, basePath, !safeMode && autoFreeXmlData));
+                node = new ResXDataNode(node.Name, node.GetValue(null, basePath, !safeMode && !cloneValues && autoFreeXmlData));
             else if (adjustPath && !Path.IsPathRooted(fileRef.FileName))
             {
                 // Restoring the original full path so the ResXResourceWriter can create a new relative path to the new basePath
@@ -1138,7 +1168,7 @@ namespace KGySoft.Resources
             return node;
         }
 
-        private object GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
+        private object GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue, Dictionary<string, ResXDataNode> data, ref Dictionary<string, ResXDataNode> dataCaseInsensitive)
         {
             if (data == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
@@ -1149,7 +1179,11 @@ namespace KGySoft.Resources
             lock (data)
             {
                 if (data.TryGetValue(name, out ResXDataNode result))
-                    return result.GetValueInternal(asSafe, isString, autoFreeXmlData, basePath);
+                {
+                    return asSafe
+                        ? result.GetSafeValueInternal(isString, cloneValue)
+                        : result.GetUnsafeValueInternal(null, isString, cloneValue, autoFreeXmlData, basePath);
+                }
 
                 if (!ignoreCase)
                     return null;
@@ -1158,7 +1192,11 @@ namespace KGySoft.Resources
                     dataCaseInsensitive = InitCaseInsensitive(data);
 
                 if (dataCaseInsensitive.TryGetValue(name, out result))
-                    return result.GetValueInternal(asSafe, isString, autoFreeXmlData, basePath);
+                {
+                    return asSafe
+                        ? result.GetSafeValueInternal(isString, cloneValue)
+                        : result.GetUnsafeValueInternal(null, isString, cloneValue, autoFreeXmlData, basePath);
+                }
             }
 
             return null;
@@ -1217,11 +1255,11 @@ namespace KGySoft.Resources
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
-        object IExpandoResourceSetInternal.GetResource(string name, bool ignoreCase, bool isString, bool asSafe)
-            => GetResourceInternal(name, ignoreCase, isString, asSafe);
+        object IExpandoResourceSetInternal.GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
+            => GetResourceInternal(name, ignoreCase, isString, asSafe, cloneValue);
 
-        object IExpandoResourceSetInternal.GetMeta(string name, bool ignoreCase, bool isString, bool asSafe)
-            => GetMetaInternal(name, ignoreCase, isString, asSafe);
+        object IExpandoResourceSetInternal.GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
+            => GetMetaInternal(name, ignoreCase, isString, asSafe, cloneValue);
 
         #endregion
 

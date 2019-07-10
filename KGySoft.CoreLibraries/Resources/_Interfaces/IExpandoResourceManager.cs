@@ -60,6 +60,19 @@ namespace KGySoft.Resources
         bool SafeMode { get; set; }
 
         /// <summary>
+        /// Gets or sets whether <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods return always a new copy of the stored values.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResourceManager" target="_blank">System.Resources.ResourceManager</a> this
+        /// property is <see langword="true"/>&#160;by default. If this <see cref="IExpandoResourceManager"/> instance contains no mutable values or it is known that modifying values is not
+        /// an issue than this property can be set to <see langword="false"/>&#160;for better performance.</para>
+        /// <para>String values are not cloned.</para>
+        /// <para>The value of this property affects only the objects returned from .resx sources. Non-string values from compiled sources are always cloned.</para>
+        /// </remarks>
+        bool CloneValues { get; set; }
+
+        /// <summary>
         /// Gets whether this <see cref="IExpandoResourceManager"/> instance is disposed.
         /// </summary>
         bool IsDisposed { get; }

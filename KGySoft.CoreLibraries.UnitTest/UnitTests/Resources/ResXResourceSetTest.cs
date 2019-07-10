@@ -364,6 +364,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             File.Delete(newFile);
         }
 
+        [Test]
+        public void CloneValuesTest()
+        {
+            const string objKey = "TestImage";
+            var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
+            var rs = new ResXResourceSet(path);
+            Assert.IsFalse(rs.CloneValues);
+            Assert.IsTrue(rs.AutoFreeXmlData);
+
+            // if not cloning values, references are the same for subsequent calls
+            Assert.AreSame(rs.GetObject(objKey), rs.GetObject(objKey));
+
+            // if cloning values, references are different
+            rs.CloneValues = true;
+            Assert.AreNotSame(rs.GetObject(objKey), rs.GetObject(objKey));
+        }
+
         #endregion
     }
 }

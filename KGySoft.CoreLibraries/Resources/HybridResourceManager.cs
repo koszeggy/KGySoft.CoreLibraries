@@ -449,7 +449,28 @@ namespace KGySoft.Resources
         /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceManager.SafeMode"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
-        public bool SafeMode { get; set; }
+        public bool SafeMode
+        {
+            get => resxResources.SafeMode;
+            set => resxResources.SafeMode = value;
+        }
+
+        /// <summary>
+        /// Gets or sets whether <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods return always a new copy of the stored values.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResourceManager" target="_blank">System.Resources.ResourceManager</a> this
+        /// property is <see langword="true"/>&#160;by default. If this <see cref="HybridResourceManager"/> contains no mutable values or it is known that modifying values is not
+        /// an issue than this property can be set to <see langword="false"/>&#160;for better performance.</para>
+        /// <para>String values are not cloned.</para>
+        /// <para>The value of this property affects only the objects returned from .resx sources. Non-string values from compiled sources are always cloned.</para>
+        /// </remarks>
+        public bool CloneValues
+        {
+            get => resxResources.CloneValues;
+            set => resxResources.CloneValues = value;
+        }
 
         /// <summary>
         /// Gets whether this <see cref="HybridResourceManager"/> instance has modified and unsaved data.
@@ -606,7 +627,7 @@ namespace KGySoft.Resources
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override string GetString(string name) => (string)GetObjectInternal(name, null, true);
+        public override string GetString(string name) => (string)GetObjectInternal(name, null, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the string resource localized for the specified <paramref name="culture"/>.
@@ -628,7 +649,7 @@ namespace KGySoft.Resources
         /// non-string entry is from a compiled resource.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true);
+        public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the specified resource.
@@ -642,7 +663,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object GetObject(string name) => GetObjectInternal(name, null, false);
+        public override object GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
 
         /// <summary>
         /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
@@ -659,7 +680,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false);
+        public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false, CloneValues);
 
         /// <summary>
         /// Retrieves the resource set for a particular culture.
@@ -680,9 +701,13 @@ namespace KGySoft.Resources
             // base implementation must not be called because it wants to open main assembly in case of invariant culture
             ResourceSet result = Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
 
-            // this.SafeMode is not used to set the SafeMode of the wrapped ResourceSets when resources are accessed so setting it only when the user obtains a ResX/HybridResourceSet instance.
-            if (result is IExpandoResourceSetInternal expandoRs)
+            // These properties are never taken from the stored sets so setting them only when an IExpandoResourceSet instance is returned.
+            // It does not matter if they are changed by the user.
+            if (result is IExpandoResourceSet expandoRs)
+            {
                 expandoRs.SafeMode = SafeMode;
+                expandoRs.CloneValues = CloneValues;
+            }
 
             return result;
         }
@@ -729,7 +754,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public virtual string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true);
+        public virtual string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the specified non-string metadata for the specified <paramref name="culture"/>.
@@ -747,7 +772,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public virtual object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false);
+        public virtual object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false, CloneValues);
 
         /// <summary>
         /// Retrieves the resource set for a particular culture, which can be dynamically modified.
@@ -770,8 +795,14 @@ namespace KGySoft.Resources
                 throw new ArgumentOutOfRangeException(nameof(behavior), Res.ArgumentOutOfRange);
 
             IExpandoResourceSet result = Unwrap(InternalGetResourceSet(culture, behavior, tryParents, true)) as IExpandoResourceSet;
+
+            // These properties are never taken from the stored sets so setting them only when the user obtains an IExpandoResourceSet instance.
+            // It does not matter if they are changed by the user.
             if (result != null)
+            {
                 result.SafeMode = SafeMode;
+                result.CloneValues = CloneValues;
+            }
 
             return result;
         }
@@ -1004,7 +1035,7 @@ namespace KGySoft.Resources
         /// Actually should be protected AND internal...
         /// Warning: it CAN return a proxy
         /// </summary>
-        internal ResourceSet TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, out object value)
+        internal ResourceSet TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, bool cloneValue, out object value)
         {
             ResourceSet cachedRs = GetFirstResourceSet(culture);
             if (cachedRs == null)
@@ -1013,7 +1044,7 @@ namespace KGySoft.Resources
                 return null;
             }
 
-            value = GetResourceFromAny(cachedRs, name, isString);
+            value = GetResourceFromAny(cachedRs, name, isString, cloneValue);
             return cachedRs;
         }
 
@@ -1030,11 +1061,11 @@ namespace KGySoft.Resources
         /// <summary>
         /// Actually should be protected AND internal...
         /// </summary>
-        internal object GetResourceFromAny(ResourceSet rs, string name, bool isString)
+        internal object GetResourceFromAny(ResourceSet rs, string name, bool isString, bool cloneValue)
         {
             ResourceSet realRs = Unwrap(rs);
             return realRs is IExpandoResourceSetInternal expandoRs
-                ? expandoRs.GetResource(name, IgnoreCase, isString, SafeMode)
+                ? expandoRs.GetResource(name, IgnoreCase, isString, SafeMode, cloneValue)
                 : (isString ? realRs.GetString(name, IgnoreCase) : realRs.GetObject(name, IgnoreCase));
         }
 
@@ -1316,6 +1347,60 @@ namespace KGySoft.Resources
             }
         }
 
+        internal /*private protected*/ virtual object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
+
+            if (culture == null)
+                culture = CultureInfo.CurrentUICulture;
+            ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, cloneValue, out object value));
+
+            // There is a result, or a stored null is returned from invariant
+            if (value != null
+                || (seen != null
+                    && (Equals(culture, CultureInfo.InvariantCulture) || seen is ProxyResourceSet && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
+                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
+            {
+                return value;
+            }
+
+            // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
+            // the inner one can return an existing resource set without the searched resource, in which case here is
+            // the fallback to the parent resource.
+            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            ResourceSet toCache = null;
+            foreach (CultureInfo currentCulture in mgr)
+            {
+                ResourceSet rs = InternalGetResourceSet(currentCulture, ResourceSetRetrieval.LoadIfExists, true, false);
+                if (rs == null)
+                    return null;
+
+                // we have already checked this resource
+                var unwrapped = Unwrap(rs);
+                if (unwrapped == seen)
+                    continue;
+
+                if (toCache == null)
+                    toCache = rs;
+
+                value = GetResourceFromAny(unwrapped, name, isString, cloneValue);
+                if (value != null)
+                {
+                    lock (SyncRoot)
+                    {
+                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, toCache);
+                    }
+
+                    return value;
+                }
+
+                seen = unwrapped;
+            }
+
+            return null;
+        }
+
         #endregion
 
         #region Protected Methods
@@ -1371,60 +1456,6 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-        private object GetObjectInternal(string name, CultureInfo culture, bool isString)
-        {
-            if (name == null)
-                throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
-
-            if (culture == null)
-                culture = CultureInfo.CurrentUICulture;
-            ResourceSet seen = Unwrap(TryGetFromCachedResourceSet(name, culture, isString, out object value));
-
-            // There is a result, or a stored null is returned from invariant
-            if (value != null
-                || (seen != null
-                    && (Equals(culture, CultureInfo.InvariantCulture) || seen is ProxyResourceSet && GetWrappedCulture(seen).Equals(CultureInfo.InvariantCulture))
-                    && (Unwrap(seen) as IExpandoResourceSet)?.ContainsResource(name, IgnoreCase) == true))
-            {
-                return value;
-            }
-
-            // The InternalGetResourceSet has also a hierarchy traversal. This outer traversal is required as well because
-            // the inner one can return an existing resource set without the searched resource, in which case here is
-            // the fallback to the parent resource.
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
-            ResourceSet toCache = null;
-            foreach (CultureInfo currentCulture in mgr)
-            {
-                ResourceSet rs = InternalGetResourceSet(currentCulture, ResourceSetRetrieval.LoadIfExists, true, false);
-                if (rs == null)
-                    return null;
-
-                // we have already checked this resource
-                var unwrapped = Unwrap(rs);
-                if (unwrapped == seen)
-                    continue;
-
-                if (toCache == null)
-                    toCache = rs;
-
-                value = GetResourceFromAny(unwrapped, name, isString);
-                if (value != null)
-                {
-                    lock (SyncRoot)
-                    {
-                        lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, toCache);
-                    }
-
-                    return value;
-                }
-
-                seen = unwrapped;
-            }
-
-            return null;
-        }
-
         /// <summary>
         /// Tries to get the first resource set in the traversal hierarchy,
         /// so the resource set for the culture itself.
@@ -1469,10 +1500,9 @@ namespace KGySoft.Resources
             // InternalGetResourceSet is both recursive and reentrant -
             // assembly load callbacks in particular are a way we can call
             // back into the ResourceManager in unexpectedly on the same thread.
-            ResourceSet lostRace;
             if (resourceSets == null)
                 resourceSets = new Dictionary<string, ResourceSet> { { cultureName, rs } };
-            else if (resourceSets.TryGetValue(cultureName, out lostRace))
+            else if (resourceSets.TryGetValue(cultureName, out ResourceSet lostRace))
             {
                 if (!ReferenceEquals(lostRace, rs))
                 {
@@ -1500,7 +1530,7 @@ namespace KGySoft.Resources
             lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
         }
 
-        private object GetMetaInternal(string name, CultureInfo culture, bool isString)
+        private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
@@ -1512,7 +1542,7 @@ namespace KGySoft.Resources
             IExpandoResourceSetInternal rs = Unwrap(InternalGetResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false, false)) as IExpandoResourceSetInternal;
             if (rs == null && ThrowException)
                 InternalGetResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, true, false);
-            return rs?.GetMeta(name, IgnoreCase, isString, SafeMode);
+            return rs?.GetMeta(name, IgnoreCase, isString, SafeMode, cloneValue);
         }
 
         #endregion

@@ -58,6 +58,20 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         bool IsModified { get; }
 
+        /// <summary>
+        /// Gets or sets whether <see cref="GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>
+        /// and <see cref="GetEnumerator">GetEnumerator</see>/<see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return always a new copy of the stored values.
+        /// <br/>Default value: <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResXResourceSet" target="_blank">System.Resources.ResXResourceSet</a> this
+        /// property is <see langword="false"/>&#160;by default. However, it can be a problem for mutable types if the returned value is changed by the consumer.</para>
+        /// <para>To be compatible with <see cref="ResourceSet"/> set this property to <see langword="true"/>.</para>
+        /// <para>String values are not cloned.</para>
+        /// <para>The value of this property affects only the objects returned from .resx sources. Values from compiled sources are always cloned.</para>
+        /// </remarks>
+        bool CloneValues { get; set; }
+
         #endregion
 
         #region Methods
@@ -148,6 +162,26 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> (when <see cref="SafeMode"/> is <see langword="false"/>&#160;or the resource is not from a .resx resource).</exception>
         string GetString(string name, bool ignoreCase = false);
+
+        ///// <summary>
+        ///// Searches for a <see cref="Stream" /> resource with the specified <paramref name="name"/> and returns it as a read-only <see cref="MemoryStream"/>.
+        ///// </summary>
+        ///// <param name="name">Name of the resource to search for.</param>
+        ///// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
+        ///// <returns>
+        ///// The <see cref="MemoryStream"/> value of a resource.
+        ///// If <see cref="SafeMode"/> is <see langword="false"/>, or the result is not from a .resx resource, an <see cref="InvalidOperationException"/> will be thrown for
+        ///// non-memory stream resources. If <see cref="SafeMode"/> is <see langword="true"/>&#160;and the result is found in a .resx resource, the raw XML value will be wrapped
+        ///// into a <see cref="MemoryStream"/> if the result is not a <see cref="Stream"/> or byte array.
+        ///// </returns>
+        ///// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        ///// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
+        ///// <exception cref="InvalidOperationException">The type of the resource is not a <see cref="Stream"/>, byte array or <see cref="string"/> (when <see cref="SafeMode"/> is <see langword="false"/>&#160;or
+        ///// <remarks>
+        ///// <para>If the stored value is a <see cref="MemoryStream"/> or byte array, then a new read-only <see cref="MemoryStream"/> is returned </para>
+        ///// </remarks>
+        ///// the resource is not from a .resx resource).</exception>
+        //MemoryStream GetStream(string name, bool ignoreCase = false);
 
         /// <summary>
         /// Searches for a metadata object with the specified <paramref name="name"/>.

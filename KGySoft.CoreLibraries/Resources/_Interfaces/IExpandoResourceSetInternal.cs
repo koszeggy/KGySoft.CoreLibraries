@@ -21,17 +21,11 @@ namespace KGySoft.Resources
     /// </summary>
     internal interface IExpandoResourceSetInternal
     {
-        #region Properties
-
-        bool SafeMode { set; }
-
-        #endregion
-
         #region Methods
 
-        object GetResource(string name, bool ignoreCase, bool isString, bool asSafe);
+        object GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
 
-        object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe);
+        object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
 
         #endregion
     }

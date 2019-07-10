@@ -501,6 +501,18 @@ namespace KGySoft.Resources
         public bool SafeMode { get; set; }
 
         /// <summary>
+        /// Gets or sets whether <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods return always a new copy of the stored values.
+        /// <br/>Default value: <see langword="true"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResourceManager" target="_blank">System.Resources.ResourceManager</a> this
+        /// property is <see langword="true"/>&#160;by default. If this <see cref="ResXResourceManager"/> contains no mutable values or it is known that modifying values is not
+        /// an issue than this property can be set to <see langword="false"/>&#160;for better performance.</para>
+        /// <para>String values are not cloned.</para>
+        /// </remarks>
+        public bool CloneValues { get; set; }
+
+        /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance is disposed.
         /// </summary>
         public bool IsDisposed => GetBaseResources() == null;
@@ -793,7 +805,7 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
-        public override string GetString(string name) => (string)GetObjectInternal(name, null, true);
+        public override string GetString(string name) => (string)GetObjectInternal(name, null, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the string resource localized for the specified <paramref name="culture"/>.
@@ -815,7 +827,7 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
-        public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true);
+        public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the specified non-string resource.
@@ -830,7 +842,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object GetObject(string name) => GetObjectInternal(name, null, false);
+        public override object GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
 
         /// <summary>
         /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
@@ -848,7 +860,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false);
+        public override object GetObject(string name, CultureInfo culture) => GetObjectInternal(name, culture, false, CloneValues);
 
         /// <summary>
         /// Returns the value of the string metadata for the specified <paramref name="culture"/>.
@@ -871,7 +883,7 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true);
+        public string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true, CloneValues);
 
         /// <summary>
         /// Returns the value of the specified non-string metadata for the specified <paramref name="culture"/>.
@@ -890,7 +902,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
-        public object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false);
+        public object GetMetaObject(string name, CultureInfo culture = null) => GetMetaInternal(name, culture, false, CloneValues);
 
         /// <summary>
         /// Adds or replaces a resource object in the current <see cref="ResXResourceManager" /> with the specified
@@ -1125,9 +1137,13 @@ namespace KGySoft.Resources
 
             ResXResourceSet result = GetResXResourceSet(culture, behavior, tryParents);
 
-            // this.SafeMode is not used to set ResXResourceSet.SafeMode when resources are accessed so setting it only when the user obtains a ResXResourceSet instance.
+            // These properties are never taken from the stored sets so setting them only when the user obtains a ResXResourceSet instance.
+            // It does not matter if they are changed by the user.
             if (result != null)
+            {
                 result.SafeMode = SafeMode;
+                result.CloneValues = CloneValues;
+            }
 
             return result;
         }
@@ -1392,7 +1408,7 @@ namespace KGySoft.Resources
 #error .NET version is not set or not supported!
 #endif
 
-        private object GetObjectInternal(string name, CultureInfo culture, bool isString)
+        private object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
@@ -1404,7 +1420,7 @@ namespace KGySoft.Resources
             object value;
             if (first != null)
             {
-                value = first.GetResourceInternal(name, IgnoreCase, isString, SafeMode);
+                value = first.GetResourceInternal(name, IgnoreCase, isString, SafeMode, cloneValue);
                 if (value != null)
                     return value;
             }
@@ -1426,7 +1442,7 @@ namespace KGySoft.Resources
                 if (toCache == null)
                     toCache = rs;
 
-                value = rs.GetResourceInternal(name, IgnoreCase, isString, SafeMode);
+                value = rs.GetResourceInternal(name, IgnoreCase, isString, SafeMode, cloneValue);
                 if (value != null)
                 {
                     lock (syncRoot)
@@ -1441,7 +1457,7 @@ namespace KGySoft.Resources
             return null;
         }
 
-        private object GetMetaInternal(string name, CultureInfo culture, bool isString)
+        private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
@@ -1450,7 +1466,7 @@ namespace KGySoft.Resources
             ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.LoadIfExists, false);
             if (rs == null && ThrowException)
                 GetResXResourceSet(CultureInfo.InvariantCulture, ResourceSetRetrieval.GetIfAlreadyLoaded, true);
-            return rs?.GetMetaInternal(name, IgnoreCase, isString, SafeMode);
+            return rs?.GetMetaInternal(name, IgnoreCase, isString, SafeMode, cloneValue);
         }
 
         /// <summary>

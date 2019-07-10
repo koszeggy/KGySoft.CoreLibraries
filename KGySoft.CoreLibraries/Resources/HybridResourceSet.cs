@@ -226,14 +226,29 @@ namespace KGySoft.Resources
             }
         }
 
+        public bool CloneValues
+        {
+            get
+            {
+                ResXResourceSet resx = resxResourceSet;
+                if (resx == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+                return resx.CloneValues;
+            }
+            set
+            {
+                ResXResourceSet resx = resxResourceSet;
+                if (resx == null)
+                    throw new ObjectDisposedException(null, Res.ObjectDisposed);
+
+                resx.CloneValues = value;
+            }
+        }
+
         #endregion
 
         #region Explicitly Implemented Interface Properties
-
-        bool IExpandoResourceSetInternal.SafeMode
-        {
-            set => resxResourceSet.SafeMode = value;
-        }
 
         bool IExpandoResourceSet.SafeMode
         {
@@ -305,7 +320,7 @@ namespace KGySoft.Resources
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return GetResource(name, false, false, resx.SafeMode);
+            return GetResource(name, false, false, resx.SafeMode, resx.CloneValues);
         }
 
         public override object GetObject(string name, bool ignoreCase)
@@ -314,7 +329,7 @@ namespace KGySoft.Resources
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return GetResource(name, ignoreCase, false, resx.SafeMode);
+            return GetResource(name, ignoreCase, false, resx.SafeMode, resx.CloneValues);
         }
 
         public override string GetString(string name)
@@ -323,7 +338,7 @@ namespace KGySoft.Resources
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return (string)GetResource(name, false, true, resx.SafeMode);
+            return (string)GetResource(name, false, true, resx.SafeMode, resx.CloneValues);
         }
 
         public override string GetString(string name, bool ignoreCase)
@@ -332,17 +347,17 @@ namespace KGySoft.Resources
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return (string)GetResource(name, ignoreCase, true, resx.SafeMode);
+            return (string)GetResource(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
         }
 
-        public object GetResource(string name, bool ignoreCase, bool isString, bool asSafe)
+        public object GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
         {
             ResXResourceSet resx = resxResourceSet;
             ResourceSet compiled = compiledResourceSet;
             if (resx == null || compiled == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            object result = resx.GetResourceInternal(name, ignoreCase, isString, asSafe);
+            object result = resx.GetResourceInternal(name, ignoreCase, isString, asSafe, cloneValue);
 
             if (result != null)
                 return result;
@@ -354,13 +369,13 @@ namespace KGySoft.Resources
             return isString ? compiled.GetString(name, ignoreCase) : compiled.GetObject(name, ignoreCase);
         }
 
-        public object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe)
+        public object GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
         {
             ResXResourceSet resx = resxResourceSet;
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return resx.GetMetaInternal(name, ignoreCase, isString, asSafe);
+            return resx.GetMetaInternal(name, ignoreCase, isString, asSafe, cloneValue);
         }
 
         public IDictionaryEnumerator GetMetadataEnumerator()
@@ -435,7 +450,7 @@ namespace KGySoft.Resources
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return resx.GetMetaInternal(name, ignoreCase, false, resx.SafeMode);
+            return resx.GetMetaInternal(name, ignoreCase, false, resx.SafeMode, resx.CloneValues);
         }
 
         public string GetMetaString(string name, bool ignoreCase = false)
@@ -444,7 +459,7 @@ namespace KGySoft.Resources
             if (resx == null)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
 
-            return (string)resx.GetMetaInternal(name, ignoreCase, true, resx.SafeMode);
+            return (string)resx.GetMetaInternal(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
         }
 
         public string GetAliasValue(string alias)

@@ -277,7 +277,7 @@ namespace KGySoft.Resources
     /// <seealso cref="DynamicResourceManager"/>
 #pragma warning restore 618
     [Serializable]
-    public sealed class ResXDataNode : ISerializable
+    public sealed class ResXDataNode : ISerializable, ICloneable
     {
         #region ResXSerializationBinder class
 
@@ -475,6 +475,8 @@ namespace KGySoft.Resources
 
         private string name;
         private string comment;
+
+        // In a valid ResXDataNode at least one of these must have a value:
         private object cachedValue;
         private DataNodeInfo nodeInfo;
         private ResXFileRef fileRef;
@@ -672,16 +674,14 @@ namespace KGySoft.Resources
             }
 
             // 2.) ResXDataNode
-            ResXDataNode other = value as ResXDataNode;
-            if (other != null)
+            if (value is ResXDataNode other)
             {
                 InitFrom(other);
                 return;
             }
 
             // 3.) FileRef
-            ResXFileRef fr = value as ResXFileRef;
-            if (fr != null)
+            if (value is ResXFileRef fr)
             {
                 fileRef = fr;
                 return;
@@ -765,10 +765,18 @@ namespace KGySoft.Resources
                 MimeType = info.GetString(ResXCommon.MimeTypeStr),
                 ValueData = info.GetString(ResXCommon.ValueStr),
                 AssemblyAliasValue = info.GetString(ResXCommon.AliasStr),
-                BasePath = info.GetString("BasePath"),
-                CompatibleFormat = info.GetBoolean("CompatibleFormat")
+                BasePath = info.GetString(nameof(DataNodeInfo.BasePath)),
+                CompatibleFormat = info.GetBoolean(nameof(DataNodeInfo.CompatibleFormat))
             };
             InitFileRef();
+        }
+
+        private ResXDataNode(ResXDataNode other)
+        {
+            fileRef = other.FileRef;
+
+            // nodeInfo is regenerated only if also fileRef is null
+            nodeInfo = other.nodeInfo?.Clone() ?? (fileRef == null ? other.GetDataNodeInfo(null, null) : null);
         }
 
         #endregion
@@ -970,55 +978,65 @@ namespace KGySoft.Resources
             return base.ToString();
         }
 
+        /// <summary>
+        /// Creates a new <see cref="ResXDataNode"/> that is a copy of the current instance.
+        /// </summary>
+        /// <returns>
+        /// A new <see cref="ResXDataNode"/> instance that is a copy of this instance.
+        /// </returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public object Clone() => new ResXDataNode(this);
+
         #endregion
 
         #region Internal Methods
 
         /// <summary>
-        /// Called from <see cref="ResXResourceSet"/>.
+        /// Called from <see cref="ResXResourceSet"/> when <see cref="ResXResourceSet.SafeMode"/> is <see langword="true"/>.
         /// </summary>
-        /// <param name="safeMode">true to get ResXDataNode as object and string without exception as string.</param>
-        /// <param name="isString">true to get a string</param>
-        /// <param name="cleanup">true to nullify nodeInfo after a non-safe retrieval</param>
-        /// <param name="basePath">if null, tries to use the original base path if any</param>
-        internal object GetValueInternal(bool safeMode, bool isString, bool cleanup, string basePath)
+        internal object GetSafeValueInternal(bool isString, bool cloneValue)
         {
-            object result;
-            if (safeMode)
-            {
-                if (!isString)
-                    return this;
-
-                // returning a string for any type
-                result = cachedValue;
-                if (result is string)
-                    return result;
-
-                if (nodeInfo != null)
-                    return nodeInfo.ValueData;
-
-                if (fileRef != null)
-                    return fileRef.ToString();
-
-                // here there is no available string meta so generating nodeInfo
-                Debug.Assert(result != null);
-                nodeInfo = GetDataNodeInfo(null, null);
-                return nodeInfo.ValueData;
-            }
-
-            // non-safe mode
             if (!isString)
-                return GetValue(null, basePath, cleanup);
+                return cloneValue ? new ResXDataNode(this) : this;
 
-            result = cachedValue;
+            // returning a string for any type below
+            object result = cachedValue;
             if (result is string)
                 return result;
 
-            if (result == ResXNullRef.Value)
+            if (nodeInfo != null)
+                return nodeInfo.ValueData;
+
+            if (fileRef != null)
+                return fileRef.ToString();
+
+            // here there is no available string meta so generating nodeInfo
+            Debug.Assert(result != null);
+            nodeInfo = GetDataNodeInfo(null, null);
+            return nodeInfo.ValueData;
+        }
+
+        /// <summary>
+        /// Called from <see cref="ResXResourceSet"/> when <see cref="ResXResourceSet.SafeMode"/> is <see langword="false"/>.
+        /// </summary>
+        internal object GetUnsafeValueInternal(ITypeResolutionService typeResolver, bool isString, bool cloneValue, bool cleanup, string basePath)
+        {
+            if (cachedValue is string)
+                return cachedValue;
+            if (cachedValue == ResXNullRef.Value)
                 return null;
 
-            if (result != null)
-                throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, result.GetType().ToString()));
+            if (!isString)
+            {
+                return cloneValue 
+                    ? new ResXDataNode(this).GetValue(typeResolver, basePath) // not cleaning up if cloning
+                    : GetValue(typeResolver, basePath, cleanup);
+            }
+
+            // string result required below
+
+            if (cachedValue != null)
+                throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, cachedValue.GetType().ToString()));
 
             // result is not deserialized here yet
 
@@ -1031,7 +1049,7 @@ namespace KGySoft.Resources
             if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 throw new InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
 
-            result = GetValue(null, basePath, cleanup);
+            object result = GetValue(typeResolver, basePath, !cloneValue && cleanup);
             if (result == null || result is string)
                 return result;
 
@@ -1132,7 +1150,7 @@ namespace KGySoft.Resources
             aqnValid = other.aqnValid;
             comment = other.comment;
             if (other.fileRef != null)
-                fileRef = other.fileRef.Clone();
+                fileRef = other.fileRef;
             if (other.nodeInfo != null)
                 nodeInfo = other.nodeInfo.Clone();
         }
@@ -1533,8 +1551,8 @@ namespace KGySoft.Resources
             si.AddValue(ResXCommon.MimeTypeStr, info.MimeType);
             si.AddValue(ResXCommon.ValueStr, info.ValueData);
             si.AddValue(ResXCommon.AliasStr, info.AssemblyAliasValue);
-            si.AddValue("BasePath", info.BasePath);
-            si.AddValue("CompatibleFormat", info.CompatibleFormat);
+            si.AddValue(nameof(info.BasePath), info.BasePath);
+            si.AddValue(nameof(info.CompatibleFormat), info.CompatibleFormat);
             // no fileRef is needed, it is retrieved from nodeInfo
         }
 

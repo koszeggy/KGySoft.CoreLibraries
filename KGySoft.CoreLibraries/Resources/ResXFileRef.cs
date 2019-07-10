@@ -381,8 +381,6 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
-        internal ResXFileRef Clone() => new ResXFileRef(fileName, typeName, encoding);
-
         internal object GetValue(Type objectType, string basePath) => Converter.ConvertFrom(ToString(), objectType, basePath);
 
         #endregion

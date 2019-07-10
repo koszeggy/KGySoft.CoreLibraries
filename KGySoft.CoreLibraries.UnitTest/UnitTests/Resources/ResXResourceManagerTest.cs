@@ -185,6 +185,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        public void GetStream()
+        {
+            var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
+            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly);
+            var resName = "TestSound";
+            //var o = refManager.GetObject(resName, inv);
+            //var o2 = refManager.GetObject(resName, inv);
+            var s = refManager.GetStream(resName, inv);
+            var s2 = refManager.GetStream(resName, inv);
+
+            s.WriteByte(1);
+        //    Assert.AreSame(o, o2);
+            //Assert.AreSame(s, s2);
+        }
+
+        [Test]
         public void SetObjectTest()
         {
             LanguageSettings.DisplayLanguage = enUS;
