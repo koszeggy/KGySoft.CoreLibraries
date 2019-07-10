@@ -34,7 +34,6 @@ namespace KGySoft.Resources
         internal string AssemblyAliasValue;
         internal string MimeType;
         internal string ValueData;
-        internal string BasePath;
         internal int Line; //only used to track position in the reader
         internal int Column; //only used to track position in the reader
 

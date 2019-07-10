@@ -367,18 +367,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void CloneValuesTest()
         {
-            const string objKey = "TestImage";
+            string key = "TestImage";
             var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
             var rs = new ResXResourceSet(path);
             Assert.IsFalse(rs.CloneValues);
             Assert.IsTrue(rs.AutoFreeXmlData);
 
             // if not cloning values, references are the same for subsequent calls
-            Assert.AreSame(rs.GetObject(objKey), rs.GetObject(objKey));
+            Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
 
             // if cloning values, references are different
             rs.CloneValues = true;
-            Assert.AreNotSame(rs.GetObject(objKey), rs.GetObject(objKey));
+            Assert.AreNotSame(rs.GetObject(key), rs.GetObject(key));
+
+            // but strings are always the same reference
+            key = "TestString";
+            Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
+            Assert.AreSame(rs.GetString(key), rs.GetString(key));
         }
 
         #endregion

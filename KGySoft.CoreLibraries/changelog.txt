@@ -31,7 +31,9 @@
 
 ! KGySoft.Resources namespace:
 ==============================
-+ ResXDataNode: Implements ICloneable
+* ResXDataNode:
+  - Base path to a file reference is not lost even if raw XML data is cleaned up
+  + Implements ICloneable
 + IExpandoResourceSet: New CloneValues property
 + ResXResourceSet: New CloneValues property
 + IExpandoResourceManager: New CloneValues property

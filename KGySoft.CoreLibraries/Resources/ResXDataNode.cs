@@ -475,6 +475,7 @@ namespace KGySoft.Resources
 
         private string name;
         private string comment;
+        private string fileRefBasePath;
 
         // In a valid ResXDataNode at least one of these must have a value:
         private object cachedValue;
@@ -732,9 +733,7 @@ namespace KGySoft.Resources
 
             this.name = name;
             this.fileRef = fileRef;
-
-            if (basePath != null)
-                GetDataNodeInfo(null, null).BasePath = basePath;
+            fileRefBasePath = basePath;
         }
 
         #endregion
@@ -744,11 +743,11 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called by <see cref="ResXResourceReader"/>.
         /// </summary>
-        internal ResXDataNode(DataNodeInfo nodeInfo)
+        internal ResXDataNode(DataNodeInfo nodeInfo, string fileRefBasePath)
         {
             // No need to set name and comment fields here. They will be set if nodeInfo is cleared.
             this.nodeInfo = nodeInfo;
-            InitFileRef();
+            InitFileRef(fileRefBasePath);
         }
 
         #endregion
@@ -765,14 +764,17 @@ namespace KGySoft.Resources
                 MimeType = info.GetString(ResXCommon.MimeTypeStr),
                 ValueData = info.GetString(ResXCommon.ValueStr),
                 AssemblyAliasValue = info.GetString(ResXCommon.AliasStr),
-                BasePath = info.GetString(nameof(DataNodeInfo.BasePath)),
                 CompatibleFormat = info.GetBoolean(nameof(DataNodeInfo.CompatibleFormat))
             };
-            InitFileRef();
+
+            InitFileRef(info.GetString(nameof(fileRefBasePath)));
         }
 
         private ResXDataNode(ResXDataNode other)
         {
+            name = other.name;
+            comment = other.Comment;
+            fileRefBasePath = other.fileRefBasePath;
             fileRef = other.FileRef;
 
             // nodeInfo is regenerated only if also fileRef is null
@@ -925,11 +927,7 @@ namespace KGySoft.Resources
                 // fileRef.TypeName is always an AQN, so there is no need to play with the alias name.
                 Type objectType = ResolveType(fileRef.TypeName, typeResolver);
                 if (objectType != null)
-                {
-                    if (basePath == null && nodeInfo != null)
-                        basePath = nodeInfo.BasePath;
-                    cachedValue = result = fileRef.GetValue(objectType, basePath);
-                }
+                    cachedValue = result = fileRef.GetValue(objectType, basePath ?? fileRefBasePath);
                 else
                     throw new TypeLoadException(
                         nodeInfo == null
@@ -1155,13 +1153,13 @@ namespace KGySoft.Resources
                 nodeInfo = other.nodeInfo.Clone();
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA1806:DoNotIgnoreMethodResults", MessageId = "KGySoft.Resources.ResXFileRef.TryParse(System.String,KGySoft.Resources.ResXFileRef@)", Justification = "The relevant result is not ignored.")]
-        private void InitFileRef()
+        private void InitFileRef(string basePath)
         {
             if (!IsFileRef(AssemblyQualifiedName))
                 return;
 
-            ResXFileRef.TryParse(nodeInfo.ValueData, out fileRef);
+            if (ResXFileRef.TryParse(nodeInfo.ValueData, out fileRef))
+                fileRefBasePath = basePath;
         }
 
         /// <summary>
@@ -1551,7 +1549,7 @@ namespace KGySoft.Resources
             si.AddValue(ResXCommon.MimeTypeStr, info.MimeType);
             si.AddValue(ResXCommon.ValueStr, info.ValueData);
             si.AddValue(ResXCommon.AliasStr, info.AssemblyAliasValue);
-            si.AddValue(nameof(info.BasePath), info.BasePath);
+            si.AddValue(nameof(fileRefBasePath), fileRefBasePath);
             si.AddValue(nameof(info.CompatibleFormat), info.CompatibleFormat);
             // no fileRef is needed, it is retrieved from nodeInfo
         }

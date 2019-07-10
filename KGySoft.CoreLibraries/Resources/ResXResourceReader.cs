@@ -1259,7 +1259,6 @@ namespace KGySoft.Resources
                 Name = key,
                 TypeName = reader[ResXCommon.TypeStr],
                 MimeType = reader[ResXCommon.MimeTypeStr],
-                BasePath = basePath,
                 Line = line,
                 Column = col
             };
@@ -1302,7 +1301,7 @@ namespace KGySoft.Resources
 #pragma warning restore 252, 253
             }
 
-            value = new ResXDataNode(nodeInfo);
+            value = new ResXDataNode(nodeInfo, basePath);
         }
 
 #endregion
