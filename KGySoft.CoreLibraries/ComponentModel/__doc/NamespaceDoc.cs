@@ -18,7 +18,6 @@
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using KGySoft.Collections;
 
 #endregion
 

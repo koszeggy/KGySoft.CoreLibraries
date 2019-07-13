@@ -418,7 +418,6 @@ namespace KGySoft.Collections
         #region Static Fields
 
         private static readonly Type typeOfT = typeof(T);
-        private static readonly T[] emptyArray = new T[0];
 
         // ReSharper disable StaticMemberInGenericType
         private static readonly bool isEnum = typeOfT.IsEnum;
@@ -514,7 +513,7 @@ namespace KGySoft.Collections
                     startIndex = 0;
                 }
                 else
-                    items = emptyArray;
+                    items = Reflector.EmptyArray<T>();
             }
         }
 
@@ -622,7 +621,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Creates a new instance of <see cref="CircularList{T}"/>.
         /// </summary>
-        public CircularList() => items = emptyArray;
+        public CircularList() => items = Reflector.EmptyArray<T>();
 
         /// <summary>
         /// Creates a new instance of <see cref="CircularList{T}"/> that is empty and has the specified initial capacity.
@@ -647,7 +646,7 @@ namespace KGySoft.Collections
                 return;
             }
 
-            items = emptyArray;
+            items = Reflector.EmptyArray<T>();
             foreach (T item in collection)
                 AddLast(item);
         }
@@ -1197,7 +1196,7 @@ namespace KGySoft.Collections
         {
             if (size == 0)
                 return;
-            items = emptyArray;
+            items = Reflector.EmptyArray<T>();
             startIndex = 0;
             size = 0;
             version++;

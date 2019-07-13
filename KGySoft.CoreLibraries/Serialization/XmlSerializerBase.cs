@@ -281,7 +281,7 @@ namespace KGySoft.Serialization
 
             // getting non read-only instance fields
             IEnumerable<MemberInfo> fields = ExcludeFields
-                    ? (IEnumerable<MemberInfo>)new MemberInfo[0]
+                    ? (IEnumerable<MemberInfo>)Reflector.EmptyArray<MemberInfo>()
                     : type.GetFields(BindingFlags.Public | BindingFlags.Instance)
                         .Where(f => !f.IsInitOnly
                             // read-only fields are serialized only if forced

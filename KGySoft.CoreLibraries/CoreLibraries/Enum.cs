@@ -23,7 +23,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.Remoting.Messaging;
 using System.Text;
 
 using KGySoft.Collections;

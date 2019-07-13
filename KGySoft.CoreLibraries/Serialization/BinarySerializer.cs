@@ -199,7 +199,7 @@ namespace KGySoft.Serialization
             if (array == null)
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length == 0)
-                return new byte[0];
+                return Reflector.EmptyArray<byte>();
 
             byte[] rawData = new byte[Marshal.SizeOf(typeof(T)) * array.Length];
             GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
@@ -234,7 +234,7 @@ namespace KGySoft.Serialization
                 throw new ArgumentNullException(nameof(array), Res.ArgumentNull);
             if (array.Length == 0)
             {
-                result = new byte[0];
+                result = Reflector.EmptyArray<byte>();
                 return true;
             }
 
@@ -344,7 +344,7 @@ namespace KGySoft.Serialization
                 throw new ArgumentOutOfRangeException(nameof(offset), Res.ArgumentOutOfRange);
 
             if (count == 0)
-                return new T[0];
+                return Reflector.EmptyArray<T>();
 
             T[] result = new T[count];
             GCHandle handle = GCHandle.Alloc(result, GCHandleType.Pinned);

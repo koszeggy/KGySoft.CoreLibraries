@@ -447,7 +447,7 @@ namespace KGySoft.Serialization
             ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
             byte[] data = context.Reader.NodeType == XmlNodeType.Text
                 ? Convert.FromBase64String(context.Reader.Value)
-                : new byte[0];
+                : Reflector.EmptyArray<byte>();
             if (attrCrc != null)
             {
                 if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc)

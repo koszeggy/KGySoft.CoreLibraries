@@ -22,6 +22,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -138,7 +139,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(s), Res.ArgumentNull);
 
             if (s.Length == 0)
-                return new byte[0];
+                return Reflector.EmptyArray<byte>();
 
             if (s.Length % 2 != 0)
                 throw new ArgumentException(Res.StringExtensionsSourceLengthNotEven, nameof(s));

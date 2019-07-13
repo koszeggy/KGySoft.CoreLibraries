@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
+using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
 
 #endregion
@@ -158,7 +159,7 @@ namespace KGySoft.CoreLibraries
             if (length < 0)
                 throw new ArgumentOutOfRangeException(nameof(length), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if (length == 0)
-                return new byte[0];
+                return Reflector.EmptyArray<byte>();
 
             var result = new byte[length];
             random.NextBytes(result);

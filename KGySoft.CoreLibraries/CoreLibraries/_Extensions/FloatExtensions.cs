@@ -18,7 +18,6 @@
 
 using System;
 using System.Globalization;
-using KGySoft.Reflection;
 
 #endregion
 
