@@ -6,8 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~
-! v4.6.3:
+! v4.7.0:
 ~~~~~~~~~
+
++ KGySoft namespace:
+====================
++ PublicResources class: Some new resources.
+
+- KGySoft.CoreLibraries namespace:
+==================================
+- StreamExtensions.ToArray: Fixing an edge case-scenario
 
 + KGySoft.Collections.ObjectModel namespace:
 ============================================
@@ -36,15 +44,22 @@
   + Implements ICloneable
 + IExpandoResourceSet: New CloneValues property
 + ResXResourceSet: New CloneValues property
-+ IExpandoResourceManager: New CloneValues property
++ IExpandoResourceManager:
+  + New CloneValues property
+  + New GetStream method
 ! ResXResourceManager:
   + New CloneValues property
   ! To be compatible with ResourceManager the default value of CloneValues is true, so Get[Meta]Object and Get[Meta]Enumerator will return a copy
     of the stored objects by default. For compatibility with earlier behavior set CloneValues to false.
-! HybridResourceManager (and thus DynamicResourceManager):
+  ! New GetStream methods: Since in the base ResourceManager these methods are not overridable these are newly defined methods.
+    Unlike the base methods, these have MemoryStream return type (instead of UnmanagedMemoryStream).
+! HybridResourceManager:
+  ! If SafeMode is true the GetString methods do not throw an InvalidOperationException even if the result is from a compiled resource.
   + New CloneValues property
   ! To be compatible with ResourceManager the default value of CloneValues is true, so Get[Meta]Object and Get[Meta]Enumerator will return a copy
     of the stored objects by default. For compatibility with earlier behavior set CloneValues to false.
+  ! New GetStream methods: Since in the base ResourceManager these methods are not overridable these are newly defined methods.
+    Unlike the base methods, these have MemoryStream return type (instead of UnmanagedMemoryStream).
 
 ~~~~~~~~~
 * v4.6.2:

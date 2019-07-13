@@ -238,6 +238,10 @@ namespace KGySoft.Resources
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>
     /// and <see cref="GetMetaString">GetMetaString</see> methods will not throw an <see cref="InvalidOperationException"/>
     /// even for non-string entries; they return the raw XML value instead.</item>
+    /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see>
+    /// and <see cref="GetMetaStream">GetMetaStream</see> methods will not throw an <see cref="InvalidOperationException"/>.
+    /// For values, which are neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see> instances, they return a stream wrapper for the same string value
+    /// that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> methods.</item>
     /// </list>
     /// <note type="security">Even if <see cref="SafeMode"/> is <see langword="false"/>, loading a .resx content with corrupt or malicious entry
     /// will have no effect until we try to obtain the corresponding value. See the last example at <see cref="ResXResourceSet"/> for the demonstration
@@ -254,6 +258,7 @@ namespace KGySoft.Resources
     /// which has a corresponding but not loaded resource file, then a resource set for a parent culture might be cached and on successive calls that cached parent set will be
     /// returned even if the <c>createIfNotExists</c> argument is <see langword="true"/>. In <see cref="ResXResourceManager"/> the corresponding argument of
     /// the <see cref="GetResourceSet">GetResourceSet</see> method has been renamed to <c>loadIfExists</c> and works as expected.</item>
+    /// <item>The <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods have <see cref="MemoryStream"/> return type instead of <see cref="UnmanagedMemoryStream"/> and they can be used also for <see cref="Array">byte[]</see> values.</item>
     /// </list></para>
     /// <para><strong>New features and improvements</strong> compared to <see cref="ResourceManager"/>:
     /// <list type="bullet">
@@ -494,7 +499,11 @@ namespace KGySoft.Resources
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
-        /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
+        /// will return a <see cref="string"/> also for non-string objects. For non-string values the raw XML string value will be returned.</para>
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> and <see cref="GetMetaStream">GetMetaStream</see> methods
+        /// will return a <see cref="MemoryStream"/> for any object.
+        /// For values, which are neither <see cref="MemoryStream"/>, nor <see cref="Array">byte[]</see> instances these methods return a stream wrapper for the same string value
+        /// that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> methods.</para>
         /// </remarks>
         /// <seealso cref="ResXResourceReader.SafeMode"/>
         /// <seealso cref="ResXResourceSet.SafeMode"/>
@@ -510,7 +519,7 @@ namespace KGySoft.Resources
         /// an issue than this property can be set to <see langword="false"/>&#160;for better performance.</para>
         /// <para>String values are not cloned.</para>
         /// </remarks>
-        public bool CloneValues { get; set; }
+        public bool CloneValues { get; set; } = true;
 
         /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance is disposed.
@@ -798,6 +807,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
@@ -820,6 +830,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
@@ -830,7 +841,62 @@ namespace KGySoft.Resources
         public override string GetString(string name, CultureInfo culture) => (string)GetObjectInternal(name, culture, true, CloneValues);
 
         /// <summary>
-        /// Returns the value of the specified non-string resource.
+        /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to retrieve.</param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method,
+        /// which will be the raw XML content for non-string resources.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public new virtual MemoryStream GetStream(string name) => GetStream(name, null);
+
+        /// <summary>
+        /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/> and <paramref name="culture"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to retrieve.</param>
+        /// <param name="culture">An object that represents the culture for which the resource is localized. If the resource is not localized for
+        /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
+        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method,
+        /// which will be the raw XML content for non-string resources.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public new virtual MemoryStream GetStream(string name, CultureInfo culture)
+        {
+            object value = GetObjectInternal(name, culture, false, false);
+            return ResXCommon.ToMemoryStream(name, value, SafeMode);
+        }
+
+        /// <summary>
+        /// Returns the value of the specified resource.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="ResXResourceManager"/> class for examples.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
@@ -838,6 +904,13 @@ namespace KGySoft.Resources
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
@@ -845,7 +918,7 @@ namespace KGySoft.Resources
         public override object GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
 
         /// <summary>
-        /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
+        /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="ResXResourceManager"/> class for examples.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
@@ -856,6 +929,13 @@ namespace KGySoft.Resources
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
@@ -884,6 +964,39 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public string GetMetaString(string name, CultureInfo culture = null) => (string)GetMetaInternal(name, culture, true, CloneValues);
+
+        /// <summary>
+        /// Returns a <see cref="MemoryStream"/> instance from the metadata of the specified <paramref name="name"/> and <paramref name="culture"/>.
+        /// </summary>
+        /// <param name="name">The name of the metadata to retrieve.</param>
+        /// <param name="culture">An object that represents the culture for which the metadata should be returned.
+        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
+        /// Unlike in case of <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods, no fallback is used if the metadata is not found in the specified culture. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.
+        /// </param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified metadata, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetMetaObject">GetMetaObject</see> method returns either
+        /// a full copy of the specified metadata, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetMetaStream">GetMetaStream</see> method
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="GetMetaStream">GetMetaStream</see> can be used also for byte array metadata.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array metadata, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> methods,
+        /// which will be the raw XML content for non-string metadata.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public MemoryStream GetMetaStream(string name, CultureInfo culture = null)
+        {
+            object value = GetMetaInternal(name, culture, false, false);
+            return ResXCommon.ToMemoryStream(name, value, SafeMode);
+        }
 
         /// <summary>
         /// Returns the value of the specified non-string metadata for the specified <paramref name="culture"/>.

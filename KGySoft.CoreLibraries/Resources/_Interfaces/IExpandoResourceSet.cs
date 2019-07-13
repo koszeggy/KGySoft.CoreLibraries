@@ -42,10 +42,11 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
-        /// objects on demand by calling the <see cref="ResXDataNode.GetValue"/> method on the <see cref="ResXDataNode"/> instance.</para>
+        /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
-        /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx source.
-        /// For non-string elements the raw XML string value will be returned.</para>
+        /// will return a <see cref="string"/> also for non-string objects.
+        /// For non-string values the raw XML string value will be returned for resources from a .resx source and the result of the <see cref="object.ToString">ToString</see> method
+        /// for resources from a compiled source.</para>
         /// </remarks>
         bool SafeMode { get; set; }
 
@@ -155,33 +156,14 @@ namespace KGySoft.Resources
         /// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
         /// <returns>
         /// The <see cref="string"/> value of a resource.
-        /// If <see cref="SafeMode"/> is <see langword="false"/>, or the result is not from a .resx resource, an <see cref="InvalidOperationException"/> will be thrown for
-        /// non-string resources. If <see cref="SafeMode"/> is <see langword="true"/>&#160;and the result is found in a .resx resource, the raw XML value will be returned for non-string resources.
+        /// If <see cref="SafeMode"/> is <see langword="false"/>, then an <see cref="InvalidOperationException"/> will be thrown for
+        /// non-string resources. If <see cref="SafeMode"/> is <see langword="true"/>, then either the raw XML value (for resources from a .resx source)
+        /// or the string representation of the object (for resources from a compiled source) will be returned for non-string resources.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> (when <see cref="SafeMode"/> is <see langword="false"/>&#160;or the resource is not from a .resx resource).</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
         string GetString(string name, bool ignoreCase = false);
-
-        ///// <summary>
-        ///// Searches for a <see cref="Stream" /> resource with the specified <paramref name="name"/> and returns it as a read-only <see cref="MemoryStream"/>.
-        ///// </summary>
-        ///// <param name="name">Name of the resource to search for.</param>
-        ///// <param name="ignoreCase">Indicates whether the case of the specified <paramref name="name"/> should be ignored.</param>
-        ///// <returns>
-        ///// The <see cref="MemoryStream"/> value of a resource.
-        ///// If <see cref="SafeMode"/> is <see langword="false"/>, or the result is not from a .resx resource, an <see cref="InvalidOperationException"/> will be thrown for
-        ///// non-memory stream resources. If <see cref="SafeMode"/> is <see langword="true"/>&#160;and the result is found in a .resx resource, the raw XML value will be wrapped
-        ///// into a <see cref="MemoryStream"/> if the result is not a <see cref="Stream"/> or byte array.
-        ///// </returns>
-        ///// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
-        ///// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
-        ///// <exception cref="InvalidOperationException">The type of the resource is not a <see cref="Stream"/>, byte array or <see cref="string"/> (when <see cref="SafeMode"/> is <see langword="false"/>&#160;or
-        ///// <remarks>
-        ///// <para>If the stored value is a <see cref="MemoryStream"/> or byte array, then a new read-only <see cref="MemoryStream"/> is returned </para>
-        ///// </remarks>
-        ///// the resource is not from a .resx resource).</exception>
-        //MemoryStream GetStream(string name, bool ignoreCase = false);
 
         /// <summary>
         /// Searches for a metadata object with the specified <paramref name="name"/>.

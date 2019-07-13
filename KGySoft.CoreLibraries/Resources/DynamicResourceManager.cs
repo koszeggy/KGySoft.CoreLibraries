@@ -845,6 +845,11 @@ namespace KGySoft.Resources
         /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
+        /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.</para>
         /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
         /// </remarks>
@@ -863,6 +868,11 @@ namespace KGySoft.Resources
         /// Otherwise, returns the value of the resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
+        /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.</para>
         /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
         /// </remarks>
@@ -881,21 +891,21 @@ namespace KGySoft.Resources
         /// <returns>
         /// The value of the resource localized for the specified culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/>&#160;or the current
-        /// non-string entry is from a compiled resource.</exception>
-        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
-        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>
-        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
-        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>, then instead of throwing an <see cref="InvalidOperationException"/>
+        /// either the raw XML value (for resources from a .resx source) or the string representation of the object (for resources from a compiled source) will be returned for non-string resources.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.
         /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
         /// or <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see>.
         /// <note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note>
         /// </para>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public override string GetString(string name, CultureInfo culture) => base.GetString(name, culture);
 
         /// <summary>
@@ -906,8 +916,9 @@ namespace KGySoft.Resources
         /// The value of the resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
-        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>, then instead of throwing an <see cref="InvalidOperationException"/>
+        /// either the raw XML value (for resources from a .resx source) or the string representation of the object (for resources from a compiled source) will be returned for non-string resources.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.
         /// In this case the result will be prefixed either by <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see>
         /// or <see cref="LanguageSettings.UnknownResourcePrefix">LanguageSettings.UnknownResourcePrefix</see>.
@@ -915,12 +926,65 @@ namespace KGySoft.Resources
         /// </para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/>&#160;or the current
-        /// non-string entry is from a compiled resource.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         public override string GetString(string name) => GetString(name, null);
+
+        // ReSharper disable once RedundantOverriddenMember - overridden for the description
+        /// <summary>
+        /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/> and <paramref name="culture"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to retrieve.</param>
+        /// <param name="culture">An object that represents the culture for which the resource is localized. If the resource is not localized for
+        /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
+        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property.</param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
+        /// <para><see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetString">GetString</see> method,
+        /// which will be the raw XML content for non-string resources.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public override MemoryStream GetStream(string name, CultureInfo culture) => base.GetStream(name, culture);
+
+        /// <summary>
+        /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to retrieve.</param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified resource localized for the caller's current UI culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> methods return either
+        /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> methods
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
+        /// <para><see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
+        /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> method,
+        /// which will be the raw XML content for non-string resources.</para>
+        /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.</para>
+        /// <para><note>For more details see the <em>Auto Appending</em> section at the description of the <see cref="DynamicResourceManager"/> class.</note></para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="HybridResourceManager.SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        public override MemoryStream GetStream(string name) => GetStream(name, null);
 
         /// <summary>
         /// Retrieves the resource set for a particular culture.

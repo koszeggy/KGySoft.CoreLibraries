@@ -22,7 +22,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Resources;
-
+using System.Text;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 
@@ -114,6 +114,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             Assert.AreEqual(resx, hybrid);
             Assert.IsNull(compiled);
+
+            // Non string throws an exception if not is in safe mode
+            resName = "TestImage";
+            Assert.IsFalse(manager.SafeMode);
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
+            manager.Source = ResourceManagerSources.ResXOnly;
+            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
+
+            // but in safe mode they succeed - the content is different though: ToString vs. raw XML content
+            manager.SafeMode = true;
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            compiled = manager.GetString(resName, inv);
+            Assert.AreEqual(manager.GetObject(resName, inv).ToString(), compiled);
+            manager.Source = ResourceManagerSources.ResXOnly;
+            resx = manager.GetString(resName, inv);
+            Assert.AreEqual(manager.GetObject(resName, inv).ToString(), resx);
+            Assert.AreNotEqual(compiled, resx);
         }
 
         [Test]
@@ -234,6 +252,62 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreSame(hybrid, manager.GetObject(resName, huHU)); // returned from cached lastUsedResourceSet
             Assert.AreSame(hybrid, manager.GetObject(resName, hu)); // returned from cached proxy in resourceSets
             Assert.AreSame(hybrid, manager.GetObject(resName, inv)); // returned from cached non-proxy in resourceSets
+        }
+
+        [Test]
+        public void GetStreamTest()
+        {
+            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+
+            // Memory stream can be obtained from both compiled and resx, compiled is an unmanaged memory stream
+            var resName = "TestSound";
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            var compiled = manager.GetStream(resName, inv);
+            manager.Source = ResourceManagerSources.ResXOnly;
+            var resx = manager.GetStream(resName, inv);
+            Assert.IsInstanceOf<MemoryStream>(compiled);
+            Assert.IsInstanceOf<MemoryStream>(resx);
+            Assert.AreNotEqual(compiled.GetType(), resx.GetType());
+
+            // Works also for byte[], now MemoryStream is returned for both
+            resName = "TestBinFile";
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            compiled = manager.GetStream(resName, inv);
+            manager.Source = ResourceManagerSources.ResXOnly;
+            resx = manager.GetStream(resName, inv);
+            Assert.IsInstanceOf<MemoryStream>(compiled);
+            Assert.IsInstanceOf<MemoryStream>(resx);
+            Assert.AreEqual(compiled.GetType(), resx.GetType());
+
+            // For a string exception is thrown when SafeMode = false
+            resName = "TestString";
+            Assert.IsFalse(manager.SafeMode);
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            Assert.Throws<InvalidOperationException>(() => manager.GetStream(resName, inv));
+            manager.Source = ResourceManagerSources.ResXOnly;
+            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType.FullName));
+
+            // but when SafeMode is true, a string stream is returned
+            manager.SafeMode = true;
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            compiled = manager.GetStream(resName, inv);
+            Assert.IsInstanceOf<MemoryStream>(compiled);
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(compiled, Encoding.Unicode).ReadToEnd());
+            manager.Source = ResourceManagerSources.ResXOnly;
+            resx = manager.GetStream(resName, inv);
+            Assert.IsInstanceOf<MemoryStream>(resx);
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd());
+
+            // even for non-string resources
+            resName = "TestImage";
+            manager.Source = ResourceManagerSources.CompiledOnly;
+            compiled = manager.GetStream(resName, inv);
+            Assert.IsInstanceOf<MemoryStream>(compiled);
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(compiled, Encoding.Unicode).ReadToEnd());
+            manager.Source = ResourceManagerSources.ResXOnly;
+            resx = manager.GetStream(resName, inv);
+            Assert.IsInstanceOf<MemoryStream>(resx);
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd());
         }
 
         [Test]

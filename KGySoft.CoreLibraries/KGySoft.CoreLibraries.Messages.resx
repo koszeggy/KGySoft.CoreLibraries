@@ -349,6 +349,9 @@ Hit rate: {8:P2}</value>
   <data name="IList_InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</value>
   </data>
+  <data name="Array_InvalidOffsLen" xml:space="preserve">
+    <value>Offset and length were out of bounds for the array.</value>
+  </data>
   <data name="IDictionary_NongenericKeyTypeInvalidFormat" xml:space="preserve">
     <value>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>
@@ -755,7 +758,10 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>In this ResolveType overload the type name should not contain the assembly name.</value>
   </data>
   <data name="Resources_NonStringResourceWithTypeFormat" xml:space="preserve">
-    <value>Type of resource "{0}" is not string but "{1}" - use GetObject instead.</value>
+    <value>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</value>
+  </data>
+  <data name="Resources_NonStreamResourceWithTypeFormat" xml:space="preserve">
+    <value>Type of resource "{0}" is not MemoryStream but "{1}" - enable SafeMode or use GetObject instead.</value>
   </data>
   <data name="Resources_ConvertFromStringNotSupportedAtFormat" xml:space="preserve">
     <value>Attempting to convert type "{0}" from string on line {1}, position {2} has failed: {3}</value>

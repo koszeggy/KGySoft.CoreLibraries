@@ -93,11 +93,15 @@ namespace KGySoft
 
         /// <summary>Looks up a localized string similar to <c>'</c></summary>
         /// <returns>A localized string similar to <c>'</c></returns>
-        internal static string QuoteStart => Res.QuoteStart;
+        public static string QuoteStart => Res.QuoteStart;
 
         /// <summary>Looks up a localized string similar to <c>'</c></summary>
         /// <returns>A localized string similar to <c>'</c></returns>
-        internal static string QuoteEnd => Res.QuoteEnd;
+        public static string QuoteEnd => Res.QuoteEnd;
+
+        /// <summary>Looks up a localized string similar to <c>Offset and length were out of bounds for the array.</c></summary>
+        /// <returns>A localized string similar to <c>Offset and length were out of bounds for the array.</c></returns>
+        internal static string ArrayInvalidOffsLen => Res.ArrayInvalidOffsLen;
 
         // ReSharper disable InconsistentNaming
         /// <summary>Looks up a localized string similar to <c>Enumeration has either not started or has already finished.</c></summary>

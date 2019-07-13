@@ -17,9 +17,11 @@
 #region Usings
 
 using System;
+using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
 using KGySoft.CoreLibraries;
+using KGySoft.IO;
 using KGySoft.Reflection;
 
 #endregion
@@ -110,6 +112,8 @@ namespace KGySoft.Resources
 
         #region Methods
 
+        #region Internal Methods
+
         /// <summary>
         /// Gets assembly info for the corresponding type. If the delegate is provided it is used to get this information.
         /// </summary>
@@ -191,6 +195,82 @@ namespace KGySoft.Resources
 
             return soapFormatter;
         }
+
+        internal static MemoryStream ToMemoryStream(string name, object value, bool safeMode)
+        {
+            if (value == null)
+                return null;
+
+            if (value is ResXDataNode node)
+                return ToStreamSafe(node);
+
+            if (CanGetAsMemoryStream(value, safeMode, out MemoryStream result))
+                return result;
+
+            throw new InvalidOperationException(Res.ResourcesNonStreamResourceWithType(name, value.GetType().ToString()));
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private static bool CanGetAsMemoryStream(object value, bool safeMode, out MemoryStream result)
+        {
+            // .NET BUG: is operator would capture sbyte[], too
+            if (value.GetType() == Reflector.ByteArrayType)
+            {
+                // ReSharper disable once AssignNullToNotNullAttribute
+                result = new MemoryStream((byte[])value, false);
+                return true;
+            }
+
+            if (value is MemoryStream ms)
+            {
+                result = ms.GetType() == typeof(MemoryStream)
+                    ? new MemoryStream(ms.InternalGetBuffer(), false)
+                    : ms;
+                return true;
+            }
+
+            if (!safeMode)
+            {
+                result = null;
+                return false;
+            }
+
+            if (value is string s)
+            {
+                result = new StringStream(s);
+                return true;
+            }
+
+            result = new StringStream(value.ToString());
+            return true;
+        }
+
+        private static MemoryStream ToStreamSafe(ResXDataNode node)
+        {
+            object value = node.ValueInternal;
+
+            // not deserialized yet
+            if (value == null)
+            {
+                string typeName = node.FileRef?.TypeName ?? node.AssemblyQualifiedName;
+                if (typeName != null && Reflector.ResolveType(typeName) is Type type && type.In(Reflector.ByteArrayType, Reflector.StringType, typeof(MemoryStream)))
+                    value = node.GetValue();
+            }
+
+            if (value is ResXNullRef)
+                return null;
+
+            if (value != null && CanGetAsMemoryStream(value, false, out MemoryStream result))
+                return result;
+
+            // not a supported type or type cannot be determined: by raw value
+            return new StringStream(node.ValueData ?? node.GetDataNodeInfo(null, null).ValueData);
+        }
+
+        #endregion
 
         #endregion
     }

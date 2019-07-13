@@ -109,6 +109,9 @@ namespace KGySoft
         /// <summary>ms</summary>
         internal static string Millisecond => Get("General_Millisecond");
 
+        /// <summary>Offset and length were out of bounds for the array.</summary>
+        internal static string ArrayInvalidOffsLen => Get("Array_InvalidOffsLen");
+
         // ReSharper disable InconsistentNaming
         /// <summary>Enumeration has either not started or has already finished.</summary>
         internal static string IEnumeratorEnumerationNotStartedOrFinished => Get("IEnumerator_EnumerationNotStartedOrFinished");
@@ -805,8 +808,11 @@ namespace KGySoft
         /// <summary>Type "{0}" cannot be resolved.</summary>
         internal static string ResourcesTypeLoadException(string typeName) => Get("Resources_TypeLoadExceptionFormat", typeName);
 
-        /// <summary>Type of resource "{0}" is not string but "{1}" - use GetObject instead.</summary>
+        /// <summary>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</summary>
         internal static string ResourcesNonStringResourceWithType(string name, string typeName) => Get("Resources_NonStringResourceWithTypeFormat", name, typeName);
+
+        /// <summary>Type of resource "{0}" is not MemoryStream but "{1}" - enable SafeMode or use GetObject instead.</summary>
+        internal static string ResourcesNonStreamResourceWithType(string name, string typeName) => Get("Resources_NonStreamResourceWithTypeFormat", name, typeName);
 
         /// <summary>Attempting to convert type "{0}" from string on line {1}, position {2} has failed: {3}</summary>
         internal static string ResourcesConvertFromStringNotSupportedAt(string typeName, int line, int pos, string message) => Get("Resources_ConvertFromStringNotSupportedAtFormat", typeName, line, pos, message);

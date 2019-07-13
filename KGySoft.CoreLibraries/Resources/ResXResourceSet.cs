@@ -41,7 +41,8 @@ namespace KGySoft.Resources
     /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
     /// (<see cref="GetString(string)">GetString</see> and <see cref="GetObject(string)">GetObject</see> methods for resources, <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see>
     /// for metadata, and <see cref="GetAliasValue">GetAliasValue</see> for aliases).</para>
-    /// <example>
+    /// <h1 class="heading">Example: Enumerating resources, metadata and aliases</h1>
+    /// <para>
     /// The following example demonstrates how to access the content of a .resx file by the <see cref="ResXResourceSet"/> class using the enumerators.
     /// This is very similar to the first example of <see cref="ResXResourceReader"/>.
     /// <code lang="C#"><![CDATA[
@@ -149,11 +150,12 @@ namespace KGySoft.Resources
     /// // Name: CustomAlias
     /// // Value in SafeMode:     System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)
     /// // Value in non-SafeMode: System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)</code>
-    /// </example>
+    /// </para>
     /// <para>The <see cref="ResXResourceSet"/> class supports adding new resources (<see cref="SetObject">SetObject</see>), metadata (<see cref="SetMetaObject">SetMetaObject</see>) and aliases (<see cref="SetAliasValue">SetAliasValue</see>).
     /// Existing entries can be removed by <see cref="RemoveObject">RemoveObject</see>, <see cref="RemoveMetaObject">RemoveMetaObject</see> and <see cref="RemoveAliasValue">RemoveAliasValue</see> methods.
     /// The changed set can be saved by the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> overloads.</para>
-    /// <example>
+    /// <h1 class="heading">Example: Populating and saving a new resource set</h1>
+    /// <para>
     /// The following example shows how to create a new resource set, add a new resource and save the content. It demonstrates the usage of the key-based resource access, too.
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -193,7 +195,7 @@ namespace KGySoft.Resources
     /// //     <value>a string value</value>
     /// //   </data>
     /// // </root>]]></code>
-    /// </example>
+    /// </para>
     /// <para>If a .resx content contains the same resource name multiple times, <see cref="ResXResourceSet"/> will contain the lastly defined key. To obtain redefined values use <see cref="ResXResourceReader"/> explicitly
     /// and set <see cref="ResXResourceReader.AllowDuplicatedKeys"/> to <see langword="true"/>.</para>
     /// <para>If the <see cref="SafeMode"/> property is <see langword="true"/>&#160;the value of the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see> property returned by the enumerator methods is a <see cref="ResXDataNode"/>
@@ -201,8 +203,12 @@ namespace KGySoft.Resources
     /// <note type="security">Even if <see cref="SafeMode"/> is <see langword="false"/>, loading a .resx content with corrupt or malicious entry will have no effect until we try to obtain the corresponding value. See the example below for the demonstration.</note>
     /// </para>
     /// <para>If <see cref="SafeMode"/> property is <see langword="true"/>&#160;the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods will not throw an
-    /// <see cref="InvalidOperationException"/> even for non-string entries; they return the raw XML value instead.</para>
-    /// <example>
+    /// <see cref="InvalidOperationException"/> even for non-string values; they return the raw XML value instead.</para>
+    /// <para>If <see cref="SafeMode"/> property is <see langword="true"/>&#160;the <see cref="O:KGySoft.Resources.ResXResourceSet.GetStream">GetStream</see> methods will not throw an
+    /// <see cref="InvalidOperationException"/>. For values, which are neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see> instances, they return a stream wrapper for the same string value
+    /// that is returned by the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> methods.</para>
+    /// <h1 class="heading">Example: The SafeMode property</h1>
+    /// <para>
     /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -327,7 +333,7 @@ namespace KGySoft.Resources
     /// // Type of resource with name 'binary' is System.Byte[]. String representation: System.Byte[]
     /// // Obtaining 'dangerous' failed with an error: The input is not a valid Base-64 string as it contains a non-base 64 character,
     /// // more than two padding characters, or an illegal character among the padding characters.</code>
-    /// </example>
+    /// </para>
     /// <h1 class="heading">Comparison with System.Resources.ResXResourceSet<a name="comparison">&#160;</a></h1>
     /// <para><see cref="ResXResourceSet"/> can load .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a>.
     /// <note>When reading a .resx file written by the <a href="https://msdn.microsoft.com/en-us/library/system.resources.resxresourcewriter.aspx" target="_blank">System.Resources.ResXResourceWriter</a> class,
@@ -410,11 +416,11 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetObject(string,bool)">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
-        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetString(string,bool)">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
-        /// work for every defined item in the resource set. For non-string elements the raw XML string value will be returned.</para>
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
+        /// will return a <see cref="string"/> also for non-string objects. For non-string elements the raw XML string value will be returned.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
         /// can be freed when calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// <para>For examples see the documentation of the <see cref="ResXResourceSet"/> class.</para>

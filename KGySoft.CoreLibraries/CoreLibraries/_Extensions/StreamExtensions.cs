@@ -119,7 +119,7 @@ namespace KGySoft.CoreLibraries
                     return result;
 
                 // we use the buffer with the first fragment and continue reading
-                using (ms = new MemoryStream(result) { Position = len })
+                using (ms = new MemoryStream(result, 0, len, true, true) { Position = len })
                 {
                     CopyTo(s, ms);
 

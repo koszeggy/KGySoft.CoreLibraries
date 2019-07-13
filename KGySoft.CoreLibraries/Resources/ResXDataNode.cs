@@ -575,14 +575,10 @@ namespace KGySoft.Resources
 
         internal object ValueInternal => cachedValue;
 
-        #endregion
-
-        #region Private Properties
-
         /// <summary>
         /// Gets the assembly qualified name of the node, or null, if type cannot be determined until deserialized.
         /// </summary>
-        private string AssemblyQualifiedName
+        internal string AssemblyQualifiedName
         {
             get
             {
@@ -1188,8 +1184,7 @@ namespace KGySoft.Resources
             }
 
             // 3.) CultureInfo - because CultureInfoConverter sets the CurrentUICulture in a finally block
-            CultureInfo ci = cachedValue as CultureInfo;
-            if (ci != null)
+            if (cachedValue is CultureInfo ci)
             {
                 nodeInfo.ValueData = ci.Name;
                 nodeInfo.TypeName = ResXCommon.GetAssemblyQualifiedName(typeof(CultureInfo), typeNameConverter, compatibleFormat);

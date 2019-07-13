@@ -54,6 +54,7 @@
     <DefineConstants>TRACE;DEBUG;NET45</DefineConstants>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_NET45|AnyCPU'">
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -193,6 +194,7 @@
     <Compile Include="Diagnostics\_Interfaces\ITestCaseRepetition.cs" />
     <Compile Include="Diagnostics\_Interfaces\ITestCaseResult.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IO\StringStream.cs" />
     <Compile Include="LanguageSettings.cs" />
     <Compile Include="CoreLibraries\ReferenceEqualityComparer.cs" />
     <Compile Include="NamespaceDoc.cs" />
@@ -316,7 +318,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ExternalBuildIntegrationEnabled="True" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" />
+      <UserProperties LastExportedMakefileHash="Wp+YgqCTKiSrcCYIuQQ59w==" ED14F191-6CDA-4bbb-BB1B-C329DD754E20_OutputCondition="" ExternalBuildIntegrationEnabled="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

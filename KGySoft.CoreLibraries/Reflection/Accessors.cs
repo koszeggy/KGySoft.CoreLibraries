@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
@@ -107,6 +108,9 @@ namespace KGySoft.Reflection
         private static IDictionary<Type, IndexerAccessor> propertiesIList_Item;
 
         private static ActionMethodAccessor methodRuntimeConstructorInfo_SerializationInvoke;
+        private static FunctionMethodAccessor methodMemoryStream_InternalGetBuffer;
+
+        private static ParameterizedCreateInstanceAccessor ctorUnmanagedMemoryStreamWrapper;
 
         #endregion
 
@@ -189,6 +193,18 @@ namespace KGySoft.Reflection
         #region RuntimeConstructorInfo
 
         private static ActionMethodAccessor RuntimeConstructorInfo_SerializationInvoke(ConstructorInfo ci) => methodRuntimeConstructorInfo_SerializationInvoke ?? (methodRuntimeConstructorInfo_SerializationInvoke = new ActionMethodAccessor(ci.GetType().GetMethod("SerializationInvoke", BindingFlags.Instance | BindingFlags.NonPublic)));
+
+        #endregion
+
+        #region MemoryStream
+
+        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
+
+        #endregion
+
+        #region UnmanagedMemoryStreamWrapper
+
+        private static ParameterizedCreateInstanceAccessor UnmanagedMemoryStreamWrapper => ctorUnmanagedMemoryStreamWrapper ?? (ctorUnmanagedMemoryStreamWrapper = new ParameterizedCreateInstanceAccessor(Reflector.ResolveType("System.IO.UnmanagedMemoryStreamWrapper").GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(UnmanagedMemoryStream) }, null)));
 
         #endregion
 
@@ -538,6 +554,18 @@ namespace KGySoft.Reflection
         #region RuntimeConstructorInfo
 
         internal static void SerializationInvoke(this ConstructorInfo ci, object target, SerializationInfo info, StreamingContext context) => RuntimeConstructorInfo_SerializationInvoke(ci).Invoke(ci, target, info, context);
+
+        #endregion
+
+        #region MemoryStream
+
+        internal static byte[] InternalGetBuffer(this MemoryStream ms) => (byte[])MemoryStream_InternalGetBuffer.Invoke(ms);
+
+        #endregion
+
+        #region UnmanagedMemoryStreamWrapper
+
+        internal static MemoryStream ToMemoryStream(this UnmanagedMemoryStream ums) => (MemoryStream)UnmanagedMemoryStreamWrapper.CreateInstance(ums);
 
         #endregion
 

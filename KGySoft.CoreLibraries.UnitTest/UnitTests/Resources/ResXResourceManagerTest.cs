@@ -24,8 +24,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Resources;
+using System.Text;
 using System.Windows.Forms;
-
+using KGySoft.IO;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization;
@@ -88,6 +89,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetString(resName, en), manager.GetString(resName, en));
             Assert.AreNotEqual(refManager.GetString(resName, en), refManager.GetString(resName, enUS));
             Assert.AreNotEqual(manager.GetString(resName, en), manager.GetString(resName, enUS));
+
+            // Non string throws an exception if not is in safe mode
+            resName = "TestImage";
+            Assert.IsFalse(manager.SafeMode);
+            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
+
+            // but in safe mode they succeed - the content is different though: ToString vs. raw XML content
+            manager.SafeMode = true;
+            Assert.AreEqual(manager.GetObject(resName, inv).ToString(), manager.GetString(resName, inv));
         }
 
         [Test]
@@ -185,19 +195,68 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        public void CloneValuesTest()
+        {
+            string resName = "TestImage";
+            var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
+            Assert.IsTrue(manager.CloneValues);
+
+            // if cloning values, references are different for subsequent calls
+            Assert.AreNotSame(manager.GetObject(resName, inv), manager.GetObject(resName, inv));
+
+            // if cloning values, references are the same
+            manager.CloneValues = false;
+            Assert.AreSame(manager.GetObject(resName, inv), manager.GetObject(resName, inv));
+
+            // but strings are always the same reference
+            manager.CloneValues = true;
+            resName = "TestString";
+            Assert.AreSame(manager.GetObject(resName, inv), manager.GetObject(resName, inv));
+            Assert.AreSame(manager.GetString(resName, inv), manager.GetString(resName, inv));
+        }
+
+        [Test]
         public void GetStream()
         {
-            var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly);
+            var refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", enUS);
+            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
             var resName = "TestSound";
-            //var o = refManager.GetObject(resName, inv);
-            //var o2 = refManager.GetObject(resName, inv);
-            var s = refManager.GetStream(resName, inv);
-            var s2 = refManager.GetStream(resName, inv);
 
-            s.WriteByte(1);
-        //    Assert.AreSame(o, o2);
-            //Assert.AreSame(s, s2);
+            AssertItemsEqual(refManager.GetStream(resName, inv).ToArray(), manager.GetStream(resName, inv).ToArray());
+
+            // when CloneValues is true, GetObject returns always a new instance including the inner buffer
+            Assert.IsTrue(manager.CloneValues);
+            Assert.AreNotSame(((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer(), ((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer());
+
+            // but GetStream gets different streams wrapping the same buffer
+            Assert.AreNotSame(manager.GetStream(resName, inv), manager.GetStream(resName, inv));
+            Assert.AreSame(manager.GetStream(resName, inv).InternalGetBuffer(), manager.GetStream(resName, inv).InternalGetBuffer());
+
+            // even if CloneValues is false and GetObject returns always the same instance, GetStream gets different streams for the same buffer
+            manager.CloneValues = false;
+            Assert.AreSame(manager.GetObject(resName, inv), manager.GetObject(resName, inv));
+            Assert.AreNotSame(manager.GetStream(resName, inv), manager.GetStream(resName, inv));
+            Assert.AreSame(manager.GetStream(resName, inv).InternalGetBuffer(), manager.GetStream(resName, inv).InternalGetBuffer());
+
+            // works also for byte[] where the original ResourceManager throws an exception
+            resName = "TestBytes";
+            Throws<InvalidOperationException>(() => refManager.GetStream(resName, inv));
+            Assert.IsInstanceOf<MemoryStream>(manager.GetStream(resName, inv));
+
+            // when not in SafeMode, other types throw an exception
+            resName = "TestString";
+            Assert.IsFalse(manager.SafeMode);
+            Throws<InvalidOperationException>(() => refManager.GetStream(resName, inv));
+            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType.FullName));
+
+            // but in SafeMode strings are returned as streams
+            manager.SafeMode = true;
+            Assert.IsInstanceOf<MemoryStream>(manager.GetStream(resName, inv));
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(manager.GetStream(resName, inv), Encoding.Unicode).ReadToEnd());
+
+            // and even non-strings return the same raw XML content as GetString
+            resName = "TestImage";
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(manager.GetStream(resName, inv), Encoding.Unicode).ReadToEnd());
         }
 
         [Test]

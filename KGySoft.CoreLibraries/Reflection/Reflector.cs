@@ -47,11 +47,20 @@ namespace KGySoft.Reflection
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "It is due to caching common types (see fields).")]
     public static class Reflector
     {
+        #region Nested Classes
+
+        private static class EmptyArrayHelper<T>
+        {
+            internal static readonly T[] Instance = new T[0];
+        }
+
+        #endregion
+
         #region Fields
 
         #region Internal Fields
 
-        internal static readonly object[] EmptyObjects = new object[0];
+        internal static readonly object[] EmptyObjects = EmptyArrayHelper<object>.Instance;
 
         internal static readonly Type VoidType = typeof(void);
 
@@ -127,16 +136,16 @@ namespace KGySoft.Reflection
 
         #region Properties
 
-        private static IThreadSafeCacheAccessor<Type, string> DefaultMemberCache 
+        private static IThreadSafeCacheAccessor<Type, string> DefaultMemberCache
             => defaultMemberCache ?? (defaultMemberCache = new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor());
 
-        private static LockingDictionary<string, Type> TypeCacheByString 
+        private static LockingDictionary<string, Type> TypeCacheByString
             => typeCacheByString ?? (typeCacheByString = new Cache<string, Type>().AsThreadSafe());
 
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly 
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
             => typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>(64).AsThreadSafe()).GetThreadSafeAccessor(true)); // true because the inner creation is fast
 
-        private static LockingDictionary<string, Assembly> AssemblyCache 
+        private static LockingDictionary<string, Assembly> AssemblyCache
             => assemblyCache ?? (assemblyCache = new Cache<string, Assembly>().AsThreadSafe());
 
         #endregion
@@ -1938,7 +1947,7 @@ namespace KGySoft.Reflection
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             // In case of value types no parameterless constructor would be found - redirecting
-            return type.IsValueType && (parameters?.Length ?? 0) == 0 
+            return type.IsValueType && (parameters?.Length ?? 0) == 0
                 ? (TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object result) ? result : null)
                 : (TryCreateInstanceByCtor(type, parameters ?? EmptyObjects, genericParameters ?? Type.EmptyTypes, way, true, out result) ? result : null);
         }
@@ -3028,6 +3037,13 @@ namespace KGySoft.Reflection
                 return Buffer.ByteLength(new T[1]);
             return type.SizeOf();
         }
+
+        internal static T[] EmptyArray<T>() =>
+#if NET35 || NET40 || NET45
+            EmptyArrayHelper<T>.Instance;
+#else
+            Array.Empty<T>();
+#endif
 
         #endregion
 

@@ -54,8 +54,13 @@ namespace KGySoft.Resources
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
         /// objects on demand by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> method.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
-        /// will return a <see cref="string"/> for non-string objects, too, if they are from a .resx source.
-        /// For non-string elements the raw XML string value will be returned.</para>
+        /// will return a <see cref="string"/> also for non-string objects.
+        /// For non-string values the raw XML string value will be returned for resources from a .resx source and the result of the <see cref="Object.ToString">ToString</see> method
+        /// for resources from a compiled source.</para>
+        /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, the <see cref="GetStream">GetStream</see> and <see cref="GetMetaStream">GetMetaStream</see> methods
+        /// will return a <see cref="MemoryStream"/> for any object.
+        /// For values, which are neither <see cref="MemoryStream"/>, nor <see cref="Array">byte[]</see> instances these methods return a stream wrapper for the same string value
+        /// that is returned by the <see cref="GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> methods.</para>
         /// </remarks>
         bool SafeMode { get; set; }
 
@@ -122,19 +127,47 @@ namespace KGySoft.Resources
         /// The value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> resource from a .resx content, then
-        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the resource.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then instead of throwing an <see cref="InvalidOperationException"/>
+        /// either the raw XML value (for resources from a .resx source) or the string representation of the object (for resources from a compiled source) will be returned for non-string resources.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the resource is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/>&#160;or the current
-        /// non-string entry is from a compiled resource.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the resource is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetString(string name, CultureInfo culture = null);
 
         /// <summary>
-        /// Gets the value of the specified non-string resource localized for the specified <paramref name="culture"/>.
+        /// Returns a <see cref="MemoryStream"/> instance from the resource of the specified <paramref name="name"/> and <paramref name="culture"/>.
+        /// </summary>
+        /// <param name="name">The name of the resource to retrieve.</param>
+        /// <param name="culture">An object that represents the culture for which the resource is localized. If the resource is not localized for
+        /// this culture, the resource manager uses fallback rules to locate an appropriate resource. If this value is
+        /// <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.CurrentUICulture">CultureInfo.CurrentUICulture</see> property. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetObject">GetObject</see> method returns either
+        /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetStream">GetStream</see> method
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="GetString">GetString</see> method,
+        /// which will be the raw XML content for non-string resources.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        MemoryStream GetStream(string name, CultureInfo culture = null);
+
+        /// <summary>
+        /// Gets the value of the specified resource localized for the specified <paramref name="culture"/>.
         /// </summary>
         /// <param name="name">The name of the resource to get.</param>
         /// <param name="culture">The culture for which the resource is localized. If the resource is not localized for
@@ -145,6 +178,13 @@ namespace KGySoft.Resources
         /// If <see cref="SafeMode"/> is <see langword="true"/>, and the resource is from a .resx content, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the resource localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetObject">GetObject</see> method returns either
+        /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetStream">GetStream</see> method
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
@@ -211,15 +251,45 @@ namespace KGySoft.Resources
         /// The value of the metadata of the specified culture, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is a non-<see langword="string"/> metadata, then
-        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns the underlying raw XML content of the metadata.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then instead of throwing an <see cref="InvalidOperationException"/>
+        /// the raw XML value will be returned for non-string metadata.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
-        /// <exception cref="InvalidOperationException">The type of the metadata is not <see cref="string"/> and <see cref="SafeMode"/> is <see langword="false"/>.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160; and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         string GetMetaString(string name, CultureInfo culture = null);
+
+        /// <summary>
+        /// Returns a <see cref="MemoryStream"/> instance from the metadata of the specified <paramref name="name"/> and <paramref name="culture"/>.
+        /// </summary>
+        /// <param name="name">The name of the metadata to retrieve.</param>
+        /// <param name="culture">An object that represents the culture for which the metadata should be returned.
+        /// If this value is <see langword="null"/>, the <see cref="CultureInfo" /> object is obtained by using the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
+        /// Unlike in case of <see cref="GetStream">GetStream</see> method, no fallback is used if the metadata is not found in the specified culture. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.
+        /// </param>
+        /// <returns>
+        /// A <see cref="MemoryStream"/> object from the specified metadata, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
+        /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetMetaObject">GetMetaObject</see> method returns either
+        /// a full copy of the specified metadata, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetMetaStream">GetMetaStream</see> method
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="GetMetaStream">GetMetaStream</see> can be used also for byte array metadata.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array metadata, then
+        /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="GetString">GetString</see> method,
+        /// which will be the raw XML content for non-string metadata.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/>&#160;and the type of the metadata is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
+        /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
+        /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        MemoryStream GetMetaStream(string name, CultureInfo culture = null);
 
         /// <summary>
         /// Returns the value of the specified non-string metadata for the specified <paramref name="culture"/>.
@@ -234,6 +304,13 @@ namespace KGySoft.Resources
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then the method returns a <see cref="ResXDataNode"/> instance instead of the actual deserialized value.
         /// Otherwise, returns the value of the metadata localized for the specified <paramref name="culture"/>, or <see langword="null"/>&#160;if <paramref name="name" /> cannot be found in a resource set.
         /// </returns>
+        /// <remarks>
+        /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetMetaObject">GetMetaObject</see> method returns either
+        /// a full copy of the specified metadata, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetMetaStream">GetMetaStream</see> method
+        /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
+        /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
