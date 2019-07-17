@@ -204,9 +204,6 @@ namespace KGySoft.Resources
     /// </para>
     /// <para>If <see cref="SafeMode"/> property is <see langword="true"/>&#160;the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods will not throw an
     /// <see cref="InvalidOperationException"/> even for non-string values; they return the raw XML value instead.</para>
-    /// <para>If <see cref="SafeMode"/> property is <see langword="true"/>&#160;the <see cref="O:KGySoft.Resources.ResXResourceSet.GetStream">GetStream</see> methods will not throw an
-    /// <see cref="InvalidOperationException"/>. For values, which are neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see> instances, they return a stream wrapper for the same string value
-    /// that is returned by the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see>/<see cref="GetMetaString">GetMetaString</see> methods.</para>
     /// <h1 class="heading">Example: The SafeMode property</h1>
     /// <para>
     /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).

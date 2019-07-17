@@ -20,6 +20,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+#if NET35 || NET40
+using System.Globalization;
+#endif
 using System.IO;
 using System.Linq;
 using System.Reflection;

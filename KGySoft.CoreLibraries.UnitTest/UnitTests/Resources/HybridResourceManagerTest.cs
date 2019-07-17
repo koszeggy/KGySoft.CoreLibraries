@@ -692,7 +692,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string testRes = manager.GetString(resName);
             Assert.IsNotNull(testResRef);
             Assert.IsNotNull(testRes);
+#if NET35
             // TODO .NET 3.5: get/set pointer fields by FieldAccessor
+            Assert.Inconclusive("Serializing pointers is not supported");
+#endif
             refManager = refManager.DeepClone();
             manager = manager.DeepClone();
             Assert.AreEqual(testResRef, refManager.GetString(resName));
