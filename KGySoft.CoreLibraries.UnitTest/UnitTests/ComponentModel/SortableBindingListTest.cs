@@ -128,7 +128,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         [Test]
         public void SetInner()
         {
-            var inner = new List<string> { "1", "2", "3", "2", "1" };
+            var inner = new List<string> { "0", "3", "2", "3", "1" };
             var coll = new SortableBindingList<string>(inner) { CheckConsistency = false };
             coll.ApplySort(ListSortDirection.Ascending);
 

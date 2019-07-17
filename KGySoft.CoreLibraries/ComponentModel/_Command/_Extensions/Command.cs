@@ -234,7 +234,7 @@ namespace KGySoft.ComponentModel
         }
 
         internal static ICommandSource<T> Cast<T>(this ICommandSource orig) where T : EventArgs
-            => new CommandSource<T>
+            => orig as ICommandSource<T> ?? new CommandSource<T>
             {
                 EventArgs = (T)orig.EventArgs,
                 Source = orig.Source,

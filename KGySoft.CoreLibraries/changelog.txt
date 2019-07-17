@@ -23,9 +23,16 @@
 
 ! KGySoft.ComponentModel namespace:
 ===================================
-! CommandBindingsCollection is now derived from FastLookupCollection<T> instead of Collection<T>
-- Command.CreatePropertyBinding: The underlying command was disposed incorrectly.
-+ ICommandBinding.AddSource, Command.CreateBinding, CommandBindingsCollection.Add: The source can be a Type for static events.
+! CommandBindingsCollection:
+  ! It is now derived from FastLookupCollection<T> instead of Collection<T>
+  - Disposed bindings cannot be added to the collection.
+  + Add: The source can be a Type for static events.
+* Command:
+  - CreatePropertyBinding: The underlying command was disposed incorrectly.
+  + CreateBinding: The source can be a Type for static events.
++ ICommandBinding:
+  + AddSource: The source can be a Type for static events.
+  + New IsDisposed property.
 ! FastBindingList<T>:
   ! SetItem: Invoking ListChange event with ListChangedType.ItemChanged even if setting the same instance again (compatibility with BindingList<T>).
   - SetItem: Fixing consistency check so inner map is now not rebuilt that often.

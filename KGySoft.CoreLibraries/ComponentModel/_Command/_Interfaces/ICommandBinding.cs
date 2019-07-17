@@ -84,6 +84,11 @@ namespace KGySoft.ComponentModel
         /// </summary>
         IList<ICommandStateUpdater> StateUpdaters { get; }
 
+        /// <summary>
+        /// Gets whether this <see cref="ICommandBinding"/> instance is disposed.
+        /// </summary>
+        bool IsDisposed { get; }
+
         #endregion
 
         #region Methods

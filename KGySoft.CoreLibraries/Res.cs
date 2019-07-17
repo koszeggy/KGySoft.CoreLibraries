@@ -227,7 +227,10 @@ namespace KGySoft
 
         /// <summary>Source must be an object instance for instance events and a Type for static events.</summary>
         internal static string ComponentModelInvalidCommandSource => Get("ComponentModel_InvalidCommandSource");
-        
+
+        /// <summary>Cannot add an already disposed binding to this collection.</summary>
+        internal static string ComponentModelCannotAddDiposedBinding => Get("ComponentModel_CannotAddDiposedBinding");
+
         #endregion
 
         #region Enum/EnumComparer
@@ -693,7 +696,7 @@ namespace KGySoft
         #region Profiler
 
         /// <summary>[{0}]{1}: Average Time: {2}; Total Time: {4}; First Call: {3}; Number of Calls: {5:N0}</summary>
-        internal static string ProfilerMeasureItemToString(string category,  string operation, TimeSpan averageTime, TimeSpan firstCall, TimeSpan totalTime, long calls) => Get("Profiler_MeasureItemToStringFormat", category, operation, averageTime, firstCall, totalTime, calls);
+        internal static string ProfilerMeasureItemToString(string category, string operation, TimeSpan averageTime, TimeSpan firstCall, TimeSpan totalTime, long calls) => Get("Profiler_MeasureItemToStringFormat", category, operation, averageTime, firstCall, totalTime, calls);
 
         #endregion
 

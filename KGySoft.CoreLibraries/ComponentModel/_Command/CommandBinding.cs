@@ -140,6 +140,7 @@ namespace KGySoft.ComponentModel
 
         #region Properties
 
+        public bool IsDisposed => disposed;
         public ICommandState State => state;
         public IDictionary<object, string[]> Sources => sources?.ToDictionary(i => i.Key, i => i.Value.Values.Select(si => si.EventName).ToArray());
         public IList<object> Targets => targets?.ToArray();
@@ -198,7 +199,8 @@ namespace KGySoft.ComponentModel
             bool isStatic = ReferenceEquals(source, sourceType);
             if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
                 throw new ArgumentException(Res.ComponentModelMissingEvent(eventName, sourceType), nameof(eventName));
-            if (eventInfo.AddMethod.IsStatic ^ isStatic)
+            MethodInfo addMethod = eventInfo.GetAddMethod(true);
+            if (addMethod.IsStatic ^ isStatic)
                 throw new ArgumentException(Res.ComponentModelInvalidCommandSource, nameof(source));
 
             MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
@@ -209,7 +211,7 @@ namespace KGySoft.ComponentModel
                 throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
 
             // already added
-            if (sources.TryGetValue(source, out var subscriptions) && subscriptions.ContainsKey(eventInfo))
+            if (sources.TryGetValue(source, out Dictionary<EventInfo, SubscriptionInfo> subscriptions) && subscriptions.ContainsKey(eventInfo))
                 return this;
 
             // creating generic info by reflection because the signature must match and EventArgs can vary
@@ -220,7 +222,7 @@ namespace KGySoft.ComponentModel
 
             // subscribing the event by info.Execute
             info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
-            Reflector.InvokeMethod(isStatic ? null : source, eventInfo.GetAddMethod(), info.Delegate);
+            Reflector.InvokeMethod(isStatic ? null : source, addMethod, info.Delegate);
 
             if (subscriptions == null)
                 sources[source] = new Dictionary<EventInfo, SubscriptionInfo> { { eventInfo, info } };
@@ -228,47 +230,6 @@ namespace KGySoft.ComponentModel
                 subscriptions[eventInfo] = info;
 
             UpdateSource(source);
-            return this;
-        }
-
-        public ICommandBinding AddSource(Type sourceType, string eventName)
-        {
-            if (disposed)
-                throw new ObjectDisposedException(null, Res.ObjectDisposed);
-            if (sourceType == null)
-                throw new ArgumentNullException(nameof(sourceType), Res.ArgumentNull);
-            if (eventName == null)
-                throw new ArgumentNullException(nameof(eventName), Res.ArgumentNull);
-
-            if (!eventsCache[sourceType].TryGetValue(eventName, out EventInfo eventInfo))
-                throw new ArgumentException(Res.ComponentModelMissingEvent(eventName, sourceType), nameof(eventName));
-
-            MethodInfo invokeMethod = eventInfo.EventHandlerType.GetMethod(nameof(Action.Invoke));
-            ParameterInfo[] parameters = invokeMethod?.GetParameters();
-
-            // ReSharper disable once PossibleNullReferenceException - if parameters is null the first condition will match
-            if (invokeMethod?.ReturnType != Reflector.VoidType || parameters.Length != 2 || parameters[0].ParameterType != Reflector.ObjectType || !typeof(EventArgs).IsAssignableFrom(parameters[1].ParameterType))
-                throw new ArgumentException(Res.ComponentModelInvalidEvent(eventName), nameof(eventName));
-
-            // already added
-            if (sources.TryGetValue(sourceType, out Dictionary<EventInfo, SubscriptionInfo> subscriptions) && subscriptions.ContainsKey(eventInfo))
-                return this;
-
-            // creating generic info by reflection because the signature must match and EventArgs can vary
-            var info = (SubscriptionInfo)Activator.CreateInstance(typeof(SubscriptionInfo<>).MakeGenericType(parameters[1].ParameterType));
-            info.Source = sourceType;
-            info.EventName = eventName;
-            info.Binding = this;
-
-            // subscribing the event by info.Execute
-            info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType, info, nameof(SubscriptionInfo<EventArgs>.Execute));
-            Reflector.InvokeMethod(null, eventInfo.GetAddMethod(), info.Delegate);
-
-            if (subscriptions == null)
-                sources[sourceType] = new Dictionary<EventInfo, SubscriptionInfo> { { eventInfo, info } };
-            else
-                subscriptions[eventInfo] = info;
-
             return this;
         }
 

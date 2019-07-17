@@ -54,7 +54,7 @@ namespace KGySoft.ComponentModel
     ///     // A simple integer property (with zero default value). Until the property is set no value is stored internally.
     ///     public int IntProperty { get => Get<int>(); set => Set(value); }
     ///
-    ///     // An int property with default value. Until the property is set the default will be returned.
+    ///     // An int property with a specified default value. Until the property is set the default will be returned.
     ///     public int IntPropertyCustomDefault { get => Get(-1); set => Set(value); }
     ///
     ///     // If the default value is a complex one, which should not be evaluated each time you can provide a factory for it:

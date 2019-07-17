@@ -30,7 +30,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents a collection of command bindings. If a component or control uses events, then this class can be used
     /// to create and hold the event bindings, regardless of any used technology. When this class is disposed, all of the
-    /// internally subscribed events will be released at once.
+    /// internally subscribed events will be released at once. Removed and replaced bindings will also be disposed.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>
     /// <seealso cref="ICommand" />
@@ -328,6 +328,8 @@ namespace KGySoft.ComponentModel
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
+            if (item.IsDisposed)
+                throw new ArgumentException(Res.ComponentModelCannotAddDiposedBinding, nameof(item));
             base.InsertItem(index, item);
         }
 
@@ -341,6 +343,8 @@ namespace KGySoft.ComponentModel
         {
             if (item == null)
                 throw new ArgumentNullException(nameof(item));
+            if (item.IsDisposed)
+                throw new ArgumentException(Res.ComponentModelCannotAddDiposedBinding, nameof(item));
             if (this[index] == item)
                 return;
             this[index].Dispose();

@@ -877,4 +877,7 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="ComponentModel_InvalidCommandSource" xml:space="preserve">
     <value>Source must be an object instance for instance events and a Type for static events.</value>
   </data>
+  <data name="ComponentModel_CannotAddDiposedBinding" xml:space="preserve">
+    <value>Cannot add an already disposed binding to this collection.</value>
+  </data>
 </root>

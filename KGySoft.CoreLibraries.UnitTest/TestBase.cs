@@ -124,10 +124,10 @@ namespace KGySoft.CoreLibraries
         {
 #if NET35
             if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
-                Assert.Inconclusive($"mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion>v3.5</TargetFrameworkVersion> to csproj and try again");
+                Assert.Fail($"mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 2.0");
 #elif NET40 || NET45
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
-                Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion> to csproj and try again");
+                Assert.Fail($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 4.x");
 #endif
 
         }
