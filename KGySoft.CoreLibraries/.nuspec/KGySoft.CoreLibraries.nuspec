@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>4.6.3-alpha.1</version>
+    <version>4.7.0</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -28,7 +28,9 @@ Among others:
 
 Just the most core framework .dlls are referenced. No dependencies to any 3rd party libraries.
 
-Find the full documentation with examples online: https://docs.kgysoft.net/corelibraries</description>
+Demo App: https://github.com/koszeggy/KGySoft.ComponentModelDemo
+Online Live Examples: https://dotnetfiddle.net/Authors/84474/koszeggy
+Online Documentation: https://docs.kgysoft.net/corelibraries</description>
     <releaseNotes>See the detailed release notes here: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt</releaseNotes>
     <copyright>Copyright © KGy SOFT</copyright>
     <tags>KGySoft CoreLibraries performance performant collection extension reflection serialization serializer binary xml enum cache resource manager resx dynamic command binding</tags>

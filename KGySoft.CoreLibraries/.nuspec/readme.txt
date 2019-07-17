@@ -1,15 +1,27 @@
 Thank you for installing KGy SOFT Core Libraries
 
 Release Notes: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt
+
+KGy SOFT Core Libraries features high-performance and handy general libraries.
+Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
+
+                                                 ~~*~~
+
++------------------------------------------------------------------------------------------------------------------+ 
+| Demo App for KGySoft.ComponentModel Types (WPF/WinForms): https://github.com/koszeggy/KGySoft.ComponentModelDemo |
+| Online Live Examples: https://dotnetfiddle.net/Authors/84474/koszeggy                                            |
++------------------------------------------------------------------------------------------------------------------+
+
+                                                 ~~*~~
+
 Project Home Page: https://kgysoft.net/corelibraries
 Online Documentation: https://docs.kgysoft.net/corelibraries
 Offline Documentation: <packages folder>\KGySoft.CoreLibraries.<version>\Help\KGySoft.CoreLibraries.chm
 GitHub: https://github.com/koszeggy/KGySoft.CoreLibraries
 
-KGy SOFT Core Libraries features high-performance and handy general libraries.
-Many of them aim to replace existing APIs of the original .NET framework with more efficient versions.
+                                                 ~~*~~
 
-Among others:
+Some Highlights of KGy SOFT Core Libraries:
 - Useful extensions for simple types, collections, and others
 - High-performance collections
 - High-performance reflection API

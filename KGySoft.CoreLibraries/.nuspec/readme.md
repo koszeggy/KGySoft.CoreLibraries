@@ -18,3 +18,5 @@ Among others:
 - and more...
 
 See the [online help](https://docs.kgysoft.net/corelibraries) for the complete documentation or the [project site](https://kgysoft.net/corelibraries) for some highlighted code examples.
+
+See also this WPF/WinForms [demo application](https://github.com/koszeggy/KGySoft.ComponentModelDemo), which focuses mainly on some [KGySoft.ComponentModel](http://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) features.
