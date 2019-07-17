@@ -12,7 +12,9 @@ Many of them aim to replace existing APIs of the original .NET framework with mo
 [![.NET Fiddle](https://img.shields.io/website/https/dotnetfiddle.net/Authors/84474/koszeggy.svg?label=.NET%20Fiddle)](https://dotnetfiddle.net/Authors/84474/koszeggy)
 
 ## Table of Contents:
-1. [Download Binaries](#download-binaries)
+1. [Download](#download)
+   - [Download Binaries](#download-binaries)
+   - [Download Demo App](#download-demo-app)
 2. [Project Site](#project-site)
 3. [Documentation](#documentation)
 4. [Release Notes](#release-notes)
@@ -26,14 +28,25 @@ Many of them aim to replace existing APIs of the original .NET framework with mo
    - [Business Objects](#business-objects)
    - [Command Binding](#command-binding)
    - [Performance Measurement](#performance-measurement)
+6. [License](#license)
 
-## Download Binaries:
+## Download:
+
+### Download Binaries:
 
 The binaries can be downloaded as a NuGet package directly from [nuget.org](https://www.nuget.org/packages/KGySoft.CoreLibraries)
 
 However, the preferred way is to install the package in VisualStudio either by looking for the `KGySoft.CoreLibraries` package in the Nuget Package Manager GUI, or by sending the following command at the Package Manager Console prompt:
 
     PM> Install-Package KGySoft.CoreLibraries
+
+### Download Demo App:
+
+[KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) is a desktop application, which focuses mainly to the features of the [KGySoft.ComponentModel](http://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespace of KGy SOFT Core Libraries (see also the [business objects](#business-objects) and [command binding](#command-binding) examples below). Furthermore, it also provides some useful code samples for using the KGy SOFT Core Libraries in WPF and Windows Forms applications.
+
+[![KGySoft.ComponentModelDemo](https://kgysoft.net/images/KGySoft.ComponentModelDemo.jpg)](https://github.com/koszeggy/KGySoft.ComponentModelDemo)
+
+> _Tip:_ Some simple console application live examples are also available at [.NET Fiddle](https://dotnetfiddle.net/Authors/84474/koszeggy).
 
 ## Project Site
 
@@ -796,7 +809,12 @@ new RandomizedPerformanceTest<string> { Iterations = 1_000_000 }
     .DoTest()
     .DumpResults(Console.Out);
 ```
+
+## License
+KGy SOFT Core Libraries is under the [CC BY-ND 4.0](https://creativecommons.org/licenses/by-nd/4.0/legalcode) license (see a short summary [here](https://creativecommons.org/licenses/by-nd/4.0)). It allows you to copy and redistribute the material in any medium or format for any purpose, even commercially. The only thing is not allowed is to distribute a modified material as yours.
+
 ---
+
 See the complete KGy SOFT Core Libraries documentation with even more examples at [docs.kgysoft.net](https://docs.kgysoft.net/corelibraries).
 
 [![KGy SOFT .net](https://docs.kgysoft.net/corelibraries/icons/logo.png)](https://kgysoft.net)
