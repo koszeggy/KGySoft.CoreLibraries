@@ -620,7 +620,7 @@ The possible drawback of the polling way is that `Enabled` is set only in the mo
 
 - #### [ICommandStateUpdater](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommandStateUpdater.htm):
 
-A [`ICommandState`][ICommandState] can store not just the predefined `Enabled` state but also any other data. If these states can be rendered meaningfully by the command sources (for example, when `Enabled` is false, then a source button or menu item can be disabled), then an `ICommandStateUpdater` can be used to apply the states to the sources. If the states are properties on the source, then the [`PropertyCommandStateUpdater`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_PropertyCommandStateUpdater.htm) can be added to the binding:
+An [`ICommandState`][ICommandState] can store not just the predefined `Enabled` state but also any other data. If these states can be rendered meaningfully by the command sources (for example, when `Enabled` is false, then a source button or menu item can be disabled), then an `ICommandStateUpdater` can be used to apply the states to the sources. If the states are properties on the source, then the [`PropertyCommandStateUpdater`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_PropertyCommandStateUpdater.htm) can be added to the binding:
 
 ```cs
 // we can pass a string-object dictionary to the constructor, or we can treat it as a dynamic object.
