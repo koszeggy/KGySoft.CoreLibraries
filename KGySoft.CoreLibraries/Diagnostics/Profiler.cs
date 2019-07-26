@@ -108,6 +108,12 @@ namespace KGySoft.Diagnostics
     /// </example>
     public static class Profiler
     {
+        #region Constants
+
+        private const string defaultDir = "Profiler";
+
+        #endregion
+
         #region Fields
 
         private static readonly Dictionary<string, MeasureItem> items;
@@ -169,19 +175,7 @@ namespace KGySoft.Diagnostics
                 AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
 
             items = new Dictionary<string, MeasureItem>();
-
-            try
-            {
-                profilerDir = GetDefaultDir();
-            }
-            catch (SecurityException)
-            {
-                profilerDir = "Profiler";
-            }
-            catch (UnauthorizedAccessException)
-            {
-                profilerDir = "Profiler";
-            }
+            profilerDir = GetDefaultDir();
         }
 
         #endregion
@@ -308,7 +302,18 @@ namespace KGySoft.Diagnostics
 
         private static string GetDefaultDir()
         {
-            return Path.Combine(Files.GetExecutingPath() ?? String.Empty, "Profiler");
+            try
+            {
+                return Path.Combine(Files.GetExecutingPath() ?? String.Empty, defaultDir);
+            }
+            catch (SecurityException)
+            {
+                return defaultDir;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return defaultDir;
+            }
         }
 
         [SuppressMessage("Microsoft.Globalization", "CA1305:SpecifyIFormatProvider", MessageId = "System.String.Format(System.String,System.Object,System.Object)", Justification = "False alarm, culture is specified")]

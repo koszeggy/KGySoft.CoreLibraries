@@ -6,6 +6,19 @@
 ===============================================================================
 
 ~~~~~~~~~
+- v4.7.1:
+~~~~~~~~~
+
+- KGySoft.Diagnostics namespace:
+================================
+- Profiler: Handling possible SecurityException from a partially trusted domain when determining executing directory
+
+- KGySoft.Resources namespace:
+==============================
+- ResXResourceManager: Handling possible SecurityException from a partially trusted domain when determining executing directory
+
+
+~~~~~~~~~
 ! v4.7.0:
 ~~~~~~~~~
 

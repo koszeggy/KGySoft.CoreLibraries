@@ -28,6 +28,7 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Security;
 using System.Text;
 using System.Threading;
 using KGySoft.CoreLibraries;
@@ -468,7 +469,7 @@ namespace KGySoft.Resources
 
                 if (Path.IsPathRooted(value))
                 {
-                    string baseDir = Files.GetExecutingPath();
+                    string baseDir = GetExecutingPath();
                     string relPath = Files.GetRelativePath(value, baseDir);
                     if (!Path.IsPathRooted(relPath))
                     {
@@ -787,6 +788,22 @@ namespace KGySoft.Resources
                 return resx;
 
             return ((ProxyResourceSet)rs).ResXResourceSet;
+        }
+
+        private static string GetExecutingPath()
+        {
+            try
+            {
+                return Files.GetExecutingPath();
+            }
+            catch (SecurityException)
+            {
+                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory;
+            }
         }
 
         #endregion
@@ -1659,11 +1676,11 @@ namespace KGySoft.Resources
                 return resxDirFullPath;
 
             if (String.IsNullOrEmpty(resxResourcesDir))
-                resxDirFullPath = Files.GetExecutingPath();
+                resxDirFullPath = GetExecutingPath();
             else if (Path.IsPathRooted(resxResourcesDir))
                 resxDirFullPath = resxResourcesDir;
             else
-                resxDirFullPath = Path.Combine(Files.GetExecutingPath(), resxResourcesDir);
+                resxDirFullPath = Path.Combine(GetExecutingPath(), resxResourcesDir);
 
             return resxDirFullPath;
         }
