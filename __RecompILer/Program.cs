@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if NET35 || NET40 || NET45
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: Program.cs
@@ -23,7 +24,7 @@ using System.Text;
 
 #endregion
 
-namespace RecompILer
+namespace KGySoft.RecompILer
 {
     internal static class Program
     {
@@ -32,10 +33,6 @@ namespace RecompILer
         private const bool decompileOnly = false;
         private const bool removeChangedSource = true;
 
-        private const string inputAssembly = "KGySoft.CoreLibraries.dll";
-        private const string backupAssembly = "KGySoft.CoreLibraries.bak.dll";
-        private const string outputAssembly = inputAssembly;
-        private const string keyFile = @"..\..\..\KGySoft.snk";
         private const string patternEquals = "Equals(!TEnum x,";
         private const string equalsOrigSize = "20 (0x14)";
         private const string patternGetHashCode = "GetHashCode(!TEnum";
@@ -47,10 +44,10 @@ namespace RecompILer
 
         private const string bodyEquals = @"
     .maxstack 8
-    L_0000: ldarg.1
-    L_0001: ldarg.2
-    L_0002: ceq
-    L_0004: ret";
+    ldarg.1
+    ldarg.2
+    ceq
+    ret";
 
         private const string bodyGetHashCode = @"
     .maxstack 1
@@ -109,20 +106,41 @@ namespace RecompILer
 
         private static int Main(string[] args)
         {
-            if (args.Length == 0)
-                Console.WriteLine("Framework version is not defined. Defaulting to v3.5");
-            else
-                Console.WriteLine("Framework version: " + args[0]);
+            Console.WriteLine("RecompILer");
+            if (args.Length != 3)
+            {
+                Console.WriteLine("Target Framework, assembly path and .snk path are expected");
+                return 1;
+            }
 
-            string frameworkVersion = args.Length > 0 ? args[0] : "v3.5";
-            string ildasmExe = FindIldasm(frameworkVersion);
+            Console.WriteLine("Used parameters:");
+            string targetFramework = args[0];
+            string fileName = args[1];
+            string keyFile = args[2];
+            Console.WriteLine($"Target Framework: {targetFramework}");
+            Console.WriteLine($"Assembly Path: {fileName}");
+            Console.WriteLine($"Key Path: {keyFile}");
+
+            if (!File.Exists(fileName))
+            {
+                Console.WriteLine($"File does not exist: {fileName}");
+                return 1;
+            }
+
+            if (!File.Exists(keyFile))
+            {
+                Console.WriteLine($"File does not exist: {keyFile}");
+                return 1;
+            }
+
+            string ildasmExe = FindIldasm(targetFramework);
             if (ildasmExe == null)
             {
                 // Error message has already been written
                 return 1;
             }
             string windows = Environment.GetFolderPath(Environment.SpecialFolder.System);
-            string ilasmExe = Path.Combine(windows, frameworkVersion.StartsWith("v4.", StringComparison.Ordinal) ? ilasm4 : ilasm2);
+            string ilasmExe = Path.Combine(windows, targetFramework.StartsWith("net4", StringComparison.Ordinal) ? ilasm4 : ilasm2);
             if (!File.Exists(ilasmExe))
             {
                 Console.WriteLine("Can't find ilasm. Aborting. Expected it at: {0}", ilasmExe);
@@ -131,7 +149,7 @@ namespace RecompILer
 
             try
             {
-                string ilFile = Decompile(ildasmExe);
+                string ilFile = Decompile(ildasmExe, fileName);
                 if (decompileOnly)
                     return 0;
 
@@ -140,7 +158,7 @@ namespace RecompILer
                     return 1;
                 }
 
-                if (!Recompile(ilFile, ilasmExe))
+                if (!Recompile(ilFile, ilasmExe, fileName, keyFile))
                 {
                     return 1;
                 }
@@ -162,7 +180,7 @@ namespace RecompILer
         private static string FindIldasm(string frameworkVersion)
         {
             string programFiles = IntPtr.Size == 4 ? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles) : Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-            foreach (string sdkPath in (frameworkVersion == "v4.0" || frameworkVersion == "v4.5") ? ildasm4 : ildasm35)
+            foreach (string sdkPath in (frameworkVersion == "net40" || frameworkVersion == "net45") ? ildasm4 : ildasm35)
             {
                 string ildasm = Path.Combine(programFiles, sdkPath);
                 if (File.Exists(ildasm))
@@ -174,34 +192,31 @@ namespace RecompILer
             return null;
         }
 
-        private static string Decompile(string ildasmExe)
+        private static string Decompile(string ildasmExe, string fileName)
         {
-            if (!File.Exists(inputAssembly))
-            {
-                throw new FileNotFoundException("File not found", inputAssembly);
-            }
             string ilFile = Path.GetTempFileName();
             Console.WriteLine("Decompiling to {0}", ilFile);
             Process process = Process.Start(new ProcessStartInfo
             {
                 FileName = ildasmExe,
-                Arguments = "\"/OUT=" + ilFile + "\" " + inputAssembly,
+                Arguments = "\"/OUT=" + ilFile + "\" " + fileName,
                 WindowStyle = ProcessWindowStyle.Hidden
             });
             process.WaitForExit();
             return ilFile;
         }
 
-        private static bool Recompile(string ilFile, string ilasmExe)
+        private static bool Recompile(string ilFile, string ilasmExe, string fileName, string keyFile)
         {
+            var backupAssembly = fileName + ".bak";
             if (File.Exists(backupAssembly))
                 File.Delete(backupAssembly);
-            File.Move(inputAssembly, backupAssembly);
-            Console.WriteLine("Recompiling {0} to {1}", ilFile, outputAssembly);
+            File.Move(fileName, backupAssembly);
+            Console.WriteLine("Recompiling {0} to {1}", ilFile, fileName);
             Process process = Process.Start(new ProcessStartInfo
             {
                 FileName = ilasmExe,
-                Arguments = String.Format("/OUTPUT={0} /KEY={1} /DLL \"{2}\"", outputAssembly, keyFile, ilFile), // "/OUTPUT=" + OutputAssembly + " /DLL " + "\"" + ilFile + "\"",
+                Arguments = String.Format("/OUTPUT={0} /KEY={1} /DLL \"{2}\"", fileName, keyFile, ilFile), // "/OUTPUT=" + OutputAssembly + " /DLL " + "\"" + ilFile + "\"",
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
                 RedirectStandardError = true,
@@ -266,3 +281,4 @@ namespace RecompILer
         #endregion
     }
 }
+#endif

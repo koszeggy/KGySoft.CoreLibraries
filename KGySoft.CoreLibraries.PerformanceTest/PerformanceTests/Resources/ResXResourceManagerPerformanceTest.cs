@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Resources
             var inv = CultureInfo.InvariantCulture;
             var hu = CultureInfo.GetCultureInfo("hu-HU");
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
+            var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly) { CloneValues = false };
             new PerformanceTest<object>
             {
                 TestName = "GetObject Invariant Test",

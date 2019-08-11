@@ -391,9 +391,15 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item>In Solution Explorer right click on <c>ClassLibrary1</c>, Unload Project</item>
     /// <item>In Solution Explorer right click on <c>ClassLibrary1 (unavailable)</c>, Edit ClassLibrary1.csproj</item>
-    /// <item>Search for the <c>EmbeddedResource</c> element and edit it as follows:
+    /// <item>Search for the <c>EmbeddedResource</c> element and edit it as follows (or in case of a .NET Core project add it if it does not exist):
     /// <code lang="XML"><![CDATA[
+    /// <!-- .NET Framework project: -->
     /// <EmbeddedResource Include="Resource1.resx" >
+    ///   <LogicalName>ClassLibrary1.Messages.resources</LogicalName>
+    /// </EmbeddedResource>
+    ///
+    /// <!-- .NET Core project (note "Update" in place of "Include"): -->
+    /// <EmbeddedResource Update="Resource1.resx" >
     ///   <LogicalName>ClassLibrary1.Messages.resources</LogicalName>
     /// </EmbeddedResource>]]></code></item>
     /// <item>In Solution Explorer right click on <c>ClassLibrary1 (unavailable)</c>, Reload ClassLibrary1.csproj</item>
