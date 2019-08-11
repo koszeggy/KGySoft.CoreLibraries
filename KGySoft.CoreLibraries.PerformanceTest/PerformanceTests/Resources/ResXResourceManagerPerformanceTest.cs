@@ -41,22 +41,22 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Resources
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly) { CloneValues = false };
             new PerformanceTest<object>
-            {
-                TestName = "GetObject Invariant Test",
-                Iterations = 1000000,
-                Repeat = 5
-            }
+                {
+                    TestName = "GetObject Invariant Test",
+                    Iterations = 1000000,
+                    Repeat = 5
+                }
                 .AddCase(() => refManager.GetObject("TestString", inv), "ResourceManager")
                 .AddCase(() => manager.GetObject("TestString", inv), "ResXResourceManager")
                 .DoTest()
                 .DumpResults(Console.Out);
 
             new PerformanceTest<object>
-            {
-                TestName = "GetObject fallback to invariant",
-                Iterations = 1000000,
-                Repeat = 5
-            }
+                {
+                    TestName = "GetObject fallback to invariant",
+                    Iterations = 1000000,
+                    Repeat = 5
+                }
                 .AddCase(() => refManager.GetObject("TestString", hu), "ResourceManager")
                 .AddCase(() => manager.GetObject("TestString", hu), "ResXResourceManager")
                 .DoTest()
