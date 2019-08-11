@@ -227,6 +227,8 @@ namespace KGySoft.Serialization
     /// {
     ///     public static void Main()
     ///     {
+    ///         IFormatter formatter;
+    /// 
     ///         // feel free to change the type in NextObject<>
     ///         var instance = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
     ///         Console.WriteLine("Generated object:   " + Dump(instance));
@@ -234,7 +236,7 @@ namespace KGySoft.Serialization
     ///         using (var ms = new MemoryStream())
     ///         {
     ///             // serializing by KGy SOFT version:
-    ///             IFormatter formatter = new BinarySerializationFormatter();
+    ///             formatter = new BinarySerializationFormatter();
     ///             formatter.Serialize(ms, instance);
     /// 
     ///             // deserialization:
@@ -243,7 +245,10 @@ namespace KGySoft.Serialization
     /// 
     ///             Console.WriteLine("Deserialized object " + Dump(deserialized));
     ///             Console.WriteLine("Length by BinarySerializationFormatter: " + ms.Length);
+    ///         }
     /// 
+    ///         using (var ms = new MemoryStream())
+    ///         {
     ///             // serializing by System version:
     ///             formatter = new BinaryFormatter();
     ///             formatter.Serialize(ms, instance);
@@ -270,7 +275,7 @@ namespace KGySoft.Serialization
     /// // Generated object:   [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
     /// // Deserialized object [{Key = 908558467; Value = [abufaji, xica]}, {Key = 2026569158; Value = [hivelu]}]
     /// // Length by BinarySerializationFormatter: 43
-    /// // Length by BinaryFormatter: 2214]]></code>
+    /// // Length by BinaryFormatter: 2171]]></code>
     /// </example>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
