@@ -7,7 +7,18 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
+    <!-- Takes 5 seconds but emits post-build Code Analysys has been deprecated -->
+    <!--<RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>-->
   </PropertyGroup>
+
+  <!-- Takes forever, eats up every CPU and RAM -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Update="KGySoft.CoreLibraries.Messages.resx">
