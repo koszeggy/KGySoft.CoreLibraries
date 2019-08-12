@@ -7,7 +7,7 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
-    <!-- Takes 5 seconds but emits post-build Code Analysys has been deprecated -->
+    <!-- Takes 5 seconds but emits the "Post-build Code Analysys has been deprecated" message -->
     <!--<RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>-->
   </PropertyGroup>
