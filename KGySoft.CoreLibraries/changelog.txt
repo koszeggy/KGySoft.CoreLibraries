@@ -6,8 +6,26 @@
 ===============================================================================
 
 ~~~~~~~~~
-- v4.7.1:
+! v4.8.0:
 ~~~~~~~~~
+
++ Global changes:
+=================
++ New Target Framework: Supporting .NET Core 2.0
+
+! KGySoft.CoreLibraries namespace:
+==================================
+! DictionaryExtensions class:
+  ! GetValueOrDefault overloads: In .NET 4.5 the IDictionary<,> parameter has been changed to IReadOnlyDictionary<,>.
+  ! GetValueOrDefault<TKey, TValue, TActualValue>: Caused a functional conflict in .NET Core so this method has been
+    renamed to GetActualValueOrDefault. For compatibility reasons the overload for string-object dictionaries
+	has not been renamed.
+  + In .NET 3.5, 4.0 and 4.5 a new GetValueOrDefault<TKey, TValue> overload has been added with the same functionality
+    as .NET Core has. Actually this functionality was provided by the old GetValueOrDefault<TKey, TValue, TActualValue>
+	overload when TValue and TActualValue were the same.
++ Range<T> struct:
+  + New Deconstruct method.
+  + New operators for converting from T, (T, T) and to (T, T).
 
 - KGySoft.Diagnostics namespace:
 ================================

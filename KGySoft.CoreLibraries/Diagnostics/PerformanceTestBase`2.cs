@@ -379,7 +379,7 @@ namespace KGySoft.Diagnostics
             if (typeof(TResult).IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type genericType))
             {
                 Type genericParam = genericType.GetGenericArguments()[0];
-                return KnownTypes.GetValueOrDefault(genericParam) ?? genericParam.Name;
+                return KnownTypes.GetValueOrDefault(genericParam, "") ?? genericParam.Name;
             }
 
             if (typeof(IEnumerable).IsAssignableFrom(typeof(TResult)))

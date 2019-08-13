@@ -272,6 +272,10 @@ namespace KGySoft
         /// <value>
         /// <see langword="true"/>&#160;if system regional settings should be captured; otherwise, <see langword="false"/>.
         /// </value>
+        /// <remarks>
+        /// <note type="caller">Accessing this property in .NET Core may throw an <see cref="InvalidOperationException"/> if capturing the locale changes
+        /// of the executing operating system is not supported.</note>
+        /// </remarks>
         public static bool CaptureSystemLocaleChange
         {
             get => captureSystemLocaleChange;
@@ -286,9 +290,15 @@ namespace KGySoft
 
                 captureSystemLocaleChange = value;
                 if (value)
+                {
                     SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
+                    HookCleanup();
+                }
                 else
+                {
                     SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+                    UnhookCleanup();
+                }
             }
         }
 
@@ -423,9 +433,31 @@ namespace KGySoft
             DisplayLanguageChanged?.Invoke(null, e);
         }
 
+        private static void HookCleanup()
+        {
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+                AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+            else
+                AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
+        }
+
+        private static void UnhookCleanup()
+        {
+            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
+                AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
+            else
+                AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
+        }
+
         private static void OnDynamicResourceManagersSourceChanged(EventArgs e) => DynamicResourceManagersSourceChanged?.Invoke(null, e);
 
         private static void OnDynamicResourceManagersAutoSaveChanged(EventArgs e) => DynamicResourceManagersAutoSaveChanged?.Invoke(null, e);
+
+        private static void UnhookSystemEvents()
+        {
+            // According to the documentation this event must be detached when the application is closed to prevent leaks
+            SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+        }
 
         #endregion
 
@@ -442,6 +474,9 @@ namespace KGySoft
             Thread.CurrentThread.CurrentCulture.ClearCachedData();
             OnFormattingLanguageChanged(EventArgs.Empty);
         }
+
+        private static void CurrentDomain_ProcessExit(object sender, EventArgs e) => UnhookSystemEvents();
+        private static void CurrentDomain_DomainUnload(object sender, EventArgs e) => UnhookSystemEvents();
 
         #endregion
 

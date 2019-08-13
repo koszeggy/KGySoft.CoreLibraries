@@ -2621,11 +2621,9 @@ namespace KGySoft.Reflection
 #if NET35 || NET40
                 if (asmName.CultureInfo != null && asmName.CultureInfo.Name != nameToCheck.CultureInfo.Name)
                     continue;
-#elif NET45
+#else
                 if (asmName.CultureName != null && nameToCheck.CultureName != asmName.CultureName)
                     continue;
-#else
-#error .NET version is not set or not supported!
 #endif
                 byte[] publicKeyTokenRef, publicKeyTokenCheck;
                 if ((publicKeyTokenRef = asmName.GetPublicKeyToken()) != null && (publicKeyTokenCheck = nameToCheck.GetPublicKeyToken()) != null

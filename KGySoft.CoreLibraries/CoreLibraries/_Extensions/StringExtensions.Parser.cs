@@ -117,7 +117,7 @@ namespace KGySoft.CoreLibraries
                         value = Enum.Parse(type, s);
                         return true;
 #else
-#error .NET version is not supported. Use non-generic TryParse (available in .NET Core)
+                        return Enum.TryParse(type, s, out value);
 #endif
                     }
 

@@ -429,14 +429,12 @@ namespace KGySoft.Resources
         [NonSerialized]
         private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
 
-#if NET40 || NET45
+#if !NET35
         /// <summary>
         /// Local cache of the resource sets stored in the base.
         /// Must be serialized because in the base it is non-serialized. Before serializing we remove proxies and unmodified sets.
         /// </summary>
         private Dictionary<string, ResourceSet> resourceSets;
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
 
         #endregion
@@ -564,7 +562,7 @@ namespace KGySoft.Resources
             }
             set { base.ResourceSets = value; }
         }
-#elif NET40 || NET45
+#else
         private new Dictionary<string, ResourceSet> ResourceSets
         {
             get
@@ -580,8 +578,6 @@ namespace KGySoft.Resources
                 resourceSets = value;
             }
         }
-#else
-#error .NET version is not set or not supported!
 #endif
 
         private object SyncRoot
@@ -732,10 +728,10 @@ namespace KGySoft.Resources
                 }
             }
         }
-#elif NET40 || NET45
+#else
 #if !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)] // available only above 4.0
-#endif // no else is needed, attribute is added always above 4.0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private static bool TryGetResource(Dictionary<string, ResourceSet> localResourceSets, string cultureName, out ResourceSet rs)
         {
             return localResourceSets.TryGetValue(cultureName, out rs);
@@ -775,8 +771,6 @@ namespace KGySoft.Resources
                 }
             }
         }
-#else
-#error .NET version is not set or not supported!
 #endif
 
         private static ResXResourceSet GetResXResourceSet(ResourceSet rs)
@@ -792,6 +786,9 @@ namespace KGySoft.Resources
 
         private static string GetExecutingPath()
         {
+#if NETCOREAPP2_0
+            return Files.GetExecutingPath();
+#else
             try
             {
                 return Files.GetExecutingPath();
@@ -804,6 +801,7 @@ namespace KGySoft.Resources
             {
                 return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory;
             }
+#endif
         }
 
         #endregion
@@ -1223,10 +1221,9 @@ namespace KGySoft.Resources
                 throw new InvalidOperationException("An ObjectDisposedException should has been thrown in ResourceSets getter");
 
             base.ReleaseAllResources();
-#if NET40 || NET45
+#if !NET35
             resourceSets = null; // clearing local cache because here base creates a new instance
 #elif !NET35
-#error .NET version is not set or not supported!
 #endif
 
             lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
@@ -1287,14 +1284,14 @@ namespace KGySoft.Resources
             GC.SuppressFinalize(this);
         }
 
-        #endregion
+#endregion
 
-        #region Internal Methods
+#region Internal Methods
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
         internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
-            #region Local Methods to reduce complexity
+#region Local Methods to reduce complexity
 
             bool TryGetCachedResourceSet(ref GetResXResourceSetContext ctx)
             {
@@ -1390,7 +1387,7 @@ namespace KGySoft.Resources
                 return false;
             }
 
-            #endregion
+#endregion
 
             if (culture == null)
                 throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
@@ -1464,9 +1461,9 @@ namespace KGySoft.Resources
             return (ResXResourceSet)result;
         }
 
-        #endregion
+#endregion
 
-        #region Protected Methods
+#region Protected Methods
 
         /// <summary>
         /// Generates the name of the resource file for the given <see cref="CultureInfo"/> object.
@@ -1526,16 +1523,14 @@ namespace KGySoft.Resources
             lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
         }
 
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
 
 #if NET35
         private Hashtable GetBaseResources() => base.ResourceSets;
-#elif NET40 || NET45
-        private Dictionary<string, ResourceSet> GetBaseResources() => this.GetResourceSets();
 #else
-#error .NET version is not set or not supported!
+        private Dictionary<string, ResourceSet> GetBaseResources() => this.GetResourceSets();
 #endif
 
         private object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
@@ -1708,10 +1703,10 @@ namespace KGySoft.Resources
             }
         }
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

@@ -423,9 +423,14 @@ namespace KGySoft.Collections
         private static readonly bool isEnum = typeOfT.IsEnum;
         private static readonly bool isPrimitive = typeOfT.IsPrimitive;
         private static readonly int elementSizeExponent = isPrimitive ? (int)Math.Log(Reflector.SizeOf<T>(), 2) : 0;
-#if NET40 || NET45
-        private static readonly bool isNonIntEnum = isEnum && Enum.GetUnderlyingType(typeOfT) != Reflector.IntType;
-#elif !NET35
+        private static readonly bool useEnumComparer =
+#if NET35
+            isEnum;
+#elif NET40 || NET45
+            isEnum && Enum.GetUnderlyingType(typeOfT) != Reflector.IntType;
+#elif NETCOREAPP2_0
+            false;
+#else
 #error .NET version is not set or not supported! - check EnumComparer performance in new framework
 #endif
         // ReSharper restore StaticMemberInGenericType
@@ -1296,16 +1301,7 @@ namespace KGySoft.Collections
         /// </remarks>
         public int IndexOf(T item)
         {
-            if (
-#if NET35
-                isEnum
-#elif NET40 || NET45
-                isNonIntEnum
-#else
-#error .NET version is not set or not supported!
-#endif
-
-            )
+            if (useEnumComparer)
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindIndex(0, size, enumItem => enumComparer.Equals(enumItem, item));
@@ -1362,16 +1358,7 @@ namespace KGySoft.Collections
             if (count < 0 || index > size - count)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
-            if (
-#if NET35
-                isEnum
-#elif NET40 || NET45
-                isNonIntEnum
-#else
-#error .NET version is not set or not supported!
-#endif
-
-                )
+            if (useEnumComparer)
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindIndex(index, count, enumItem => enumComparer.Equals(enumItem, item));
@@ -1419,16 +1406,7 @@ namespace KGySoft.Collections
         {
             int carry = startIndex + size - items.Length;
 
-            if (
-#if NET35
-                isEnum
-#elif NET40 || NET45
-                isNonIntEnum
-#else
-#error .NET version is not set or not supported!
-#endif
-
-                )
+            if (useEnumComparer)
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindLastIndex(size - 1, size, enumItem => enumComparer.Equals(enumItem, item));
@@ -1494,16 +1472,7 @@ namespace KGySoft.Collections
             if (count > index + 1)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
-            if (
-#if NET35
-                isEnum
-#elif NET40 || NET45
-                isNonIntEnum
-#else
-#error .NET version is not set or not supported!
-#endif
-
-                )
+            if (useEnumComparer)
             {
                 EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
                 return FindLastIndex(index, count, enumItem => enumComparer.Equals(enumItem, item));
@@ -2712,7 +2681,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets an element without check
         /// </summary>
-        private T ElementAt(int index) 
+        private T ElementAt(int index)
             => startIndex == 0 ? items[index] : ElementAtNonZeroStart(index);
 
         /// <summary>

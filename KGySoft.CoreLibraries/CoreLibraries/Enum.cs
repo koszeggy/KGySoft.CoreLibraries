@@ -148,7 +148,7 @@ namespace KGySoft.CoreLibraries
                         ? (IEqualityComparer<TEnum>)EqualityComparer<TEnum>.Default
                         : EnumComparer<TEnum>.Comparer;
 #else
-#error .NET version is not set or not supported!
+                    comparer = EqualityComparer<TEnum>.Default;
 #endif
                     result = new Dictionary<TEnum, string>(Names.Length, comparer);
                     for (int i = 0; i < Values.Length; i++)

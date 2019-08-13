@@ -71,10 +71,8 @@ namespace KGySoft.CoreLibraries
         {
 #if NET35
             int bufferSize = 4096;
-#elif NET40 || NET45
-            int bufferSize = Environment.SystemPageSize;
 #else
-#error .NET version is not set or not supported!
+            int bufferSize = Environment.SystemPageSize;
 #endif
 
             CopyTo(source, destination, bufferSize);

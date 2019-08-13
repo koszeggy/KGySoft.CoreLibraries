@@ -1,24 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45</TargetFrameworks>
+    <!--<TargetFrameworks>net35;net40;net45</TargetFrameworks>-->
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>KGySoft</RootNamespace>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
-    <!-- Takes 5 seconds but emits the "Post-build Code Analysys has been deprecated" message -->
+    <!-- Takes 5 seconds but emits the "Post-build Code Analysis has been deprecated" message -->
     <!--<RunCodeAnalysis>true</RunCodeAnalysis>
     <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>-->
   </PropertyGroup>
 
-  <!-- Takes forever, eats up every CPU and RAM -->
   <ItemGroup>
+    <PackageReference Condition="'$(TargetFramework)'=='netcoreapp2.0'" Include="Microsoft.Win32.SystemEvents" Version="4.5.0" />
+  </ItemGroup>
+
+  <!-- Takes forever, eats up every CPU and RAM -->
+  <!--<ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
     <EmbeddedResource Update="KGySoft.CoreLibraries.Messages.resx">

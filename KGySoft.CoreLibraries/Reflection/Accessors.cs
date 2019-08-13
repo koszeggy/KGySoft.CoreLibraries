@@ -26,13 +26,15 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Resources;
-using System.Runtime.Serialization;
-using System.Text;
 using System.Threading;
 using System.Xml;
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
+
+#if NETCOREAPP2_0
+using CollectionExtensions = KGySoft.CoreLibraries.CollectionExtensions;
+#endif
 
 #endregion
 
@@ -46,52 +48,27 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-#if NET35 || NET40
-        private static FieldAccessor fieldException_source;
-        private static FieldAccessor fieldException_remoteStackTraceString;
-#endif
-        private static FieldAccessor fieldResourceManager_neutralResourcesCulture;
-#if NET40 || NET45
-        private static FieldAccessor fieldResourceManager_resourceSets;
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-        private static FieldAccessor fieldResXDataNode_value;
-        private static FieldAccessor fieldResXDataNode_comment;
-        private static FieldAccessor fieldResXDataNode_fileRef;
-        private static FieldAccessor fieldResXDataNode_nodeInfo;
-        private static FieldAccessor fieldDataNodeInfo_Name;
-        private static FieldAccessor fieldDataNodeInfo_Comment;
-        private static FieldAccessor fieldDataNodeInfo_TypeName;
-        private static FieldAccessor fieldDataNodeInfo_MimeType;
-        private static FieldAccessor fieldDataNodeInfo_ValueData;
-        private static FieldAccessor fieldDataNodeInfo_ReaderPosition;
-        private static FieldAccessor fieldXmlException_lineNumber;
-        private static FieldAccessor fieldXmlException_linePosition;
+        #region For Public Members
 
-        private static PropertyAccessor propertyResXFileRef_FileName;
-        private static PropertyAccessor propertyResXFileRef_TypeName;
-        private static PropertyAccessor propertyResXFileRef_TextFileEncoding;
-        private static PropertyAccessor propertyPoint_X;
-        private static PropertyAccessor propertyPoint_Y;
+        #region CollectionExtensions
 
-#if NET35 || NET40
-        private static ActionMethodAccessor methodException_InternalPreserveStackTrace;
-#endif
-
-#if NET35 || NET40 || NET45 // from .NET 4.72 capacity ctor is available
-        private static IDictionary<Type, ActionMethodAccessor> methodsHashSet_Initialize;
-#endif
-
+        private static MethodInfo addRangeExtensionMethod;
         private static IDictionary<Type, ActionMethodAccessor> methodsCollectionExtensions_AddRange;
+
+        #endregion
+
+        #region ListExtensions
+
+        private static MethodInfo insertRangeExtensionMethod;
+        private static MethodInfo removeRangeExtensionMethod;
+        private static MethodInfo replaceRangeExtensionMethod;
         private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_InsertRange;
         private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_RemoveRange;
         private static IDictionary<Type, ActionMethodAccessor> methodsListExtensions_ReplaceRange;
 
-        private static MethodInfo addRangeExtensionMethod;
-        private static MethodInfo insertRangeExtensionMethod;
-        private static MethodInfo removeRangeExtensionMethod;
-        private static MethodInfo replaceRangeExtensionMethod;
+        #endregion
+
+        #region ICollection<T>
 
         private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_IsReadOnly;
         private static IDictionary<Type, ActionMethodAccessor> methodsICollection_Add;
@@ -99,119 +76,133 @@ namespace KGySoft.Reflection
         private static IDictionary<Type, SimplePropertyAccessor> propertiesICollection_Count;
         private static IDictionary<Type, FunctionMethodAccessor> methodsICollection_Remove;
 
+        #endregion
+
+        #region IProducerConsumerCollection<T>
+
 #if !NET35
         private static IDictionary<Type, FunctionMethodAccessor> methodsIProducerConsumerCollection_TryAdd;
 #endif
+
+        #endregion
+
+        #region IList<T>
 
         private static IDictionary<Type, ActionMethodAccessor> methodsIList_Insert;
         private static IDictionary<Type, ActionMethodAccessor> methodsIList_RemoveAt;
         private static IDictionary<Type, IndexerAccessor> propertiesIList_Item;
 
-        private static ActionMethodAccessor methodRuntimeConstructorInfo_SerializationInvoke;
-        private static FunctionMethodAccessor methodMemoryStream_InternalGetBuffer;
-
-        private static ParameterizedCreateInstanceAccessor ctorUnmanagedMemoryStreamWrapper;
+        #endregion
 
         #endregion
 
-        #region Accessor Factories
-
         #region For Non-Public Members
-#if NET35 || NET40 || NET45 // Make sure this condition covers the whole region. Include all supported versions in the condition after checking the member names.
+        // In this region non-public accessors need conditions only if they are not applicable for every supported framework.
+        // The #else-#error branches for open-ended versions are in the factories.
 
         #region Exception
 
 #if NET35 || NET40
-        private static FieldAccessor Exception_source => fieldException_source ?? (fieldException_source = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor Exception_remoteStackTraceString => fieldException_remoteStackTraceString ?? (fieldException_remoteStackTraceString = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static MethodAccessor Exception_InternalPreserveStackTrace => methodException_InternalPreserveStackTrace ?? (methodException_InternalPreserveStackTrace = new ActionMethodAccessor(typeof(Exception).GetMethod(nameof(InternalPreserveStackTrace), BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor fieldException_source;
+        private static FieldAccessor fieldException_remoteStackTraceString;
+        private static ActionMethodAccessor methodException_InternalPreserveStackTrace;
 #endif
 
         #endregion
 
         #region HashSet<T>
 
-#if NET35 || NET40 || NET45
-        private static MethodAccessor HashSet_Initialize<T>()
-        {
-            if (methodsHashSet_Initialize == null)
-                Interlocked.CompareExchange(ref methodsHashSet_Initialize, new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe(), null);
-            if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor accessor))
-            {
-                accessor = new ActionMethodAccessor(typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
-                methodsHashSet_Initialize[typeof(T)] = accessor;
-            }
-
-            return accessor;
-        }
-#else
-#error make sure not to use this from NET472, where capacity ctor is available
+#if NET35 || NET40 || NET45 // from .NET 4.72 capacity ctor is available
+        private static IDictionary<Type, ActionMethodAccessor> methodsHashSet_Initialize;
 #endif
 
         #endregion
 
         #region ResourceManager
 
-        private static FieldAccessor ResourceManager_neutralResourcesCulture => fieldResourceManager_neutralResourcesCulture ?? (fieldResourceManager_neutralResourcesCulture = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_neutralResourcesCulture", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor fieldResourceManager_neutralResourcesCulture;
 
-#if NET40 || NET45
-        private static FieldAccessor ResourceManager_resourceSets => fieldResourceManager_resourceSets ?? (fieldResourceManager_resourceSets = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_resourceSets", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !NET35
-#error .NET version is not set or not supported!
+#if NET40 || NET45 || NETCOREAPP2_0
+        private static FieldAccessor fieldResourceManager_resourceSets;
 #endif
 
         #endregion
 
         #region XmlException
 
-        private static FieldAccessor XmlException_lineNumber => fieldXmlException_lineNumber ?? (fieldXmlException_lineNumber = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("lineNumber", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor XmlException_linePosition => fieldXmlException_linePosition ?? (fieldXmlException_linePosition = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("linePosition", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor fieldXmlException_lineNumber;
+        private static FieldAccessor fieldXmlException_linePosition;
+
+        #endregion
+
+        #region ResXFileRef
+
+#if NET35 || NET40 || NET45
+        private static PropertyAccessor propertyResXFileRef_FileName;
+        private static PropertyAccessor propertyResXFileRef_TypeName;
+        private static PropertyAccessor propertyResXFileRef_TextFileEncoding;
+#endif
 
         #endregion
 
         #region ResXDataNode
-        // Note: some of these are available as public properties but they must be accessed as fields because property getters alter the real values
 
-        private static FieldAccessor ResXDataNode_value(object node) => fieldResXDataNode_value ?? (fieldResXDataNode_value = FieldAccessor.CreateAccessor(node.GetType().GetField("value", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor ResXDataNode_comment(object node) => fieldResXDataNode_comment ?? (fieldResXDataNode_comment = FieldAccessor.CreateAccessor(node.GetType().GetField("comment", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor ResXDataNode_fileRef(object node) => fieldResXDataNode_fileRef ?? (fieldResXDataNode_fileRef = FieldAccessor.CreateAccessor(node.GetType().GetField("fileRef", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor ResXDataNode_nodeInfo(object node) => fieldResXDataNode_nodeInfo ?? (fieldResXDataNode_nodeInfo = FieldAccessor.CreateAccessor(node.GetType().GetField("nodeInfo", BindingFlags.Instance | BindingFlags.NonPublic)));
+#if NET35 || NET40 || NET45
+        private static FieldAccessor fieldResXDataNode_value;
+        private static FieldAccessor fieldResXDataNode_comment;
+        private static FieldAccessor fieldResXDataNode_fileRef;
+        private static FieldAccessor fieldResXDataNode_nodeInfo;
+#endif
 
         #endregion
 
         #region DataNodeInfo
 
-        private static FieldAccessor DataNodeInfo_Name(object nodeInfo) => fieldDataNodeInfo_Name ?? (fieldDataNodeInfo_Name = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Name", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_Comment(object nodeInfo) => fieldDataNodeInfo_Comment ?? (fieldDataNodeInfo_Comment = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Comment", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_TypeName(object nodeInfo) => fieldDataNodeInfo_TypeName ?? (fieldDataNodeInfo_TypeName = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("TypeName", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_MimeType(object nodeInfo) => fieldDataNodeInfo_MimeType ?? (fieldDataNodeInfo_MimeType = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("MimeType", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_ValueData(object nodeInfo) => fieldDataNodeInfo_ValueData ?? (fieldDataNodeInfo_ValueData = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ValueData", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_ReaderPosition(object nodeInfo) => fieldDataNodeInfo_ReaderPosition ?? (fieldDataNodeInfo_ReaderPosition = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ReaderPosition", BindingFlags.Instance | BindingFlags.NonPublic)));
+#if NET35 || NET40 || NET45
+        private static FieldAccessor fieldDataNodeInfo_Name;
+        private static FieldAccessor fieldDataNodeInfo_Comment;
+        private static FieldAccessor fieldDataNodeInfo_TypeName;
+        private static FieldAccessor fieldDataNodeInfo_MimeType;
+        private static FieldAccessor fieldDataNodeInfo_ValueData;
+        private static FieldAccessor fieldDataNodeInfo_ReaderPosition;
+#endif
+
+        #endregion
+
+        #region Point
+
+#if NET35 || NET40 || NET45
+        private static PropertyAccessor propertyPoint_X;
+        private static PropertyAccessor propertyPoint_Y;
+#endif
 
         #endregion
 
         #region RuntimeConstructorInfo
 
-        private static ActionMethodAccessor RuntimeConstructorInfo_SerializationInvoke(ConstructorInfo ci) => methodRuntimeConstructorInfo_SerializationInvoke ?? (methodRuntimeConstructorInfo_SerializationInvoke = new ActionMethodAccessor(ci.GetType().GetMethod("SerializationInvoke", BindingFlags.Instance | BindingFlags.NonPublic)));
+#if NET35 || NET40 || NET45
+        private static ActionMethodAccessor methodRuntimeConstructorInfo_SerializationInvoke;
+#endif
 
         #endregion
 
         #region MemoryStream
 
-        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FunctionMethodAccessor methodMemoryStream_InternalGetBuffer;
 
         #endregion
 
         #region UnmanagedMemoryStreamWrapper
 
-        private static ParameterizedCreateInstanceAccessor UnmanagedMemoryStreamWrapper => ctorUnmanagedMemoryStreamWrapper ?? (ctorUnmanagedMemoryStreamWrapper = new ParameterizedCreateInstanceAccessor(Reflector.ResolveType("System.IO.UnmanagedMemoryStreamWrapper").GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(UnmanagedMemoryStream) }, null)));
+        private static ParameterizedCreateInstanceAccessor ctorUnmanagedMemoryStreamWrapper;
 
         #endregion
 
-#else
-#error .NET version is not set or not supported! Check accessed non-public member names for the newly added .NET version.
-#endif
         #endregion
+
+        #endregion
+
+        #region Accessor Factories
 
         #region For Public Members
 
@@ -280,21 +271,6 @@ namespace KGySoft.Reflection
             return accessor;
         }
 
-
-        #endregion
-
-        #region ResXFileRef
-
-        private static PropertyAccessor ResXFileRef_FileName(object fileRef) => propertyResXFileRef_FileName ?? (propertyResXFileRef_FileName = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("FileName", BindingFlags.Instance | BindingFlags.Public)));
-        private static PropertyAccessor ResXFileRef_TypeName(object fileRef) => propertyResXFileRef_TypeName ?? (propertyResXFileRef_TypeName = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public)));
-        private static PropertyAccessor ResXFileRef_TextFileEncoding(object fileRef) => propertyResXFileRef_TextFileEncoding ?? (propertyResXFileRef_TextFileEncoding = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("TextFileEncoding", BindingFlags.Instance | BindingFlags.Public)));
-
-        #endregion
-
-        #region Point
-
-        private static PropertyAccessor Point_X(object point) => propertyPoint_X ?? (propertyPoint_X = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("X")));
-        private static PropertyAccessor Point_Y(object point) => propertyPoint_Y ?? (propertyPoint_Y = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("Y")));
 
         #endregion
 
@@ -431,38 +407,48 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #endregion
-
-        #region Internal Accessor Methods
+        #region For Non-Public Members
+        // Make sure every member in this region is in conditions. Provide an #else #error for open-ended versions where the member has to be checked for new target frameworks.
 
         #region Exception
 
 #if NET35 || NET40
-        internal static string GetSource(this Exception exception) => (string)Exception_source.Get(exception);
-        internal static void SetSource(this Exception exception, string value) => Exception_source.Set(exception, value);
-        internal static void SetRemoteStackTraceString(this Exception exception, string value) => Exception_remoteStackTraceString.Set(exception, value);
-        internal static void InternalPreserveStackTrace(this Exception exception) => Exception_InternalPreserveStackTrace.Invoke(exception);
+        private static FieldAccessor Exception_source => fieldException_source ?? (fieldException_source = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor Exception_remoteStackTraceString => fieldException_remoteStackTraceString ?? (fieldException_remoteStackTraceString = FieldAccessor.CreateAccessor(typeof(Exception).GetField("_remoteStackTraceString", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static MethodAccessor Exception_InternalPreserveStackTrace => methodException_InternalPreserveStackTrace ?? (methodException_InternalPreserveStackTrace = new ActionMethodAccessor(typeof(Exception).GetMethod(nameof(InternalPreserveStackTrace), BindingFlags.Instance | BindingFlags.NonPublic)));
 #endif
 
         #endregion
 
         #region HashSet<T>
 
-#if NET35 || NET40 || NET45
-        internal static void Initialize<T>(this HashSet<T> hashSet, int capacity) => HashSet_Initialize<T>().Invoke(hashSet, capacity);
-#else
-#error make sure not to use this from NET472, where capacity ctor is available
+#if NET35 || NET40 || NET45 // for other frameworks we expect that ctor with capacity is available. If not, the usages will provide the compile error
+        private static MethodAccessor HashSet_Initialize<T>()
+        {
+            if (methodsHashSet_Initialize == null)
+                Interlocked.CompareExchange(ref methodsHashSet_Initialize, new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe(), null);
+            if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor accessor))
+            {
+                accessor = new ActionMethodAccessor(typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
+                methodsHashSet_Initialize[typeof(T)] = accessor;
+            }
+
+            return accessor;
+        }
 #endif
 
         #endregion
 
         #region ResourceManager
 
-        internal static CultureInfo GetNeutralResourcesCulture(this ResourceManager resourceManager) => (CultureInfo)ResourceManager_neutralResourcesCulture.Get(resourceManager);
-        internal static void SetNeutralResourcesCulture(this ResourceManager resourceManager, CultureInfo ci) => ResourceManager_neutralResourcesCulture.Set(resourceManager, ci);
-#if NET40 || NET45
-        internal static Dictionary<string, ResourceSet> GetResourceSets(this ResourceManager resourceManager) => (Dictionary<string, ResourceSet>)ResourceManager_resourceSets.Get(resourceManager);
-        internal static void SetResourceSets(this ResourceManager resourceManager, Dictionary<string, ResourceSet> resourceSets) => ResourceManager_resourceSets.Set(resourceManager, resourceSets);
+#if NET35 || NET40 || NET45 || NETCOREAPP2_0
+        private static FieldAccessor ResourceManager_neutralResourcesCulture => fieldResourceManager_neutralResourcesCulture ?? (fieldResourceManager_neutralResourcesCulture = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_neutralResourcesCulture", BindingFlags.Instance | BindingFlags.NonPublic)));
+#else
+#error .NET version is not set or not supported!
+#endif
+
+#if NET40 || NET45 || NETCOREAPP2_0
+        private static FieldAccessor ResourceManager_resourceSets => fieldResourceManager_resourceSets ?? (fieldResourceManager_resourceSets = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_resourceSets", BindingFlags.Instance | BindingFlags.NonPublic)));
 #elif !NET35
 #error .NET version is not set or not supported!
 #endif
@@ -471,10 +457,106 @@ namespace KGySoft.Reflection
 
         #region XmlException
 
-        internal static void SetLineNumber(this XmlException e, int lineNumber) => XmlException_lineNumber.Set(e, lineNumber);
-        internal static void SetLinePosition(this XmlException e, int linePosition) => XmlException_linePosition.Set(e, linePosition);
+#if NET35 || NET40 || NET45 || NETCOREAPP2_0
+        private static FieldAccessor XmlException_lineNumber => fieldXmlException_lineNumber ?? (fieldXmlException_lineNumber = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("lineNumber", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor XmlException_linePosition => fieldXmlException_linePosition ?? (fieldXmlException_linePosition = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("linePosition", BindingFlags.Instance | BindingFlags.NonPublic)));
+#else
+#error .NET version is not set or not supported!
+#endif
 
         #endregion
+
+        #region ResXFileRef
+        // though we access only public ResXFileRef properties we treat it as it wasn't public because we need to check every added frameworks whether we can use this type
+
+#if NET35 || NET40 || NET45
+        private static PropertyAccessor ResXFileRef_FileName(object fileRef) => propertyResXFileRef_FileName ?? (propertyResXFileRef_FileName = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("FileName", BindingFlags.Instance | BindingFlags.Public)));
+        private static PropertyAccessor ResXFileRef_TypeName(object fileRef) => propertyResXFileRef_TypeName ?? (propertyResXFileRef_TypeName = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public)));
+        private static PropertyAccessor ResXFileRef_TextFileEncoding(object fileRef) => propertyResXFileRef_TextFileEncoding ?? (propertyResXFileRef_TextFileEncoding = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("TextFileEncoding", BindingFlags.Instance | BindingFlags.Public)));
+#elif !NETCOREAPP2_0 // No WinForms version has to be supported in .NET Core 2.0
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #region ResXDataNode
+        // Note: some of these are available as public properties but they must be accessed as fields because property getters alter the real values
+
+#if NET35 || NET40 || NET45
+        private static FieldAccessor ResXDataNode_value(object node) => fieldResXDataNode_value ?? (fieldResXDataNode_value = FieldAccessor.CreateAccessor(node.GetType().GetField("value", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor ResXDataNode_comment(object node) => fieldResXDataNode_comment ?? (fieldResXDataNode_comment = FieldAccessor.CreateAccessor(node.GetType().GetField("comment", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor ResXDataNode_fileRef(object node) => fieldResXDataNode_fileRef ?? (fieldResXDataNode_fileRef = FieldAccessor.CreateAccessor(node.GetType().GetField("fileRef", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor ResXDataNode_nodeInfo(object node) => fieldResXDataNode_nodeInfo ?? (fieldResXDataNode_nodeInfo = FieldAccessor.CreateAccessor(node.GetType().GetField("nodeInfo", BindingFlags.Instance | BindingFlags.NonPublic)));
+#elif !NETCOREAPP2_0 // No WinForms version has to be supported in .NET Core 2.0
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #region DataNodeInfo
+
+#if NET35 || NET40 || NET45
+        private static FieldAccessor DataNodeInfo_Name(object nodeInfo) => fieldDataNodeInfo_Name ?? (fieldDataNodeInfo_Name = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Name", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor DataNodeInfo_Comment(object nodeInfo) => fieldDataNodeInfo_Comment ?? (fieldDataNodeInfo_Comment = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Comment", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor DataNodeInfo_TypeName(object nodeInfo) => fieldDataNodeInfo_TypeName ?? (fieldDataNodeInfo_TypeName = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("TypeName", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor DataNodeInfo_MimeType(object nodeInfo) => fieldDataNodeInfo_MimeType ?? (fieldDataNodeInfo_MimeType = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("MimeType", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor DataNodeInfo_ValueData(object nodeInfo) => fieldDataNodeInfo_ValueData ?? (fieldDataNodeInfo_ValueData = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ValueData", BindingFlags.Instance | BindingFlags.NonPublic)));
+        private static FieldAccessor DataNodeInfo_ReaderPosition(object nodeInfo) => fieldDataNodeInfo_ReaderPosition ?? (fieldDataNodeInfo_ReaderPosition = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ReaderPosition", BindingFlags.Instance | BindingFlags.NonPublic)));
+#elif !NETCOREAPP2_0 // No WinForms version has to be supported in .NET Core 2.0
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #region Point
+        // Since used only for DataNodeInfo.ReaderPosition the same applies for it
+
+#if NET35 || NET40 || NET45
+        private static PropertyAccessor Point_X(object point) => propertyPoint_X ?? (propertyPoint_X = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("X")));
+        private static PropertyAccessor Point_Y(object point) => propertyPoint_Y ?? (propertyPoint_Y = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("Y")));
+#elif !NETCOREAPP2_0 
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #region RuntimeConstructorInfo
+
+#if NET35 || NET40 || NET45
+        private static ActionMethodAccessor RuntimeConstructorInfo_SerializationInvoke(ConstructorInfo ci) => methodRuntimeConstructorInfo_SerializationInvoke ?? (methodRuntimeConstructorInfo_SerializationInvoke = new ActionMethodAccessor(ci.GetType().GetMethod("SerializationInvoke", BindingFlags.Instance | BindingFlags.NonPublic)));
+#elif !NETCOREAPP2_0 // There is no SerializationInvoke in .NET Core 2.0
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #region MemoryStream
+
+#if NET35 || NET40 || NET45 || NETCOREAPP2_0
+        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
+#else
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #region UnmanagedMemoryStreamWrapper
+
+#if NET35 || NET40 || NET45 || NETCOREAPP2_0
+        private static ParameterizedCreateInstanceAccessor UnmanagedMemoryStreamWrapper => ctorUnmanagedMemoryStreamWrapper ?? (ctorUnmanagedMemoryStreamWrapper = new ParameterizedCreateInstanceAccessor(Reflector.ResolveType("System.IO.UnmanagedMemoryStreamWrapper").GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(UnmanagedMemoryStream) }, null)));
+#else
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
+        #region Internal Accessor Methods
+
+        #region For Public Members
 
         #region CollectionExtensions
 
@@ -487,41 +569,6 @@ namespace KGySoft.Reflection
         internal static void InsertRange(this IEnumerable target, Type genericArgument, int index, IEnumerable collection) => ListExtensions_InsertRange(genericArgument).Invoke(null, target, index, collection);
         internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count) => ListExtensions_RemoveRange(genericArgument).Invoke(null, collection, index, count);
         internal static void ReplaceRange(this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection) => ListExtensions_ReplaceRange(genericArgument).Invoke(null, target, index, count, collection);
-
-        #endregion
-
-        #region ResXFileRef
-
-        internal static string ResXFileRef_GetFileName(object fileRef) => (string)ResXFileRef_FileName(fileRef).Get(fileRef);
-        internal static string ResXFileRef_GetTypeName(object fileRef) => (string)ResXFileRef_TypeName(fileRef).Get(fileRef);
-        internal static Encoding ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding)ResXFileRef_TextFileEncoding(fileRef).Get(fileRef);
-
-        #endregion
-
-        #region ResXDataNode
-
-        internal static object ResXDataNode_GetValue(object node) => ResXDataNode_value(node).Get(node);
-        internal static string ResXDataNode_GetComment(object node) => (string)ResXDataNode_comment(node).Get(node);
-        internal static object ResXDataNode_GetFileRef(object node) => ResXDataNode_fileRef(node).Get(node);
-        internal static object ResXDataNode_GetNodeInfo(object node) => ResXDataNode_nodeInfo(node).Get(node);
-
-        #endregion
-
-        #region DataNodeInfo
-
-        internal static string DataNodeInfo_GetName(object nodeInfo) => (string)DataNodeInfo_Name(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetComment(object nodeInfo) => (string)DataNodeInfo_Comment(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetTypeName(object nodeInfo) => (string)DataNodeInfo_TypeName(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetMimeType(object nodeInfo) => (string)DataNodeInfo_MimeType(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetValueData(object nodeInfo) => (string)DataNodeInfo_ValueData(nodeInfo).Get(nodeInfo);
-        internal static object DataNodeInfo_GetReaderPosition(object nodeInfo) => DataNodeInfo_ReaderPosition(nodeInfo).Get(nodeInfo);
-
-        #endregion
-
-        #region Point
-
-        internal static int Point_GetX(object point) => (int)Point_X(point).Get(point);
-        internal static int Point_GetY(object point) => (int)Point_Y(point).Get(point);
 
         #endregion
 
@@ -551,9 +598,98 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #endregion
+
+        #region For Non-Public Members
+        // In this region non-public accessors need conditions only if they are not applicable for every supported framework.
+        // The #else-#error branches for open-ended versions are in the factories.
+
+        #region Exception
+
+#if NET35 || NET40
+        internal static string GetSource(this Exception exception) => (string)Exception_source.Get(exception);
+        internal static void SetSource(this Exception exception, string value) => Exception_source.Set(exception, value);
+        internal static void SetRemoteStackTraceString(this Exception exception, string value) => Exception_remoteStackTraceString.Set(exception, value);
+        internal static void InternalPreserveStackTrace(this Exception exception) => Exception_InternalPreserveStackTrace.Invoke(exception);
+#endif
+
+        #endregion
+
+        #region HashSet<T>
+
+#if NET35 || NET40 || NET45
+        internal static void Initialize<T>(this HashSet<T> hashSet, int capacity) => HashSet_Initialize<T>().Invoke(hashSet, capacity);
+#endif
+
+        #endregion
+
+        #region ResourceManager
+
+        internal static CultureInfo GetNeutralResourcesCulture(this ResourceManager resourceManager) => (CultureInfo)ResourceManager_neutralResourcesCulture.Get(resourceManager);
+        internal static void SetNeutralResourcesCulture(this ResourceManager resourceManager, CultureInfo ci) => ResourceManager_neutralResourcesCulture.Set(resourceManager, ci);
+
+#if NET40 || NET45 || NETCOREAPP2_0
+        internal static Dictionary<string, ResourceSet> GetResourceSets(this ResourceManager resourceManager) => (Dictionary<string, ResourceSet>)ResourceManager_resourceSets.Get(resourceManager);
+        internal static void SetResourceSets(this ResourceManager resourceManager, Dictionary<string, ResourceSet> resourceSets) => ResourceManager_resourceSets.Set(resourceManager, resourceSets);
+#endif
+
+        #endregion
+
+        #region XmlException
+
+        internal static void SetLineNumber(this XmlException e, int lineNumber) => XmlException_lineNumber.Set(e, lineNumber);
+        internal static void SetLinePosition(this XmlException e, int linePosition) => XmlException_linePosition.Set(e, linePosition);
+
+        #endregion
+
+        #region ResXFileRef
+
+#if NET35 || NET40 || NET45
+        internal static string ResXFileRef_GetFileName(object fileRef) => (string)ResXFileRef_FileName(fileRef).Get(fileRef);
+        internal static string ResXFileRef_GetTypeName(object fileRef) => (string)ResXFileRef_TypeName(fileRef).Get(fileRef);
+        internal static Encoding ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding)ResXFileRef_TextFileEncoding(fileRef).Get(fileRef);
+#endif
+
+        #endregion
+
+        #region ResXDataNode
+
+#if NET35 || NET40 || NET45
+        internal static object ResXDataNode_GetValue(object node) => ResXDataNode_value(node).Get(node);
+        internal static string ResXDataNode_GetComment(object node) => (string)ResXDataNode_comment(node).Get(node);
+        internal static object ResXDataNode_GetFileRef(object node) => ResXDataNode_fileRef(node).Get(node);
+        internal static object ResXDataNode_GetNodeInfo(object node) => ResXDataNode_nodeInfo(node).Get(node);
+#endif
+
+        #endregion
+
+        #region DataNodeInfo
+
+#if NET35 || NET40 || NET45
+        internal static string DataNodeInfo_GetName(object nodeInfo) => (string)DataNodeInfo_Name(nodeInfo).Get(nodeInfo);
+        internal static string DataNodeInfo_GetComment(object nodeInfo) => (string)DataNodeInfo_Comment(nodeInfo).Get(nodeInfo);
+        internal static string DataNodeInfo_GetTypeName(object nodeInfo) => (string)DataNodeInfo_TypeName(nodeInfo).Get(nodeInfo);
+        internal static string DataNodeInfo_GetMimeType(object nodeInfo) => (string)DataNodeInfo_MimeType(nodeInfo).Get(nodeInfo);
+        internal static string DataNodeInfo_GetValueData(object nodeInfo) => (string)DataNodeInfo_ValueData(nodeInfo).Get(nodeInfo);
+        internal static object DataNodeInfo_GetReaderPosition(object nodeInfo) => DataNodeInfo_ReaderPosition(nodeInfo).Get(nodeInfo);
+#endif
+
+        #endregion
+
+        #region Point
+
+#if NET35 || NET40 || NET45
+        internal static int Point_GetX(object point) => (int)Point_X(point).Get(point);
+        internal static int Point_GetY(object point) => (int)Point_Y(point).Get(point);
+#endif
+
+        #endregion
+
         #region RuntimeConstructorInfo
 
+#if NET35 || NET40 || NET45
         internal static void SerializationInvoke(this ConstructorInfo ci, object target, SerializationInfo info, StreamingContext context) => RuntimeConstructorInfo_SerializationInvoke(ci).Invoke(ci, target, info, context);
+#endif
 
         #endregion
 
@@ -566,6 +702,8 @@ namespace KGySoft.Reflection
         #region UnmanagedMemoryStreamWrapper
 
         internal static MemoryStream ToMemoryStream(this UnmanagedMemoryStream ums) => (MemoryStream)UnmanagedMemoryStreamWrapper.CreateInstance(ums);
+
+        #endregion
 
         #endregion
 

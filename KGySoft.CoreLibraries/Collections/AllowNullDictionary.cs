@@ -154,13 +154,12 @@ namespace KGySoft.Collections
         {
             if (key != null)
                 return dict.Remove(key);
-
             bool oldHasNull = hasNullKey;
             hasNullKey = false;
             return oldHasNull;
         }
 
-        [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "1")]
+        //[SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "1")]
         public bool TryGetValue([CanBeNull]TKey key, out TValue value)
         {
             if (key != null)

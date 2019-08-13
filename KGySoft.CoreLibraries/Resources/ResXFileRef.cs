@@ -356,10 +356,12 @@ namespace KGySoft.Resources
             return result;
         }
 
+#if !NETCOREAPP2_0
         internal static ResXFileRef InitFromWinForms(object other) => new ResXFileRef(
             Accessors.ResXFileRef_GetFileName(other),
             Accessors.ResXFileRef_GetTypeName(other),
             Accessors.ResXFileRef_GetTextFileEncoding(other)?.WebName);
+#endif
 
         #endregion
 

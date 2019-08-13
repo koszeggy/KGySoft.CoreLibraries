@@ -43,6 +43,7 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
+#if !NETCOREAPP2_0
         internal static DataNodeInfo InitFromWinForms(object nodeInfoWinForms)
         {
             object pos = Accessors.DataNodeInfo_GetReaderPosition(nodeInfoWinForms);
@@ -58,6 +59,7 @@ namespace KGySoft.Resources
                 Column = Accessors.Point_GetX(pos)
             };
         }
+#endif
 
         #endregion
 

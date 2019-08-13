@@ -348,10 +348,8 @@ namespace KGySoft.Resources
                     // removing the assembly part only
 #if NET35
                     rebuiltTypeName += ", " + String.Join(", ", typeParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)).ToArray());
-#elif NET40 || NET45
-                    rebuiltTypeName += ", " + String.Join(", ", typeParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)));
 #else
-#error Unsupported .NET version
+                    rebuiltTypeName += ", " + String.Join(", ", typeParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)));
 #endif
 
                 }
@@ -400,9 +398,9 @@ namespace KGySoft.Resources
 
             #region Instance Methods
 
-#if NET40 || NET45
-
-            [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0", Justification = "If serializedType is null the base will be called.")]
+#if !NET35
+            [SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods", MessageId = "0",
+                Justification = "If serializedType is null the base will be called.")]
             public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
             {
                 // Actually the same as in the WinForms implementation but fixed for generics.
@@ -427,8 +425,6 @@ namespace KGySoft.Resources
 
                 base.BindToName(serializedType, out assemblyName, out typeName);
             }
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
 
             public override Type BindToType(string assemblyName, string typeName)
@@ -684,6 +680,7 @@ namespace KGySoft.Resources
                 return;
             }
 
+#if !NETCOREAPP2_0
             string typeName = value.GetType().AssemblyQualifiedName;
             if (typeName != null)
             {
@@ -701,6 +698,7 @@ namespace KGySoft.Resources
                     return;
                 }
             }
+#endif
 
             // 6.) other value
             cachedValue = value;
@@ -1121,6 +1119,7 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
+#if !NETCOREAPP2_0
         private void InitFromWinForms(object other)
         {
             cachedValue = Accessors.ResXDataNode_GetValue(other);
@@ -1136,6 +1135,7 @@ namespace KGySoft.Resources
             if (cachedValue == null && fileRef == null && nodeInfo == null)
                 cachedValue = ResXNullRef.Value;
         }
+#endif
 
         private void InitFrom(ResXDataNode other)
         {

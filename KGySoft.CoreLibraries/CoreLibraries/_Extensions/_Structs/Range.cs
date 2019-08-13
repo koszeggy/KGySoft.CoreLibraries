@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
 #endregion
@@ -31,25 +32,6 @@ namespace KGySoft.CoreLibraries
     public struct Range<T> : IEquatable<Range<T>>
         where T : IComparable<T>
     {
-#if !NET35 && !NET40 && !NET45
-#error TODO: .NET 4.7 and above:
-        ///// <summary>
-        ///// Deconstructs this <see cref="Range{T}"/> instance.
-        ///// </summary>
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //public void Deconstruct(out T lowerBound, out T upperBound)
-        //{
-        //    lowerBound = LowerBound;
-        //    upperBound = UpperBound;
-        //}
-
-        //public static implicit operator Range<T>(T upperBound) => new Range<T>(upperBound);
-
-        //public static implicit operator Range<T>((T LowerBound, T UpperBound) bounds) => new Range<T>(bounds.LowerBound, bounds.UpperBound);
-
-        //public static implicit operator (T LowerBound, T UpperBound)(Range<T> range) => (range.LowerBound, range.UpperBound);
-#endif
-
         #region Fields
 
         private static readonly IEqualityComparer<T> comparer = typeof(T).IsEnum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
@@ -64,7 +46,7 @@ namespace KGySoft.CoreLibraries
         public T LowerBound { get; }
 
         /// <summary>
-        /// Gets the upper bound of the range. Whether this is an exclusive or inclusive bound, it depends on the context it is used in.
+        /// Gets the upper bound of the range. Whether this is an exclusive or inclusive bound, it depends on the context the <see cref="Range{T}"/> is used in.
         /// </summary>
         public T UpperBound { get; }
 
@@ -87,6 +69,36 @@ namespace KGySoft.CoreLibraries
         /// <param name="right">The right argument of the inequality check.</param>
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(Range<T> left, Range<T> right) => !left.Equals(right);
+
+#if !NET35 && !NET40 && !NET45
+
+        /// <summary>
+        /// Performs an implicit conversion from <typeparamref name="T"/> to <see cref="Range{T}"/> using the provided value as upper bound.
+        /// </summary>
+        /// <param name="upperBound">The upper bound of the range. Whether this is an exclusive or inclusive bound, it depends on the context the <see cref="Range{T}"/> is used in.</param>
+        /// <returns>
+        /// A <see cref="Range{T}"/> instance representing a range between the default value of <typeparamref name="T"/> and <paramref name="upperBound"/>.
+        /// </returns>
+        public static implicit operator Range<T>(T upperBound) => new Range<T>(upperBound);
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="ValueTuple{T, T}"/> to <see cref="Range{T}"/>.
+        /// </summary>
+        /// <param name="bounds">The <see cref="ValueTuple{T, T}"/> instance to be converted to <see cref="Range{T}"/>.</param>
+        /// <returns>
+        /// A <see cref="Range{T}"/> instance representing a range between the provided <see cref="ValueTuple{T, T}.Item1"/> and <see cref="ValueTuple{T, T}.Item2"/>.
+        /// </returns>
+        public static implicit operator Range<T>((T LowerBound, T UpperBound) bounds) => new Range<T>(bounds.LowerBound, bounds.UpperBound);
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="Range{T}"/> to <see cref="ValueTuple{T, T}"/>.
+        /// </summary>
+        /// <param name="range">The range to convert.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator (T LowerBound, T UpperBound)(Range<T> range) => (range.LowerBound, range.UpperBound);
+#endif
 
         #endregion
 
@@ -118,6 +130,21 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Methods
+
+#if !NET35 && !NET40 && !NET45
+
+        /// <summary>
+        /// Deconstructs this <see cref="Range{T}"/> instance.
+        /// </summary>
+        /// <param name="lowerBound">Returns the lower bound of the range.</param>
+        /// <param name="upperBound">Returns the upper bound of the range. Whether this is an exclusive or inclusive bound, it depends on the context the <see cref="Range{T}"/> is used in.</param>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public void Deconstruct(out T lowerBound, out T upperBound)
+        {
+            lowerBound = LowerBound;
+            upperBound = UpperBound;
+        }
+#endif
 
         /// <summary>
         /// Indicates whether the current <see cref="Range{T}"/> instance is equal to another one specified in the <paramref name="other"/> prameter.

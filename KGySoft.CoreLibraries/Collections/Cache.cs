@@ -842,21 +842,27 @@ namespace KGySoft.Collections
         private static readonly Type typeValue = typeof(TValue);
 
         // ReSharper disable StaticMemberInGenericType
-        private static readonly bool useEnumKeyComparer = typeKey.IsEnum
-#if NET40 || NET45
-            && Enum.GetUnderlyingType(typeKey) != Reflector.IntType
-#elif !NET35
+        private static readonly bool useEnumKeyComparer =
+#if NET35
+            typeKey.IsEnum;
+#elif NET40 || NET45
+            typeKey.IsEnum && Enum.GetUnderlyingType(typeKey) != Reflector.IntType;
+#elif NETCOREAPP2_0
+            false;
+#else
 #error .NET version is not set or not supported!
 #endif
-            ;
 
-        private static readonly bool useEnumValueComparer = typeValue.IsEnum
-#if NET40 || NET45
-                && Enum.GetUnderlyingType(typeValue) != Reflector.IntType
-#elif !NET35
+        private static readonly bool useEnumValueComparer =
+#if NET35
+            typeValue.IsEnum;
+#elif NET40 || NET45
+            typeValue.IsEnum && Enum.GetUnderlyingType(typeValue) != Reflector.IntType;
+#elif NETCOREAPP2_0
+            false;
+#else
 #error .NET version is not set or not supported!
 #endif
-            ;
 
         #endregion
 
