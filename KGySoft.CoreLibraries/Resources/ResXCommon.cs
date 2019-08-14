@@ -80,11 +80,8 @@ namespace KGySoft.Resources
 
 #if NET35
         private const string winformsPostfix = ", Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-#elif NET40 || NET45
-
-        private const string winformsPostfix = ", Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 #else
-#error .NET version is not set or not supported!
+        private const string winformsPostfix = ", Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 #endif
 
         private const string soapFormatterTypeName = "System.Runtime.Serialization.Formatters.Soap.SoapFormatter, System.Runtime.Serialization.Formatters.Soap";

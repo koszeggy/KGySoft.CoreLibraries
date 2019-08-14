@@ -31,50 +31,93 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_0 // These methods are not included into .NET Core to prevent conflict with CollectionExtensions
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
-        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}"/> overload for some examples.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
-#if NET35 || NET40
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
-#else
-        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
-#endif
             => GetValueOrDefault(dictionary, key, default);
 
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
-        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}"/> overload for some examples.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
         /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
-        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
-#if NET35 || NET40
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
         public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
-#else
-        public static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
-#endif
         {
             if (dictionary == null)
                 throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
 
             return dictionary.TryGetValue(key, out TValue value) ? value : defaultValue;
         }
-#endif // !NETCOREAPP2_0
+#endif
+
+#if !(NET35 || NET40)
+        /// <summary>
+        /// Tries to get a value from the provided <paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <returns>The found value or the default value of <typeparamref name="TValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key)
+            => GetValueOrDefault(dictionary, key, default);
 
         /// <summary>
-        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key. Unlike in the <see cref="GetValueOrDefault{TKey,TValue}(IReadOnlyDictionary{TKey,TValue},TKey,TValue)"/> overload,
+        /// Tries to get a value from the provided <paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
+        /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
+        /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        public static TValue GetValueOrDefault<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, TValue defaultValue)
+        {
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+
+            switch (dictionary)
+            {
+                case IDictionary<TKey, TValue> dict:
+                    return dict.TryGetValue(key, out TValue value) ? value : defaultValue;
+                case IReadOnlyDictionary<TKey, TValue> dict:
+                    return dict.TryGetValue(key, out value) ? value : defaultValue;
+                default:
+                {
+                    IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                    foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                    {
+                        if (comparer.Equals(item.Key, key))
+                            return item.Value;
+                    }
+
+                    return defaultValue;
+                }
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key. Unlike in the <see cref="GetValueOrDefault{TKey,TValue}(IDictionary{TKey,TValue},TKey,TValue)"/> overload,
         /// here <paramref name="defaultValue"/> can have a different type than <typeparamref name="TValue"/>.
-        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}"/> method for some examples.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
@@ -83,11 +126,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
         /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
-#if NET35 || NET40
         public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TActualValue defaultValue)
-#else
-        public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key, TActualValue defaultValue)
-#endif
             where TActualValue : TValue
         {
             if (dictionary == null)
@@ -95,6 +134,53 @@ namespace KGySoft.CoreLibraries
 
             return dictionary.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
         }
+
+#if !(NET35 || NET40)
+        /// <summary>
+        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key. Unlike in the <see cref="GetValueOrDefault{TKey,TValue}(IEnumerable{KeyValuePair{TKey,TValue}},TKey,TValue)"/> overload,
+        /// here <paramref name="defaultValue"/> can have a different type than <typeparamref name="TValue"/>.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type is not compatible with <typeparamref name="TActualValue"/>.</param>
+        /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
+        /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        public static TActualValue GetActualValueOrDefault<TKey, TValue, TActualValue>(this IEnumerable<KeyValuePair<TKey, TValue>> dictionary, TKey key, TActualValue defaultValue)
+            where TActualValue : TValue
+        {
+            if (dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary), Res.ArgumentNull);
+
+            switch (dictionary)
+            {
+                case IDictionary<TKey, TValue> dict:
+                    {
+                        return dict.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+                    }
+                case IReadOnlyDictionary<TKey, TValue> dict:
+                    {
+                        return dict.TryGetValue(key, out TValue value) && value is TActualValue actualValue ? actualValue : defaultValue;
+                    }
+                default:
+                    {
+                        IEqualityComparer<TKey> comparer = ComparerHelper<TKey>.EqualityComparer;
+                        foreach (KeyValuePair<TKey, TValue> item in dictionary)
+                        {
+                            // allowing multiple keys with different type of values
+                            if (comparer.Equals(item.Key, key) && item.Value is TActualValue actualValue)
+                                return actualValue;
+                        }
+
+                        return defaultValue;
+                    }
+            }
+        }
+#endif
 
         /// <summary>
         /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/>&#160;<paramref name="dictionary"/> for the given key.
@@ -155,12 +241,25 @@ namespace KGySoft.CoreLibraries
         ///     }
         /// }]]></code>
         /// </example>
-#if NET35 || NET40
         public static TActualValue GetValueOrDefault<TActualValue>(this IDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
-#else
-        public static TActualValue GetValueOrDefault<TActualValue>(this IReadOnlyDictionary<string, object> dictionary, string key, TActualValue defaultValue = default)
-#endif
             => dictionary.GetActualValueOrDefault(key, defaultValue);
+
+#if !(NET35 || NET40)
+        /// <summary>
+        /// Tries to get the typed value from a <see cref="string"/>-<see cref="object"/>&#160;<paramref name="dictionary"/> for the given key.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
+        /// </summary>
+        /// <param name="dictionary">The dictionary.</param>
+        /// <param name="key">The key whose value to get.</param>
+        /// <param name="defaultValue">The default value to return if <paramref name="key"/> was not found or its actual type is not compatible with <typeparamref name="TActualValue"/> This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>&#160;if <typeparamref name="TActualValue"/> is a reference type; otherwise, the bitwise zero value of <typeparamref name="TActualValue"/>.</param>
+        /// <typeparam name="TActualValue">The type of the value of the corresponding <paramref name="key"/> to get.</typeparam>
+        /// <returns>The found value or <paramref name="defaultValue"/> if <paramref name="key"/> was not found or its value cannot be cast to <typeparamref name="TActualValue"/>.</returns>
+        /// <remarks><note>If <paramref name="dictionary"/> is neither an <see cref="IDictionary{TKey,TValue}"/>, nor an <see cref="IReadOnlyDictionary{TKey,TValue}"/> instance,
+        /// then a sequential lookup is performed using a default equality comparer on the keys.</note></remarks>
+        public static TActualValue GetValueOrDefault<TActualValue>(this IEnumerable<KeyValuePair<string, object>> dictionary, string key, TActualValue defaultValue = default)
+            => dictionary.GetActualValueOrDefault(key, defaultValue);
+#endif
 
         /// <summary>
         /// Returns a <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.
@@ -174,6 +273,6 @@ namespace KGySoft.CoreLibraries
         /// <returns>A <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.</returns>
         public static LockingDictionary<TKey, TValue> AsThreadSafe<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) => new LockingDictionary<TKey, TValue>(dictionary);
 
-#endregion
+        #endregion
     }
 }

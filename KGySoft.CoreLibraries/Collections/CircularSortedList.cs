@@ -595,11 +595,6 @@ namespace KGySoft.Collections
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
 
-        // ReSharper disable StaticMemberInGenericType - they depend on type arguments
-        private static readonly bool isEnumKey = typeKey.IsEnum;
-        private static readonly bool isEnumValue = typeValue.IsEnum;
-        // ReSharper restore StaticMemberInGenericType
-
         #endregion
 
         #region Instance Fields
@@ -891,10 +886,7 @@ namespace KGySoft.Collections
             keys = new CircularList<TKey>(capacity);
             values = new CircularList<TValue>(capacity);
 
-            if (comparer == null)
-                this.comparer = isEnumKey ? (IComparer<TKey>)EnumComparer<TKey>.Comparer : Comparer<TKey>.Default;
-            else
-                this.comparer = comparer;
+            this.comparer = comparer ?? ComparerHelper<TKey>.Comparer;
         }
 
         /// <summary>
@@ -1251,10 +1243,7 @@ namespace KGySoft.Collections
             if (index < 0)
                 return index;
 
-            if (isEnumValue)
-                return EnumComparer<TValue>.Comparer.Equals(item.Value, values[index]) ? index : -1;
-
-            return EqualityComparer<TValue>.Default.Equals(item.Value, values[index]) ? index : -1;
+            return ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values[index]) ? index : -1;
         }
 
         private IList<TKey> GetKeys() => keysList ?? (keysList = new KeysList(this));
@@ -1273,10 +1262,7 @@ namespace KGySoft.Collections
             if (index < 0)
                 return -1;
 
-            if (isEnumValue)
-                return EnumComparer<TValue>.Comparer.Equals(item.Value, values[index]) ? index : -1;
-
-            return EqualityComparer<TValue>.Default.Equals(item.Value, values[index]) ? index : -1;
+            return ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values[index]) ? index : -1;
         }
 
         void IList<KeyValuePair<TKey, TValue>>.Insert(int index, KeyValuePair<TKey, TValue> item) => throw new NotSupportedException(Res.CircularSortedListInsertByIndexNotSupported);
@@ -1305,11 +1291,7 @@ namespace KGySoft.Collections
             if (index < 0)
                 return false;
 
-            bool equals = isEnumValue
-                    ? EnumComparer<TValue>.Comparer.Equals(item.Value, values[index])
-                    : EqualityComparer<TValue>.Default.Equals(item.Value, values[index]);
-
-            if (!equals)
+            if (!ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, values[index]))
                 return false;
 
             RemoveAt(index);

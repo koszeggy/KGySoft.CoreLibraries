@@ -26,8 +26,13 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Resources;
+#if NET35 || NET40 || NET45
+using System.Runtime.Serialization;
+using System.Text;
+#endif
 using System.Threading;
 using System.Xml;
+
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -124,6 +129,14 @@ namespace KGySoft.Reflection
 
 #if NET40 || NET45 || NETCOREAPP2_0
         private static FieldAccessor fieldResourceManager_resourceSets;
+#endif
+
+        #endregion
+
+        #region ResourceSet
+
+#if NETCOREAPP2_0
+        private static FieldAccessor fieldResourceSet_Table;
 #endif
 
         #endregion
@@ -455,6 +468,16 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region ResourceSet
+
+#if NETCOREAPP2_0
+        private static FieldAccessor ResourceSet_Table => fieldResourceSet_Table ?? (fieldResourceSet_Table = FieldAccessor.GetAccessor(typeof(ResourceSet).GetField("Table", BindingFlags.Instance | BindingFlags.NonPublic)));
+#elif !(NET35 || NET40 || NET45)
+#error .NET version is not set or not supported!
+#endif
+
+        #endregion
+
         #region XmlException
 
 #if NET35 || NET40 || NET45 || NETCOREAPP2_0
@@ -631,6 +654,14 @@ namespace KGySoft.Reflection
 #if NET40 || NET45 || NETCOREAPP2_0
         internal static Dictionary<string, ResourceSet> GetResourceSets(this ResourceManager resourceManager) => (Dictionary<string, ResourceSet>)ResourceManager_resourceSets.Get(resourceManager);
         internal static void SetResourceSets(this ResourceManager resourceManager, Dictionary<string, ResourceSet> resourceSets) => ResourceManager_resourceSets.Set(resourceManager, resourceSets);
+#endif
+
+        #endregion
+
+        #region ResourceSet
+
+#if NETCOREAPP2_0
+        internal static void ClearTable(this ResourceSet set) => ResourceSet_Table.Set(set, null);
 #endif
 
         #endregion

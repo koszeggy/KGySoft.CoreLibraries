@@ -23,6 +23,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Resources;
 
+using KGySoft.Reflection;
+
 #endregion
 
 namespace KGySoft.Resources
@@ -281,8 +283,12 @@ namespace KGySoft.Resources
             resxResourceSet = resx ?? throw new ArgumentNullException(nameof(resx), Res.ArgumentNull);
             compiledResourceSet = compiled ?? throw new ArgumentNullException(nameof(compiled), Res.ArgumentNull);
 
-            // base ctor allocates a Hashtable and the dummy base ctor(bool), which avoids that, is not available from here
+            // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
+#if NETCOREAPP2_0
+            this.ClearTable();
+#else
             Table = null;
+#endif
         }
 
         #endregion

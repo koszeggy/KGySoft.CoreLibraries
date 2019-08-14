@@ -521,14 +521,12 @@ namespace KGySoft.Resources
             set => base.ResourceSets = value;
         }
 
-#elif NET40 || NET45
+#else
         private Dictionary<string, ResourceSet> CompiledResourceSets
         {
             get => this.GetResourceSets();
             set => this.SetResourceSets(value);
         }
-#else
-#error .NET version is not set or not supported!
 #endif
 
         #endregion
@@ -1401,11 +1399,11 @@ namespace KGySoft.Resources
                     switch (source)
                     {
                         case ResourceManagerSources.CompiledOnly:
-                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundCompiled(BaseNameField, MainAssembly.Location));
+                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundCompiled(BaseName, MainAssembly.Location));
                         case ResourceManagerSources.ResXOnly:
                             throw new MissingManifestResourceException(Res.ResourcesNeutralResourceFileNotFoundResX(resxResources.ResourceFileName));
                         default:
-                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundHybrid(BaseNameField, MainAssembly.Location, resxResources.ResourceFileName));
+                            throw new MissingManifestResourceException(Res.ResourcesNeutralResourceNotFoundHybrid(BaseName, MainAssembly.Location, resxResources.ResourceFileName));
                     }
                 }
             }

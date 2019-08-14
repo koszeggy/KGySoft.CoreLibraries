@@ -81,7 +81,7 @@ namespace KGySoft.Collections
         {
             try
             {
-                return comparer?.Equals(Comparer<TComparable>.Default) != false
+                return comparer.Equals(Comparer<TComparable>.Default)
                     ? BinarySearchAsComparable(list, index, length, value)
                     : BinarySearchWithComparer(list, index, length, value, comparer);
             }

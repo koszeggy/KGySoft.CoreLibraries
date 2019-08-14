@@ -841,29 +841,6 @@ namespace KGySoft.Collections
         private static readonly Type typeKey = typeof(TKey);
         private static readonly Type typeValue = typeof(TValue);
 
-        // ReSharper disable StaticMemberInGenericType
-        private static readonly bool useEnumKeyComparer =
-#if NET35
-            typeKey.IsEnum;
-#elif NET40 || NET45
-            typeKey.IsEnum && Enum.GetUnderlyingType(typeKey) != Reflector.IntType;
-#elif NETCOREAPP2_0
-            false;
-#else
-#error .NET version is not set or not supported!
-#endif
-
-        private static readonly bool useEnumValueComparer =
-#if NET35
-            typeValue.IsEnum;
-#elif NET40 || NET45
-            typeValue.IsEnum && Enum.GetUnderlyingType(typeValue) != Reflector.IntType;
-#elif NETCOREAPP2_0
-            false;
-#else
-#error .NET version is not set or not supported!
-#endif
-
         #endregion
 
         #region Instance Fields
@@ -1355,7 +1332,7 @@ namespace KGySoft.Collections
         {
             this.itemLoader = itemLoader ?? nullLoader;
             Capacity = capacity;
-            this.comparer = comparer ?? (useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default);
+            this.comparer = comparer ?? ComparerHelper<TKey>.EqualityComparer;
         }
 
         #endregion
@@ -1384,10 +1361,7 @@ namespace KGySoft.Collections
         #region Static Methods
 
         private static bool IsDefaultComparer(IEqualityComparer<TKey> comparer)
-            => useEnumKeyComparer ? EnumComparer<TKey>.Comparer.Equals(comparer) : EqualityComparer<TKey>.Default.Equals(comparer);
-
-        private static IEqualityComparer<TValue> GetValueComparer()
-            => useEnumValueComparer ? (IEqualityComparer<TValue>)EnumComparer<TValue>.Comparer : EqualityComparer<TValue>.Default;
+            => ComparerHelper<TKey>.EqualityComparer.Equals(comparer);
 
         #endregion
 
@@ -1491,7 +1465,7 @@ namespace KGySoft.Collections
                 return false;
             }
 
-            IEqualityComparer<TValue> valueComparer = GetValueComparer();
+            IEqualityComparer<TValue> valueComparer = ComparerHelper<TValue>.EqualityComparer;
             for (int i = first; i != -1; i = items[i].NextInOrder)
             {
                 if (valueComparer.Equals(value, items[i].Value))
@@ -1779,7 +1753,7 @@ namespace KGySoft.Collections
             {
                 if (items[i].Hash != hashCode || !comparer.Equals(items[i].Key, key))
                     continue;
-                if (ckeckValue && !GetValueComparer().Equals(items[i].Value, value))
+                if (ckeckValue && !ComparerHelper<TValue>.EqualityComparer.Equals(items[i].Value, value))
                     return false;
 
                 // removing entry from the original bucket
@@ -2020,7 +1994,7 @@ namespace KGySoft.Collections
                 return false;
 
             int i = GetItemIndex(item.Key);
-            return i >= 0 && GetValueComparer().Equals(item.Value, items[i].Value);
+            return i >= 0 && ComparerHelper<TValue>.EqualityComparer.Equals(item.Value, items[i].Value);
         }
 
         /// <summary>
@@ -2232,8 +2206,7 @@ namespace KGySoft.Collections
 
             capacity = info.GetInt32(nameof(capacity));
             ensureCapacity = info.GetBoolean(nameof(ensureCapacity));
-            comparer = (IEqualityComparer<TKey>)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>))
-                ?? (useEnumKeyComparer ? (IEqualityComparer<TKey>)EnumComparer<TKey>.Comparer : EqualityComparer<TKey>.Default);
+            comparer = (IEqualityComparer<TKey>)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)) ?? ComparerHelper<TKey>.EqualityComparer;
             behavior = (CacheBehavior)info.GetByte(nameof(behavior));
             itemLoader = (Func<TKey, TValue>)info.GetValue(nameof(itemLoader), typeof(Func<TKey, TValue>)) ?? nullLoader;
             disposeDroppedValues = info.GetBoolean(nameof(disposeDroppedValues));

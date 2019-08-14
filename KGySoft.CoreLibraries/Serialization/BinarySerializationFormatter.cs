@@ -563,10 +563,8 @@ namespace KGySoft.Serialization
             { typeof(Stack<>), DataTypes.Stack },
             { typeof(LinkedList<>), DataTypes.LinkedList },
             { typeof(HashSet<>), DataTypes.HashSet },
-#if NET40 || NET45
+#if !NET35
             { typeof(SortedSet<>), DataTypes.SortedSet },
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
 
             { typeof(Dictionary<,>), DataTypes.Dictionary },
@@ -3006,7 +3004,11 @@ namespace KGySoft.Serialization
                 if (ci == null)
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
+#if NETCOREAPP2_0
+                Reflector.InvokeCtor(obj, ci, si, Context);
+#else
                 ci.SerializationInvoke(obj, si, Context);
+#endif
             }
             else
             {
@@ -3046,7 +3048,11 @@ namespace KGySoft.Serialization
                 if (ci == null)
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
+#if NETCOREAPP2_0
+                Reflector.InvokeCtor(obj, ci, si, Context);
+#else
                 ci.SerializationInvoke(obj, si, Context);
+#endif
             }
             else
             {
@@ -3105,18 +3111,18 @@ namespace KGySoft.Serialization
                 throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), elements.First().Key));
         }
 
-        #endregion
+#endregion
 
-        #region Explicitly Implemented Interface Methods
+#region Explicitly Implemented Interface Methods
 
         object IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
 
         void IFormatter.Serialize(Stream serializationStream, object graph) => SerializeToStream(serializationStream, graph);
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }

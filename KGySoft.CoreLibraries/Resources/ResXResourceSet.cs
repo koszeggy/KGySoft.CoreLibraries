@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Resources;
 using System.Threading;
 using System.Xml;
+using KGySoft.Reflection;
 
 namespace KGySoft.Resources
 {
@@ -588,7 +589,12 @@ namespace KGySoft.Resources
         /// <remarks>This constructor is private so the single string parameter in the public constructors means file name, which is compatible with the system version.</remarks>
         private ResXResourceSet(string basePath)
         {
-            Table = null; // base ctor initializes that; however, we don't need it.
+            // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
+#if NETCOREAPP2_0
+            this.ClearTable();
+#else
+            Table = null;
+#endif
             this.basePath = basePath;
             resources = new Dictionary<string, ResXDataNode>();
             metadata = new Dictionary<string, ResXDataNode>(0);

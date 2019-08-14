@@ -137,10 +137,8 @@ namespace KGySoft.Serialization
         {
 #if NET35
             if (String.IsNullOrEmpty(name))
-#elif NET40 || NET45
-            if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
 #else
-#error .NET version is not set or not supported!
+            if (String.IsNullOrEmpty(name) || name == omittedAssemblyName)
 #endif
                 return null;
 

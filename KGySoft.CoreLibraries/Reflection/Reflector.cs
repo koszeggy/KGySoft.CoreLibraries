@@ -1671,9 +1671,8 @@ namespace KGySoft.Reflection
         /// </summary>
         internal static void InvokeCtor(object instance, ConstructorInfo ctor, params object[] parameters)
         {
-            // TODO: the old solution was slow and dangerous.
-            // The new could be in ActionMethodAccessor.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
-            // Performance test: MethodBase.Invoke is just 4x slower than an already executed invoker but at the first time invoker is 3000x slower.
+            // TODO: The new solution could be in ActionMethodAccessor.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
+            // Performance test: MethodBase.Invoke is just 4x slower than an already compiled invoker but at the first time invoker is 3000x slower.
             ctor.Invoke(instance, parameters);
         }
 

@@ -18,8 +18,10 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if !NETCOREAPP2_0
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
+# endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
@@ -93,8 +95,10 @@ namespace KGySoft.Serialization
                 throw new ArgumentNullException(nameof(info), Res.ArgumentNull);
             info.AddValue("isWeak", useWeakBinding);
             BinarySerializationFormatter serializer = new BinarySerializationFormatter();
+#if !NETCOREAPP2_0
             if (RemotingServices.IsTransparentProxy(obj))
                 serializer.SurrogateSelector = new RemotingSurrogateSelector();
+#endif
             info.AddValue("data", serializer.Serialize(obj));
         }
 

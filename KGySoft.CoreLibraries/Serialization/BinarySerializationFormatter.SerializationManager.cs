@@ -58,11 +58,9 @@ namespace KGySoft.Serialization
 
             private Dictionary<Assembly, int> assemblyIndexCache;
             private Dictionary<Type, int> typeIndexCache;
-#if NET40 || NET45
+#if !NET35
             private Dictionary<string, int> assemblyNameIndexCache;
             private Dictionary<string, int> typeNameIndexCache;
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
             private int idCounter = 1; // 0/1 are reserved for null/dbnull
             private Dictionary<object, int> idCacheByValue;
@@ -86,10 +84,8 @@ namespace KGySoft.Serialization
                 get
                 {
                     return (assemblyIndexCache?.Count ?? KnownAssemblies.Length)
-#if NET40 || NET45
+#if !NET35
                         + (assemblyNameIndexCache?.Count ?? 0)
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
                         ;
                 }
@@ -100,10 +96,8 @@ namespace KGySoft.Serialization
                 get
                 {
                     return (typeIndexCache?.Count ?? KnownTypes.Length)
-#if NET40 || NET45
+#if !NET35
                         + (typeNameIndexCache?.Count ?? 0)
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
                         ;
                 }
@@ -256,7 +250,7 @@ namespace KGySoft.Serialization
                 typeIndexCache.Add(type, TypeIndexCacheCount);
             }
 
-#elif NET40 || NET45
+#else
 
             /// <summary>
             /// Writes a type into the serialization stream
@@ -452,8 +446,6 @@ namespace KGySoft.Serialization
                 typeIndexCache.Add(type, TypeIndexCacheCount);
             }
 
-#else
-#error .NET version is not set or not supported!
 #endif
 
             /// <summary>

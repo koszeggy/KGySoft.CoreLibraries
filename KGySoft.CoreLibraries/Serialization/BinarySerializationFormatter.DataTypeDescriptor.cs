@@ -63,8 +63,6 @@ namespace KGySoft.Serialization
 
 #if NET35
             internal bool IsGenericDictionary => CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary;
-#elif !(NET40 || NET45)
-#error .NET version is not set or not supported!
 #endif
 
             internal bool IsReadOnly { get; set; }
@@ -374,11 +372,9 @@ namespace KGySoft.Serialization
                         return (typeof(Stack<>).MakeGenericType(ElementType));
                     case DataTypes.CircularList:
                         return (typeof(CircularList<>).MakeGenericType(ElementType));
-#if NET40 || NET45
+#if !NET35
                     case DataTypes.SortedSet:
                         return (typeof(SortedSet<>).MakeGenericType(ElementType));
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
 
 

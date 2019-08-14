@@ -420,19 +420,8 @@ namespace KGySoft.Collections
         private static readonly Type typeOfT = typeof(T);
 
         // ReSharper disable StaticMemberInGenericType
-        private static readonly bool isEnum = typeOfT.IsEnum;
         private static readonly bool isPrimitive = typeOfT.IsPrimitive;
         private static readonly int elementSizeExponent = isPrimitive ? (int)Math.Log(Reflector.SizeOf<T>(), 2) : 0;
-        private static readonly bool useEnumComparer =
-#if NET35
-            isEnum;
-#elif NET40 || NET45
-            isEnum && Enum.GetUnderlyingType(typeOfT) != Reflector.IntType;
-#elif NETCOREAPP2_0
-            false;
-#else
-#error .NET version is not set or not supported! - check EnumComparer performance in new framework
-#endif
         // ReSharper restore StaticMemberInGenericType
 
         private static BinarySearchHelper<T> binarySearchHelper;
@@ -1301,11 +1290,9 @@ namespace KGySoft.Collections
         /// </remarks>
         public int IndexOf(T item)
         {
-            if (useEnumComparer)
-            {
-                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
-                return FindIndex(0, size, enumItem => enumComparer.Equals(enumItem, item));
-            }
+            IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
+            if (!comparer.Equals(EqualityComparer<T>.Default))
+                return FindIndex(0, size, enumItem => comparer.Equals(enumItem, item));
 
             int carry = startIndex + size - items.Length;
 
@@ -1358,11 +1345,9 @@ namespace KGySoft.Collections
             if (count < 0 || index > size - count)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
-            if (useEnumComparer)
-            {
-                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
-                return FindIndex(index, count, enumItem => enumComparer.Equals(enumItem, item));
-            }
+            IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
+            if (!comparer.Equals(EqualityComparer<T>.Default))
+                return FindIndex(index, count, enumItem => comparer.Equals(enumItem, item));
 
             // every searched element is carried
             int capacity = items.Length;
@@ -1406,11 +1391,9 @@ namespace KGySoft.Collections
         {
             int carry = startIndex + size - items.Length;
 
-            if (useEnumComparer)
-            {
-                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
-                return FindLastIndex(size - 1, size, enumItem => enumComparer.Equals(enumItem, item));
-            }
+            IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
+            if (!comparer.Equals(EqualityComparer<T>.Default))
+                return FindLastIndex(size - 1, size, enumItem => comparer.Equals(enumItem, item));
 
             int result;
             if (carry > 0)
@@ -1472,11 +1455,9 @@ namespace KGySoft.Collections
             if (count > index + 1)
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
 
-            if (useEnumComparer)
-            {
-                EnumComparer<T> enumComparer = EnumComparer<T>.Comparer;
-                return FindLastIndex(index, count, enumItem => enumComparer.Equals(enumItem, item));
-            }
+            IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
+            if (!comparer.Equals(EqualityComparer<T>.Default))
+                return FindLastIndex(index, count, enumItem => comparer.Equals(enumItem, item));
 
             // every searched element is carried
             int capacity = items.Length;
@@ -1833,8 +1814,8 @@ namespace KGySoft.Collections
                 throw new ArgumentOutOfRangeException(nameof(count), Res.ArgumentOutOfRange);
             if (index + count > size)
                 throw new ArgumentException(Res.IListInvalidOffsLen);
-            if (comparer == null && isEnum)
-                comparer = EnumComparer<T>.Comparer;
+            if (comparer == null)
+                comparer = ComparerHelper<T>.Comparer;
 
             int capacity = items.Length;
             int start = startIndex + index;
@@ -2130,8 +2111,8 @@ namespace KGySoft.Collections
             if (index + count > size)
                 throw new ArgumentException(Res.IListInvalidOffsLen);
 
-            if (comparer == null && isEnum)
-                comparer = EnumComparer<T>.Comparer;
+            if (comparer == null)
+                comparer = ComparerHelper<T>.Comparer;
 
             int capacity = items.Length;
             int start = startIndex + index;

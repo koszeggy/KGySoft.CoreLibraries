@@ -70,10 +70,6 @@ namespace KGySoft.Collections
         {
             try
             {
-                // in case of enum element, comparer is already assigned
-                if (comparer == null)
-                    comparer = Comparer<T>.Default;
-
                 return BinarySearchWithComparer(list, index, length, value, comparer);
             }
             catch (Exception e)
