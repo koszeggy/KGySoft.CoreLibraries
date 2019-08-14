@@ -121,7 +121,9 @@ namespace KGySoft
 
         #region Fields
 
+#if !NETCOREAPP2_0
         private static bool captureSystemLocaleChange;
+#endif
         private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
         private static AutoSaveOptions dynamicResourceManagersAutoSave = autoSaveDefault;
         private static AutoAppendOptions dynamicResourceManagersAutoAppend = AutoAppendDefault;
@@ -262,6 +264,7 @@ namespace KGySoft
             }
         }
 
+#if !NETCOREAPP2_0
         /// <summary>
         /// Gets or sets whether changes of system regional settings should be captured.
         /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
@@ -273,8 +276,8 @@ namespace KGySoft
         /// <see langword="true"/>&#160;if system regional settings should be captured; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note type="caller">Accessing this property in .NET Core may throw an <see cref="InvalidOperationException"/> if capturing the locale changes
-        /// of the executing operating system is not supported.</note>
+        /// <note>This property is not available in .NET Core. However, if you use .NET Core 2.1 or newer you can reference the <c>Microsoft.Win32.SystemEvents</c> package
+        /// to use <see cref="SystemEvents.UserPreferenceChanged"/> event.</note>
         /// </remarks>
         public static bool CaptureSystemLocaleChange
         {
@@ -290,17 +293,12 @@ namespace KGySoft
 
                 captureSystemLocaleChange = value;
                 if (value)
-                {
                     SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
-                    HookCleanup();
-                }
                 else
-                {
                     SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
-                    UnhookCleanup();
-                }
             }
         }
+#endif
 
         /// <summary>
         /// Gets or sets the source, from which the <see cref="DynamicResourceManager"/> instances of the
@@ -432,37 +430,15 @@ namespace KGySoft
             // raising the local event
             DisplayLanguageChanged?.Invoke(null, e);
         }
-
-        private static void HookCleanup()
-        {
-            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-                AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-            else
-                AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
-        }
-
-        private static void UnhookCleanup()
-        {
-            if (AppDomain.CurrentDomain.IsDefaultAppDomain())
-                AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-            else
-                AppDomain.CurrentDomain.DomainUnload -= CurrentDomain_DomainUnload;
-        }
-
         private static void OnDynamicResourceManagersSourceChanged(EventArgs e) => DynamicResourceManagersSourceChanged?.Invoke(null, e);
 
         private static void OnDynamicResourceManagersAutoSaveChanged(EventArgs e) => DynamicResourceManagersAutoSaveChanged?.Invoke(null, e);
-
-        private static void UnhookSystemEvents()
-        {
-            // According to the documentation this event must be detached when the application is closed to prevent leaks
-            SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
-        }
 
         #endregion
 
         #region Event handlers
 
+#if !NETCOREAPP2_0
 #if !NET35
         [SecuritySafeCritical]
 #endif
@@ -474,9 +450,7 @@ namespace KGySoft
             Thread.CurrentThread.CurrentCulture.ClearCachedData();
             OnFormattingLanguageChanged(EventArgs.Empty);
         }
-
-        private static void CurrentDomain_ProcessExit(object sender, EventArgs e) => UnhookSystemEvents();
-        private static void CurrentDomain_DomainUnload(object sender, EventArgs e) => UnhookSystemEvents();
+#endif
 
         #endregion
 

@@ -13,10 +13,6 @@
     <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>-->
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Condition="'$(TargetFramework)'=='netcoreapp2.0'" Include="Microsoft.Win32.SystemEvents" Version="4.5.0" />
-  </ItemGroup>
-
   <!-- Takes forever, eats up every CPU and RAM -->
   <!--<ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">

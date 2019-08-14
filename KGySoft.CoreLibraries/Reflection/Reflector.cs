@@ -29,6 +29,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+#if !(NET35 || NET40 || NET45)
+using System.Runtime.InteropServices;
+# endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
@@ -2660,7 +2663,7 @@ namespace KGySoft.Reflection
         private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
         {
             // 1. In case of a system assembly, returning it from the GAC
-            string gacPath = Fusion.GetGacPath(assemblyName.Name);
+            string gacPath = GetGacPath(assemblyName.Name);
             if (gacPath != null)
                 return Assembly.LoadFrom(gacPath);
 
@@ -2689,6 +2692,15 @@ namespace KGySoft.Reflection
             }
 
             return result;
+        }
+
+        private static string GetGacPath(string assemblyName)
+        {
+#if !(NET35 || NET40 || NET45)
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return null;
+#endif
+            return Fusion.GetGacPath(assemblyName);
         }
 
         #endregion
