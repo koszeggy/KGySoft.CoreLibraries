@@ -1,5 +1,4 @@
-﻿#if NET35 || NET40 || NET45
-#region Copyright
+﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: Program.cs
@@ -62,7 +61,7 @@ namespace KGySoft.RecompILer
         private const string bodyCompare = @"
     .maxstack 3
     .locals init (int64 signedX, uint64 unsignedX)
-    ldsfld bool class KGySoft.CoreLibraries.EnumComparer`1/FullyTrustedEnumComparer<!TEnum>::isUnsignedCompare
+    ldsfld bool class KGySoft.CoreLibraries.EnumComparer`1/RecompiledEnumComparer<!TEnum>::isUnsignedCompare
     brtrue.s CompareAsUnsigned
     ldarg.1
     conv.i8
@@ -281,4 +280,3 @@ namespace KGySoft.RecompILer
         #endregion
     }
 }
-#endif
