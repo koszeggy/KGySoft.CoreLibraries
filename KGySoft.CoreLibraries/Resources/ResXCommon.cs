@@ -156,21 +156,8 @@ namespace KGySoft.Resources
             return valueData;
         }
 
-        /// <summary>
-        /// Creates an XmlException with already localized position message and still set position.
-        /// </summary>
-        /// <param name="message">The already formatted and localized message.</param>
-        /// <param name="line">The line to set.</param>
-        /// <param name="pos">The position to set.</param>
-        /// <param name="innerException">The original exception to wrap (if any).</param>
-        /// <returns>A new <see cref="XmlException"/>.</returns>
         internal static XmlException CreateXmlException(string message, int line, int pos, Exception innerException = null)
-        {
-            var result = new XmlException(message, innerException);
-            result.SetLineNumber(line);
-            result.SetLinePosition(pos);
-            return result;
-        }
+            => new XmlException(message, innerException, line, pos);
 
         internal static IFormatter GetSoapFormatter()
         {
@@ -213,7 +200,7 @@ namespace KGySoft.Resources
 
         private static bool CanGetAsMemoryStream(object value, bool safeMode, out MemoryStream result)
         {
-            // .NET BUG: is operator would capture sbyte[], too
+            // .NET issue: is operator would capture sbyte[], too (https://stackoverflow.com/q/33896316/5114784)
             if (value.GetType() == Reflector.ByteArrayType)
             {
                 // ReSharper disable once AssignNullToNotNullAttribute
@@ -224,7 +211,7 @@ namespace KGySoft.Resources
             if (value is MemoryStream ms)
             {
                 result = ms.GetType() == typeof(MemoryStream)
-                    ? new MemoryStream(ms.InternalGetBuffer(), false)
+                    ? new MemoryStream(ms.InternalGetBuffer() ?? ms.ToArray(), false)
                     : ms;
                 return true;
             }

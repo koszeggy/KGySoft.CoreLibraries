@@ -335,6 +335,8 @@ namespace KGySoft.Resources
         #region Fields
 
         private readonly ResXResourceManager resxResources; // used as sync obj as well because this reference lives along with parent lifetime and is invisible from outside
+        private readonly CultureInfo neutralResourcesCulture;
+
         private ResourceManagerSources source = ResourceManagerSources.CompiledAndResX;
         private bool throwException = true;
 
@@ -347,12 +349,6 @@ namespace KGySoft.Resources
         /// </summary>
         [NonSerialized]
         private KeyValuePair<string, ResourceSet> lastUsedResourceSet;
-
-        /// <summary>
-        /// Local cache of the base neutral resources culture.
-        /// </summary>
-        [NonSerialized]
-        private CultureInfo neutralResourcesCulture;
 
         #endregion
 
@@ -507,27 +503,7 @@ namespace KGySoft.Resources
         /// Gets the <see cref="CultureInfo"/> that is specified as neutral culture in the <see cref="Assembly"/>
         /// used to initialized this instance, or the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> if no such culture is defined.
         /// </summary>
-        protected CultureInfo NeutralResourcesCulture 
-            => neutralResourcesCulture ?? (neutralResourcesCulture = this.GetNeutralResourcesCulture() ?? CultureInfo.InvariantCulture);
-
-        #endregion
-
-        #region Private Properties
-
-#if NET35
-        private Hashtable CompiledResourceSets
-        {
-            get => base.ResourceSets;
-            set => base.ResourceSets = value;
-        }
-
-#else
-        private Dictionary<string, ResourceSet> CompiledResourceSets
-        {
-            get => this.GetResourceSets();
-            set => this.SetResourceSets(value);
-        }
-#endif
+        protected CultureInfo NeutralResourcesCulture => neutralResourcesCulture;
 
         #endregion
 
@@ -550,10 +526,7 @@ namespace KGySoft.Resources
         {
             // base will set MainAssembly and BaseNameField directly
             resxResources = new ResXResourceManager(explicitResXBaseFileName ?? baseName, assembly);
-#if NET35
-            // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
-            this.SetNeutralResourcesCulture(GetNeutralResourcesLanguage(assembly));
-#endif // elif not needed because this will not be needed in newer versions
+            neutralResourcesCulture = GetNeutralResourcesLanguage(assembly);
         }
 
         /// <summary>
@@ -573,10 +546,7 @@ namespace KGySoft.Resources
             resxResources = explicitResXBaseFileName == null
                 ? new ResXResourceManager(resourceSource)
                 : new ResXResourceManager(explicitResXBaseFileName, resourceSource.Assembly);
-#if NET35
-            // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
-            this.SetNeutralResourcesCulture(GetNeutralResourcesLanguage(resourceSource.Assembly));
-#endif // elif not needed because this will not be needed in newer versions
+            neutralResourcesCulture = GetNeutralResourcesLanguage(resourceSource.Assembly);
         }
 
         #endregion
@@ -676,6 +646,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> method,
         /// which will be the raw XML content for non-string resources.</para>
+        /// <note>The internal buffer is tried to be obtained by reflection in the first place. On platforms, which have possibly unknown non-public member names the public APIs are used, which may copy the content in memory.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -703,6 +674,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.HybridResourceManager.GetString">GetString</see> method,
         /// which will be the raw XML content for non-string resources.</para>
+        /// <note>The internal buffer is tried to be obtained by reflection in the first place. On platforms, which have possibly unknown non-public member names the public APIs are used, which may copy the content in memory.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
@@ -1554,27 +1526,17 @@ namespace KGySoft.Resources
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            IDictionary compiledResources = CompiledResourceSets;
-            if (compiledResources == null)
+            if (resxResources.IsDisposed)
                 return;
 
             if (disposing)
             {
                 resxResources.Dispose();
-
-                // this enumerates both Hashtable and Dictionary the same way.
-                // The nongeneric enumerator is not a problem, values must be cast anyway.
-                IDictionaryEnumerator enumerator = compiledResources.GetEnumerator();
-                while (enumerator.MoveNext())
-                {
-                    ((ResourceSet)enumerator.Value).Dispose();
-                }
+                base.ReleaseAllResources();
             }
 
-            CompiledResourceSets = null;
             resourceSets = null;
             lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
-            neutralResourcesCulture = null;
         }
 
         #endregion

@@ -22,7 +22,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Resources;
@@ -36,7 +35,7 @@ using System.Xml;
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
-
+using KGySoft.IO;
 #if NETCOREAPP2_0
 using CollectionExtensions = KGySoft.CoreLibraries.CollectionExtensions;
 #endif
@@ -123,31 +122,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region ResourceManager
-
-        private static FieldAccessor fieldResourceManager_neutralResourcesCulture;
-
-#if NET40 || NET45 || NETCOREAPP2_0
-        private static FieldAccessor fieldResourceManager_resourceSets;
-#endif
-
-        #endregion
-
-        #region ResourceSet
-
-#if NETCOREAPP2_0
-        private static FieldAccessor fieldResourceSet_Table;
-#endif
-
-        #endregion
-
-        #region XmlException
-
-        private static FieldAccessor fieldXmlException_lineNumber;
-        private static FieldAccessor fieldXmlException_linePosition;
-
-        #endregion
-
         #region ResXFileRef
 
 #if NET35 || NET40 || NET45
@@ -203,11 +177,17 @@ namespace KGySoft.Reflection
 
         private static FunctionMethodAccessor methodMemoryStream_InternalGetBuffer;
 
+#if !NETFRAMEWORK
+        private static bool? hasMemoryStream_InternalGetBuffer;
+#endif
+
         #endregion
 
         #region UnmanagedMemoryStreamWrapper
 
+#if NETFRAMEWORK
         private static ParameterizedCreateInstanceAccessor ctorUnmanagedMemoryStreamWrapper;
+#endif
 
         #endregion
 
@@ -421,7 +401,10 @@ namespace KGySoft.Reflection
         #endregion
 
         #region For Non-Public Members
-        // Make sure every member in this region is in conditions. Provide an #else #error for open-ended versions where the member has to be checked for new target frameworks.
+        // Make sure every member in this region is in conditions.
+        // Use as narrow conditions as possible and provide an #else #error for open-ended versions so new target frameworks have to always be reviewed.
+        // Non-Framework versions can be executed on any runtime (even .NET Core picks a semi-random installation) so for .NET Core/Standard the internal methods must be prepared for null MemberInfos.
+        // Whenever possible, use some workaround for non-public .NET Core/Standard libraries.
 
         #region Exception
 
@@ -448,43 +431,6 @@ namespace KGySoft.Reflection
 
             return accessor;
         }
-#endif
-
-        #endregion
-
-        #region ResourceManager
-
-#if NET35 || NET40 || NET45 || NETCOREAPP2_0
-        private static FieldAccessor ResourceManager_neutralResourcesCulture => fieldResourceManager_neutralResourcesCulture ?? (fieldResourceManager_neutralResourcesCulture = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_neutralResourcesCulture", BindingFlags.Instance | BindingFlags.NonPublic)));
-#else
-#error .NET version is not set or not supported!
-#endif
-
-#if NET40 || NET45 || NETCOREAPP2_0
-        private static FieldAccessor ResourceManager_resourceSets => fieldResourceManager_resourceSets ?? (fieldResourceManager_resourceSets = FieldAccessor.GetAccessor(typeof(ResourceManager).GetField("_resourceSets", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !NET35
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
-        #region ResourceSet
-
-#if NETCOREAPP2_0
-        private static FieldAccessor ResourceSet_Table => fieldResourceSet_Table ?? (fieldResourceSet_Table = FieldAccessor.GetAccessor(typeof(ResourceSet).GetField("Table", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !(NET35 || NET40 || NET45)
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
-        #region XmlException
-
-#if NET35 || NET40 || NET45 || NETCOREAPP2_0
-        private static FieldAccessor XmlException_lineNumber => fieldXmlException_lineNumber ?? (fieldXmlException_lineNumber = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("lineNumber", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor XmlException_linePosition => fieldXmlException_linePosition ?? (fieldXmlException_linePosition = FieldAccessor.CreateAccessor(typeof(XmlException).GetField("linePosition", BindingFlags.Instance | BindingFlags.NonPublic)));
-#else
-#error .NET version is not set or not supported!
 #endif
 
         #endregion
@@ -547,7 +493,7 @@ namespace KGySoft.Reflection
 
 #if NET35 || NET40 || NET45
         private static ActionMethodAccessor RuntimeConstructorInfo_SerializationInvoke(ConstructorInfo ci) => methodRuntimeConstructorInfo_SerializationInvoke ?? (methodRuntimeConstructorInfo_SerializationInvoke = new ActionMethodAccessor(ci.GetType().GetMethod("SerializationInvoke", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !NETCOREAPP2_0 // There is no SerializationInvoke in .NET Core 2.0
+#elif !NETCOREAPP2_0 // We can execute the constructor as a method in .NET Core/Standard
 #error .NET version is not set or not supported!
 #endif
 
@@ -555,8 +501,24 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-#if NET35 || NET40 || NET45 || NETCOREAPP2_0
+#if NET35 || NET40 || NET45
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
+#elif NETCOREAPP2_0
+        private static FunctionMethodAccessor MemoryStream_InternalGetBuffer
+        {
+            get
+            {
+                if (hasMemoryStream_InternalGetBuffer == null)
+                {
+                    MethodInfo mi = typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic);
+                    hasMemoryStream_InternalGetBuffer = mi != null;
+                    if (hasMemoryStream_InternalGetBuffer == true)
+                        methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(mi);
+                }
+
+                return hasMemoryStream_InternalGetBuffer == true ? methodMemoryStream_InternalGetBuffer : null;
+            }
+        }
 #else
 #error .NET version is not set or not supported!
 #endif
@@ -565,9 +527,9 @@ namespace KGySoft.Reflection
 
         #region UnmanagedMemoryStreamWrapper
 
-#if NET35 || NET40 || NET45 || NETCOREAPP2_0
+#if NET35 || NET40 || NET45
         private static ParameterizedCreateInstanceAccessor UnmanagedMemoryStreamWrapper => ctorUnmanagedMemoryStreamWrapper ?? (ctorUnmanagedMemoryStreamWrapper = new ParameterizedCreateInstanceAccessor(Reflector.ResolveType("System.IO.UnmanagedMemoryStreamWrapper").GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(UnmanagedMemoryStream) }, null)));
-#else
+#elif !NETCOREAPP2_0
 #error .NET version is not set or not supported!
 #endif
 
@@ -646,33 +608,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region ResourceManager
-
-        internal static CultureInfo GetNeutralResourcesCulture(this ResourceManager resourceManager) => (CultureInfo)ResourceManager_neutralResourcesCulture.Get(resourceManager);
-        internal static void SetNeutralResourcesCulture(this ResourceManager resourceManager, CultureInfo ci) => ResourceManager_neutralResourcesCulture.Set(resourceManager, ci);
-
-#if NET40 || NET45 || NETCOREAPP2_0
-        internal static Dictionary<string, ResourceSet> GetResourceSets(this ResourceManager resourceManager) => (Dictionary<string, ResourceSet>)ResourceManager_resourceSets.Get(resourceManager);
-        internal static void SetResourceSets(this ResourceManager resourceManager, Dictionary<string, ResourceSet> resourceSets) => ResourceManager_resourceSets.Set(resourceManager, resourceSets);
-#endif
-
-        #endregion
-
-        #region ResourceSet
-
-#if NETCOREAPP2_0
-        internal static void ClearTable(this ResourceSet set) => ResourceSet_Table.Set(set, null);
-#endif
-
-        #endregion
-
-        #region XmlException
-
-        internal static void SetLineNumber(this XmlException e, int lineNumber) => XmlException_lineNumber.Set(e, lineNumber);
-        internal static void SetLinePosition(this XmlException e, int linePosition) => XmlException_linePosition.Set(e, linePosition);
-
-        #endregion
-
         #region ResXFileRef
 
 #if NET35 || NET40 || NET45
@@ -726,13 +661,18 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-        internal static byte[] InternalGetBuffer(this MemoryStream ms) => (byte[])MemoryStream_InternalGetBuffer.Invoke(ms);
+        internal static byte[] InternalGetBuffer(this MemoryStream ms) => (byte[])MemoryStream_InternalGetBuffer?.Invoke(ms);
 
         #endregion
 
         #region UnmanagedMemoryStreamWrapper
 
-        internal static MemoryStream ToMemoryStream(this UnmanagedMemoryStream ums) => (MemoryStream)UnmanagedMemoryStreamWrapper.CreateInstance(ums);
+        internal static MemoryStream ToMemoryStream(this UnmanagedMemoryStream ums) =>
+#if NETFRAMEWORK
+            (MemoryStream)UnmanagedMemoryStreamWrapper.CreateInstance(ums);
+#else
+            new UnmanagedMemoryStreamWrapper(ums);
+#endif
 
         #endregion
 

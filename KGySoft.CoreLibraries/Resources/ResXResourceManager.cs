@@ -32,7 +32,6 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using KGySoft.CoreLibraries;
-using KGySoft.Reflection;
 
 #endregion
 
@@ -408,16 +407,12 @@ namespace KGySoft.Resources
 
         #region Fields
 
+        private readonly CultureInfo neutralResourcesCulture;
+
         private string resxResourcesDir = "Resources";
 
         [NonSerialized]
         private string resxDirFullPath;
-
-        /// <summary>
-        /// Local cache of the base neutral resources culture.
-        /// </summary>
-        [NonSerialized]
-        private CultureInfo neutralResourcesCulture;
 
         [NonSerialized]
         private object syncRoot;
@@ -431,8 +426,8 @@ namespace KGySoft.Resources
 
 #if !NET35
         /// <summary>
-        /// Local cache of the resource sets stored in the base.
-        /// Must be serialized because in the base it is non-serialized. Before serializing we remove proxies and unmodified sets.
+        /// Local cache of the resource sets.
+        /// Before serializing we remove proxies and unmodified sets.
         /// </summary>
         private Dictionary<string, ResourceSet> resourceSets;
 #endif
@@ -523,7 +518,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance is disposed.
         /// </summary>
-        public bool IsDisposed => GetBaseResources() == null;
+        public bool IsDisposed => BackingResourceSets == null;
 
         /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance has modified and unsaved data.
@@ -550,7 +545,10 @@ namespace KGySoft.Resources
 
         #region Private Properties
 
+
 #if NET35
+        private Hashtable BackingResourceSets => base.ResourceSets;
+
         private new Hashtable ResourceSets
         {
             get
@@ -560,23 +558,21 @@ namespace KGySoft.Resources
                     throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return result;
             }
-            set { base.ResourceSets = value; }
+            set => base.ResourceSets = value;
         }
 #else
+        private Dictionary<string, ResourceSet> BackingResourceSets => resourceSets;
+
         private new Dictionary<string, ResourceSet> ResourceSets
         {
             get
             {
-                Dictionary<string, ResourceSet> result = resourceSets ?? (resourceSets = GetBaseResources());
+                Dictionary<string, ResourceSet> result = resourceSets;
                 if (result == null)
                     throw new ObjectDisposedException(null, Res.ObjectDisposed);
                 return result;
             }
-            set
-            {
-                this.SetResourceSets(value);
-                resourceSets = value;
-            }
+            set => resourceSets = value;
         }
 #endif
 
@@ -589,9 +585,6 @@ namespace KGySoft.Resources
                 return syncRoot;
             }
         }
-
-        private CultureInfo NeutralResourcesCulture
-            => neutralResourcesCulture ?? (neutralResourcesCulture = this.GetNeutralResourcesCulture() ?? CultureInfo.InvariantCulture);
 
         #endregion
 
@@ -620,10 +613,10 @@ namespace KGySoft.Resources
             // - .resx files will be searched in resxResourcesDir\baseName[.Culture].resx
             // - _userResourceSet is set to ResXResourceSet and thus is returned by ResourceSetType; however, it will never be used by base because InternalGetResourceSet is overridden
             // - _neutralResourcesCulture is initialized from assembly (> .NET4 only)
-#if NET35
-            // .NET 3.5 sets _neutralResourcesCulture in its InternalGetResourceSet only so setting the field here.
-            this.SetNeutralResourcesCulture(GetNeutralResourcesLanguage(assembly));
-#endif // #elif not needed because this will not be needed in newer versions
+            neutralResourcesCulture = GetNeutralResourcesLanguage(assembly);
+#if !NET35
+            ResetResourceSets();
+#endif
         }
 
         /// <summary>
@@ -645,7 +638,7 @@ namespace KGySoft.Resources
             : this(baseName, Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly())
         {
             if (neutralResourcesLanguage != null)
-                this.SetNeutralResourcesCulture(neutralResourcesLanguage);
+                neutralResourcesCulture = neutralResourcesLanguage;
         }
 
         /// <summary>
@@ -745,8 +738,7 @@ namespace KGySoft.Resources
             lock (localResourceSets)
             {
                 // If another thread added this culture, return that.
-                ResourceSet lostRace;
-                if (TryGetResource(localResourceSets, cultureName, out lostRace))
+                if (TryGetResource(localResourceSets, cultureName, out ResourceSet lostRace))
                 {
                     if (!ReferenceEquals(lostRace, rs))
                     {
@@ -802,6 +794,15 @@ namespace KGySoft.Resources
                 return AppDomain.CurrentDomain.SetupInformation.ApplicationBase ?? AppDomain.CurrentDomain.BaseDirectory;
             }
 #endif
+        }
+
+        private static void ReleaseResourceSets(IDictionary resourceSets)
+        {
+            // this enumerates both Hashtable and Dictionary the same way.
+            // The non-generic enumerator is not a problem, values must be cast anyway.
+            IDictionaryEnumerator enumerator = resourceSets.GetEnumerator();
+            while (enumerator.MoveNext())
+                ((ResourceSet)enumerator.Value).Dispose();
         }
 
         #endregion
@@ -871,6 +872,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method,
         /// which will be the raw XML content for non-string resources.</para>
+        /// <note>The internal buffer is tried to be obtained by reflection in the first place. On platforms, which have possibly unknown non-public member names the public APIs are used, which may copy the content in memory.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
@@ -898,6 +900,7 @@ namespace KGySoft.Resources
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>&#160;and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
         /// instead of throwing an <see cref="InvalidOperationException"/> the method returns a stream wrapper for the same string value that is returned by the <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> method,
         /// which will be the raw XML content for non-string resources.</para>
+        /// <note>The internal buffer is tried to be obtained by reflection in the first place. On platforms, which have possibly unknown non-public member names the public APIs are used, which may copy the content in memory.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
@@ -1216,16 +1219,9 @@ namespace KGySoft.Resources
         /// </remarks>
         public override void ReleaseAllResources()
         {
-            // This check prevents an already disposed object from reanimation (because base re-sets the resource sets)
-            if (ResourceSets == null)
-                throw new InvalidOperationException("An ObjectDisposedException should has been thrown in ResourceSets getter");
-
+            ReleaseResourceSets(ResourceSets);
             base.ReleaseAllResources();
-#if !NET35
-            resourceSets = null; // clearing local cache because here base creates a new instance
-#elif !NET35
-#endif
-
+            ResetResourceSets();
             lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
         }
 
@@ -1284,14 +1280,14 @@ namespace KGySoft.Resources
             GC.SuppressFinalize(this);
         }
 
-#endregion
+        #endregion
 
-#region Internal Methods
+        #region Internal Methods
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
         internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
-#region Local Methods to reduce complexity
+            #region Local Methods to reduce complexity
 
             bool TryGetCachedResourceSet(ref GetResXResourceSetContext ctx)
             {
@@ -1313,7 +1309,7 @@ namespace KGySoft.Resources
 
             bool TryGetResourceWhileTraverse(ref GetResXResourceSetContext ctx)
             {
-                ctx.FallbackManager = new ResourceFallbackManager(ctx.Culture, NeutralResourcesCulture, ctx.TryParents);
+                ctx.FallbackManager = new ResourceFallbackManager(ctx.Culture, neutralResourcesCulture, ctx.TryParents);
                 foreach (CultureInfo currentCultureInfo in ctx.FallbackManager)
                 {
                     bool resourceFound;
@@ -1387,7 +1383,7 @@ namespace KGySoft.Resources
                 return false;
             }
 
-#endregion
+            #endregion
 
             if (culture == null)
                 throw new ArgumentNullException(nameof(culture), Res.ArgumentNull);
@@ -1461,9 +1457,9 @@ namespace KGySoft.Resources
             return (ResXResourceSet)result;
         }
 
-#endregion
+        #endregion
 
-#region Protected Methods
+        #region Protected Methods
 
         /// <summary>
         /// Generates the name of the resource file for the given <see cref="CultureInfo"/> object.
@@ -1503,34 +1499,27 @@ namespace KGySoft.Resources
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            var localResourceSets = GetBaseResources();
+            var localResourceSets = BackingResourceSets;
             if (localResourceSets == null)
                 return;
 
             if (disposing)
-            {
-                // this enumerates both Hashtable and Dictionary the same way.
-                // The non-generic enumerator is not a problem, values must be cast anyway.
-                IDictionaryEnumerator enumerator = localResourceSets.GetEnumerator();
-                while (enumerator.MoveNext())
-                    ((ResourceSet)enumerator.Value).Dispose();
-            }
+                ReleaseResourceSets(localResourceSets);
 
             ResourceSets = null;
             resxDirFullPath = null;
-            neutralResourcesCulture = null;
             syncRoot = null;
             lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
         }
 
-#endregion
+        #endregion
 
-#region Private Methods
+        #region Private Methods
 
 #if NET35
-        private Hashtable GetBaseResources() => base.ResourceSets;
+        private void ResetResourceSets() => base.ResourceSets = new Hashtable();
 #else
-        private Dictionary<string, ResourceSet> GetBaseResources() => this.GetResourceSets();
+        private void ResetResourceSets() => resourceSets = new Dictionary<string, ResourceSet>();
 #endif
 
         private object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
@@ -1553,7 +1542,7 @@ namespace KGySoft.Resources
             // The GetResXResourceSet has also a hierarchy traversal. This outer traversal is required as well because
             // the inner one can return an existing resource set without the searched resource, in which case here is
             // the fallback to the parent resource.
-            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, NeutralResourcesCulture, true);
+            ResourceFallbackManager mgr = new ResourceFallbackManager(culture, neutralResourcesCulture, true);
             ResXResourceSet toCache = null;
             foreach (CultureInfo currentCultureInfo in mgr)
             {
@@ -1600,7 +1589,7 @@ namespace KGySoft.Resources
         private ResXResourceSet GetFirstResourceSet(CultureInfo culture)
         {
             // Logic from ResourceFallbackManager.GetEnumerator()
-            if (!ReferenceEquals(culture, CultureInfo.InvariantCulture) && culture.Name == NeutralResourcesCulture.Name)
+            if (!ReferenceEquals(culture, CultureInfo.InvariantCulture) && culture.Name == neutralResourcesCulture.Name)
                 culture = CultureInfo.InvariantCulture;
 
             lock (SyncRoot)
@@ -1650,7 +1639,7 @@ namespace KGySoft.Resources
             // fallback for neutral culture: if neutral file does not exist but specific does, using that file.
             if (!exists && Equals(CultureInfo.InvariantCulture, culture))
             {
-                CultureInfo neutralResources = NeutralResourcesCulture;
+                CultureInfo neutralResources = neutralResourcesCulture;
                 if (!CultureInfo.InvariantCulture.Equals(neutralResources))
                 {
                     string neutralFileName = GetResourceFileName(neutralResources);
@@ -1703,10 +1692,10 @@ namespace KGySoft.Resources
             }
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

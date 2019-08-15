@@ -75,6 +75,12 @@ namespace KGySoft.IO
             }
         }
 
+        public override int Capacity
+        {
+            get => position >= 0 ? str.Length << 1 : throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            set => base.Capacity = value; // to throw the appropriate exception
+        }
+
         #endregion
 
         #region Indexers
@@ -141,7 +147,6 @@ namespace KGySoft.IO
             return position == str.Length << 1 ? -1 : this[position++];
         }
 
-
         public override byte[] ToArray()
         {
             var result = new byte[str.Length << 1];
@@ -154,12 +159,16 @@ namespace KGySoft.IO
         {
             if (position < 0)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
             using (var ss = new StringStream(str))
                 ss.CopyTo(stream);
         }
 
         public override void SetLength(long value) => throw new NotSupportedException(Res.NotSupported);
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException(Res.NotSupported);
+        public override void WriteByte(byte value) => throw new NotSupportedException(Res.NotSupported);
+
         public override string ToString() => str;
 
         #endregion

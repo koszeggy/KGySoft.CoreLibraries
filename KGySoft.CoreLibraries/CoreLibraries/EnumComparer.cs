@@ -54,10 +54,10 @@ namespace KGySoft.CoreLibraries
     {
         #region Nested classes
 
-        #region PartiallyTrustedEnumComparer class
+        #region DynamicDelegateEnumComparer class
 
         [Serializable]
-        private sealed class PartiallyTrustedEnumComparer : EnumComparer<TEnum>, IObjectReference
+        private sealed class DynamicDelegateEnumComparer : EnumComparer<TEnum>, IObjectReference
         {
             #region Fields
 
@@ -148,10 +148,11 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region FullyTrustedEnumComparer class
+        #region RecompiledEnumComparer class
 
+#if NETFRAMEWORK
         [Serializable]
-        private sealed class FullyTrustedEnumComparer : EnumComparer<TEnum>, IObjectReference
+        private sealed class RecompiledEnumComparer : EnumComparer<TEnum>, IObjectReference
         {
             #region Fields
 
@@ -191,6 +192,7 @@ namespace KGySoft.CoreLibraries
 
             #endregion
         }
+#endif
 
         #endregion
 
@@ -198,11 +200,13 @@ namespace KGySoft.CoreLibraries
 
         #region Fields
 
+#if NETFRAMEWORK
         private static readonly bool isFullyTrusted =
 #if NET35
             true; // even if not, the FullyTrustedEnumComparer can be used in .NET 3.5
 #else
             AppDomain.CurrentDomain.IsFullyTrusted;
+#endif  
 #endif
 
         private static EnumComparer<TEnum> comparer;
@@ -214,7 +218,11 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the comparer instance for <typeparamref name="TEnum"/> type.
         /// </summary>
-        public static EnumComparer<TEnum> Comparer => comparer ?? (comparer = isFullyTrusted ? (EnumComparer<TEnum>)new FullyTrustedEnumComparer() : new PartiallyTrustedEnumComparer());
+        public static EnumComparer<TEnum> Comparer => comparer ?? (comparer =
+#if NETFRAMEWORK
+                    isFullyTrusted ? (EnumComparer<TEnum>)new RecompiledEnumComparer() : 
+#endif
+                new DynamicDelegateEnumComparer());
 
         #endregion
 

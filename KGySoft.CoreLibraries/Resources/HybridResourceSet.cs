@@ -283,10 +283,8 @@ namespace KGySoft.Resources
             resxResourceSet = resx ?? throw new ArgumentNullException(nameof(resx), Res.ArgumentNull);
             compiledResourceSet = compiled ?? throw new ArgumentNullException(nameof(compiled), Res.ArgumentNull);
 
+#if !NETCOREAPP2_0
             // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
-#if NETCOREAPP2_0
-            this.ClearTable();
-#else
             Table = null;
 #endif
         }

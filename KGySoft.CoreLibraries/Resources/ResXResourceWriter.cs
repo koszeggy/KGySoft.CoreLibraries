@@ -928,16 +928,14 @@ namespace KGySoft.Resources
         private void AddDataRow(string elementName, string name, object value)
         {
             // 1.) String
-            string valueData = value as string;
-            if (valueData != null)
+            if (value is string valueData)
             {
                 AddDataRow(elementName, name, valueData);
                 return;
             }
 
-            // 2.) byte[] - double check must be performed because of sbyte[]
-            byte[] byteArray = value as byte[];
-            if (byteArray != null && value.GetType() == Reflector.ByteArrayType)
+            // 2.) byte[] - double check must be performed because of sbyte[] (https://stackoverflow.com/q/33896316/5114784)
+            if (value is byte[] byteArray && value.GetType() == Reflector.ByteArrayType)
             {
                 AddDataRow(elementName, name, byteArray);
                 return;
