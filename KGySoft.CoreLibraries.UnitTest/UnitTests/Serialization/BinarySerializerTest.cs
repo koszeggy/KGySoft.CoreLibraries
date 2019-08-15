@@ -26,7 +26,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Messaging;
+#if NETFRAMEWORK
+using System.Runtime.Remoting.Messaging; 
+#endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
@@ -1561,7 +1563,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region TestSerializationBinder Class
 
-#if NET40 || NET45
+#if !NET35
         private class TestSerializationBinder : SerializationBinder
         {
             public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
@@ -1589,8 +1591,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 return assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
             }
         }
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
         #endregion
 
@@ -2536,14 +2536,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new CircularList<int>(new[]{ 1, 2, 3}),
                     new CircularList<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
 
-                    #if NET40 || NET45
+#if !NET35
                     new SortedSet<int>(new[]{ 1, 2, 3}),
                     new SortedSet<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
                     new SortedSet<string>(StringComparer.CurrentCulture) { "alpha", "Alpha", "ALPHA" },
                     new SortedSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "Alpha", "ALPHA" },
-                    #elif !NET35
-                    #error .NET version is not set or not supported!
-                    #endif
+#endif
 
 
                     new Dictionary<int, string> { {1, "alpha"}, {2, "beta"}, {3, "gamma"}},
@@ -2673,11 +2671,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new Dictionary<int, Queue<int>>{{1, new Queue<int>(new[]{1,2})}, {2, null}}, // Queue
                     new Dictionary<int, Stack<int>>{{1, new Stack<int>(new[]{1,2})}, {2, null}}, // Stack
                     new Dictionary<int, CircularList<int>>{{1, new CircularList<int>{1, 2}}, {2, null}}, // CircularList
-                    #if NET40 || NET45
+#if !NET35
                     new Dictionary<int, SortedSet<int>>{{1, new SortedSet<int>{1, 2}}, {2, null}}, // SortedSet
-                    #elif !NET35
-                    #error .NET version is not set or not supported!
-                    #endif
+#endif
 
 
                     // generic dictionary value
@@ -2809,6 +2805,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
+#if !NETCOREAPP2_0
         [Test]
         public void SerializeMarshalByRefObjects()
         {
@@ -2856,7 +2853,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 AppDomain.Unload(domain);
             }
-        }
+        } 
+#endif
 
         [Test]
         public void SerializationBinderTest()
@@ -2895,7 +2893,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
 
-#if NET40 || NET45
+#if !NET35
             Console.WriteLine("-------Serialization and deserialization with WeakAssemblySerializationBinder, OmitAssemblyNameOnSerialize enabled-------------");
             Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
             binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
@@ -2939,10 +2937,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             raw = SerializeObjects(referenceObjects, bsf);
             result = DeserializeObjects(raw, bsf);
             AssertItemsEqual(referenceObjects, result);
-#elif !NET35
-#error .NET version is not set or not supported!
 #endif
-
         }
 
         [Test]
@@ -3021,11 +3016,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                     // collections with native support
                     new CircularList<int>{ 1, 2, 3},
-                    #if NET40 || NET45
+#if !NET35
                     new SortedSet<int>{ 1, 2, 3},
-                    #elif !NET35
-                    #error .NET version is not set or not supported!
-                    #endif
+#endif
 
                     new CircularSortedList<int, int>{ {1, 1}, {2, 2}, {3, 3}},
                 };

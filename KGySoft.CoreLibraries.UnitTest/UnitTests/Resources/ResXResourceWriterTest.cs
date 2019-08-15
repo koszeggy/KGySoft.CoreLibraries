@@ -24,12 +24,16 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
-using System.Drawing.Imaging;
+#if !NETCOREAPP2_0
+using System.Drawing.Imaging; 
+#endif
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
+#if !NETCOREAPP2_0
+using System.Windows.Forms; 
+#endif
 
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
@@ -43,8 +47,10 @@ using NUnit.Framework.Internal;
 
 #region Used Aliases
 
+#if !NETCOREAPP2_0
 using SystemResXResourceReader = System.Resources.ResXResourceReader;
 using SystemResXResourceWriter = System.Resources.ResXResourceWriter;
+#endif
 
 #endregion
 
@@ -153,6 +159,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Static Methods
 
+#if !NETCOREAPP2_0
         private static Metafile CreateTestMetafile()
         {
             Graphics refGraph = Graphics.FromHwnd(IntPtr.Zero);
@@ -166,16 +173,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 var reye1 = new Rectangle(20, 20, 20, 30);
                 var reye2 = new Rectangle(60, 20, 20, 30);
 
-                using (Pen pRed = new Pen(Color.Red, 2.5f))
-                using (var pBlack = new Pen(Color.Black, 3))
-                {
-                    g.FillEllipse(Brushes.Yellow, r);
-                    g.FillEllipse(Brushes.White, reye1);
-                    g.FillEllipse(Brushes.White, reye2);
-                    g.DrawEllipse(pBlack, reye1);
-                    g.DrawEllipse(pBlack, reye2);
-                    g.DrawBezier(pRed, new Point(10, 50), new Point(10, 100), new Point(90, 100), new Point(90, 50));
-                }
+                g.FillEllipse(Brushes.Yellow, r);
+                g.FillEllipse(Brushes.White, reye1);
+                g.FillEllipse(Brushes.White, reye2);
+                g.DrawEllipse(Pens.Black, reye1);
+                g.DrawEllipse(Pens.Black, reye2);
+                g.DrawBezier(Pens.Red, new Point(10, 50), new Point(10, 100), new Point(90, 100), new Point(90, 50));
             }
 
             refGraph.ReleaseHdc(hdc);
@@ -192,7 +195,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             //msTiff.Position = 0L;
             //var tiffImage = new Bitmap(msTiff);
             //return tiffImage;
-        }
+        } 
+#endif
 
         #endregion
 
@@ -468,6 +472,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     CultureInfo.GetCultureInfo("en-US"),
 
                     // partly working built-in
+#if !NETCOREAPP2_0
                     Cursors.Arrow, // a default cursor: by string
                     //new Cursor(cursor), // custom cursor: exception is thrown both for string and byte[] conversion
 
@@ -475,7 +480,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     //Icons.Information, // multi-resolution icon (built-in saves one page only)
                     //Images.InformationMultiSize, // multi-resolution bitmap-icon (built-in saves one page only)
                     //CreateTestTiff(), // multipage TIFF (built-in saves first page only)
-                    //CreateTestMetafile(), // EMF image (built-in saves it as a PNG)
+                    //CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
+#endif
 
                     // pure custom
                     new Version(1, 2, 3, 4),
@@ -617,10 +623,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     // binary wrapper
                     new AnyObjectSerializerWrapper("test", false),
 
+#if !NETCOREAPP2_0 
                     // legacy formats: KGy version converts these to self formats
                     new System.Resources.ResXFileRef(path, "System.String"),
                     new System.Resources.ResXDataNode("TestString", "string"),
-                    new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
+                    new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),  
+#endif
                 };
 
             SystemSerializeObjects(referenceObjects);
@@ -632,7 +640,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 // self formats: supported only by KGySoft
                 new ResXFileRef(path, typeof(string)),
                 new ResXDataNode("TestString", "string"),
+#if !NETCOREAPP2_0
                 new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, "System.String")),
+#endif
             };
 
             KGySerializeObjects(referenceObjects);
@@ -739,6 +749,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         private void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
         {
+#if !NETCOREAPP2_0
             using (new TestExecutionContext.IsolatedContext())
             {
                 Console.WriteLine("------------------System ResXResourceWriter (Items Count: {0})--------------------", referenceObjects.Length);
@@ -749,10 +760,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NET35
                         new SystemResXResourceWriter(new StringWriter(sb))
 
-#elif NET40 || NET45
-                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
 #else
-#error Unsupported .NET version
+                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
 #endif
 
                         )
@@ -780,7 +789,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     Console.WriteLine("System serialization failed: {0}", e);
                 }
-            }
+            } 
+#endif
         }
 
         private void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode = true, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
@@ -808,6 +818,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
 
+#if !NETCOREAPP2_0
             if (compatibilityMode)
             {
                 deserializedObjects.Clear();
@@ -821,7 +832,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
                 if (checkCompatibleEquality)
                     AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-            }
+            } 
+#endif
         }
 
         #endregion

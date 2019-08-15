@@ -19,13 +19,17 @@
 using System;
 using System.Collections;
 using System.Drawing;
-using System.Drawing.Imaging;
+#if !NETCOREAPP2_0
+using System.Drawing.Imaging; 
+#endif
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Text;
-using System.Windows.Forms;
+#if !NETCOREAPP2_0
+using System.Windows.Forms; 
+#endif
 using KGySoft.IO;
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -346,6 +350,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         {
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
+            object reference, check;
 
             // string
             Assert.AreEqual(refManager.GetString("TestString"), manager.GetString("TestString"));
@@ -353,9 +358,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // text file by reference
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
+#if !NETCOREAPP2_0
             // icon by reference
-            var reference = refManager.GetObject("TestIcon");
-            var check = manager.GetObject("TestIcon");
+            reference = refManager.GetObject("TestIcon");
+            check = manager.GetObject("TestIcon");
             Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
@@ -380,7 +386,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Bitmap>(reference);
             Assert.IsInstanceOf<Bitmap>(check);
             Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
-            Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid);
+            Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid); 
+#endif
 
             // byte array by reference
             reference = refManager.GetObject("TestBinFile");
@@ -400,6 +407,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Point>(reference);
             Assert.AreEqual(reference, check);
 
+#if !NETCOREAPP2_0
             // bmp embedded as bytearray.base64 (created by a ctor from stream): they are visually equal, however different DPIs are stored
             reference = refManager.GetObject("TestImageEmbedded");
             check = manager.GetObject("TestImageEmbedded");
@@ -421,7 +429,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             reference = refManager.GetObject("TestIconEmbedded");
             check = manager.GetObject("TestIconEmbedded");
             Assert.IsInstanceOf<Icon>(reference);
-            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
+            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check)); 
+#endif
 
             // stream embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestSoundEmbedded");

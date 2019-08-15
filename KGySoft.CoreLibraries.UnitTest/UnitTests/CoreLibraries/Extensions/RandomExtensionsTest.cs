@@ -147,10 +147,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Sandbox class
 
+#if NETFRAMEWORK
         private partial class Sandbox : MarshalByRefObject
         {
             internal void NextObjectTest() => new RandomExtensionsTest().NextObjectTest();
-        }
+        } 
+#endif
 
         #endregion
 
@@ -429,7 +431,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<ArraySegment<int>>(); // array ctor
             Test<Cache<int, int>>(); // populate
             Test<Queue>(); // ICollection ctor
-            Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object
+#if !NETCOREAPP2_0
+            Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object  
+#endif
 
             // key-value
             Test<DictionaryEntry>();
@@ -461,6 +465,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<XmlSchemaObject>(); // contains self as abstract class
         }
 
+#if NETFRAMEWORK
         [Test]
         [SecuritySafeCritical]
         public void NextObjectTest_PartiallyTrusted()
@@ -480,7 +485,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Console.WriteLine(e);
                 throw;
             }
-        }
+        } 
+#endif
 
         #endregion
     }

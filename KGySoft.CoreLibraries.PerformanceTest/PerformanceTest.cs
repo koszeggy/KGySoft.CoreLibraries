@@ -38,7 +38,7 @@ namespace KGySoft.CoreLibraries
 #elif NET40 || NET45
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Add a global <TargetFrameworkVersion> to csproj and try again");
-#else
+#elif NETFRAMEWORK
 #error unknown .NET version
 #endif
         }

@@ -24,7 +24,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
+#if !NETCOREAPP2_0
+using System.Windows.Forms; 
+#endif
 
 using KGySoft.Resources;
 
@@ -97,11 +99,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // no mime, parsed from string by type converter
             Assert.IsInstanceOf<Point>(rs.GetObject("TestPoint"));
 
+#if !NETCOREAPP2_0
             // mime, deserialized by BinaryFormatter
             Assert.IsInstanceOf<ImageListStreamer>(rs.GetObject("TestObjectEmbedded"));
 
             // mime, converted from byte array by type converter
             Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImageEmbedded"));
+#endif
 
             // WinForms.FileRef/byte[]
             Assert.IsInstanceOf<byte[]>(rs.GetObject("TestBinFile"));
@@ -109,8 +113,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // WinForms.FileRef/MemoryStream
             Assert.IsInstanceOf<MemoryStream>(rs.GetObject("TestSound"));
 
+#if !NETCOREAPP2_0
             // WinForms.FileRef/object created from stream
-            Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImage"));
+            Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImage")); 
+#endif
         }
 
         /// <summary>
@@ -275,7 +281,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // by type converter
             rs.SetObject("TypeConverter/string", Point.Empty);
-            rs.SetObject("TypeConverter/byte[]", SystemIcons.Application.ToBitmap());
+#if !NETCOREAPP2_0
+            rs.SetObject("TypeConverter/byte[]", SystemIcons.Application.ToBitmap()); 
+#endif
 
             // binary serialization
             rs.SetObject("serialized", new Collection<byte> { 1, 2, 3 });

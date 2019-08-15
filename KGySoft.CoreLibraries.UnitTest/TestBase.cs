@@ -29,13 +29,17 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+#if NETFRAMEWORK
 using System.Drawing;
-using System.Drawing.Imaging;
+using System.Drawing.Imaging; 
+#endif
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Windows.Forms;
+#if NETFRAMEWORK
+using System.Windows.Forms; 
+#endif
 
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -48,8 +52,10 @@ using NUnit.Framework;
 #region Used Aliases
 
 using Assert = NUnit.Framework.Assert;
+#if NETFRAMEWORK
 using SystemDataNode = System.Resources.ResXDataNode;
-using SystemFileRef = System.Resources.ResXFileRef;
+using SystemFileRef = System.Resources.ResXFileRef; 
+#endif
 
 #endregion
 
@@ -128,8 +134,11 @@ namespace KGySoft.CoreLibraries
 #elif NET40 || NET45
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 4.x");
+#elif NETFRAMEWORK
+#error unknown .NET version
+#else
+            Console.WriteLine($"Tests executed on framework version {typeof(object).Assembly.GetName().Version}");
 #endif
-
         }
 
         protected static void CopyContent(object target, object source)
@@ -151,6 +160,7 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+#if NETFRAMEWORK
         protected static AppDomain CreateSandboxDomain(params IPermission[] permissions)
         {
             var evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
@@ -169,7 +179,8 @@ namespace KGySoft.CoreLibraries
             }
 
             return AppDomain.CreateDomain("SandboxDomain", evidence, setup, permissionSet, strongNames.ToArray());
-        }
+        } 
+#endif
 
         #endregion
 
@@ -189,17 +200,19 @@ namespace KGySoft.CoreLibraries
             if (typeRef == typeof(AnyObjectSerializerWrapper))
                 return CheckDeepEquals(Reflector.GetField(reference, "obj"), check, forceEqualityByMembers, errors, checkedObjects);
 
-            if (typeRef == typeof(SystemFileRef))
-                return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
-
             if (typeRef == typeof(ResXFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 
-            if (typeRef == typeof(SystemDataNode))
-                return CheckDeepEquals(((SystemDataNode)reference).GetValue((ITypeResolutionService)null), check, forceEqualityByMembers, errors, checkedObjects);
-
             if (typeRef == typeof(ResXDataNode))
                 return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
+
+#if !NETCOREAPP2_0
+            if (typeRef == typeof(SystemFileRef))
+                return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
+
+            if (typeRef == typeof(SystemDataNode))
+                return CheckDeepEquals(((SystemDataNode)reference).GetValue((ITypeResolutionService)null), check, forceEqualityByMembers, errors, checkedObjects); 
+#endif
 
             if (!Check(typeRef == typeChk, $"Types are different. {typeRef} <-> {typeChk}", errors))
                 return false;
@@ -251,6 +264,8 @@ namespace KGySoft.CoreLibraries
                     return result;
                 }
 
+
+#if !NETCOREAPP2_0
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
 
@@ -265,7 +280,8 @@ namespace KGySoft.CoreLibraries
                     var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };
                     var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
                     return CheckItemsEqual(il1.Images, il2.Images, forceEqualityByMembers, errors, checkedObjects);
-                }
+                } 
+#endif
 
                 // Structural equality if forced for non-primitive types or when Equals is not overridden
                 if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
@@ -411,6 +427,7 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
+#if !NETCOREAPP2_0
         private static bool CheckImages(Bitmap reference, Bitmap check, List<string> errors)
         {
             // using the not so fast GetPixel compare. This works also for different pixel formats and raw formats.
@@ -431,7 +448,8 @@ namespace KGySoft.CoreLibraries
             }
 
             return true;
-        }
+        } 
+#endif
 
         private static void AssertResult(bool result, List<string> errors)
         {
@@ -460,6 +478,7 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
+#if NETFRAMEWORK
         private static PermissionSet GetPermissionSet(IPermission[] permissions)
         {
             var evidence = new Evidence();
@@ -472,7 +491,8 @@ namespace KGySoft.CoreLibraries
             foreach (var permission in permissions)
                 result.AddPermission(permission);
             return result;
-        }
+        } 
+#endif
 
         #endregion
 

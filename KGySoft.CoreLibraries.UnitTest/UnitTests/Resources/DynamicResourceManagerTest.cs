@@ -43,6 +43,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     {
         #region Nested classes
 
+#if NETFRAMEWORK
         private class RemoteDrmConsumer : MarshalByRefObject
         {
             #region Methods
@@ -67,7 +68,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
 
             #endregion
-        }
+        } 
+#endif
 
         #endregion
 
@@ -96,16 +98,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         private CultureInfo huRunic; // hu-Runic: neutral under hu
         private CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
-        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU
+        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU  
 
         #endregion
 
         #endregion
 
         #region Methods
-        
+
         #region Public Methods
 
+#if !NETCOREAPP2_0
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
@@ -128,7 +131,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
             catch (UnauthorizedAccessException e)
             {
-                Assert.Inconclusive("To run the tests in this class, administrator rights are required: " + e);
+                //Assert.Inconclusive("To run the tests in this class, administrator rights are required: " + e);
+                return; // no admin rights - basic tests will be executed
             }
             catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
             {
@@ -176,10 +180,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [OneTimeTearDown]
         public void RemoveCustomCultures()
         {
-            CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
-            CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
-            CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
-        }
+            try
+            {
+                CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
+                CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
+                CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // no admin rights
+            }
+        } 
+#endif
 
         [Test]
         public void GetUnknownTest()
@@ -257,30 +269,64 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastNeutralCulture
             };
-
             string key = "TestString";
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            string custom = "custom";
+
+            if (huRunic != null)
+            {
+                // creating proxies
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+                // this will widen append so proxies are not trustworthy anymore
+                manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+                // the result will come from proxy eventually
+                manager.AutoAppend = AutoAppendOptions.AppendNeutralCultures;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+                // this will merge multiple resources
+                manager.ReleaseAllResources();
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+                // inserting explicitly into a non-merged: it will be retrieved via child, too
+                manager.SetObject(key, custom, huRunicHU);
+                Assert.AreEqual(custom, manager.GetString(key, huRunicHULowland));
+
+                // The string will be prefixed even if retrieved as an object
+                manager.ReleaseAllResources();
+                Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                return;
+            }
+
+            // ---basic tests: no admin rights or not .NET Framework---
+
+            // creating proxies
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
             // this will widen append so proxies are not trustworthy anymore
             manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
             // the result will come from proxy eventually
             manager.AutoAppend = AutoAppendOptions.AppendNeutralCultures;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-            // this will merge multiple resources
+            // this would merge multiple resources but now we have one neutral (.NET Framework with admin rights needed)
             manager.ReleaseAllResources();
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
             // inserting explicitly into a non-merged: it will be retrieved via child, too
-            var custom = "custom";
-            manager.SetObject(key, custom, huRunicHU);
-            Assert.AreEqual(custom, manager.GetString(key, huRunicHULowland));
+            manager.SetObject(key, custom, inv);
+            Assert.AreEqual(custom, manager.GetString(key, huHU));
 
             // The string will be prefixed even if retrieved as an object
             manager.ReleaseAllResources();
-            Assert.IsTrue(((string)manager.GetObject(key, huRunicHULowland)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(((string)manager.GetObject(key, huHU)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+#if !NETCOREAPP2_0
+            Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required"); 
+#endif
         }
 
         [Test]
@@ -302,6 +348,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rshu = manager.GetExpandoResourceSet(hu, ResourceSetRetrieval.CreateIfNotExists, true); // but this will, and performs merge, too
             Assert.AreNotSame(rsinv, rshu);
             Assert.IsTrue(rshu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+            if (huRunic == null)
+            {
+#if !NETCOREAPP2_0
+                Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
+#endif
+                return;
+            }
 
             // hu is proxied in descendants, too.
             Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
@@ -342,24 +396,41 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastSpecificCulture
             };
-
-            // the result will come from proxy eventually
             string key = "TestString";
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            string custom = "custom";
 
-            // this will widen append so proxies are not trustworthy anymore but proxy will replaced anyway
-            manager.AutoAppend = AutoAppendOptions.AppendFirstSpecificCulture;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            if (huRunic != null)
+            {
+                // the result will come from proxy eventually
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-            // this will merge multiple resources
-            manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures;
-            manager.ReleaseAllResources();
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                // this will widen append so proxies are not trustworthy anymore but proxy will replaced anyway
+                manager.AutoAppend = AutoAppendOptions.AppendFirstSpecificCulture;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-            // inserting explicitly into a base: it will not be retrieved via child, because they are not proxies
-            var custom = "custom";
+                // this will merge multiple resources
+                manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures;
+                manager.ReleaseAllResources();
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+                // inserting explicitly into a base: it will not be retrieved via child, because they are not proxies
+                manager.SetObject(key, custom, hu);
+                Assert.AreNotEqual(custom, manager.GetString(key, huRunicHULowland));
+                return;
+            }
+
+            // ---basic tests: no admin rights or not .NET Framework---
+
+            // the result will come from a new generated child
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+            // inserting explicitly into a base: it will not be retrieved via child, because it is not a proxy
             manager.SetObject(key, custom, hu);
-            Assert.AreNotEqual(custom, manager.GetString(key, huRunicHULowland));
+            Assert.AreNotEqual(custom, manager.GetString(key, huHU));
+
+#if !NETCOREAPP2_0
+            Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
+#endif
         }
 
         [Test]
@@ -372,43 +443,63 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
             string key = "TestString";
+            IExpandoResourceSet rsinv;
+
+            if (huRunic != null)
+            {
+                // retrieving spec with merge
+                rsinv = manager.GetExpandoResourceSet(inv);
+                IExpandoResourceSet rshuRunicHu = manager.GetExpandoResourceSet(huRunicHU, ResourceSetRetrieval.LoadIfExists, true); // this will not create a new rs
+                Assert.AreSame(rsinv, rshuRunicHu);
+                Assert.IsFalse(rshuRunicHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                rshuRunicHu = manager.GetExpandoResourceSet(huRunicHU, ResourceSetRetrieval.CreateIfNotExists, true); // but this will, and performs merge, too
+                Assert.AreNotSame(rsinv, rshuRunicHu);
+                Assert.IsTrue(rshuRunicHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+                // huRunicHU is proxied into huRunicHULowland, too.
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                Assert.AreSame(rshuRunicHu, manager.GetExpandoResourceSet(huRunicHULowland, ResourceSetRetrieval.GetIfAlreadyLoaded, false));
+
+                // now proxy of huRunicHULowland is replaced by a normal resource set
+                manager.AutoAppend = AutoAppendOptions.AppendFirstSpecificCulture | AutoAppendOptions.AppendOnLoad;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                Assert.AreNotSame(huRunicHU, manager.GetExpandoResourceSet(huRunicHULowland, ResourceSetRetrieval.GetIfAlreadyLoaded, false));
+
+                // now only huRunicHULowland is created (from inv), no proxies because it has no descendants
+                manager.ReleaseAllResources();
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                Assert.IsNull(manager.GetExpandoResourceSet(huRunicHU, ResourceSetRetrieval.GetIfAlreadyLoaded, false));
+
+                // now every specific is merged
+                manager.ReleaseAllResources();
+                manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures | AutoAppendOptions.AppendOnLoad;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+                rsinv = manager.GetExpandoResourceSet(inv);
+                rshuRunicHu = manager.GetExpandoResourceSet(huRunicHU);
+                var rshuRunicHULowland = manager.GetExpandoResourceSet(huRunicHULowland);
+                Assert.AreNotSame(rsinv, rshuRunicHu);
+                Assert.AreNotSame(rshuRunicHu, rshuRunicHULowland);
+                return;
+            }
+
+            // ---basic tests: no admin rights or not .NET Framework---
 
             // retrieving spec with merge
-            var rsinv = manager.GetExpandoResourceSet(inv);
-            var rshuRunicHu = manager.GetExpandoResourceSet(huRunicHU, ResourceSetRetrieval.LoadIfExists, true); // this will not create a new rs
-            Assert.AreSame(rsinv, rshuRunicHu);
-            Assert.IsFalse(rshuRunicHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
-            rshuRunicHu = manager.GetExpandoResourceSet(huRunicHU, ResourceSetRetrieval.CreateIfNotExists, true); // but this will, and performs merge, too
-            Assert.AreNotSame(rsinv, rshuRunicHu);
-            Assert.IsTrue(rshuRunicHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
-
-            // huRunicHU is proxied into huRunicHULowland, too.
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
-            Assert.AreSame(rshuRunicHu, manager.GetExpandoResourceSet(huRunicHULowland, ResourceSetRetrieval.GetIfAlreadyLoaded, false));
-
-            // now proxy of huRunicHULowland is replaced by a normal resource set
-            manager.AutoAppend = AutoAppendOptions.AppendFirstSpecificCulture | AutoAppendOptions.AppendOnLoad;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
-            Assert.AreNotSame(huRunicHU, manager.GetExpandoResourceSet(huRunicHULowland, ResourceSetRetrieval.GetIfAlreadyLoaded, false));
-
-            // now only huRunicHULowland is created (from inv), no proxies because it has no descendants
-            manager.ReleaseAllResources();
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
-            Assert.IsNull(manager.GetExpandoResourceSet(huRunicHU, ResourceSetRetrieval.GetIfAlreadyLoaded, false));
-
-            // now every specific is merged
-            manager.ReleaseAllResources();
-            manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures | AutoAppendOptions.AppendOnLoad;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
             rsinv = manager.GetExpandoResourceSet(inv);
-            rshuRunicHu = manager.GetExpandoResourceSet(huRunicHU);
-            var rshuRunicHULowland = manager.GetExpandoResourceSet(huRunicHULowland);
-            Assert.AreNotSame(rsinv, rshuRunicHu);
-            Assert.AreNotSame(rshuRunicHu, rshuRunicHULowland);
+            var rshuHu = manager.GetExpandoResourceSet(huHU, ResourceSetRetrieval.LoadIfExists, true); // this will not create a new rs
+            Assert.AreSame(rsinv, rshuHu);
+            Assert.IsFalse(rshuHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+            rshuHu = manager.GetExpandoResourceSet(huHU, ResourceSetRetrieval.CreateIfNotExists, true); // but this will, and performs merge, too
+            Assert.AreNotSame(rsinv, huHU);
+            Assert.IsTrue(rshuHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
+
+#if !NETCOREAPP2_0
+            Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
+#endif
         }
 
         [Test]
-        public void NonContinguousProxyTest()
+        public void NonContiguousProxyTest()
         {
             // now it is like HRM
             var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
@@ -416,71 +507,113 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.None
             };
-
-            // preparing the chain: inv (loaded), hu (proxy), hu-Runic (created), hu-Runic-HU (proxy), hu-Runic-HU-Lowland (created)
-            manager.GetExpandoResourceSet(huRunic, ResourceSetRetrieval.CreateIfNotExists);
-            manager.GetExpandoResourceSet(huRunicHULowland, ResourceSetRetrieval.CreateIfNotExists);
-            Assert.AreSame(manager.GetResourceSet(hu, true, true), manager.GetResourceSet(inv, false, false)); // now hu is proxy, inv is loaded
-            Assert.AreSame(manager.GetResourceSet(huRunicHU, true, true), manager.GetResourceSet(huRunic, true, true)); // now huRunicHU is proxy, huRunic is already loaded
-
-            var resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
-
             string key = "unknown";
+            Dictionary<string, ResourceSet> resourceSets;
+            string proxyName = "ProxyResourceSet";
+
+            if (huRunic != null)
+            {
+                // preparing the chain: inv (loaded), hu (proxy), hu-Runic (created), hu-Runic-HU (proxy), hu-Runic-HU-Lowland (created)
+                manager.GetExpandoResourceSet(huRunic, ResourceSetRetrieval.CreateIfNotExists);
+                manager.GetExpandoResourceSet(huRunicHULowland, ResourceSetRetrieval.CreateIfNotExists);
+                Assert.AreSame(manager.GetResourceSet(hu, true, true), manager.GetResourceSet(inv, false, false)); // now hu is proxy, inv is loaded
+                Assert.AreSame(manager.GetResourceSet(huRunicHU, true, true), manager.GetResourceSet(huRunic, true, true)); // now huRunicHU is proxy, huRunic is already loaded
+
+                resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // through HRM: does not change anything
+                Assert.IsNull(manager.GetString(key, huRunicHULowland));
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // through DRM but without merging (adding to invariant only): does not change anything, proxies remain intact
+                manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // huRunic is about to be merged, this already existed so proxies remain intact
+                manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // specifics are merged so result comes from huRunic, hu proxy remains, huRunicHU is replaced
+                manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // result is coming from the completely merged huRunicHULowland so nothing changes in the base
+                manager.AutoAppend = AutoAppendOptions.AppendNeutralCultures;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // even if the rs of the proxied hu is retrieved
+                manager.GetResourceSet(hu, true, true);
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // result is coming from the cached merged huRunicHULowland so nothing changes in the base even if AppendOnLoad is requested
+                manager.AutoAppend |= AutoAppendOptions.AppendOnLoad;
+                Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+
+                // even if the rs of the proxied hu is retrieved with Load only (EnsureMerged is executed but no create occurs so the proxied inv will be returned)
+                var rsinv = manager.GetResourceSet(hu, true, true);
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+                Assert.AreSame(manager.GetResourceSet(inv, false, false), rsinv);
+
+                // but for Create it is loaded and immediately merged, too
+                var rshu = manager.GetExpandoResourceSet(hu, ResourceSetRetrieval.CreateIfNotExists, true);
+                Assert.AreEqual(5, resourceSets.Count);
+                Assert.AreEqual(0, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
+                Assert.AreNotSame(rsinv, rshu);
+                Assert.IsTrue(rshu.ContainsResource(key));
+                return;
+            }
+
+            // ---basic tests: no admin rights or not .NET Framework---
+
+            // preparing the chain: inv (loaded), hu (proxy), hu-HU (created)
+            manager.GetExpandoResourceSet(huHU, ResourceSetRetrieval.CreateIfNotExists);
+            Assert.AreSame(manager.GetResourceSet(hu, true, true), manager.GetResourceSet(inv, false, false)); // now hu is proxy, inv is loaded
+
+            resourceSets = (Dictionary<string, ResourceSet>)Reflector.GetField(manager, "resourceSets");
+            Assert.AreEqual(3, resourceSets.Count);
+            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
             // through HRM: does not change anything
-            Assert.IsNull(manager.GetString(key, huRunicHULowland));
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
+            Assert.IsNull(manager.GetString(key, huHU));
+            Assert.AreEqual(3, resourceSets.Count);
+            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
-            // through DRM but without merging (adding to invariant only): does not change anything, proxies remain intact
+            // through DRM but without merging (adding to invariant only): does not change anything, the proxy remains intact
             manager.AutoAppend = AutoAppendOptions.AddUnknownToInvariantCulture;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.AreEqual(3, resourceSets.Count);
+            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
-            // huRunic is about to be merged, this already existed so proxies remain intact
-            manager.AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(2, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
-
-            // specifics are merged so result comes from huRunic, hu proxy remains, huRunicHU is replaced
+            // specific is merged, which is already exists no nothing changes
             manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.AreEqual(3, resourceSets.Count);
+            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
-            // result is coming from the completely merged huRunicHULowland so nothing changes in the base
+            // neutral is merged so it will be replaced now
             manager.AutoAppend = AutoAppendOptions.AppendNeutralCultures;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
+            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.AreEqual(3, resourceSets.Count);
+            Assert.AreEqual(0, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
-            // even if the rs of the proxied hu is retrieved
-            manager.GetResourceSet(hu, true, true);
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
-
-            // result is coming from the cached merged huRunicHULowland so nothing changes in the base even if AppendOnLoad is requested
-            manager.AutoAppend |= AutoAppendOptions.AppendOnLoad;
-            Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
-
-            // even if the rs of the proxied hu is retrieved with Load only (EnsureMerged is executed but no create occurs so the proxied inv will be returned)
-            var rsinv = manager.GetResourceSet(hu, true, true);
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
-            Assert.AreSame(manager.GetResourceSet(inv, false, false), rsinv);
-
-            // but for Create it is loaded and immediately merged, too
-            var rshu = manager.GetExpandoResourceSet(hu, ResourceSetRetrieval.CreateIfNotExists, true);
-            Assert.AreEqual(5, resourceSets.Count);
-            Assert.AreEqual(0, resourceSets.Count(kv => kv.Value.GetType().Name.Contains("Proxy")));
-            Assert.AreNotSame(rsinv, rshu);
-            Assert.IsTrue(rshu.ContainsResource(key));
+#if !NETCOREAPP2_0
+            Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
+#endif
         }
 
         [Test]
@@ -493,19 +626,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 AutoAppend = AutoAppendOptions.None,
             };
+            CultureInfo testCulture = hu;
 
-            // making sure that the resources, which will be created in the test later do not exist yet as a file
-            Assert.IsNull(manager.GetResourceSet(hu, true, false));
-            Assert.IsNull(manager.GetResourceSet(huHU, true, false));
-            Assert.IsNull(manager.GetResourceSet(huRunic, true, false));
-            Assert.IsNull(manager.GetResourceSet(huRunicHU, true, false));
-            Assert.IsNull(manager.GetResourceSet(huRunicHULowland, true, false));
-            Assert.IsNull(manager.GetResourceSet(enGB, true, false));
-            Assert.IsNull(manager.GetResourceSet(de, true, false));
-            Assert.IsNull(manager.GetResourceSet(deDE, true, false));
+            void Cleanup()
+            {
+                //foreach (CultureInfo culture in cultures)
+                File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{testCulture.Name}.resx"));
+            }
 
             // SourceChange, individual
-            CultureInfo testCulture = hu;
+            Cleanup();
             manager.Source = ResourceManagerSources.CompiledAndResX;
             manager.UseLanguageSettings = false;
             manager.AutoSave = AutoSaveOptions.SourceChange;
@@ -517,7 +647,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
             // SourceChange, central
-            testCulture = huHU;
+            Cleanup();
             manager.ReleaseAllResources();
             LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
             manager.UseLanguageSettings = true;
@@ -530,7 +660,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
             // LanguageChange, individual
-            testCulture = huRunic;
+            Cleanup();
             manager.ReleaseAllResources();
             manager.UseLanguageSettings = false;
             LanguageSettings.DisplayLanguage = testCulture;
@@ -543,7 +673,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
             // LanguageChange, central
-            testCulture = huRunicHU;
+            Cleanup();
             manager.ReleaseAllResources();
             manager.UseLanguageSettings = true;
             LanguageSettings.DisplayLanguage = testCulture;
@@ -555,13 +685,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
+#if !NETCOREAPP2_0
             // DomainUnload, individual
-            testCulture = huRunicHULowland;
+            Cleanup();
             manager.ReleaseAllResources();
             Evidence evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
             AppDomain sandboxDomain = AppDomain.CreateDomain("SandboxDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
             AssemblyName selfName = Assembly.GetExecutingAssembly().GetName();
-            sandboxDomain.Load(selfName);
+            sandboxDomain.Load(selfName); 
 
             RemoteDrmConsumer remote = (RemoteDrmConsumer)sandboxDomain.CreateInstanceAndUnwrap(selfName.FullName, typeof(RemoteDrmConsumer).FullName);
             remote.UseDrmRemotely(false, testCulture);
@@ -569,7 +700,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded that has been saved in another domain
 
             // DomainUnload, central
-            testCulture = enGB;
+            Cleanup();
             manager.ReleaseAllResources();
             evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
             sandboxDomain = AppDomain.CreateDomain("SandboxDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
@@ -580,9 +711,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             remote.UseDrmRemotely(true, testCulture);
             AppDomain.Unload(sandboxDomain);
             Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded that has been saved in another domain
+#endif
 
             // Dispose, individual
-            testCulture = de;
+            Cleanup();
             manager.UseLanguageSettings = false;
             manager.Source = ResourceManagerSources.CompiledAndResX;
             manager.UseLanguageSettings = false;
@@ -600,7 +732,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 UseLanguageSettings = true
             };
-            testCulture = deDE;
+            Cleanup();
 
             manager.SetObject(key, value, testCulture);
             LanguageSettings.DisplayLanguage = inv; // save occurs
@@ -608,8 +740,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
             Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), "TestResourceResX.de-DE.resx")));
 
-            // cleaning up the newly created resources
-            Clean(manager, hu, huHU, huRunic, huRunicHU, huRunicHULowland, enGB, de, deDE);
+            // final cleanup
+            Cleanup();
         }
 
         [Test]
@@ -671,12 +803,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         #endregion
 
         #region Private Methods
-
-        private void Clean(DynamicResourceManager manager, params CultureInfo[] cultures)
-        {
-            foreach (CultureInfo culture in cultures)
-                File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{culture.Name}.resx"));
-        }
 
         #endregion
 

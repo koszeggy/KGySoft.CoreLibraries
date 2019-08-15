@@ -35,6 +35,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     {
         #region Methods
 
+#if !NETCOREAPP2_0
         [Test]
         public void ParseData()
         {
@@ -55,7 +56,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(
                 refReader.Cast<object>().Count(), // cached
                 reader.Cast<object>().Count()); // duplication is off (not lazy now)
-        }
+        } 
+#endif
 
         [Test]
         public void TestEnumerators()
