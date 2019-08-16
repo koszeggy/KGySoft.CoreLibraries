@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -50,164 +51,25 @@ namespace KGySoft.CoreLibraries
     /// </code>
     /// </example>
     [Serializable]
-    public abstract class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>
+    public abstract class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>, ISerializable
     {
-        #region Nested classes
+        #region SerializationUnityHolder class
 
-        #region DynamicDelegateEnumComparer class
-
-        [Serializable]
-        private sealed class DynamicDelegateEnumComparer : EnumComparer<TEnum>, IObjectReference
+        /// <summary>
+        /// This class is needed in order not to serialize the generated type.
+        /// </summary>
+        private sealed class SerializationUnityHolder : IObjectReference
         {
-            #region Fields
-
-            private static Func<TEnum, TEnum, bool> equals;
-            private static Func<TEnum, int> getHashCode;
-            private static Func<TEnum, TEnum, int> compare;
-
-            #endregion
-
             #region Methods
 
-            #region Static Methods
-
-            private static Func<TEnum, TEnum, bool> GenerateEquals()
-            {
-                // Cannot use x == y because compiler says that operator "==" cannot applied between TEnum and TEnum.
-                // But in a generated code such equality check will not be a problem.
-
-                ParameterExpression xParameter = Expression.Parameter(typeof(TEnum), "x");
-                ParameterExpression yParameter = Expression.Parameter(typeof(TEnum), "y");
-                BinaryExpression equalExpression = Expression.Equal(xParameter, yParameter);
-
-                return Expression.Lambda<Func<TEnum, TEnum, bool>>(equalExpression, xParameter, yParameter).Compile();
-            }
-
-            private static Func<TEnum, int> GenerateGetHashCode()
-            {
-                // Original GetHashCode is extremely slow on enums because they retrieve internal value as object first.
-                // But casting self value to the underlying type and calling GetHashCode on that value returns the same hash code much more fast.
-
-                ParameterExpression objParameter = Expression.Parameter(typeof(TEnum), "obj");
-                Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
-                UnaryExpression enumCastToUnderlyingType = Expression.Convert(objParameter, underlyingType);
-                // ReSharper disable once AssignNullToNotNullAttribute - the constructor ensures TEnum has an underlying enum type
-                MethodCallExpression getHashCodeCall = Expression.Call(enumCastToUnderlyingType, underlyingType.GetMethod(nameof(Object.GetHashCode)));
-
-                return Expression.Lambda<Func<TEnum, int>>(getHashCodeCall, objParameter).Compile();
-            }
-
-            private static Func<TEnum, TEnum, int> GenerateCompare()
-            {
-                // Original Enum implements only non-generic IComparable with an extremely slow CompareTo
-                // This implementation calls CompareTo on underlying type: x.CompareTo(y)
-
-                Type underlyingType = Enum.GetUnderlyingType(typeof(TEnum));
-                ParameterExpression xParameter = Expression.Parameter(typeof(TEnum), "x");
-                ParameterExpression yParameter = Expression.Parameter(typeof(TEnum), "y");
-                UnaryExpression xAsUnderlyingType = Expression.Convert(xParameter, underlyingType);
-                UnaryExpression yAsUnderlyingType = Expression.Convert(yParameter, underlyingType);
-                // ReSharper disable once AssignNullToNotNullAttribute - the constructor ensures TEnum has is a real enum with a comparable underlying type
-                MethodCallExpression compareToCall = Expression.Call(xAsUnderlyingType, underlyingType.GetMethod(nameof(IComparable<_>.CompareTo), new Type[] { underlyingType }), yAsUnderlyingType);
-
-                return Expression.Lambda<Func<TEnum, TEnum, int>>(compareToCall, xParameter, yParameter).Compile();
-            }
-
-            #endregion
-
-            #region Instance Methods
-
-            public override bool Equals(TEnum x, TEnum y)
-            {
-                if (equals == null)
-                    Interlocked.CompareExchange(ref equals, GenerateEquals(), null);
-                return equals.Invoke(x, y);
-            }
-
-            public override int GetHashCode(TEnum obj)
-            {
-                if (getHashCode == null)
-                    Interlocked.CompareExchange(ref getHashCode, GenerateGetHashCode(), null);
-                return getHashCode.Invoke(obj);
-            }
-
-            public override int Compare(TEnum x, TEnum y)
-            {
-                if (compare == null)
-                    Interlocked.CompareExchange(ref compare, GenerateCompare(), null);
-                return compare.Invoke(x, y);
-            }
-
-            [SecurityCritical]
-            public object GetRealObject(StreamingContext context) => Comparer;
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region RecompiledEnumComparer class
-
-#if NETFRAMEWORK
-        [Serializable]
-        private sealed class RecompiledEnumComparer : EnumComparer<TEnum>, IObjectReference
-        {
-            #region Fields
-
-            [SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields", Justification = "Usage generated by RecompILer in Release build")]
-            private static readonly bool isUnsignedCompare = Enum.GetUnderlyingType(typeof(TEnum)) == Reflector.ULongType;
-
-            #endregion
-
-            #region Methods
-
-            public override bool Equals(TEnum x, TEnum y)
-            {
-                // In Release build the content of this method is replaced to the next code by RecompILer:
-                // return x == y;
-                // Allowed to be used in fully trusted domain only; otherwise, a VerificationException will be thrown at JIT time: Operation could destabilize the runtime.
-                return x.Equals(y);
-            }
-
-            public override int GetHashCode(TEnum obj)
-            {
-                // In Release build the content of this method is replaced to the next code by RecompILer:
-                // return ((int)obj).GetHashCode();
-                // Allowed to be used in fully trusted domain only; otherwise, a VerificationException will be thrown at JIT time: Operation could destabilize the runtime.
-                return obj.GetHashCode();
-            }
-
-            public override int Compare(TEnum x, TEnum y)
-            {
-                // In Release build the content of this method is replaced to the next code by RecompILer:
-                // return isUnsignedCompare ? ((ulong)x).CompareTo((ulong)y) : ((long)x).CompareTo((long)y);
-                // Allowed to be used in fully trusted domain only; otherwise, a VerificationException will be thrown at JIT time: Operation could destabilize the runtime.
-                return ((IComparable)x).CompareTo(y);
-            }
-
-            [SecurityCritical]
             public object GetRealObject(StreamingContext context) => Comparer;
 
             #endregion
         }
-#endif
-
-        #endregion
 
         #endregion
 
         #region Fields
-
-#if NETFRAMEWORK
-        private static readonly bool isFullyTrusted =
-#if NET35
-            true; // even if not, the FullyTrustedEnumComparer can be used in .NET 3.5
-#else
-            AppDomain.CurrentDomain.IsFullyTrusted;
-#endif  
-#endif
 
         private static EnumComparer<TEnum> comparer;
 
@@ -218,11 +80,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the comparer instance for <typeparamref name="TEnum"/> type.
         /// </summary>
-        public static EnumComparer<TEnum> Comparer => comparer ?? (comparer =
-#if NETFRAMEWORK
-                    isFullyTrusted ? (EnumComparer<TEnum>)new RecompiledEnumComparer() : 
-#endif
-                new DynamicDelegateEnumComparer());
+        public static EnumComparer<TEnum> Comparer => comparer ?? (comparer = EnumComparerBuilder.GetComparer<TEnum>());
 
         #endregion
 
@@ -242,6 +100,8 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
+        #region Public Methods
+
         /// <summary>
         /// Determines whether the specified <paramref name="obj"/> is the same type of <see cref="EnumComparer{TEnum}"/> as the current instance.
         /// </summary>
@@ -253,13 +113,9 @@ namespace KGySoft.CoreLibraries
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>
-        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+        /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
         public override int GetHashCode() => typeof(EnumComparer<TEnum>).GetHashCode();
-
-        #endregion
-
-        #region IEqualityComparer<TEnum> Members
 
         /// <summary>
         /// Determines whether two <typeparamref name="TEnum"/> instances are equal.
@@ -281,10 +137,6 @@ namespace KGySoft.CoreLibraries
         /// <remarks>Returned hash code is not necessarily equals with own hash code of an <see langword="enum"/>&#160;value but provides a fast and well-spread value.</remarks>
         public abstract int GetHashCode(TEnum obj);
 
-        #endregion
-
-        #region IComparer<TEnum> Members
-
         /// <summary>
         /// Compares two <typeparamref name="TEnum"/> instances and returns a value indicating whether one is less than, equal to, or greater than the other.
         /// </summary>
@@ -299,6 +151,14 @@ namespace KGySoft.CoreLibraries
         /// <param name="x">The first <typeparamref name="TEnum"/> instance to compare.</param>
         /// <param name="y">The second <typeparamref name="TEnum"/> instance to compare.</param>
         public abstract int Compare(TEnum x, TEnum y);
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.SetType(typeof(SerializationUnityHolder));
+
+        #endregion
 
         #endregion
     }
