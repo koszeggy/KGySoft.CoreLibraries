@@ -34,7 +34,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static readonly IEqualityComparer<T> comparer = typeof(T).IsEnum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+        private static readonly IEqualityComparer<T> comparer = ComparerHelper<T>.EqualityComparer;
 
         #endregion
 

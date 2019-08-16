@@ -102,7 +102,7 @@ namespace KGySoft.CoreLibraries
             if (set == null || (length = set.Length) == 0)
                 return false;
 
-            var comparer = item is Enum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+            var comparer = ComparerHelper<T>.EqualityComparer;
             for (int i = 0; i < length; i++)
             {
                 if (comparer.Equals(item, set[i]))
@@ -131,7 +131,7 @@ namespace KGySoft.CoreLibraries
             if (set == null || (length = set.Length) == 0)
                 return false;
 
-            var comparer = item is Enum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+            var comparer = ComparerHelper<T>.EqualityComparer;
             for (int i = 0; i < length; i++)
             {
                 Func<T> func = set[i];

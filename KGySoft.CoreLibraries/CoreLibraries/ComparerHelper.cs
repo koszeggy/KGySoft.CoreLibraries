@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: EqualityComparer.cs
+//  File: ComparerHelper.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -41,19 +41,19 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         internal static IEqualityComparer<T> EqualityComparer => equalityComparer ?? (equalityComparer =
-#if NET35
+#if NET35 // Choosing always EnumComparer for enums
             typeof(T).IsEnum ? EnumComparer<T>.Comparer :
-#elif NET40 || NET45
+#elif NET40 || NET45 // In Framework 4.0 and above int-based enums are optimized so choosing EnumComparer for non-int enums only
             typeof(T).IsEnum && Enum.GetUnderlyingType(typeof(T)) != Reflector.IntType ? EnumComparer<T>.Comparer :
-#elif !NETCOREAPP2_0
+#elif !NETCOREAPP2_0 // In .NET Core the default comparer is optimized for all enum types. EnumComparer.Equals is usually still better but GetHashCode is slower.
 #error .NET version is not set or not supported! - check EnumComparer performance in new framework
 #endif
             (IEqualityComparer<T>)EqualityComparer<T>.Default);
 
         internal static IComparer<T> Comparer => comparer ?? (comparer =
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETCOREAPP2_0 // Choosing EnumComparer for enums in all supported frameworks.
             typeof(T).IsEnum ? EnumComparer<T>.Comparer :
-#elif !NETCOREAPP2_0
+#else
 #error .NET version is not set or not supported! - check EnumComparer performance in new framework
 #endif
             (IComparer<T>)Comparer<T>.Default);

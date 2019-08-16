@@ -1446,7 +1446,7 @@ namespace KGySoft.CoreLibraries
                 case IList list:
                     return list.IndexOf(element);
                 default:
-                    var comparer = element is Enum ? (IEqualityComparer<T>)EnumComparer<T>.Comparer : EqualityComparer<T>.Default;
+                    var comparer = ComparerHelper<T>.EqualityComparer;
                     var index = 0;
                     foreach (T item in source)
                     {
