@@ -134,10 +134,10 @@ namespace KGySoft.CoreLibraries
 #elif NET40 || NET45
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 4.x");
-#elif NETFRAMEWORK
-#error unknown .NET version
+#elif NETCOREAPP
+            Console.WriteLine($"Tests executed on .NET Core version {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))}");
 #else
-            Console.WriteLine($"Tests executed on framework version {typeof(object).Assembly.GetName().Version}");
+#error unknown .NET version
 #endif
         }
 

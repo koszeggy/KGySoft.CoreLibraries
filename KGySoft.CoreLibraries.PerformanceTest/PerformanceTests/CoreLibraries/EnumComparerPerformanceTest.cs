@@ -30,33 +30,56 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     {
         #region Enumerations
 
-        private enum TestEnum : long
+        private enum ByteEnum : byte
+        {
+            Min = Byte.MinValue,
+            Max = Byte.MaxValue,
+        }
+
+        private enum IntEnum : int
+        {
+            Min = Int32.MinValue,
+            Max = Int32.MaxValue,
+        }
+
+        private enum LongEnum : long
         {
             Min = Int64.MinValue,
             Max = Int64.MaxValue,
         }
 
+        private enum ULongEnum : ulong
+        {
+            Min = UInt64.MinValue,
+            Max = UInt64.MaxValue,
+        }
+
+
         #endregion
 
         #region Methods
 
-        [Test]
-        public void EnumComparerTest() => new PerformanceTest { TestName = "EnumComparer Test", Iterations = 10000000 }
-//#pragma warning disable 219
-//            .AddCase(() => { bool eq = TestEnum.Min == TestEnum.Max; }, "Operator ==")
-//            .AddCase(() => { bool gt = TestEnum.Min > TestEnum.Max; }, "Operator >")
-//#pragma warning restore 219
-            .AddCase(() => TestEnum.Min.Equals(TestEnum.Max), "Enum.Equals(object)")
-            .AddCase(() => TestEnum.Min.GetHashCode(), "Enum.GetHashCode()")
-            .AddCase(() => TestEnum.Min.CompareTo(TestEnum.Max), "Enum.CompareTo(object)")
-            .AddCase(() => EqualityComparer<TestEnum>.Default.Equals(TestEnum.Min, TestEnum.Max), "EqualityComparer<T>.Default.Equals(T,T)")
-            .AddCase(() => EqualityComparer<TestEnum>.Default.GetHashCode(TestEnum.Min), "EqualityComparer<T>.Default.GetHashCode(T)")
-            .AddCase(() => Comparer<TestEnum>.Default.Compare(TestEnum.Min, TestEnum.Max), "Comparer<T>.Default.Compare(T,T)")
-            .AddCase(() => EnumComparer<TestEnum>.Comparer.Equals(TestEnum.Min, TestEnum.Max), "EnumComparer<TEnum>.Comparer.Equals(TEnum,TEnum)")
-            .AddCase(() => EnumComparer<TestEnum>.Comparer.GetHashCode(TestEnum.Min), "EnumComparer<TEnum>.Comparer.GetHashCode(TEnum)")
-            .AddCase(() => EnumComparer<TestEnum>.Comparer.Compare(TestEnum.Min, TestEnum.Max), "EnumComparer<TEnum>.Comparer.Compare(TEnum,TEnum)")
-            .DoTest()
-            .DumpResults(Console.Out);
+        [TestCase(ByteEnum.Min, ByteEnum.Max)]
+        [TestCase(IntEnum.Min, IntEnum.Max)]
+        [TestCase(LongEnum.Min, LongEnum.Max)]
+        [TestCase(ULongEnum.Min, ULongEnum.Max)]
+        public void EnumComparerTest<TEnum>(TEnum min, TEnum max) where TEnum : Enum =>
+            new PerformanceTest { TestName = $"EnumComparer<{typeof(TEnum).Name}> Test", Iterations = 10000000 }
+                //#pragma warning disable 219
+                //            .AddCase(() => { bool eq = TestEnum.Min == TestEnum.Max; }, "Operator ==")
+                //            .AddCase(() => { bool gt = TestEnum.Min > TestEnum.Max; }, "Operator >")
+                //#pragma warning restore 219
+                .AddCase(() => min.Equals(max), "Enum.Equals(object)")
+                .AddCase(() => min.GetHashCode(), "Enum.GetHashCode()")
+                .AddCase(() => min.CompareTo(max), "Enum.CompareTo(object)")
+                .AddCase(() => EqualityComparer<TEnum>.Default.Equals(min, max), "EqualityComparer<T>.Default.Equals(T,T)")
+                .AddCase(() => EqualityComparer<TEnum>.Default.GetHashCode(min), "EqualityComparer<T>.Default.GetHashCode(T)")
+                .AddCase(() => Comparer<TEnum>.Default.Compare(min, max), "Comparer<T>.Default.Compare(T,T)")
+                .AddCase(() => EnumComparer<TEnum>.Comparer.Equals(min, max), "EnumComparer<TEnum>.Comparer.Equals(TEnum,TEnum)")
+                .AddCase(() => EnumComparer<TEnum>.Comparer.GetHashCode(min), "EnumComparer<TEnum>.Comparer.GetHashCode(TEnum)")
+                .AddCase(() => EnumComparer<TEnum>.Comparer.Compare(min, max), "EnumComparer<TEnum>.Comparer.Compare(TEnum,TEnum)")
+                .DoTest()
+                .DumpResults(Console.Out);
 
         #endregion
     }

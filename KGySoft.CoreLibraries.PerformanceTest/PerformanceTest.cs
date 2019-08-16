@@ -16,8 +16,15 @@
 
 #region Usings
 
-using System;
-
+#if NETFRAMEWORK
+using System; 
+#endif
+#if NETCOREAPP
+using System.IO; 
+#endif
+#if !(NETFRAMEWORK || NETCOREAPP)
+using System.Runtime.InteropServices; 
+#endif
 using NUnit.Framework;
 
 #endregion
@@ -26,6 +33,33 @@ namespace KGySoft.CoreLibraries
 {
     internal class PerformanceTest : KGySoft.Diagnostics.PerformanceTest
     {
+        #region Properties
+
+        #region Static Properties
+
+        internal static string FrameworkVersion =>
+#if NETFRAMEWORK
+            $".NET Framework Runtime {typeof(object).Assembly.ImageRuntimeVersion}";
+#elif NETCOREAPP
+            $".NET Core {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))}";
+#else
+            $"{RuntimeInformation.FrameworkDescription})";
+#endif
+
+        #endregion
+
+        #region Instance Properties
+
+        public new string TestName
+        {
+            get => base.TestName;
+            set => base.TestName = $"{value} ({FrameworkVersion})";
+        }
+
+        #endregion
+
+        #endregion
+
         #region Methods
 
         #region Static Methods
@@ -63,6 +97,16 @@ namespace KGySoft.CoreLibraries
 
     internal class PerformanceTest<TResult> : KGySoft.Diagnostics.PerformanceTest<TResult>
     {
+        #region Properties
+
+        public new string TestName
+        {
+            get => base.TestName;
+            set => base.TestName = $"{value} ({PerformanceTest.FrameworkVersion})";
+        }
+
+        #endregion
+
         #region Methods
 
         protected override void OnInitialize()

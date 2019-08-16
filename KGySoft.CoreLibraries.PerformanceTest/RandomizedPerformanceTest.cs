@@ -36,6 +36,12 @@ namespace KGySoft.CoreLibraries
 
         public int Seed { get; set; }
 
+        public new string TestName
+        {
+            get => base.TestName;
+            set => base.TestName = $"{value} ({PerformanceTest.FrameworkVersion})";
+        }
+
         #endregion
 
         #region Methods
@@ -72,6 +78,12 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         public int Seed { get; set; }
+
+        public new string TestName
+        {
+            get => base.TestName;
+            set => base.TestName = $"{value} ({PerformanceTest.FrameworkVersion})";
+        }
 
         #endregion
 

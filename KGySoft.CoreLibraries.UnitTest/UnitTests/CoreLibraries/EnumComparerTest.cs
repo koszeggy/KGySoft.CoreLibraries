@@ -18,7 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Diagnostics;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Security;
+using System.Security.Permissions;
+using KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions;
 using NUnit.Framework;
 
 #endregion
@@ -26,8 +31,10 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 {
     [TestFixture]
-    public class EnumComparerTest
+    public class EnumComparerTest : TestBase
     {
+        #region Nested Types
+        
         #region Enumerations
 
         private enum TestLongEnum : long
@@ -45,10 +52,23 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 
         #endregion
 
+        #region Sandbox class
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void TestEnumComparer() => new EnumComparerTest().TestEnumComparer();
+        }
+#endif
+
+        #endregion
+
+        #endregion
+
         #region Methods
 
         [Test]
-        public void EnumComparer()
+        public void TestEnumComparer()
         {
             var c1 = EnumComparer<EmptyEnum>.Comparer;
             c1.Compare((EmptyEnum)(-1), (EmptyEnum)1);
@@ -87,6 +107,26 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e3.Equals(v3[1], v3[1]), c3.Equals(v3[1], v3[1]));
             Assert.AreNotEqual(c3.GetHashCode(v3[0]), c3.GetHashCode(v3[1]));
         }
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void TestEnumComparer_PartiallyTrusted()
+        {
+            var domain = CreateSandboxDomain(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.TestEnumComparer();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }
