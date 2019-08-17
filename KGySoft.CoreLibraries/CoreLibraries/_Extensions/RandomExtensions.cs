@@ -1059,7 +1059,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A random <typeparamref name="TEnum"/> value or the default value of <typeparamref name="TEnum"/> if it has no defined values.</returns>
         public static TEnum NextEnum<TEnum>(this Random random)
 #pragma warning restore CS3024 // Constraint type is not CLS-compliant
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             if (random == null)
                 throw new ArgumentNullException(nameof(random), Res.ArgumentNull);

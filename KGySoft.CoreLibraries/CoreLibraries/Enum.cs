@@ -32,27 +32,23 @@ using KGySoft.Reflection;
 
 namespace KGySoft.CoreLibraries
 {
-#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible is replaced to System.Enum by RecompILer
+#pragma warning disable CS3024 // Constraint type is not CLS-compliant - IConvertible (needed because Enum implements it explicitly)
     /// <summary>
     /// Generic helper class for the <see cref="Enum"/> class.
-    /// Provides faster solutions for already existing functionalities in the <see cref="Enum"/> class along with
-    /// some additional functionality.
+    /// Provides faster solutions for already existing functionality in the <see cref="Enum"/> class along with
+    /// some additional features.
     /// </summary>
     /// <typeparam name="TEnum">The type of the enumeration. Must be an <see cref="Enum"/> type.</typeparam>
     [SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "It is not a suffix but the name of the type")]
     [SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Enum", Justification = "Naming it Enum is intended")]
-    public static class Enum<TEnum> where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+    public static class Enum<TEnum> where TEnum : struct, Enum, IConvertible
 #pragma warning restore CS3024 // Constraint type is not CLS-compliant
     {
         #region Fields
 
-        // ReSharper disable StaticMemberInGenericType - values are specific for TEnum
-        private static readonly Type enumType =
-#if DEBUG
-            !typeof(TEnum).IsEnum ? throw new InvalidOperationException(Res.EnumTypeParameterInvalid) : // CA1065: in Release TEnum is constrainted well; otherwise, this is needed
-#endif
-                typeof(TEnum);
+        private static readonly Type enumType = typeof(TEnum);
 
+        // ReSharper disable StaticMemberInGenericType - values are specific for TEnum
         private static readonly TypeCode typeCode = Type.GetTypeCode(Enum.GetUnderlyingType(enumType));
         private static readonly bool isFlags = enumType.IsFlagsEnum();
         private static readonly bool isSigned = typeCode.In(TypeCode.SByte, TypeCode.Int16, TypeCode.Int32, TypeCode.Int64);

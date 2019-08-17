@@ -181,25 +181,25 @@ namespace KGySoft
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
         /// <returns>A localized string similar to <c>Enum instance of '{0}' type must be one of the following values: {1}.</c></returns>
-        public static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Res.EnumOutOfRangeWithValues(value);
+        public static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Res.EnumOutOfRangeWithValues(value);
 
         /// <summary>Looks up a localized string similar to <c>Enum instance of '{0}' type must consist of the following flags: {1}.</c></summary>
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
         /// <returns>A localized string similar to <c>Enum instance of '{0}' type must consist of the following flags: {1}.</c></returns>
-        public static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Res.FlagsEnumOutOfRangeWithValues(value);
+        public static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Res.FlagsEnumOutOfRangeWithValues(value);
 
         /// <summary>Looks up a localized string similar to <c>Enum instance of '{0}' type must be one of the defined values.</c></summary>
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
         /// <returns>A localized string similar to <c>Enum instance of '{0}' type must be one of the defined values.</c></returns>
-        public static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Res.EnumOutOfRange(value);
+        public static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Res.EnumOutOfRange(value);
 
         /// <summary>Looks up a localized string similar to <c>Enum instance of '{0}' type must consist of the defined flags.</c></summary>
         /// <typeparam name="TEnum">Type of the value.</typeparam>
         /// <param name="value">The enum value.</param>
         /// <returns>A localized string similar to <c>Enum instance of '{0}' type must consist of the defined flags.</c></returns>
-        public static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Res.FlagsEnumOutOfRange(value);
+        public static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Res.FlagsEnumOutOfRange(value);
 #pragma warning restore CS3024 // Constraint type is not CLS-compliant
 
         /// <summary>Looks up a localized string similar to <c>Specified argument is expected to be an instance of type {0}.</c></summary>

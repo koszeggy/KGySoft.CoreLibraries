@@ -36,6 +36,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             Max = Byte.MaxValue,
         }
 
+        private enum SByteEnum : sbyte
+        {
+            Min = SByte.MinValue,
+            Max = SByte.MaxValue,
+        }
+
         private enum IntEnum : int
         {
             Min = Int32.MinValue,
@@ -54,12 +60,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             Max = UInt64.MaxValue,
         }
 
-
         #endregion
 
         #region Methods
 
         [TestCase(ByteEnum.Min, ByteEnum.Max)]
+        [TestCase(SByteEnum.Min, SByteEnum.Max)]
         [TestCase(IntEnum.Min, IntEnum.Max)]
         [TestCase(LongEnum.Min, LongEnum.Max)]
         [TestCase(ULongEnum.Min, ULongEnum.Max)]

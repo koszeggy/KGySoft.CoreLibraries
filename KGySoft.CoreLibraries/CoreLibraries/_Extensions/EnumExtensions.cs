@@ -54,7 +54,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Invalid <paramref name="format"/>.</exception>
         public static string ToString<TEnum>(this TEnum value, EnumFormattingOptions format = EnumFormattingOptions.Auto, string separator = DefaultFormatSeparator)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.ToString(value, format, separator);
         }
@@ -67,7 +67,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="separator">Separator in case of flags formatting. If <see langword="null"/>&#160;or is empty, then comma-space (", ") separator is used.</param>
         /// <returns>The string representation of <paramref name="value"/>.</returns>
         public static string ToString<TEnum>(this TEnum value, string separator)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.ToString(value, EnumFormattingOptions.Auto, separator);
         }
@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The enum value whose name is required.</param>
         /// <returns>A string containing the name of the enumerated <paramref name="value"/>, or <see langword="null"/>&#160;if no such constant is found.</returns>
         public static string GetName<TEnum>(this TEnum value)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.GetName(value);
         }
@@ -91,7 +91,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <returns><see langword="true"/>&#160;if <typeparamref name="TEnum"/> has a defined field that equals <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsDefined<TEnum>(this TEnum value)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.IsDefined(value);
         }
@@ -106,7 +106,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="flags"/> is a zero value and zero is defined,
         /// or if <paramref name="flags"/> is nonzero and its every bit has a defined name.</returns>
         public static bool AllFlagsDefined<TEnum>(this TEnum flags)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.AllFlagsDefined(flags);
         }
@@ -124,7 +124,7 @@ namespace KGySoft.CoreLibraries
         /// <note>Always specify the <typeparamref name="TEnum"/> generic argument when use this method; otherwise, in .NET 4.0 and above the less performant <see cref="Enum.HasFlag"/> method will be used.</note>
         /// </remarks>
         public static bool HasFlag<TEnum>(this TEnum value, TEnum flags)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.HasFlag(value, flags);
         }
@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">The value to check.</param>
         /// <returns><see langword="true"/>, if only a single bit is set in <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
         public static bool IsSingleFlag<TEnum>(this TEnum value)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.IsSingleFlag(value);
         }
@@ -155,7 +155,7 @@ namespace KGySoft.CoreLibraries
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<TEnum> GetFlags<TEnum>(this TEnum flags, bool onlyDefinedValues)
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             return Enum<TEnum>.GetFlags(flags, onlyDefinedValues);
         }

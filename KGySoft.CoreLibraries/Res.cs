@@ -460,16 +460,16 @@ namespace KGySoft
         internal static string ArgumentMustBeBetween<T>(T low, T high) => Get("General_ArgumentMustBeBetweenFormat", low, high);
 
         /// <summary>Enum instance of '{0}' type must be one of the following values: {1}.</summary>
-        internal static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumValues<TEnum>());
+        internal static string EnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_EnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumValues<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must consist of the following flags: {1}.</summary>
-        internal static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
+        internal static string FlagsEnumOutOfRangeWithValues<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_FlagsEnumOutOfRangeWithValuesFormat", value.GetType().Name, FormatEnumFlags<TEnum>());
 
         /// <summary>Enum instance of '{0}' type must be one of the defined values.</summary>
-        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
+        internal static string EnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Get("General_EnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Enum instance of '{0}' type must consist of the defined flags.</summary>
-        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, IConvertible => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
+        internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : Enum => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
@@ -953,14 +953,14 @@ namespace KGySoft
             return args == null ? format : SafeFormat(format, args);
         }
 
-        private static string FormatEnumValues<TEnum>() where TEnum : struct, IConvertible
+        private static string FormatEnumValues<TEnum>() where TEnum : struct, Enum
             => String.Join(", ", Enum<TEnum>.GetNames().Select(v => QuoteStart + v + QuoteEnd)
 #if NET35
                     .ToArray()
 #endif
             );
 
-        private static string FormatEnumFlags<TEnum>() where TEnum : struct, IConvertible
+        private static string FormatEnumFlags<TEnum>() where TEnum : struct, Enum
             => String.Join(", ", Enum<TEnum>.GetFlags().Select(f => QuoteStart + f + QuoteEnd)
 #if NET35
                     .ToArray()

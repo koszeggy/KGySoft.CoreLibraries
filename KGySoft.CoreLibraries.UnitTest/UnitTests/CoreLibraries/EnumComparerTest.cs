@@ -21,9 +21,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Permissions;
 using KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions;
+using KGySoft.Reflection;
 using NUnit.Framework;
 
 #endregion
@@ -57,7 +59,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 #if NETFRAMEWORK
         private class Sandbox : MarshalByRefObject
         {
-            internal void TestEnumComparer() => new EnumComparerTest().TestEnumComparer();
+            internal void TestEnumComparer()
+            {
+#if !NET35
+                Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted); 
+#endif
+                new EnumComparerTest().TestEnumComparer();
+            }
         }
 #endif
 
@@ -106,6 +114,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(e3.Equals(v3[0], v3[1]), c3.Equals(v3[0], v3[1]));
             Assert.AreEqual(e3.Equals(v3[1], v3[1]), c3.Equals(v3[1], v3[1]));
             Assert.AreNotEqual(c3.GetHashCode(v3[0]), c3.GetHashCode(v3[1]));
+
+            var clone = c1.DeepClone();
+            Assert.AreSame(c1, clone);
         }
 
 #if NETFRAMEWORK

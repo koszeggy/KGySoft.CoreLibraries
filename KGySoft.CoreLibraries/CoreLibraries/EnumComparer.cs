@@ -18,14 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 using System.Runtime.Serialization;
-using System.Security;
-using System.Threading;
-
+using System.Security; 
 using KGySoft.Collections;
-using KGySoft.Reflection;
 
 #endregion
 
@@ -40,9 +35,23 @@ namespace KGySoft.CoreLibraries
     /// <remarks>
     /// Using dictionaries with <see langword="enum"/>&#160;key and finding elements in an <see langword="enum"/>&#160;array works without using <see cref="EnumComparer{TEnum}"/>, too.
     /// But unlike <see cref="int"/> or the other possible underlying types, <see langword="enum"/>&#160;types does not implement the generic <see cref="IEquatable{T}"/> and
-    /// <see cref="IComparable{T}"/> interfaces. This causes that using an <see langword="enum"/>&#160;as key in a dictionary, for example, will be very ineffective due to heavy boxing and unboxing to and from
-    /// <see cref="object"/> type. This comparer generates the type specific <see cref="IEqualityComparer{T}.Equals(T,T)"><![CDATA[IEqualityComparer<TEnum>.Equals]]></see>,
+    /// <see cref="IComparable{T}"/> interfaces. This causes that using an <see langword="enum"/>&#160;as key in a dictionary, for example, can be very ineffective (depends on the used framework, see the note below)
+    /// due to heavy boxing and unboxing to and from <see cref="object"/> type. This comparer generates the type specific <see cref="IEqualityComparer{T}.Equals(T,T)"><![CDATA[IEqualityComparer<TEnum>.Equals]]></see>,
     /// <see cref="IEqualityComparer{T}.GetHashCode(T)"><![CDATA[IEqualityComparer<T>.GetHashCode]]></see> and <see cref="IComparer{T}.Compare"><![CDATA[IComparer<T>.Compare]]></see> methods for any <see langword="enum"/>&#160;type.
+    /// <note>
+    /// The optimization of <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> instances for <see langword="enum"/>&#160;types may differ in different target frameworks.
+    /// <list type="bullet">
+    /// <item>In .NET Framework 3.5 and earlier versions they are not optimized at all.</item>
+    /// <item>In .NET 4.0 Framework <see cref="EqualityComparer{T}"/> was optimized for <see cref="int"/>-based <see langword="enum"/>s. (Every .NET 4.0 assembly is executed on the latest 4.x runtime though, so this is might be relevant
+    /// only on Windows XP where no newer than the 4.0 runtime can be installed.)</item>
+    /// <item>In latest .NET 4.x Framework versions <see cref="EqualityComparer{T}"/> is optimized for any <see langword="enum"/>&#160;type but <see cref="Comparer{T}"/> is not.</item>
+    /// <item>In .NET Core both <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> are optimized for any <see langword="enum"/>&#160;types. In fact, <see cref="Compare"><![CDATA[EnumComparer<T>.Compare]]></see>
+    /// and <see cref="Equals(TEnum,TEnum)"><![CDATA[EnumComparer<T>.Equals]]></see> are still slightly faster than <see cref="Comparer{T}.Compare"><![CDATA[Comparer<T>.Compare]]></see>
+    /// and <see cref="EqualityComparer{T}.Equals(T,T)"><![CDATA[EqualityComparer<T>.Equals]]></see> methods, while <see cref="GetHashCode(TEnum)"><![CDATA[EnumComparer<T>.GetHashCode]]></see> is slightly slower than
+    /// <see cref="EqualityComparer{T}.GetHashCode(T)"><![CDATA[EqualityComparer<T>.GetHashCode]]></see>. (A <see cref="Dictionary{TKey,TValue}"/> uses exactly one <see cref="IEqualityComparer{T}.GetHashCode(T)">GetHashCode</see> and
+    /// at least one <see cref="IEqualityComparer{T}.Equals(T,T)">Equals</see> call for each lookup, for example).</item>
+    /// </list>
+    /// </note>
     /// </remarks>
     /// <example>
     /// Example for initializing of a <see cref="Dictionary{TKey,TValue}"/> with <see cref="EnumComparer{TEnum}"/>:
@@ -62,6 +71,7 @@ namespace KGySoft.CoreLibraries
         {
             #region Methods
 
+            [SecurityCritical] 
             public object GetRealObject(StreamingContext context) => Comparer;
 
             #endregion
@@ -156,6 +166,7 @@ namespace KGySoft.CoreLibraries
 
         #region Explicitly Implemented Interface Methods
 
+        [SecurityCritical] 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.SetType(typeof(SerializationUnityHolder));
 
         #endregion

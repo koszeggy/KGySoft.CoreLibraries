@@ -187,7 +187,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>A non-<see langword="null"/>&#160;value if the conversion was successful; otherwise, <see langword="null"/>.</returns>
         public static TEnum? ToEnum<TEnum>(this string s, bool definedOnly = false)
 #pragma warning restore CS3024 // Constraint type is not CLS-compliant
-            where TEnum : struct, IConvertible // replaced to System.Enum by RecompILer
+            where TEnum : struct, Enum
         {
             if (s == null)
                 return null;

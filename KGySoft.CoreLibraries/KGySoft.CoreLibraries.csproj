@@ -27,8 +27,4 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <!--<Target Condition="$(Configuration)=='Release'" Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="if exist $(ProjectDir)..\__RecompILer\bin\$(Configuration)\$(TargetFramework)\RecompILer.exe $(ProjectDir)..\__RecompILer\bin\$(Configuration)\$(TargetFramework)\RecompILer $(TargetFramework) $(ProjectDir)\bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).dll ..\KGySoft.snk" />
-  </Target>-->
-
 </Project>

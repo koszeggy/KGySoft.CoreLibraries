@@ -30,7 +30,7 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// A class, which can generate an <see cref="EnumComparer{TEnum}"/> implementation.
-    /// <br/>This class is a replacement of the old RecompILer logic an can be used also for .NET Core/Standard and partially trusted domains.
+    /// <br/>This class is a replacement of the old RecompILer logic and can be used also for .NET Core/Standard and partially trusted domains.
     /// </summary>
     internal static class EnumComparerBuilder
     {
@@ -41,6 +41,7 @@ namespace KGySoft.CoreLibraries
         /// Value: A <![CDATA[DynamicEnumComparer<TEnum>]]> generic type definition using the matching size and sign.
         /// </summary>
         private static readonly IDictionary<Type, Type> comparers = new LockingDictionary<Type, Type>();
+
         private static ModuleBuilder moduleBuilder;
 
         #endregion
@@ -96,15 +97,17 @@ namespace KGySoft.CoreLibraries
         #region Private Methods
 
         /// <summary><![CDATA[
-        /// [Serializable] public class DynamicEnumComparer<TEnum> : EnumComparer<TEnum>
+        /// [Serializable] public class DynamicEnumComparer<TEnum> : EnumComparer<TEnum> where TEnum : struct, Enum
         /// ]]></summary>
         private static Type BuildGenericComparer(Type underlyingType)
         {
             TypeBuilder builder = ModuleBuilder.DefineType($"DynamicEnumComparer{underlyingType.Name}`1",
-                    TypeAttributes.Public,
-                    typeof(EnumComparer<>));
-            builder.DefineGenericParameters("TEnum");
-            Type tEnum = builder.GetGenericArguments()[0];
+                TypeAttributes.Public,
+                typeof(EnumComparer<>));
+            builder.SetCustomAttribute(new CustomAttributeBuilder(typeof(SerializableAttribute).GetDefaultConstructor(), Reflector.EmptyObjects));
+            GenericTypeParameterBuilder tEnum = builder.DefineGenericParameters("TEnum")[0];
+            tEnum.SetGenericParameterAttributes(GenericParameterAttributes.NotNullableValueTypeConstraint);
+            tEnum.SetBaseTypeConstraint(Reflector.EnumType);
 
             GenerateCtor(builder);
             GenerateEquals(builder, tEnum);
@@ -146,9 +149,6 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary><![CDATA[
-        /// // NET Core:
-        /// public override int GetHashCode(TEnum obj) => obj.GetHashCode();
-        /// // Other:
         /// public override int GetHashCode(TEnum obj) => ((underlyingType)obj).GetHashCode();
         /// ]]></summary>
         private static void GenerateGetHashCode(TypeBuilder type, Type underlyingType, Type tEnum)
@@ -158,14 +158,6 @@ namespace KGySoft.CoreLibraries
             methodGetHashCode.SetParameters(tEnum);
             methodGetHashCode.DefineParameter(1, ParameterAttributes.None, "obj");
             ILGenerator il = methodGetHashCode.GetILGenerator();
-
-#if NETCOREAPP
-            MethodInfo objGetHashCode = typeof(object).GetMethod(nameof(GetHashCode));
-            il.Emit(OpCodes.Ldarga, 1);
-            il.Emit(OpCodes.Constrained, tEnum);
-            il.Emit(OpCodes.Callvirt, objGetHashCode);
-            il.Emit(OpCodes.Ret);
-#else
             MethodInfo underlyingGetHashCode = underlyingType.GetMethod(nameof(GetHashCode));
             il.DeclareLocal(underlyingType);
             il.Emit(OpCodes.Ldarg_1);
@@ -174,8 +166,6 @@ namespace KGySoft.CoreLibraries
             il.Emit(OpCodes.Ldloca_S, 0);
             il.Emit(OpCodes.Call, underlyingGetHashCode);
             il.Emit(OpCodes.Ret);
-#endif
-
         }
 
         /// <summary><![CDATA[

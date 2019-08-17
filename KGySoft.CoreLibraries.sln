@@ -4,11 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29201.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGySoft.CoreLibraries", "KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj", "{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A1E0A22A-1EFF-4A38-B391-6D073790BD21} = {A1E0A22A-1EFF-4A38-B391-6D073790BD21}
-	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "__RecompILer", "__RecompILer\__RecompILer.csproj", "{A1E0A22A-1EFF-4A38-B391-6D073790BD21}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGySoft.CoreLibraries.UnitTest", "KGySoft.CoreLibraries.UnitTest\KGySoft.CoreLibraries.UnitTest.csproj", "{1BBCDF8A-90DA-44A1-AA3C-9B4086F22292}"
 EndProject
@@ -31,9 +26,6 @@ Global
 		{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A1E0A22A-1EFF-4A38-B391-6D073790BD21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A1E0A22A-1EFF-4A38-B391-6D073790BD21}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A1E0A22A-1EFF-4A38-B391-6D073790BD21}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1BBCDF8A-90DA-44A1-AA3C-9B4086F22292}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1BBCDF8A-90DA-44A1-AA3C-9B4086F22292}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BBCDF8A-90DA-44A1-AA3C-9B4086F22292}.Release|Any CPU.ActiveCfg = Release|Any CPU
