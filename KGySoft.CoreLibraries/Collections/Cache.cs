@@ -68,6 +68,10 @@ namespace KGySoft.Collections
     /// serialize cache instances try to use static methods as data loaders and avoid using anonymous delegates or lambda expressions, otherwise it is not guaranteed that another
     /// implementations or versions of CLR will able to deserialize data and resolve the compiler-generated members.
     /// </note>
+    /// <note type="warning">
+    /// .NET Core does not support serializing delegates. If the <see cref="Cache{TKey,TValue}"/> instance was initialized by a loader delegate it is possible that serialization
+    /// throws a <see cref="SerializationException"/> on some platforms.
+    /// </note>
     /// </remarks>
     /// <threadsafety instance="false">Members of this type are not safe for multi-threaded operations, though a thread-safe accessor can be obtained for the <see cref="Cache{TKey,TValue}"/>
     /// by the <see cref="GetThreadSafeAccessor">GetThreadSafeAccessor</see> method. To get a thread-safe wrapper for all members use the

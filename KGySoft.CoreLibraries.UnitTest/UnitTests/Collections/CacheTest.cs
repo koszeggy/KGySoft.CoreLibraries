@@ -243,6 +243,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void SerializationTest()
         {
+#if NETCOREAPP
+            // .NET Core does not support delegate serialization
+            var cache = new Cache<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                EnsureCapacity = true,
+                Behavior = CacheBehavior.RemoveOldestElement,
+                DisposeDroppedValues = true
+            };
+            cache["One"] = 1;
+            cache["Two"] = 2;
+            cache["Three"] = 3;
+
+            var cacheCopy = cache.DeepClone();
+            Assert.AreNotSame(cache, cacheCopy);
+            Assert.AreEqual(cache.Count, cacheCopy.Count);
+            Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
+            Assert.AreEqual(cache.Behavior, cacheCopy.Behavior);
+            Assert.AreEqual(cache.DisposeDroppedValues, cacheCopy.DisposeDroppedValues);
+            Assert.AreEqual(cache.EnsureCapacity, cacheCopy.EnsureCapacity);
+
+            Assert.IsTrue(cache.SequenceEqual(cacheCopy));
+            Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
+            Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
+#else
             var cache = new Cache<string, string>(s => s.ToUpperInvariant(), StringComparer.OrdinalIgnoreCase)
             {
                 EnsureCapacity = true,
@@ -265,6 +289,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(cache.SequenceEqual(cacheCopy));
             Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
             Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
+#endif
         }
 
         #endregion
