@@ -38,9 +38,13 @@ namespace KGySoft.Serialization
 
             protected static readonly Assembly[] KnownAssemblies =
             {
-                Reflector.MsCorlibAssembly,
+                Reflector.CoreLibrariesAssembly,
+#if NETFRAMEWORK
                 Reflector.SystemAssembly,
                 Reflector.SystemCoreAssembly,
+#elif NETCOREAPP
+                Reflector.SystemCollectionsAssembly,
+#endif
                 Reflector.KGySoftLibrariesAssembly
             };
 

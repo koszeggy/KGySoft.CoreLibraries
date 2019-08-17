@@ -39,7 +39,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public void TestAssemblyPartialResolve()
         {
-            string asmName = "System.Design";
+#if NETFRAMEWORK
+            string asmName = "System.Design"; 
+#elif NETCOREAPP
+            string asmName = "System.Data";
+#else
+#error .NET version is not supported
+#endif
             if (Reflector.ResolveAssembly(asmName, false, true) != null)
             {
                 Assert.Inconclusive("Assembly {0} is already loaded, test is ignored. Try to run this test alone.", asmName);

@@ -117,9 +117,13 @@ namespace KGySoft.Reflection
         internal static readonly Type TypeInfo = typeof(TypeInfo);
 #endif
 
-        internal static readonly Assembly MsCorlibAssembly = ObjectType.Assembly;
+        internal static readonly Assembly CoreLibrariesAssembly = ObjectType.Assembly;
+#if NETFRAMEWORK
         internal static readonly Assembly SystemAssembly = typeof(Queue<>).Assembly;
-        internal static readonly Assembly SystemCoreAssembly = typeof(HashSet<>).Assembly;
+        internal static readonly Assembly SystemCoreAssembly = typeof(HashSet<>).Assembly; 
+#elif NETCOREAPP
+        internal static readonly Assembly SystemCollectionsAssembly = typeof(HashSet<>).Assembly;
+#endif
         internal static readonly Assembly KGySoftLibrariesAssembly = typeof(Reflector).Assembly;
 
         private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
@@ -2696,11 +2700,11 @@ namespace KGySoft.Reflection
 
         private static string GetGacPath(string assemblyName)
         {
-#if !(NET35 || NET40 || NET45)
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return null;
+#if NETFRAMEWORK
+            return Fusion.GetGacPath(assemblyName); 
+#else
+            return null;
 #endif
-            return Fusion.GetGacPath(assemblyName);
         }
 
         #endregion

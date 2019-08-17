@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if NETFRAMEWORK
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: Fusion.cs
@@ -80,3 +81,4 @@ namespace KGySoft.Reflection.WinApi
         #endregion
     }
 }
+#endif
