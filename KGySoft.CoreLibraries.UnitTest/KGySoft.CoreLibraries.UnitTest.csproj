@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
-    <TargetFrameworks>net45</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <!--<UseWindowsForms>true</UseWindowsForms>-->
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
@@ -54,10 +54,10 @@
     <EmbeddedResource Condition="'$(TargetFramework)' != 'netcoreapp3.0'" Update="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Remove="Resources\TestRes.resx" />
+    <!--<EmbeddedResource Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Remove="Resources\TestRes.resx" />
     <None Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Include="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </None>-->
   </ItemGroup>
 
   <ItemGroup>
