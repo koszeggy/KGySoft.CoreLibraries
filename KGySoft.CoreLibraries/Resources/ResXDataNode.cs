@@ -1381,7 +1381,13 @@ namespace KGySoft.Resources
             if (type == Reflector.ByteArrayType)
                 return FromBase64WrappedString(dataNodeInfo.ValueData);
 
-            // 4.) By TypeConverter from string
+#if !NETFRAMEWORK
+            // 4.) CultureInfo - There is no CultureInfoConverter in .NET Core but we handle it in InitNodeInfo
+            if (type == typeof(CultureInfo))
+                return new CultureInfo(nodeInfo.ValueData);
+#endif
+
+            // 5.) By TypeConverter from string
             TypeConverter tc = TypeDescriptor.GetConverter(type);
             if (!tc.CanConvertFrom(Reflector.StringType))
             {

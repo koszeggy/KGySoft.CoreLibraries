@@ -30,7 +30,7 @@ namespace KGySoft.CoreLibraries
     [SetUpFixture]
     public class GlobalInitialization
     {
-#region Methods
+        #region Methods
 
         [OneTimeSetUp]
         public void Initialize()
@@ -39,7 +39,7 @@ namespace KGySoft.CoreLibraries
             typeof(Bitmap).RegisterTypeConverter<BitmapConverter>();
         }
 
-#endregion
+        #endregion
     }
 }
 #endif

@@ -21,7 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
-
+using KGySoft.Reflection;
 using KGySoft.Resources;
 
 using NUnit.Framework;
@@ -141,7 +141,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // BUG in WinForms version: System resx reader throws exception even with type resolver because the resolver is not used for file refs.
             var enumerator = reader.GetEnumerator(); // this reads now the whole xml
             while (enumerator.MoveNext())
-                Console.WriteLine("Key: {0}; Value: {1}", enumerator.Key, enumerator.Value);
+            {
+                try
+                {
+                    Console.WriteLine("Key: {0}; Value: {1}", enumerator.Key, enumerator.Value);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
+
+#if NETCOREAPP2_0
+                    if (e.InnerException is FileNotFoundException fe && fe.Message.Contains("System.Windows.Forms", StringComparison.Ordinal))
+                        continue;
+#endif
+                    throw;
+                }
+            }
         }
 
         [Test]
