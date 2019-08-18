@@ -316,30 +316,23 @@ namespace KGySoft.Resources
 
             private static string StripTypeName(string origTypeName, bool removeVersionOnly)
             {
-                int genericEnd = origTypeName.LastIndexOf(']');
-                int asmNamePos = origTypeName.IndexOf(',', genericEnd + 1);
-
-                if (asmNamePos < 0 && genericEnd < 0)
+                Reflector.SplitTypeName(origTypeName, out string asmName, out string typeName);
+                bool isGenericOrArray = typeName.IndexOf(']') > 0;
+                if (asmName == null && !isGenericOrArray)
                     return origTypeName;
 
-                string typeName = asmNamePos < 0 ? origTypeName : origTypeName.Substring(0, asmNamePos);
                 string rebuiltTypeName = typeName;
-
-                // generic or array type
-                if (genericEnd >= 0)
+                if (isGenericOrArray)
                 {
-                    string genericTypeName;
-                    string[] genericTypeParams;
-                    int[] arrayRanks;
-                    Reflector.GetNameAndIndices(typeName, out genericTypeName, out genericTypeParams, out arrayRanks);
+                    Reflector.GetNameAndIndices(typeName, out string genericTypeName, out string[] genericTypeParams, out int[] arrayRanks);
                     if (genericTypeParams != null)
                         rebuiltTypeName = RebuildTypeName(genericTypeName, genericTypeParams, arrayRanks, removeVersionOnly);
                 }
 
                 // assembly part is included: removing it entirely or just the version part
-                if (asmNamePos >= 0)
+                if (asmName != null)
                 {
-                    var typeParts = origTypeName.Substring(asmNamePos + 1).Split(',').Select(s => s.Trim());
+                    var asmParts = asmName.Split(',').Select(s => s.Trim());
 
                     // returning the type name only
                     if (!removeVersionOnly)
@@ -347,9 +340,9 @@ namespace KGySoft.Resources
 
                     // removing the assembly part only
 #if NET35
-                    rebuiltTypeName += ", " + String.Join(", ", typeParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)).ToArray());
+                    rebuiltTypeName += ", " + String.Join(", ", asmParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)).ToArray());
 #else
-                    rebuiltTypeName += ", " + String.Join(", ", typeParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)));
+                    rebuiltTypeName += ", " + String.Join(", ", asmParts.Where(s => !s.StartsWith("Version=", StringComparison.OrdinalIgnoreCase)));
 #endif
 
                 }
@@ -504,7 +497,7 @@ namespace KGySoft.Resources
             {
                 if (compatibleFileRefTypeName == null)
                 {
-                    AssemblyName asmName = Reflector.MsCorlibAssembly.GetName();
+                    AssemblyName asmName = Reflector.SystemCoreLibrariesAssembly.GetName();
                     asmName.Name = "System.Windows.Forms";
                     compatibleFileRefTypeName = "System.Resources.ResXFileRef, " + asmName.FullName;
                 }
@@ -855,6 +848,9 @@ namespace KGySoft.Resources
 
             if (result == null)
                 result = Reflector.ResolveType(assemblyQualifiedName, true, true);
+
+            if (result == null)
+                return null;
 
             // Mapping WinForms refs to KGySoft ones (can happen in case of non-usual aliases)
             if (IsFileRef(result.AssemblyQualifiedName))

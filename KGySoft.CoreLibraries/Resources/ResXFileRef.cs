@@ -269,7 +269,7 @@ namespace KGySoft.Resources
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
             this.fileName = fileName;
-            typeName = type.Assembly == Reflector.MsCorlibAssembly ? type.FullName : type.AssemblyQualifiedName;
+            typeName = type.Assembly == Reflector.SystemCoreLibrariesAssembly ? type.FullName : type.AssemblyQualifiedName;
             if (textFileEncoding != null)
             {
                 this.textFileEncoding = textFileEncoding;

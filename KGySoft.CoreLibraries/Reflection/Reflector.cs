@@ -117,7 +117,7 @@ namespace KGySoft.Reflection
         internal static readonly Type TypeInfo = typeof(TypeInfo);
 #endif
 
-        internal static readonly Assembly CoreLibrariesAssembly = ObjectType.Assembly;
+        internal static readonly Assembly SystemCoreLibrariesAssembly = ObjectType.Assembly;
 #if NETFRAMEWORK
         internal static readonly Assembly SystemAssembly = typeof(Queue<>).Assembly;
         internal static readonly Assembly SystemCoreAssembly = typeof(HashSet<>).Assembly; 
@@ -2766,15 +2766,13 @@ namespace KGySoft.Reflection
                 return result;
             }
 
-            // no success: partial name or non-mscorlib type without name
-            int genericEnd = typeName.LastIndexOf(']');
-            int asmNamePos = typeName.IndexOf(',', genericEnd + 1);
+            // no success: partial name or non-mscorlib type without assembly name
+            SplitTypeName(typeName, out string asmName, out typeName);
 
             // (partial) assembly name is defined
-            if (asmNamePos >= 0)
+            if (asmName != null)
             {
                 Assembly assembly;
-                string asmName = typeName.Substring(asmNamePos + 1).Trim();
                 try
                 {
                     assembly = ResolveAssembly(asmName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
@@ -2787,7 +2785,7 @@ namespace KGySoft.Reflection
                 if (assembly == null)
                     return null;
 
-                return ResolveType(assembly, typeName.Substring(0, asmNamePos).Trim(), loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
+                return ResolveType(assembly, typeName, loadPartiallyDefinedAssemblies, matchAssemblyByWeakName);
             }
 
             // no assembly name is defined (generics: no assembly name for the main type itself)
@@ -2921,6 +2919,24 @@ namespace KGySoft.Reflection
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Splits possible assembly qualified name to assembly and type names.
+        /// </summary>
+        internal static void SplitTypeName(string aqnOrTypeName, out string assemblyName, out string typeName)
+        {
+            int genericEnd = aqnOrTypeName.LastIndexOf(']');
+            int asmNamePos = aqnOrTypeName.IndexOf(',', genericEnd + 1);
+            if (asmNamePos >= 0)
+            {
+                assemblyName = aqnOrTypeName.Substring(asmNamePos + 1).Trim();
+                typeName = aqnOrTypeName.Substring(0, asmNamePos).Trim();
+                return;
+            }
+
+            assemblyName = null;
+            typeName = aqnOrTypeName;
         }
 
         /// <summary>

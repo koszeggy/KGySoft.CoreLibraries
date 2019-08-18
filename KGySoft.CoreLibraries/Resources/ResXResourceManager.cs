@@ -518,7 +518,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance is disposed.
         /// </summary>
-        public bool IsDisposed => BackingResourceSets == null;
+        public bool IsDisposed => InternalResourceSets == null;
 
         /// <summary>
         /// Gets whether this <see cref="ResXResourceManager"/> instance has modified and unsaved data.
@@ -547,7 +547,7 @@ namespace KGySoft.Resources
 
 
 #if NET35
-        private Hashtable BackingResourceSets => base.ResourceSets;
+        private Hashtable InternalResourceSets => base.ResourceSets;
 
         private new Hashtable ResourceSets
         {
@@ -561,7 +561,7 @@ namespace KGySoft.Resources
             set => base.ResourceSets = value;
         }
 #else
-        private Dictionary<string, ResourceSet> BackingResourceSets => resourceSets;
+        private Dictionary<string, ResourceSet> InternalResourceSets => resourceSets;
 
         private new Dictionary<string, ResourceSet> ResourceSets
         {
@@ -1499,7 +1499,7 @@ namespace KGySoft.Resources
         /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            var localResourceSets = BackingResourceSets;
+            var localResourceSets = InternalResourceSets;
             if (localResourceSets == null)
                 return;
 
