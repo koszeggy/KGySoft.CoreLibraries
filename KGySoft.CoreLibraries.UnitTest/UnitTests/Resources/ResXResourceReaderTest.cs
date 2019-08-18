@@ -131,24 +131,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void TestDataTypes()
         {
-            // various types of embedded and referenced data
             string path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
-            //var refReader = new System.Resources.ResXResourceReader(path, new TypeResolver())
-            //    {
-            //        BasePath = Path.GetDirectoryName(path)
-            //    };
-            ResXResourceReader reader = new ResXResourceReader(path, new TestTypeResolver())
+            var reader = new ResXResourceReader(path, new TestTypeResolver())
             {
                 AllowDuplicatedKeys = false,
                 BasePath = Path.GetDirectoryName(path)
             };
-            //var refEnumerator = refReader.GetEnumerator(); // this reads now the whole xml BUG: System resx reader throws exception even with type resolver because the resolver is not used for file refs.
+            // Since no duplicates are allowed, this reads now the whole xml.
+            // BUG in WinForms version: System resx reader throws exception even with type resolver because the resolver is not used for file refs.
             var enumerator = reader.GetEnumerator(); // this reads now the whole xml
-            while (/*refEnumerator.MoveNext() &&*/ enumerator.MoveNext())
-            {
-                //Console.Write("RefKey: {0}; RefValue: {1}; ", refEnumerator.Key, refEnumerator.Value);
+            while (enumerator.MoveNext())
                 Console.WriteLine("Key: {0}; Value: {1}", enumerator.Key, enumerator.Value);
-            }
         }
 
         [Test]

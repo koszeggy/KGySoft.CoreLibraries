@@ -16,9 +16,6 @@
 
 #region Usings
 
-using System.Security;
-using System.Security.Permissions;
-using System.Security.Policy;
 
 #region Used Namespaces
 
@@ -29,15 +26,18 @@ using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.ComponentModel.Design;
-#if NETFRAMEWORK
 using System.Drawing;
 using System.Drawing.Imaging; 
-#endif
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 #if NETFRAMEWORK
+using System.Security;
+using System.Security.Permissions;
+using System.Security.Policy; 
+#endif
+using System.Text;
+#if !NETCOREAPP2_0
 using System.Windows.Forms; 
 #endif
 
@@ -206,7 +206,7 @@ namespace KGySoft.CoreLibraries
             if (typeRef == typeof(ResXDataNode))
                 return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP
             if (typeRef == typeof(SystemFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 
@@ -265,7 +265,6 @@ namespace KGySoft.CoreLibraries
                 }
 
 
-#if !NETCOREAPP2_0
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
 
@@ -275,12 +274,13 @@ namespace KGySoft.CoreLibraries
                 if (typeRef == typeof(Icon))
                     return true; //return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
 
+#if !NETCOREAPP2_0
                 if (typeRef == typeof(ImageListStreamer))
                 {
                     var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };
                     var il2 = new ImageList { ImageStream = (ImageListStreamer)check };
                     return CheckItemsEqual(il1.Images, il2.Images, forceEqualityByMembers, errors, checkedObjects);
-                } 
+                }  
 #endif
 
                 // Structural equality if forced for non-primitive types or when Equals is not overridden
@@ -427,7 +427,6 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
-#if !NETCOREAPP2_0
         private static bool CheckImages(Bitmap reference, Bitmap check, List<string> errors)
         {
             // using the not so fast GetPixel compare. This works also for different pixel formats and raw formats.
@@ -449,7 +448,6 @@ namespace KGySoft.CoreLibraries
 
             return true;
         } 
-#endif
 
         private static void AssertResult(bool result, List<string> errors)
         {

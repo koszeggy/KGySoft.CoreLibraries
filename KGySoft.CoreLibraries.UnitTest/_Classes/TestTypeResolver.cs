@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel.Design;
+using System.Drawing;
 using System.Reflection;
 
 using KGySoft.Reflection;
@@ -30,8 +31,20 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
-        public Type GetType(string name, bool throwOnError) => Reflector.ResolveType(name, true, true);
-        public Type GetType(string name) => Reflector.ResolveType(name, true, true);
+        public Type GetType(string name, bool throwOnError)
+        {
+#if NETCOREAPP
+            Reflector.SplitTypeName(name, out string assemblyName, out string typeName);
+            if (typeName == typeof(Bitmap).FullName)
+                return typeof(Bitmap);
+            if (typeName == typeof(Icon).FullName)
+                return typeof(Icon);
+#endif
+
+            return Reflector.ResolveType(name, true, true);
+        }
+
+        public Type GetType(string name) => GetType(name, false);
 
         public Assembly GetAssembly(AssemblyName name, bool throwOnError) => throw new NotImplementedException();
         public Assembly GetAssembly(AssemblyName name) => throw new NotImplementedException();

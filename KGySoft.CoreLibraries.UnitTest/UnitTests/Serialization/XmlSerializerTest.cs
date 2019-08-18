@@ -1309,7 +1309,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeByTypeConverter()
         {
-            typeof(Version).RegisterTypeConverter<VersionConverter>();
+#if !NETCOREAPP3_0
+            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+#endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 
             object[] referenceObjects =
@@ -1544,7 +1546,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeSimpleArrays()
         {
-            typeof(Version).RegisterTypeConverter<VersionConverter>();
+#if !NETCOREAPP3_0
+            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+#endif
             IList[] referenceObjects =
                 {
                     new object[0],
@@ -2077,7 +2081,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Test]
         public void SerializeComplexGenericCollections()
         {
-            typeof(Version).RegisterTypeConverter<VersionConverter>();
+#if !NETCOREAPP3_0
+            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+#endif
             ICollection[] referenceObjects =
                 {
                     new List<byte>[] { new List<byte>{ 11, 12, 13}, new List<byte>{21, 22} }, // array of lists

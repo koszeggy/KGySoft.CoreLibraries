@@ -451,7 +451,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SerializeByTypeConverter()
         {
-            typeof(Version).RegisterTypeConverter<VersionConverter>();
+#if !NETCOREAPP3_0
+            typeof(Version).RegisterTypeConverter<VersionConverter>(); 
+#endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
             // TODO: re-enable after referencing KGySoft.Drawing from nuget
             //typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
@@ -757,7 +759,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     StringBuilder sb = new StringBuilder();
                     using (SystemResXResourceWriter writer =
-#if NET35
+#if NET35 || NETCOREAPP3_0
                         new SystemResXResourceWriter(new StringWriter(sb))
 
 #else
@@ -789,7 +791,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     Console.WriteLine("System serialization failed: {0}", e);
                 }
-            } 
+            }  
 #endif
         }
 

@@ -2805,7 +2805,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP
         [Test]
         public void SerializeMarshalByRefObjects()
         {

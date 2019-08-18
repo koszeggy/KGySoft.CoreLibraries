@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Public Methods
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
@@ -180,6 +180,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [OneTimeTearDown]
         public void RemoveCustomCultures()
         {
+            if (huRunic == null)
+                return;
             try
             {
                 CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
@@ -289,7 +291,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 manager.ReleaseAllResources();
                 Assert.IsTrue(manager.GetString(key, huRunicHULowland).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-                // inserting explicitly into a non-merged: it will be retrieved via child, too
+                // inserting explicitly into a proxy parent: it will be retrieved via proxy child, too
                 manager.SetObject(key, custom, huRunicHU);
                 Assert.AreEqual(custom, manager.GetString(key, huRunicHULowland));
 
@@ -316,8 +318,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.ReleaseAllResources();
             Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-            // inserting explicitly into a non-merged: it will be retrieved via child, too
-            manager.SetObject(key, custom, inv);
+            // inserting explicitly into a proxy parent: it will be retrieved via proxy child, too
+            manager.SetObject(key, custom, hu);
             Assert.AreEqual(custom, manager.GetString(key, huHU));
 
             // The string will be prefixed even if retrieved as an object
@@ -599,15 +601,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(3, resourceSets.Count);
             Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
-            // specific is merged, which is already exists no nothing changes
+            // specific is merged again, so nothing changes
+            manager.RemoveObject(key, huHU);
             manager.AutoAppend = AutoAppendOptions.AppendSpecificCultures;
             Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
             Assert.AreEqual(3, resourceSets.Count);
             Assert.AreEqual(1, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
             // neutral is merged so it will be replaced now
+            manager.RemoveObject(key, huHU);
             manager.AutoAppend = AutoAppendOptions.AppendNeutralCultures;
-            Assert.IsTrue(manager.GetString(key, huHU).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
+            Assert.IsTrue(manager.GetString(key, hu).StartsWith(LanguageSettings.UntranslatedResourcePrefix + LanguageSettings.UnknownResourcePrefix, StringComparison.Ordinal));
             Assert.AreEqual(3, resourceSets.Count);
             Assert.AreEqual(0, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
@@ -634,114 +638,121 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 File.Delete(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"{resXBaseName}.{testCulture.Name}.resx"));
             }
 
-            // SourceChange, individual
-            Cleanup();
-            manager.Source = ResourceManagerSources.CompiledAndResX;
-            manager.UseLanguageSettings = false;
-            manager.AutoSave = AutoSaveOptions.SourceChange;
+            try
+            {
+                // SourceChange, individual
+                Cleanup();
+                manager.Source = ResourceManagerSources.CompiledAndResX;
+                manager.UseLanguageSettings = false;
+                manager.AutoSave = AutoSaveOptions.SourceChange;
 
-            manager.SetObject(key, value, testCulture);
-            manager.Source = ResourceManagerSources.ResXOnly; // save occurs
-            manager.ReleaseAllResources();
-            Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
-            Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
+                manager.SetObject(key, value, testCulture);
+                manager.Source = ResourceManagerSources.ResXOnly; // save occurs
+                manager.ReleaseAllResources();
+                Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
+                Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
-            // SourceChange, central
-            Cleanup();
-            manager.ReleaseAllResources();
-            LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
-            manager.UseLanguageSettings = true;
-            LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.SourceChange;
+                // SourceChange, central
+                Cleanup();
+                manager.ReleaseAllResources();
+                LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
+                manager.UseLanguageSettings = true;
+                LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.SourceChange;
 
-            manager.SetObject(key, value, testCulture);
-            LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.ResXOnly; // save occurs
-            manager.ReleaseAllResources();
-            Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
-            Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
+                manager.SetObject(key, value, testCulture);
+                LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.ResXOnly; // save occurs
+                manager.ReleaseAllResources();
+                Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
+                Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
-            // LanguageChange, individual
-            Cleanup();
-            manager.ReleaseAllResources();
-            manager.UseLanguageSettings = false;
-            LanguageSettings.DisplayLanguage = testCulture;
-            manager.AutoSave = AutoSaveOptions.LanguageChange;
+                // LanguageChange, individual
+                Cleanup();
+                manager.ReleaseAllResources();
+                manager.UseLanguageSettings = false;
+                LanguageSettings.DisplayLanguage = testCulture;
+                manager.AutoSave = AutoSaveOptions.LanguageChange;
 
-            manager.SetObject(key, value); // null: uses DisplayLanguage, which is the same as CurrentUICulture
-            LanguageSettings.DisplayLanguage = inv; // save occurs
-            manager.ReleaseAllResources();
-            Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
-            Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
+                manager.SetObject(key, value); // null: uses DisplayLanguage, which is the same as CurrentUICulture
+                LanguageSettings.DisplayLanguage = inv; // save occurs
+                manager.ReleaseAllResources();
+                Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
+                Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
-            // LanguageChange, central
-            Cleanup();
-            manager.ReleaseAllResources();
-            manager.UseLanguageSettings = true;
-            LanguageSettings.DisplayLanguage = testCulture;
-            LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.LanguageChange;
+                // LanguageChange, central
+                Cleanup();
+                manager.ReleaseAllResources();
+                manager.UseLanguageSettings = true;
+                LanguageSettings.DisplayLanguage = testCulture;
+                LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.LanguageChange;
 
-            manager.SetObject(key, value); // null: uses DisplayLanguage, which is the same as CurrentUICulture
-            LanguageSettings.DisplayLanguage = inv; // save occurs
-            manager.ReleaseAllResources();
-            Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
-            Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
+                manager.SetObject(key, value); // null: uses DisplayLanguage, which is the same as CurrentUICulture
+                LanguageSettings.DisplayLanguage = inv; // save occurs
+                manager.ReleaseAllResources();
+                Assert.IsNull(manager.GetResourceSet(testCulture, false, false)); // not loaded after release
+                Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // but can be loaded from saved
 
-#if !NETCOREAPP2_0
-            // DomainUnload, individual
-            Cleanup();
-            manager.ReleaseAllResources();
-            Evidence evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
-            AppDomain sandboxDomain = AppDomain.CreateDomain("SandboxDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
-            AssemblyName selfName = Assembly.GetExecutingAssembly().GetName();
-            sandboxDomain.Load(selfName); 
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+                // DomainUnload, individual
+                Cleanup();
+                manager.ReleaseAllResources();
+                Evidence evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
+                AppDomain sandboxDomain = AppDomain.CreateDomain("SandboxDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
+                AssemblyName selfName = Assembly.GetExecutingAssembly().GetName();
+                sandboxDomain.Load(selfName);
 
-            RemoteDrmConsumer remote = (RemoteDrmConsumer)sandboxDomain.CreateInstanceAndUnwrap(selfName.FullName, typeof(RemoteDrmConsumer).FullName);
-            remote.UseDrmRemotely(false, testCulture);
-            AppDomain.Unload(sandboxDomain);
-            Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded that has been saved in another domain
+                RemoteDrmConsumer remote = (RemoteDrmConsumer)sandboxDomain.CreateInstanceAndUnwrap(selfName.FullName, typeof(RemoteDrmConsumer).FullName);
+                remote.UseDrmRemotely(false, testCulture);
+                AppDomain.Unload(sandboxDomain);
+                Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded that has been saved in another domain
 
-            // DomainUnload, central
-            Cleanup();
-            manager.ReleaseAllResources();
-            evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
-            sandboxDomain = AppDomain.CreateDomain("SandboxDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
-            selfName = Assembly.GetExecutingAssembly().GetName();
-            sandboxDomain.Load(selfName);
+                // DomainUnload, central
+                Cleanup();
+                manager.ReleaseAllResources();
+                evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
+                sandboxDomain = AppDomain.CreateDomain("SandboxDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
+                selfName = Assembly.GetExecutingAssembly().GetName();
+                sandboxDomain.Load(selfName);
 
-            remote = (RemoteDrmConsumer)sandboxDomain.CreateInstanceAndUnwrap(selfName.FullName, typeof(RemoteDrmConsumer).FullName);
-            remote.UseDrmRemotely(true, testCulture);
-            AppDomain.Unload(sandboxDomain);
-            Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded that has been saved in another domain
+                remote = (RemoteDrmConsumer)sandboxDomain.CreateInstanceAndUnwrap(selfName.FullName, typeof(RemoteDrmConsumer).FullName);
+                remote.UseDrmRemotely(true, testCulture);
+                AppDomain.Unload(sandboxDomain);
+                Assert.IsNotNull(manager.GetResourceSet(testCulture, true, false)); // can be loaded that has been saved in another domain
 #endif
 
-            // Dispose, individual
-            Cleanup();
-            manager.UseLanguageSettings = false;
-            manager.Source = ResourceManagerSources.CompiledAndResX;
-            manager.UseLanguageSettings = false;
-            manager.AutoSave = AutoSaveOptions.Dispose;
+                // Dispose, individual
+                Cleanup();
+                manager.UseLanguageSettings = false;
+                manager.Source = ResourceManagerSources.CompiledAndResX;
+                manager.UseLanguageSettings = false;
+                manager.AutoSave = AutoSaveOptions.Dispose;
 
-            manager.SetObject(key, value, testCulture);
-            manager.Dispose(); // save occurs
-            Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
-            Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), "TestResourceResX.de.resx")));
+                manager.SetObject(key, value, testCulture);
+                manager.Dispose(); // save occurs
+                Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
+                Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"TestResourceResX.{testCulture.Name}.resx")));
 
-            // Dispose, central
-            LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
-            LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.Dispose;
-            manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+                // Dispose, central
+                LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
+                LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.Dispose;
+                manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+                {
+                    UseLanguageSettings = true
+                };
+                Cleanup();
+
+                manager.SetObject(key, value, testCulture);
+                LanguageSettings.DisplayLanguage = inv; // save occurs
+                manager.Dispose(); // save occurs
+                Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
+                Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"TestResourceResX.{testCulture.Name}.resx")));
+
+                // final cleanup
+                Cleanup();
+            }
+            finally
             {
-                UseLanguageSettings = true
-            };
-            Cleanup();
-
-            manager.SetObject(key, value, testCulture);
-            LanguageSettings.DisplayLanguage = inv; // save occurs
-            manager.Dispose(); // save occurs
-            Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
-            Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), "TestResourceResX.de-DE.resx")));
-
-            // final cleanup
-            Cleanup();
+                Cleanup();
+            }
         }
 
         [Test]
