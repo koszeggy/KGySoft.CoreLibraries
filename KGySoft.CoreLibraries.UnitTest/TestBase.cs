@@ -300,6 +300,11 @@ namespace KGySoft.CoreLibraries
         private static bool CheckItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             Type type = referenceObjects.GetType();
+            if (referenceObjects is Hashtable)
+            {
+                referenceObjects = referenceObjects.Convert<List<DictionaryEntry>>().OrderBy(i => i.Key.ToString()).ToList();
+                targetObjects = targetObjects.Convert<List<DictionaryEntry>>().OrderBy(i => i.Key.ToString()).ToList();
+            }
 #if !NET35
             if (type.IsGenericTypeOf(typeof(ConcurrentBag<>)))
             {

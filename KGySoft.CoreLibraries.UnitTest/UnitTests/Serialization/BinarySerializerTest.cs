@@ -27,7 +27,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 #if NETFRAMEWORK
-using System.Runtime.Remoting.Messaging; 
+using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -2208,14 +2208,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         public void SerializeTypes()
         {
             object[] referenceObjects =
-                {
-                    typeof(int), // 166
-                    typeof(List<int>), // 280
-                    typeof(CustomGenericCollection<int>), // 303
+            {
+                typeof(int),
+                typeof(List<int>),
+                typeof(CustomGenericCollection<int>),
 
-                    typeof(List<>), // 187
-                    typeof(List<>).GetGenericArguments()[0] // 335
-                };
+                typeof(List<>),
+                typeof(List<>).GetGenericArguments()[0]
+            };
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
@@ -2623,25 +2623,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new Collection<int> { 1, 2, 3 }, // -> 77/77
-                    new Collection<int[]> { new int[]{1, 2, 3}, null }, // -> 85/85
-                    new Collection<ReadOnlyCollection<int>>(new Collection<ReadOnlyCollection<int>>{new ReadOnlyCollection<int>(new int[]{ 1, 2, 3})}), // -> 166/166
-                    new Collection<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) }, // -> 214/145
-                    new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null}, // -> 481/412
+                    //new Collection<int> { 1, 2, 3 }, // -> 77/77
+                    //new Collection<int[]> { new int[]{1, 2, 3}, null }, // -> 85/85
+                    //new Collection<ReadOnlyCollection<int>>(new Collection<ReadOnlyCollection<int>>{new ReadOnlyCollection<int>(new int[]{ 1, 2, 3})}), // -> 166/166
+                    //new Collection<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) }, // -> 214/145
+                    //new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null}, // -> 481/412
 
-                    // collections of keyvalue pairs (as object and strongly typed as well)
-                    new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) }, // -> 155/155
-                    new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } , // -> 141/151
+                    //// collections of keyvalue pairs (as object and strongly typed as well)
+                    //new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) }, // -> 155/155
+                    //new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } , // -> 141/151
 
-                    new ReadOnlyCollection<int>(new int[]{ 1, 2, 3}), // -> 85/85
-                    new ReadOnlyCollection<int[]>(new int[][]{new int[]{1, 2, 3}, null}), // -> 93/93
+                    //new ReadOnlyCollection<int>(new int[]{ 1, 2, 3}), // -> 85/85
+                    //new ReadOnlyCollection<int[]>(new int[][]{new int[]{1, 2, 3}, null}), // -> 93/93
 
-                    new CustomNonGenericCollection { "alpha", 2, null }, // -> 198/129
+                    //new CustomNonGenericCollection { "alpha", 2, null }, // -> 198/129
                     new CustomNonGenericDictionary { { "alpha", 2 }, { "beta", null } }, // -> 328/259
-                    new CustomGenericCollection<int> { 1, 2, 3 }, // -> 199/130
-                    new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } }, // -> 334/265
+                    //new CustomGenericCollection<int> { 1, 2, 3 }, // -> 199/130
+                    //new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } }, // -> 334/265
 
-                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alpha"}} }, // -> 618/549
+                    //new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alpha"}} }, // -> 618/549
                 };
 
             SystemSerializeObject(referenceObjects);
@@ -2853,7 +2853,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 AppDomain.Unload(domain);
             }
-        } 
+        }
 #endif
 
         [Test]
@@ -3316,7 +3316,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 object deserializedObject; // = BinarySerializer.Deserialize(serObject);
                 using (BinaryReader br = new TestReader(new MemoryStream(serObject), dumpDetails))
                 {
-                    deserializedObject = BinarySerializer.DeserializeByReader(br);
+                    deserializedObject = BinarySerializer.DeserializeByReader(br, options);
                 }
 
                 if (!safeCompare)

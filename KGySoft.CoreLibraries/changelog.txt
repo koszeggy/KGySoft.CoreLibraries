@@ -37,6 +37,10 @@
 ==============================
 - ResXResourceManager: Handling possible SecurityException from a partially trusted domain when determining executing directory
 
++ KGySoft.Serialization namespace:
+==============================
++ BinarySerializer class: Adding optional options BinarySerializationOptions parameter to deserialization methods.
+
 
 ~~~~~~~~~
 ! v4.7.0:

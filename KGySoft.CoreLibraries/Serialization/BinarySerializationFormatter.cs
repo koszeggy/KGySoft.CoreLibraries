@@ -72,7 +72,7 @@ using KGySoft.Reflection;
  * 8. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
  *    - SerializeSupportedDictionaryValues - twice when generic dictionary type; otherwise, only once
- *   [- SerializeComplexGenericCollections  - when generic]
+ *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
  * 9. Add type to description - Collections
 */
@@ -456,6 +456,7 @@ namespace KGySoft.Serialization
         #region Constants
 
         private const BinarySerializationOptions extendedFlags = (BinarySerializationOptions)(1 << 7);
+        private const int ticksPerMinute = 600_000_000;
 
         #endregion
 
@@ -1267,8 +1268,8 @@ namespace KGySoft.Serialization
 
         private static void WriteDateTimeOffset(BinaryWriter bw, DateTimeOffset dateTimeOffset)
         {
-            bw.Write(((DateTime)Reflector.GetField(dateTimeOffset, "m_dateTime")).Ticks);
-            bw.Write((short)Reflector.GetField(dateTimeOffset, "m_offsetMinutes"));
+            bw.Write(dateTimeOffset.Ticks);
+            bw.Write((short)(dateTimeOffset.Offset.Ticks / ticksPerMinute));
         }
 
         private static void WriteVersion(BinaryWriter bw, Version version)
@@ -2603,9 +2604,7 @@ namespace KGySoft.Serialization
                     case DataTypes.TimeSpan:
                         return result = new TimeSpan(br.ReadInt64());
                     case DataTypes.DateTimeOffset:
-                        result = new DateTimeOffset();
-                        Reflector.SetField(result, "m_dateTime", new DateTime(br.ReadInt64()));
-                        Reflector.SetField(result, "m_offsetMinutes", br.ReadInt16());
+                        result = new DateTimeOffset(br.ReadInt64(), TimeSpan.FromMinutes(br.ReadInt16()));
                         return result;
                     case DataTypes.DBNull:
                         if (collectionDescriptor != null)
@@ -2865,7 +2864,7 @@ namespace KGySoft.Serialization
             OnDeserializing(result);
 
             bool useSurrogate = manager.TryGetSurrogate(type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector);
-            bool isISerializable = result is ISerializable;
+            bool isISerializable = result is ISerializable && (manager.Options & BinarySerializationOptions.IgnoreISerializable) == BinarySerializationOptions.None;
 
             // default graph was serialized
             if (isDefaultObjectGraph)

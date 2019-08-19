@@ -75,8 +75,10 @@ namespace KGySoft.Serialization
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
+        /// <param name="options">Options of the serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>The deserialized object.</returns>
-        public static object Deserialize(byte[] rawData, int offset = 0) => new BinarySerializationFormatter().Deserialize(rawData, offset);
+        public static object Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> into a <paramref name="stream"/>.
@@ -91,8 +93,10 @@ namespace KGySoft.Serialization
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="options">Options of the serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>The deserialized data.</returns>
-        public static object DeserializeFromStream(Stream stream) => new BinarySerializationFormatter().DeserializeFromStream(stream);
+        public static object DeserializeFromStream(Stream stream, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -110,13 +114,15 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="reader"/>.
         /// </summary>
+        /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
+        /// <param name="options">Options of the serialization. This parameter is optional.
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <remarks>
         /// <note>If data was serialized by <see cref="Serialize">Serialize</see> or <see cref="SerializeToStream">SerializeToStream</see> methods, then
         /// <paramref name="reader"/> must use UTF-8 encoding to get correct result. If data was serialized by the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as there.</note>
         /// </remarks>
-        /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        public static object DeserializeByReader(BinaryReader reader) => new BinarySerializationFormatter().DeserializeByReader(reader);
+        public static object DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
 
         /// <summary>
         /// Serializes a <see cref="ValueType"/> into a byte array.
