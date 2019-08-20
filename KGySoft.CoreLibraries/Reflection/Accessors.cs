@@ -22,20 +22,20 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Resources;
 #if NET35 || NET40 || NET45
 using System.Runtime.Serialization;
 using System.Text;
 #endif
 using System.Threading;
-using System.Xml;
 
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
-using KGySoft.IO;
+
 #if NETCOREAPP2_0
 using CollectionExtensions = KGySoft.CoreLibraries.CollectionExtensions;
 #endif
@@ -190,6 +190,13 @@ namespace KGySoft.Reflection
 #endif
 
         #endregion
+
+        #endregion
+
+        #region Any Member
+
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor> properties;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type FieldType, string FieldNamePattern), FieldAccessor> fields;
 
         #endregion
 
@@ -537,6 +544,46 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region Any Member
+
+        private static PropertyAccessor GetProperty(Type type, string propertyName)
+        {
+            PropertyAccessor GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
+            {
+                // Properties are meant to be used for visible members so always exact names are searched
+                PropertyInfo property = key.DeclaringType.GetProperty(key.PropertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                return property == null ? null : PropertyAccessor.GetAccessor(property);
+            }
+
+            if (properties == null)
+                Interlocked.CompareExchange(ref properties, new Cache<(Type, string), PropertyAccessor>(GetPropertyAccessor).GetThreadSafeAccessor(), null);
+            return properties[(type, propertyName)];
+        }
+
+        private static FieldAccessor GetField(Type type, Type fieldType, string fieldNamePattern)
+        {
+            FieldAccessor GetFieldAccessor((Type DeclaringType, Type FieldType, string FieldNamePattern) key)
+            {
+                // Fields are meant to be used for non-visible members either by type or name pattern (or both)
+                FieldInfo field = key.DeclaringType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
+                                         && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
+                return field == null ? null : FieldAccessor.GetAccessor(field);
+            }
+
+            if (fields == null)
+                Interlocked.CompareExchange(ref fields, new Cache<(Type, Type, string), FieldAccessor>(GetFieldAccessor).GetThreadSafeAccessor(), null);
+            return fields[(type, fieldType, fieldNamePattern)];
+        }
+
+        private static T GetFieldValueOrDefault<T>(object obj, T defaultValue = default, string fieldNamePattern = null)
+        {
+            var field = GetField(obj.GetType(), typeof(T), fieldNamePattern);
+            return field == null ? defaultValue : (T)field.Get(obj);
+        }
+
+        #endregion
+
         #endregion
 
         #region Internal Accessor Methods
@@ -673,6 +720,91 @@ namespace KGySoft.Reflection
 #else
             new UnmanagedMemoryStreamWrapper(ums);
 #endif
+
+        #endregion
+
+        #endregion
+
+        #region Members of Any Type
+        // Note: The methods also here can be as specific as possible. "Any Type" means that the caller must know whether these methods can be used for a type.
+        //       And that these members use a common cache for any type.
+        // Important: Visible members are allowed to be called on types only where we know these properties exist. Otherwise, an InvalidOperationException can be thrown.
+        //            For non-visible members we always have to provide some default value.
+
+        #region Specific Members
+
+        internal static int Count([NoEnumeration] this IEnumerable collection)
+        {
+            if (collection is ICollection c)
+                return c.Count;
+            PropertyAccessor property = GetProperty(collection.GetType(), "Count") // StringDictionary
+                ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
+            return (int)property.Get(collection);
+        }
+
+        internal static int Capacity([NoEnumeration] this IEnumerable collection)
+        {
+            PropertyAccessor property = GetProperty(collection.GetType(), "Capacity") // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList
+                ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
+            return (int)property.Get(collection);
+        }
+
+        internal static bool IsCaseInsensitive([NoEnumeration] this IEnumerable collection)
+            => GetFieldValueOrDefault(collection, false, "caseInsensitive"); // HybridDictionary
+
+        internal static object GetComparer([NoEnumeration] this IEnumerable collection)
+        {
+            // 1.) By Comparer/EqualityComparer property
+            Type type = collection.GetType();
+            PropertyAccessor property = GetProperty(type, "Comparer") // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>
+                ?? GetProperty(type, "EqualityComparer"); // Hashtable
+            if (property != null)
+                return property.Get(collection);
+
+            // 2.) By *comparer* field
+            return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary
+        }
+
+        internal static CompareInfo CompareInfo(this Comparer comparer)
+            => GetFieldValueOrDefault<CompareInfo>(comparer);
+
+        internal static int[] GetUnderlyingArray(this BitArray bitArray)
+        {
+            var result = GetFieldValueOrDefault<int[]>(bitArray);
+            if (result != null)
+                return result;
+
+            // we need to restore the array from the bits (should never occurs but we must provide a fallback due to private field handling)
+            int len = bitArray.Length;
+            result = new int[len > 0 ? ((len - 1) >> 5) + 1 : 0];
+            for (int i = 0; i < len; i++)
+            {
+                if (bitArray[i])
+                    result[i >> 5] |= 1 << (i % 32);
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region Any Member
+        // Note: These methods could be completely replaced by Reflector methods but these use a smaller and more direct cache
+
+        internal static object GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
+        {
+            Type type = genTypeDef.GetGenericType(t);
+            PropertyAccessor property = GetProperty(type, propertyName)
+                ?? throw new InvalidOperationException(Res.ReflectionStaticPropertyDoesNotExist(propertyName, genTypeDef));
+            return property.Get(null);
+        }
+
+        internal static object GetPropertyValue(object instance, string propertyName)
+        {
+            PropertyAccessor property = GetProperty(instance.GetType(), propertyName)
+                ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
+            return property.Get(instance);
+        }
 
         #endregion
 

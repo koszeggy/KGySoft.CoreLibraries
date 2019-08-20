@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
+using System.Threading;
 using KGySoft.Annotations;
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -17,43 +21,73 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Static descriptor for collection types. Instance-specific descriptor is in <see cref="DataTypeDescriptor"/>.
         /// </summary>
-        sealed class CollectionSerializationInfo
+        private sealed class CollectionSerializationInfo
         {
             #region Fields
 
-            internal readonly static CollectionSerializationInfo Default = new CollectionSerializationInfo();
+            #region Static Fields
+
+            internal static readonly CollectionSerializationInfo Default = new CollectionSerializationInfo();
+
+            #endregion
+
+            #region Instance Fields
+
+            /// <summary>
+            /// Can contain more elements only for generic collections. Will be instantiated only on deserialization.
+            /// Locking accessor because the serialization info is stored in a static shared dictionary.
+            /// </summary>
+            private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor> ctorCache;
+            private IThreadSafeCacheAccessor<Type, MethodAccessor> addMethodCache;
+
+            #endregion
 
             #endregion
 
             #region Properties
 
+            #region Internal Properties
+
             internal CollectionInfo Info { private get; set; }
+
+            /// <summary>
+            /// Specifies the constructor arguments to be used. Order matters!
+            /// </summary>
+            internal CollectionCtorArguments[] CtorArguments { private get; set; }
+
             /// <summary>
             /// Should be specified only when target collection is not <see cref="IList"/> or <see cref="ICollection{T}"/> implementation,
-            /// or when defining it results faster access that resolving the generic Add method for each access
+            /// or when defining it results faster access than resolving the generic Add method for each access. Can refer to a generic method definition.
             /// </summary>
             internal string SpecificAddMethod { get; set; }
 
-            internal string ComparerFieldName { private get; set; }
+            internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
+            internal bool IsNonGenericCollection => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
+            internal bool IsNonGenericDictionary => !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
+            internal bool IsGenericCollection => IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
+            internal bool IsGenericDictionary => IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
+            internal bool IsDictionary => (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
+            internal bool IsSingleElement => (Info & CollectionInfo.IsSingleElement) == CollectionInfo.IsSingleElement;
 
-            internal bool ReverseElements { get { return (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements; } }
-            internal bool IsNonGenericCollection { get { return !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None; } }
-            internal bool IsNonGenericDictionary { get { return !IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary; } }
-            internal bool IsGenericCollection { get { return IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None; } }
-            internal bool IsGenericDictionary { get { return IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary; } }
-            internal bool IsDictionary { get { return (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary; } }
-            internal bool IsSingleElement { get { return (Info & CollectionInfo.IsSingleElement) == CollectionInfo.IsSingleElement; } }
-            private bool IsGeneric { get { return (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric; } }
-            private bool HasCapacity { get { return (Info & CollectionInfo.HasCapacity) == CollectionInfo.HasCapacity; } }
-            private bool HasEqualityComparer { get { return (Info & CollectionInfo.HasEqualityComparer) == CollectionInfo.HasEqualityComparer; } }
-            private bool HasAnyComparer { get { return HasEqualityComparer || (Info & CollectionInfo.HasComparer) == CollectionInfo.HasComparer; } }
-            private bool HasCaseInsensitivity { get { return (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity; } }
-            private bool HasReadOnly { get { return (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly; } }
-            private bool DefaultEnumComparer { get { return (Info & CollectionInfo.DefaultEnumComparer) == CollectionInfo.DefaultEnumComparer; } }
+            #endregion
+
+            #region Private Properties
+
+            private bool IsGeneric => (Info & CollectionInfo.IsGeneric) == CollectionInfo.IsGeneric;
+            private bool HasCapacity => (Info & CollectionInfo.HasCapacity) == CollectionInfo.HasCapacity;
+            private bool HasEqualityComparer => (Info & CollectionInfo.HasEqualityComparer) == CollectionInfo.HasEqualityComparer;
+            private bool HasAnyComparer => HasEqualityComparer || (Info & CollectionInfo.HasComparer) == CollectionInfo.HasComparer;
+            private bool HasCaseInsensitivity => (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity;
+            private bool HasReadOnly => (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly;
+            private bool DefaultEnumComparer => (Info & CollectionInfo.DefaultEnumComparer) == CollectionInfo.DefaultEnumComparer;
+
+            #endregion
 
             #endregion
 
             #region Methods
+
+            #region Internal Methods
 
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
@@ -65,44 +99,41 @@ namespace KGySoft.Serialization
                     return;
 
                 // 1.) Count
-                if (collection is ICollection c)
-                    Write7BitInt(bw, c.Count);
-                else
-                    Write7BitInt(bw, (int)Reflector.GetProperty(collection, "Count"));
+                Write7BitInt(bw, collection.Count());
 
-                // 2.) Capacity
+                // 2.) Capacity - public property in all cases
                 if (HasCapacity)
-                    Write7BitInt(bw, (int)Reflector.GetProperty(collection, "Capacity"));
+                    Write7BitInt(bw, collection.Capacity());
 
-                // 3.) Case sensitivity
+                // 3.) Case sensitivity - only HybridDictionary
                 if (HasCaseInsensitivity)
-                    bw.Write((bool)Reflector.GetField(collection, "caseInsensitive"));
+                    bw.Write(collection.IsCaseInsensitive());
 
                 // 4.) ReadOnly
                 if (HasReadOnly)
                 {
-                    if (collection is IList list)
-                        bw.Write(list.IsReadOnly);
-                    else
+                    switch (collection)
                     {
-                        if (collection is IDictionary dictionary)
+                        case IList list:
+                            bw.Write(list.IsReadOnly);
+                            break;
+                        case IDictionary dictionary:
                             bw.Write(dictionary.IsReadOnly);
-                        else
-                            // should never occur for suppoerted collections, throwing internal error without resource
-                            throw new SerializationException("Could not write IsReadOnly state of collection " + collection.GetType());
+                            break;
+                        default:
+                            // should never occur for supported collections, throwing internal error without resource
+                            Debug.Fail("Could not write IsReadOnly state of collection " + collection.GetType());
+                            bw.Write(false);
+                            break;
                     }
                 }
 
                 // 5.) Comparer
                 if (HasAnyComparer)
                 {
-                    object comparer = GetComparer(collection);
-                    object referenceComparer = GetDefaultComparer(collection.GetType(), DefaultEnumComparer);
-
-                    // is default comparer
-                    bool isDefaultComparer = AreComparersEquals(referenceComparer, comparer);
+                    object comparer = collection.GetComparer();
+                    bool isDefaultComparer = comparer == null || IsDefaultComparer(collection, comparer);
                     bw.Write(isDefaultComparer);
-
                     if (!isDefaultComparer)
                         owner.Write(bw, comparer, false, manager);
                 }
@@ -135,126 +166,136 @@ namespace KGySoft.Serialization
                 if (HasReadOnly)
                     descriptor.IsReadOnly = br.ReadBoolean();
 
-                // Creating collection based on the infos above (comparer is added later because of id caching)
-                List<Type> ctorParamTypes = new List<Type> { Reflector.IntType }; // a collection can have capacity ctor parameter even is does not have Capacity property
-                List<object> ctorParams = new List<object> { capacity };
-                //if (comparer != null)
-                //{
-                //    if (IsGeneric)
-                //        if (HasEqualityComparer)
-                //            ctorParamTypes.Add(typeof(IEqualityComparer<>).MakeGenericType(new Type[] { descriptor.ElementType }));
-                //        else
-                //            ctorParamTypes.Add(typeof(IComparer<>).MakeGenericType(new Type[] { descriptor.ElementType }));
-                //    else
-                //        if (HasEqualityComparer)
-                //            ctorParamTypes.Add(typeof(IEqualityComparer));
-                //        else
-                //            ctorParamTypes.Add(typeof(IComparer));
-                //    ctorParams.Add(comparer);
-                //}
-                if (HasCaseInsensitivity)
-                {
-                    ctorParamTypes.Add(Reflector.BoolType);
-                    ctorParams.Add(caseInsensitive);
-                }
+                // 5.) Comparer
+                object comparer = null;
+                if (HasAnyComparer && !br.ReadBoolean())
+                    comparer = owner.Read(br, false, manager);
 
-                // try 1: capacity and case insesitivity if specified
-                Type collectionType = descriptor.GetTypeToCreate();
-                ConstructorInfo ctor = collectionType.GetConstructor(ctorParamTypes.ToArray());
-
-                // try 2: trying without capacity
-                if (ctor == null)
-                {
-                    ctorParamTypes.RemoveAt(0);
-                    ctor = collectionType.GetConstructor(ctorParamTypes.ToArray());
-                    if (ctor != null)
-                        ctorParams.RemoveAt(0);
-                }
-
-                // should never occur for supported collections, throwing internal error without resource
-                if (ctor == null)
-                    throw new SerializationException($"Could not create type {collectionType.GetTypeName(false)} because no appropriate constructor found");
-
-                object result = Reflector.CreateInstance(ctor, ctorParams.ToArray());
+                object result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
                 if (addToCache)
                     manager.AddObjectToCache(result);
-
-                // 5.) Comparer
-                if (HasAnyComparer && !br.ReadBoolean())
-                {
-                    object comparer = owner.Read(br, false, manager);
-                    SetComparer(result, comparer);
-                }
 
                 return result;
             }
 
-            private object GetDefaultComparer(Type type, bool defaultEnumComparer)
+            internal CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)
             {
-                // non-generic
-                if (!IsGeneric)
+                CreateInstanceAccessor GetCtorAccessor(Type type)
                 {
-                    // non-generic equality default: null
-                    return HasEqualityComparer ? null : Comparer.Default;
+                    if (CtorArguments == null)
+                        return CreateInstanceAccessor.GetAccessor(type);
+                    Type[] args = new Type[CtorArguments.Length];
+                    for (int i = 0; i < CtorArguments.Length; i++)
+                    {
+                        switch (CtorArguments[i])
+                        {
+                            case CollectionCtorArguments.Capacity:
+                                args[i] = Reflector.IntType;
+                                break;
+                            case CollectionCtorArguments.CaseInsensitivity:
+                                args[i] = Reflector.BoolType;
+                                break;
+                            case CollectionCtorArguments.Comparer:
+                                args[i] = IsGeneric
+                                    ? HasEqualityComparer
+                                        ? typeof(IEqualityComparer<>).GetGenericType(descriptor.ElementType)
+                                        : typeof(IComparer<>).GetGenericType(descriptor.ElementType)
+                                    : HasEqualityComparer
+                                        ? typeof(IEqualityComparer)
+                                        : typeof(IComparer);
+                                break;
+                            case CollectionCtorArguments.Key:
+                                args[i] = descriptor.ElementType;
+                                break;
+                            case CollectionCtorArguments.Value:
+                                args[i] = descriptor.DictionaryValueType;
+                                break;
+                            default:
+                                throw new InvalidOperationException($"Unsupported {nameof(CollectionCtorArguments)}");
+                        }
+                    }
+
+                    return CreateInstanceAccessor.GetAccessor(type.GetConstructor(args) ?? throw new InvalidOperationException(Res.ReflectionCtorNotFound(type)));
                 }
 
-                // enum comparer
-                Type elementType = type.GetGenericArguments()[0];
-                if (defaultEnumComparer && elementType.IsEnum)
-                {
-                    Type comparerType = typeof(EnumComparer<>).MakeGenericType(new Type[] { elementType });
-                    return Reflector.GetProperty(comparerType, "Comparer");
-                }
-
-                // generic equality comparer
-                if (HasEqualityComparer)
-                {
-                    Type comparerType = typeof(EqualityComparer<>).MakeGenericType(new Type[] { elementType });
-                    return Reflector.GetProperty(comparerType, "Default");
-                }
-                // generic relation comparer
-                else
-                {
-                    Type comparerType = typeof(Comparer<>).MakeGenericType(new Type[] { elementType });
-                    return Reflector.GetProperty(comparerType, "Default");
-                }
+                if (ctorCache == null)
+                    Interlocked.CompareExchange(ref ctorCache, new Cache<Type, CreateInstanceAccessor>(GetCtorAccessor).GetThreadSafeAccessor(), null);
+                return ctorCache[descriptor.Type];
             }
 
-            private static bool AreComparersEquals(object referenceComparer, object comparer)
+            internal MethodAccessor GetAddMethod(DataTypeDescriptor descriptor, string addMethodName)
             {
-                if (Equals(referenceComparer, comparer))
+                MethodAccessor GetAddMethodAccessor(Type type)
+                {
+                    Type[] args = descriptor.IsDictionary ? new[] { descriptor.ElementType, descriptor.DictionaryValueType } : new[] { descriptor.ElementType };
+                    return MethodAccessor.GetAccessor(type.GetMethod(addMethodName, args));
+                }
+
+                if (addMethodName == null)
+                    return null;
+                if (addMethodCache == null)
+                    Interlocked.CompareExchange(ref addMethodCache, new Cache<Type, MethodAccessor>(GetAddMethodAccessor).GetThreadSafeAccessor(), null);
+                return addMethodCache[descriptor.Type];
+            }
+
+            #endregion
+
+            #region Private Methods
+
+            private bool IsDefaultComparer([NoEnumeration]IEnumerable collection, object comparer)
+            {
+                object GetDefaultComparer(Type type)
+                {
+                    if (!IsGeneric)
+                        return HasEqualityComparer ? null : Comparer.Default;
+
+                    Type elementType = type.GetGenericArguments()[0];
+                    if (DefaultEnumComparer && elementType.IsEnum)
+                        return typeof(EnumComparer<>).GetPropertyValue(elementType, nameof(EnumComparer<_>.Comparer));
+                    return HasEqualityComparer
+                        ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<_>.Default))
+                        : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
+                }
+
+                object defaultComparer = GetDefaultComparer(collection.GetType());
+                if (Equals(defaultComparer, comparer))
                     return true;
 
-                if (referenceComparer is Comparer && comparer is Comparer)
-                    return Equals(Reflector.GetField(referenceComparer, "m_compareInfo"), Reflector.GetField(comparer, "m_compareInfo"));
+                if (defaultComparer is Comparer def && comparer is Comparer c)
+                    return Equals(def.CompareInfo(), c.CompareInfo());
 
                 return false;
             }
 
-            private object GetComparer(object collection)
+            private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, object comparer)
             {
-                if (!ComparerFieldName.Contains("."))
-                    return Reflector.GetField(collection, ComparerFieldName);
-                return ComparerFieldName.Split('.').Aggregate(collection, (obj, name) => Reflector.GetField(obj, name));
-            }
+                CreateInstanceAccessor ctor = GetInitializer(descriptor);
+                if (CtorArguments == null)
+                    return ctor.CreateInstance();
 
-            private void SetComparer(object collection, object comparer)
-            {
-                if (!ComparerFieldName.Contains("."))
+                object[] parameters = new object[CtorArguments.Length];
+                for (int i = 0; i < CtorArguments.Length; i++)
                 {
-                    Reflector.SetField(collection, ComparerFieldName, comparer);
-                    return;
+                    switch (CtorArguments[i])
+                    {
+                        case CollectionCtorArguments.Capacity:
+                            parameters[i] = capacity;
+                            break;
+                        case CollectionCtorArguments.Comparer:
+                            parameters[i] = comparer;
+                            break;
+                        case CollectionCtorArguments.CaseInsensitivity:
+                            parameters[i] = isCaseInsensitive;
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Unsupported {nameof(CollectionCtorArguments)}");
+                    }
                 }
 
-                string[] chain = ComparerFieldName.Split('.');
-                object obj = collection;
-                for (int i = 0; i < chain.Length - 1; i++)
-                {
-                    obj = Reflector.GetField(obj, chain[i]);
-                }
-
-                Reflector.SetField(obj, chain[chain.Length - 1], comparer);
+                return ctor.CreateInstance(parameters);
             }
+
+            #endregion
 
             #endregion
         }

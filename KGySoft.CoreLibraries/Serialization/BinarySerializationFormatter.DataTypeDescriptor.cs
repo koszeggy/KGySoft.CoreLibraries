@@ -229,8 +229,7 @@ namespace KGySoft.Serialization
                 switch (CollectionDataType)
                 {
                     case DataTypes.OrderedDictionary:
-                        Reflector.SetField(collection, "_readOnly", true);
-                        return collection;
+                        return ((OrderedDictionary)collection).AsReadOnly();
                     default:
                         throw new NotSupportedException(Res.BinarySerializationReadOnlyCollectionNotSupported(ToString()));
                 }
@@ -247,26 +246,9 @@ namespace KGySoft.Serialization
                 {
                     case DataTypes.DictionaryEntryNullable:
                     case DataTypes.KeyValuePairNullable:
-                        // nullables: returning the underlying type because they have the key/value constructor
                         return Nullable.GetUnderlyingType(Type);
                     default:
                         return Type;
-                }
-            }
-
-            internal string GetFieldNameToSet(bool isValue)
-            {
-                switch (CollectionDataType)
-                {
-                    case DataTypes.DictionaryEntry:
-                    case DataTypes.DictionaryEntryNullable:
-                        return !isValue ? "_key" : "_value";
-                    case DataTypes.KeyValuePair:
-                    case DataTypes.KeyValuePairNullable:
-                        return !isValue ? "key" : "value";
-                    default:
-                        // should never occur, throwing internal error without resource
-                        throw new InvalidOperationException("GetFieldToSet is only for single element types");
                 }
             }
 
@@ -345,7 +327,7 @@ namespace KGySoft.Serialization
                         if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)
                         {
                             Type underlyingType = GetElementType(dataType & ~DataTypes.Nullable, br, manager);
-                            return Reflector.NullableType.MakeGenericType(underlyingType);
+                            return Reflector.NullableType.GetGenericType(underlyingType);
                         }
 
                         // enum
@@ -361,31 +343,31 @@ namespace KGySoft.Serialization
                 switch (collectionDataType)
                 {
                     case DataTypes.List:
-                        return (Reflector.ListGenType.MakeGenericType(ElementType));
+                        return (Reflector.ListGenType.GetGenericType(ElementType));
                     case DataTypes.LinkedList:
-                        return (typeof(LinkedList<>).MakeGenericType(ElementType));
+                        return (typeof(LinkedList<>).GetGenericType(ElementType));
                     case DataTypes.HashSet:
-                        return (typeof(HashSet<>).MakeGenericType(ElementType));
+                        return (typeof(HashSet<>).GetGenericType(ElementType));
                     case DataTypes.Queue:
-                        return (typeof(Queue<>).MakeGenericType(ElementType));
+                        return (typeof(Queue<>).GetGenericType(ElementType));
                     case DataTypes.Stack:
-                        return (typeof(Stack<>).MakeGenericType(ElementType));
+                        return (typeof(Stack<>).GetGenericType(ElementType));
                     case DataTypes.CircularList:
-                        return (typeof(CircularList<>).MakeGenericType(ElementType));
+                        return (typeof(CircularList<>).GetGenericType(ElementType));
 #if !NET35
                     case DataTypes.SortedSet:
-                        return (typeof(SortedSet<>).MakeGenericType(ElementType));
+                        return (typeof(SortedSet<>).GetGenericType(ElementType));
 #endif
 
 
                     case DataTypes.Dictionary:
-                        return (Reflector.DictionaryGenType.MakeGenericType(ElementType, DictionaryValueType));
+                        return (Reflector.DictionaryGenType.GetGenericType(ElementType, DictionaryValueType));
                     case DataTypes.SortedList:
-                        return (typeof(SortedList<,>).MakeGenericType(ElementType, DictionaryValueType));
+                        return (typeof(SortedList<,>).GetGenericType(ElementType, DictionaryValueType));
                     case DataTypes.SortedDictionary:
-                        return (typeof(SortedDictionary<,>).MakeGenericType(ElementType, DictionaryValueType));
+                        return (typeof(SortedDictionary<,>).GetGenericType(ElementType, DictionaryValueType));
                     case DataTypes.CircularSortedList:
-                        return (typeof(CircularSortedList<,>).MakeGenericType(ElementType, DictionaryValueType));
+                        return (typeof(CircularSortedList<,>).GetGenericType(ElementType, DictionaryValueType));
 
                     case DataTypes.ArrayList:
                         return typeof(ArrayList);
@@ -414,9 +396,9 @@ namespace KGySoft.Serialization
                     case DataTypes.DictionaryEntryNullable:
                         return typeof(DictionaryEntry?);
                     case DataTypes.KeyValuePair:
-                        return (Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType));
+                        return (Reflector.KeyValuePairType.GetGenericType(ElementType, DictionaryValueType));
                     case DataTypes.KeyValuePairNullable:
-                        return Reflector.NullableType.MakeGenericType((Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType)));
+                        return Reflector.NullableType.GetGenericType((Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType)));
 
                     default:
                         throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(BinarySerializationFormatter.ToString(collectionDataType)));

@@ -2079,6 +2079,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 new BitVector32(13),
                 BitVector32.CreateSection(13),
+                BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);

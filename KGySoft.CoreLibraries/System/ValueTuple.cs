@@ -55,7 +55,12 @@ namespace System
                 && EqualityComparer<T3>.Default.Equals(Item3, other.Item3);
 
         public override bool Equals(object obj) => obj is ValueTuple<T1, T2, T3> tuple && Equals(tuple);
-        public override int GetHashCode() => ValueTuple.CombineHashCodes(EqualityComparer<T1>.Default.GetHashCode(Item1), EqualityComparer<T2>.Default.GetHashCode(Item2));
+
+        public override int GetHashCode()
+            => ValueTuple.CombineHashCodes(EqualityComparer<T1>.Default.GetHashCode(Item1),
+                EqualityComparer<T2>.Default.GetHashCode(Item2),
+                EqualityComparer<T3>.Default.GetHashCode(Item3));
+
         public static bool operator ==(ValueTuple<T1, T2, T3> left, ValueTuple<T1, T2, T3> right) => left.Equals(right);
         public static bool operator !=(ValueTuple<T1, T2, T3> left, ValueTuple<T1, T2, T3> right) => !left.Equals(right);
     }

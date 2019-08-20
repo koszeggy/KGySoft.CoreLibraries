@@ -118,23 +118,16 @@ namespace KGySoft.Reflection
 #endif
 
         internal static readonly Assembly SystemCoreLibrariesAssembly = ObjectType.Assembly;
-#if NETFRAMEWORK
-        internal static readonly Assembly SystemAssembly = typeof(Queue<>).Assembly;
-        internal static readonly Assembly SystemCoreAssembly = typeof(HashSet<>).Assembly; 
-#elif NETCOREAPP
-        internal static readonly Assembly SystemCollectionsAssembly = typeof(HashSet<>).Assembly;
-#endif
         internal static readonly Assembly KGySoftLibrariesAssembly = typeof(Reflector).Assembly;
-
-        private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
-        private static LockingDictionary<string, Assembly> assemblyCache;
-        private static LockingDictionary<string, Type> typeCacheByString;
-        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
 
         #endregion
 
         #region Private Fields
 
+        private static IThreadSafeCacheAccessor<Type, string> defaultMemberCache;
+        private static LockingDictionary<string, Assembly> assemblyCache;
+        private static LockingDictionary<string, Type> typeCacheByString;
+        private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> typeCacheByAssembly;
         private static bool? canCreateUninitializedObject;
 
         #endregion
@@ -1860,12 +1853,12 @@ namespace KGySoft.Reflection
             }
 
             // 2.) By default constructor if preferred
-            bool? hasDefaultCtor = null;
-            if (preferCtor && (hasDefaultCtor = type.CanBeCreatedWithoutParameters()) == true)
+            ConstructorInfo defaultCtor = null;
+            if (preferCtor && (defaultCtor = type.GetDefaultConstructor()) != null)
             {
                 try
                 {
-                    result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                    result = CreateInstanceAccessor.GetAccessor(defaultCtor).CreateInstance();
                     return true;
                 }
                 catch (Exception e) when (!e.IsCritical())
@@ -1880,17 +1873,16 @@ namespace KGySoft.Reflection
                 return true;
 
             // default constructor was already checked
-            if (hasDefaultCtor.HasValue)
+            if (defaultCtor != null)
                 return false;
 
             // 4.) By default constructor as a fallback
-            if (type.CanBeCreatedWithoutParameters())
+            if ((defaultCtor = type.GetDefaultConstructor()) != null)
             {
                 try
                 {
-                    result = CreateInstanceAccessor.GetAccessor(type).CreateInstance();
+                    result = CreateInstanceAccessor.GetAccessor(defaultCtor).CreateInstance();
                     return true;
-
                 }
                 catch (Exception e) when (!e.IsCritical())
                 {

@@ -60,6 +60,8 @@ namespace KGySoft.CoreLibraries
         private static readonly IDictionary<Type, IDictionary<Type, Delegate>> conversions = new LockingDictionary<Type, IDictionary<Type, Delegate>>();
 
         private static IThreadSafeCacheAccessor<Type, int> sizeOfCache;
+        private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type T2), Type> genericTypeCache;
+        private static IThreadSafeCacheAccessor<Type, ConstructorInfo> defaultCtorCache;
 
         #endregion
 
@@ -518,7 +520,16 @@ namespace KGySoft.CoreLibraries
             => !(type.IsValueType || type.IsClass && type.IsSealed);
 
         internal static ConstructorInfo GetDefaultConstructor(this Type type)
-            => type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+        {
+            if (defaultCtorCache == null)
+            {
+                Interlocked.CompareExchange(ref defaultCtorCache,
+                    new Cache<Type, ConstructorInfo>(t => type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)).GetThreadSafeAccessor(),
+                    null);
+            }
+
+            return defaultCtorCache[type];
+        }
 
         internal static bool CanBeCreatedWithoutParameters(this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
@@ -575,6 +586,13 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        internal static Type GetGenericType(this Type genTypeDef, Type t1, Type t2 = null)
+        {
+            if (genericTypeCache == null)
+                Interlocked.CompareExchange(ref genericTypeCache, genericTypeCache = new Cache<(Type, Type, Type), Type>(CreateGenericType).GetThreadSafeAccessor(), null);
+            return genericTypeCache[(genTypeDef, t1, t2)];
+        }
+
         #endregion
 
         #region Private Methods
@@ -613,6 +631,8 @@ namespace KGySoft.CoreLibraries
             var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
             return (int)method.Invoke();
         }
+
+        private static Type CreateGenericType((Type GenTypeDef, Type T1, Type T2) key) => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
 
         #endregion
 

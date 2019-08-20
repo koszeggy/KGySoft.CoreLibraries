@@ -39,7 +39,8 @@
 
 + KGySoft.Serialization namespace:
 ==============================
-+ BinarySerializer class: Adding optional options BinarySerializationOptions parameter to deserialization methods.
++ BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
+* BinarySerializationFormatter: Improving performance.
 
 
 ~~~~~~~~~

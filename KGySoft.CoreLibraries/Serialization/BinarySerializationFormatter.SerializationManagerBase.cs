@@ -17,6 +17,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -39,13 +40,11 @@ namespace KGySoft.Serialization
             protected static readonly Assembly[] KnownAssemblies =
             {
                 Reflector.SystemCoreLibrariesAssembly,
+                Reflector.KGySoftLibrariesAssembly,
 #if NETFRAMEWORK
-                Reflector.SystemAssembly,
-                Reflector.SystemCoreAssembly,
-#elif NETCOREAPP
-                Reflector.SystemCollectionsAssembly,
+                typeof(Queue<>).Assembly, // System.dll
+                typeof(HashSet<>).Assembly // System.Core.dll 
 #endif
-                Reflector.KGySoftLibrariesAssembly
             };
 
             protected static readonly Type[] KnownTypes =

@@ -394,7 +394,7 @@ namespace KGySoft.Serialization
         /// Special serialization info for collections
         /// </summary>
         [Flags]
-        enum CollectionInfo
+        private enum CollectionInfo
         {
             None = 0,
 
@@ -451,6 +451,18 @@ namespace KGySoft.Serialization
             DefaultEnumComparer = 1 << 9,
         }
 
+        /// <summary>
+        /// Possible arguments of a collection constructor
+        /// </summary>
+        private enum CollectionCtorArguments
+        {
+            Capacity,
+            Comparer,
+            CaseInsensitivity,
+            Key,
+            Value
+        }
+
         #endregion
 
         #region Constants
@@ -468,50 +480,92 @@ namespace KGySoft.Serialization
         {
             // generic collections
             { DataTypes.Array, CollectionSerializationInfo.Default }, // Could be IsGeneric, but does not matter as arrays are handled separately
-            { DataTypes.List, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
+            { DataTypes.List, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity } }
+            },
             { DataTypes.LinkedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric } },
-            { DataTypes.HashSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-                SpecificAddMethod = "Add", ComparerFieldName = "m_comparer"} },
-            { DataTypes.Queue, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric,
-                SpecificAddMethod = "Enqueue" } },
-            { DataTypes.Stack, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                SpecificAddMethod = "Push" } },
-            { DataTypes.CircularList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity } },
-            { DataTypes.SortedSet, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
-                ComparerFieldName = "comparer" } },
+            { DataTypes.HashSet, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
+#if NETCOREAPP2_0
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },  
+#elif NET35 || NET40 || NET45
+                CtorArguments = new[] { CollectionCtorArguments.Comparer },
+#else
+#error Select ctor arguments for the newly added .NET version.
+#endif
+                SpecificAddMethod = nameof(HashSet<_>.Add) } // because faster than via ICollection<T>.Add
+            },
+            { DataTypes.Queue, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                SpecificAddMethod = nameof(Queue<_>.Enqueue) }
+            },
+            { DataTypes.Stack, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                SpecificAddMethod = nameof(Stack<_>.Push) }
+            },
+            { DataTypes.CircularList, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity } }
+            },
+#if !NET35
+            { DataTypes.SortedSet, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Comparer } }
+            },
+#endif
 
             // generic dictionaries
-            { DataTypes.Dictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                ComparerFieldName = "comparer"} },
-            { DataTypes.SortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                ComparerFieldName = "comparer" } },
-            { DataTypes.SortedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                ComparerFieldName = "_set.comparer.keyComparer" } },
+            { DataTypes.Dictionary, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
+            { DataTypes.SortedList, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
+            { DataTypes.SortedDictionary, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Comparer } } },
             { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
             { DataTypes.KeyValuePairNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            { DataTypes.CircularSortedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
-                ComparerFieldName = "comparer" } },
+            { DataTypes.CircularSortedList, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
 
             // non-generic collections
-            { DataTypes.ArrayList, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity } },
-            { DataTypes.QueueNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.None,
-                SpecificAddMethod = "Enqueue" } },
-            { DataTypes.StackNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.ReverseElements,
-                SpecificAddMethod = "Push" } },
+            { DataTypes.ArrayList, new CollectionSerializationInfo {
+                Info = CollectionInfo.HasCapacity,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity } } },
+            { DataTypes.QueueNonGeneric, new CollectionSerializationInfo {
+                Info = CollectionInfo.None,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                SpecificAddMethod = nameof(Queue.Enqueue) } },
+            { DataTypes.StackNonGeneric, new CollectionSerializationInfo {
+                Info = CollectionInfo.ReverseElements,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                SpecificAddMethod = nameof(Stack.Push) } },
             { DataTypes.StringCollection, CollectionSerializationInfo.Default },
 
             // non-generic dictionaries
-            { DataTypes.Hashtable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                ComparerFieldName = "_keycomparer" } },
-            { DataTypes.SortedListNonGeneric, new CollectionSerializationInfo { Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                ComparerFieldName = "comparer" } },
-            { DataTypes.ListDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, comparer and not equalitycomparer
-                ComparerFieldName = "comparer" } },
-            { DataTypes.HybridDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity } },
-            { DataTypes.OrderedDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
-                ComparerFieldName = "_comparer"} },
-            { DataTypes.StringDictionary, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary,
-                SpecificAddMethod = "Add"} },
+            { DataTypes.Hashtable, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
+            { DataTypes.SortedListNonGeneric, new CollectionSerializationInfo {
+                Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.Capacity } } },
+            { DataTypes.ListDictionary, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, it uses Comparer and not EqualityComparer
+                CtorArguments = new[] { CollectionCtorArguments.Comparer } } },
+            { DataTypes.HybridDictionary, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.CaseInsensitivity } } },
+            { DataTypes.OrderedDictionary, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
+                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
+            { DataTypes.StringDictionary, new CollectionSerializationInfo {
+                Info = CollectionInfo.IsDictionary,
+                SpecificAddMethod = nameof(StringDictionary.Add)} },
             { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
             { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
         };
@@ -555,7 +609,6 @@ namespace KGySoft.Serialization
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
         };
 
-
         private static readonly Dictionary<Type, DataTypes> supportedCollections = new Dictionary<Type, DataTypes>
         {
             { typeof(Array), DataTypes.Array },
@@ -591,7 +644,7 @@ namespace KGySoft.Serialization
 
         #endregion
 
-            #region Instance Fields
+        #region Instance Fields
 
         private List<IDeserializationCallback> deserRegObjects;
         private BinarySerializationOptions serializationOptions;
@@ -1283,7 +1336,7 @@ namespace KGySoft.Serialization
         private static void WriteUri(BinaryWriter bw, Uri uri)
         {
             bw.Write(uri.IsAbsoluteUri);
-            bw.Write((string)Reflector.InvokeMethod(uri, "GetParts", UriComponents.SerializationInfoString, UriFormat.UriEscaped));
+            bw.Write(uri.GetComponents(UriComponents.SerializationInfoString, UriFormat.UriEscaped));
         }
 
         private static void WriteBitArray(BinaryWriter bw, BitArray bitArray)
@@ -1292,7 +1345,7 @@ namespace KGySoft.Serialization
             Write7BitInt(bw, bitArray.Length);
             if (length > 0)
             {
-                int[] value = (int[])Reflector.GetField(bitArray, "m_array");
+                int[] value = bitArray.GetUnderlyingArray();
                 foreach (int i in value)
                     bw.Write(i);
             }
@@ -1391,6 +1444,57 @@ namespace KGySoft.Serialization
             while ((b & 0x80) != 0);
 
             return result;
+        }
+
+        private static Version ReadVersion(BinaryReader br)
+        {
+            int major = br.ReadInt32();
+            int minor = br.ReadInt32();
+            int build = br.ReadInt32();
+            int revision = br.ReadInt32();
+            if (revision == -1)
+                return new Version(major, minor);
+            if (build == -1)
+                return new Version(major, minor, build);
+            return new Version(major, minor, build, revision);
+        }
+
+        private static Uri ReadUri(BinaryReader br)
+        {
+            bool isAbsolute = br.ReadBoolean();
+            return new Uri(br.ReadString(), isAbsolute ? UriKind.Absolute : UriKind.Relative);
+        }
+
+        private static BitArray ReadBitArray(BinaryReader br)
+        {
+            int length = Read7BitInt(br);
+            var values = new int[(length + 31) >> 5];
+            if (length > 0)
+            {
+                for (int i = 0; i < values.Length; i++)
+                    values[i] = br.ReadInt32();
+            }
+
+            return new BitArray(values);
+        }
+
+        private static BitVector32.Section ReadSection(BinaryReader br)
+        {
+            short mask = br.ReadInt16();
+            short offset = br.ReadInt16();
+            if (offset == 0)
+                return BitVector32.CreateSection(mask);
+
+            BitVector32.Section shift = BitVector32.CreateSection(1);
+            while (shift.Offset < offset - 1)
+                shift = BitVector32.CreateSection(1, shift);
+            return BitVector32.CreateSection(mask, shift);
+        }
+
+        private static StringBuilder ReadStringBuilder(BinaryReader br)
+        {
+            int capacity = Read7BitInt(br);
+            return new StringBuilder(br.ReadString(), capacity);
         }
 
         private static object ReadEnum(BinaryReader br, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
@@ -1864,15 +1968,15 @@ namespace KGySoft.Serialization
                     WriteElement(bw, element.Key, keyCollectionDataTypes, keyDataType, collectionKeyType, manager);
                     WriteElement(bw, element.Value, valueCollectionDataTypes, valueDataType, collectionValueType, manager);
                 }
+
+                return;
             }
-            // if cannot be cast to a non-generic dictionary, Key and Value properties can be accessed only via reflection
-            else
+
+            // Single KeyValuePair only: cannot be cast to a non-generic dictionary, Key and Value properties must be accessed by name
+            foreach (object element in collection)
             {
-                foreach (object element in collection)
-                {
-                    WriteElement(bw, Reflector.GetProperty(element, "Key"), keyCollectionDataTypes, keyDataType, collectionKeyType, manager);
-                    WriteElement(bw, Reflector.GetProperty(element, "Value"), valueCollectionDataTypes, valueDataType, collectionValueType, manager);
-                }
+                WriteElement(bw, Accessors.GetPropertyValue(element, nameof(KeyValuePair<_, _>.Key)), keyCollectionDataTypes, keyDataType, collectionKeyType, manager);
+                WriteElement(bw, Accessors.GetPropertyValue(element, nameof(KeyValuePair<_, _>.Value)), valueCollectionDataTypes, valueDataType, collectionValueType, manager);
             }
         }
 
@@ -2327,9 +2431,8 @@ namespace KGySoft.Serialization
         {
             if (methods == null)
                 return;
-
             foreach (MethodInfo method in methods)
-                Reflector.InvokeMethod(obj, method, Context);
+                MethodAccessor.GetAccessor(method).Invoke(obj, Context);
         }
 
         /// <summary>
@@ -2455,23 +2558,21 @@ namespace KGySoft.Serialization
                     return cachedResult;
             }
 
-            // KeyValuePair, dictionary entry
+            CollectionSerializationInfo serInfo = serializationInfo[descriptor.CollectionDataType];
+
+            // KeyValuePair, DictionaryEntry
             if (descriptor.IsSingleElement)
             {
-                object result = Reflector.CreateInstance(descriptor.GetTypeToCreate());
+                object key = ReadElement(br, descriptor, manager, false);
+                object value = ReadElement(br, descriptor, manager, true);
+                object result = serInfo.GetInitializer(descriptor).CreateInstance(key, value);
                 if (addToCache)
                     manager.AddObjectToCache(result);
-                object key = ReadElement(br, descriptor, manager, false);
-                object value = descriptor.IsDictionary ? ReadElement(br, descriptor, manager, true) : null;
-                Reflector.SetField(result, descriptor.GetFieldNameToSet(false), key);
-                Reflector.SetField(result, descriptor.GetFieldNameToSet(true), value);
                 return result;
             }
 
-            CollectionSerializationInfo serInfo = serializationInfo[descriptor.CollectionDataType];
             IEnumerable collection = (IEnumerable)serInfo.InitializeCollection(this, br, addToCache, descriptor, manager, out int count);
-
-            MethodInfo addMethod = serInfo.SpecificAddMethod != null ? collection.GetType().GetMethod(serInfo.SpecificAddMethod) : null;
+            MethodAccessor addMethod = serInfo.GetAddMethod(descriptor, serInfo.SpecificAddMethod);
 
             for (int i = 0; i < count; i++)
             {
@@ -2482,7 +2583,7 @@ namespace KGySoft.Serialization
                 {
                     if (addMethod != null)
                     {
-                        Reflector.InvokeMethod(collection, addMethod, element, value);
+                        addMethod.Invoke(collection, element, value);
                         continue;
                     }
 
@@ -2495,16 +2596,16 @@ namespace KGySoft.Serialization
                     }
 #if NET35
 
-                    // generic dictionary with null value: calling generic Add because non-generic one may fail under .NET 4
-                    Reflector.InvokeMethod(collection, nameof(IDictionary<_,_>.Add), element, null);
+                    // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
+                    addMethod = serInfo.GetAddMethod(descriptor, nameof(IDictionary<_,_>.Add));
+                    addMethod.Invoke(collection, element, null);
                     continue;
 #endif
-
                 }
 
                 if (addMethod != null)
                 {
-                    Reflector.InvokeMethod(collection, addMethod, element);
+                    addMethod.Invoke(collection, element);
                     continue;
                 }
 
@@ -2547,6 +2648,18 @@ namespace KGySoft.Serialization
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
         private object ReadObject(BinaryReader br, bool isRoot, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
+            bool TryGetFromCache(out object cachedValue)
+            {
+                if (collectionDescriptor == null)
+                {
+                    cachedValue = null;
+                    return false;
+                }
+
+                Debug.Assert(addToCache, "Reference element types of collections should be cached");
+                return manager.TryGetCachedObject(br, out cachedValue);
+            }
+
             bool is7BitEncoded = (dataType & DataTypes.Store7BitEncoded) != DataTypes.Null;
 
             // nullable type
@@ -2557,172 +2670,93 @@ namespace KGySoft.Serialization
                     return null;
             }
 
-            object result = null;
+            object createdResult = null;
             try
             {
                 object cachedResult;
                 switch (dataType & ~DataTypes.Store7BitEncoded & ~DataTypes.Nullable)
                 {
                     case DataTypes.Bool:
-                        return result = br.ReadBoolean();
+                        return createdResult = br.ReadBoolean();
                     case DataTypes.UInt8:
-                        return result = br.ReadByte();
+                        return createdResult = br.ReadByte();
                     case DataTypes.Int8:
-                        return result = br.ReadSByte();
+                        return createdResult = br.ReadSByte();
                     case DataTypes.Int16:
-                        return result = is7BitEncoded ? (short)Read7BitInt(br) : br.ReadInt16();
+                        return createdResult = is7BitEncoded ? (short)Read7BitInt(br) : br.ReadInt16();
                     case DataTypes.UInt16:
-                        return result = is7BitEncoded ? (ushort)Read7BitInt(br) : br.ReadUInt16();
+                        return createdResult = is7BitEncoded ? (ushort)Read7BitInt(br) : br.ReadUInt16();
                     case DataTypes.Int32:
-                        return result = is7BitEncoded ? Read7BitInt(br) : br.ReadInt32();
+                        return createdResult = is7BitEncoded ? Read7BitInt(br) : br.ReadInt32();
                     case DataTypes.UInt32:
-                        return result = is7BitEncoded ? (uint)Read7BitInt(br) : br.ReadUInt32();
+                        return createdResult = is7BitEncoded ? (uint)Read7BitInt(br) : br.ReadUInt32();
                     case DataTypes.Int64:
-                        return result = is7BitEncoded ? Read7BitLong(br) : br.ReadInt64();
+                        return createdResult = is7BitEncoded ? Read7BitLong(br) : br.ReadInt64();
                     case DataTypes.UInt64:
-                        return result = is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64();
+                        return createdResult = is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64();
                     case DataTypes.Char:
-                        return result = is7BitEncoded ? (char)Read7BitInt(br) : (char)br.ReadUInt16();
+                        return createdResult = is7BitEncoded ? (char)Read7BitInt(br) : (char)br.ReadUInt16();
                     case DataTypes.String:
-                        if (collectionDescriptor != null)
-                        {
-                            Debug.Assert(addToCache, "Reference element types of collections should be cached");
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                        }
-
-                        return result = br.ReadString();
+                        return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = br.ReadString();
                     case DataTypes.Single:
-                        return result = br.ReadSingle();
+                        return createdResult = br.ReadSingle();
                     case DataTypes.Double:
-                        return result = br.ReadDouble();
+                        return createdResult = br.ReadDouble();
                     case DataTypes.Decimal:
-                        return result = br.ReadDecimal();
+                        return createdResult = br.ReadDecimal();
                     case DataTypes.DateTime:
                         DateTimeKind kind = (DateTimeKind)br.ReadByte();
-                        return result = new DateTime(br.ReadInt64(), kind);
+                        return createdResult = new DateTime(br.ReadInt64(), kind);
                     case DataTypes.TimeSpan:
-                        return result = new TimeSpan(br.ReadInt64());
+                        return createdResult = new TimeSpan(br.ReadInt64());
                     case DataTypes.DateTimeOffset:
-                        result = new DateTimeOffset(br.ReadInt64(), TimeSpan.FromMinutes(br.ReadInt16()));
-                        return result;
+                        createdResult = new DateTimeOffset(br.ReadInt64(), TimeSpan.FromMinutes(br.ReadInt16()));
+                        return createdResult;
                     case DataTypes.DBNull:
-                        if (collectionDescriptor != null)
-                        {
-                            Debug.Assert(addToCache, "Reference element types of collections should be cached");
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                            Debug.Fail("DBNull singleton instance must be in the cache");
-                        }
-
+                        if (TryGetFromCache(out cachedResult))
+                            return cachedResult;
                         Debug.Assert(!addToCache, "DBNull should be returned without cache only when not in collection.");
                         return DBNull.Value;
                     case DataTypes.IntPtr:
-                        return result = new IntPtr(br.ReadInt64());
+                        return createdResult = new IntPtr(br.ReadInt64());
                     case DataTypes.UIntPtr:
-                        return result = new UIntPtr(br.ReadUInt64());
+                        return createdResult = new UIntPtr(br.ReadUInt64());
                     case DataTypes.Object:
                         // object - returning object instance on root level, otherwise, doing recursion because can mean any type as an element type
                         if (collectionDescriptor == null)
-                            return result = new object();
+                            return createdResult = new object();
                         // result is not set here - when caching is needed, will be done in the recursion
                         return Read(br, false, manager);
                     case DataTypes.Version:
-                        if (collectionDescriptor != null)
-                        {
-                            Debug.Assert(addToCache, "Reference element types of collections should be cached");
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                        }
-
-                        int major = br.ReadInt32();
-                        int minor = br.ReadInt32();
-                        int build = br.ReadInt32();
-                        int revision = br.ReadInt32();
-                        if (revision == -1)
-                            return result = new Version(major, minor);
-                        if (build == -1)
-                            return result = new Version(major, minor, build);
-                        return result = new Version(major, minor, build, revision);
+                        return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadVersion(br);
                     case DataTypes.Guid:
-                        return result = new Guid(br.ReadBytes(16));
+                        return createdResult = new Guid(br.ReadBytes(16));
                     case DataTypes.Uri:
-                        if (collectionDescriptor != null)
-                        {
-                            Debug.Assert(addToCache, "Reference element types of collections should be cached");
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                        }
-
-                        bool isAbsolute = br.ReadBoolean();
-                        return result = new Uri(br.ReadString(), isAbsolute ? UriKind.Absolute : UriKind.Relative);
+                        return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadUri(br);
                     case DataTypes.BitArray:
-                        if (collectionDescriptor != null)
-                        {
-                            Debug.Assert(addToCache, "Reference element types of collections should be cached");
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                        }
-
-                        int length = Read7BitInt(br);
-                        result = new BitArray(length);
-                        if (length > 0)
-                        {
-                            int[] value = new int[(length + 31) >> 5]; // ">> 5" is "/ 32" but faster
-                            for (int i = 0; i < value.Length; i++)
-                            {
-                                value[i] = br.ReadInt32();
-                            }
-
-                            Reflector.SetField(result, "m_array", value);
-                        }
-                        return result;
+                        return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadBitArray(br);
                     case DataTypes.BitVector32:
-                        return result = new BitVector32(br.ReadInt32());
+                        return createdResult = new BitVector32(br.ReadInt32());
                     case DataTypes.BitVector32Section:
-                        return result = Reflector.CreateInstance(typeof(BitVector32.Section), br.ReadInt16(), br.ReadInt16());
+                        return createdResult = ReadSection(br);
                     case DataTypes.StringBuilder:
-                        if (collectionDescriptor != null)
-                        {
-                            Debug.Assert(addToCache, "Reference element types of collections should be cached");
-                            if (manager.TryGetCachedObject(br, out cachedResult))
-                                return cachedResult;
-                        }
-
-                        int capacity = Read7BitInt(br);
-                        return result = new StringBuilder(br.ReadString(), capacity);
-
-                    // IBinarySerializable
+                        return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                     case DataTypes.BinarySerializable:
                         return ReadBinarySerializable(br, isRoot, addToCache, collectionDescriptor, manager, isTValue);
-
-                    // recursive graph
                     case DataTypes.RecursiveObjectGraph:
                         return ReadObjectGraph(br, isRoot, addToCache, collectionDescriptor, manager, isTValue);
-
-                    // raw structure
                     case DataTypes.RawStruct:
-                        Type structType = collectionDescriptor == null
-                            ? manager.ReadType(br)
-                            : collectionDescriptor.GetElementType(isTValue);
-                        byte[] rawData = br.ReadBytes(Read7BitInt(br));
-                        result = BinarySerializer.DeserializeValueType(structType, rawData);
-                        OnDeserializing(result);
-                        OnDeserialized(result);
-                        return result;
-
+                        return createdResult = ReadValueType(br, collectionDescriptor, manager, isTValue);
                     default:
-                        // enum
                         if ((dataType & DataTypes.Enum) == DataTypes.Enum)
-                            return result = ReadEnum(br, dataType, collectionDescriptor, manager, isTValue);
-
+                            return createdResult = ReadEnum(br, dataType, collectionDescriptor, manager, isTValue);
                         throw new InvalidOperationException(Res.BinarySerializationCannotDeserializeObject(ToString(dataType)));
                 }
             }
             finally
             {
-                if (addToCache && result != null)
-                    manager.AddObjectToCache(result);
+                if (addToCache && createdResult != null)
+                    manager.AddObjectToCache(createdResult);
             }
         }
 
@@ -3004,6 +3038,7 @@ namespace KGySoft.Serialization
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
 #if NETCOREAPP2_0
+#error Reflector
                 Reflector.InvokeCtor(obj, ci, si, Context);
 #else
                 ci.SerializationInvoke(obj, si, Context);
@@ -3048,6 +3083,7 @@ namespace KGySoft.Serialization
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
 
 #if NETCOREAPP2_0
+#error Reflector
                 Reflector.InvokeCtor(obj, ci, si, Context);
 #else
                 ci.SerializationInvoke(obj, si, Context);
@@ -3110,18 +3146,31 @@ namespace KGySoft.Serialization
                 throw new SerializationException(Res.BinarySerializationMissingField(obj.GetType(), elements.First().Key));
         }
 
-#endregion
+        [SecurityCritical]
+        private object ReadValueType(BinaryReader br, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        {
+            Type structType = collectionDescriptor == null
+                ? manager.ReadType(br)
+                : collectionDescriptor.GetElementType(isTValue);
+            byte[] rawData = br.ReadBytes(Read7BitInt(br));
+            object result = BinarySerializer.DeserializeValueType(structType, rawData);
+            OnDeserializing(result);
+            OnDeserialized(result);
+            return result;
+        }
 
-#region Explicitly Implemented Interface Methods
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
 
         object IFormatter.Deserialize(Stream serializationStream) => DeserializeFromStream(serializationStream);
 
         void IFormatter.Serialize(Stream serializationStream, object graph) => SerializeToStream(serializationStream, graph);
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }
