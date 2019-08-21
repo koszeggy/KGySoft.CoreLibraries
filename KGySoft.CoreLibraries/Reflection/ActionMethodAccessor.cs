@@ -43,7 +43,7 @@ namespace KGySoft.Reflection
 
         #region Constructors
 
-        internal ActionMethodAccessor(MethodBase mi) // now can be used for ctors but that is not cached in the base! See the comment in Reflector
+        internal ActionMethodAccessor(MethodBase mi) // Now can be used for ctors but that is not cached in the base! See Accessors.GetCtorMethod
             : base(mi)
         {
         }

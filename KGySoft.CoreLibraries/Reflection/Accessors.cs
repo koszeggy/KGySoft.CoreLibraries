@@ -28,7 +28,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 #if NET35 || NET40 || NET45
-using System.Runtime.Serialization;
 using System.Text;
 #endif
 using System.Threading;
@@ -166,14 +165,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region RuntimeConstructorInfo
-
-#if NET35 || NET40 || NET45
-        private static ActionMethodAccessor methodRuntimeConstructorInfo_SerializationInvoke;
-#endif
-
-        #endregion
-
         #region MemoryStream
 
         private static FunctionMethodAccessor methodMemoryStream_InternalGetBuffer;
@@ -198,6 +189,7 @@ namespace KGySoft.Reflection
 
         private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor> properties;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type FieldType, string FieldNamePattern), FieldAccessor> fields;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type P1, Type P2), ActionMethodAccessor> ctorMethods;
 
         #endregion
 
@@ -497,16 +489,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region RuntimeConstructorInfo
-
-#if NET35 || NET40 || NET45
-        private static ActionMethodAccessor RuntimeConstructorInfo_SerializationInvoke(ConstructorInfo ci) => methodRuntimeConstructorInfo_SerializationInvoke ?? (methodRuntimeConstructorInfo_SerializationInvoke = new ActionMethodAccessor(ci.GetType().GetMethod("SerializationInvoke", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !NETCOREAPP2_0 // We can execute the constructor as a method in .NET Core/Standard
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
         #region MemoryStream
 
 #if NET35 || NET40 || NET45
@@ -595,6 +577,21 @@ namespace KGySoft.Reflection
             }
 
             field.Set(obj, value);
+        }
+
+        private static ActionMethodAccessor GetCtorMethod(Type type, object[] ctorArgs)
+        {
+            ActionMethodAccessor GetCtorMethodAccessor((Type Type, Type P1, Type P2) key)
+            {
+                ConstructorInfo ci = key.P1 == null 
+                    ? key.Type.GetDefaultConstructor()
+                    : key.Type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, key.P2 == null ? new[] { key.P1 } : new[] { key.P1, key.P2 }, null);
+                return ci == null ? null : new ActionMethodAccessor(ci);
+            }
+
+            if (ctorMethods == null)
+                Interlocked.CompareExchange(ref ctorMethods, new Cache<(Type, Type, Type), ActionMethodAccessor>(GetCtorMethodAccessor).GetThreadSafeAccessor(), null);
+            return ctorMethods[(type, ctorArgs?.ElementAtOrDefault(0)?.GetType(), ctorArgs?.ElementAtOrDefault(1)?.GetType())];
         }
 
         #endregion
@@ -713,14 +710,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region RuntimeConstructorInfo
-
-#if NET35 || NET40 || NET45
-        internal static void SerializationInvoke(this ConstructorInfo ci, object target, SerializationInfo info, StreamingContext context) => RuntimeConstructorInfo_SerializationInvoke(ci).Invoke(ci, target, info, context);
-#endif
-
-        #endregion
-
         #region MemoryStream
 
         internal static byte[] InternalGetBuffer(this MemoryStream ms) => (byte[])MemoryStream_InternalGetBuffer?.Invoke(ms);
@@ -835,6 +824,20 @@ namespace KGySoft.Reflection
             PropertyAccessor property = GetProperty(instance.GetType(), propertyName)
                 ?? throw new InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
             return property.Get(instance);
+        }
+
+        /// <summary>
+        /// Invokes a constructor on an already created instance.
+        /// </summary>
+        internal static bool TryInvokeCtor(object instance, params object[] ctorArgs)
+        {
+            Debug.Assert(ctorArgs == null || ctorArgs.Length <= 2, "Constructors with more than 2 arguments are not cached. Use MethodBase.Invoke instead.");
+            ActionMethodAccessor accessor = GetCtorMethod(instance.GetType(), ctorArgs);
+            if (accessor == null)
+                return false;
+
+            accessor.Invoke(instance, ctorArgs);
+            return true;
         }
 
         #endregion

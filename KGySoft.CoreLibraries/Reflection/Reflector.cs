@@ -1666,16 +1666,6 @@ namespace KGySoft.Reflection
         public static object CreateInstance(ConstructorInfo ctor, params object[] parameters)
             => CreateInstance(ctor, ReflectionWays.Auto, parameters);
 
-        /// <summary>
-        /// Invokes a constructor on an already created instance.
-        /// </summary>
-        internal static void InvokeCtor(object instance, ConstructorInfo ctor, params object[] parameters)
-        {
-            // TODO: The new solution could be in ActionMethodAccessor.Invoke (now prepared for ctors) but that is not cached and I didn't want a new cache here.
-            // Performance test: MethodBase.Invoke is just 4x slower than an already compiled invoker but at the first time invoker is 3000x slower.
-            ctor.Invoke(instance, parameters);
-        }
-
         #endregion
 
         #region Default Construction (by parameterless constructor or without constructor)
@@ -1834,7 +1824,7 @@ namespace KGySoft.Reflection
         }
 
         [SecurityCritical]
-        internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowCreateWithoutCtor, out object result)
+        internal static bool TryCreateEmptyObject(Type type, bool preferCtor, bool allowAlternativeWay, out object result)
         {
             result = null;
 
@@ -1863,14 +1853,19 @@ namespace KGySoft.Reflection
                 }
                 catch (Exception e) when (!e.IsCritical())
                 {
-                    if (!allowCreateWithoutCtor)
+                    if (!allowAlternativeWay)
                         return false;
                 }
             }
 
             // 3.) Without constructor if allowed
-            if (allowCreateWithoutCtor && TryCreateUninitializedObject(type, out result))
-                return true;
+            if (!preferCtor || allowAlternativeWay)
+            {
+                if (TryCreateUninitializedObject(type, out result))
+                    return true;
+                if (!allowAlternativeWay)
+                    return false;
+            }
 
             // default constructor was already checked
             if (defaultCtor != null)
@@ -1914,8 +1909,8 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// At JIT-time this method may throw a SecurityEception from a partially trusted domain. A separate method because
-        /// the exception is thrown without even executing the code just by recognizing GetUninitializedObject in the method.
+        /// At JIT-time this method may throw a SecurityException from a partially trusted domain. A separate method because
+        /// the exception is thrown without even executing the code just by recognizing the GetUninitializedObject call in the body.
         /// </summary>
         [MethodImpl(MethodImplOptions.NoInlining)]
         [SecurityCritical]

@@ -2883,24 +2883,18 @@ namespace KGySoft.Serialization
         {
             byte[] serData = br.ReadBytes(Read7BitInt(br));
 
-            if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
+            if (!Reflector.TryCreateEmptyObject(type, false, false, out object result))
                 throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
 
             if (addToCache)
                 manager.AddObjectToCache(result);
             OnDeserializing(result);
 
-            // Looking for a serializer constructor
-            ConstructorInfo ctor = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new Type[] { typeof(BinarySerializationOptions), typeof(byte[]) }, null);
-            if (ctor != null)
-                Reflector.InvokeCtor(result, ctor, origOptions, serData);
-            else
+            // Trying to use a deserializer constructor in the first place.
+            if (!Accessors.TryInvokeCtor(result, origOptions, serData))
             {
-                // Looking for parameterless constructor
-                ctor = type.GetDefaultConstructor();
-                if (ctor != null)
-                    Reflector.InvokeCtor(result, ctor);
-
+                // Otherwise, using default constructor (if any) + deserializing method
+                Accessors.TryInvokeCtor(result);
                 ((IBinarySerializable)result).Deserialize(origOptions, serData);
             }
 
@@ -2962,7 +2956,7 @@ namespace KGySoft.Serialization
                 type = manager.ReadType(br);
 
             // c.) Reading members
-            if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
+            if (!Reflector.TryCreateEmptyObject(type, false, false, out object result))
                 throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
             int id = 0;
             if (addToCache)
@@ -3104,17 +3098,8 @@ namespace KGySoft.Serialization
             manager.CheckReferences(si);
             if (surrogate == null)
             {
-                // As ISerializable: Invoking serialization constructor
-                ConstructorInfo ci = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(SerializationInfo), typeof(StreamingContext) }, null);
-                if (ci == null)
+                if (!Accessors.TryInvokeCtor(obj, si, Context))
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
-
-#if NETCOREAPP2_0
-#error Reflector
-                Reflector.InvokeCtor(obj, ci, si, Context);
-#else
-                ci.SerializationInvoke(obj, si, Context);
-#endif
             }
             else
             {
@@ -3150,16 +3135,8 @@ namespace KGySoft.Serialization
             if (surrogate == null)
             {
                 // As ISerializable: Invoking serialization constructor
-                ConstructorInfo ci = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new[] { typeof(SerializationInfo), typeof(StreamingContext) }, null);
-                if (ci == null)
+                if (!Accessors.TryInvokeCtor(obj, si, Context))
                     throw new SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
-
-#if NETCOREAPP2_0
-#error Reflector
-                Reflector.InvokeCtor(obj, ci, si, Context);
-#else
-                ci.SerializationInvoke(obj, si, Context);
-#endif
             }
             else
             {
