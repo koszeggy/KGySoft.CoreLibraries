@@ -107,20 +107,6 @@ namespace KGySoft.Serialization
 
             #region Methods
 
-            #region Static Methods
-
-            private static bool IsComparedByValue(Type type)
-            {
-                // TODO: by hashset (lazy init?), maybe this method ban be deleted
-                return type.IsPrimitive || type.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
-                    type.In(Reflector.StringType, Reflector.UIntPtrType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType,
-                        Reflector.DateTimeOffsetType, typeof(Guid));
-            }
-
-            #endregion
-
-            #region Instance Methods
-
             #region Internal Methods
 
 #if NET35
@@ -453,6 +439,10 @@ namespace KGySoft.Serialization
             /// </summary>
             internal bool WriteId(BinaryWriter bw, object data)
             {
+                bool IsComparedByValue(Type type) =>
+                    type.IsPrimitive || type.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
+                    type.In(Reflector.StringType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType, Reflector.DateTimeOffsetType, typeof(Guid));
+
                 // null is always known.
                 if (data == null)
                 {
@@ -548,8 +538,6 @@ namespace KGySoft.Serialization
                 foreach (Type genericArgument in type.GetGenericArguments())
                     WriteType(bw, genericArgument);
             }
-
-            #endregion
 
             #endregion
 

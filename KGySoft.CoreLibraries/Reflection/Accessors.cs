@@ -22,6 +22,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -582,6 +583,20 @@ namespace KGySoft.Reflection
             return field == null ? defaultValue : (T)field.Get(obj);
         }
 
+        private static void SetFieldValue(object obj, string fieldNamePattern, object value, bool throwIfMissing = true)
+        {
+            Type type = obj.GetType();
+            FieldAccessor field = GetField(type, null, fieldNamePattern);
+            if (field == null)
+            {
+                if (throwIfMissing)
+                    throw new InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
+                return;
+            }
+
+            field.Set(obj, value);
+        }
+
         #endregion
 
         #endregion
@@ -726,8 +741,8 @@ namespace KGySoft.Reflection
         #endregion
 
         #region Members of Any Type
-        // Note: The methods also here can be as specific as possible. "Any Type" means that the caller must know whether these methods can be used for a type.
-        //       And that these members use a common cache for any type.
+        // Note: The methods also here should be as specific as possible. "Any Type" means that the caller must know whether these methods can be used for a specific type
+        //       and that these members use a common cache for any type.
         // Important: Visible members are allowed to be called on types only where we know these properties exist. Otherwise, an InvalidOperationException can be thrown.
         //            For non-visible members we always have to provide some default value.
 
@@ -774,7 +789,7 @@ namespace KGySoft.Reflection
             if (result != null)
                 return result;
 
-            // we need to restore the array from the bits (should never occurs but we must provide a fallback due to private field handling)
+            // we need to restore the array from the bits (should never occur but we must provide a fallback due to private field handling)
             int len = bitArray.Length;
             result = new int[len > 0 ? ((len - 1) >> 5) + 1 : 0];
             for (int i = 0; i < len; i++)
@@ -784,6 +799,22 @@ namespace KGySoft.Reflection
             }
 
             return result;
+        }
+
+        internal static void SetKeyValue(object instance, object key, object value)
+        {
+            // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of boxing
+            if (instance is DictionaryEntry)
+            {
+                Type type = instance.GetType();
+                GetProperty(type, nameof(DictionaryEntry.Key)).Set(instance, key);
+                GetProperty(type, nameof(DictionaryEntry.Value)).Set(instance, value);
+                return;
+            }
+
+            Debug.Assert(instance.GetType().IsGenericTypeOf(Reflector.KeyValuePairType));
+            SetFieldValue(instance, "key", key);
+            SetFieldValue(instance, "value", value);
         }
 
         #endregion

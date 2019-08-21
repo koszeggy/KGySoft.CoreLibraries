@@ -105,7 +105,7 @@ namespace KGySoft.Serialization
                 if (surrogateSelector == null)
                     return false;
 
-                if (type.IsPrimitive || type.IsArray || type.In(Reflector.StringType, Reflector.ObjectType, Reflector.UIntPtrType))
+                if (type.IsPrimitive || type.IsArray || type == Reflector.StringType || type == Reflector.ObjectType)
                     return false;
 
                 return TryGetSurrogate(type, out var _, out var _);

@@ -87,6 +87,12 @@ namespace KGySoft.Serialization
 
             #region Methods
 
+            #region Public Methods
+
+            public override string ToString() => Info.ToString<CollectionInfo>();
+
+            #endregion
+
             #region Internal Methods
 
             /// <summary>
@@ -145,10 +151,23 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             internal object InitializeCollection(BinarySerializationFormatter owner, BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
             {
+                object result;
+                
+                // KeyValuePair, DictionaryEntry
                 if (IsSingleElement)
                 {
+                    // Note: If addToCache is true, then the key-value may contain itself via references.
+                    // That's why we create the instance first and then set Key and Value (just like at object graphs).
+                    result = Activator.CreateInstance(descriptor.GetTypeToCreate());
+                    if (addToCache)
+                        manager.AddObjectToCache(result);
+
+                    object key = owner.ReadElement(br, descriptor, manager, false);
+                    object value = owner.ReadElement(br, descriptor, manager, true);
+                    Accessors.SetKeyValue(result, key, value);
+
                     count = 1;
-                    return null;
+                    return result;
                 }
 
                 // 1.) Count
@@ -166,73 +185,36 @@ namespace KGySoft.Serialization
                 if (HasReadOnly)
                     descriptor.IsReadOnly = br.ReadBoolean();
 
+                // In the ID cache the collection comes first and then the comparer so we add a placeholder to the cache.
+                // Unlike for KeyValuePairs this works here because we can assume that a comparer does not reference the collection.
+                int id = 0;
+                if (addToCache)
+                    manager.AddObjectToCache(null, out id);
+
                 // 5.) Comparer
                 object comparer = null;
                 if (HasAnyComparer && !br.ReadBoolean())
                     comparer = owner.Read(br, false, manager);
 
-                object result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
-                if (addToCache)
-                    manager.AddObjectToCache(result);
+                result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
+                if (id != 0)
+                    manager.ReplaceObjectInCache(id, result);
 
                 return result;
             }
 
-            internal CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)
-            {
-                CreateInstanceAccessor GetCtorAccessor(Type type)
-                {
-                    if (CtorArguments == null)
-                        return CreateInstanceAccessor.GetAccessor(type);
-                    Type[] args = new Type[CtorArguments.Length];
-                    for (int i = 0; i < CtorArguments.Length; i++)
-                    {
-                        switch (CtorArguments[i])
-                        {
-                            case CollectionCtorArguments.Capacity:
-                                args[i] = Reflector.IntType;
-                                break;
-                            case CollectionCtorArguments.CaseInsensitivity:
-                                args[i] = Reflector.BoolType;
-                                break;
-                            case CollectionCtorArguments.Comparer:
-                                args[i] = IsGeneric
-                                    ? HasEqualityComparer
-                                        ? typeof(IEqualityComparer<>).GetGenericType(descriptor.ElementType)
-                                        : typeof(IComparer<>).GetGenericType(descriptor.ElementType)
-                                    : HasEqualityComparer
-                                        ? typeof(IEqualityComparer)
-                                        : typeof(IComparer);
-                                break;
-                            case CollectionCtorArguments.Key:
-                                args[i] = descriptor.ElementType;
-                                break;
-                            case CollectionCtorArguments.Value:
-                                args[i] = descriptor.DictionaryValueType;
-                                break;
-                            default:
-                                throw new InvalidOperationException($"Unsupported {nameof(CollectionCtorArguments)}");
-                        }
-                    }
-
-                    return CreateInstanceAccessor.GetAccessor(type.GetConstructor(args) ?? throw new InvalidOperationException(Res.ReflectionCtorNotFound(type)));
-                }
-
-                if (ctorCache == null)
-                    Interlocked.CompareExchange(ref ctorCache, new Cache<Type, CreateInstanceAccessor>(GetCtorAccessor).GetThreadSafeAccessor(), null);
-                return ctorCache[descriptor.Type];
-            }
-
-            internal MethodAccessor GetAddMethod(DataTypeDescriptor descriptor, string addMethodName)
+            internal MethodAccessor GetAddMethod(DataTypeDescriptor descriptor)
             {
                 MethodAccessor GetAddMethodAccessor(Type type)
                 {
-                    Type[] args = descriptor.IsDictionary ? new[] { descriptor.ElementType, descriptor.DictionaryValueType } : new[] { descriptor.ElementType };
-                    return MethodAccessor.GetAccessor(type.GetMethod(addMethodName, args));
+                    string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary keys.
+
+                    MethodInfo method = IsGeneric
+                        ? type.GetMethod(methodName, type.GetGenericArguments()) // Using type arguments to eliminate ambiguity (LinkedList<T>.AddLast)
+                        : type.GetMethod(methodName); // For non-generics arguments are not always objects (StringDictionary)
+                    return MethodAccessor.GetAccessor(method);
                 }
 
-                if (addMethodName == null)
-                    return null;
                 if (addMethodCache == null)
                     Interlocked.CompareExchange(ref addMethodCache, new Cache<Type, MethodAccessor>(GetAddMethodAccessor).GetThreadSafeAccessor(), null);
                 return addMethodCache[descriptor.Type];
@@ -293,6 +275,45 @@ namespace KGySoft.Serialization
                 }
 
                 return ctor.CreateInstance(parameters);
+            }
+
+            private CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)
+            {
+                CreateInstanceAccessor GetCtorAccessor(Type type)
+                {
+                    if (CtorArguments == null)
+                        return CreateInstanceAccessor.GetAccessor(type);
+                    Type[] args = new Type[CtorArguments.Length];
+                    for (int i = 0; i < CtorArguments.Length; i++)
+                    {
+                        switch (CtorArguments[i])
+                        {
+                            case CollectionCtorArguments.Capacity:
+                                args[i] = Reflector.IntType;
+                                break;
+                            case CollectionCtorArguments.CaseInsensitivity:
+                                args[i] = Reflector.BoolType;
+                                break;
+                            case CollectionCtorArguments.Comparer:
+                                args[i] = IsGeneric
+                                    ? HasEqualityComparer
+                                        ? typeof(IEqualityComparer<>).GetGenericType(type.GetGenericArguments()[0])
+                                        : typeof(IComparer<>).GetGenericType(type.GetGenericArguments()[0])
+                                    : HasEqualityComparer
+                                        ? typeof(IEqualityComparer)
+                                        : typeof(IComparer);
+                                break;
+                            default:
+                                throw new InvalidOperationException($"Unsupported {nameof(CollectionCtorArguments)}");
+                        }
+                    }
+
+                    return CreateInstanceAccessor.GetAccessor(type.GetConstructor(args) ?? throw new InvalidOperationException(Res.ReflectionCtorNotFound(type)));
+                }
+
+                if (ctorCache == null)
+                    Interlocked.CompareExchange(ref ctorCache, new Cache<Type, CreateInstanceAccessor>(GetCtorAccessor).GetThreadSafeAccessor(), null);
+                return ctorCache[descriptor.Type];
             }
 
             #endregion

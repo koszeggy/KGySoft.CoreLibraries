@@ -44,6 +44,11 @@ namespace KGySoft.Serialization
             #region Fields
 
             private BinarySerializationOptions serializationOptions;
+            private bool? isDictionary;
+#if NET35
+            private bool? isGenericDictionary; 
+#endif
+            private bool? isSingleElement;
 
             #endregion
 
@@ -59,15 +64,15 @@ namespace KGySoft.Serialization
 
             internal bool IsArray => CollectionDataType == DataTypes.Array;
 
-            internal bool IsDictionary => CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary;
+            internal bool IsDictionary => isDictionary ?? (isDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary).Value;
 
 #if NET35
-            internal bool IsGenericDictionary => CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary;
+            internal bool IsGenericDictionary => isGenericDictionary ?? (isGenericDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary).Value;
 #endif
 
             internal bool IsReadOnly { get; set; }
 
-            internal bool IsSingleElement => serializationInfo[CollectionDataType].IsSingleElement;
+            internal bool IsSingleElement => isSingleElement ?? (isSingleElement = serializationInfo[CollectionDataType].IsSingleElement).Value;
 
             /// <summary>
             /// Decoded type of self descriptor

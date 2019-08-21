@@ -32,6 +32,7 @@ namespace System
         public bool Equals(ValueTuple<T1, T2> other) => EqualityComparer<T1>.Default.Equals(Item1, other.Item1) && EqualityComparer<T2>.Default.Equals(Item2, other.Item2);
         public override bool Equals(object obj) => obj is ValueTuple<T1, T2> tuple && Equals(tuple);
         public override int GetHashCode() => ValueTuple.CombineHashCodes(EqualityComparer<T1>.Default.GetHashCode(Item1), EqualityComparer<T2>.Default.GetHashCode(Item2));
+        public override string ToString() => $"({Item1}, {Item2})";
         public static bool operator ==(ValueTuple<T1, T2> left, ValueTuple<T1, T2> right) => left.Equals(right);
         public static bool operator !=(ValueTuple<T1, T2> left, ValueTuple<T1, T2> right) => !left.Equals(right);
     }
@@ -60,6 +61,8 @@ namespace System
             => ValueTuple.CombineHashCodes(EqualityComparer<T1>.Default.GetHashCode(Item1),
                 EqualityComparer<T2>.Default.GetHashCode(Item2),
                 EqualityComparer<T3>.Default.GetHashCode(Item3));
+
+        public override string ToString() => $"({Item1}, {Item2}, {Item3})";
 
         public static bool operator ==(ValueTuple<T1, T2, T3> left, ValueTuple<T1, T2, T3> right) => left.Equals(right);
         public static bool operator !=(ValueTuple<T1, T2, T3> left, ValueTuple<T1, T2, T3> right) => !left.Equals(right);

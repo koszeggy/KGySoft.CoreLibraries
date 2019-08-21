@@ -288,7 +288,7 @@ namespace KGySoft.Serialization
         /// One of the simple types can be combined with one of the collection types and the flags.
         /// </summary>
         [Flags]
-        [DebuggerDisplay("{BinarySerializationFormatter.ToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
+        //[DebuggerDisplay("{BinarySerializationFormatter.ToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
         enum DataTypes : ushort
         {
             // ------ simple types:
@@ -458,9 +458,7 @@ namespace KGySoft.Serialization
         {
             Capacity,
             Comparer,
-            CaseInsensitivity,
-            Key,
-            Value
+            CaseInsensitivity
         }
 
         #endregion
@@ -480,100 +478,177 @@ namespace KGySoft.Serialization
         {
             // generic collections
             { DataTypes.Array, CollectionSerializationInfo.Default }, // Could be IsGeneric, but does not matter as arrays are handled separately
-            { DataTypes.List, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity } }
+            {
+                DataTypes.List, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                }
             },
-            { DataTypes.LinkedList, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric } },
-            { DataTypes.HashSet, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
+            {
+                DataTypes.LinkedList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    SpecificAddMethod = nameof(LinkedList<_>.AddLast)
+                }
+            },
+            {
+                DataTypes.HashSet, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
 #if NETCOREAPP2_0
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },  
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
 #elif NET35 || NET40 || NET45
-                CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
 #else
 #error Select ctor arguments for the newly added .NET version.
 #endif
-                SpecificAddMethod = nameof(HashSet<_>.Add) } // because faster than via ICollection<T>.Add
+                    SpecificAddMethod = nameof(HashSet<_>.Add) // because faster than via ICollection<T>.Add
+                }
             },
-            { DataTypes.Queue, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                SpecificAddMethod = nameof(Queue<_>.Enqueue) }
+            {
+                DataTypes.Queue, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    SpecificAddMethod = nameof(Queue<_>.Enqueue)
+                }
             },
-            { DataTypes.Stack, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                SpecificAddMethod = nameof(Stack<_>.Push) }
+            {
+                DataTypes.Stack, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    SpecificAddMethod = nameof(Stack<_>.Push)
+                }
             },
-            { DataTypes.CircularList, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity } }
+            {
+                DataTypes.CircularList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                }
             },
 #if !NET35
-            { DataTypes.SortedSet, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Comparer } }
+            {
+                DataTypes.SortedSet, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    SpecificAddMethod = nameof(SortedSet<_>.Add)
+                }
             },
 #endif
 
             // generic dictionaries
-            { DataTypes.Dictionary, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
-            { DataTypes.SortedList, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
-            { DataTypes.SortedDictionary, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Comparer } } },
+            {
+                DataTypes.Dictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                }
+            },
+            {
+                DataTypes.SortedList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                }
+            },
+            {
+                DataTypes.SortedDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                }
+            },
             { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
             { DataTypes.KeyValuePairNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            { DataTypes.CircularSortedList, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
+            {
+                DataTypes.CircularSortedList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.DefaultEnumComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                }
+            },
 
             // non-generic collections
-            { DataTypes.ArrayList, new CollectionSerializationInfo {
-                Info = CollectionInfo.HasCapacity,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity } } },
-            { DataTypes.QueueNonGeneric, new CollectionSerializationInfo {
-                Info = CollectionInfo.None,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                SpecificAddMethod = nameof(Queue.Enqueue) } },
-            { DataTypes.StackNonGeneric, new CollectionSerializationInfo {
-                Info = CollectionInfo.ReverseElements,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                SpecificAddMethod = nameof(Stack.Push) } },
+            {
+                DataTypes.ArrayList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.HasCapacity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                }
+            },
+            {
+                DataTypes.QueueNonGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.None,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    SpecificAddMethod = nameof(Queue.Enqueue)
+                }
+            },
+            {
+                DataTypes.StackNonGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.ReverseElements,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    SpecificAddMethod = nameof(Stack.Push)
+                }
+            },
             { DataTypes.StringCollection, CollectionSerializationInfo.Default },
 
             // non-generic dictionaries
-            { DataTypes.Hashtable, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
-            { DataTypes.SortedListNonGeneric, new CollectionSerializationInfo {
-                Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.Capacity } } },
-            { DataTypes.ListDictionary, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, it uses Comparer and not EqualityComparer
-                CtorArguments = new[] { CollectionCtorArguments.Comparer } } },
-            { DataTypes.HybridDictionary, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.CaseInsensitivity } } },
-            { DataTypes.OrderedDictionary, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
-                CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer } } },
-            { DataTypes.StringDictionary, new CollectionSerializationInfo {
-                Info = CollectionInfo.IsDictionary,
-                SpecificAddMethod = nameof(StringDictionary.Add)} },
+            {
+                DataTypes.Hashtable, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                }
+            },
+            {
+                DataTypes.SortedListNonGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.Capacity }
+                }
+            },
+            {
+                DataTypes.ListDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, it uses Comparer and not EqualityComparer
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                }
+            },
+            {
+                DataTypes.HybridDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.CaseInsensitivity }
+                }
+            },
+            {
+                DataTypes.OrderedDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                }
+            },
+            {
+                DataTypes.StringDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsDictionary,
+                    SpecificAddMethod = nameof(StringDictionary.Add)
+                }
+            },
             { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+            { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } }
         };
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
-            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
+            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4)).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
-        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes> // including non-primitives such as string and UIntPtr
+        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes> // including string
         {
             { Reflector.BoolType, DataTypes.Bool },
             { Reflector.ByteType, DataTypes.UInt8 },
@@ -734,7 +809,7 @@ namespace KGySoft.Serialization
         }
 
         /// <summary>
-        /// Writes AssemblyQiualifiedName of element types and array ranks if needed
+        /// Writes AssemblyQualifiedName of element types and array ranks if needed
         /// </summary>
         [SecurityCritical]
         private static void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, BinarySerializationOptions options, SerializationManager manager)
@@ -1107,12 +1182,6 @@ namespace KGySoft.Serialization
             return result;
         }
 
-        private static bool CanHaveRecursion(CircularList<DataTypes> collectionType)
-            => collectionType.Exists(dt =>
-                (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
-                || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
-                || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
-
         private static void Write7BitInt(BinaryWriter bw, int value)
         {
             uint v = (uint)value;
@@ -1475,7 +1544,7 @@ namespace KGySoft.Serialization
                     values[i] = br.ReadInt32();
             }
 
-            return new BitArray(values);
+            return new BitArray(values) { Length = length };
         }
 
         private static BitVector32.Section ReadSection(BinaryReader br)
@@ -1741,7 +1810,7 @@ namespace KGySoft.Serialization
             if (!isRoot && manager.WriteId(bw, data))
                 return;
 
-            // a.) Natively supported primitive types including string and uintptr (no need for distinct nullables here as they are boxed)
+            // a.) Natively supported primitive types including string (no need to distinct nullable types here as they are boxed)
             if (TryWritePrimitive(bw, data))
                 return;
 
@@ -1826,6 +1895,12 @@ namespace KGySoft.Serialization
         [SecurityCritical]
         private bool TryWriteCollection(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
         {
+            bool CanHaveRecursion(CircularList<DataTypes> dataTypes)
+                => dataTypes.Exists(dt =>
+                    (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
+                    || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
+                    || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
+
             Type type = data.GetType();
 
             if (!IsSupportedCollection(type))
@@ -2559,60 +2634,57 @@ namespace KGySoft.Serialization
             }
 
             CollectionSerializationInfo serInfo = serializationInfo[descriptor.CollectionDataType];
-
-            // KeyValuePair, DictionaryEntry
-            if (descriptor.IsSingleElement)
+            object result = serInfo.InitializeCollection(this, br, addToCache, descriptor, manager, out int count);
+            if (result is IEnumerable collection)
             {
-                object key = ReadElement(br, descriptor, manager, false);
-                object value = ReadElement(br, descriptor, manager, true);
-                object result = serInfo.GetInitializer(descriptor).CreateInstance(key, value);
-                if (addToCache)
-                    manager.AddObjectToCache(result);
-                return result;
-            }
-
-            IEnumerable collection = (IEnumerable)serInfo.InitializeCollection(this, br, addToCache, descriptor, manager, out int count);
-            MethodAccessor addMethod = serInfo.GetAddMethod(descriptor, serInfo.SpecificAddMethod);
-
-            for (int i = 0; i < count; i++)
-            {
-                object element = ReadElement(br, descriptor, manager, false);
-                object value = descriptor.IsDictionary ? ReadElement(br, descriptor, manager, true) : null;
-
-                if (descriptor.IsDictionary)
+                MethodAccessor addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
+                for (int i = 0; i < count; i++)
                 {
+                    object element = ReadElement(br, descriptor, manager, false);
+                    object value = descriptor.IsDictionary ? ReadElement(br, descriptor, manager, true) : null;
+
+                    if (descriptor.IsDictionary)
+                    {
+                        if (addMethod != null)
+                        {
+                            addMethod.Invoke(collection, element, value);
+                            continue;
+                        }
+
+#if NET35
+                        if (value != null || !descriptor.IsGenericDictionary)
+#endif
+                        {
+                            ((IDictionary)collection).Add(element, value);
+                            continue;
+                        }
+#if NET35
+
+                        // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
+                        addMethod = serInfo.GetAddMethod(descriptor);
+                        addMethod.Invoke(collection, element, null);
+                        continue;
+#endif
+                    }
+
                     if (addMethod != null)
                     {
-                        addMethod.Invoke(collection, element, value);
+                        addMethod.Invoke(collection, element);
                         continue;
                     }
 
-#if NET35
-                    if (value != null || !descriptor.IsGenericDictionary)
-#endif
+                    if (collection is IList list)
                     {
-                        ((IDictionary)collection).Add(element, value);
+                        list.Add(element);
                         continue;
                     }
-#if NET35
 
-                    // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
-                    addMethod = serInfo.GetAddMethod(descriptor, nameof(IDictionary<_,_>.Add));
-                    addMethod.Invoke(collection, element, null);
-                    continue;
-#endif
+                    Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");
+                    collection.TryAdd(element, false);
                 }
-
-                if (addMethod != null)
-                {
-                    addMethod.Invoke(collection, element);
-                    continue;
-                }
-
-                collection.TryAdd(element, false);
             }
 
-            return descriptor.IsReadOnly ? descriptor.GetAsReadOnly(collection) : collection;
+            return descriptor.IsReadOnly ? descriptor.GetAsReadOnly(result) : result;
         }
 
         [SecurityCritical]

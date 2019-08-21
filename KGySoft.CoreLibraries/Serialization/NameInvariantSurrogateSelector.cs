@@ -94,7 +94,7 @@ namespace KGySoft.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type), Res.ArgumentNull);
 
-            if (!type.IsPrimitive && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) && !type.In(Reflector.StringType, Reflector.UIntPtrType))
+            if (!type.IsPrimitive && type != Reflector.StringType && !type.IsArray && !typeof(ISerializable).IsAssignableFrom(type) )
             {
                 selector = this;
                 return this;

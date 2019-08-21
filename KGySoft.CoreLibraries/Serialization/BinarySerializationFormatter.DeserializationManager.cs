@@ -51,7 +51,11 @@ namespace KGySoft.Serialization
 
             #region Properties
 
-            private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object> { { 0, null }, { 1, DBNull.Value } });
+            private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object>
+            {
+                { 0, null },
+                { 1, DBNull.Value }
+            });
 
             #endregion
 
@@ -195,8 +199,7 @@ namespace KGySoft.Serialization
                     if (objectReferences == null)
                         objectReferences = new Dictionary<object, List<KeyValuePair<FieldInfo, object>>>(1, ReferenceEqualityComparer.Comparer);
 
-                    List<KeyValuePair<FieldInfo, object>> refUsages;
-                    if (!objectReferences.TryGetValue(objRef, out refUsages))
+                    if (!objectReferences.TryGetValue(objRef, out List<KeyValuePair<FieldInfo, object>> refUsages))
                     {
                         refUsages = new List<KeyValuePair<FieldInfo, object>>();
                         objectReferences.Add(objRef, refUsages);
@@ -217,16 +220,14 @@ namespace KGySoft.Serialization
                 // circular IObjectReferences can be resolved after all, except if custom deserialization is used for unresolved references
                 foreach (SerializationEntry entry in si)
                 {
-                    IObjectReference objRef = entry.Value as IObjectReference;
-                    if (objRef != null && objectReferences.ContainsKey(objRef))
+                    if (entry.Value is IObjectReference objRef && objectReferences.ContainsKey(objRef))
                         throw new SerializationException(Res.BinarySerializationCircularIObjectReference);
                 }
             }
 
             internal void UpdateReferences(IObjectReference objRef, object realObject)
             {
-                List<KeyValuePair<FieldInfo, object>> refUsages;
-                if (objectReferences == null || !objectReferences.TryGetValue(objRef, out refUsages))
+                if (objectReferences == null || !objectReferences.TryGetValue(objRef, out List<KeyValuePair<FieldInfo, object>> refUsages))
                     return;
 
                 foreach (KeyValuePair<FieldInfo, object> usage in refUsages)

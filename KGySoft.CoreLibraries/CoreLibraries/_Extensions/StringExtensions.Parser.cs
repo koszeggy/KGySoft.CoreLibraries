@@ -416,13 +416,13 @@ namespace KGySoft.CoreLibraries
                 return true;
             }
 
-#endregion
+            #endregion
 
-#endregion
+            #endregion
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

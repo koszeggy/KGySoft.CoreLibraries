@@ -524,7 +524,7 @@ namespace KGySoft.CoreLibraries
             if (defaultCtorCache == null)
             {
                 Interlocked.CompareExchange(ref defaultCtorCache,
-                    new Cache<Type, ConstructorInfo>(t => type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)).GetThreadSafeAccessor(),
+                    new Cache<Type, ConstructorInfo>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null)).GetThreadSafeAccessor(),
                     null);
             }
 
