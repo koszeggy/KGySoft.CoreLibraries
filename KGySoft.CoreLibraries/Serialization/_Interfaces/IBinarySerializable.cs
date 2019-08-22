@@ -47,7 +47,7 @@ namespace KGySoft.Serialization
     /// using KGySoft.Serialization;
     ///
     /// // This is a simple sealed class that will never be derived
-    /// public sealed class ExampleSimplev : IBinarySerializable
+    /// public sealed class ExampleSimple : IBinarySerializable
     /// {
     ///     public int IntProp { get; }
     ///     public string StringProp { get; }
@@ -61,7 +61,7 @@ namespace KGySoft.Serialization
     ///
     ///     // this is the special constructor used by the deserializer
     ///     // if you have read-only fields you must implement this constructor
-    ///     private ExampleSimple(BinarySerializationOptions options, byte[] serData)
+    ///     private ExampleSimple(BinarySerializationOptions originalOptions, byte[] serData)
     ///     {
     ///         using (BinaryReader reader = new BinaryReader(new MemoryStream(serData)))
     ///         {
@@ -84,7 +84,7 @@ namespace KGySoft.Serialization
     ///         return ms.ToArray();
     ///     }
     ///
-    ///     public void Deserialize(BinarySerializationOptions options, byte[] serData)
+    ///     public void Deserialize(BinarySerializationOptions originalOptions, byte[] serData)
     ///     {
     ///         throw new InvalidOperationException("Will not be called because special constructor is implemented");
     ///     }
@@ -126,7 +126,7 @@ namespace KGySoft.Serialization
     ///         return ms.ToArray();
     ///     }
     ///
-    ///     void IBinarySerializable.Deserialize(BinarySerializationOptions options, byte[] serData)
+    ///     void IBinarySerializable.Deserialize(BinarySerializationOptions originalOptions, byte[] serData)
     ///     {
     ///         using (BinaryReader reader = new BinaryReader(new MemoryStream(serData)))
     ///         {
@@ -217,8 +217,8 @@ namespace KGySoft.Serialization
         /// Without such constructor parameterless constructor will be called if any (otherwise, no constructors will be executed). The special constructor should be used if the class has read-only fields.
         /// </summary>
         /// <param name="serData">Serialized raw data of the object created by the <see cref="Serialize">Serialize</see> method.</param>
-        /// <param name="options">The same options that were used when the object was serialized by the <see cref="Serialize">Serialize</see> method.</param>
-        void Deserialize(BinarySerializationOptions options, byte[] serData);
+        /// <param name="originalOptions">The same options that were used when the object was serialized by the <see cref="Serialize">Serialize</see> method.</param>
+        void Deserialize(BinarySerializationOptions originalOptions, byte[] serData);
 
         #endregion
     }

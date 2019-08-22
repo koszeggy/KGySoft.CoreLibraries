@@ -2062,18 +2062,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new DateTimeOffset(DateTime.Now),
                     new DateTimeOffset(DateTime.UtcNow),
                     new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
-                    new Uri(@"x:\teszt"), // 20
+                    new Uri(@"x:\teszt"), // 19
                     new DictionaryEntry(1, "alpha"),
                     new KeyValuePair<int,string>(1, "alpha"), // 14
-                    new BitArray(new[] {true, false, true}), // 10 -> 7
+                    new BitArray(new[] {true, false, true}), // 6
                     new StringBuilder("alpha")
                 };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 296 -> 273
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None); // 267
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 296 -> 233
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None); // 226
 
             referenceObjects = new object[]
             {
@@ -2087,7 +2087,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         }
 
         [Test]
-        public void SerializeValues()
+        public void SerializeCompressibleValues()
         {
             object[] referenceObjects =
                 {
@@ -2117,11 +2117,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     Int32.MaxValue,
                     (uint)TestEnumUInt.Treshold,
                     UInt32.MaxValue,
+                    Single.MaxValue,
 
                     // 4 bytes compressed
                     (int)TestEnumInt.Limit,
                     UInt32.MinValue,
                     (uint)TestEnumUInt.Limit,
+                    Single.Epsilon,
 
                     // 8 bytes
                     Int64.MinValue,
@@ -2129,18 +2131,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     Int64.MaxValue,
                     (ulong)TestEnumULong.Treshold,
                     UInt64.MaxValue,
+                    Double.MaxValue,
+                    new IntPtr(IntPtr.Size == 4 ? Int32.MaxValue : Int64.MaxValue),
+                    new UIntPtr(UIntPtr.Size == 4 ? UInt32.MaxValue : UInt64.MaxValue),
 
                     // 8 bytes compressed
                     (long)TestEnumLong.Limit,
                     UInt64.MinValue,
                     (ulong)TestEnumULong.Limit,
+                    Double.Epsilon,
+                    IntPtr.Zero,
+                    UIntPtr.Zero
                 };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 198
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None); // 165
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 217
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None); // 174
         }
 
         [Test]
@@ -2198,10 +2206,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 871
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // ? -> 802
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
@@ -2220,7 +2228,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // -> 1148 -> 849
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // -> 1148 -> 890
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2229,28 +2237,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new BinarySerializableSealedClass(3, "gamma"), // None: 154
-                    new BinarySerializableClass{ IntProp = 1, StringProp = "alpha"}, // None: 148
-                    new BinarySerializableStruct{ IntProp = 2, StringProp = "beta" }, // None: 147
-                    new BinarySerializableStructNoCtor { IntProp = 2, StringProp = "beta" }, // None: 152
-                    new SystemSerializableClass{ IntProp = 3, StringProp = "gamma",  Bool = null }, // None: 224
+                    new BinarySerializableSealedClass(3, "gamma"), // None: 214
+                    new BinarySerializableClass{ IntProp = 1, StringProp = "alpha"}, // None: 208
+                    new BinarySerializableStruct{ IntProp = 2, StringProp = "beta" }, // None: 205
+                    new BinarySerializableStructNoCtor { IntProp = 2, StringProp = "beta" }, // None: 210
+                    new SystemSerializableClass{ IntProp = 3, StringProp = "gamma",  Bool = null }, // None: 283
 
-                    new KeyValuePair<int, object>(1, new object[] {1, "alpha", DateTime.Now, null}), // None: 36
+                    new KeyValuePair<int, object>(1, new object[] {1, "alpha", DateTime.Now, null}), // None: 38
 
-                    new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent, // None: 455
-                    new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 525
-                    new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // IObjectReference - None: 548
-                    DefaultGraphObjRef.Get(), // IObjectReference without ISerializable
-                    new CustomGraphDefaultObjRef{ Name = "alpha" } // obj is ISerializable but IObjectReference is not
+                    new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent, // None: 509
+                    new CustomSerializedClass { Name = "Single node" }, // ISerializable - 421
+                    new CustomSerializedClass { Name = "Parent derived", Bool = null }.AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 608
+                    new CustomSerializedSealedClass("Parent advanced derived").AddChild("Child base").AddChild("GrandChild base").Parent.Parent, // None: 631
+                    DefaultGraphObjRef.Get(), // IObjectReference without ISerializable - 217
+                    new CustomGraphDefaultObjRef{ Name = "alpha" } // obj is ISerializable but IObjectReference is not - 222
                 };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 1697 -> 1711
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // 1628 -> 1642
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
 
             referenceObjects = new object[]
@@ -2260,13 +2269,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alpha" },
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // 529
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures); // 492
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames); // 423
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
@@ -2288,7 +2297,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 175 -> 184
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 175 -> 185
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2330,7 +2339,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 501 -> 520
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 501 -> 522
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             referenceObjects = new object[]
@@ -2339,7 +2348,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new BitVector32.Section[] { BitVector32.CreateSection(13) },
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 23
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 27
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2355,19 +2364,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new TestEnumByte[,] { {TestEnumByte.One}, {TestEnumByte.Two} }, // multidimensional enum array
                     new TestEnumByte[][] { new TestEnumByte[] {TestEnumByte.One}, new TestEnumByte[] {TestEnumByte.Two} }, // jagged enum array
 
-                    new object[] { TestEnumByte.One, null }, // - 130
-                    new IConvertible[] { TestEnumByte.One, null }, // - 165 -> 153
-                    new Enum[] { TestEnumByte.One, null }, // - 157 -> 145
-                    new ValueType[] { TestEnumByte.One, null }, // - 162 -> 150
+                    new object[] { TestEnumByte.One, null },
+                    new IConvertible[] { TestEnumByte.One, null },
+                    new Enum[] { TestEnumByte.One, null },
+                    new ValueType[] { TestEnumByte.One, null },
                 };
 
             SystemSerializeObject(referenceObjects);
             //SystemSerializeObjects(referenceObjects); // System serializer fails with IConvertible is not serializable
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 267 -> 260
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // 198
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
@@ -2387,7 +2396,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 100 -> 74
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 100 -> 63
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             referenceObjects = new object[]
@@ -2396,7 +2405,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 Array.CreateInstance(typeof(string), new int[] {3}, new int[]{-1}) // array with -1..1 index interval
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 17 -> 19
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 17 -> 20
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2422,33 +2431,33 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObjects(referenceObjects);
 
             CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 1760 -> 1738
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // 1691
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); 
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
 
             referenceObjects = new object[]
             {
-                new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"}, new NonSerializableClassWithSerializableBase(3, "gamma") }, // a non serializable element among te serializable ones - 660/664/595
-                new NonSerializableClass[] { new NonSerializableClass { IntProp = 1, StringProp = "alpha"}, new NonSerializableSealedClass(1, "beta") { IntProp = 3, StringProp = "gamma" } } , // 411/414/345
-                new NonSerializableSealedClass[] { new NonSerializableSealedClass(1, "alpha") { IntProp = 2, StringProp = "beta" }, null } , // 280/281/212
-                new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass {IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass(3, "gamma") }, // IBinarySerializable array - 316/317/248
-                new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}}, null }, // IBinarySerializable array - 160/161/92
-                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "beta", Bytes3 = new byte[] {3, 2, 1}} }, // array custom struct - 254/178/109
+                new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"}, new NonSerializableClassWithSerializableBase(3, "gamma") }, // a non serializable element among the serializable ones
+                new NonSerializableClass[] { new NonSerializableClass { IntProp = 1, StringProp = "alpha"}, new NonSerializableSealedClass(1, "beta") { IntProp = 3, StringProp = "gamma" } } ,
+                new NonSerializableSealedClass[] { new NonSerializableSealedClass(1, "alpha") { IntProp = 2, StringProp = "beta" }, null } ,
+                new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass {IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass(3, "gamma") }, // IBinarySerializable array
+                new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}}, null }, // IBinarySerializable array
+                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "beta", Bytes3 = new byte[] {3, 2, 1}} }, // array custom struct
 
-                new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alpha"}, new SystemSerializableStruct {IntProp = 2, StringProp = "beta"}, null, 1}, // - 309/312/243
-                new IConvertible[] { null, 1 }, // - 33/34/34
-                new IConvertible[][] { null, new IConvertible[]{ null, 1},  }, // - 56 -> 40/41/41
+                new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alpha"}, new SystemSerializableStruct {IntProp = 2, StringProp = "beta"}, null, 1},
+                new IConvertible[] { null, 1 },
+                new IConvertible[][] { null, new IConvertible[]{ null, 1}, },
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // 1849
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures); // 1788
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames); // 1719
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
@@ -2477,36 +2486,36 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     new TimeSpan?[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks), null }, // 24
                     new DateTimeOffset?[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)), null }, // 39
 
-                    new TestEnumByte?[] { TestEnumByte.One, TestEnumByte.Two, null }, // 130
+                    new TestEnumByte?[] { TestEnumByte.One, TestEnumByte.Two, null },
 
                     new DictionaryEntry?[] { new DictionaryEntry(1, "alpha"), null}, // 21
                     new KeyValuePair<int, string>?[] { new KeyValuePair<int,string>(1, "alpha"), null}, // 21
                     new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?,int?>(1, 2), new KeyValuePair<int?,int?>(2, null), null}, // 28
 
-                    new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null }, // 151
-                    new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null }, // 206
+                    new BinarySerializableStruct?[] { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
+                    new SystemSerializableStruct?[] { new SystemSerializableStruct{IntProp = 1, StringProp = "alpha"}, null },
                 };
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
             CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 824 -> 841
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             referenceObjects = new object[]
             {
-                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alpha"}, null }, // 195/159/90
-                new BitVector32?[] { new BitVector32(13), null }, // 11/11/11
-                new BitVector32.Section?[] { BitVector32.CreateSection(13), null }, // 11/11/11
+                new NonSerializableStruct?[] { new NonSerializableStruct{ Bytes3 = new byte[] {1,2,3}, IntProp = 10, Str10 = "alpha"}, null },
+                new BitVector32?[] { new BitVector32(13), null },
+                new BitVector32.Section?[] { BitVector32.CreateSection(13), null },
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable); // 223 -> 229
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures); // 186
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames); // 117
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
@@ -2515,7 +2524,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new List<int> { 1, 2, 3 }, // 22 -> 7 -> 16
+                    new List<int> { 1, 2, 3 },
                     new List<int[]> { new int[]{1, 2, 3}, null },
 
                     new LinkedList<int>(new[]{ 1, 2, 3}),
@@ -2574,7 +2583,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 1986
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2583,7 +2592,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new ArrayList { 1, "alpha", DateTime.Now }, // 34 -> 25
+                    new ArrayList { 1, "alpha", DateTime.Now },
 
                     new Hashtable { {1, "alpha"}, { (byte)2, "beta"}, {3m, "gamma"} },
                     new Hashtable(StringComparer.CurrentCulture) { {"alpha", 1}, {"Alpha", 2}, {"ALPHA", 3}},
@@ -2614,7 +2623,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 1714 -> 1171
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2623,40 +2632,40 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
                 {
-                    new Collection<int> { 1, 2, 3 }, // -> 77/77
-                    new Collection<int[]> { new int[]{1, 2, 3}, null }, // -> 85/85
-                    new Collection<ReadOnlyCollection<int>>(new Collection<ReadOnlyCollection<int>>{new ReadOnlyCollection<int>(new int[]{ 1, 2, 3})}), // -> 166/166
-                    new Collection<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) }, // -> 214/145
-                    new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null}, // -> 481/412
+                    new Collection<int> { 1, 2, 3 },
+                    new Collection<int[]> { new int[]{1, 2, 3}, null },
+                    new Collection<ReadOnlyCollection<int>>(new Collection<ReadOnlyCollection<int>>{new ReadOnlyCollection<int>(new int[]{ 1, 2, 3})}),
+                    new Collection<BinarySerializableStruct> { new BinarySerializableStruct{IntProp = 1, StringProp = "alpha"}, default(BinarySerializableStruct) },
+                    new Collection<SystemSerializableClass> { new SystemSerializableClass { Bool = null, IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { Bool = true, IntProp = 2, StringProp = "beta" }, null},
 
                     // collections of keyvalue pairs (as object and strongly typed as well)
-                    new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) }, // -> 155/155
-                    new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) } , // -> 141/151
+                    new Collection<object> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) },
+                    new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] {1, "alpha", DateTime.Now, null}), new KeyValuePair<int, object>(5, null) },
 
-                    new ReadOnlyCollection<int>(new int[]{ 1, 2, 3}), // -> 85/85
-                    new ReadOnlyCollection<int[]>(new int[][]{new int[]{1, 2, 3}, null}), // -> 93/93
+                    new ReadOnlyCollection<int>(new int[]{ 1, 2, 3}),
+                    new ReadOnlyCollection<int[]>(new int[][]{new int[]{1, 2, 3}, null}),
 
-                    new CustomNonGenericCollection { "alpha", 2, null }, // -> 198/129
-                    new CustomNonGenericDictionary { { "alpha", 2 }, { "beta", null } }, // -> 328/259
-                    new CustomGenericCollection<int> { 1, 2, 3 }, // -> 199/130
-                    new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } }, // -> 334/265
+                    new CustomNonGenericCollection { "alpha", 2, null },
+                    new CustomNonGenericDictionary { { "alpha", 2 }, { "beta", null } },
+                    new CustomGenericCollection<int> { 1, 2, 3 },
+                    new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } },
 
-                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alpha"}} }, // -> 618/549
+                    new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { {TestEnumByte.One, new CustomSerializedClass { Name = "alpha"}} },
                 };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
             CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 2241
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames); // 2172
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
         [Test]
-        public void SerializeSupportedDictionaryValues()
+        public void SerializeSupportedDictionaries()
         {
             object[] referenceObjects =
                 {
@@ -2711,7 +2720,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 954
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2779,7 +2788,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             //SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
 
             CheckTestingFramework(); // late ctor invoke
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 3666 -> 2943
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2798,7 +2807,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 2147
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -2834,14 +2843,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
                 Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
                 bf.SurrogateSelector = surrogate;
-                byte[] raw = SerializeObjects(referenceObjects, bf); // 1097
+                byte[] raw = SerializeObjects(referenceObjects, bf);
                 bf.SurrogateSelector = null;
                 object[] result = DeserializeObjects(raw, bf);
                 AssertItemsEqual(referenceObjects, result);
 
                 Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
                 bsf.SurrogateSelector = surrogate;
-                raw = SerializeObjects(referenceObjects, bsf); // 1017
+                raw = SerializeObjects(referenceObjects, bsf);
                 bsf.SurrogateSelector = null;
                 result = DeserializeObjects(raw, bsf);
                 AssertItemsEqual(referenceObjects, result);
@@ -3136,25 +3145,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             object ts = new SystemSerializableStruct { IntProp = 10, StringProp = "s1" };
             object[] referenceObjects =
                 {   // *: Id is generated on system serialization
-                        new object[] { 1, 2, 3 }, // different objects - 14 -> 18
-                    new object[] { 1, 1, 1 }, // same values but different instances - 14 -> 12
-                    new object[] { one, one, one }, // same value type boxed reference - 14 -> 12
-                    new object[] { s1, s1 }, // same references* - 19 -> 15
-                    new object[] { s1, s2 }, // different references but same values - 19 -> 15
-                    new string[] { s1, s1 }, // same references* - 17 -> 12
-                    new string[] { s1, s2 }, // different references but same values - 17 -> 12
-                    new SystemSerializableClass[] { tc }, // custom class, single instance - 230 -> 233
-                    new SystemSerializableClass[] { tc, tc, tc, tc }, // custom class, multiple instances* - 509 -> 236
-                    new SystemSerializableStruct[] { (SystemSerializableStruct)ts }, // custom struct, single instance - 202 -> 204
-                    new SystemSerializableStruct[] { (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts }, // custom struct, double instances* - 394 -> 384
-                    new object[] { ts }, // custom struct, boxed single instance - 204 -> 207
-                    new object[] { ts, ts, ts, ts }, // custom struct, boxed double instances* - 411 -> 210
+                    new object[] { 1, 2, 3 }, // different objects
+                    new object[] { 1, 1, 1 }, // same values but different instances
+                    new object[] { one, one, one }, // same value type boxed reference
+                    new object[] { s1, s1 }, // same references*
+                    new object[] { s1, s2 }, // different references but same values
+                    new string[] { s1, s1 }, // same references*
+                    new string[] { s1, s2 }, // different references but same values
+                    new SystemSerializableClass[] { tc }, // custom class, single instance
+                    new SystemSerializableClass[] { tc, tc, tc, tc }, // custom class, multiple instances*
+                    new SystemSerializableStruct[] { (SystemSerializableStruct)ts }, // custom struct, single instance
+                    new SystemSerializableStruct[] { (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts }, // custom struct, double instances*
+                    new object[] { ts }, // custom struct, boxed single instance
+                    new object[] { ts, ts, ts, ts }, // custom struct, boxed double instances*
                 };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 788
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 

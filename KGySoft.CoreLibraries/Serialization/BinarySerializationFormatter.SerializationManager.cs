@@ -109,6 +109,25 @@ namespace KGySoft.Serialization
 
             #region Internal Methods
 
+            /// <summary>
+            /// Writes options used at serialization (only used for <see cref="IBinarySerializable"/>).
+            /// Should be called after writing <see cref="DataTypes"/> at root level if it contains any <see cref="DataTypes.BinarySerializable"/>, <see cref="DataTypes.RecursiveObjectGraph"/> or <see cref="DataTypes.Object"/> as element type.
+            /// </summary>
+            internal void WriteOptions(BinaryWriter bw)
+            {
+                BinarySerializationOptions options = Options;
+
+                // 1 byte is enough
+                if (((int)options & 0xFF) == (int)options)
+                {
+                    bw.Write((byte)options);
+                    return;
+                }
+
+                // storing options on 2 bytes
+                bw.Write((ushort)(options | ExtendedOptions));
+            }
+
 #if NET35
             /// <summary>
             /// Writes a type into the serialization stream
@@ -509,7 +528,7 @@ namespace KGySoft.Serialization
                 {
                     // count + 2: natively supported type
                     Write7BitInt(bw, AssemblyIndexCacheCount + 2);
-                    bw.Write((ushort)nativelySupportedType);
+                    WriteDataType(bw, nativelySupportedType);
                     return true;
                 }
 
@@ -520,7 +539,7 @@ namespace KGySoft.Serialization
                     {
                         // count + 2: natively supported type
                         Write7BitInt(bw, AssemblyIndexCacheCount + 2);
-                        collectionType.ForEach(dt => bw.Write((ushort)dt));
+                        collectionType.ForEach(dt => WriteDataType(bw, dt));
                         WriteTypeNamesAndRanks(bw, type, BinarySerializationOptions.IgnoreIBinarySerializable, this);
                         return true;
                     }

@@ -37,7 +37,7 @@ namespace KGySoft.Serialization
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>
-        /// Descriptor of a decoded type
+        /// Per instance descriptor of a decoded type. Used for supported collections.
         /// </summary>
         sealed class DataTypeDescriptor
         {
@@ -59,8 +59,6 @@ namespace KGySoft.Serialization
             internal DataTypes CollectionDataType { get; }
 
             internal DataTypeDescriptor ParentDescriptor { get; }
-
-            internal BinarySerializationOptions SerializationOptions => ParentDescriptor?.SerializationOptions ?? serializationOptions;
 
             internal bool IsArray => CollectionDataType == DataTypes.Array;
 
@@ -117,11 +115,7 @@ namespace KGySoft.Serialization
             private DataTypeDescriptor ElementDescriptor { get; }
 
             private DataTypeDescriptor DictionaryValueDescriptor { get; }
-
-            private bool HasOptions => ((ElementDataType & DataTypes.SimpleTypes) == DataTypes.BinarySerializable) || ((ElementDataType & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph)
-                || ElementDescriptor != null && ElementDescriptor.HasOptions
-                || DictionaryValueDescriptor != null && DictionaryValueDescriptor.HasOptions;
-
+            
             #endregion
 
             #endregion
@@ -136,10 +130,10 @@ namespace KGySoft.Serialization
 
                 // recursion 2: nested type
                 if (ElementDataType == DataTypes.Null)
-                    ElementDescriptor = new DataTypeDescriptor(this, (DataTypes)reader.ReadUInt16(), reader);
+                    ElementDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
                 // recursion 3: TValue in dictionaries
                 if (IsDictionary)
-                    DictionaryValueDescriptor = new DataTypeDescriptor(this, (DataTypes)reader.ReadUInt16(), reader);
+                    DictionaryValueDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
             }
 
             #endregion
@@ -153,17 +147,6 @@ namespace KGySoft.Serialization
             #endregion
 
             #region Internal Methods
-
-            /// <summary>
-            /// Reads SerializationOptions if stored
-            /// </summary>
-            internal void TryReadOptions(BinaryReader br)
-            {
-                Debug.Assert(ParentDescriptor == null, "TryReadOptions can be called only on parent");
-
-                if (HasOptions)
-                    serializationOptions = ReadOptions(br);
-            }
 
             /// <summary>
             /// Decodes self and element types

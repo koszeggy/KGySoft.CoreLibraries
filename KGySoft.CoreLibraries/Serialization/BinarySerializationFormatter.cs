@@ -291,48 +291,49 @@ namespace KGySoft.Serialization
         //[DebuggerDisplay("{BinarySerializationFormatter.ToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
         enum DataTypes : ushort
         {
+            // ====== LOW BYTE ======
             // ------ simple types:
             Null = 0,
-            Object,
+            Object = 1,
             // ReSharper disable once InconsistentNaming
-            DBNull,
+            DBNull = 2,
 
             Bool = 3,
-            Int8,
-            UInt8,
-            Int16,
-            UInt16,
-            Int32,
-            UInt32,
-            Int64,
-            UInt64,
+            Int8 = 4,
+            UInt8 = 5,
+            Int16 = 6,
+            UInt16 = 7,
+            Int32 = 8,
+            UInt32 = 9,
+            Int64 = 10,
+            UInt64 = 11,
 
             IntPtr = 12,
-            UIntPtr,
+            UIntPtr = 13,
 
             Single = 14,
-            Double,
-            Decimal,
+            Double = 15,
+            Decimal = 16,
 
             Char = 17,
-            String,
-            StringBuilder,
-            Uri,
+            String = 18,
+            StringBuilder = 19,
+            Uri = 20,
 
             DateTime = 21,
-            TimeSpan,
-            DateTimeOffset,
+            TimeSpan = 22,
+            DateTimeOffset = 23,
 
             Version = 24,
-            Guid,
+            Guid = 25,
 
             BitArray = 26, // too complex special handling would be needed as collection so treated as simple type
-            BitVector32, // too complex special handling would be needed as collection so treated as simple type
+            BitVector32 = 27, // too complex special handling would be needed as collection so treated as simple type
             BitVector32Section = 28,
 
             // free: 29-58
 
-            // not concrete types encoded as simply types:
+            // not concrete types encoded as simple types:
             //SerializationEnd = 59, // TODO: a reference to a single private static object, which represents the end added objects by custom serialization
             BinarySerializable = 60, // Implements IBinarySerializable
             RawStruct = 61, // any ValueType
@@ -342,10 +343,11 @@ namespace KGySoft.Serialization
 
             SimpleTypes = 0x3F, // Simple types: 0-5 bits - up to 63 types
 
-            // ------ flags that can be combined with simple types:
-            Enum = 1 << 6,
-            Nullable = 1 << 7,
+            // ------ flags:
+            Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
+            Extended = 1 << 7, // Indicates that high byte also is used
 
+            // ====== HIGH BYTE ======
             // ------ collection types that can be combined with flags and simple types:
             Array = 1 << 8,
             List = 2 << 8,
@@ -385,9 +387,9 @@ namespace KGySoft.Serialization
 
             CollectionTypes = 0x3F00, // Collection types: 8-13 bits (6 bits) - up to 63 types
 
-            // ------ further flags
-            Store7BitEncoded = 1 << 14, // Applicable for every >1 byte fix-length data type
-            //Reserved = 1 << 15, // TODO: Pointer - similarly used as Nullable flag
+            // ------ flags
+            Enum = 1 << 14,
+            Nullable = 1 << 15
         }
 
         /// <summary>
@@ -465,7 +467,6 @@ namespace KGySoft.Serialization
 
         #region Constants
 
-        private const BinarySerializationOptions extendedFlags = (BinarySerializationOptions)(1 << 7);
         private const int ticksPerMinute = 600_000_000;
 
         #endregion
@@ -732,7 +733,7 @@ namespace KGySoft.Serialization
 
         /// <summary>
         /// Options used for serialization and deserialization.
-        /// See the <see cref="BinarySerializationOptions"/> enumeration for details.
+        /// <br/>See the <see cref="BinarySerializationOptions"/> enumeration for details.
         /// </summary>
         public BinarySerializationOptions Options
         {
@@ -789,26 +790,6 @@ namespace KGySoft.Serialization
         private static void ThrowNotSupported(BinarySerializationOptions options, Type type) => throw new NotSupportedException(Res.BinarySerializationNotSupported(type, options));
 
         /// <summary>
-        /// Writes options if needed
-        /// </summary>
-        private static void WriteOptions(BinaryWriter bw, CircularList<DataTypes> collectionType, BinarySerializationOptions options)
-        {
-            // options are needed if there is a BinarySerializable or recursively saved element anywhere
-            if (collectionType == null || collectionType.Exists(dt => (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph))
-            {
-                // 1 byte is enough
-                if (((int)options & 255) == (int)options)
-                {
-                    bw.Write((byte)options);
-                    return;
-                }
-
-                // storing options on 2 bytes
-                bw.Write((ushort)(options | extendedFlags));
-            }
-        }
-
-        /// <summary>
         /// Writes AssemblyQualifiedName of element types and array ranks if needed
         /// </summary>
         [SecurityCritical]
@@ -849,7 +830,7 @@ namespace KGySoft.Serialization
                 case 2:
                     if (value >= (1UL << 7)) // up to 7 bits
                     {
-                        bw.Write((ushort)dataType);
+                        WriteDataType(bw, dataType);
                         bw.Write((ushort)value);
                         return;
                     }
@@ -858,7 +839,7 @@ namespace KGySoft.Serialization
                 case 4:
                     if (value >= (1UL << 21)) // up to 3*7 bits
                     {
-                        bw.Write((ushort)dataType);
+                        WriteDataType(bw, dataType);
                         bw.Write((uint)value);
                         return;
                     }
@@ -867,7 +848,7 @@ namespace KGySoft.Serialization
                 case 8:
                     if (value >= (1UL << 49)) // up to 7*7 bits
                     {
-                        bw.Write((ushort)dataType);
+                        WriteDataType(bw, dataType);
                         bw.Write(value);
                         return;
                     }
@@ -880,8 +861,22 @@ namespace KGySoft.Serialization
 
             // storing the value as 7-bit encoded int, which will be shorter
             dataType |= DataTypes.Store7BitEncoded;
-            bw.Write((ushort)dataType);
+            WriteDataType(bw, dataType);
             Write7BitLong(bw, value);
+        }
+
+        private static void WriteDataType(BinaryWriter bw, DataTypes dataType)
+        {
+            // using the low byte only
+            if ((dataType & (DataTypes)0xFF) == dataType)
+            {
+                Debug.Assert((dataType & DataTypes.Extended) == 0);
+                bw.Write((byte)dataType);
+                return;
+            }
+
+            // writing the whole word
+            bw.Write((ushort)(dataType | DataTypes.Extended));
         }
 
         /// <summary>
@@ -1141,12 +1136,10 @@ namespace KGySoft.Serialization
                             break;
                         case DataTypes.Array:
                         case DataTypes.List:
-                        //case DataTypes.Collection:
                         case DataTypes.LinkedList:
                         case DataTypes.HashSet:
                         case DataTypes.Queue:
                         case DataTypes.Stack:
-                        //case DataTypes.ReadOnlyCollection:
                         case DataTypes.CircularList:
                         case DataTypes.SortedSet:
                         case DataTypes.ArrayList:
@@ -1212,22 +1205,22 @@ namespace KGySoft.Serialization
         {
             if (data == null)
             {
-                bw.Write((ushort)DataTypes.Null);
+                WriteDataType(bw, DataTypes.Null);
                 return true;
             }
 
             switch (primitiveTypes.GetValueOrDefault(data.GetType()))
             {
                 case DataTypes.Bool:
-                    bw.Write((ushort)DataTypes.Bool);
+                    WriteDataType(bw, DataTypes.Bool);
                     bw.Write((bool)data);
                     return true;
                 case DataTypes.UInt8:
-                    bw.Write((ushort)DataTypes.UInt8);
+                    WriteDataType(bw, DataTypes.UInt8);
                     bw.Write((byte)data);
                     return true;
                 case DataTypes.Int8:
-                    bw.Write((ushort)DataTypes.Int8);
+                    WriteDataType(bw, DataTypes.Int8);
                     bw.Write((sbyte)data);
                     return true;
                 case DataTypes.Int16:
@@ -1252,24 +1245,20 @@ namespace KGySoft.Serialization
                     WriteDynamicInt(bw, DataTypes.Char, 2, (char)data);
                     return true;
                 case DataTypes.String:
-                    bw.Write((ushort)DataTypes.String);
+                    WriteDataType(bw, DataTypes.String);
                     bw.Write((string)data);
                     return true;
                 case DataTypes.Single:
-                    bw.Write((ushort)DataTypes.Single);
-                    bw.Write((float)data);
+                    WriteDynamicInt(bw, DataTypes.Single, 4, BitConverter.ToUInt32(BitConverter.GetBytes((float)data), 0));
                     return true;
                 case DataTypes.Double:
-                    bw.Write((ushort)DataTypes.Double);
-                    bw.Write((double)data);
+                    WriteDynamicInt(bw, DataTypes.Double, 8, (ulong)BitConverter.DoubleToInt64Bits((double)data));
                     return true;
                 case DataTypes.IntPtr:
-                    bw.Write((ushort)DataTypes.IntPtr);
-                    bw.Write(((IntPtr)data).ToInt64());
+                    WriteDynamicInt(bw, DataTypes.IntPtr, 8, (ulong)(IntPtr)data);
                     return true;
                 case DataTypes.UIntPtr:
-                    bw.Write((ushort)DataTypes.UIntPtr);
-                    bw.Write(((UIntPtr)data).ToUInt64());
+                    WriteDynamicInt(bw, DataTypes.UIntPtr, 8, (ulong)(UIntPtr)data);
                     return true;
                 default:
                     return false;
@@ -1281,53 +1270,53 @@ namespace KGySoft.Serialization
             switch (supportedNonPrimitiveElementTypes.GetValueOrDefault(data.GetType()))
             {
                 case DataTypes.Decimal:
-                    bw.Write((ushort)DataTypes.Decimal);
+                    WriteDataType(bw, DataTypes.Decimal);
                     bw.Write((decimal)data);
                     return true;
                 case DataTypes.DateTime:
-                    bw.Write((ushort)DataTypes.DateTime);
+                    WriteDataType(bw, DataTypes.DateTime);
                     WriteDateTime(bw, (DateTime)data);
                     return true;
                 case DataTypes.DateTimeOffset:
-                    bw.Write((ushort)DataTypes.DateTimeOffset);
+                    WriteDataType(bw, DataTypes.DateTimeOffset);
                     WriteDateTimeOffset(bw, (DateTimeOffset)data);
                     return true;
                 case DataTypes.TimeSpan:
-                    bw.Write((ushort)DataTypes.TimeSpan);
+                    WriteDataType(bw, DataTypes.TimeSpan);
                     bw.Write(((TimeSpan)data).Ticks);
                     return true;
                 case DataTypes.DBNull:
-                    bw.Write((ushort)DataTypes.DBNull);
+                    WriteDataType(bw, DataTypes.DBNull);
                     return true;
                 case DataTypes.Guid:
-                    bw.Write((ushort)DataTypes.Guid);
+                    WriteDataType(bw, DataTypes.Guid);
                     bw.Write(((Guid)data).ToByteArray());
                     return true;
                 case DataTypes.BitVector32:
-                    bw.Write((ushort)DataTypes.BitVector32);
+                    WriteDataType(bw, DataTypes.BitVector32);
                     bw.Write(((BitVector32)data).Data);
                     return true;
                 case DataTypes.BitVector32Section:
-                    bw.Write((ushort)DataTypes.BitVector32Section);
+                    WriteDataType(bw, DataTypes.BitVector32Section);
                     WriteSection(bw, (BitVector32.Section)data);
                     return true;
                 case DataTypes.Version:
-                    bw.Write((ushort)DataTypes.Version);
+                    WriteDataType(bw, DataTypes.Version);
                     WriteVersion(bw, (Version)data);
                     return true;
                 case DataTypes.BitArray:
-                    bw.Write((ushort)DataTypes.BitArray);
+                    WriteDataType(bw, DataTypes.BitArray);
                     WriteBitArray(bw, (BitArray)data);
                     return true;
                 case DataTypes.StringBuilder:
-                    bw.Write((ushort)DataTypes.StringBuilder);
+                    WriteDataType(bw, DataTypes.StringBuilder);
                     WriteStringBuilder(bw, (StringBuilder)data);
                     return true;
                 case DataTypes.Object:
-                    bw.Write((ushort)DataTypes.Object);
+                    WriteDataType(bw, DataTypes.Object);
                     return true;
                 case DataTypes.Uri:
-                    bw.Write((ushort)DataTypes.Uri);
+                    WriteDataType(bw, DataTypes.Uri);
                     WriteUri(bw, (Uri)data);
                     return true;
                 default:
@@ -1374,7 +1363,7 @@ namespace KGySoft.Serialization
             if (is7Bit)
                 dataType |= DataTypes.Store7BitEncoded;
 
-            bw.Write((ushort)dataType);
+            WriteDataType(bw, dataType);
             manager.WriteType(bw, type);
             if (is7Bit)
                 Write7BitLong(bw, enumValue);
@@ -1515,6 +1504,17 @@ namespace KGySoft.Serialization
             return result;
         }
 
+        private static DataTypes ReadDataType(BinaryReader br)
+        {
+            var result = (DataTypes)br.ReadByte();
+            if ((result & DataTypes.Extended) == DataTypes.Extended)
+            {
+                result |= (DataTypes)(br.ReadByte() << 8);
+                result &= ~DataTypes.Extended;
+            }
+            return result;
+        }
+
         private static Version ReadVersion(BinaryReader br)
         {
             int major = br.ReadInt32();
@@ -1597,20 +1597,6 @@ namespace KGySoft.Serialization
                 default:
                     throw new InvalidOperationException(Res.BinarySerializationInvalidEnumBase(ToString(dataType & DataTypes.SimpleTypes)));
             }
-        }
-
-        private static BinarySerializationOptions ReadOptions(BinaryReader br)
-        {
-            BinarySerializationOptions options = (BinarySerializationOptions)br.ReadByte();
-
-            // if stored on 2 bytes
-            if ((options & extendedFlags) == extendedFlags)
-            {
-                options &= ~extendedFlags;
-                options |= (BinarySerializationOptions)(br.ReadByte() << 8);
-            }
-
-            return options;
         }
 
         /// <summary>
@@ -1819,16 +1805,7 @@ namespace KGySoft.Serialization
             BinarySerializationOptions options = manager.Options;
             if ((options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None && manager.CanUseSurrogate(type))
             {
-                bw.Write((ushort)DataTypes.RecursiveObjectGraph);
-
-                // on root level writing the id after datatype even if the object is value type because the boxed reference can be shared
-                if (isRoot)
-                {
-                    if (manager.WriteId(bw, data))
-                        Debug.Fail("Id of recursive object should be unknown on top level.");
-                }
-                WriteOptions(bw, null, options);
-                WriteObjectGraph(bw, data, null, manager);
+                WriteRecursively(bw, data, isRoot, manager);
                 return;
             }
 
@@ -1850,16 +1827,17 @@ namespace KGySoft.Serialization
             // f.) BinarySerializable
             if (((options & BinarySerializationOptions.IgnoreIBinarySerializable) == BinarySerializationOptions.None) && data is IBinarySerializable binarySerializable)
             {
-                bw.Write((ushort)DataTypes.BinarySerializable);
+                WriteDataType(bw, DataTypes.BinarySerializable);
 
-                // on root level writing the id after datatype even if the object is value type because the boxed reference can be shared
                 if (isRoot)
                 {
+                    manager.WriteOptions(bw);
+
+                    // on root level writing the id even if the object is value type because the boxed reference can be shared
                     if (manager.WriteId(bw, data))
                         Debug.Fail("Id of recursive object should be unknown on top level.");
                 }
 
-                WriteOptions(bw, null, options);
                 manager.WriteType(bw, type);
                 WriteBinarySerializable(bw, binarySerializable, options);
                 return;
@@ -1868,21 +1846,24 @@ namespace KGySoft.Serialization
             // g.) Any struct if can serialize
             if ((options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
             {
-                bw.Write((ushort)DataTypes.RawStruct);
+                WriteDataType(bw, DataTypes.RawStruct);
                 manager.WriteType(bw, type);
                 WriteValueType(bw, data, options);
                 return;
             }
 
             // h.) Recursive serialization: if enabled or surrogate selector supports the type, or when type is serializable
-            if (TryWriteRecursively(bw, data, isRoot, manager))
+            if ((manager.Options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None || manager.CanUseSurrogate(type) || type.IsSerializable)
+            {
+                WriteRecursively(bw, data, isRoot, manager);
                 return;
+            }
 
 #pragma warning disable 618, 612
             // i.) Any struct (obsolete but still supported as backward compatibility)
             if ((options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None && type.IsValueType)
             {
-                bw.Write((ushort)DataTypes.RawStruct);
+                WriteDataType(bw, DataTypes.RawStruct);
                 manager.WriteType(bw, type);
                 WriteValueType(bw, data, options);
                 return;
@@ -1912,16 +1893,15 @@ namespace KGySoft.Serialization
 
             CircularList<DataTypes> collectionTypeList = new CircularList<DataTypes>(collectionType);
             foreach (DataTypes dataType in collectionTypeList)
-                bw.Write((ushort)dataType);
+                WriteDataType(bw, dataType);
 
-            // on root level writing the id after data type if the collection may have recursion because its reference can be re-used
             if (isRoot && CanHaveRecursion(collectionTypeList))
             {
+                manager.WriteOptions(bw);
                 if (manager.WriteId(bw, data))
                     Debug.Fail("Id of recursive object should be unknown on top level.");
             }
 
-            WriteOptions(bw, collectionTypeList, manager.Options);
             WriteTypeNamesAndRanks(bw, type, manager.Options, manager);
             WriteCollection(bw, collectionTypeList, data, manager);
             return true;
@@ -2266,24 +2246,20 @@ namespace KGySoft.Serialization
         }
 
         [SecurityCritical]
-        private bool TryWriteRecursively(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
+        private void WriteRecursively(BinaryWriter bw, object data, bool isRoot, SerializationManager manager)
         {
-            Type type = data.GetType();
-            if ((manager.Options & BinarySerializationOptions.RecursiveSerializationAsFallback) == BinarySerializationOptions.None && !manager.CanUseSurrogate(type) && (!type.IsSerializable || type.IsArray))
-                return false;
+            WriteDataType(bw, DataTypes.RecursiveObjectGraph);
 
-            bw.Write((ushort)DataTypes.RecursiveObjectGraph);
-
-            // on root level writing the id after data type even if the object is value type because the boxed reference can be shared
             if (isRoot)
             {
+                manager.WriteOptions(bw);
+
+                // on root level writing the id even if the object is value type because the boxed reference can be shared
                 if (manager.WriteId(bw, data))
                     Debug.Fail("Id of recursive object should be unknown on top level.");
             }
 
-            WriteOptions(bw, null, manager.Options);
             WriteObjectGraph(bw, data, null, manager);
-            return true;
         }
 
         /// <summary>
@@ -2523,23 +2499,39 @@ namespace KGySoft.Serialization
             if (!isRoot && manager.TryGetCachedObject(br, out object result))
                 return result;
 
-            DataTypes dataType = (DataTypes)br.ReadUInt16();
+            DataTypes dataType = ReadDataType(br);
 
             // 1.) null value
             if (dataType == DataTypes.Null)
                 return null;
 
+            bool addToCache = !isRoot;
+
             // 2.) other supported non-collection type
             if ((dataType & DataTypes.CollectionTypes) == DataTypes.Null)
-                return ReadObject(br, isRoot, !isRoot, dataType, null, manager, false);
+            {
+                // on root level options and id are written for IBinarySerializable and recursive objects (collections are checked below)
+                if (isRoot && (dataType == DataTypes.BinarySerializable || dataType == DataTypes.RecursiveObjectGraph))
+                {
+                    manager.ReadOptions(br);
+                    addToCache = true;
+                    if (manager.TryGetCachedObject(br, out result))
+                    {
+                        Debug.Fail("Root level object is not expected in the cache");
+                        return result;
+                    }
+                }
+
+                return ReadObject(br, addToCache, dataType, null, manager, false);
+            }
 
             // 3.) compound collection type
             DataTypeDescriptor descriptor = new DataTypeDescriptor(null, dataType, br);
 
-            // on root level id is written only after data type and only when the collection can have recursion except DictionaryEntry/KeyValuePair
-            bool addToCache = !isRoot;
+            // on root level options and id are written after data type only when the collection can have recursion
             if (isRoot && descriptor.CanHaveRecursion)
             {
+                manager.ReadOptions(br);
                 addToCache = true;
                 if (manager.TryGetCachedObject(br, out result))
                 {
@@ -2548,7 +2540,6 @@ namespace KGySoft.Serialization
                 }
             }
 
-            descriptor.TryReadOptions(br);
             descriptor.DecodeType(br, manager);
 
             // 3/a.) array
@@ -2694,7 +2685,7 @@ namespace KGySoft.Serialization
 
             // single element
             if (elementDataType != DataTypes.Null)
-                return ReadObject(br, false, !collectionDescriptor.GetElementType(isTValue).IsValueType, elementDataType, collectionDescriptor, manager, isTValue);
+                return ReadObject(br, !collectionDescriptor.GetElementType(isTValue).IsValueType, elementDataType, collectionDescriptor, manager, isTValue);
 
             DataTypeDescriptor elementDescriptor = collectionDescriptor.GetElementDescriptor(isTValue);
             // nested array
@@ -2709,7 +2700,6 @@ namespace KGySoft.Serialization
         /// Reads a non-collection object from the stream.
         /// </summary>
         /// <param name="br">The reader</param>
-        /// <param name="isRoot"><see langword="true"/>, when the object to deserialize is the root-level object</param>
         /// <param name="addToCache">When <see langword="true"/>, the result must be added to the ID cache. Otherwise, only reference types in a collection might be added to cache.</param>
         /// <param name="dataType">The already read data type of the object.</param>
         /// <param name="collectionDescriptor">When a collection element is deserialized, the collection descriptor.</param>
@@ -2718,7 +2708,7 @@ namespace KGySoft.Serialization
         /// <returns>The deserialized object.</returns>
         [SecurityCritical]
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
-        private object ReadObject(BinaryReader br, bool isRoot, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        private object ReadObject(BinaryReader br, bool addToCache, DataTypes dataType, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
             bool TryGetFromCache(out object cachedValue)
             {
@@ -2737,7 +2727,7 @@ namespace KGySoft.Serialization
             // nullable type
             if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)
             {
-                // no need to check collection descriptor because there is no nullable type on root level so checking for null in any case
+                // there is no nullable type on root level so checking for null in any case (occurs in collection and type members)
                 if (!br.ReadBoolean())
                     return null;
             }
@@ -2771,9 +2761,9 @@ namespace KGySoft.Serialization
                     case DataTypes.String:
                         return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = br.ReadString();
                     case DataTypes.Single:
-                        return createdResult = br.ReadSingle();
+                        return createdResult = is7BitEncoded ? BitConverter.ToSingle(BitConverter.GetBytes(Read7BitInt(br)), 0) : br.ReadSingle();
                     case DataTypes.Double:
-                        return createdResult = br.ReadDouble();
+                        return createdResult = is7BitEncoded ? BitConverter.Int64BitsToDouble(Read7BitLong(br)) : br.ReadDouble();
                     case DataTypes.Decimal:
                         return createdResult = br.ReadDecimal();
                     case DataTypes.DateTime:
@@ -2790,9 +2780,9 @@ namespace KGySoft.Serialization
                         Debug.Assert(!addToCache, "DBNull should be returned without cache only when not in collection.");
                         return DBNull.Value;
                     case DataTypes.IntPtr:
-                        return createdResult = new IntPtr(br.ReadInt64());
+                        return createdResult = new IntPtr(is7BitEncoded ? Read7BitLong(br) : br.ReadInt64());
                     case DataTypes.UIntPtr:
-                        return createdResult = new UIntPtr(br.ReadUInt64());
+                        return createdResult = new UIntPtr(is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
                     case DataTypes.Object:
                         // object - returning object instance on root level, otherwise, doing recursion because can mean any type as an element type
                         if (collectionDescriptor == null)
@@ -2814,9 +2804,9 @@ namespace KGySoft.Serialization
                     case DataTypes.StringBuilder:
                         return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                     case DataTypes.BinarySerializable:
-                        return ReadBinarySerializable(br, isRoot, addToCache, collectionDescriptor, manager, isTValue);
+                        return ReadBinarySerializable(br, addToCache, collectionDescriptor, manager, isTValue);
                     case DataTypes.RecursiveObjectGraph:
-                        return ReadObjectGraph(br, isRoot, addToCache, collectionDescriptor, manager, isTValue);
+                        return ReadObjectGraph(br, addToCache, collectionDescriptor, manager, isTValue);
                     case DataTypes.RawStruct:
                         return createdResult = ReadValueType(br, collectionDescriptor, manager, isTValue);
                     default:
@@ -2833,28 +2823,14 @@ namespace KGySoft.Serialization
         }
 
         [SecurityCritical]
-        private object ReadBinarySerializable(BinaryReader br, bool isRoot, bool addToCache, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        private object ReadBinarySerializable(BinaryReader br, bool addToCache, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
-            object cachedResult;
-
-            // occurs on root level: object id is stored only after data type
-            if (isRoot)
-            {
-                if (manager.TryGetCachedObject(br, out cachedResult))
-                {
-                    Debug.Fail("Root level object is not expected in the cache");
-                    return cachedResult;
-                }
-            }
-
-            BinarySerializationOptions origOptions = collectionDescriptor?.SerializationOptions ?? ReadOptions(br);
-
             // checking instance id
             Type elementType = null;
             if (collectionDescriptor != null &&
                 (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
             {
-                if (manager.TryGetCachedObject(br, out cachedResult))
+                if (manager.TryGetCachedObject(br, out object cachedResult))
                     return cachedResult;
             }
 
@@ -2875,11 +2851,11 @@ namespace KGySoft.Serialization
             }
 
             // 3. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
-            return DoReadBinarySerializable(br, addToCache || isRoot, objType, origOptions, manager);
+            return DoReadBinarySerializable(br, addToCache, objType, manager);
         }
 
         [SecurityCritical]
-        private object DoReadBinarySerializable(BinaryReader br, bool addToCache, Type type, BinarySerializationOptions origOptions, DeserializationManager manager)
+        private object DoReadBinarySerializable(BinaryReader br, bool addToCache, Type type, DeserializationManager manager)
         {
             byte[] serData = br.ReadBytes(Read7BitInt(br));
 
@@ -2891,11 +2867,11 @@ namespace KGySoft.Serialization
             OnDeserializing(result);
 
             // Trying to use a deserializer constructor in the first place.
-            if (!Accessors.TryInvokeCtor(result, origOptions, serData))
+            if (!Accessors.TryInvokeCtor(result, manager.OrigOptions, serData))
             {
                 // Otherwise, using default constructor (if any) + deserializing method
                 Accessors.TryInvokeCtor(result);
-                ((IBinarySerializable)result).Deserialize(origOptions, serData);
+                ((IBinarySerializable)result).Deserialize(manager.OrigOptions, serData);
             }
 
             OnDeserialized(result);
@@ -2903,33 +2879,18 @@ namespace KGySoft.Serialization
         }
 
         [SecurityCritical]
-        private object ReadObjectGraph(BinaryReader br, bool isRoot, bool addToCache, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
+        private object ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor collectionDescriptor, DeserializationManager manager, bool isTValue)
         {
             // When element types may differ, reading element with data type
             if (collectionDescriptor != null && collectionDescriptor.AreAllElementsQualified(isTValue))
                 return Read(br, false, manager);
-
-            // occurs on root level: object id is stored only after data type
-            object cachedResult;
-            if (isRoot)
-            {
-                if (manager.TryGetCachedObject(br, out cachedResult))
-                {
-                    Debug.Fail("Root level object is not expected in the cache");
-                    return cachedResult;
-                }
-            }
-
-            // TODO: options is not used here anymore
-            if (collectionDescriptor?.SerializationOptions == null)
-                ReadOptions(br); // just reading it to pass through but not used
 
             // checking instance id
             Type elementType = null;
             if (collectionDescriptor != null &&
                 (!(elementType = collectionDescriptor.GetElementType(isTValue)).IsValueType))
             {
-                if (manager.TryGetCachedObject(br, out cachedResult))
+                if (manager.TryGetCachedObject(br, out object cachedResult))
                     return cachedResult;
             }
 
@@ -2939,7 +2900,7 @@ namespace KGySoft.Serialization
                 : (elementType ?? collectionDescriptor.GetElementType(isTValue));
 
             // 2. deserialize (result is not set here - object will be cached immediately after creation so circular references will be found in time)
-            return DoReadObjectGraph(br, addToCache || isRoot, objType, manager, collectionDescriptor != null);
+            return DoReadObjectGraph(br, addToCache, objType, manager, collectionDescriptor != null);
         }
 
         /// <summary>

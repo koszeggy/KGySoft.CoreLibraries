@@ -33,6 +33,15 @@ namespace KGySoft.Serialization
     {
         abstract class SerializationManagerBase
         {
+            #region Constants
+
+            /// <summary>
+            /// Indicated that options are stored on two bytes. Not stored in the public <see cref="BinarySerializationOptions"/> enum.
+            /// </summary>
+            protected const BinarySerializationOptions ExtendedOptions = (BinarySerializationOptions)(1 << 7);
+
+            #endregion
+
             #region Fields
 
             #region Static Fields

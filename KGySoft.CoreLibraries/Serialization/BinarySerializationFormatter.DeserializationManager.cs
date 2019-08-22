@@ -46,16 +46,34 @@ namespace KGySoft.Serialization
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
             private Dictionary<object, List<KeyValuePair<FieldInfo, object>>> objectReferences;
+            private BinarySerializationOptions? origOptions;
 
             #endregion
 
             #region Properties
+
+            #region Internal Properties
+
+            internal BinarySerializationOptions OrigOptions
+            {
+                get
+                {
+                    Debug.Assert(origOptions != null, "Original options haven't been deserialized");
+                    return origOptions.GetValueOrDefault();
+                }
+            }
+
+            #endregion
+
+            #region Private Properties
 
             private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object>
             {
                 { 0, null },
                 { 1, DBNull.Value }
             });
+
+            #endregion
 
             #endregion
 
@@ -72,6 +90,20 @@ namespace KGySoft.Serialization
 
             #region Internal Methods
 
+            internal void ReadOptions(BinaryReader br)
+            {
+                var options = (BinarySerializationOptions)br.ReadByte();
+
+                // stored on 2 bytes
+                if ((options & ExtendedOptions) == ExtendedOptions)
+                {
+                    options &= ~ExtendedOptions;
+                    options |= (BinarySerializationOptions)(br.ReadByte() << 8);
+                }
+
+                origOptions = options;
+            }
+
             /// <summary>
             /// Reads a type from the serialization stream
             /// </summary>
@@ -85,7 +117,7 @@ namespace KGySoft.Serialization
                 // natively supported type
                 if (index == readAssemblies.Count + 2)
                 {
-                    DataTypes dataType = (DataTypes)br.ReadUInt16();
+                    DataTypes dataType = ReadDataType(br);
                     DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
                     desc.DecodeType(br, this);
                     return desc.Type;
