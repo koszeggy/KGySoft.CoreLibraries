@@ -40,8 +40,9 @@
 ! KGySoft.Serialization namespace:
 ==============================
 ! BinarySerializationFormatter:
-  ! The serialized stream is more compact than before (meaning, not compatible with previous versions)
+  ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   * Improving performance.
++ BinarySerializerOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
 
 

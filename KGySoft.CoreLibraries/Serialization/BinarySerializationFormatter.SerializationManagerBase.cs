@@ -17,12 +17,11 @@
 #region Usings
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
-using KGySoft.CoreLibraries;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -31,7 +30,7 @@ namespace KGySoft.Serialization
 {
     public sealed partial class BinarySerializationFormatter
     {
-        abstract class SerializationManagerBase
+        private abstract class SerializationManagerBase
         {
             #region Constants
 
@@ -52,8 +51,9 @@ namespace KGySoft.Serialization
                 Reflector.KGySoftLibrariesAssembly,
 #if NETFRAMEWORK
                 typeof(Queue<>).Assembly, // System.dll
-                typeof(HashSet<>).Assembly // System.Core.dll 
+                typeof(HashSet<>).Assembly // System.Core.dll
 #endif
+
             };
 
             protected static readonly Type[] KnownTypes =
@@ -65,13 +65,11 @@ namespace KGySoft.Serialization
 
             #region Instance Fields
 
-            #region Internal Fields
-
-            internal readonly BinarySerializationOptions Options;
-
-            #endregion
-
             #region Protected Fields
+
+            protected readonly BinarySerializationOptions Options;
+
+            protected readonly StreamingContext Context;
 
             protected readonly SerializationBinder Binder;
 
@@ -79,7 +77,6 @@ namespace KGySoft.Serialization
 
             #region Private Fields
 
-            private readonly StreamingContext context;
             private readonly ISurrogateSelector surrogateSelector;
             private readonly Dictionary<Type, KeyValuePair<ISerializationSurrogate, ISurrogateSelector>> surrogates;
 
@@ -89,12 +86,30 @@ namespace KGySoft.Serialization
 
             #endregion
 
+            #region Properties
+
+            protected bool ForceRecursiveSerializationOfSupportedTypes => (Options & BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes) != BinarySerializationOptions.None;
+#pragma warning disable 618
+            protected bool ForcedSerializationValueTypesAsFallback => (Options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None;
+#pragma warning restore 618
+            protected bool RecursiveSerializationAsFallback => (Options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None;
+            protected bool IgnoreSerializationMethods => (Options & BinarySerializationOptions.IgnoreSerializationMethods) != BinarySerializationOptions.None;
+            protected bool IgnoreIBinarySerializable => (Options & BinarySerializationOptions.IgnoreIBinarySerializable) != BinarySerializationOptions.None;
+            protected bool OmitAssemblyQualifiedNames => (Options & BinarySerializationOptions.OmitAssemblyQualifiedNames) != BinarySerializationOptions.None;
+            protected bool CompactSerializationOfStructures => (Options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None;
+            protected bool IgnoreISerializable => (Options & BinarySerializationOptions.IgnoreISerializable) != BinarySerializationOptions.None;
+            protected bool IgnoreIObjectReference => (Options & BinarySerializationOptions.IgnoreIObjectReference) != BinarySerializationOptions.None;
+            protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
+            protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
+
+            #endregion
+
             #region Constructors
 
             protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
             {
                 Options = options;
-                this.context = context;
+                Context = context;
                 Binder = binder;
                 this.surrogateSelector = surrogateSelector;
                 if (surrogateSelector != null)
@@ -104,6 +119,53 @@ namespace KGySoft.Serialization
             #endregion
 
             #region Methods
+
+            #region Static Methods
+
+            private static IEnumerable<MethodInfo> GetMethodsWithAttribute(Type attribute, Type type)
+            {
+                Dictionary<Type, IEnumerable<MethodInfo>> cacheItem = methodsByAttributeCache[type];
+
+                lock (cacheItem)
+                {
+                    if (cacheItem.TryGetValue(attribute, out IEnumerable<MethodInfo> cachedResult))
+                        return cachedResult;
+
+                    List<MethodInfo> result = new List<MethodInfo>();
+                    for (Type t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
+                    {
+                        foreach (MethodInfo method in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                        {
+                            if (method.IsDefined(attribute, false))
+                            {
+                                ParameterInfo[] parameters = method.GetParameters();
+                                if (parameters.Length == 1 && parameters[0].ParameterType == typeof(StreamingContext))
+                                {
+                                    result.Add(method);
+                                }
+                            }
+                        }
+                    }
+
+                    if (result.Count > 1)
+                        result.Reverse();
+
+                    if (result.Count == 0)
+                    {
+                        cacheItem[attribute] = null;
+                        return null;
+                    }
+
+                    cacheItem[attribute] = result;
+                    return result;
+                }
+            }
+
+            #endregion
+
+            #region Instance Methods
+
+            #region Internal Methods
 
             /// <summary>
             /// Gets if a type can use a surrogate
@@ -146,9 +208,33 @@ namespace KGySoft.Serialization
                 return surrogate != null;
             }
 
+            #endregion
+
+            #region Protected Methods
+
+            protected void ExecuteMethodsOfAttribute(object obj, Type attributeType)
+            {
+                if (IgnoreSerializationMethods)
+                    return;
+
+                var methods = GetMethodsWithAttribute(attributeType, obj.GetType());
+                if (methods == null)
+                    return;
+                foreach (MethodInfo method in methods)
+                    MethodAccessor.GetAccessor(method).Invoke(obj, Context);
+            }
+
+            #endregion
+
+            #region Private Methods
+
             [SecurityCritical]
             private void DoGetSurrogate(Type type, out ISerializationSurrogate surrogate, out ISurrogateSelector selector)
-                => surrogate = surrogateSelector.GetSurrogate(type, context, out selector);
+                => surrogate = surrogateSelector.GetSurrogate(type, Context, out selector);
+
+            #endregion
+
+            #endregion
 
             #endregion
         }

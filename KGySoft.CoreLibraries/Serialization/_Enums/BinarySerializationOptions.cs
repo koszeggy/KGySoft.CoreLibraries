@@ -39,7 +39,13 @@ namespace KGySoft.Serialization
         /// </summary>
         None,
 
-        // TODO: ForceRecursiveSerializationOfSupportedTypes = 1 // everything is serialized recursively, except most primitive types (enums?) and arrays. Consider at array elements, too.
+        /// <summary>
+        /// Apart from primitive types, strings and arrays forces to serialize every type recursively. If <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set,
+        /// then the surrogate selectors will be tried to used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).
+        /// <para>This flag is considered on serialization.</para>
+        /// <para>Default at serializer methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// </summary>
+        ForceRecursiveSerializationOfSupportedTypes = 1,
 
         /// <summary>
         /// <para>This option makes possible to serialize <see cref="ValueType"/>s (<see langword="struct"/>) that are not marked by <see cref="SerializableAttribute"/>.

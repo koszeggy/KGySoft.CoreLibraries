@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Serialization;
@@ -37,16 +36,16 @@ namespace KGySoft.Serialization
     public sealed partial class BinarySerializationFormatter
     {
         /// <summary>
-        /// Per instance descriptor of a decoded type. Used for supported collections.
+        /// Per instance descriptor of a decoded type. Used on deserialization for supported collections.
+        /// Static type information is in <see cref="CollectionSerializationInfo"/>.
         /// </summary>
-        sealed class DataTypeDescriptor
+        private sealed class DataTypeDescriptor
         {
             #region Fields
 
-            private BinarySerializationOptions serializationOptions;
             private bool? isDictionary;
 #if NET35
-            private bool? isGenericDictionary; 
+            private bool? isGenericDictionary;
 #endif
             private bool? isSingleElement;
 
@@ -57,19 +56,13 @@ namespace KGySoft.Serialization
             #region Internal Properties
 
             internal DataTypes CollectionDataType { get; }
-
             internal DataTypeDescriptor ParentDescriptor { get; }
-
             internal bool IsArray => CollectionDataType == DataTypes.Array;
-
             internal bool IsDictionary => isDictionary ?? (isDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsDictionary).Value;
-
 #if NET35
             internal bool IsGenericDictionary => isGenericDictionary ?? (isGenericDictionary = CollectionDataType != DataTypes.Null && serializationInfo[CollectionDataType].IsGenericDictionary).Value;
 #endif
-
             internal bool IsReadOnly { get; set; }
-
             internal bool IsSingleElement => isSingleElement ?? (isSingleElement = serializationInfo[CollectionDataType].IsSingleElement).Value;
 
             /// <summary>
@@ -115,7 +108,7 @@ namespace KGySoft.Serialization
             private DataTypeDescriptor ElementDescriptor { get; }
 
             private DataTypeDescriptor DictionaryValueDescriptor { get; }
-            
+
             #endregion
 
             #endregion
@@ -142,7 +135,7 @@ namespace KGySoft.Serialization
 
             #region Public Methods
 
-            public override string ToString() => BinarySerializationFormatter.ToString(ElementDataType | CollectionDataType);
+            public override string ToString() => DataTypeToString(ElementDataType | CollectionDataType);
 
             #endregion
 
@@ -321,7 +314,7 @@ namespace KGySoft.Serialization
                         // enum
                         if ((dataType & DataTypes.Enum) == DataTypes.Enum)
                             return manager.ReadType(br);
-                        throw new InvalidOperationException(Res.BinarySerializationCannotDecodeDataType(BinarySerializationFormatter.ToString(ElementDataType)));
+                        throw new InvalidOperationException(Res.BinarySerializationCannotDecodeDataType(DataTypeToString(ElementDataType)));
                 }
             }
 
@@ -346,6 +339,7 @@ namespace KGySoft.Serialization
                     case DataTypes.SortedSet:
                         return (typeof(SortedSet<>).GetGenericType(ElementType));
 #endif
+
 
 
                     case DataTypes.Dictionary:
@@ -389,7 +383,7 @@ namespace KGySoft.Serialization
                         return Reflector.NullableType.GetGenericType((Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType)));
 
                     default:
-                        throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(BinarySerializationFormatter.ToString(collectionDataType)));
+                        throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
                 }
             }
 

@@ -1,18 +1,36 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: BinarySerializationFormatter.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Security;
 using System.Threading;
+
 using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Serialization
 {
@@ -38,6 +56,7 @@ namespace KGySoft.Serialization
             /// Locking accessor because the serialization info is stored in a static shared dictionary.
             /// </summary>
             private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor> ctorCache;
+
             private IThreadSafeCacheAccessor<Type, MethodAccessor> addMethodCache;
 
             #endregion
@@ -99,7 +118,7 @@ namespace KGySoft.Serialization
             /// Writes specific properties of a collection that are needed for deserialization
             /// </summary>
             [SecurityCritical]
-            internal void WriteSpecificProperties(BinarySerializationFormatter owner, BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
+            internal void WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
                 if (IsSingleElement)
                     return;
@@ -127,9 +146,9 @@ namespace KGySoft.Serialization
                             bw.Write(dictionary.IsReadOnly);
                             break;
                         default:
-                            // should never occur for supported collections, throwing internal error without resource
-                            Debug.Fail("Could not write IsReadOnly state of collection " + collection.GetType());
+                            // should never occur for supported collections
                             bw.Write(false);
+                            Debug.Fail("Could not write IsReadOnly state of collection " + collection.GetType());
                             break;
                     }
                 }
@@ -141,7 +160,7 @@ namespace KGySoft.Serialization
                     bool isDefaultComparer = comparer == null || IsDefaultComparer(collection, comparer);
                     bw.Write(isDefaultComparer);
                     if (!isDefaultComparer)
-                        owner.Write(bw, comparer, false, manager);
+                        manager.Write(bw, comparer, false);
                 }
             }
 
@@ -149,10 +168,10 @@ namespace KGySoft.Serialization
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
             [SecurityCritical]
-            internal object InitializeCollection(BinarySerializationFormatter owner, BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
+            internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
             {
                 object result;
-                
+
                 // KeyValuePair, DictionaryEntry
                 if (IsSingleElement)
                 {
@@ -162,8 +181,8 @@ namespace KGySoft.Serialization
                     if (addToCache)
                         manager.AddObjectToCache(result);
 
-                    object key = owner.ReadElement(br, descriptor, manager, false);
-                    object value = owner.ReadElement(br, descriptor, manager, true);
+                    object key = manager.ReadElement(br, descriptor, false);
+                    object value = manager.ReadElement(br, descriptor, true);
                     Accessors.SetKeyValue(result, key, value);
 
                     count = 1;
@@ -194,7 +213,7 @@ namespace KGySoft.Serialization
                 // 5.) Comparer
                 object comparer = null;
                 if (HasAnyComparer && !br.ReadBoolean())
-                    comparer = owner.Read(br, false, manager);
+                    comparer = manager.Read(br, false);
 
                 result = CreateCollection(descriptor, capacity, caseInsensitive, comparer);
                 if (id != 0)
