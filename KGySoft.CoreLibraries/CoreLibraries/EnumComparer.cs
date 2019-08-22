@@ -67,6 +67,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// This class is needed in order not to serialize the generated type.
         /// </summary>
+        [Serializable]
         private sealed class SerializationUnityHolder : IObjectReference
         {
             #region Methods
