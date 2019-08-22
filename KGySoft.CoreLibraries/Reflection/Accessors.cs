@@ -175,14 +175,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region UnmanagedMemoryStreamWrapper
-
-#if NETFRAMEWORK
-        private static ParameterizedCreateInstanceAccessor ctorUnmanagedMemoryStreamWrapper;
-#endif
-
-        #endregion
-
         #endregion
 
         #region Any Member
@@ -515,16 +507,6 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region UnmanagedMemoryStreamWrapper
-
-#if NET35 || NET40 || NET45
-        private static ParameterizedCreateInstanceAccessor UnmanagedMemoryStreamWrapper => ctorUnmanagedMemoryStreamWrapper ?? (ctorUnmanagedMemoryStreamWrapper = new ParameterizedCreateInstanceAccessor(Reflector.ResolveType("System.IO.UnmanagedMemoryStreamWrapper").GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(UnmanagedMemoryStream) }, null)));
-#elif !NETCOREAPP2_0
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
         #endregion
 
         #region Any Member
@@ -713,17 +695,6 @@ namespace KGySoft.Reflection
         #region MemoryStream
 
         internal static byte[] InternalGetBuffer(this MemoryStream ms) => (byte[])MemoryStream_InternalGetBuffer?.Invoke(ms);
-
-        #endregion
-
-        #region UnmanagedMemoryStreamWrapper
-
-        internal static MemoryStream ToMemoryStream(this UnmanagedMemoryStream ums) =>
-#if NETFRAMEWORK
-            (MemoryStream)UnmanagedMemoryStreamWrapper.CreateInstance(ums);
-#else
-            new UnmanagedMemoryStreamWrapper(ums);
-#endif
 
         #endregion
 

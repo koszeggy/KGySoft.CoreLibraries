@@ -1,5 +1,4 @@
-﻿#if !NETFRAMEWORK
-#region Copyright
+﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: UnmanagedMemoryStreamReadOnlyWrapper.cs
@@ -109,4 +108,3 @@ namespace KGySoft.IO
         #endregion
     }
 }
-#endif

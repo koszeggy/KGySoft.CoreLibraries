@@ -27,7 +27,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+
 using KGySoft.CoreLibraries;
+using KGySoft.IO;
 using KGySoft.Reflection;
 
 #endregion
@@ -1156,7 +1158,7 @@ namespace KGySoft.Resources
                 return null;
 
             if (!isString)
-                return result is UnmanagedMemoryStream ums ? ums.ToMemoryStream() : result;
+                return result is UnmanagedMemoryStream ums ? new UnmanagedMemoryStreamWrapper(ums) : result;
 
             if (result is string)
                 return result;
