@@ -298,6 +298,8 @@ namespace KGySoft.Serialization
                         return typeof(StringBuilder);
                     case DataTypes.Object:
                         return Reflector.ObjectType;
+                    case DataTypes.RuntimeType:
+                        return manager.ReadRuntimeType(br);
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
@@ -380,7 +382,7 @@ namespace KGySoft.Serialization
                     case DataTypes.KeyValuePair:
                         return (Reflector.KeyValuePairType.GetGenericType(ElementType, DictionaryValueType));
                     case DataTypes.KeyValuePairNullable:
-                        return Reflector.NullableType.GetGenericType((Reflector.KeyValuePairType.MakeGenericType(ElementType, DictionaryValueType)));
+                        return Reflector.NullableType.GetGenericType((Reflector.KeyValuePairType.GetGenericType(ElementType, DictionaryValueType)));
 
                     default:
                         throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));

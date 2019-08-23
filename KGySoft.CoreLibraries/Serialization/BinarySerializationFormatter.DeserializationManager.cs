@@ -216,7 +216,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Reads a type from the serialization stream
             /// </summary>
-            internal Type ReadType(BinaryReader br)
+            internal Type ReadType(BinaryReader br, bool allowOpenTypes = false)
             {
                 // assembly index
                 int index = Read7BitInt(br);
@@ -246,9 +246,7 @@ namespace KGySoft.Serialization
                     readAssemblies.Add(type.Assembly);
                     readTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
-                    {
-                        type = ReadGenericType(br, type);
-                    }
+                        type = HandleGenericTypeDef(br, type, allowOpenTypes);
 
                     return type;
                 }
@@ -265,38 +263,48 @@ namespace KGySoft.Serialization
                 // type index
                 index = Read7BitInt(br);
 
-                // reading type
+                // new type
                 if (index == readTypes.Count + 1)
                 {
                     string typeName = br.ReadString();
                     Type type = null;
-                    // ReSharper disable AssignNullToNotNullAttribute
                     if (Binder != null)
                         type = Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, typeName);
-                    // ReSharper restore AssignNullToNotNullAttribute
                     if (type == null)
-                        type = assembly == null
-                            ? Reflector.ResolveType(typeName)
-                            : Reflector.ResolveType(assembly, typeName);
+                        type = assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
                     if (type == null)
                         throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
                     readTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
-                        type = ReadGenericType(br, type);
+                        type = HandleGenericTypeDef(br, type, allowOpenTypes);
 
                     return type;
                 }
 
+                // known index
                 Debug.Assert(index >= 0 && index < readTypes.Count, "Invalid type index");
                 Type result = readTypes[index];
                 if (result.IsGenericTypeDefinition)
-                    result = ReadGenericType(br, result);
+                    result = HandleGenericTypeDef(br, result, allowOpenTypes);
 
-                // ReSharper disable AssignNullToNotNullAttribute
                 return Binder != null
                     ? (Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, result.FullName) ?? result)
                     : result;
-                // ReSharper restore AssignNullToNotNullAttribute
+            }
+
+            /// <summary>
+            /// The pair of <see cref="SerializationManager.WriteRuntimeType"/>. Do not call it to resolve the type of a serialized object.
+            /// </summary>
+            internal Type ReadRuntimeType(BinaryReader br)
+            {
+                //bool isGenericTypeArgument = br.ReadBoolean();
+                //if (!isGenericTypeArgument)
+                //    return ReadType(br);
+
+                //int index = Read7BitInt(br);
+                //Type genericTypeDef = ReadType(br);
+                //return genericTypeDef.GetGenericArguments()[index];
+                return ReadType(br, true);
             }
 
             internal void AddObjectToCache(object obj)
@@ -557,6 +565,9 @@ namespace KGySoft.Serialization
                             return createdResult = ReadSection(br);
                         case DataTypes.StringBuilder:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
+                        case DataTypes.RuntimeType:
+                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadRuntimeType(br);
+
                         case DataTypes.BinarySerializable:
                             return ReadBinarySerializable(br, addToCache, collectionDescriptor, isTValue);
                         case DataTypes.RecursiveObjectGraph:
@@ -1043,7 +1054,7 @@ namespace KGySoft.Serialization
             }
 
             /// <summary>
-            /// Resolves a type by string
+            /// Resolves a type by string. Here neither the assembly nor the type is resolved yet.
             /// </summary>
             private Type GetType(string assemblyName, string typeName)
             {
@@ -1077,17 +1088,43 @@ namespace KGySoft.Serialization
                 typeByNameCache.Add(key, result);
             }
 
-            private Type ReadGenericType(BinaryReader br, Type genTypeDef)
+            private Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes)
             {
-                int len = genTypeDef.GetGenericArguments().Length;
-                Type[] args = new Type[len];
-                for (int i = 0; i < len; i++)
-                    args[i] = ReadType(br);
+                Type[] args = typeDef.GetGenericArguments();
+                int len = args.Length;
+                Type result;
 
-                Type result = genTypeDef.MakeGenericType(args);
+                if (allowOpenTypes)
+                {
+                    switch ((GenericTypeSpecifier)br.ReadByte())
+                    {
+                        case GenericTypeSpecifier.TypeDefinition:
+                            return typeDef;
+                        case GenericTypeSpecifier.GenericParameter:
+                        {
+                            var index = Read7BitInt(br);
+                            if (index < 0 || index >= len)
+                                throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                            result = typeDef.GetGenericArguments()[index];
+                            readTypes.Add(result);
+                            return result;
+                        }
+                        case GenericTypeSpecifier.ConstructedType:
+                            break;
+                        default:
+                            throw new SerializationException(Res.BinarySerializationInvalidStreamData);
+                    }
+                }
+
+                // reading arguments
+                for (int i = 0; i < len; i++)
+                    args[i] = ReadType(br, allowOpenTypes);
+
+                result = typeDef.GetGenericType(args);
                 readTypes.Add(result);
 
                 // ReSharper disable once AssignNullToNotNullAttribute
+                // Only constructed types are checked by the Binder
                 return Binder != null ? (Binder.BindToType(result.Assembly.FullName, result.FullName) ?? result) : result;
             }
 

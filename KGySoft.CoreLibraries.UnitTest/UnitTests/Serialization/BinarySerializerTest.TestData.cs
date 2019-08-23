@@ -851,6 +851,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
+        #region OpenGenericDictionary class
+
+        private class OpenGenericDictionary<TValue> : Dictionary<string, TValue>
+        {
+        }
+
+        #endregion
+
+
         #region CustomNonGenericDictionary class
 
         [Serializable]

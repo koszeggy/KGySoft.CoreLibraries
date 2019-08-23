@@ -503,7 +503,17 @@ namespace KGySoft.Serialization
                 if (TryWriteCollection(bw, data, isRoot))
                     return;
 
-                // f.) BinarySerializable
+                // f.) Other non-pure types. DataTypes enum does not describe exact type information for them.
+
+                // RuntimeType
+                if (type == Reflector.RuntimeType)
+                {
+                    WriteDataType(bw, DataTypes.RuntimeType);
+                    WriteRuntimeType(bw, (Type)data);
+                    return;
+                }
+
+                // BinarySerializable
                 if (!IgnoreIBinarySerializable && data is IBinarySerializable binarySerializable)
                 {
                     WriteDataType(bw, DataTypes.BinarySerializable);
@@ -520,7 +530,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // g.) Any struct if can serialize
+                // Any struct if can serialize
                 if (CompactSerializationOfStructures && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
                 {
                     WriteDataType(bw, DataTypes.RawStruct);
@@ -529,7 +539,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // h.) Recursive serialization: if enabled or surrogate selector supports the type, or when type is serializable
+                // Recursive serialization: if enabled or surrogate selector supports the type, or when type is serializable
                 if (RecursiveSerializationAsFallback || CanUseSurrogate(type) || type.IsSerializable)
                 {
                     WriteRecursively(bw, data, isRoot);
@@ -537,7 +547,7 @@ namespace KGySoft.Serialization
                 }
 
 #pragma warning disable 618, 612
-                // i.) Any struct (obsolete but still supported as backward compatibility)
+                // Any struct (obsolete but still supported as backward compatibility)
                 if (ForcedSerializationValueTypesAsFallback && type.IsValueType)
                 {
                     WriteDataType(bw, DataTypes.RawStruct);
@@ -653,7 +663,9 @@ namespace KGySoft.Serialization
                         return new[] { DataTypes.Array }.Concat(innerType);
                 }
 
-                return null;
+                // An array must always be serialized as an array. For unsupported types we encode the array type
+                // and if recursive serialization is not supported it will turn out the non-null elements (if any)
+                return pureOnly ? null : new[] { DataTypes.Array | DataTypes.RecursiveObjectGraph };
             }
 
             [SecurityCritical]
@@ -720,6 +732,7 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/> as an element type.
             /// If <paramref name="pureOnly"/> is <see langword="true"/>, then only types without required name are returned.
+            /// Returns <see cref="DataTypes.Null"/> for collections and non-pure types if pure was requested.
             /// </summary>
             [SecurityCritical]
             private DataTypes GetSupportedElementType(Type type, bool pureOnly)
@@ -754,29 +767,36 @@ namespace KGySoft.Serialization
                 if (type.IsEnum)
                     return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), false);
 
-                // if type is a collection, then returning null here
+                // Shortcut: If type is a collection, then returning null here
                 if (GetSupportedCollectionType(type) != DataTypes.Null)
                     return DataTypes.Null;
 
-                // f.) IBinarySerializable implementation
+                // e.) Other non-pure types
+
+                // RuntimeType
+                if (type == Reflector.RuntimeType)
+                    return DataTypes.RuntimeType;
+
+                // IBinarySerializable implementation
                 if (!IgnoreIBinarySerializable && typeof(IBinarySerializable).IsAssignableFrom(type))
                     return DataTypes.BinarySerializable;
 
-                // g.) Any struct if can be serialized
+                // Any struct if can be serialized
                 if (CompactSerializationOfStructures && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
                     return DataTypes.RawStruct;
 
-                // h.) Recursive serialization
+                // Recursive serialization
                 if (RecursiveSerializationAsFallback || type.IsInterface || type.IsSerializable || CanUseSurrogate(type))
                     return DataTypes.RecursiveObjectGraph;
 
 #pragma warning disable 618, 612
-                // i.) Any struct (obsolete but still supported as backward compatibility)
+                // Any struct (obsolete but still supported as backward compatibility)
                 if (ForcedSerializationValueTypesAsFallback && type.IsValueType)
                     return DataTypes.RawStruct;
 #pragma warning restore 618, 612
 
-                return DataTypes.Null;
+                // It is alright for a collection element type. If no recursive serialization is allowed it will turn out for the items.
+                return DataTypes.RecursiveObjectGraph;
             }
 
             [SecurityCritical]
@@ -824,6 +844,24 @@ namespace KGySoft.Serialization
                     Write7BitLong(bw, enumValue);
                 else
                     bw.Write(BitConverter.GetBytes(enumValue), 0, size);
+            }
+
+            /// <summary>
+            /// Use only when serializing a type as an instance. Handles also generic type arguments.
+            /// </summary>
+            [SecurityCritical]
+            private void WriteRuntimeType(BinaryWriter bw, Type type)
+            {
+                //bool isGenericParameter = type.IsGenericParameter;
+                //bw.Write(isGenericParameter);
+                //if (isGenericParameter)
+                //{
+                //    Write7BitInt(bw, type.GenericParameterPosition);
+                //    type = type.DeclaringType;
+                //}
+
+                //WriteType(bw, type);
+                WriteType(bw, type, true);
             }
 
             [SecurityCritical]
@@ -1114,6 +1152,12 @@ namespace KGySoft.Serialization
                         Debug.Assert(element != null, "When element is null, WriteId should return true");
                         WriteStringBuilder(bw, (StringBuilder)element);
                         break;
+                    case DataTypes.RuntimeType:
+                        if (WriteId(bw, element))
+                            break;
+                        Debug.Assert(element != null, "When element is null, WriteId should return true");
+                        WriteRuntimeType(bw, (Type)element);
+                        break;
 
                     case DataTypes.BinarySerializable:
                         // 1. instance id for classes or when element is defined as interface in the collection (for nullables IsNotNull was already written in default case)
@@ -1180,6 +1224,7 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteRecursively(BinaryWriter bw, object data, bool isRoot)
             {
+                Debug.Assert(!(data is Array), "Arrays cannot be serialized as an object graph.");
                 WriteDataType(bw, DataTypes.RecursiveObjectGraph);
 
                 if (isRoot)
@@ -1398,7 +1443,7 @@ namespace KGySoft.Serialization
                         if (isGeneric)
                         {
                             typeIndexCache.Add(typeDef, indexCacheCount);
-                            WriteGenericType(bw, type);
+                            WriteGenericTypeArguments(bw, type);
                         }
 
                         // when generic, the constructed type is added again (property value must be re-evaluated)
@@ -1427,7 +1472,7 @@ namespace KGySoft.Serialization
                 if (isGeneric && typeIndexCache.TryGetValue(typeDef, out index))
                 {
                     Write7BitInt(bw, index);
-                    WriteGenericType(bw, type);
+                    WriteGenericTypeArguments(bw, type);
 
                     // caching the constructed type (property value must be re-evaluated)
                     typeIndexCache.Add(type, TypeIndexCacheCount);
@@ -1443,7 +1488,7 @@ namespace KGySoft.Serialization
                 if (isGeneric)
                 {
                     typeIndexCache.Add(typeDef, typeIndexCacheCount);
-                    WriteGenericType(bw, type);
+                    WriteGenericTypeArguments(bw, type);
                 }
 
                 // when generic, the constructed type is added again (property value must be re-evaluated)
@@ -1467,7 +1512,7 @@ namespace KGySoft.Serialization
             /// count + 1: new type (name is to be stored)
             /// </remarks>
             [SecurityCritical]
-            private void WriteType(BinaryWriter bw, Type type)
+            private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
             {
                 #region Private Methods to reduce complexity
 
@@ -1514,6 +1559,7 @@ namespace KGySoft.Serialization
 
                 #endregion
 
+                Debug.Assert(allowOpenTypes || (!type.IsGenericTypeDefinition && !type.IsGenericParameter));
                 var context = new WriteTypeContext { Type = type };
                 Binder?.BindToName(type, out context.BinderAsmName, out context.BinderTypeName);
 
@@ -1521,9 +1567,6 @@ namespace KGySoft.Serialization
                     return;
 
                 int asmIndex = GetAssemblyIndex(ref context);
-
-                bool isGeneric;
-                Type typeDef;
 
                 // new assembly
                 if (asmIndex == -1)
@@ -1562,25 +1605,11 @@ namespace KGySoft.Serialization
                             bw.Write(context.BinderTypeName);
 
                             // binder can produce the same type name for different assemblies so prefixing with assembly
-                            typeNameIndexCache.Add((context.BinderAsmName ?? type.Assembly.FullName) + ":" + context.BinderTypeName,
-                                indexCacheCount);
+                            typeNameIndexCache.Add((context.BinderAsmName ?? type.Assembly.FullName) + ":" + context.BinderTypeName, indexCacheCount);
                             return;
                         }
 
-                        // type by itself: type is unknown here for sure so encoding without looking in cache
-                        isGeneric = type.IsGenericType;
-                        typeDef = isGeneric ? type.GetGenericTypeDefinition() : null;
-
-                        // ReSharper disable once AssignNullToNotNullAttribute - see the check above
-                        bw.Write(isGeneric ? typeDef.FullName : type.FullName);
-                        if (isGeneric)
-                        {
-                            typeIndexCache.Add(typeDef, indexCacheCount);
-                            WriteGenericType(bw, type);
-                        }
-
-                        // when generic, the constructed type is added again (property value must be re-evaluated)
-                        typeIndexCache.Add(type, TypeIndexCacheCount);
+                        WriteNewType(bw, type, false, allowOpenTypes);
                         return;
                     }
                 }
@@ -1618,33 +1647,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                // generic type definition is already known but the constructed type is not yet
-                isGeneric = type.IsGenericType;
-                typeDef = isGeneric ? type.GetGenericTypeDefinition() : null;
-
-                if (isGeneric && typeIndexCache.TryGetValue(typeDef, out typeIndex))
-                {
-                    Write7BitInt(bw, typeIndex);
-                    WriteGenericType(bw, type);
-
-                    // caching the constructed type (property value must be re-evaluated)
-                    typeIndexCache.Add(type, TypeIndexCacheCount);
-                    return;
-                }
-
-                // type is not known at all (count + 1: new type)
-                Write7BitInt(bw, typeIndexCacheCount + 1);
-
-                // ReSharper disable once AssignNullToNotNullAttribute
-                bw.Write(isGeneric ? typeDef.FullName : type.FullName);
-                if (isGeneric)
-                {
-                    typeIndexCache.Add(typeDef, typeIndexCacheCount);
-                    WriteGenericType(bw, type);
-                }
-
-                // when generic, the constructed type is added again (property value must be re-evaluated)
-                typeIndexCache.Add(type, TypeIndexCacheCount);
+                WriteNewType(bw, type, true, allowOpenTypes);
             }
 #endif
 
@@ -1652,6 +1655,7 @@ namespace KGySoft.Serialization
             /// When writing SerializationInfo types on serializing custom object graph it can happen that we want to write the name
             /// of a natively supported type. In that case we write the <see cref="DataTypes"/> for those types.
             /// As we come from <see cref="WriteType"/> we return true only when the type can be written purely by <see cref="DataTypes"/>.
+            /// NOTE: Pure data types are not cached in type index cache because they should not be bound to any assembly.
             /// </summary>
             [SecurityCritical]
             private bool TryWritePureDataType(BinaryWriter bw, Type type)
@@ -1682,13 +1686,75 @@ namespace KGySoft.Serialization
             }
 
             /// <summary>
-            /// Writes the generic parameters of a type.
+            /// Writes a new non-pure type if a binder did not handle it. Assembly part is already written.
+            /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
-            [SecurityCritical]
-            private void WriteGenericType(BinaryWriter bw, Type type)
+            private void WriteNewType(BinaryWriter bw, Type type, bool knownAssembly, bool allowOpenTypes)
             {
+                bool isGeneric = type.IsGenericType;
+                bool isTypeDef = type.IsGenericTypeDefinition;
+                bool isGenericParam = type.IsGenericParameter;
+                bool typeDefWritten = false;
+
+                Debug.Assert(allowOpenTypes || !isTypeDef && !isGenericParam, $"Unexpected type when open types are not allowed: {type}");
+
+                Type typeDef = isTypeDef ? type
+                    : isGeneric ? type.GetGenericTypeDefinition()
+                    : isGenericParam ? type.DeclaringType
+                    : null;
+
+                // For known assemblies a type index is requested first.
+                if (knownAssembly)
+                {
+                    // It can happen that the generic type definition is already known.
+                    if (typeDef != null && typeIndexCache.TryGetValue(typeDef, out int typeIndex))
+                    {
+                        Write7BitInt(bw, typeIndex);
+                        typeDefWritten = true;
+                    }
+                    else
+                        Write7BitInt(bw, TypeIndexCacheCount + 1); // count + 1: new type
+                }
+
+                // Regular type name
+                if (typeDef == null)
+                {
+                    bw.Write(type.FullName);
+                    typeIndexCache.Add(type, TypeIndexCacheCount);
+                    return;
+                }
+
+                // Generic type definition name
+                if (!typeDefWritten)
+                {
+                    bw.Write(typeDef.FullName);
+                    typeIndexCache.Add(typeDef, TypeIndexCacheCount);
+                }
+
+                // If open types are allowed in current context we write a specifier after the generic type definition
+                if (allowOpenTypes)
+                {
+                    if (isTypeDef)
+                    {
+                        bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
+                        return;
+                    }
+
+                    if (isGenericParam)
+                    {
+                        bw.Write((byte)GenericTypeSpecifier.GenericParameter);
+                        Write7BitInt(bw, type.GenericParameterPosition);
+                        typeIndexCache.Add(type, TypeIndexCacheCount);
+                        return;
+                    }
+
+                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
+                }
+
+                // Constructed generic type: arguments (it still can contain generic parameters)
                 foreach (Type genericArgument in type.GetGenericArguments())
-                    WriteType(bw, genericArgument);
+                    WriteType(bw, genericArgument, allowOpenTypes);
+                typeIndexCache.Add(type, TypeIndexCacheCount);
             }
 
             /// <summary>

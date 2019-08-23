@@ -32,6 +32,17 @@ namespace KGySoft.Serialization
     {
         private abstract class SerializationManagerBase
         {
+            #region Enumerations
+
+            protected enum GenericTypeSpecifier
+            {
+                TypeDefinition,
+                ConstructedType,
+                GenericParameter
+            }
+
+            #endregion
+
             #region Fields
 
             #region Static Fields

@@ -41,11 +41,14 @@ using KGySoft.Reflection;
  * I. Adding a simple type
  * ~~~~~~~~~~~~~~~~~~~~~~~
  * 1. Add type to DataTypes 0-5 bits (adjust free places in comments)
- * 2. Handle type in SerializationManager.TryWriteSimpleNonPrimitive - if type is non sealed, below non-sealed types: create a WriteXXX (where XXX is the type)
- * 3. Add type to supportedNonPrimitiveElementTypes
- * 4. Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX
- * 5. Add type to the private DataTypeDescriptor.GetElementType
- * 6. Handle type in DeserializationManager.ReadObject: for reference call TryGetFromCache and always set createdResult
+ * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
+ *    Otherwise, handle it in SerializationManager.GetSupportedElementType under e.)
+ * 3. If type is pure handle it type in SerializationManager.TryWriteSimpleNonPrimitive. Create a static WriteXXX.
+ *    Otherwise, handle it in SerializationManager.Write under f.). Create a WriteXXX and use WriteType.
+ * 4. Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX.
+ * 5. Add type to DataTypeDescriptor.GetElementType (to the private overload).
+ *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
+ * 6. Handle type in DeserializationManager.ReadObject: for reference types call TryGetFromCache. Always set createdResult.
  * 7. Add type to unit test:
  *    - SerializeSimpleTypes
  *    - SerializeSimpleArrays
@@ -73,6 +76,8 @@ using KGySoft.Reflection;
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
  * 9. Add type to description - Collections
+ *
+ * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
  */
 namespace KGySoft.Serialization
 {
@@ -287,7 +292,7 @@ namespace KGySoft.Serialization
         /// </summary>
         [Flags]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
-        enum DataTypes : ushort
+        private enum DataTypes : ushort
         {
             // ====== LOW BYTE ======
             // ------ simple types:
@@ -330,7 +335,9 @@ namespace KGySoft.Serialization
             BitVector32 = 27, // too complex special handling would be needed as collection so treated as simple type
             BitVector32Section = 28,
 
-            // free: 29-58
+            RuntimeType = 29,
+
+            // free: 30-58
 
             // not concrete types encoded as simple types:
             //SerializationEnd = 59, // TODO: a reference to a single private static object, which represents the end added objects by custom serialization

@@ -41,6 +41,7 @@
 ==============================
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
+  + Supporting runtime types natively. It was required for .NET Core, which cannot serialize Type instances.
   * Improving performance.
 ! IBinarySerializable interface (behavioral change for implementations):
   ! The options parameter of the special constructor and the Deserialize methods get the options of the deserialization

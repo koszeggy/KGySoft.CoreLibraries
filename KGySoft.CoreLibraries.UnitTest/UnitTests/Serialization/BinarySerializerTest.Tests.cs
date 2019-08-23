@@ -22,11 +22,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
+using System.Reflection;
 #if NETFRAMEWORK
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+#if NETFRAMEWORK
+using System.Security;
+using System.Security.Permissions;
+using System.Security.Policy; 
+#endif
 using System.Text;
 
 using KGySoft.Collections;
@@ -67,7 +73,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Constants
 
-        private const bool dumpDetails = false;
+        private const bool dumpDetails = true;
         private const bool dumpSerContent = false;
 
         #endregion
@@ -81,7 +87,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 null,
                 new object(),
-                DBNull.Value,
                 true,
                 (sbyte)1,
                 (byte)1,
@@ -110,7 +115,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new DictionaryEntry(1, "alpha"),
                 new KeyValuePair<int, string>(1, "alpha"), // 14
                 new BitArray(new[] { true, false, true }), // 6
-                new StringBuilder("alpha")
+                new StringBuilder("alpha"),
             };
 
             SystemSerializeObject(referenceObjects);
@@ -124,16 +129,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
+                DBNull.Value,
                 new BitVector32(13),
                 BitVector32.CreateSection(13),
                 BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
+                typeof(int)
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+#if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes); 
+#endif
         }
 
         [Test]
@@ -272,8 +281,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(List<int>),
                 typeof(CustomGenericCollection<int>),
 
-                typeof(List<>),
-                typeof(List<>).GetGenericArguments()[0]
+                typeof(List<>), // List<T> - generic definition
+                typeof(List<>).GetGenericArguments()[0], // T - generic argument
+                typeof(OpenGenericDictionary<>).BaseType // Dictionary<string, TValue> - open generic type
             };
 
 #if !NETCOREAPP2_0 // type is not serializable in .NET Core
@@ -360,7 +370,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             object[] referenceObjects =
             {
                 new object[] { new object(), null },
-                new DBNull[] { DBNull.Value, null },
                 new bool[] { true, false },
                 new sbyte[] { 1, 2 },
                 new byte[] { 1, 2 },
@@ -400,15 +409,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
+                new DBNull[] { DBNull.Value, null },
                 new BitVector32[] { new BitVector32(13) },
-                new BitVector32.Section[] { BitVector32.CreateSection(13) },
+                new BitVector32.Section[] { BitVector32.CreateSection(13), BitVector32.CreateSection(42, BitVector32.CreateSection(13)) },
+                new Type[] { typeof(int), typeof(List<int>), null }
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 27
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+#if !NETCOREAPP2_0 // type is not serializable in .NET Core
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+#endif
         }
 
         /// <summary>
@@ -1056,6 +1069,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
+                typeof(int),
 
                 TestEnumByte.Two,
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
