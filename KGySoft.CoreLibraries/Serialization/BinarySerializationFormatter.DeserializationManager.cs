@@ -625,7 +625,7 @@ namespace KGySoft.Serialization
             {
                 byte[] serData = br.ReadBytes(Read7BitInt(br));
 
-                if (!Reflector.TryCreateEmptyObject(type, false, false, out object result))
+                if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
                     throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
 
                 if (addToCache)
@@ -683,7 +683,7 @@ namespace KGySoft.Serialization
                     type = ReadType(br);
 
                 // c.) Reading members
-                if (!Reflector.TryCreateEmptyObject(type, false, false, out object result))
+                if (!Reflector.TryCreateEmptyObject(type, false, true, out object result))
                     throw new SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
                 int id = 0;
                 if (addToCache)
