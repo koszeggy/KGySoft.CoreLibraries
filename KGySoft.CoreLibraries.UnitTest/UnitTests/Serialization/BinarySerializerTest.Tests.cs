@@ -21,27 +21,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
 #if NETFRAMEWORK
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Security;
-using System.Security.Permissions;
-using System.Security.Policy;
 using System.Text;
 
 using KGySoft.Collections;
-using KGySoft.Reflection;
 using KGySoft.Serialization;
 
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 
 #endregion
 
@@ -559,6 +550,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new DictionaryEntry?[] { new DictionaryEntry(1, "alpha"), null }, // 21
                 new KeyValuePair<int, string>?[] { new KeyValuePair<int, string>(1, "alpha"), null }, // 21
                 new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?, int?>(1, 2), new KeyValuePair<int?, int?>(2, null), null }, // 28
+                new KeyValuePair<KeyValuePair<int?, string>?, KeyValuePair<int?, string>?>?[] { new KeyValuePair<KeyValuePair<int?, string>?, KeyValuePair<int?, string>?>(new KeyValuePair<int?, string>(1, "alpha"), new KeyValuePair<int?, string>(2, "beta")),  }, // 28
 
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },

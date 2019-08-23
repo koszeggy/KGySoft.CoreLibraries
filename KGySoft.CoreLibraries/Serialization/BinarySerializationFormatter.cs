@@ -38,23 +38,23 @@ using KGySoft.Reflection;
 /* HOWTO
  * =====
  *
- * I. Add a simple type
- * ~~~~~~~~~~~~~~~~~~~~
+ * I. Adding a simple type
+ * ~~~~~~~~~~~~~~~~~~~~~~~
  * 1. Add type to DataTypes 0-5 bits (adjust free places in comments)
- * 2. Handle type in Write c.) - if type is non sealed, below non-sealed types: create a WriteXXX (where XXX is the type)
- * 3. Handle type in GetSupportedElementType d.)
- * 4. Handle type in WriteElement: check null for reference types, then simply call WriteXXX
- * 5. Add type to DataTypeDescriptor.GetElementType
- * 6. Handle type in ReadObject: for reference types check null if collectionDescriptor is not null, then create object
+ * 2. Handle type in SerializationManager.TryWriteSimpleNonPrimitive - if type is non sealed, below non-sealed types: create a WriteXXX (where XXX is the type)
+ * 3. Add type to supportedNonPrimitiveElementTypes
+ * 4. Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX
+ * 5. Add type to the private DataTypeDescriptor.GetElementType
+ * 6. Handle type in DeserializationManager.ReadObject: for reference call TryGetFromCache and always set createdResult
  * 7. Add type to unit test:
  *    - SerializeSimpleTypes
  *    - SerializeSimpleArrays
  *    - SerializeNullableArrays (value types)
  *    - SerializationSurrogateTest
- * 8. Add type to description - Simple types
+ * 8. Add type to description - Natively supported simple types
  *
- * II. Add a collection type
- * ~~~~~~~~~~~~~~~~~~~~~~~~~
+ * II. Adding a collection type
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * 1. Add type to DataTypes 8-13 bits (adjust free places in comments)
  *    - 0..15 << 8: Generic collections
  *    - 16..31 << 8: Generic dictionaries
@@ -62,14 +62,14 @@ using KGySoft.Reflection;
  *    - 48..63 << 8: Non-generic dictionaries
  * 2. Update serializationInfo dictionary in static constructor - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
- * 3. Add type to IsSupportedCollection (more common types first)
- * 4. Handle type in GetSupportedCollectionType - mind generic/non generic groups
- * 5. Handle type in GetDictionaryValueTypes - mind non-dictionary/dictionary types
+ * 3. Add type to supportedCollections
+ * 4. Check SerializationManager.GetSupportedCollectionType whether a special handling is needed
+ * 5. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
  * 6. Add type to DataTypeDescriptor.GetCollectionType - mind groups
  * 7. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
  * 8. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
- *    - SerializeSupportedDictionaryValues - twice when generic dictionary type; otherwise, only once
+ *    - SerializeSupportedDictionaries - twice when generic dictionary type; otherwise, only once
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
  * 9. Add type to description - Collections

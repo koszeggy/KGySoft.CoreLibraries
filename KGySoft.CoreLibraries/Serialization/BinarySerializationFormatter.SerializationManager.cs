@@ -209,7 +209,7 @@ namespace KGySoft.Serialization
             }
 
             /// <summary>
-            /// Gets the element types for a dictionary
+            /// Retrieves the value type(s) for a dictionary.
             /// </summary>
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many common cases")]
             private static IList<DataTypes> GetDictionaryValueTypes(IList<DataTypes> collectionTypeDescriptor)
@@ -218,62 +218,69 @@ namespace KGySoft.Serialization
                 Debug.Assert(collectionTypeDescriptor.Count > 0, "Type description is invalid: not enough data");
 #if DEBUG
                 int collType = ((int)(collectionTypeDescriptor[0] & DataTypes.CollectionTypes) >> 8);
-                Debug.Assert(collType >= 16 && collType < 32
-                    || collType >= 48 && collType < 64, "Type description is invalid: dictionary type is expected");
+                Debug.Assert(collType >= 16 && collType < 32 || collType >= 48 && collType < 64, 
+                    $"Type description is invalid: {collectionTypeDescriptor[0] & DataTypes.CollectionTypes} is not a dictionary type.");
 #endif
 
-
                 CircularList<DataTypes> result = new CircularList<DataTypes>();
-                int skipLevel = 0; // starting from -1 because dictionary will increase it by 1 or 2
+                int skipLevel = 0;
                 bool startingDictionaryResolved = false;
                 foreach (DataTypes dataType in collectionTypeDescriptor)
                 {
-                    if (startingDictionaryResolved && skipLevel == 0) // 0 means we are in value already
-                        result.Add(dataType);
-                    else
+                    // we reached the value
+                    if (startingDictionaryResolved && skipLevel == 0)
                     {
-                        switch (dataType & DataTypes.CollectionTypes)
-                        {
-                            case DataTypes.Null:
-                                // simple type: leaf element of previous collection
+                        result.Add(dataType);
+                        continue;
+                    }
+
+                    switch (dataType & DataTypes.CollectionTypes)
+                    {
+                        // No collection type indicated: element type belongs to an already skipped previous collection.
+                        case DataTypes.Null:
+                            skipLevel--;
+                            break;
+
+                        // Collections with a single element: decreasing level if element is specified.
+                        // Otherwise it is a nested collection, skip level kept for the next item.
+                        case DataTypes.Array:
+                        case DataTypes.List:
+                        case DataTypes.LinkedList:
+                        case DataTypes.HashSet:
+                        case DataTypes.Queue:
+                        case DataTypes.Stack:
+                        case DataTypes.CircularList:
+                        case DataTypes.SortedSet:
+                        case DataTypes.ArrayList:
+                        case DataTypes.QueueNonGeneric:
+                        case DataTypes.StackNonGeneric:
+                        case DataTypes.StringCollection:
+                            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
                                 skipLevel--;
-                                break;
-                            case DataTypes.Array:
-                            case DataTypes.List:
-                            case DataTypes.LinkedList:
-                            case DataTypes.HashSet:
-                            case DataTypes.Queue:
-                            case DataTypes.Stack:
-                            case DataTypes.CircularList:
-                            case DataTypes.SortedSet:
-                            case DataTypes.ArrayList:
-                            case DataTypes.QueueNonGeneric:
-                            case DataTypes.StackNonGeneric:
-                            case DataTypes.StringCollection:
-                                // collections with a single element: decreasing level if element is specified
-                                if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
-                                    skipLevel--;
-                                break;
-                            case DataTypes.Dictionary:
-                            case DataTypes.SortedList:
-                            case DataTypes.SortedDictionary:
-                            case DataTypes.CircularSortedList:
-                            case DataTypes.Hashtable:
-                            case DataTypes.SortedListNonGeneric:
-                            case DataTypes.ListDictionary:
-                            case DataTypes.HybridDictionary:
-                            case DataTypes.OrderedDictionary:
-                            case DataTypes.StringDictionary:
-                            case DataTypes.KeyValuePair:
-                            case DataTypes.DictionaryEntry:
-                            case DataTypes.KeyValuePairNullable:
-                            case DataTypes.DictionaryEntryNullable:
-                                // dictionary types: increasing level by 1 if key is not specified, otherwise current level remains
-                                if ((dataType & ~DataTypes.CollectionTypes) == DataTypes.Null)
-                                    skipLevel++;
-                                startingDictionaryResolved = true;
-                                break;
-                        }
+                            break;
+
+                        // Dictionary type: Entry point of the loop or skipped nested key collections.
+                        // If element type is specified, value type starts on next position.
+                        // Otherwise, key is a nested collection and we need to skip it.
+                        case DataTypes.Dictionary:
+                        case DataTypes.SortedList:
+                        case DataTypes.SortedDictionary:
+                        case DataTypes.CircularSortedList:
+                        case DataTypes.Hashtable:
+                        case DataTypes.SortedListNonGeneric:
+                        case DataTypes.ListDictionary:
+                        case DataTypes.HybridDictionary:
+                        case DataTypes.OrderedDictionary:
+                        case DataTypes.StringDictionary:
+                        case DataTypes.KeyValuePair:
+                        case DataTypes.DictionaryEntry:
+                        case DataTypes.KeyValuePairNullable:
+                        case DataTypes.DictionaryEntryNullable:
+                            // this check works because flags cannot be combined with collection types (nullable "collections" have different values)
+                            if ((dataType & ~DataTypes.CollectionTypes) == DataTypes.Null)
+                                skipLevel++;
+                            startingDictionaryResolved = true;
+                            break;
                     }
                 }
 

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
-    <TargetFrameworks>net45</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <!--<UseWindowsForms>true</UseWindowsForms>-->
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
@@ -24,7 +24,15 @@
   </ItemGroup>
 
   <!-- .NET Core only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0'">
+  <!--<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0'">
+    <PackageReference Include="System.Drawing.Common">
+      <Version>4.5.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Text.Encoding.CodePages">
+      <Version>4.5.1</Version>
+    </PackageReference>
+  </ItemGroup>-->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
     <PackageReference Include="System.Drawing.Common">
       <Version>4.5.1</Version>
     </PackageReference>
@@ -32,6 +40,7 @@
       <Version>4.5.1</Version>
     </PackageReference>
   </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
@@ -51,9 +60,12 @@
 
   <!--TestRes.resx: Embedded in .NET Framework and .NET Core 2.0 but only copied in .NET Core 3 because it contains errors (on purpose) that cannot be handled by .NET Core 3 -->
   <ItemGroup>
-    <EmbeddedResource Condition="'$(TargetFramework)' != 'netcoreapp3.0'" Update="Resources\TestRes.resx">
+    <EmbeddedResource Update="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <!--<EmbeddedResource Condition="'$(TargetFramework)' != 'netcoreapp3.0'" Update="Resources\TestRes.resx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>-->
     <!--<EmbeddedResource Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Remove="Resources\TestRes.resx" />
     <None Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Include="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
