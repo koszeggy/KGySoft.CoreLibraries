@@ -11,7 +11,7 @@
 
 + Global changes:
 =================
-+ New Target Framework: Supporting .NET Core 2.0
++ New Target Framework: .NET Core 2.0 is supported.
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
@@ -24,7 +24,7 @@
 	overload when TValue and TActualValue were the same.
   + New GetValueOrDefault overloads for IEnumerable<KeyValuePair<TKey, Tvalue>> instances to support also read-only
     dictionaries. The parameter type is not IReadOnlyDictionary<TKey, TValue> because that would cause ambiguity due
-	to the current interface inheritance. In case non-dictionary instances a sequential search is performed.
+	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
 + Range<T> struct:
   + New Deconstruct method.
   + New operators for converting from T, (T, T) and to (T, T).
@@ -42,7 +42,11 @@
 ! BinarySerializationFormatter:
   ! The serialized stream is more compact than before (also meaning, not compatible with previous versions)
   * Improving performance.
-+ BinarySerializerOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
+! IBinarySerializable interface (behavioral change for implementations):
+  ! The options parameter of the special constructor and the Deserialize methods get the options of the deserialization
+    rather than the original one used for the serialization. If that info is needed you need to save it into the
+	custom serialized data.
++ BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
 
 

@@ -503,8 +503,6 @@ namespace KGySoft.Serialization
 
                     if (isRoot)
                     {
-                        WriteOptions(bw);
-
                         // on root level writing the id even if the object is value type because the boxed reference can be shared
                         if (WriteId(bw, data))
                             Debug.Fail("Id of recursive object should be unknown on top level.");
@@ -845,7 +843,6 @@ namespace KGySoft.Serialization
 
                 if (isRoot && CanHaveRecursion(collectionTypeList))
                 {
-                    WriteOptions(bw);
                     if (WriteId(bw, data))
                         Debug.Fail("Id of recursive object should be unknown on top level.");
                 }
@@ -1180,8 +1177,6 @@ namespace KGySoft.Serialization
 
                 if (isRoot)
                 {
-                    WriteOptions(bw);
-
                     // on root level writing the id even if the object is value type because the boxed reference can be shared
                     if (WriteId(bw, data))
                     {
@@ -1324,25 +1319,6 @@ namespace KGySoft.Serialization
             private void OnSerializing(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializingAttribute));
 
             private void OnSerialized(object obj) => ExecuteMethodsOfAttribute(obj, typeof(OnSerializedAttribute));
-
-            /// <summary>
-            /// Writes options used at serialization (only used for <see cref="IBinarySerializable"/>).
-            /// Should be called after writing <see cref="DataTypes"/> at root level if it contains any <see cref="DataTypes.BinarySerializable"/>, <see cref="DataTypes.RecursiveObjectGraph"/> or <see cref="DataTypes.Object"/> as element type.
-            /// </summary>
-            private void WriteOptions(BinaryWriter bw)
-            {
-                BinarySerializationOptions options = Options;
-
-                // 1 byte is enough
-                if (((int)options & 0xFF) == (int)options)
-                {
-                    bw.Write((byte)options);
-                    return;
-                }
-
-                // storing options on 2 bytes
-                bw.Write((ushort)(options | ExtendedOptions));
-            }
 
 #if NET35
             /// <summary>

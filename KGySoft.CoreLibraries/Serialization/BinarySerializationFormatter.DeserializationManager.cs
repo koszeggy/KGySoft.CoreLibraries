@@ -52,21 +52,11 @@ namespace KGySoft.Serialization
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
             private Dictionary<object, List<KeyValuePair<FieldInfo, object>>> objectReferences;
-            private BinarySerializationOptions? origOptions;
             private List<IDeserializationCallback> deserializationRegObjects;
 
             #endregion
 
             #region Properties
-
-            private BinarySerializationOptions OrigOptions
-            {
-                get
-                {
-                    Debug.Assert(origOptions != null, "Original options haven't been deserialized");
-                    return origOptions.GetValueOrDefault();
-                }
-            }
 
             private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object> { { 0, null } });
 
@@ -167,10 +157,9 @@ namespace KGySoft.Serialization
                 // 2.) other supported non-collection type
                 if ((dataType & DataTypes.CollectionTypes) == DataTypes.Null)
                 {
-                    // on root level options and id are written for IBinarySerializable and recursive objects (collections are checked below)
+                    // on root level id is written for IBinarySerializable and recursive objects (collections are checked below)
                     if (isRoot && (dataType == DataTypes.BinarySerializable || dataType == DataTypes.RecursiveObjectGraph))
                     {
-                        ReadOptions(br);
                         addToCache = true;
                         if (TryGetCachedObject(br, out result))
                         {
@@ -185,10 +174,9 @@ namespace KGySoft.Serialization
                 // 3.) compound collection type
                 DataTypeDescriptor descriptor = new DataTypeDescriptor(null, dataType, br);
 
-                // on root level options and id are written after data type only when the collection can have recursion
+                // on root level id is written after data type only when the collection can have recursion
                 if (isRoot && descriptor.CanHaveRecursion)
                 {
-                    ReadOptions(br);
                     addToCache = true;
                     if (TryGetCachedObject(br, out result))
                     {
@@ -633,11 +621,11 @@ namespace KGySoft.Serialization
                 OnDeserializing(result);
 
                 // Trying to use a deserializer constructor in the first place.
-                if (!Accessors.TryInvokeCtor(result, OrigOptions, serData))
+                if (!Accessors.TryInvokeCtor(result, Options, serData))
                 {
                     // Otherwise, using default constructor (if any) + deserializing method
                     Accessors.TryInvokeCtor(result);
-                    ((IBinarySerializable)result).Deserialize(OrigOptions, serData);
+                    ((IBinarySerializable)result).Deserialize(Options, serData);
                 }
 
                 OnDeserialized(result);
@@ -993,20 +981,6 @@ namespace KGySoft.Serialization
                 for (int i = deserializationRegObjects.Count - 1; i >= 0; i--)
                     deserializationRegObjects[i].OnDeserialization(this);
                 deserializationRegObjects = null;
-            }
-
-            private void ReadOptions(BinaryReader br)
-            {
-                var options = (BinarySerializationOptions)br.ReadByte();
-
-                // stored on 2 bytes
-                if ((options & ExtendedOptions) == ExtendedOptions)
-                {
-                    options &= ~ExtendedOptions;
-                    options |= (BinarySerializationOptions)(br.ReadByte() << 8);
-                }
-
-                origOptions = options;
             }
 
             private bool TryGetCachedObject(BinaryReader br, out object result)

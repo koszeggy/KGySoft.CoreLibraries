@@ -33,7 +33,7 @@ namespace KGySoft.Serialization
     /// because the whole object has to be written into memory. In case of very large object hierarchies you might consider to implement <see cref="ISerializable"/>
     /// interface instead, which is also supported by <see cref="BinarySerializer"/> and <see cref="BinarySerializationFormatter"/>.
     /// </para>
-    /// <para>If the implementer has a constructor with <c>(<see cref="BinarySerializationOptions"/>, <see cref="Array">byte[]</see>)</c> parameters, then it will called
+    /// <para>If the implementer has a constructor with <c>(<see cref="BinarySerializationOptions"/>, <see cref="Array">byte[]</see>)</c> parameters, then it will be called
     /// for deserialization. This makes possible to initialize read-only fields. If no such constructor exists, then the <see cref="Deserialize">Deserialize</see> method will be called. If the implementer has a parameterless constructor,
     /// then it will be called before calling the <see cref="Deserialize">Deserialize</see> method; otherwise, no constructor will be used at all.</para>
     /// <para>Methods decorated by <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>, <see cref="OnDeserializingAttribute"/> and <see cref="OnDeserializedAttribute"/> as well as calling <see cref="IDeserializationCallback.OnDeserialization">IDeserializationCallback.OnDeserialization</see> method
@@ -61,7 +61,7 @@ namespace KGySoft.Serialization
     ///
     ///     // this is the special constructor used by the deserializer
     ///     // if you have read-only fields you must implement this constructor
-    ///     private ExampleSimple(BinarySerializationOptions originalOptions, byte[] serData)
+    ///     private ExampleSimple(BinarySerializationOptions options, byte[] serData)
     ///     {
     ///         using (BinaryReader reader = new BinaryReader(new MemoryStream(serData)))
     ///         {
@@ -84,7 +84,7 @@ namespace KGySoft.Serialization
     ///         return ms.ToArray();
     ///     }
     ///
-    ///     public void Deserialize(BinarySerializationOptions originalOptions, byte[] serData)
+    ///     public void Deserialize(BinarySerializationOptions options, byte[] serData)
     ///     {
     ///         throw new InvalidOperationException("Will not be called because special constructor is implemented");
     ///     }
@@ -126,7 +126,7 @@ namespace KGySoft.Serialization
     ///         return ms.ToArray();
     ///     }
     ///
-    ///     void IBinarySerializable.Deserialize(BinarySerializationOptions originalOptions, byte[] serData)
+    ///     void IBinarySerializable.Deserialize(BinarySerializationOptions options, byte[] serData)
     ///     {
     ///         using (BinaryReader reader = new BinaryReader(new MemoryStream(serData)))
     ///         {
@@ -208,17 +208,17 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Serializes the object into a byte array.
         /// </summary>
-        /// <param name="options">Options that were used when serialization of the object was invoked.</param>
+        /// <param name="options">Options used for the serialization.</param>
         /// <returns>The byte data representation of the object that can be used to restore the original object state by the <see cref="Deserialize">Deserialize</see> method.</returns>
         byte[] Serialize(BinarySerializationOptions options);
 
         /// <summary>
         /// Deserializes the inner state of the object from a byte array. Called only when the implementer does not have a constructor with <c>(<see cref="BinarySerializationOptions"/>, <see cref="Array">byte[]</see>)</c> parameters.
-        /// Without such constructor parameterless constructor will be called if any (otherwise, no constructors will be executed). The special constructor should be used if the class has read-only fields.
+        /// Without such constructor parameterless constructor will be called if any (otherwise, no constructors will be executed). The special constructor should be used if the class has read-only fields to be restored.
         /// </summary>
         /// <param name="serData">Serialized raw data of the object created by the <see cref="Serialize">Serialize</see> method.</param>
-        /// <param name="originalOptions">The same options that were used when the object was serialized by the <see cref="Serialize">Serialize</see> method.</param>
-        void Deserialize(BinarySerializationOptions originalOptions, byte[] serData);
+        /// <param name="options">Options used for the deserialization.</param>
+        void Deserialize(BinarySerializationOptions options, byte[] serData);
 
         #endregion
     }
