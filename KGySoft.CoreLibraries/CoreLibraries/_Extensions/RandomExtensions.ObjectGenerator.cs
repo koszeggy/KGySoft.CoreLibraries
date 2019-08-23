@@ -435,7 +435,7 @@ namespace KGySoft.CoreLibraries
                 // the checks above cannot be perfect (especially if constraints contain generics) so creating the type in try-catch
                 try
                 {
-                    return genericTypeDef.MakeGenericType(argumentsToCreate);
+                    return genericTypeDef.GetGenericType(argumentsToCreate);
                 }
                 catch (ArgumentException)
                 {
@@ -474,7 +474,7 @@ namespace KGySoft.CoreLibraries
                 try
                 {
                     // This still can throw exception because we skipped constraints with generic parameters
-                    return arg.GetGenericTypeDefinition().MakeGenericType(replacedArgs);
+                    return arg.GetGenericTypeDefinition().GetGenericType(replacedArgs);
                 }
                 catch (ArgumentException)
                 {
@@ -1142,7 +1142,7 @@ namespace KGySoft.CoreLibraries
 
                 Type[] keyValue = GetKeyValueTypes(elementType);
                 IDictionary dictionary = collection as IDictionary;
-                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetAccessor((PropertyInfo)Reflector.IDictionaryGenType.MakeGenericType(keyValue).GetDefaultMembers()[0]);
+                PropertyAccessor genericIndexer = dictionary != null ? null : PropertyAccessor.GetAccessor((PropertyInfo)Reflector.IDictionaryGenType.GetGenericType(keyValue).GetDefaultMembers()[0]);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -1186,7 +1186,7 @@ namespace KGySoft.CoreLibraries
                 if (isDictionary)
                 {
                     Type[] args = GetKeyValueTypes(elementType);
-                    initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.DictionaryGenType.MakeGenericType(args[0], args[1])).CreateInstance();
+                    initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.DictionaryGenType.GetGenericType(args[0], args[1])).CreateInstance();
                     PopulateCollection(initializerCollection, elementType, true, ref context);
                 }
                 else if (collectionCtor.GetParameters()[0].ParameterType.IsAssignableFrom(elementType.MakeArrayType()))
@@ -1195,7 +1195,7 @@ namespace KGySoft.CoreLibraries
                 }
                 else // for non-dictionaries array or list must be accepted by constructor
                 {
-                    initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.ListGenType.MakeGenericType(elementType)).CreateInstance();
+                    initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.ListGenType.GetGenericType(elementType)).CreateInstance();
                     PopulateCollection(initializerCollection, elementType, false, ref context);
                 }
 

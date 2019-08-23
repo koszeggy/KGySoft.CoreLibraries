@@ -335,7 +335,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // case 2: source size is not known: using a List
-                IList resultList = (IList)Reflector.CreateInstance(Reflector.ListGenType.MakeGenericType(targetElementType));
+                IList resultList = (IList)Reflector.CreateInstance(Reflector.ListGenType.GetGenericType(targetElementType));
                 foreach (object sourceItem in sourceCollection)
                 {
                     if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem))

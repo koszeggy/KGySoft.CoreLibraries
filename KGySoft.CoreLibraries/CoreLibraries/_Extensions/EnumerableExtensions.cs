@@ -1778,10 +1778,10 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-        internal static bool IsGenericEnumerableOf([NoEnumeration]this IEnumerable collection, Type genericArgument)
+        private static bool IsGenericEnumerableOf([NoEnumeration]this IEnumerable collection, Type genericArgument)
         {
             if (genericEnumerableCache == null)
-                Interlocked.CompareExchange(ref genericEnumerableCache, new Cache<Type, Type>(t => Reflector.IEnumerableGenType.MakeGenericType(t)).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericEnumerableCache, new Cache<Type, Type>(t => Reflector.IEnumerableGenType.GetGenericType(t)).GetThreadSafeAccessor(), null);
             return genericEnumerableCache[genericArgument].IsInstanceOfType(collection);
         }
 

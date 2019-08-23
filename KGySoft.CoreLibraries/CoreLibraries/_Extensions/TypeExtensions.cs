@@ -377,8 +377,8 @@ namespace KGySoft.CoreLibraries
                         continue;
 
                     // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
-                    if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(Reflector.ListGenType.MakeGenericType(elementType)))
-                        || isDictionary && paramType.IsAssignableFrom(Reflector.DictionaryGenType.MakeGenericType(elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType })))
+                    if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(Reflector.ListGenType.GetGenericType(elementType)))
+                        || isDictionary && paramType.IsAssignableFrom(Reflector.DictionaryGenType.GetGenericType(elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType })))
                     {
                         collectionCtor = ctor;
                         if (defaultCtor != null)
@@ -396,8 +396,8 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         internal static IEnumerable CreateInitializerCollection(this Type collectionElementType, bool isDictionary)
             => isDictionary
-                ? (IEnumerable)(collectionElementType.IsGenericType ? Reflector.CreateInstance(Reflector.DictionaryGenType.MakeGenericType(collectionElementType.GetGenericArguments())) : new Dictionary<object, object>())
-                : (IEnumerable)Reflector.CreateInstance(Reflector.ListGenType.MakeGenericType(collectionElementType));
+                ? (IEnumerable)(collectionElementType.IsGenericType ? Reflector.CreateInstance(Reflector.DictionaryGenType.GetGenericType(collectionElementType.GetGenericArguments())) : new Dictionary<object, object>())
+                : (IEnumerable)Reflector.CreateInstance(Reflector.ListGenType.GetGenericType(collectionElementType));
 
         /// <summary>
         /// Gets whether given type is a collection type and is capable to add/remove/clear items
@@ -591,6 +591,21 @@ namespace KGySoft.CoreLibraries
             if (genericTypeCache == null)
                 Interlocked.CompareExchange(ref genericTypeCache, genericTypeCache = new Cache<(Type, Type, Type), Type>(CreateGenericType).GetThreadSafeAccessor(), null);
             return genericTypeCache[(genTypeDef, t1, t2)];
+        }
+
+        internal static Type GetGenericType(this Type genTypeDef, Type[] args)
+        {
+            if (args == null)
+                throw new ArgumentNullException(nameof(args), Res.ArgumentNull);
+            switch (args.Length)
+            {
+                case 1:
+                    return GetGenericType(genTypeDef, args[0]);
+                case 2:
+                    return GetGenericType(genTypeDef, args[0], args[1]);
+                default:
+                    return genTypeDef.MakeGenericType(args);
+            }
         }
 
         #endregion

@@ -88,7 +88,7 @@ namespace KGySoft.CoreLibraries
                 comparers[underlyingType] = comparerDefinition;
             }
 
-            Type type = comparerDefinition.MakeGenericType(typeof(TEnum));
+            Type type = comparerDefinition.GetGenericType(typeof(TEnum));
             return (EnumComparer<TEnum>)Activator.CreateInstance(type);
         }
 

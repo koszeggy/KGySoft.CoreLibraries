@@ -1779,7 +1779,7 @@ namespace KGySoft.Reflection
                     return throwError ? throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters)) : false;
                 try
                 {
-                    type = type.MakeGenericType(genericParameters);
+                    type = type.GetGenericType(genericParameters);
                 }
                 catch (Exception e) when (!e.IsCriticalOr(throwError))
                 {
@@ -2076,7 +2076,7 @@ namespace KGySoft.Reflection
                     return throwError ? throw new ArgumentException(Res.ReflectionTypeArgsLengthMismatch(genArgs.Length), nameof(genericParameters)) : false;
                 try
                 {
-                    type = type.MakeGenericType(genericParameters);
+                    type = type.GetGenericType(genericParameters);
                 }
                 catch (Exception e) when (!e.IsCriticalOr(throwError))
                 {
@@ -2867,7 +2867,7 @@ namespace KGySoft.Reflection
                                     throw new ReflectionException(Res.ReflectionCannotResolveTypeArg(elementTypeName, typeName));
                             }
 
-                            result = result.MakeGenericType(typeGenParams);
+                            result = result.GetGenericType(typeGenParams);
                         }
 
                         // processing ranks
