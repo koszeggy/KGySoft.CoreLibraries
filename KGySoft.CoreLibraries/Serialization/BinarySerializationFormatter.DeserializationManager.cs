@@ -214,7 +214,8 @@ namespace KGySoft.Serialization
             }
 
             /// <summary>
-            /// Reads a type from the serialization stream
+            /// Reads a type from the serialization stream.
+            /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when type is deserialzied as an instance.
             /// </summary>
             internal Type ReadType(BinaryReader br, bool allowOpenTypes = false)
             {
@@ -290,21 +291,6 @@ namespace KGySoft.Serialization
                 return Binder != null
                     ? (Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, result.FullName) ?? result)
                     : result;
-            }
-
-            /// <summary>
-            /// The pair of <see cref="SerializationManager.WriteRuntimeType"/>. Do not call it to resolve the type of a serialized object.
-            /// </summary>
-            internal Type ReadRuntimeType(BinaryReader br)
-            {
-                //bool isGenericTypeArgument = br.ReadBoolean();
-                //if (!isGenericTypeArgument)
-                //    return ReadType(br);
-
-                //int index = Read7BitInt(br);
-                //Type genericTypeDef = ReadType(br);
-                //return genericTypeDef.GetGenericArguments()[index];
-                return ReadType(br, true);
             }
 
             internal void AddObjectToCache(object obj)
@@ -566,7 +552,7 @@ namespace KGySoft.Serialization
                         case DataTypes.StringBuilder:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                         case DataTypes.RuntimeType:
-                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadRuntimeType(br);
+                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true);
 
                         case DataTypes.BinarySerializable:
                             return ReadBinarySerializable(br, addToCache, collectionDescriptor, isTValue);

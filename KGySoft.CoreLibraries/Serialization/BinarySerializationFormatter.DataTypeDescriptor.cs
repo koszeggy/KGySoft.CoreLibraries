@@ -299,7 +299,7 @@ namespace KGySoft.Serialization
                     case DataTypes.Object:
                         return Reflector.ObjectType;
                     case DataTypes.RuntimeType:
-                        return manager.ReadRuntimeType(br);
+                        return manager.ReadType(br, true);
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:

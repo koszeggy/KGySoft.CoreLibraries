@@ -281,6 +281,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(List<int>),
                 typeof(CustomGenericCollection<int>),
 
+                // TODO: this writes the name of List`1 to the stream. Supporting generic definitions as pure?
                 typeof(List<>), // List<T> - generic definition
                 typeof(List<>).GetGenericArguments()[0], // T - generic argument
                 typeof(OpenGenericDictionary<>).BaseType // Dictionary<string, TValue> - open generic type
@@ -502,7 +503,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -738,7 +738,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
