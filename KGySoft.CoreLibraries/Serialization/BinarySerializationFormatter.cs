@@ -287,15 +287,19 @@ namespace KGySoft.Serialization
         #region Enumerations
 
         /// <summary>
-        /// Represents possible types.
-        /// One of the simple types can be combined with one of the collection types and the flags.
+        /// Represents possible types. One of the simple types can be combined with one of the collection types and the flags.
+        /// Nested generic collections can be encoded by multiple consecutive <see cref="DataTypes"/> values.
         /// </summary>
         [Flags]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
         private enum DataTypes : ushort
         {
             // ====== LOW BYTE ======
-            // ------ simple types:
+
+            // ------ simple/element types:
+            SimpleTypes = 0x3F, // bits 0-5 (6 bits - up to 64 types)
+
+            // ...... pure types (they are unambiguous without a type name): bits 0-4 (5 bits - up to 32 types)
             Null = 0,
             Object = 1,
 
@@ -334,28 +338,34 @@ namespace KGySoft.Serialization
             BitArray = 26, // too complex special handling would be needed as collection so treated as simple type
             BitVector32 = 27, // too complex special handling would be needed as collection so treated as simple type
             BitVector32Section = 28,
+            // 29-31: 3 reserved pure types
 
-            RuntimeType = 29,
+            // ...... impure types (they require an exact type name)
+            ImpureType = 1 << 5,
 
-            // free: 30-58
+            // 32: Reserved (though it would have the same value as the ImpureType flag)
+            RuntimeType = 33,
+            GenericTypeDefinition = 34,
+            
+            // 35-59: 25 reserved values
 
-            // not concrete types encoded as simple types:
             //SerializationEnd = 59, // TODO: a reference to a single private static object, which represents the end added objects by custom serialization
             BinarySerializable = 60, // Implements IBinarySerializable
             RawStruct = 61, // any ValueType
             RecursiveObjectGraph = 62, // Represents an object graph with serialized fields or custom name/value data
-
-            // 63: Reserved. If needed, can be re-used, though SimpleTypes has the same value as mask
-
-            SimpleTypes = 0x3F, // Simple types: 0-5 bits - up to 63 types
+            // 63: Reserved (though it would have has the same value as the SimpleTypes mask)
 
             // ------ flags:
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
-            Extended = 1 << 7, // Indicates that high byte also is used
+            Extended = 1 << 7, // When serialized, indicates that high byte also is used
 
             // ====== HIGH BYTE ======
-            // ------ collection types that can be combined with flags and simple types:
-            Array = 1 << 8,
+
+            // ------ collection types:
+            CollectionTypes = 0x3F00, // 8-13 bits (6 bits - up to 64 types)
+
+            // ...... generic collections:
+            Array = 1 << 8, // actually not a generic type but can be encoded the same way
             List = 2 << 8,
             LinkedList = 3 << 8,
             HashSet = 4 << 8,
@@ -365,37 +375,39 @@ namespace KGySoft.Serialization
             SortedSet = 8 << 8,
             // 9-15 << 8: 7 reserved generic collections
 
-            Dictionary = 16 << 8,
-            SortedList = 17 << 8,
-            SortedDictionary = 18 << 8,
-            CircularSortedList = 19 << 8,
+            // ...... non-generic collections:
+            ArrayList = 16 << 8,
+            QueueNonGeneric = 17 << 8,
+            StackNonGeneric = 18 << 8,
+            StringCollection = 19 << 8,
+            // 20-31 << 8: 12 reserved non-generic collection
 
-            KeyValuePair = 29 << 8, // special "collection" of exactly one key-value pair
-            KeyValuePairNullable = 30 << 8, // Special "collection" of exactly one key-value pair. Nullable flag can be combined only with simple types (here: key) so stored separately.
-            // 20-28, 31 << 8 : 9 + 1 reserved generic dictionaries
+            // ...... generic dictionaries:
+            Dictionary = 32 << 8, // Represents both the generic Dictionary type and a flag (1 << 13) for all dictionaries
+            SortedList = 33 << 8,
+            SortedDictionary = 34 << 8,
+            CircularSortedList = 35 << 8,
+            // 36-45 << 8 : 10 reserved generic dictionaries
 
-            ArrayList = 32 << 8,
-            QueueNonGeneric = 33 << 8,
-            StackNonGeneric = 34 << 8,
-            StringCollection = 35 << 8,
-            // 36-47 << 8: 12 reserved non-generic collection
+            KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
+            KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of the previous one.
 
+            // ...... non-generic dictionaries:
             Hashtable = 48 << 8,
             SortedListNonGeneric = 49 << 8,
             ListDictionary = 50 << 8,
             HybridDictionary = 51 << 8,
             OrderedDictionary = 52 << 8,
             StringDictionary = 53 << 8,
+            // 54-60 << 8 : 7 reserved non-generic dictionaries
 
-            DictionaryEntry = 61 << 8, // special "collection" of exactly one key-value pair
-            DictionaryEntryNullable = 62 << 8, // special "collection" of one key-value pair. Nullable flag can be combined only simple types so stored separately.
-            // 54-60, 63 << 8 : 7 + 1 reserved non-generic dictionaries
-
-            CollectionTypes = 0x3F00, // Collection types: 8-13 bits (6 bits) - up to 63 types
+            DictionaryEntry = 61 << 8, // Could be a simple type but keeping consistency with KeyValuePair
+            DictionaryEntryNullable = 62 << 8, // The Nullable flag would be used for the key (which is invalid for this type) so this is the nullable version of the previous one.
+            // 63 << 8: Reserved (though it would have has the same value as the CollectionTypes mask)
 
             // ------ flags
             Enum = 1 << 14,
-            Nullable = 1 << 15
+            Nullable = 1 << 15 // Can be combined with simple types. Nullable collections are separate items.
         }
 
         /// <summary>
@@ -650,7 +662,8 @@ namespace KGySoft.Serialization
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
             = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4)).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
-        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes> // including string
+        // including string and the abstract enum and array types
+        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
         {
             { Reflector.BoolType, DataTypes.Bool },
             { Reflector.ByteType, DataTypes.UInt8 },
@@ -688,7 +701,7 @@ namespace KGySoft.Serialization
 
         private static readonly Dictionary<Type, DataTypes> supportedCollections = new Dictionary<Type, DataTypes>
         {
-            { typeof(Array), DataTypes.Array },
+            // Array is not here because that is an abstract type. Arrays are handled separately.
             { typeof(List<>), DataTypes.List },
             { typeof(Queue<>), DataTypes.Queue },
             { typeof(Stack<>), DataTypes.Stack },

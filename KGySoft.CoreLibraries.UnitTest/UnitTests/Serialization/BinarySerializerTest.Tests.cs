@@ -277,22 +277,39 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                typeof(int),
-                typeof(List<int>),
-                typeof(CustomGenericCollection<int>),
+                //typeof(int), // supported simple
+                //typeof(CustomSerializedClass), // custom simple
 
-                // TODO: this writes the name of List`1 to the stream. Supporting generic definitions as pure?
-                typeof(List<>), // List<T> - generic definition
-                typeof(List<>).GetGenericArguments()[0], // T - generic argument
-                typeof(OpenGenericDictionary<>).BaseType // Dictionary<string, TValue> - open generic type
+                typeof(int[]), // supported array
+                typeof(CustomSerializedClass[]), // custom array
+                typeof(Array), // unspecified array
+
+                typeof(List<int>), // supported generic
+                typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+                typeof(CustomGenericCollection<int>), // custom generic with supported parameter
+                typeof(List<CustomSerializedClass>), // supported generic with custom parameter
+                typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
+
+                typeof(List<Array>),
+                typeof(List<int[]>),
+                typeof(List<Array[]>),
+
+                typeof(List<>), // supported generic type definition
+                typeof(Dictionary<,>), // supported generic type definition
+                typeof(CustomGenericCollection<>), // custom generic type definition
+
+                typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
+                typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+
+                typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
             };
 
-#if !NETCOREAPP2_0 // type is not serializable in .NET Core
-            SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
-#endif
+            //#if !NETCOREAPP2_0 // type is not serializable in .NET Core
+            //            SystemSerializeObject(referenceObjects);
+            //            SystemSerializeObjects(referenceObjects);
+            //#endif
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // -> 1148 -> 890
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // -> 1148 -> 890
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -500,37 +517,40 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new KeyValuePair<int, CustomSerializedClass>[] { new KeyValuePair<int, CustomSerializedClass>(1, new CustomSerializedClass { Bool = true, Name = "alpha" }), new KeyValuePair<int, CustomSerializedClass>(2, null) }, // None: 341
             };
 
-            SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
+            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
 
             referenceObjects = new object[]
             {
-                new SystemSerializableClass[] { new SystemSerializableClass{IntProp = 1, StringProp = "alpha"}, new SystemSerializableSealedClass{IntProp = 2, StringProp = "beta"}, new NonSerializableClassWithSerializableBase(3, "gamma") }, // a non serializable element among the serializable ones
-                new NonSerializableClass[] { new NonSerializableClass { IntProp = 1, StringProp = "alpha"}, new NonSerializableSealedClass(1, "beta") { IntProp = 3, StringProp = "gamma" } } ,
-                new NonSerializableSealedClass[] { new NonSerializableSealedClass(1, "alpha") { IntProp = 2, StringProp = "beta" }, null } ,
-                new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}, new BinarySerializableClass {IntProp = 2, StringProp = "beta"}, new BinarySerializableSealedClass(3, "gamma") }, // IBinarySerializable array
-                new IBinarySerializable[][] {new IBinarySerializable[] {new BinarySerializableStruct { IntProp = 1, StringProp = "alpha"}}, null }, // IBinarySerializable array
-                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] {1, 2, 3}}, new NonSerializableStruct{IntProp = 2, Str10 = "beta", Bytes3 = new byte[] {3, 2, 1}} }, // array custom struct
+                //new SystemSerializableClass[] { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { IntProp = 2, StringProp = "beta" }, new NonSerializableClassWithSerializableBase(3, "gamma") }, // a non serializable element among the serializable ones
+                //new NonSerializableClass[] { new NonSerializableClass { IntProp = 1, StringProp = "alpha" }, new NonSerializableSealedClass(1, "beta") { IntProp = 3, StringProp = "gamma" } },
+                //new NonSerializableSealedClass[] { new NonSerializableSealedClass(1, "alpha") { IntProp = 2, StringProp = "beta" }, null },
+                //new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new BinarySerializableClass { IntProp = 2, StringProp = "beta" }, new BinarySerializableSealedClass(3, "gamma") }, // IBinarySerializable array
+                //new IBinarySerializable[][] { new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } }, null }, // IBinarySerializable array
+                //new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, new NonSerializableStruct { IntProp = 2, Str10 = "beta", Bytes3 = new byte[] { 3, 2, 1 } } }, // array custom struct
 
-                new ValueType[] { new BinarySerializableStruct{ IntProp = 1, StringProp = "alpha"}, new SystemSerializableStruct {IntProp = 2, StringProp = "beta"}, null, 1},
-                new IConvertible[] { null, 1 },
-                new IConvertible[][] { null, new IConvertible[]{ null, 1}, },
+                //new ValueType[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new SystemSerializableStruct { IntProp = 2, StringProp = "beta" }, null, 1 },
+                //new IConvertible[] { null, 1 },
+                //new IConvertible[][] { null, new IConvertible[] { null, 1 }, },
+
+                new Array[] { null, new[] { 1, 2 }, new[] { "alpha", "beta" } },
+                //new Enum[] { null, TestEnumByte.One, TestEnumInt.Min }
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
         }
 
         [Test]
@@ -810,8 +830,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                new List<byte>[] { new List<byte> { 11, 12, 13 }, new List<byte> { 21, 22 } }, // array of lists
-                new List<byte[]> { new byte[] { 11, 12, 13 }, new byte[] { 21, 22 } }, // list of arrays
+                new List<byte>[] { new List<byte> { 11, 12, 13 }, new List<byte> { 21, 22 } }, // array of byte lists
+                new List<byte[]> { new byte[] { 11, 12, 13 }, new byte[] { 21, 22 } }, // list of byte arrays
+                new List<Array> { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } }, // list of any arrays
+                new List<Array[]> { null, new Array[] { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } } }, // list of array of any arrays
 
                 // a single key-value pair with a dictionary somewhere in value
                 new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("gamma", new Dictionary<string, string> { { "alpha", "beta" } })),
@@ -862,11 +884,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
 
                 new IList<int>[] { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
-                new List<IList<int>> { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } }
+                new List<IList<int>> { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
             };
 
             SystemSerializeObject(referenceObjects);
-            //SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
+            SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);

@@ -50,13 +50,13 @@ namespace KGySoft.Serialization
 #if !NET35
             private struct WriteTypeContext
             {
-            #region Fields
+                #region Fields
 
                 internal Type Type;
                 internal string BinderAsmName;
                 internal string BinderTypeName;
 
-            #endregion
+                #endregion
             }
 #endif
 
@@ -72,7 +72,7 @@ namespace KGySoft.Serialization
 
             private Dictionary<Assembly, int> assemblyIndexCache;
             private Dictionary<Type, int> typeIndexCache;
-#if !NET35
+#if !NET35 // binders can map type to names only in .NET 4.0 and above
             private Dictionary<string, int> assemblyNameIndexCache;
             private Dictionary<string, int> typeNameIndexCache;
 #endif
@@ -96,6 +96,10 @@ namespace KGySoft.Serialization
                 }
             }
 
+            private int OmitAssemblyIndex => AssemblyIndexCacheCount;
+            private int NewAssemblyIndex => AssemblyIndexCacheCount + 1;
+            private int InvariantAssemblyIndex => AssemblyIndexCacheCount + 2; // for natively supported types, which can be in any assembly in different frameworks
+
             private int TypeIndexCacheCount
             {
                 get
@@ -107,6 +111,8 @@ namespace KGySoft.Serialization
                         ;
                 }
             }
+
+            private int NewTypeIndex => TypeIndexCacheCount + 1;
 
             #endregion
 
@@ -171,19 +177,7 @@ namespace KGySoft.Serialization
                 Write7BitLong(bw, value);
             }
 
-            /// <summary>
-            /// Returning a true value just indicates that the type itself supported without the generic parameters or element type.
-            /// </summary>
-            private static bool IsSupportedCollection(Type type)
-            {
-                if (type.IsArray)
-                    return true;
-                if (type.IsValueType)
-                    type = Nullable.GetUnderlyingType(type) ?? type;
-                if (type.IsGenericType)
-                    type = type.GetGenericTypeDefinition();
-                return supportedCollections.ContainsKey(type);
-            }
+            private static bool IsSupportedCollection(Type type) => GetSupportedCollectionType(type) != DataTypes.Null;
 
             private static DataTypes GetSupportedCollectionType(Type type)
             {
@@ -205,8 +199,10 @@ namespace KGySoft.Serialization
 
                 if (type.IsGenericType)
                     type = type.GetGenericTypeDefinition();
-                return supportedCollections.GetValueOrDefault(type);
+                return supportedCollections.GetValueOrDefault(type, DataTypes.Null);
             }
+
+            private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
 
             /// <summary>
             /// Retrieves the value type(s) for a dictionary.
@@ -216,11 +212,7 @@ namespace KGySoft.Serialization
             {
                 // descriptor must refer a generic dictionary type here
                 Debug.Assert(collectionTypeDescriptor.Count > 0, "Type description is invalid: not enough data");
-#if DEBUG
-                int collType = ((int)(collectionTypeDescriptor[0] & DataTypes.CollectionTypes) >> 8);
-                Debug.Assert(collType >= 16 && collType < 32 || collType >= 48 && collType < 64,
-                    $"Type description is invalid: {collectionTypeDescriptor[0] & DataTypes.CollectionTypes} is not a dictionary type.");
-#endif
+                Debug.Assert((collectionTypeDescriptor[0] & DataTypes.Dictionary) != DataTypes.Null, $"Type description is invalid: {collectionTypeDescriptor[0] & DataTypes.CollectionTypes} is not a dictionary type.");
 
                 CircularList<DataTypes> result = new CircularList<DataTypes>();
                 int skipLevel = 0;
@@ -570,47 +562,48 @@ namespace KGySoft.Serialization
             /// Writes AssemblyQualifiedName of element types and array ranks if needed
             /// </summary>
             [SecurityCritical]
-            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, bool pureOnly)
+            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type)
             {
-                // Enum, BinarySerializable, RawStruct, recursive serialization: type name
-                DataTypes elementType = GetSupportedElementType(type, pureOnly);
-                if ((elementType & DataTypes.Enum) != DataTypes.Null
-                    || (elementType & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
-                    || (elementType & DataTypes.SimpleTypes) == DataTypes.RawStruct
-                    || (elementType & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph)
+                // Impure types: type name
+                DataTypes elementType = GetSupportedElementType(type);
+                if (!IsPureType(elementType))
                 {
-                    Debug.Assert(!pureOnly, "Pure types do not require type name.");
                     if ((elementType & DataTypes.Nullable) == DataTypes.Nullable)
                         type = Nullable.GetUnderlyingType(type);
                     WriteType(bw, type);
+                    return;
                 }
-                // Array: element type name and rank
-                else if (type.IsArray)
+
+                // Non-abstract array: recursion for element type, then writing rank
+                if (type.IsArray)
                 {
-                    WriteTypeNamesAndRanks(bw, type.GetElementType(), pureOnly);
+                    WriteTypeNamesAndRanks(bw, type.GetElementType());
                     bw.Write((byte)type.GetArrayRank());
+                    return;
                 }
+
                 // recursion for generic arguments
-                else if (IsSupportedCollection(type))
+                if (type.IsGenericType)
                 {
                     foreach (Type genericArgument in type.GetGenericArguments())
-                        WriteTypeNamesAndRanks(bw, genericArgument, pureOnly);
+                        WriteTypeNamesAndRanks(bw, genericArgument);
                 }
             }
 
             [SecurityCritical]
-            private IEnumerable<DataTypes> EncodeCollectionType(Type type, bool pureOnly)
+            private CircularList<DataTypes> EncodeCollectionType(Type type)
             {
                 // array
                 if (type.IsArray)
-                    return EncodeArray(type, pureOnly);
+                    return EncodeArray(type);
 
+                Debug.Assert(!type.IsGenericTypeDefinition, $"Generic type definition is not expected in {nameof(EncodeCollectionType)}");
                 DataTypes collectionType = GetSupportedCollectionType(type);
                 type = Nullable.GetUnderlyingType(type) ?? type;
 
                 // generic type
                 if (type.IsGenericType)
-                    return EncodeGenericCollection(type, collectionType, pureOnly);
+                    return EncodeGenericCollection(type, collectionType);
 
                 // non-generic types
                 switch (collectionType)
@@ -618,7 +611,7 @@ namespace KGySoft.Serialization
                     case DataTypes.ArrayList:
                     case DataTypes.QueueNonGeneric:
                     case DataTypes.StackNonGeneric:
-                        return new[] { collectionType | DataTypes.Object };
+                        return new CircularList<DataTypes> { collectionType | DataTypes.Object };
 
                     case DataTypes.Hashtable:
                     case DataTypes.SortedListNonGeneric:
@@ -627,13 +620,13 @@ namespace KGySoft.Serialization
                     case DataTypes.OrderedDictionary:
                     case DataTypes.DictionaryEntry:
                     case DataTypes.DictionaryEntryNullable:
-                        return new[] { collectionType | DataTypes.Object, DataTypes.Object };
+                        return new CircularList<DataTypes> { collectionType | DataTypes.Object, DataTypes.Object };
 
                     case DataTypes.StringCollection:
-                        return new[] { collectionType | DataTypes.String };
+                        return new CircularList<DataTypes> { collectionType | DataTypes.String };
 
                     case DataTypes.StringDictionary:
-                        return new[] { collectionType | DataTypes.String, DataTypes.String };
+                        return new CircularList<DataTypes> { collectionType | DataTypes.String, DataTypes.String };
                     default:
                         // should never occur, throwing internal error without resource
                         throw new InvalidOperationException("Element type of non-generic collection is not defined: " + DataTypeToString(collectionType));
@@ -641,54 +634,61 @@ namespace KGySoft.Serialization
             }
 
             [SecurityCritical]
-            private IEnumerable<DataTypes> EncodeArray(Type type, bool pureOnly)
+            private CircularList<DataTypes> EncodeArray(Type type)
             {
                 Type elementType = type.GetElementType();
-                if (!pureOnly && TryUseSurrogateSelectorForAnyType && CanUseSurrogate(elementType))
+                if (TryUseSurrogateSelectorForAnyType && CanUseSurrogate(elementType))
                 {
-                    DataTypes[] result = { DataTypes.Array | DataTypes.RecursiveObjectGraph };
+                    DataTypes result = DataTypes.Array | DataTypes.RecursiveObjectGraph;
                     if (elementType.IsNullable())
-                        result[0] |= DataTypes.Nullable;
-                    return result;
+                        result |= DataTypes.Nullable;
+                    return new CircularList<DataTypes> { result };
                 }
 
-                DataTypes elementDataType = GetSupportedElementType(elementType, pureOnly);
+                DataTypes elementDataType = GetSupportedElementType(elementType);
                 if (elementDataType != DataTypes.Null)
-                    return new[] { DataTypes.Array | elementDataType };
+                    return new CircularList<DataTypes> { DataTypes.Array | elementDataType };
 
                 if (IsSupportedCollection(elementType))
                 {
-                    IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, pureOnly);
-                    if (innerType != null)
-                        return new[] { DataTypes.Array }.Concat(innerType);
+                    CircularList<DataTypes> result = EncodeCollectionType(elementType);
+                    if (result != null)
+                    {
+                        result.AddFirst(DataTypes.Array);
+                        return result;
+                    }
                 }
 
-                // An array must always be serialized as an array. For unsupported types we encode the array type
-                // and if recursive serialization is not supported it will turn out the non-null elements (if any)
-                return pureOnly ? null : new[] { DataTypes.Array | DataTypes.RecursiveObjectGraph };
+                // Arrays always require a special handling and cannot be serialized recursively. For unsupported types we encode the array type
+                // and if recursive serialization is not supported it will turn out when the non-null elements are serialized (if any)
+                return new CircularList<DataTypes> { DataTypes.Array | DataTypes.RecursiveObjectGraph | (elementType.IsNullable() ? DataTypes.Nullable : DataTypes.Null) };
             }
 
             [SecurityCritical]
-            private IEnumerable<DataTypes> EncodeGenericCollection(Type type, DataTypes collectionType, bool pureOnly)
+            private CircularList<DataTypes> EncodeGenericCollection(Type type, DataTypes collectionType)
             {
                 if (collectionType == DataTypes.Null)
                     return null;
 
+                Debug.Assert(!type.ContainsGenericParameters, $"Constructed open generic types are not expected in {nameof(EncodeGenericCollection)}");
                 Type[] args = type.GetGenericArguments();
                 Type elementType = args[0];
-                DataTypes elementDataType = GetSupportedElementType(elementType, pureOnly);
+                DataTypes elementDataType = GetSupportedElementType(elementType);
 
                 // generics with 1 argument
                 if (args.Length == 1)
                 {
                     if (elementDataType != DataTypes.Null)
-                        return new[] { collectionType | elementDataType };
+                        return new CircularList<DataTypes> { collectionType | elementDataType };
 
                     if (IsSupportedCollection(elementType))
                     {
-                        IEnumerable<DataTypes> innerType = EncodeCollectionType(elementType, pureOnly);
+                        CircularList<DataTypes> innerType = EncodeCollectionType(elementType);
                         if (innerType != null)
-                            return (new[] { collectionType }).Concat(innerType);
+                        {
+                            innerType.AddFirst(collectionType);
+                            return innerType;
+                        }
                     }
 
                     return null;
@@ -696,53 +696,52 @@ namespace KGySoft.Serialization
 
                 // dictionaries
                 Type valueType = args[1];
-                DataTypes valueDataType = GetSupportedElementType(valueType, pureOnly);
+                DataTypes valueDataType = GetSupportedElementType(valueType);
 
-                IEnumerable<DataTypes> keyTypes;
-                IEnumerable<DataTypes> valueTypes;
+                CircularList<DataTypes> keyTypes;
+                CircularList<DataTypes> valueTypes;
 
                 // key
                 if (elementDataType != DataTypes.Null)
-                    keyTypes = new DataTypes[] { collectionType | elementDataType };
+                    keyTypes = new CircularList<DataTypes> { collectionType | elementDataType };
                 else if (IsSupportedCollection(elementType))
                 {
-                    keyTypes = EncodeCollectionType(elementType, pureOnly);
+                    keyTypes = EncodeCollectionType(elementType);
                     if (keyTypes == null)
                         return null;
-                    keyTypes = (new DataTypes[] { collectionType }).Concat(keyTypes);
+                    keyTypes.AddFirst(collectionType);
                 }
                 else
                     return null;
 
                 // value
                 if (valueDataType != DataTypes.Null)
-                    valueTypes = new DataTypes[] { valueDataType };
+                    valueTypes = new CircularList<DataTypes> { valueDataType };
                 else if (IsSupportedCollection(valueType))
                 {
-                    valueTypes = EncodeCollectionType(valueType, pureOnly);
+                    valueTypes = EncodeCollectionType(valueType);
                     if (valueTypes == null)
                         return null;
                 }
                 else
                     return null;
 
-                return keyTypes.Concat(valueTypes);
+                keyTypes.AddRange(valueTypes);
+                return keyTypes;
             }
 
             /// <summary>
             /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/> as an element type.
-            /// If <paramref name="pureOnly"/> is <see langword="true"/>, then only types without required name are returned.
-            /// Returns <see cref="DataTypes.Null"/> for collections and non-pure types if pure was requested.
             /// </summary>
             [SecurityCritical]
-            private DataTypes GetSupportedElementType(Type type, bool pureOnly)
+            private DataTypes GetSupportedElementType(Type type)
             {
                 DataTypes elementType;
 
                 // a.) nullable (must be before surrogate-support checks)
                 if (type.IsNullable())
                 {
-                    elementType = GetSupportedElementType(type.GetGenericArguments()[0], pureOnly);
+                    elementType = GetSupportedElementType(type.GetGenericArguments()[0]);
                     if (elementType == DataTypes.Null)
                         return elementType;
                     return DataTypes.Nullable | elementType;
@@ -753,19 +752,16 @@ namespace KGySoft.Serialization
                     return elementType;
 
                 // c.) recursion for any type: check even for sub-collections
-                if (!pureOnly && (ForceRecursiveSerializationOfSupportedTypes && !type.IsArray || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(type)))
+                if (ForceRecursiveSerializationOfSupportedTypes && !type.IsArray || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(type))
                     return supportedNonPrimitiveElementTypes.GetValueOrDefault(type, DataTypes.RecursiveObjectGraph);
 
                 // e.) Natively supported non-primitive types
                 if (supportedNonPrimitiveElementTypes.TryGetValue(type, out elementType))
                     return elementType;
 
-                if (pureOnly)
-                    return DataTypes.Null;
-
                 // d.) enum
                 if (type.IsEnum)
-                    return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type), false);
+                    return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type));
 
                 // Shortcut: If type is a collection, then returning null here
                 if (GetSupportedCollectionType(type) != DataTypes.Null)
@@ -860,27 +856,26 @@ namespace KGySoft.Serialization
                 if (!IsSupportedCollection(type))
                     return false;
 
-                IEnumerable<DataTypes> collectionType = EncodeCollectionType(type, false);
+                CircularList<DataTypes> collectionType = EncodeCollectionType(type);
                 if (collectionType == null)
                     return false;
 
-                CircularList<DataTypes> collectionTypeList = new CircularList<DataTypes>(collectionType);
-                foreach (DataTypes dataType in collectionTypeList)
+                foreach (DataTypes dataType in collectionType)
                     WriteDataType(bw, dataType);
 
-                if (isRoot && CanHaveRecursion(collectionTypeList))
+                if (isRoot && CanHaveRecursion(collectionType))
                 {
                     if (WriteId(bw, data))
                         Debug.Fail("Id of recursive object should be unknown on top level.");
                 }
 
-                WriteTypeNamesAndRanks(bw, type, false);
-                WriteCollection(bw, collectionTypeList, data);
+                WriteTypeNamesAndRanks(bw, type);
+                WriteCollection(bw, collectionType, data);
                 return true;
             }
 
             [SecurityCritical]
-            private void WriteCollection(BinaryWriter bw, IList<DataTypes> collectionTypeDescriptor, object obj)
+            private void WriteCollection(BinaryWriter bw, CircularList<DataTypes> collectionTypeDescriptor, object obj)
             {
                 if (collectionTypeDescriptor.Count == 0)
                     // should never occur, throwing internal error without resource
@@ -917,7 +912,7 @@ namespace KGySoft.Serialization
                     }
 
                     // 2.b.) Complex array
-                    collectionTypeDescriptor.RemoveAt(0);
+                    collectionTypeDescriptor.RemoveFirst();
                     WriteCollectionElements(bw, array, collectionTypeDescriptor, elementDataType, elementType);
                     return;
                 }
@@ -940,7 +935,7 @@ namespace KGySoft.Serialization
                 if (serInfo.IsGenericCollection)
                 {
                     Type elementType = collection.GetType().GetGenericArguments()[0];
-                    collectionTypeDescriptor.RemoveAt(0);
+                    collectionTypeDescriptor.RemoveFirst();
                     WriteCollectionElements(bw, collection, collectionTypeDescriptor, elementDataType, elementType);
                     return;
                 }
@@ -953,7 +948,7 @@ namespace KGySoft.Serialization
                     Type valueType = argTypes[1];
 
                     IList<DataTypes> valueCollectionDataTypes = GetDictionaryValueTypes(collectionTypeDescriptor);
-                    collectionTypeDescriptor.RemoveAt(0);
+                    collectionTypeDescriptor.RemoveFirst();
                     DataTypes valueDataType = DataTypes.Null;
                     if ((valueCollectionDataTypes[0] & DataTypes.CollectionTypes) == DataTypes.Null)
                         valueDataType = valueCollectionDataTypes[0] & ~DataTypes.Enum;
@@ -1397,20 +1392,14 @@ namespace KGySoft.Serialization
                 {
                     // storing assembly and type name together and return
                     if (OmitAssemblyQualifiedNames)
-                    {
-                        // count: omitting assembly
-                        Write7BitInt(bw, AssemblyIndexCacheCount);
-                    }
+                        Write7BitInt(bw, OmitAssemblyIndex);
                     else
                     {
-                        int indexCacheCount = AssemblyIndexCacheCount;
-
-                        // count + 1: new assembly
-                        Write7BitInt(bw, indexCacheCount + 1);
+                        Write7BitInt(bw, NewAssemblyIndex);
 
                         // asm
                         bw.Write(type.Assembly.FullName);
-                        assemblyIndexCache.Add(type.Assembly, indexCacheCount);
+                        assemblyIndexCache.Add(type.Assembly, AssemblyIndexCacheCount);
 
                         WriteNewType(bw, type, false, allowOpenTypes);
                         return;
@@ -1427,6 +1416,7 @@ namespace KGySoft.Serialization
                     return;
                 }
 
+                // new type
                 WriteNewType(bw, type, true, allowOpenTypes);
             }
 
@@ -1450,7 +1440,7 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
             {
-            #region Private Methods to reduce complexity
+                #region Private Methods to reduce complexity
 
                 int GetAssemblyIndex(ref WriteTypeContext ctx)
                 {
@@ -1493,13 +1483,13 @@ namespace KGySoft.Serialization
                     return index;
                 }
 
-            #endregion
+                #endregion
 
-                Debug.Assert(allowOpenTypes || (!type.IsGenericTypeDefinition && !type.IsGenericParameter));
+                Debug.Assert(allowOpenTypes || (!type.IsGenericTypeDefinition && !type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
                 var context = new WriteTypeContext { Type = type };
                 Binder?.BindToName(type, out context.BinderAsmName, out context.BinderTypeName);
 
-                if (context.BinderTypeName == null && context.BinderAsmName == null && TryWritePureDataType(bw, type))
+                if (context.BinderTypeName == null && context.BinderAsmName == null && TryWriteByDataTypes(bw, type, allowOpenTypes))
                     return;
 
                 int asmIndex = GetAssemblyIndex(ref context);
@@ -1509,31 +1499,23 @@ namespace KGySoft.Serialization
                 {
                     // storing assembly and type name together and return
                     if (OmitAssemblyQualifiedNames)
-                    {
-                        // count: omitting assembly
-                        Write7BitInt(bw, AssemblyIndexCacheCount);
-                    }
+                        Write7BitInt(bw, OmitAssemblyIndex);
                     else
                     {
-                        int indexCacheCount = AssemblyIndexCacheCount;
-
-                        // count + 1: new assembly
-                        Write7BitInt(bw, indexCacheCount + 1);
+                        Write7BitInt(bw, NewAssemblyIndex);
 
                         // asm by binder
                         if (context.BinderAsmName != null)
                         {
                             bw.Write(context.BinderAsmName);
-                            assemblyNameIndexCache.Add(context.BinderAsmName, indexCacheCount);
+                            assemblyNameIndexCache.Add(context.BinderAsmName, AssemblyIndexCacheCount);
                         }
                         // asm by itself
                         else
                         {
                             bw.Write(type.Assembly.FullName);
-                            assemblyIndexCache.Add(type.Assembly, indexCacheCount);
+                            assemblyIndexCache.Add(type.Assembly, AssemblyIndexCacheCount);
                         }
-
-                        indexCacheCount = TypeIndexCacheCount;
 
                         // type by binder: handling conflicts that can be caused by binder, generics are not handled individually
                         if (context.BinderTypeName != null)
@@ -1541,7 +1523,7 @@ namespace KGySoft.Serialization
                             bw.Write(context.BinderTypeName);
 
                             // binder can produce the same type name for different assemblies so prefixing with assembly
-                            typeNameIndexCache.Add((context.BinderAsmName ?? type.Assembly.FullName) + ":" + context.BinderTypeName, indexCacheCount);
+                            typeNameIndexCache.Add((context.BinderAsmName ?? type.Assembly.FullName) + ":" + context.BinderTypeName, TypeIndexCacheCount);
                             return;
                         }
 
@@ -1571,54 +1553,96 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                int typeIndexCacheCount = TypeIndexCacheCount;
-
                 // new type by binder (generics are not handled in a special way)
                 if (context.BinderTypeName != null)
                 {
-                    // type is not known yet (count + 1: new type)
-                    Write7BitInt(bw, typeIndexCacheCount + 1);
+                    // type is not known yet
+                    Write7BitInt(bw, NewTypeIndex);
                     bw.Write(context.BinderTypeName);
-                    typeNameIndexCache.Add(key, typeIndexCacheCount);
+                    typeNameIndexCache.Add(key, TypeIndexCacheCount);
                     return;
                 }
 
+                // new type without binder
                 WriteNewType(bw, type, true, allowOpenTypes);
             }
 #endif
 
             /// <summary>
-            /// When writing SerializationInfo types on serializing custom object graph it can happen that we want to write the name
-            /// of a natively supported type. In that case we write the <see cref="DataTypes"/> for those types.
-            /// As we come from <see cref="WriteType"/> we return true only when the type can be written purely by <see cref="DataTypes"/>.
-            /// NOTE: Pure data types are not cached in type index cache because they should not be bound to any assembly.
+            /// Trying to write type completely or partially by pure <see cref="DataTypes"/>.
+            /// Returning <see langword="true"/> even for partial success (array, generics) because then the beginning of the type is encoded by DataTypes.
             /// </summary>
             [SecurityCritical]
-            private bool TryWritePureDataType(BinaryWriter bw, Type type)
+            private bool TryWriteByDataTypes(BinaryWriter bw, Type type, bool allowOpenTypes)
             {
-                DataTypes pureElementType = GetSupportedElementType(type, true);
-                if (pureElementType != DataTypes.Null)
+                Debug.Assert(allowOpenTypes || (!type.IsGenericTypeDefinition && !type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
+
+                DataTypes elementType = GetSupportedElementType(type);
+                if (elementType != DataTypes.Null)
                 {
-                    Write7BitInt(bw, AssemblyIndexCacheCount + 2); // count + 2: natively supported type
-                    WriteDataType(bw, pureElementType);
+                    // No DataTypes encoding
+                    if (!IsPureType(elementType))
+                        return false;
+                    Write7BitInt(bw, InvariantAssemblyIndex);
+                    WriteDataType(bw, elementType);
                     return true;
                 }
 
-                if (!IsSupportedCollection(type))
+                bool isGeneric = type.IsGenericType;
+                bool isTypeDef = type.IsGenericTypeDefinition;
+                bool isGenericParam = type.IsGenericParameter;
+
+                Type typeDef = isTypeDef ? type
+                    : isGeneric ? type.GetGenericTypeDefinition()
+                    : isGenericParam ? type.DeclaringType
+                    : null;
+
+                // this still returns the same for generics and their type definition
+                DataTypes collectionType = GetSupportedCollectionType(typeDef ?? type);
+                if (collectionType == DataTypes.Null)
                     return false;
 
-                IEnumerable<DataTypes> pureCollectionType = EncodeCollectionType(type, true);
-                if (pureCollectionType != null)
+                // Non-generic types/arguments and closed constructed generic types: trying to encode it
+                if (!(isTypeDef || isGenericParam || (isGeneric && type.ContainsGenericParameters)))
                 {
-                    Write7BitInt(bw, AssemblyIndexCacheCount + 2); // count + 2: natively supported type
-                    pureCollectionType.ForEach(dt => WriteDataType(bw, dt));
+                    CircularList<DataTypes> encodedCollectionType = EncodeCollectionType(type);
 
-                    // As we encode pure types, no type name will be written here, only array ranks if needed.
-                    WriteTypeNamesAndRanks(bw, type, true);
-                    return true;
+                    // the type, which is not a generic type definition can be purely written (without type names)
+                    if (encodedCollectionType != null && encodedCollectionType.TrueForAll(IsPureType))
+                    {
+                        Write7BitInt(bw, InvariantAssemblyIndex);
+                        encodedCollectionType.ForEach(dt => WriteDataType(bw, dt));
+
+                        // As we encode pure types, no type name will be written here, only array ranks if needed.
+                        WriteTypeNamesAndRanks(bw, type);
+                        return true;
+                    }
                 }
 
-                return false;
+                if (typeDef == null)
+                {
+                    Debug.Assert(type.IsArray, "Non-generic non-array supported collections must be always pure");
+                    return false;
+                }
+
+                // Here we have a supported generic type definition or a constructed generic type with unsupported or impure arguments.
+                WriteDataType(bw, collectionType | DataTypes.GenericTypeDefinition); // note: no multiple DataTypes even for dictionaries!
+
+                // If open types are allowed in current context we write a specifier after the generic type definition
+                if (allowOpenTypes)
+                {
+                    WriteGenericSpecifier(bw, type);
+                    if (isTypeDef || isGenericParam)
+                        return true;
+                }
+
+                // Constructed generic type of the (partially) unsupported or impure arguments:
+                // recursion for the arguments and adding the type to the index cache at the end.
+                foreach (Type genericArgument in type.GetGenericArguments())
+                    WriteType(bw, genericArgument, allowOpenTypes);
+                typeIndexCache.Add(type, TypeIndexCacheCount);
+
+                return true;
             }
 
             /// <summary>
@@ -1649,7 +1673,7 @@ namespace KGySoft.Serialization
                         typeDefWritten = true;
                     }
                     else
-                        Write7BitInt(bw, TypeIndexCacheCount + 1); // count + 1: new type
+                        Write7BitInt(bw, NewTypeIndex);
                 }
 
                 // Regular type name
@@ -1670,27 +1694,39 @@ namespace KGySoft.Serialization
                 // If open types are allowed in current context we write a specifier after the generic type definition
                 if (allowOpenTypes)
                 {
+                    WriteGenericSpecifier(bw, type);
                     if (isTypeDef)
-                    {
-                        bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
                         return;
-                    }
-
                     if (isGenericParam)
                     {
-                        bw.Write((byte)GenericTypeSpecifier.GenericParameter);
-                        Write7BitInt(bw, type.GenericParameterPosition);
                         typeIndexCache.Add(type, TypeIndexCacheCount);
                         return;
                     }
-
-                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
                 }
 
                 // Constructed generic type: arguments (it still can contain generic parameters)
                 foreach (Type genericArgument in type.GetGenericArguments())
                     WriteType(bw, genericArgument, allowOpenTypes);
                 typeIndexCache.Add(type, TypeIndexCacheCount);
+            }
+
+            private void WriteGenericSpecifier(BinaryWriter bw, Type type)
+            {
+                if (type.IsGenericTypeDefinition)
+                {
+                    bw.Write((byte)GenericTypeSpecifier.TypeDefinition);
+                    return;
+                }
+
+                if (type.IsGenericParameter)
+                {
+                    bw.Write((byte)GenericTypeSpecifier.GenericParameter);
+                    Write7BitInt(bw, type.GenericParameterPosition);
+                    typeIndexCache.Add(type, TypeIndexCacheCount);
+                    return;
+                }
+
+                bw.Write((byte)GenericTypeSpecifier.ConstructedType);
             }
 
             /// <summary>

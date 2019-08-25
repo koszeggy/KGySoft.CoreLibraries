@@ -60,6 +60,12 @@ namespace KGySoft.Serialization
 
             private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object> { { 0, null } });
 
+            private int OmitAssemblyIndex => readAssemblies.Count;
+            private int NewAssemblyIndex => readAssemblies.Count + 1;
+            private int InvariantAssemblyIndex => readAssemblies.Count + 2;
+
+            private int NewTypeIndex => readTypes.Count + 1;
+
             #endregion
 
             #region Constructors
@@ -225,7 +231,7 @@ namespace KGySoft.Serialization
                     readAssemblies = new List<Assembly>(KnownAssemblies);
 
                 // natively supported type
-                if (index == readAssemblies.Count + 2)
+                if (index == InvariantAssemblyIndex)
                 {
                     DataTypes dataType = ReadDataType(br);
                     DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
@@ -240,7 +246,7 @@ namespace KGySoft.Serialization
                 }
 
                 // new assembly: assembly and type are stored together
-                if (index == readAssemblies.Count + 1)
+                if (index == NewAssemblyIndex)
                 {
                     // assembly qualified name (GetType uses binder if set)
                     Type type = GetType(br.ReadString(), br.ReadString());
@@ -254,8 +260,8 @@ namespace KGySoft.Serialization
 
                 Assembly assembly = null;
 
-                // type with assembly (unless assembly is omitted)
-                if (index != readAssemblies.Count)
+                // type with assembly (if assembly is not omitted)
+                if (index != OmitAssemblyIndex)
                 {
                     Debug.Assert(index >= 0 && index < readAssemblies.Count, "Invalid assembly index");
                     assembly = readAssemblies[index];
@@ -265,7 +271,7 @@ namespace KGySoft.Serialization
                 index = Read7BitInt(br);
 
                 // new type
-                if (index == readTypes.Count + 1)
+                if (index == NewTypeIndex)
                 {
                     string typeName = br.ReadString();
                     Type type = null;
