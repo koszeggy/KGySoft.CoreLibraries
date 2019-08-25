@@ -280,23 +280,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 //typeof(int), // supported simple
                 //typeof(CustomSerializedClass), // custom simple
 
-                typeof(int[]), // supported array
-                typeof(CustomSerializedClass[]), // custom array
-                typeof(Array), // unspecified array
+                //typeof(int[]), // supported array
+                //typeof(CustomSerializedClass[]), // custom array
+                //typeof(Array), // unspecified array
 
-                typeof(List<int>), // supported generic
-                typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
-                typeof(CustomGenericCollection<int>), // custom generic with supported parameter
-                typeof(List<CustomSerializedClass>), // supported generic with custom parameter
-                typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
+                //typeof(List<int>), // supported generic
+                //typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+                //typeof(CustomGenericCollection<int>), // custom generic with supported parameter
+                //typeof(List<CustomSerializedClass>), // supported generic with custom parameter
+                //typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
 
-                typeof(List<Array>),
-                typeof(List<int[]>),
-                typeof(List<Array[]>),
+                //typeof(List<Array>),
+                //typeof(List<int[]>),
+                //typeof(List<Array[]>),
 
-                typeof(List<>), // supported generic type definition
-                typeof(Dictionary<,>), // supported generic type definition
-                typeof(CustomGenericCollection<>), // custom generic type definition
+                //typeof(List<>), // supported generic type definition
+                //typeof(Dictionary<,>), // supported generic type definition
+                //typeof(CustomGenericCollection<>), // custom generic type definition
 
                 typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
@@ -676,11 +676,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new CircularSortedList<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
             };
 
-            SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
+            //SystemSerializeObject(referenceObjects);
+            //SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
