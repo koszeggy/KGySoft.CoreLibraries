@@ -217,6 +217,8 @@ namespace KGySoft.Serialization
 
                 if (type.IsGenericType)
                     type = type.GetGenericTypeDefinition();
+                if (type.IsGenericParameter)
+                    type = type.DeclaringType;
                 return supportedCollections.GetValueOrDefault(type, DataTypes.Null);
             }
 
@@ -1454,8 +1456,6 @@ namespace KGySoft.Serialization
                     return;
 
                 int index;
-
-                // initializing asm caches if needed, determining asm index
                 if (binderAsmName != null)
                 {
                     // assembly by binder
@@ -1577,28 +1577,18 @@ namespace KGySoft.Serialization
                 if (collectionType == DataTypes.Null)
                     return false;
 
-                // Non-generic types/arguments and closed constructed generic types: trying to encode it
+                // Arrays or non-generic/closed generic collections
                 if (!(isTypeDef || isGenericParam || (isGeneric && type.ContainsGenericParameters)))
                 {
                     CircularList<DataTypes> encodedCollectionType = EncodeCollectionType(type);
-
-                    // the type, which is not a generic type definition can be purely written (without type names)
-                    if (encodedCollectionType != null && encodedCollectionType.TrueForAll(IsPureType))
-                    {
-                        Write7BitInt(bw, InvariantAssemblyIndex);
-                        encodedCollectionType.ForEach(dt => WriteDataType(bw, dt));
-
-                        // As we encode pure types, no type name will be written here, only array ranks if needed.
-                        WriteTypeNamesAndRanks(bw, type);
-                        return true;
-                    }
+                    Write7BitInt(bw, InvariantAssemblyIndex);
+                    encodedCollectionType.ForEach(dt => WriteDataType(bw, dt));
+                    WriteTypeNamesAndRanks(bw, type);
+                    return true;
                 }
 
-                if (typeDef == null)
-                {
-                    Debug.Assert(type.IsArray, "Non-generic non-array supported collections must be always pure");
-                    return false;
-                }
+                Debug.Assert(typeDef != null, "Generics are expected at this point");
+                Write7BitInt(bw, InvariantAssemblyIndex);
 
                 // Here we have a supported generic type definition or a constructed generic type with unsupported or impure arguments.
                 WriteDataType(bw, collectionType | DataTypes.GenericTypeDefinition); // note: no multiple DataTypes even for dictionaries!
@@ -1615,7 +1605,6 @@ namespace KGySoft.Serialization
                 // recursion for the arguments and adding the type to the index cache at the end.
                 foreach (Type genericArgument in type.GetGenericArguments())
                     WriteType(bw, genericArgument, allowOpenTypes);
-                TypeIndexCache.Add(type, TypeIndexCacheCount);
 
                 return true;
             }
@@ -1670,13 +1659,8 @@ namespace KGySoft.Serialization
                 if (allowOpenTypes)
                 {
                     WriteGenericSpecifier(bw, type);
-                    if (isTypeDef)
+                    if (isTypeDef || isGenericParam)
                         return;
-                    if (isGenericParam)
-                    {
-                        TypeIndexCache.Add(type, TypeIndexCacheCount);
-                        return;
-                    }
                 }
 
                 // Constructed generic type: arguments (it still can contain generic parameters)
@@ -1697,7 +1681,6 @@ namespace KGySoft.Serialization
                 {
                     bw.Write((byte)GenericTypeSpecifier.GenericParameter);
                     Write7BitInt(bw, type.GenericParameterPosition);
-                    TypeIndexCache.Add(type, TypeIndexCacheCount);
                     return;
                 }
 

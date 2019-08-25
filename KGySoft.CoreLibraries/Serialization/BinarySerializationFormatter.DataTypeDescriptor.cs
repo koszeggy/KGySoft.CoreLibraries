@@ -121,6 +121,9 @@ namespace KGySoft.Serialization
                 CollectionDataType = dataType & DataTypes.CollectionTypes;
                 ElementDataType = dataType & ~DataTypes.CollectionTypes;
 
+                if (CollectionDataType == DataTypes.Null || ElementDataType == DataTypes.GenericTypeDefinition)
+                    return;
+
                 // recursion 2: nested type
                 if (ElementDataType == DataTypes.Null)
                     ElementDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
