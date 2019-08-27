@@ -208,33 +208,10 @@ namespace KGySoft.Serialization
                 Write7BitLong(bw, value);
             }
 
-            private static bool IsSupportedCollection(Type type) => GetSupportedCollectionType(type) != DataTypes.Null;
-
-            private static DataTypes GetSupportedCollectionType(Type type)
-            {
-                if (type.IsArray)
-                    return DataTypes.Array;
-
-                if (type.IsNullable())
-                {
-                    switch (GetSupportedCollectionType(type.GetGenericArguments()[0]))
-                    {
-                        case DataTypes.DictionaryEntry:
-                            return DataTypes.DictionaryEntryNullable;
-                        case DataTypes.KeyValuePair:
-                            return DataTypes.KeyValuePairNullable;
-                        default:
-                            return DataTypes.Null;
-                    }
-                }
-
-                if (type.IsGenericType)
-                    type = type.GetGenericTypeDefinition();
-                if (type.IsGenericParameter)
-                    type = type.DeclaringType;
-                return supportedCollections.GetValueOrDefault(type, DataTypes.Null);
-            }
-
+            private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
+            private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
+            private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
+            private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
             private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
 
             /// <summary>
@@ -245,7 +222,7 @@ namespace KGySoft.Serialization
             {
                 // descriptor must refer a generic dictionary type here
                 Debug.Assert(collectionTypeDescriptor.Count > 0, "Type description is invalid: not enough data");
-                Debug.Assert((collectionTypeDescriptor[0] & DataTypes.Dictionary) != DataTypes.Null, $"Type description is invalid: {collectionTypeDescriptor[0] & DataTypes.CollectionTypes} is not a dictionary type.");
+                Debug.Assert((collectionTypeDescriptor[0] & DataTypes.Dictionary) != DataTypes.Null, $"Type description is invalid: {GetCollectionDataType(collectionTypeDescriptor[0])} is not a dictionary type.");
 
                 CircularList<DataTypes> result = new CircularList<DataTypes>();
                 int skipLevel = 0;
@@ -259,7 +236,7 @@ namespace KGySoft.Serialization
                         continue;
                     }
 
-                    switch (dataType & DataTypes.CollectionTypes)
+                    switch (GetCollectionDataType(dataType))
                     {
                         // No collection type indicated: element type belongs to an already skipped previous collection.
                         case DataTypes.Null:
@@ -280,7 +257,7 @@ namespace KGySoft.Serialization
                         case DataTypes.QueueNonGeneric:
                         case DataTypes.StackNonGeneric:
                         case DataTypes.StringCollection:
-                            if ((dataType & ~DataTypes.CollectionTypes) != DataTypes.Null)
+                            if (IsElementType(dataType))
                                 skipLevel--;
                             break;
 
@@ -302,7 +279,7 @@ namespace KGySoft.Serialization
                         case DataTypes.KeyValuePairNullable:
                         case DataTypes.DictionaryEntryNullable:
                             // this check works because flags cannot be combined with collection types (nullable "collections" have different values)
-                            if ((dataType & ~DataTypes.CollectionTypes) == DataTypes.Null)
+                            if (!IsElementType(dataType))
                                 skipLevel++;
                             startingDictionaryResolved = true;
                             break;
@@ -595,22 +572,22 @@ namespace KGySoft.Serialization
             /// Writes AssemblyQualifiedName of element types and array ranks if needed
             /// </summary>
             [SecurityCritical]
-            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type)
+            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, DataTypes dataType)
             {
                 // Impure types: type name
-                DataTypes elementType = GetSupportedElementType(type);
-                if (!IsPureType(elementType))
+                if (!IsPureType(dataType))
                 {
-                    if ((elementType & DataTypes.Nullable) == DataTypes.Nullable)
+                    if ((dataType & DataTypes.Nullable) != DataTypes.Null)
                         type = Nullable.GetUnderlyingType(type);
                     WriteType(bw, type);
                     return;
                 }
 
                 // Non-abstract array: recursion for element type, then writing rank
-                if (type.IsArray)
+                if (GetCollectionDataType(dataType) == DataTypes.Array)
                 {
-                    WriteTypeNamesAndRanks(bw, type.GetElementType());
+                    Type elementType = type.GetElementType();
+                    WriteTypeNamesAndRanks(bw, elementType, GetDataType(elementType));
                     byte rank = (byte)type.GetArrayRank();
 
                     // 0-based generic array is differentiated from nonzero-based 1D array (matters if no instance is created so bounds are not queried)
@@ -624,32 +601,33 @@ namespace KGySoft.Serialization
                 if (type.IsGenericType)
                 {
                     foreach (Type genericArgument in type.GetGenericArguments())
-                        WriteTypeNamesAndRanks(bw, genericArgument);
+                        WriteTypeNamesAndRanks(bw, genericArgument, GetDataType(genericArgument));
                 }
             }
 
             [SecurityCritical]
-            private CircularList<DataTypes> EncodeCollectionType(Type type)
+            private CircularList<DataTypes> EncodeCollectionType(Type type, DataTypes collectionDataType)
             {
+                Debug.Assert(GetCollectionDataType(collectionDataType) == collectionDataType, "Plain collection type expected");
+
                 // array
-                if (type.IsArray)
+                if (collectionDataType == DataTypes.Array)
                     return EncodeArray(type);
 
                 Debug.Assert(!type.IsGenericTypeDefinition, $"Generic type definition is not expected in {nameof(EncodeCollectionType)}");
-                DataTypes collectionType = GetSupportedCollectionType(type);
                 type = Nullable.GetUnderlyingType(type) ?? type;
 
                 // generic type
                 if (type.IsGenericType)
-                    return EncodeGenericCollection(type, collectionType);
+                    return EncodeGenericCollection(type, collectionDataType);
 
                 // non-generic types
-                switch (collectionType)
+                switch (collectionDataType)
                 {
                     case DataTypes.ArrayList:
                     case DataTypes.QueueNonGeneric:
                     case DataTypes.StackNonGeneric:
-                        return new CircularList<DataTypes> { collectionType | DataTypes.Object };
+                        return new CircularList<DataTypes> { collectionDataType | DataTypes.Object };
 
                     case DataTypes.Hashtable:
                     case DataTypes.SortedListNonGeneric:
@@ -658,16 +636,16 @@ namespace KGySoft.Serialization
                     case DataTypes.OrderedDictionary:
                     case DataTypes.DictionaryEntry:
                     case DataTypes.DictionaryEntryNullable:
-                        return new CircularList<DataTypes> { collectionType | DataTypes.Object, DataTypes.Object };
+                        return new CircularList<DataTypes> { collectionDataType | DataTypes.Object, DataTypes.Object };
 
                     case DataTypes.StringCollection:
-                        return new CircularList<DataTypes> { collectionType | DataTypes.String };
+                        return new CircularList<DataTypes> { collectionDataType | DataTypes.String };
 
                     case DataTypes.StringDictionary:
-                        return new CircularList<DataTypes> { collectionType | DataTypes.String, DataTypes.String };
+                        return new CircularList<DataTypes> { collectionDataType | DataTypes.String, DataTypes.String };
                     default:
                         // should never occur, throwing internal error without resource
-                        throw new InvalidOperationException("Element type of non-generic collection is not defined: " + DataTypeToString(collectionType));
+                        throw new InvalidOperationException("Element type of non-generic collection is not defined: " + DataTypeToString(collectionDataType));
                 }
             }
 
@@ -675,141 +653,135 @@ namespace KGySoft.Serialization
             private CircularList<DataTypes> EncodeArray(Type type)
             {
                 Type elementType = type.GetElementType();
-                if (TryUseSurrogateSelectorForAnyType && CanUseSurrogate(elementType))
-                {
-                    DataTypes result = DataTypes.Array | DataTypes.RecursiveObjectGraph;
-                    if (elementType.IsNullable())
-                        result |= DataTypes.Nullable;
-                    return new CircularList<DataTypes> { result };
-                }
+                DataTypes elementDataType = GetDataType(elementType);
 
-                DataTypes elementDataType = GetSupportedElementType(elementType);
-                if (elementDataType != DataTypes.Null)
+                if (IsElementType(elementDataType))
                     return new CircularList<DataTypes> { DataTypes.Array | elementDataType };
 
-                if (IsSupportedCollection(elementType))
-                {
-                    CircularList<DataTypes> result = EncodeCollectionType(elementType);
-                    if (result != null)
-                    {
-                        result.AddFirst(DataTypes.Array);
-                        return result;
-                    }
-                }
-
-                // Arrays always require a special handling and cannot be serialized recursively. For unsupported types we encode the array type
-                // and if recursive serialization is not supported it will turn out when the non-null elements are serialized (if any)
-                return new CircularList<DataTypes> { DataTypes.Array | DataTypes.RecursiveObjectGraph | (elementType.IsNullable() ? DataTypes.Nullable : DataTypes.Null) };
+                Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
+                CircularList<DataTypes> nestedCollection = EncodeCollectionType(elementType, elementDataType);
+                nestedCollection.AddFirst(DataTypes.Array);
+                return nestedCollection;
             }
 
             [SecurityCritical]
             private CircularList<DataTypes> EncodeGenericCollection(Type type, DataTypes collectionType)
             {
-                if (collectionType == DataTypes.Null)
-                    return null;
-
+                Debug.Assert(GetCollectionDataType(collectionType) == collectionType, "Plain collection type expected");
                 Debug.Assert(!type.ContainsGenericParameters, $"Constructed open generic types are not expected in {nameof(EncodeGenericCollection)}");
+
                 Type[] args = type.GetGenericArguments();
                 Type elementType = args[0];
-                DataTypes elementDataType = GetSupportedElementType(elementType);
+                DataTypes elementDataType = GetDataType(elementType);
 
                 // generics with 1 argument
                 if (args.Length == 1)
                 {
-                    if (elementDataType != DataTypes.Null)
+                    if (IsElementType(elementDataType))
                         return new CircularList<DataTypes> { collectionType | elementDataType };
 
-                    if (IsSupportedCollection(elementType))
-                    {
-                        CircularList<DataTypes> innerType = EncodeCollectionType(elementType);
-                        if (innerType != null)
-                        {
-                            innerType.AddFirst(collectionType);
-                            return innerType;
-                        }
-                    }
-
-                    return null;
+                    Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
+                    CircularList<DataTypes> innerType = EncodeCollectionType(elementType, elementDataType);
+                    innerType.AddFirst(collectionType);
+                    return innerType;
                 }
 
                 // dictionaries
                 Type valueType = args[1];
-                DataTypes valueDataType = GetSupportedElementType(valueType);
+                DataTypes valueDataType = GetDataType(valueType);
 
                 CircularList<DataTypes> keyTypes;
                 CircularList<DataTypes> valueTypes;
 
                 // key
-                if (elementDataType != DataTypes.Null)
+                if (IsElementType(elementDataType))
                     keyTypes = new CircularList<DataTypes> { collectionType | elementDataType };
-                else if (IsSupportedCollection(elementType))
+                else
                 {
-                    keyTypes = EncodeCollectionType(elementType);
-                    if (keyTypes == null)
-                        return null;
+                    Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
+                    keyTypes = EncodeCollectionType(elementType, elementDataType);
                     keyTypes.AddFirst(collectionType);
                 }
-                else
-                    return null;
 
                 // value
-                if (valueDataType != DataTypes.Null)
+                if (IsElementType(valueDataType))
                     valueTypes = new CircularList<DataTypes> { valueDataType };
-                else if (IsSupportedCollection(valueType))
-                {
-                    valueTypes = EncodeCollectionType(valueType);
-                    if (valueTypes == null)
-                        return null;
-                }
                 else
-                    return null;
+                {
+                    Debug.Assert(IsCollectionType(valueDataType), $"Not a collection data type: {valueDataType}");
+                    valueTypes = EncodeCollectionType(valueType, valueDataType);
+                }
 
                 keyTypes.AddRange(valueTypes);
                 return keyTypes;
             }
 
             /// <summary>
-            /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/> as an element type.
+            /// Gets the <see cref="DataTypes"/> representation of <paramref name="type"/>.
             /// </summary>
             [SecurityCritical]
-            private DataTypes GetSupportedElementType(Type type)
+            private DataTypes GetDataType(Type type)
             {
-                DataTypes elementType;
+                // a.) Well-known types or forced recursion
 
-                // a.) nullable (must be before surrogate-support checks)
-                if (type.IsNullable())
+                // Primitive type
+                if (primitiveTypes.TryGetValue(type, out DataTypes result))
+                    return result;
+
+                // Primitive nullable (must be before surrogate-support checks)
+                bool isNullable = type.IsNullable();
+                if (isNullable)
                 {
-                    elementType = GetSupportedElementType(type.GetGenericArguments()[0]);
-                    if (elementType == DataTypes.Null)
-                        return elementType;
-                    return DataTypes.Nullable | elementType;
+                    result = GetDataType(type.GetGenericArguments()[0]);
+                    if (IsElementType(result) && IsPureType(result))
+                        return DataTypes.Nullable | result;
                 }
 
-                // b.) Natively supported primitive types
-                if (primitiveTypes.TryGetValue(type, out elementType))
-                    return elementType;
+                // array
+                if (type.IsArray)
+                    return DataTypes.Array;
 
-                // c.) recursion for any type: check even for sub-collections
-                if (ForceRecursiveSerializationOfSupportedTypes && !type.IsArray || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(type))
-                    return supportedNonPrimitiveElementTypes.GetValueOrDefault(type, DataTypes.RecursiveObjectGraph);
+                // Recursion for any type (except primitives and array)
+                if (ForceRecursiveSerializationOfSupportedTypes || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(type))
+                    return DataTypes.RecursiveObjectGraph | (isNullable ? DataTypes.Nullable : DataTypes.Null);
 
-                // e.) Natively supported non-primitive types
-                if (supportedNonPrimitiveElementTypes.TryGetValue(type, out elementType))
-                    return elementType;
+                // Non-primitive nullable
+                if (isNullable)
+                {
+                    // result is now the result of the recursive call
+                    switch (result)
+                    {
+                        case DataTypes.DictionaryEntry:
+                            return DataTypes.DictionaryEntryNullable;
+                        case DataTypes.KeyValuePair:
+                            return DataTypes.KeyValuePairNullable;
+                        default:
+                            return DataTypes.Nullable | result;
+                    }
+                }
 
-                // d.) enum
+                // Natively supported non-primitive type
+                if (supportedNonPrimitiveElementTypes.TryGetValue(type, out result))
+                    return result;
+
+                // enum
                 if (type.IsEnum)
-                    return DataTypes.Enum | GetSupportedElementType(Enum.GetUnderlyingType(type));
-
-                // Shortcut: If type is a collection, then returning null here
-                if (GetSupportedCollectionType(type) != DataTypes.Null)
-                    return DataTypes.Null;
-
-                // e.) Other non-pure types
+                    return DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(type)];
 
                 // RuntimeType
                 if (type == Reflector.RuntimeType)
                     return DataTypes.RuntimeType;
+
+                // supported collection
+                Type collType = type.IsGenericType ? type.GetGenericTypeDefinition()
+                    : type.IsGenericParameter ? type.DeclaringType
+                    : type;
+
+                // ReSharper disable once AssignNullToNotNullAttribute
+                if (supportedCollections.TryGetValue(collType, out result))
+                    return result;
+
+                // b.) Non-pure types
 
                 // IBinarySerializable implementation
                 if (!IgnoreIBinarySerializable && typeof(IBinarySerializable).IsAssignableFrom(type))
@@ -890,16 +862,13 @@ namespace KGySoft.Serialization
                         || (dt & DataTypes.SimpleTypes) == DataTypes.Object);
 
                 Type type = data.GetType();
+                DataTypes dataType = GetDataType(type);
 
-                if (!IsSupportedCollection(type))
+                if (!IsCollectionType(dataType))
                     return false;
 
-                CircularList<DataTypes> collectionType = EncodeCollectionType(type);
-                if (collectionType == null)
-                    return false;
-
-                foreach (DataTypes dataType in collectionType)
-                    WriteDataType(bw, dataType);
+                CircularList<DataTypes> collectionType = EncodeCollectionType(type, dataType);
+                collectionType.ForEach(dt => WriteDataType(bw, dt));
 
                 if (isRoot && CanHaveRecursion(collectionType))
                 {
@@ -907,7 +876,7 @@ namespace KGySoft.Serialization
                         Debug.Fail("Id of recursive object should be unknown on top level.");
                 }
 
-                WriteTypeNamesAndRanks(bw, type);
+                WriteTypeNamesAndRanks(bw, type, dataType);
                 WriteCollection(bw, collectionType, data);
                 return true;
             }
@@ -919,11 +888,12 @@ namespace KGySoft.Serialization
                     // should never occur, throwing internal error without resource
                     throw new ArgumentException("Type description is invalid", nameof(collectionTypeDescriptor));
 
-                DataTypes collectionDataType = collectionTypeDescriptor[0];
-                DataTypes elementDataType = collectionDataType & ~(DataTypes.CollectionTypes | DataTypes.Enum);
+                DataTypes dataType = collectionTypeDescriptor[0];
+                DataTypes elementDataType = GetElementDataType(dataType) & ~DataTypes.Enum;
+                DataTypes collectionDataType = GetCollectionDataType(dataType);
 
                 // array
-                if ((collectionDataType & DataTypes.CollectionTypes) == DataTypes.Array)
+                if (collectionDataType == DataTypes.Array)
                 {
                     Array array = (Array)obj;
                     // 1. Dimensions
@@ -956,7 +926,7 @@ namespace KGySoft.Serialization
                 }
 
                 // other collections
-                CollectionSerializationInfo serInfo = serializationInfo[collectionDataType & DataTypes.CollectionTypes];
+                CollectionSerializationInfo serInfo = serializationInfo[collectionDataType];
                 var enumerable = obj as IEnumerable;
                 IEnumerable collection = enumerable ?? new object[] { obj };
                 // as object[] for DictionaryEntry and KeyValuePair
@@ -988,7 +958,7 @@ namespace KGySoft.Serialization
                     IList<DataTypes> valueCollectionDataTypes = GetDictionaryValueTypes(collectionTypeDescriptor);
                     collectionTypeDescriptor.RemoveFirst();
                     DataTypes valueDataType = DataTypes.Null;
-                    if ((valueCollectionDataTypes[0] & DataTypes.CollectionTypes) == DataTypes.Null)
+                    if (!IsCollectionType(valueCollectionDataTypes[0]))
                         valueDataType = valueCollectionDataTypes[0] & ~DataTypes.Enum;
                     WriteDictionaryElements(bw, collection, collectionTypeDescriptor, elementDataType, valueCollectionDataTypes, valueDataType, keyType, valueType);
                     return;
@@ -1488,16 +1458,17 @@ namespace KGySoft.Serialization
             {
                 Debug.Assert(allowOpenTypes || (!type.IsGenericTypeDefinition && !type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
 
-                DataTypes elementType = GetSupportedElementType(type);
-                if (elementType != DataTypes.Null)
+                DataTypes dataType = GetDataType(type);
+                if (IsElementType(dataType))
                 {
-                    // No DataTypes encoding
-                    if (!IsPureType(elementType))
+                    if (!IsPureType(dataType))
                         return false;
                     Write7BitInt(bw, InvariantAssemblyIndex);
-                    WriteDataType(bw, elementType);
+                    WriteDataType(bw, dataType);
                     return true;
                 }
+
+                Debug.Assert(IsCollectionType(dataType), $"Not a collection data type: {dataType}");
 
                 bool isGeneric = type.IsGenericType;
                 bool isTypeDef = type.IsGenericTypeDefinition;
@@ -1508,18 +1479,13 @@ namespace KGySoft.Serialization
                     : isGenericParam ? type.DeclaringType
                     : null;
 
-                // this still returns the same for generics and their type definition
-                DataTypes collectionType = GetSupportedCollectionType(typeDef ?? type);
-                if (collectionType == DataTypes.Null)
-                    return false;
-
                 // Arrays or non-generic/closed generic collections
                 if (!(isTypeDef || isGenericParam || (isGeneric && type.ContainsGenericParameters)))
                 {
-                    CircularList<DataTypes> encodedCollectionType = EncodeCollectionType(type);
+                    CircularList<DataTypes> encodedCollectionType = EncodeCollectionType(type, dataType);
                     Write7BitInt(bw, InvariantAssemblyIndex);
                     encodedCollectionType.ForEach(dt => WriteDataType(bw, dt));
-                    WriteTypeNamesAndRanks(bw, type);
+                    WriteTypeNamesAndRanks(bw, type, dataType);
                     return true;
                 }
 
@@ -1527,7 +1493,7 @@ namespace KGySoft.Serialization
                 Write7BitInt(bw, InvariantAssemblyIndex);
 
                 // Here we have a supported generic type definition or a constructed generic type with unsupported or impure arguments.
-                WriteDataType(bw, collectionType | DataTypes.GenericTypeDefinition); // note: no multiple DataTypes even for dictionaries!
+                WriteDataType(bw, dataType | DataTypes.GenericTypeDefinition); // note: no multiple DataTypes even for dictionaries!
 
                 // If open types are allowed in current context we write a specifier after the generic type definition
                 if (allowOpenTypes)

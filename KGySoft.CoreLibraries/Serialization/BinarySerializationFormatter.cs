@@ -42,7 +42,7 @@ using KGySoft.Reflection;
  * ~~~~~~~~~~~~~~~~~~~~~~~
  * 1. Add type to DataTypes 0-5 bits (adjust free places in comments)
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
- *    Otherwise, handle it in SerializationManager.GetSupportedElementType under e.)
+ *    Otherwise, handle it in SerializationManager.GetDataType under b.)
  * 3. If type is pure handle it type in SerializationManager.TryWriteSimpleNonPrimitive. Create a static WriteXXX.
  *    Otherwise, handle it in SerializationManager.Write under f.). Create a WriteXXX and use WriteType.
  * 4. Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX.
@@ -63,19 +63,18 @@ using KGySoft.Reflection;
  *    - 16..31 << 8: Generic dictionaries
  *    - 32..47 << 8: Non-generic collections
  *    - 48..63 << 8: Non-generic dictionaries
- * 2. Update serializationInfo dictionary in static constructor - mind the groups of 1.
+ * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. Add type to supportedCollections
- * 4. Check SerializationManager.GetSupportedCollectionType whether a special handling is needed
- * 5. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
- * 6. Add type to DataTypeDescriptor.GetCollectionType - mind groups
- * 7. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
- * 8. Add type to unit test:
+ * 4. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
+ * 5. Add type to DataTypeDescriptor.GetCollectionType - mind groups
+ * 6. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
+ * 7. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
  *    - SerializeSupportedDictionaries - twice when generic dictionary type; otherwise, only once
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
- * 9. Add type to description - Collections
+ * 8. Add type to description - Collections
  *
  * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
  */
@@ -134,6 +133,7 @@ namespace KGySoft.Serialization
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
     /// <item><see cref="Enum"/> types</item>
+    /// <item><see cref="Type"/> instances if they are runtime types.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
     /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
     /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>

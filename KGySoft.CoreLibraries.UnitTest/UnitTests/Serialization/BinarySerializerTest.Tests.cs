@@ -36,6 +36,7 @@ using System.Security.Policy;
 using System.Text;
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 using KGySoft.Serialization;
 
 using NUnit.Framework;
@@ -282,8 +283,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(int?),
                 typeof(int).MakeByRefType(),
                 typeof(int).MakePointerType(),
-                typeof(CustomSerializedClass), // custom simple
+                typeof(CustomSerializedClass),
                 typeof(CustomSerializableStruct?),
+                Reflector.RuntimeType,
 
                 typeof(int[]),
                 typeof(int[,]),
