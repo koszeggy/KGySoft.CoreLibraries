@@ -598,7 +598,12 @@ namespace KGySoft.Serialization
                 if (type.IsArray)
                 {
                     WriteTypeNamesAndRanks(bw, type.GetElementType());
-                    bw.Write((byte)type.GetArrayRank());
+                    byte rank = (byte)type.GetArrayRank();
+
+                    // 0-based generic array is differentiated from nonzero-based 1D array (matters if no instance is created so bounds are not queried)
+                    if (rank == 1 && type.IsImplementationOfGenericType(Reflector.IListGenType))
+                        rank = 0;
+                    bw.Write(rank);
                     return;
                 }
 
@@ -1387,11 +1392,10 @@ namespace KGySoft.Serialization
             /// </remarks>
             private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
             {
-                if (TryWritePureDataType(bw, type))
+                if (TryWriteByDataTypes(bw, type, allowOpenTypes))
                     return;
 
-                if (!AssemblyIndexCache.TryGetValue(type.Assembly, out int index))
-                    index = -1;
+                int index = AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1);
 
                 // new assembly
                 if (index == -1)
@@ -1419,6 +1423,8 @@ namespace KGySoft.Serialization
                 if (TypeIndexCache.TryGetValue(type, out index))
                 {
                     Write7BitInt(bw, index);
+                    if (allowOpenTypes)
+                        WriteGenericSpecifier(bw, type);
                     return;
                 }
 
@@ -1450,24 +1456,15 @@ namespace KGySoft.Serialization
 
                 string binderAsmName = null;
                 string binderTypeName = null;
-                Binder?.BindToName(type, out binderAsmName, out binderTypeName);
+                if (Binder != null && type.FullName != null)
+                    Binder.BindToName(type, out binderAsmName, out binderTypeName);
 
                 if (binderTypeName == null && binderAsmName == null && TryWriteByDataTypes(bw, type, allowOpenTypes))
                     return;
 
-                int index;
-                if (binderAsmName != null)
-                {
-                    // assembly by binder
-                    if (!AssemblyNameIndexCache.TryGetValue(binderAsmName, out index))
-                        index = -1;
-                }
-                else
-                {
-                    // assembly by type
-                    if (!AssemblyIndexCache.TryGetValue(type.Assembly, out index))
-                        index = -1;
-                }
+                int index = binderAsmName == null 
+                    ? AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1)
+                    : AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
 
                 // new assembly
                 if (index == -1)
@@ -1492,13 +1489,15 @@ namespace KGySoft.Serialization
                             AssemblyIndexCache.Add(type.Assembly, AssemblyIndexCacheCount);
                         }
 
-                        // type by binder: handling conflicts that can be caused by binder, generics are not handled individually
+                        // type by binder
                         if (binderTypeName != null)
                         {
                             bw.Write(binderTypeName);
 
                             // binder can produce the same type name for different assemblies so prefixing with assembly
                             TypeNameIndexCache.Add((binderAsmName ?? type.Assembly.FullName) + ":" + binderTypeName, TypeIndexCacheCount);
+                            if (allowOpenTypes && type.IsGenericTypeDefinition)
+                                WriteGenericSpecifier(bw, type);
                             return;
                         }
 
@@ -1519,12 +1518,16 @@ namespace KGySoft.Serialization
                     if (TypeNameIndexCache.TryGetValue(key, out typeIndex))
                     {
                         Write7BitInt(bw, typeIndex);
+                        if (allowOpenTypes && type.IsGenericTypeDefinition)
+                            WriteGenericSpecifier(bw, type);
                         return;
                     }
                 }
                 else if (TypeIndexCache.TryGetValue(type, out typeIndex))
                 {
                     Write7BitInt(bw, typeIndex);
+                    if (allowOpenTypes && type.IsGenericTypeDefinition)
+                        WriteGenericSpecifier(bw, type);
                     return;
                 }
 
@@ -1534,6 +1537,8 @@ namespace KGySoft.Serialization
                     // type is not known yet
                     Write7BitInt(bw, NewTypeIndex);
                     bw.Write(binderTypeName);
+                    if (allowOpenTypes && type.IsGenericTypeDefinition)
+                        WriteGenericSpecifier(bw, type);
                     TypeNameIndexCache.Add(key, TypeIndexCacheCount);
                     return;
                 }
@@ -1630,6 +1635,28 @@ namespace KGySoft.Serialization
                 // For known assemblies a type index is requested first.
                 if (knownAssembly)
                 {
+                    //// It can happen that the generic type definition is already known.
+                    //if (typeDef != null)
+                    //{
+                    //    if (binderTypeName != null)
+                    //    {
+                    //        string key = (binderAsmName ?? type.Assembly.FullName) + ":" + binderTypeName;
+                    //        if (TypeNameIndexCache.TryGetValue(key, out int typeIndex))
+                    //        {
+                    //            Write7BitInt(bw, typeIndex);
+                    //            typeDefWritten = true;
+                    //        }
+                    //    }
+                    //    else if (TypeIndexCache.TryGetValue(type, out int typeIndex))
+                    //    {
+                    //        Write7BitInt(bw, typeIndex);
+                    //        typeDefWritten = true;
+                    //    }
+                    //}
+
+                    //if (!typeDefWritten)
+                    //    Write7BitInt(bw, NewTypeIndex);
+
                     // It can happen that the generic type definition is already known.
                     if (typeDef != null && TypeIndexCache.TryGetValue(typeDef, out int typeIndex))
                     {
@@ -1684,7 +1711,8 @@ namespace KGySoft.Serialization
                     return;
                 }
 
-                bw.Write((byte)GenericTypeSpecifier.ConstructedType);
+                if (type.IsGenericType)
+                    bw.Write((byte)GenericTypeSpecifier.ConstructedType);
             }
 
             /// <summary>

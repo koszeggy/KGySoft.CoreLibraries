@@ -968,11 +968,7 @@ namespace KGySoft.Serialization
 #if !NET35
         [SecuritySafeCritical]
 #endif
-        public void SerializeToStream(Stream stream, object data)
-        {
-            var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
-            manager.Write(new BinaryWriter(stream), data, true);
-        }
+        public void SerializeToStream(Stream stream, object data) => SerializeByWriter(new BinaryWriter(stream), data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
@@ -995,6 +991,8 @@ namespace KGySoft.Serialization
 #endif
         public void SerializeByWriter(BinaryWriter writer, object data)
         {
+            if (writer == null)
+                throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
             var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
             manager.Write(writer, data, true);
         }
@@ -1013,6 +1011,8 @@ namespace KGySoft.Serialization
 #endif
         public object DeserializeByReader(BinaryReader reader)
         {
+            if (reader == null)
+                throw new ArgumentNullException(nameof(reader), Res.ArgumentNull);
             var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector);
             return manager.Deserialize(reader);
         }

@@ -64,7 +64,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 test.SerializeComplexTypes();
                 test.SerializeComplexGenericCollections();
                 test.SerializationSurrogateTest();
-                test.SerializeMarshalByRefObjects();
+                test.SerializeRemoteObjects();
+                test.SerializationBinderTest();
             }
         }
 #endif
@@ -85,14 +86,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                null,
                 new object(),
                 true,
                 (sbyte)1,
                 (byte)1,
                 (short)1,
                 (ushort)1,
-                (int)1,
+                1,
                 (uint)1,
                 (long)1,
                 (ulong)1,
@@ -129,6 +129,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             referenceObjects = new object[]
             {
+                null,
                 DBNull.Value,
                 new BitVector32(13),
                 BitVector32.CreateSection(13),
@@ -141,7 +142,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
 #if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes); 
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 #endif
         }
 
@@ -277,39 +278,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                //typeof(int), // supported simple
-                //typeof(CustomSerializedClass), // custom simple
+                typeof(int),
+                typeof(int?),
+                typeof(int).MakeByRefType(),
+                typeof(int).MakePointerType(),
+                typeof(CustomSerializedClass), // custom simple
+                typeof(CustomSerializableStruct?),
 
-                //typeof(int[]), // supported array
-                //typeof(CustomSerializedClass[]), // custom array
-                //typeof(Array), // unspecified array
+                typeof(int[]),
+                typeof(int[,]),
+                typeof(int).MakeArrayType(1), // int[*]
+                typeof(CustomSerializedClass[]), // custom array
+                typeof(Array), // unspecified array
 
-                //typeof(List<int>), // supported generic
-                //typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
-                //typeof(CustomGenericCollection<int>), // custom generic with supported parameter
-                //typeof(List<CustomSerializedClass>), // supported generic with custom parameter
-                //typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
+                typeof(List<int>), // supported generic
+                typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+                typeof(CustomGenericCollection<int>), // custom generic with supported parameter
+                typeof(List<CustomSerializedClass>), // supported generic with custom parameter
+                typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
 
-                //typeof(List<Array>),
-                //typeof(List<int[]>),
-                //typeof(List<Array[]>),
+                // nullable collections
+                typeof(DictionaryEntry?),
+                typeof(KeyValuePair<int, string>?),
+                typeof(KeyValuePair<int, CustomSerializedClass>?), // supported generic with mixed parameters
 
-                //typeof(List<>), // supported generic type definition
-                //typeof(Dictionary<,>), // supported generic type definition
-                //typeof(CustomGenericCollection<>), // custom generic type definition
+                typeof(List<Array>),
+                typeof(List<int[]>),
+                typeof(List<Array[]>),
+
+                typeof(List<>), // supported generic type definition
+                typeof(Dictionary<,>), // supported generic type definition
+                typeof(CustomGenericCollection<>), // custom generic type definition
 
                 typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
-                //typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+                typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
 
-                //typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
             };
 
-            //#if !NETCOREAPP2_0 // type is not serializable in .NET Core
-            //            SystemSerializeObject(referenceObjects);
-            //            SystemSerializeObjects(referenceObjects);
-            //#endif
+#if !NETCOREAPP2_0 // Type is not serializable in .NET Core
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
+#endif
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // -> 1148 -> 890
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -920,7 +933,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
 #if !NETCOREAPP
         [Test]
-        public void SerializeMarshalByRefObjects()
+        public void SerializeRemoteObjects()
         {
             Evidence evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
             AppDomain domain = AppDomain.CreateDomain("TestDomain", evidence, AppDomain.CurrentDomain.BaseDirectory, null, false);
@@ -933,29 +946,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 };
 
                 // default - does not work for remote objects
-                //try
-                //{
-                //    SystemSerializeObjects(referenceObjects);
-                //    KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
-                //}
-                //catch
-                //{
-                //}
+                //SystemSerializeObjects(referenceObjects);
+                //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-                // with surrogate (deserialization: default again because RemotingSurrogateSelector does not support SetObjectData)
-                Console.WriteLine("--------------------------------Serialization with RemotingSurrogateSelector---------------------------------------");
+                // by surrogate (deserialization: default again because RemotingSurrogateSelector does not support SetObjectData)
                 ISurrogateSelector surrogate = new RemotingSurrogateSelector();
                 BinaryFormatter bf = new BinaryFormatter();
                 BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-                Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
+                Console.WriteLine($"------------------System BinaryFormatter (Items Count: {referenceObjects.Length})--------------------");
                 bf.SurrogateSelector = surrogate;
                 byte[] raw = SerializeObjects(referenceObjects, bf);
                 bf.SurrogateSelector = null;
                 object[] result = DeserializeObjects(raw, bf);
                 AssertItemsEqual(referenceObjects, result);
 
-                Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
+                Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
                 bsf.SurrogateSelector = surrogate;
                 raw = SerializeObjects(referenceObjects, bsf);
                 bsf.SurrogateSelector = null;
@@ -974,83 +980,70 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                1, // primitive type
-                new StringBuilder("1"), // natively supported by KGySoft only
-                new List<int> { 1 }, // generic, natively supported for KGySoft only, in mscorlib
-                new HashSet<int> { 1 }, // generic, natively supported for KGySoft only, in core
-                TestEnumByte.One, // non standard assembly
-                new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
-                new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
-                // new CustomSerializedSealedClass("1"), // type is changed on serialization: System BF fail: the binder gets the original type instead of the changed one
+                //1, // primitive type
+                //new StringBuilder("1"), // natively supported by KGySoft only
+                //new List<int> { 1 }, // generic, natively supported for KGySoft only, in mscorlib
+                //new HashSet<int> { 1 }, // generic, natively supported for KGySoft only, in core
+                //TestEnumByte.One, // non standard assembly
+                //new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
+                //new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+                //new CustomSerializedSealedClass("1"), // type is changed on serialization: System BinaryFormatter fails: the binder gets the original type instead of the changed one
+
+                //typeof(List<int>), // supported generic
+                //typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+
+                //typeof(List<>), // supported generic type definition
+                //typeof(Dictionary<,>), // supported generic type definition
+                typeof(CustomGenericCollection<>), // custom generic type definition
+
+                //typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
+                typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+
+                //typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                //typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
             };
 
-            // default
-            SystemSerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            //            // default
+            //            SystemSerializeObject(referenceObjects);
+            //            SystemSerializeObjects(referenceObjects);
 
-            // with WeakAssemblySerializationBinder
-            Console.WriteLine("--------------------------------Deserialization with WeakAssemblySerializationBinder---------------------------------------");
+            //            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            //            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+
+            //            // by WeakAssemblySerializationBinder
+            string title = "Deserialization with WeakAssemblySerializationBinder";
             SerializationBinder binder = new WeakAssemblySerializationBinder();
-            BinaryFormatter bf = new BinaryFormatter();
-            BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
-            bf.Binder = binder;
-            bsf.Binder = binder;
+            //            SystemSerializeObject(referenceObjects, title, binder: binder);
+            //            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
 
-            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
-            byte[] raw = SerializeObjects(referenceObjects, bf);
-            object[] result = DeserializeObjects(raw, bf);
-            AssertItemsEqual(referenceObjects, result);
+            //            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            //            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
-            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-
-#if !NET35
-            Console.WriteLine("-------Serialization and deserialization with WeakAssemblySerializationBinder, OmitAssemblyNameOnSerialize enabled-------------");
-            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
+            //#if !NET35
+            //            // by WeakAssemblySerializationBinder, including serialization
+            title = "Serialization and Deserialization with WeakAssemblySerializationBinder";
             binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
-            bf.Binder = binder;
-            bsf.Binder = binder;
-            raw = SerializeObjects(referenceObjects, bf);
-            result = DeserializeObjects(raw, bf);
-            AssertItemsEqual(referenceObjects, result);
+            //            SystemSerializeObject(referenceObjects, title, binder: binder);
+            //            SystemSerializeObjects(referenceObjects, title, binder: binder);
 
-            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
-            bsf.Options |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
-            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
 
-            // with TestSerializationBinder
-            Console.WriteLine("--------------------------------Serialization and deserialization with TestSerializationBinder---------------------------------------");
+            //            // by TestSerializationBinder
+            title = "Serialization and Deserialization with TestSerializationBinder";
             binder = new TestSerializationBinder();
-            bf = new BinaryFormatter();
-            bsf = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
-            bf.Binder = binder;
-            bsf.Binder = binder;
+            //            SystemSerializeObject(referenceObjects, title, binder: binder);
+            //            SystemSerializeObjects(referenceObjects, title, binder: binder);
 
-            Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
-            raw = SerializeObjects(referenceObjects, bf);
-            result = DeserializeObjects(raw, bf);
-            AssertItemsEqual(referenceObjects, result);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
-            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-
-            bsf.Options |= BinarySerializationOptions.OmitAssemblyQualifiedNames;
-            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, bsf.Options);
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-#endif
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            //#endif
         }
 
         [Test]
@@ -1138,108 +1131,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             };
 
             // default
-            // SystemSerializeObjects(referenceObjects); system serialization fails: IBinarySerializable is not serializable
+            //SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable is not serializable
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            // with SerializationSurrogate
-            Console.WriteLine("================================Serialization with NameInvariantSurrogateSelector=======================================");
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
-            BinaryFormatter bf = new BinaryFormatter();
-            BinarySerializationFormatter bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
-            bf.SurrogateSelector = selector;
-            bsf.SurrogateSelector = selector;
-            byte[] raw;
-            object[] result;
+            string title = nameof(NameInvariantSurrogateSelector);
+            //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // System.MemberAccessException: Cannot create an abstract class.
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 
-            Console.WriteLine($"------------------System BinaryFormatter (Items Count: {referenceObjects.Length})--------------------");
-            try
-            {
-                raw = SerializeObjects(referenceObjects, bf);
-                // system deserialization fails: Cannot deserialize an abstract class
-                result = DeserializeObjects(raw, bf);
-                AssertItemsEqual(referenceObjects, result);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error in system serializer: " + e);
-            }
-
-            Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-
-            bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
-            Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
-            raw = SerializeObjects(referenceObjects, bsf);
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-            Console.WriteLine("================================Serialization only with TestSurrogateSelector=======================================");
             selector = new TestSurrogateSelector();
-            bf.SurrogateSelector = selector;
-            bsf.SurrogateSelector = selector;
-
-            Console.WriteLine($"------------------System BinaryFormatter (Items Count: {referenceObjects.Length})--------------------");
-            try
-            {
-                raw = SerializeObjects(referenceObjects, bf);
-                // system deserialization fails: IBinarySerializable is not serializable
-                bf.SurrogateSelector = null;
-                result = DeserializeObjects(raw, bf);
-                AssertItemsEqual(referenceObjects, result);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error in system serializer: " + e);
-            }
-
-            Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
-            bsf.Options = BinarySerializationOptions.None;
-            raw = SerializeObjects(referenceObjects, bsf);
-            bsf.SurrogateSelector = null;
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-
-            bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
-            bsf.SurrogateSelector = selector;
-            Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
-            raw = SerializeObjects(referenceObjects, bsf);
-            bsf.SurrogateSelector = null;
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-
-            Console.WriteLine("================================Deserialization only with TestSurrogateSelector=======================================");
-            bf.SurrogateSelector = null;
-            bsf.SurrogateSelector = null;
-
-            Console.WriteLine($"------------------System BinaryFormatter (Items Count: {referenceObjects.Length})--------------------");
-            try
-            {
-                raw = SerializeObjects(referenceObjects, bf);
-                // system deserialization fails: Cannot deserialize field: baseclass+backingfield (this is because of the surrogate) - TODO: solve this in TestSurrogate
-                bf.SurrogateSelector = selector;
-                result = DeserializeObjects(raw, bf);
-                AssertItemsEqual(referenceObjects, result);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error in system serializer: " + e);
-            }
-
-            Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
-            bsf.Options = BinarySerializationOptions.None;
-            raw = SerializeObjects(referenceObjects, bsf);
-            bsf.SurrogateSelector = selector;
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
-
-            bsf.Options |= BinarySerializationOptions.TryUseSurrogateSelectorForAnyType;
-            bsf.SurrogateSelector = null;
-            Console.WriteLine($"------------------KGy SOFT BinarySerializer (Items Count: {referenceObjects.Length}; Options: {bsf.Options})--------------------");
-            raw = SerializeObjects(referenceObjects, bsf);
-            bsf.SurrogateSelector = selector;
-            result = DeserializeObjects(raw, bsf);
-            AssertItemsEqual(referenceObjects, result);
+            title = nameof(TestSurrogateSelector);
+            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
         }
 
         [Test]
@@ -1305,11 +1210,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             referenceObjects[1] = new DictionaryEntry(1, referenceObjects);
             referenceObjects[2] = new KeyValuePair<int, object>(1, referenceObjects);
 
-            SystemSerializeObject(referenceObjects, true);
-            SystemSerializeObjects(referenceObjects, true);
+            SystemSerializeObject(referenceObjects, recursionProofCompare: true);
+            SystemSerializeObjects(referenceObjects, recursionProofCompare: true);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, true);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, recursionProofCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, recursionProofCompare: true);
 
             referenceObjects = new object[]
             {

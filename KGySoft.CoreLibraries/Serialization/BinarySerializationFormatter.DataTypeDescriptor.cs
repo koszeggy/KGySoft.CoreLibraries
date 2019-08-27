@@ -156,6 +156,12 @@ namespace KGySoft.Serialization
                     return;
                 }
 
+                if (ElementDataType == DataTypes.GenericTypeDefinition)
+                {
+                    Type = GetCollectionType(CollectionDataType);
+                    return;
+                }
+
                 // simple collection element or dictionary key
                 if (ElementDataType != DataTypes.Null)
                     ElementType = GetElementType(ElementDataType, br, manager);
@@ -174,13 +180,24 @@ namespace KGySoft.Serialization
 
                 if (IsArray)
                 {
+                    // 0 means zero based 1D array
                     byte rank = br.ReadByte();
-                    //Type = ElementType.MakeArrayType(rank);
-                    Type = Array.CreateInstance(ElementType, new int[rank]).GetType();
+                    Type = rank == 0
+                        ? ElementType.MakeArrayType()
+                        : ElementType.MakeArrayType(rank);
                     return;
                 }
 
                 Type = GetCollectionType(CollectionDataType);
+                if (!Type.ContainsGenericParameters)
+                    return;
+
+                bool isNullable = Type.IsNullable();
+                Type typeDef = isNullable ? Type.GetGenericArguments()[0] : Type;
+                Type result = typeDef.GetGenericArguments().Length == 1
+                    ? typeDef.GetGenericType(ElementType)
+                    : typeDef.GetGenericType(ElementType, DictionaryValueType);
+                Type = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
             }
 
             internal bool AreAllElementsQualified(bool isTValue)
@@ -329,32 +346,21 @@ namespace KGySoft.Serialization
                 switch (collectionDataType)
                 {
                     case DataTypes.List:
-                        return (Reflector.ListGenType.GetGenericType(ElementType));
+                        return Reflector.ListGenType;
                     case DataTypes.LinkedList:
-                        return (typeof(LinkedList<>).GetGenericType(ElementType));
+                        return typeof(LinkedList<>);
                     case DataTypes.HashSet:
-                        return (typeof(HashSet<>).GetGenericType(ElementType));
+                        return typeof(HashSet<>);
                     case DataTypes.Queue:
-                        return (typeof(Queue<>).GetGenericType(ElementType));
+                        return typeof(Queue<>);
                     case DataTypes.Stack:
-                        return (typeof(Stack<>).GetGenericType(ElementType));
+                        return typeof(Stack<>);
                     case DataTypes.CircularList:
-                        return (typeof(CircularList<>).GetGenericType(ElementType));
+                        return typeof(CircularList<>);
 #if !NET35
                     case DataTypes.SortedSet:
-                        return (typeof(SortedSet<>).GetGenericType(ElementType));
+                        return typeof(SortedSet<>);
 #endif
-
-
-
-                    case DataTypes.Dictionary:
-                        return (Reflector.DictionaryGenType.GetGenericType(ElementType, DictionaryValueType));
-                    case DataTypes.SortedList:
-                        return (typeof(SortedList<,>).GetGenericType(ElementType, DictionaryValueType));
-                    case DataTypes.SortedDictionary:
-                        return (typeof(SortedDictionary<,>).GetGenericType(ElementType, DictionaryValueType));
-                    case DataTypes.CircularSortedList:
-                        return (typeof(CircularSortedList<,>).GetGenericType(ElementType, DictionaryValueType));
 
                     case DataTypes.ArrayList:
                         return typeof(ArrayList);
@@ -366,6 +372,16 @@ namespace KGySoft.Serialization
                         return typeof(Stack);
                     case DataTypes.StringCollection:
                         return Reflector.StringCollectionType;
+
+
+                    case DataTypes.Dictionary:
+                        return Reflector.DictionaryGenType;
+                    case DataTypes.SortedList:
+                        return typeof(SortedList<,>);
+                    case DataTypes.SortedDictionary:
+                        return typeof(SortedDictionary<,>);
+                    case DataTypes.CircularSortedList:
+                        return typeof(CircularSortedList<,>);
 
                     case DataTypes.SortedListNonGeneric:
                         return typeof(SortedList);
@@ -383,9 +399,9 @@ namespace KGySoft.Serialization
                     case DataTypes.DictionaryEntryNullable:
                         return typeof(DictionaryEntry?);
                     case DataTypes.KeyValuePair:
-                        return (Reflector.KeyValuePairType.GetGenericType(ElementType, DictionaryValueType));
+                        return Reflector.KeyValuePairType;
                     case DataTypes.KeyValuePairNullable:
-                        return Reflector.NullableType.GetGenericType((Reflector.KeyValuePairType.GetGenericType(ElementType, DictionaryValueType)));
+                        return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
 
                     default:
                         throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));

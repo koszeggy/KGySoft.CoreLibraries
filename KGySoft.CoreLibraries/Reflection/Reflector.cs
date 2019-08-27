@@ -88,6 +88,7 @@ namespace KGySoft.Reflection
         internal static readonly Type DateTimeType = typeof(DateTime);
         internal static readonly Type DateTimeOffsetType = typeof(DateTimeOffset);
 
+        internal static readonly Type ArrayType = typeof(Array);
         internal static readonly Type EnumType = typeof(Enum);
         internal static readonly Type DelegateType = typeof(Delegate);
         internal static readonly Type NullableType = typeof(Nullable<>);
@@ -118,7 +119,7 @@ namespace KGySoft.Reflection
 #endif
 
         internal static readonly Assembly SystemCoreLibrariesAssembly = ObjectType.Assembly;
-        internal static readonly Assembly KGySoftLibrariesAssembly = typeof(Reflector).Assembly;
+        internal static readonly Assembly KGySoftCoreLibrariesAssembly = typeof(Reflector).Assembly;
 
         #endregion
 

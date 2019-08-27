@@ -468,54 +468,79 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Static Methods
 
-        private static byte[] SerializeObjects(object[] objects, IFormatter formatter)
+        private static byte[] SerializeObject(object obj, IFormatter formatter)
         {
             using (MemoryStream ms = new MemoryStream())
             {
-                formatter.Serialize(ms, objects.Length);
                 BinaryWriter bw = null;
-                BinarySerializationFormatter bsf = null;
-                if (dumpDetails && formatter is BinarySerializationFormatter)
-                {
+                BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
+                if (dumpDetails && bsf != null)
                     bw = new TestWriter(ms, dumpDetails);
-                    bsf = formatter as BinarySerializationFormatter;
-                }
 
-                foreach (object o in objects)
-                {
-                    long pos = ms.Position;
-                    if (bsf != null)
-                        bsf.SerializeByWriter(bw, o);
-                    else
-                        formatter.Serialize(ms, o);
-                    Console.WriteLine("{0} - length: {1}", o == null ? "<null>" : o.GetType().ToString(), ms.Position - pos);
-                }
-                Console.WriteLine("Full length: {0}", ms.Length);
+                if (bw != null)
+                    bsf.SerializeByWriter(bw, obj);
+                else
+                    formatter.Serialize(ms, obj);
+
+                Console.WriteLine($"Length: {ms.Length}");
                 if (dumpSerContent)
                     Console.WriteLine(ToRawString(ms.ToArray()));
                 return ms.ToArray();
             }
         }
 
-        private static object[] DeserializeObjects(byte[] serObjects, IFormatter formatter)
+        private static byte[] SerializeObjects(object[] objects, IFormatter formatter)
         {
-            using (MemoryStream ms = new MemoryStream(serObjects))
+            using (MemoryStream ms = new MemoryStream())
+            {
+                formatter.Serialize(ms, objects.Length);
+                BinaryWriter bw = null;
+                BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
+                if (dumpDetails && bsf != null)
+                    bw = new TestWriter(ms, dumpDetails);
+
+                foreach (object o in objects)
+                {
+                    long pos = ms.Position;
+                    if (bw != null)
+                        bsf.SerializeByWriter(bw, o);
+                    else
+                        formatter.Serialize(ms, o);
+                    Console.WriteLine($"{(o == null ? "<null>" : o.GetType().ToString())} - length: {ms.Position - pos}");
+                }
+                Console.WriteLine($"Full length: {ms.Length}");
+                if (dumpSerContent)
+                    Console.WriteLine(ToRawString(ms.ToArray()));
+                return ms.ToArray();
+            }
+        }
+
+        private static object DeserializeObject(byte[] rawData, IFormatter formatter)
+        {
+            using (MemoryStream ms = new MemoryStream(rawData))
+            {
+                BinaryReader br = null;
+                BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
+                if (dumpDetails && bsf != null)
+                    br = new TestReader(ms, dumpDetails);
+                return br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+            }
+        }
+
+        private static object[] DeserializeObjects(byte[] rawData, IFormatter formatter)
+        {
+            using (MemoryStream ms = new MemoryStream(rawData))
             {
                 int length;
                 object[] result = new object[length = (int)formatter.Deserialize(ms)];
 
                 BinaryReader br = null;
-                BinarySerializationFormatter bsf = null;
-                if (dumpDetails && formatter is BinarySerializationFormatter)
-                {
+                BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
+                if (dumpDetails && bsf != null)
                     br = new TestReader(ms, dumpDetails);
-                    bsf = formatter as BinarySerializationFormatter;
-                }
 
                 for (int i = 0; i < length; i++)
-                {
-                    result[i] = bsf != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
-                }
+                    result[i] = br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
                 return result;
             }
         }
@@ -548,148 +573,94 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Instance Methods
 
-        private void SystemSerializeObject(object obj, bool safeCompare = false)
+        private void SystemSerializeObject(object obj, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             using (new TestExecutionContext.IsolatedContext())
             {
-                Type type = obj.GetType();
-                Console.WriteLine("------------------System BinaryFormatter ({0})--------------------", type);
+                if (title == null)
+                    title = obj.GetType().ToString();
+                Console.WriteLine($"------------------System BinaryFormatter ({title})--------------------");
+                BinaryFormatter bf = new BinaryFormatter { Binder = binder, SurrogateSelector = surrogateSelector };
                 try
                 {
-                    BinaryFormatter bf = new BinaryFormatter();
-                    MemoryStream ms = new MemoryStream();
-                    bf.Serialize(ms, obj);
-
-                    Console.WriteLine("Length: {0}", ms.Length);
-                    if (dumpSerContent)
-                        Console.WriteLine(ToRawString(ms.ToArray()));
-
-                    ms.Seek(0, SeekOrigin.Begin);
-                    object deserializedObject = bf.Deserialize(ms);
-                    if (!safeCompare)
+                    byte[] serData = SerializeObject(obj, bf);
+                    object deserializedObject = DeserializeObject(serData, bf);
+                    if (recursionProofCompare)
+                        AssertDeepEquals(serData, SerializeObject(deserializedObject, bf));
+                    else
                         AssertDeepEquals(obj, deserializedObject);
-                    else
-                    {
-                        MemoryStream ms2 = new MemoryStream();
-                        bf.Serialize(ms2, deserializedObject);
-                        AssertDeepEquals(ms.ToArray(), ms2.ToArray());
-                    }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("System serialization failed: {0}", e);
+                    Console.WriteLine($"System serialization failed: {e}");
                 }
             }
         }
 
-        private void SystemSerializeObjects(object[] referenceObjects, bool safeCompare = false)
+        private void SystemSerializeObjects(object[] referenceObjects, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
+            if (title == null)
+                title = $"Items Count: {referenceObjects.Length}";
+            Console.WriteLine($"------------------System BinaryFormatter ({title})--------------------");
             using (new TestExecutionContext.IsolatedContext())
             {
-                Console.WriteLine("------------------System BinaryFormatter (Items Count: {0})--------------------", referenceObjects.Length);
+                BinaryFormatter bf = new BinaryFormatter { Binder = binder, SurrogateSelector = surrogateSelector };
                 try
                 {
-                    List<object> deserializedObjects = new List<object>();
-                    BinaryFormatter bf = new BinaryFormatter();
-                    MemoryStream ms = new MemoryStream();
-                    foreach (object item in referenceObjects)
-                    {
-                        if (item == null)
-                        {
-                            Console.WriteLine("Skipping null");
-                            deserializedObjects.Add(null);
-                            continue;
-                        }
-
-                        long pos = ms.Position;
-                        bf.Serialize(ms, item);
-                        Console.WriteLine("{0} - length: {1}", item.GetType(), ms.Length - pos);
-                        ms.Seek(pos, SeekOrigin.Begin);
-                        deserializedObjects.Add(bf.Deserialize(ms));
-                    }
-
-                    Console.WriteLine("Full length: {0}", ms.Length);
-                    if (dumpSerContent)
-                        Console.WriteLine(ToRawString(ms.ToArray()));
-                    if (!safeCompare)
-                        AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+                    byte[] serData = SerializeObjects(referenceObjects, bf);
+                    object[] deserializedObjects = DeserializeObjects(serData, bf);
+                    if (recursionProofCompare)
+                        AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bf));
                     else
-                    {
-                        MemoryStream ms2 = new MemoryStream();
-                        foreach (object item in deserializedObjects)
-                        {
-                            if (item == null)
-                                continue;
-                            bf.Serialize(ms2, item);
-                        }
-
-                        AssertDeepEquals(ms.ToArray(), ms2.ToArray());
-                    }
+                        AssertItemsEqual(referenceObjects, deserializedObjects);
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("System serialization failed: {0}", e);
+                    Console.WriteLine($"System serialization failed: {e}");
                 }
             }
         }
 
-        private void KGySerializeObject(object obj, BinarySerializationOptions options, bool safeCompare = false)
+        private void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
-            Type type = obj.GetType();
-            Console.WriteLine("------------------KGy SOFT BinarySerializer ({0} - {1})--------------------", type, options);
+            if (title == null)
+                title = obj.GetType().ToString();
+            Console.WriteLine($"------------------KGy SOFT BinarySerializer ({title} - {options})--------------------");
+            BinarySerializationFormatter bsf = new BinarySerializationFormatter(options) { Binder = binder, SurrogateSelector = surrogateSelector };
             try
             {
-                byte[] serObject; // = BinarySerializer.Serialize(obj, options);
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    using (BinaryWriter bw = new TestWriter(ms, dumpDetails))
-                    {
-                        BinarySerializer.SerializeByWriter(bw, obj, options);
-                    }
-
-                    serObject = ms.ToArray();
-                }
-                Console.WriteLine("Length: {0}", serObject.Length);
-                if (dumpSerContent)
-                    Console.WriteLine(ToRawString(serObject.ToArray()));
-                object deserializedObject; // = BinarySerializer.Deserialize(serObject);
-                using (BinaryReader br = new TestReader(new MemoryStream(serObject), dumpDetails))
-                {
-                    deserializedObject = BinarySerializer.DeserializeByReader(br, options);
-                }
-
-                if (!safeCompare)
-                    AssertDeepEquals(obj, deserializedObject);
+                byte[] serData = SerializeObject(obj, bsf);
+                object deserializedObject = DeserializeObject(serData, bsf);
+                if (recursionProofCompare)
+                    AssertDeepEquals(serData, SerializeObject(deserializedObject, bsf));
                 else
-                {
-                    MemoryStream ms2 = new MemoryStream();
-                    BinarySerializer.SerializeToStream(ms2, deserializedObject, options);
-                    AssertDeepEquals(serObject, ms2.ToArray());
-                }
+                    AssertDeepEquals(obj, deserializedObject);
             }
             catch (Exception e)
             {
-                Console.WriteLine("KGySoft serialization failed: {0}", e);
+                Console.WriteLine($"KGySoft serialization failed: {e}");
                 throw;
             }
         }
 
-        private void KGySerializeObjects(object[] referenceObjects, BinarySerializationOptions options, bool safeCompare = false)
+        private void KGySerializeObjects(object[] referenceObjects, BinarySerializationOptions options, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
-            Console.WriteLine("------------------KGy SOFT BinarySerializer (Items Count: {0}; Options: {1})--------------------", referenceObjects.Length, options);
-            BinarySerializationFormatter bsf = new BinarySerializationFormatter(options);
+            if (title == null)
+                title = $"Items Count: {referenceObjects.Length}";
+            Console.WriteLine($"------------------KGy SOFT BinarySerializer ({title} - {options})--------------------");
+            BinarySerializationFormatter bsf = new BinarySerializationFormatter(options) { Binder = binder, SurrogateSelector = surrogateSelector };
             try
             {
                 byte[] serData = SerializeObjects(referenceObjects, bsf);
                 object[] deserializedObjects = DeserializeObjects(serData, bsf);
-                if (!safeCompare)
-                    AssertItemsEqual(referenceObjects, deserializedObjects);
-                else
+                if (recursionProofCompare)
                     AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bsf));
+                else
+                    AssertItemsEqual(referenceObjects, deserializedObjects);
             }
             catch (Exception e)
             {
-                Console.WriteLine("KGySoft serialization failed: {0}", e);
+                Console.WriteLine($"KGySoft serialization failed: {e}");
                 throw;
             }
         }

@@ -50,17 +50,19 @@ namespace KGySoft.Serialization
             protected static readonly Assembly[] KnownAssemblies =
             {
                 Reflector.SystemCoreLibrariesAssembly,
-                Reflector.KGySoftLibrariesAssembly,
+                Reflector.KGySoftCoreLibrariesAssembly,
 #if NETFRAMEWORK
                 typeof(Queue<>).Assembly, // System.dll
                 typeof(HashSet<>).Assembly // System.Core.dll
 #endif
-
             };
 
             protected static readonly Type[] KnownTypes =
             {
-                typeof(IBinarySerializable) // KGySoft.CoreLibraries
+                Reflector.NullableType,
+                Reflector.ArrayType,
+                Reflector.EnumType,
+                typeof(IBinarySerializable)
             };
 
             #endregion

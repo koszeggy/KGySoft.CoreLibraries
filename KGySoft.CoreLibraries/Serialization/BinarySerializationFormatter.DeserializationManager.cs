@@ -46,8 +46,8 @@ namespace KGySoft.Serialization
         {
             #region Fields
 
-            private List<Assembly> readAssemblies;
-            private List<Type> readTypes;
+            private List<Assembly> cachedAssemblies;
+            private List<Type> cachedTypes;
             private Dictionary<string, Assembly> assemblyByNameCache;
             private Dictionary<string, Type> typeByNameCache;
             private Dictionary<int, object> idCache;
@@ -59,12 +59,28 @@ namespace KGySoft.Serialization
             #region Properties
 
             private Dictionary<int, object> IdCache => idCache ?? (idCache = new Dictionary<int, object> { { 0, null } });
+            private List<Assembly> CachedAssemblies => cachedAssemblies ?? (cachedAssemblies = new List<Assembly>(KnownAssemblies));
 
-            private int OmitAssemblyIndex => readAssemblies.Count;
-            private int NewAssemblyIndex => readAssemblies.Count + 1;
-            private int InvariantAssemblyIndex => readAssemblies.Count + 2;
+            private List<Type> CachedTypes
+            {
+                get
+                {
+                    if (cachedTypes == null)
+                    {
+                        cachedTypes = new List<Type>(Math.Max(4, KnownTypes.Length));
+                        cachedTypes.AddRange(KnownTypes);
+                    }
 
-            private int NewTypeIndex => readTypes.Count + 1;
+                    return cachedTypes;
+                }
+            }
+
+
+            private int OmitAssemblyIndex => CachedAssemblies.Count;
+            private int NewAssemblyIndex => CachedAssemblies.Count + 1;
+            private int InvariantAssemblyIndex => CachedAssemblies.Count + 2;
+
+            private int NewTypeIndex => CachedTypes.Count + 1;
 
             #endregion
 
@@ -227,8 +243,6 @@ namespace KGySoft.Serialization
             {
                 // assembly index
                 int index = Read7BitInt(br);
-                if (readAssemblies == null)
-                    readAssemblies = new List<Assembly>(KnownAssemblies);
 
                 // natively supported type
                 if (index == InvariantAssemblyIndex)
@@ -236,13 +250,9 @@ namespace KGySoft.Serialization
                     DataTypes dataType = ReadDataType(br);
                     DataTypeDescriptor desc = new DataTypeDescriptor(null, dataType, br);
                     desc.DecodeType(br, this);
-                    return desc.Type;
-                }
-
-                if (readTypes == null)
-                {
-                    readTypes = new List<Type>(Math.Max(4, KnownTypes.Length));
-                    readTypes.AddRange(KnownTypes);
+                    return desc.Type.IsGenericTypeDefinition
+                        ? HandleGenericTypeDef(br, desc.Type, allowOpenTypes, false)
+                        : desc.Type;
                 }
 
                 // new assembly: assembly and type are stored together
@@ -250,11 +260,10 @@ namespace KGySoft.Serialization
                 {
                     // assembly qualified name (GetType uses binder if set)
                     Type type = GetType(br.ReadString(), br.ReadString());
-                    readAssemblies.Add(type.Assembly);
-                    readTypes.Add(type);
+                    CachedAssemblies.Add(type.Assembly);
+                    CachedTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
                         type = HandleGenericTypeDef(br, type, allowOpenTypes);
-
                     return type;
                 }
 
@@ -263,8 +272,8 @@ namespace KGySoft.Serialization
                 // type with assembly (if assembly is not omitted)
                 if (index != OmitAssemblyIndex)
                 {
-                    Debug.Assert(index >= 0 && index < readAssemblies.Count, "Invalid assembly index");
-                    assembly = readAssemblies[index];
+                    Debug.Assert(index >= 0 && index < CachedAssemblies.Count, "Invalid assembly index");
+                    assembly = CachedAssemblies[index];
                 }
 
                 // type index
@@ -281,7 +290,7 @@ namespace KGySoft.Serialization
                         type = assembly == null ? Reflector.ResolveType(typeName) : Reflector.ResolveType(assembly, typeName);
                     if (type == null)
                         throw new SerializationException(Res.BinarySerializationCannotResolveType(typeName));
-                    readTypes.Add(type);
+                    CachedTypes.Add(type);
                     if (type.IsGenericTypeDefinition)
                         type = HandleGenericTypeDef(br, type, allowOpenTypes);
 
@@ -289,14 +298,15 @@ namespace KGySoft.Serialization
                 }
 
                 // known index
-                Debug.Assert(index >= 0 && index < readTypes.Count, "Invalid type index");
-                Type result = readTypes[index];
+                Debug.Assert(index >= 0 && index < CachedTypes.Count, "Invalid type index");
+                Type result = CachedTypes[index];
                 if (result.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
 
-                return Binder != null
-                    ? (Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, result.FullName) ?? result)
-                    : result;
+                if (Binder == null)
+                    return result;
+                string fullName = result.FullName;
+                return fullName == null ? result : Binder.BindToType(assembly == null ? String.Empty : assembly.FullName, fullName) ?? result;
             }
 
             internal void AddObjectToCache(object obj)
@@ -1080,7 +1090,7 @@ namespace KGySoft.Serialization
                 typeByNameCache.Add(key, result);
             }
 
-            private Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes)
+            private Type HandleGenericTypeDef(BinaryReader br, Type typeDef, bool allowOpenTypes, bool addToCache = true)
             {
                 Type[] args = typeDef.GetGenericArguments();
                 int len = args.Length;
@@ -1098,7 +1108,6 @@ namespace KGySoft.Serialization
                             if (index < 0 || index >= len)
                                 throw new SerializationException(Res.BinarySerializationInvalidStreamData);
                             result = typeDef.GetGenericArguments()[index];
-                            readTypes.Add(result);
                             return result;
                         }
                         case GenericTypeSpecifier.ConstructedType:
@@ -1113,11 +1122,13 @@ namespace KGySoft.Serialization
                     args[i] = ReadType(br, allowOpenTypes);
 
                 result = typeDef.GetGenericType(args);
-                readTypes.Add(result);
+                if (addToCache)
+                    CachedTypes.Add(result);
 
-                // ReSharper disable once AssignNullToNotNullAttribute
-                // Only constructed types are checked by the Binder
-                return Binder != null ? (Binder.BindToType(result.Assembly.FullName, result.FullName) ?? result) : result;
+                if (Binder == null)
+                    return result;
+                string fullName = result.FullName;
+                return fullName == null ? result : Binder.BindToType(result.Assembly.FullName, fullName) ?? result;
             }
 
             /// <summary>

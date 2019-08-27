@@ -1447,7 +1447,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
 
-            CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
 
@@ -1666,7 +1665,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, SystemSerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, SystemSerializableStruct, NonSerializableStruct
 
-            CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // all
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // as content, custom structs; otherwise, all
 
@@ -1778,7 +1776,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // structs
 
-            CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
                     | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
@@ -2120,7 +2117,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // All but list and arrays
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // All but list and arrays
 
-            CheckTestingFramework(); // late ctor invoke
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // as content, nested collections and non-simple types; otherwise every element
         }

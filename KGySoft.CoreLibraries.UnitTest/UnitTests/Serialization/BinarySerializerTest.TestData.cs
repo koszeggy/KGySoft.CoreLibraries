@@ -29,6 +29,7 @@ using System.Security;
 
 using KGySoft.Reflection;
 using KGySoft.Serialization;
+using NUnit.Framework;
 
 #endregion
 
@@ -1152,19 +1153,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
             {
-                if (dumpDetails)
-                    Console.WriteLine("BindToName: " + serializedType);
+                Assert.IsNotNull(serializedType.FullName);
                 assemblyName = "rev_" + new string(serializedType.Assembly.FullName.Reverse().ToArray());
                 typeName = "rev_" + new string(serializedType.FullName.Reverse().ToArray());
             }
 
             public override Type BindToType(string assemblyName, string typeName)
             {
-                if (dumpDetails)
-                    Console.WriteLine("BindToType: {0}, {1}", assemblyName, typeName);
                 if (assemblyName.StartsWith("rev_", StringComparison.Ordinal))
                     assemblyName = new string(assemblyName.Substring(4).Reverse().ToArray());
-
                 if (typeName.StartsWith("rev_", StringComparison.Ordinal))
                     typeName = new string(typeName.Substring(4).Reverse().ToArray());
 

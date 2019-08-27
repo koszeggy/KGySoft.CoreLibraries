@@ -45,7 +45,7 @@ namespace KGySoft
 
         #region Fields
 
-        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.CoreLibraries.Messages", Reflector.KGySoftLibrariesAssembly)
+        private static readonly DynamicResourceManager resourceManager = new DynamicResourceManager("KGySoft.CoreLibraries.Messages", Reflector.KGySoftCoreLibrariesAssembly)
         {
             SafeMode = true,
             UseLanguageSettings = true,
