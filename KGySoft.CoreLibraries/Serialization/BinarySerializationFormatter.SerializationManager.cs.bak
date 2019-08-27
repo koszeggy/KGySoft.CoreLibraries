@@ -98,14 +98,7 @@ namespace KGySoft.Serialization
 
 
 #if !NET35
-            private Dictionary<string, int> AssemblyNameIndexCache
-            {
-                get
-                {
-                    return assemblyNameIndexCache ?? (assemblyNameIndexCache = new Dictionary<string, int>(1));
-                }
-            }
-
+            private Dictionary<string, int> AssemblyNameIndexCache => assemblyNameIndexCache ?? (assemblyNameIndexCache  = new Dictionary<string, int>(1));
             private Dictionary<string, int> TypeNameIndexCache => typeNameIndexCache ?? (typeNameIndexCache = new Dictionary<string, int>(1));
 
 #endif
@@ -1464,19 +1457,19 @@ namespace KGySoft.Serialization
             { 
 #if !NET35
                 if (binderAsmName != null)
-                    return AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
+                    return assemblyNameIndexCache?.GetValueOrDefault(binderAsmName, -1) ?? -1;
 #endif
-                return AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1);
+                return assemblyIndexCache?.GetValueOrDefault(type.Assembly, -1) ?? -1;
             }
 
             private int GetTypeIndex(Type type, string binderAsmName, string binderTypeName)
             {
 #if !NET35
                 if (Binder != null)
-                    return TypeNameIndexCache.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1);
+                    return typeNameIndexCache?.GetValueOrDefault(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), -1) ?? -1;
 #endif
 
-                return TypeIndexCache.GetValueOrDefault(type, -1);
+                return typeIndexCache?.GetValueOrDefault(type, -1) ?? -1;
             }
 
             /// <summary>
@@ -1643,7 +1636,7 @@ namespace KGySoft.Serialization
             {
 #if !NET35
                 // Even if current binder names are null we must use the string based cache if there is a binder
-                // to avoid possibly conflicting type names between the custom and default binding and among binder type names.
+                // to avoid possibly conflicting type names for different assemblies and between the custom and default binding.
                 if (Binder != null)
                 {
                     TypeNameIndexCache.Add(GetTypeNameIndexCacheKey(type, binderAsmName, binderTypeName), TypeIndexCacheCount);

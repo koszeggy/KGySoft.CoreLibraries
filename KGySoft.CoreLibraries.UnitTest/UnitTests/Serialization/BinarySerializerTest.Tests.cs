@@ -980,70 +980,70 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                //1, // primitive type
-                //new StringBuilder("1"), // natively supported by KGySoft only
-                //new List<int> { 1 }, // generic, natively supported for KGySoft only, in mscorlib
-                //new HashSet<int> { 1 }, // generic, natively supported for KGySoft only, in core
-                //TestEnumByte.One, // non standard assembly
-                //new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
-                //new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
-                //new CustomSerializedSealedClass("1"), // type is changed on serialization: System BinaryFormatter fails: the binder gets the original type instead of the changed one
+                1, // primitive type
+                new StringBuilder("1"), // natively supported by KGySoft only
+                new List<int> { 1 }, // generic, natively supported for KGySoft only, in mscorlib
+                new HashSet<int> { 1 }, // generic, natively supported for KGySoft only, in core
+                TestEnumByte.One, // non standard assembly
+                new CustomGenericCollection<TestEnumByte> { TestEnumByte.One, TestEnumByte.Two },
+                new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
+                new CustomSerializedSealedClass("1"), // type is changed on serialization: System BinaryFormatter fails: the binder gets the original type instead of the changed one
 
-                //typeof(List<int>), // supported generic
-                //typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+                typeof(List<int>), // supported generic
+                typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
 
-                //typeof(List<>), // supported generic type definition
-                //typeof(Dictionary<,>), // supported generic type definition
+                typeof(List<>), // supported generic type definition
+                typeof(Dictionary<,>), // supported generic type definition
                 typeof(CustomGenericCollection<>), // custom generic type definition
 
-                //typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
+                typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
 
-                //typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
-                //typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
+                typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
             };
 
-            //            // default
-            //            SystemSerializeObject(referenceObjects);
-            //            SystemSerializeObjects(referenceObjects);
+            // default
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
 
-            //            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
-            //            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            //            // by WeakAssemblySerializationBinder
+            // by WeakAssemblySerializationBinder
             string title = "Deserialization with WeakAssemblySerializationBinder";
             SerializationBinder binder = new WeakAssemblySerializationBinder();
-            //            SystemSerializeObject(referenceObjects, title, binder: binder);
-            //            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
-
-            //            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            //            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-
-            //#if !NET35
-            //            // by WeakAssemblySerializationBinder, including serialization
-            title = "Serialization and Deserialization with WeakAssemblySerializationBinder";
-            binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
-            //            SystemSerializeObject(referenceObjects, title, binder: binder);
-            //            SystemSerializeObjects(referenceObjects, title, binder: binder);
+            SystemSerializeObject(referenceObjects, title, binder: binder);
+            SystemSerializeObjects(referenceObjects, title, binder: binder); // The constructor to deserialize an object of type 'System.RuntimeType' was not found.
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+#if !NET35
+            // by WeakAssemblySerializationBinder, including serialization
+            title = "Serialization and Deserialization with WeakAssemblySerializationBinder";
+            binder = new WeakAssemblySerializationBinder { OmitAssemblyNameOnSerialize = true };
+            SystemSerializeObject(referenceObjects, title, binder: binder);
+            SystemSerializeObjects(referenceObjects, title, binder: binder);
 
-            //            // by TestSerializationBinder
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+
+            // by TestSerializationBinder
             title = "Serialization and Deserialization with TestSerializationBinder";
             binder = new TestSerializationBinder();
-            //            SystemSerializeObject(referenceObjects, title, binder: binder);
-            //            SystemSerializeObjects(referenceObjects, title, binder: binder);
+            SystemSerializeObject(referenceObjects, title, binder: binder);
+            SystemSerializeObjects(referenceObjects, title, binder: binder);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback, title, binder: binder);
 
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
-            //#endif
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
+#endif
         }
 
         [Test]
