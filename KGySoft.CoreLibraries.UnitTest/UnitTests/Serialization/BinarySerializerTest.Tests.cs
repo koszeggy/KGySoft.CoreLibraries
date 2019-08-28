@@ -76,7 +76,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region Constants
 
         private const bool dumpDetails = true;
-        private const bool dumpSerContent = false;
+        private const bool dumpSerContent = true;
 
         #endregion
 
@@ -87,7 +87,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                new object(),
+                // primitive types (in terms of they are never custom serialized) so including string and void
                 true,
                 (sbyte)1,
                 (byte)1,
@@ -101,11 +101,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 "alpha",
                 (float)1,
                 (double)1,
+                new IntPtr(1),
+                new UIntPtr(1),
+                FormatterServices.GetUninitializedObject(typeof(void)), // doesn't really make sense as an instance but even BinaryFormatter supports it
+
+                // simple non-primitive types
+                new object(),
                 (decimal)1,
                 DateTime.UtcNow,
                 DateTime.Now,
-                new IntPtr(1),
-                new UIntPtr(1),
                 new Version(1, 2, 3, 4),
                 new Guid("ca761232ed4211cebacd00aa0057b223"),
                 new TimeSpan(1, 1, 1),
@@ -114,8 +118,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
                 new Uri(@"x:\teszt"), // 19
                 new DictionaryEntry(1, "alpha"),
-                new KeyValuePair<int, string>(1, "alpha"), // 14
-                new BitArray(new[] { true, false, true }), // 6
+                new KeyValuePair<int, string>(1, "alpha"),
+                new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
             };
 
@@ -128,6 +132,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
+            // further natively supported types, which are not serializable in every framework
             referenceObjects = new object[]
             {
                 null,
@@ -279,53 +284,78 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             object[] referenceObjects =
             {
-                typeof(int),
-                typeof(int?),
-                typeof(int).MakeByRefType(),
-                typeof(int).MakePointerType(),
-                typeof(CustomSerializedClass),
-                typeof(CustomSerializableStruct?),
-                Reflector.RuntimeType,
+                //// Simple types
+                typeof(int), // 3
+                typeof(int?), // 4
+                (1, "x"), // 50
 
-                typeof(int[]),
-                typeof(int[,]),
-                typeof(int).MakeArrayType(1), // int[*]
-                typeof(CustomSerializedClass[]), // custom array
-                typeof(Array), // unspecified array
+                //typeof(int).MakeByRefType(),
+                //typeof(int).MakePointerType(),
+                //typeof(CustomSerializedClass),
+                //typeof(CustomSerializableStruct?),
+                //Reflector.RuntimeType,
+                //typeof(void),
+                //typeof(TypedReference),
 
-                typeof(List<int>), // supported generic
-                typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
-                typeof(CustomGenericCollection<int>), // custom generic with supported parameter
-                typeof(List<CustomSerializedClass>), // supported generic with custom parameter
-                typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
+                //// Arrays
+                //typeof(int[]),
+                //typeof(int[,]),
+                //typeof(int).MakeArrayType(1), // int[*]
+                //typeof(CustomSerializedClass[]), // custom array
+                //typeof(Array), // unspecified array
 
-                // nullable collections
-                typeof(DictionaryEntry?),
-                typeof(KeyValuePair<int, string>?),
-                typeof(KeyValuePair<int, CustomSerializedClass>?), // supported generic with mixed parameters
+                //// Pointers and References
+                //typeof(int*), // 17
+                //typeof(int**), // 18
+                //typeof(void*), // 16
+                //typeof(void**), // 17
+                //typeof(int*[]), // 21
+                //typeof(int**[,]), // 22
+                //typeof(int*[][]), // 24
+                //typeof(int).MakeByRefType(), // int& - 17
+                //typeof(int*).MakeByRefType(), // int*& - 18
 
-                typeof(List<Array>),
-                typeof(List<int[]>),
-                typeof(List<Array[]>),
+                //// Closed Constructed Generics
+                //typeof(List<int>), // supported generic
+                //typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
+                //typeof(CustomGenericCollection<int>), // custom generic with supported parameter
+                //typeof(List<CustomSerializedClass>), // supported generic with custom parameter
+                //typeof(Dictionary<string, CustomSerializedClass>), // supported generic with mixed parameters
+                //typeof(List<Array>),
+                //typeof(List<int[]>),
+                //typeof(List<Array[]>),
 
-                typeof(List<>), // supported generic type definition
-                typeof(Dictionary<,>), // supported generic type definition
-                typeof(CustomGenericCollection<>), // custom generic type definition
+                //// Nullable collections
+                //typeof(DictionaryEntry?),
+                //typeof(KeyValuePair<int, string>?),
+                //typeof(KeyValuePair<int, CustomSerializedClass>?), // supported generic with mixed parameters
 
-                typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
-                typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+                //// Generic Type Definitions
+                //typeof(List<>), // supported generic type definition
+                //typeof(Dictionary<,>), // supported generic type definition
+                //typeof(CustomGenericCollection<>), // custom generic type definition
 
-                typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
-                typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
+                //// Generic Parameters
+                //typeof(List<>).GetGenericArguments()[0], // supported generic type definition argument
+                //typeof(CustomGenericCollection<>).GetGenericArguments()[0], // custom generic type definition argument
+
+                //// Open Constructed Generics
+                //typeof(OpenGenericDictionary<>).BaseType, // open constructed generic (Dictionary<string, TValue>)
+                //typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
             };
 
-#if !NETCOREAPP2_0 // Type is not serializable in .NET Core
-            SystemSerializeObject(referenceObjects);
-            SystemSerializeObjects(referenceObjects);
-#endif
+            //#if !NETCOREAPP2_0 // Type is not serializable in .NET Core
+            //            SystemSerializeObject(referenceObjects);
+            //            SystemSerializeObjects(referenceObjects);
+            //#endif
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+#if !NETCOREAPP2_0
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes); 
+#endif
         }
 
         [Test]
@@ -1212,11 +1242,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             referenceObjects[1] = new DictionaryEntry(1, referenceObjects);
             referenceObjects[2] = new KeyValuePair<int, object>(1, referenceObjects);
 
-            SystemSerializeObject(referenceObjects, recursionProofCompare: true);
-            SystemSerializeObjects(referenceObjects, recursionProofCompare: true);
+            SystemSerializeObject(referenceObjects, safeCompare: true);
+            SystemSerializeObjects(referenceObjects, safeCompare: true);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, recursionProofCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, recursionProofCompare: true);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
 
             referenceObjects = new object[]
             {
@@ -1252,6 +1282,39 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 #endif
+
+        [Test]
+        public unsafe void SerializePointers()
+        {
+            object[] referenceObjects =
+            {
+                // Pointer fields
+                new UnsafeStruct(),
+                new UnsafeStruct { VoidPointer = (void*)new IntPtr(1) },
+            };
+
+            SystemSerializeObject(referenceObjects, safeCompare: true);
+            SystemSerializeObjects(referenceObjects, safeCompare: true);
+
+            // TODO
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None));
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None));
+
+            referenceObjects = new object[]
+            {
+                // Pointer Arrays
+                new int*[0],
+                new int*[] { (int*)IntPtr.Zero },
+                new void*[] { (void*)IntPtr.Zero },
+            };
+
+            //SystemSerializeObject(referenceObjects, safeCompare: true); // System.InvalidCastException: Unable to cast object of type 'System.Int32*[]' to type 'System.Object[]'.
+            //SystemSerializeObjects(referenceObjects, safeCompare: true);
+
+            // TODO
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None));
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None));
+        }
 
         #endregion
     }

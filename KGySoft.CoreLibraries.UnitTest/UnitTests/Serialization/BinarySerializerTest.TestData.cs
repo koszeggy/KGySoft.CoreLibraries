@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -860,7 +861,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #endregion
 
-
         #region CustomNonGenericDictionary class
 
         [Serializable]
@@ -1511,6 +1511,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     StringProp = br.ReadString();
                 }
             }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region UnsafeStruct struct
+
+        [Serializable]
+        private unsafe struct UnsafeStruct
+        {
+            #region Fields
+
+            public void* VoidPointer;
+            public int* IntPointer;
+            public Point* StructPointer;
+            public int*[] PointerArray;
+            public void** PointerOfPointer;
 
             #endregion
         }

@@ -163,56 +163,54 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Writes a <paramref name="length"/> bytes length value in the possible most compact form.
             /// </summary>
-            private static void WriteDynamicInt(BinaryWriter bw, DataTypes dataType, int length, ulong value)
+            private static void WriteDynamicInt(BinaryWriter bw, DataTypes dataType, bool writeDataType, int length, ulong value)
             {
+                bool compress = writeDataType &&
+                    (length == 2 && value < (1UL << 7) // up to 7 bits
+                    || length == 4 && value < (1UL << 21) // up to 3*7 bits
+                    || length == 8 && value < (1UL << 49)); // up to 7*7 bits
+
+                if (compress)
+                    dataType |= DataTypes.Store7BitEncoded;
+                if (writeDataType)
+                    WriteDataType(bw, dataType);
+
+                // storing the value as 7-bit encoded int, which will be shorter
+                if (compress)
+                {
+                    Write7BitLong(bw, value);
+                    return;
+                }
+
                 switch (length)
                 {
+                    case 1:
+                        bw.Write((byte)value);
+                        return;
                     case 2:
-                        if (value >= (1UL << 7)) // up to 7 bits
-                        {
-                            WriteDataType(bw, dataType);
-                            bw.Write((ushort)value);
-                            return;
-                        }
-
-                        break;
-
+                        bw.Write((ushort)value);
+                        return;
                     case 4:
-                        if (value >= (1UL << 21)) // up to 3*7 bits
-                        {
-                            WriteDataType(bw, dataType);
-                            bw.Write((uint)value);
-                            return;
-                        }
-
-                        break;
-
+                        bw.Write((uint)value);
+                        return;
                     case 8:
-                        if (value >= (1UL << 49)) // up to 7*7 bits
-                        {
-                            WriteDataType(bw, dataType);
-                            bw.Write(value);
-                            return;
-                        }
-
-                        break;
-
+                        bw.Write(value);
+                        return;
                     default:
                         // should never occur, throwing internal error without resource
                         throw new ArgumentOutOfRangeException(nameof(length));
                 }
-
-                // storing the value as 7-bit encoded int, which will be shorter
-                dataType |= DataTypes.Store7BitEncoded;
-                WriteDataType(bw, dataType);
-                Write7BitLong(bw, value);
             }
 
             private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypes;
             private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypes;
-            private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
+            private static DataTypes GetUnderlyingSimpleType(DataTypes dt) => dt & DataTypes.SimpleTypes;
+
+
+            private static bool IsPrimitiveType(DataTypes dt) => GetUnderlyingSimpleType(dt) <= DataTypes.String;
             private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
             private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
+            private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
 
             /// <summary>
             /// Retrieves the value type(s) for a dictionary.
@@ -289,70 +287,66 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            private static bool TryWritePrimitive(BinaryWriter bw, object data)
+            /// <summary>
+            /// Serializes a simple object.
+            /// </summary>
+            private static void WriteSimpleObject(BinaryWriter bw, object obj, DataTypes dataType, bool writeDataType)
             {
-                if (data == null)
-                {
-                    WriteDataType(bw, DataTypes.Null);
-                    return true;
-                }
+                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WriteSimpleObject)}");
 
-                switch (primitiveTypes.GetValueOrDefault(data.GetType()))
+                switch (dataType)
                 {
                     case DataTypes.Bool:
-                        WriteDataType(bw, DataTypes.Bool);
-                        bw.Write((bool)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 1, (bool)obj ? 1UL : 0UL);
+                        return;
                     case DataTypes.UInt8:
-                        WriteDataType(bw, DataTypes.UInt8);
-                        bw.Write((byte)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 1, (byte)obj);
+                        return;
                     case DataTypes.Int8:
-                        WriteDataType(bw, DataTypes.Int8);
-                        bw.Write((sbyte)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 1, (ulong)(sbyte)obj);
+                        return;
                     case DataTypes.Int16:
-                        WriteDynamicInt(bw, DataTypes.Int16, 2, (ulong)(short)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 2, (ulong)(short)obj);
+                        return;
                     case DataTypes.UInt16:
-                        WriteDynamicInt(bw, DataTypes.UInt16, 2, (ushort)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 2, (ushort)obj);
+                        return;
                     case DataTypes.Int32:
-                        WriteDynamicInt(bw, DataTypes.Int32, 4, (ulong)(int)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 4, (ulong)(int)obj);
+                        return;
                     case DataTypes.UInt32:
-                        WriteDynamicInt(bw, DataTypes.UInt32, 4, (uint)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 4, (uint)obj);
+                        return;
                     case DataTypes.Int64:
-                        WriteDynamicInt(bw, DataTypes.Int64, 8, (ulong)(long)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 8, (ulong)(long)obj);
+                        return;
                     case DataTypes.UInt64:
-                        WriteDynamicInt(bw, DataTypes.UInt64, 8, (ulong)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 8, (ulong)obj);
+                        return;
                     case DataTypes.Char:
-                        WriteDynamicInt(bw, DataTypes.Char, 2, (char)data);
-                        return true;
-                    case DataTypes.String:
-                        WriteDataType(bw, DataTypes.String);
-                        bw.Write((string)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 2, (char)obj);
+                        return;
                     case DataTypes.Single:
-                        WriteDynamicInt(bw, DataTypes.Single, 4, BitConverter.ToUInt32(BitConverter.GetBytes((float)data), 0));
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 4, BitConverter.ToUInt32(BitConverter.GetBytes((float)obj), 0));
+                        return;
                     case DataTypes.Double:
-                        WriteDynamicInt(bw, DataTypes.Double, 8, (ulong)BitConverter.DoubleToInt64Bits((double)data));
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 8, (ulong)BitConverter.DoubleToInt64Bits((double)obj));
+                        return;
                     case DataTypes.IntPtr:
-                        WriteDynamicInt(bw, DataTypes.IntPtr, 8, (ulong)(IntPtr)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 8, (ulong)(IntPtr)obj);
+                        return;
                     case DataTypes.UIntPtr:
-                        WriteDynamicInt(bw, DataTypes.UIntPtr, 8, (ulong)(UIntPtr)data);
-                        return true;
+                        WriteDynamicInt(bw, dataType, writeDataType, 8, (ulong)(UIntPtr)obj);
+                        return;
                     case DataTypes.Void:
-                        WriteDataType(bw, DataTypes.Void); // though it doesn't really make sense as an instance
-                        return true;
-                    default:
-                        return false;
+                        if (writeDataType)
+                            WriteDataType(bw, DataTypes.Void); // though it doesn't really make sense as an instance
+                        return;
+                    case DataTypes.String:
+                        if (writeDataType)
+                            WriteDataType(bw, DataTypes.String);
+                        bw.Write((string)obj);
+                        return;
                 }
             }
 
@@ -472,96 +466,123 @@ namespace KGySoft.Serialization
             #region Internal Methods
 
             /// <summary>
-            /// Writing an object. Can be used both at root and object element level.
+            /// The entry point of writing an object.
             /// </summary>>
             [SecurityCritical]
-            internal void Write(BinaryWriter bw, object data, bool isRoot)
+            internal void Write(BinaryWriter bw, object obj, bool isRoot)
             {
                 // if an existing id found, returning
-                if (!isRoot && WriteId(bw, data))
+                if (!isRoot && WriteId(bw, obj))
                     return;
 
-                // a.) Natively supported primitive types including string (no need to distinct nullable types here as they are boxed)
-                if (TryWritePrimitive(bw, data))
-                    return;
-
-                // b.) Surrogate selector for any type
-                Type type = data.GetType();
-                if (ForceRecursiveSerializationOfSupportedTypes && !type.IsArray || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(type))
+                // null
+                if (obj == null)
                 {
-                    WriteRecursively(bw, data, isRoot);
+                    WriteDataType(bw, DataTypes.Null);
                     return;
                 }
 
-                // c.) Natively supported non-primitive single types
-                if (TryWriteSimpleNonPrimitive(bw, data))
-                    return;
+                Type type = obj.GetType();
+                DataTypes dataType = GetDataType(type);
 
-                // d.) enum: storing enum type, assembly qualified name and value: still shorter than by BinaryFormatter
-                if (data is Enum)
+                if (IsPrimitiveType(dataType))
                 {
-                    WriteEnum(bw, data);
+                    WriteSimpleObject(bw, obj, dataType, true);
                     return;
                 }
 
-                // e.) Supported collection or compound of collections
-                if (TryWriteCollection(bw, data, isRoot))
-                    return;
+#error here
+                // TODO: - process the rest of this method
+                // - Move TryWriteSimpleNonPrimitive to WriteSimpleObject
+                // - Move the long switch of WriteElement to WriteSimpleObject
 
-                // f.) Other non-pure types. DataTypes does not describe exact type information for them.
+                #region Processed
+                //                // if an existing id found, returning
+                //                if (!isRoot && WriteId(bw, data))
+                //                    return;
 
-                // RuntimeType
-                if (type == Reflector.RuntimeType)
-                {
-                    WriteRuntimeType(bw, (Type)data);
-                    return;
-                }
+                //                // a.) Natively supported primitive types including string (no need to distinct nullable types here as they are boxed)
+                //                if (TryWritePrimitive(bw, data))
+                //                    return;
+                #endregion
 
-                // BinarySerializable
-                if (!IgnoreIBinarySerializable && data is IBinarySerializable binarySerializable)
-                {
-                    WriteDataType(bw, DataTypes.BinarySerializable);
+                //                // b.) Surrogate selector for any type
+                //                Type type = data.GetType();
+                //                if (ForceRecursiveSerializationOfSupportedTypes && !type.IsArray || TryUseSurrogateSelectorForAnyType && CanUseSurrogate(type))
+                //                {
+                //                    WriteRecursively(bw, data, isRoot);
+                //                    return;
+                //                }
 
-                    if (isRoot)
-                    {
-                        // on root level writing the id even if the object is value type because the boxed reference can be shared
-                        if (WriteId(bw, data))
-                            Debug.Fail("Id of recursive object should be unknown on top level.");
-                    }
+                //                // c.) Natively supported non-primitive single types
+                //                if (TryWriteSimpleNonPrimitive(bw, data))
+                //                    return;
 
-                    WriteType(bw, type);
-                    WriteBinarySerializable(bw, binarySerializable);
-                    return;
-                }
+                //                // d.) enum: storing enum type, assembly qualified name and value: still shorter than by BinaryFormatter
+                //                if (data is Enum)
+                //                {
+                //                    WriteEnum(bw, data);
+                //                    return;
+                //                }
 
-                // Any struct if can serialize
-                if (CompactSerializationOfStructures && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
-                {
-                    WriteDataType(bw, DataTypes.RawStruct);
-                    WriteType(bw, type);
-                    WriteValueType(bw, data);
-                    return;
-                }
+                //                // e.) Supported collection or compound of collections
+                //                if (TryWriteCollection(bw, data, isRoot))
+                //                    return;
 
-                // Recursive serialization: if enabled or surrogate selector supports the type, or when type is serializable
-                if (RecursiveSerializationAsFallback || CanUseSurrogate(type) || type.IsSerializable)
-                {
-                    WriteRecursively(bw, data, isRoot);
-                    return;
-                }
+                //                // f.) Other non-pure types. DataTypes does not describe exact type information for them.
 
-#pragma warning disable 618, 612
-                // Any struct (obsolete but still supported as backward compatibility)
-                if (ForcedSerializationValueTypesAsFallback && type.IsValueType)
-                {
-                    WriteDataType(bw, DataTypes.RawStruct);
-                    WriteType(bw, type);
-                    WriteValueType(bw, data);
-                    return;
-                }
-#pragma warning restore 618, 612
+                //                // RuntimeType
+                //                if (type == Reflector.RuntimeType)
+                //                {
+                //                    WriteRuntimeType(bw, (Type)data);
+                //                    return;
+                //                }
 
-                ThrowNotSupported(type);
+                //                // BinarySerializable
+                //                if (!IgnoreIBinarySerializable && data is IBinarySerializable binarySerializable)
+                //                {
+                //                    WriteDataType(bw, DataTypes.BinarySerializable);
+
+                //                    if (isRoot)
+                //                    {
+                //                        // on root level writing the id even if the object is value type because the boxed reference can be shared
+                //                        if (WriteId(bw, data))
+                //                            Debug.Fail("Id of recursive object should be unknown on top level.");
+                //                    }
+
+                //                    WriteType(bw, type);
+                //                    WriteBinarySerializable(bw, binarySerializable);
+                //                    return;
+                //                }
+
+                //                // Any struct if can serialize
+                //                if (CompactSerializationOfStructures && type.IsValueType && BinarySerializer.CanSerializeValueType(type, false))
+                //                {
+                //                    WriteDataType(bw, DataTypes.RawStruct);
+                //                    WriteType(bw, type);
+                //                    WriteValueType(bw, data);
+                //                    return;
+                //                }
+
+                //                // Recursive serialization: if enabled or surrogate selector supports the type, or when type is serializable
+                //                if (RecursiveSerializationAsFallback || CanUseSurrogate(type) || type.IsSerializable)
+                //                {
+                //                    WriteRecursively(bw, data, isRoot);
+                //                    return;
+                //                }
+
+                //#pragma warning disable 618, 612
+                //                // Any struct (obsolete but still supported as backward compatibility)
+                //                if (ForcedSerializationValueTypesAsFallback && type.IsValueType)
+                //                {
+                //                    WriteDataType(bw, DataTypes.RawStruct);
+                //                    WriteType(bw, type);
+                //                    WriteValueType(bw, data);
+                //                    return;
+                //                }
+                //#pragma warning restore 618, 612
+
+                //                ThrowNotSupported(type);
             }
 
             #endregion
@@ -1442,7 +1463,7 @@ namespace KGySoft.Serialization
             }
 
             private int GetAssemblyIndex(Type type, string binderAsmName)
-            { 
+            {
 #if !NET35
                 if (binderAsmName != null)
                     return AssemblyNameIndexCache.GetValueOrDefault(binderAsmName, -1);
@@ -1556,7 +1577,7 @@ namespace KGySoft.Serialization
                         WriteGenericSpecifier(bw, type);
                     AddToTypeCache(type, binderAsmName, binderTypeName);
                     return;
-                } 
+                }
 #endif
 
                 bool isGeneric = type.IsGenericType;
@@ -1722,11 +1743,11 @@ namespace KGySoft.Serialization
                 OnSerialized(data);
             }
 
-#endregion
+            #endregion
 
-#endregion
+            #endregion
 
-#endregion
+            #endregion
         }
     }
 }

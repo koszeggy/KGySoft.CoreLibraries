@@ -79,7 +79,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     var frames = new StackTrace().GetFrames();
                     string name = frames[1].GetMethod().Name;
-                    if (name == "Write7BitInt")
+                    if (name.In("Write7BitInt", "Write7BitLong"))
                         name += " (" + frames[2].GetMethod().Name + ")";
                     string valueStr = value.ToString("X2");
                     if (name == "WriteDataType")
@@ -573,7 +573,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Instance Methods
 
-        private void SystemSerializeObject(object obj, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void SystemSerializeObject(object obj, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             using (new TestExecutionContext.IsolatedContext())
             {
@@ -585,7 +585,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     byte[] serData = SerializeObject(obj, bf);
                     object deserializedObject = DeserializeObject(serData, bf);
-                    if (recursionProofCompare)
+                    if (safeCompare)
                         AssertDeepEquals(serData, SerializeObject(deserializedObject, bf));
                     else
                         AssertDeepEquals(obj, deserializedObject);
@@ -597,7 +597,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void SystemSerializeObjects(object[] referenceObjects, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void SystemSerializeObjects(object[] referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Length}";
@@ -609,7 +609,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 {
                     byte[] serData = SerializeObjects(referenceObjects, bf);
                     object[] deserializedObjects = DeserializeObjects(serData, bf);
-                    if (recursionProofCompare)
+                    if (safeCompare)
                         AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bf));
                     else
                         AssertItemsEqual(referenceObjects, deserializedObjects);
@@ -621,7 +621,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = obj.GetType().ToString();
@@ -631,7 +631,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 byte[] serData = SerializeObject(obj, bsf);
                 object deserializedObject = DeserializeObject(serData, bsf);
-                if (recursionProofCompare)
+                if (safeCompare)
                     AssertDeepEquals(serData, SerializeObject(deserializedObject, bsf));
                 else
                     AssertDeepEquals(obj, deserializedObject);
@@ -643,7 +643,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void KGySerializeObjects(object[] referenceObjects, BinarySerializationOptions options, string title = null, bool recursionProofCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private void KGySerializeObjects(object[] referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Length}";
@@ -653,7 +653,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             {
                 byte[] serData = SerializeObjects(referenceObjects, bsf);
                 object[] deserializedObjects = DeserializeObjects(serData, bsf);
-                if (recursionProofCompare)
+                if (safeCompare)
                     AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bsf));
                 else
                     AssertItemsEqual(referenceObjects, deserializedObjects);

@@ -8,6 +8,7 @@
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <!-- Common NuGet references -->

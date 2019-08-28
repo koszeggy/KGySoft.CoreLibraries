@@ -292,85 +292,95 @@ namespace KGySoft.Serialization
         /// </summary>
         [Flags]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
-        private enum DataTypes : ushort
+        private enum DataTypes // : ushort
         {
-            // ====== LOW BYTE ======
+            // ===== LOW BYTE =====
 
-            // ------ simple/element types:
+            // ----- simple/element types: -----
             SimpleTypes = 0x3F, // bits 0-5 (6 bits - up to 64 types)
 
-            // ...... pure types (they are unambiguous without a type name): bits 0-4 (5 bits - up to 32 types)
-            Null = 0,
-            Object = 1,
+            // ..... pure types (they are unambiguous without a type name): .....
+            //PureTypes = 0x1F, // bits 0-4 (5 bits - up to 32 types)
+
+            // . . . Primitive types (they are never custom serialized) . . .
+            //PrimitiveTypes = 0x0F, // bits 0-3 (4 bits - up to 16 types)
+
+            Null = 0, // not a type but represents the null reference and has also none/unknown semantics
+            Void = 1, // used rather as a type than an instance
+
+            Bool = 2,
+            Int8 = 3,
+            UInt8 = 4,
+
+            // Compressible types: 5-15
+            Int16 = 5,
+            UInt16 = 6,
+            Int32 = 7,
+            UInt32 = 8,
+            Int64 = 9,
+            UInt64 = 10,
+
+            Single = 11,
+            Double = 12,
+
+            Char = 13,
+
+            IntPtr = 14,
+            UIntPtr = 15,
+            // Compressible types end
+
+            // . . . Non-primitive pure types (16-31 - up to 16 types) . . .
+            String = 16, // though not a primitive type, it cannot be custom serialized either
+            StringBuilder = 17,
+            Uri = 18,
 
             // ReSharper disable once InconsistentNaming
-            DBNull = 2,
+            DBNull = 19, // Non-serializable in .NET Core
+            Object = 20, 
 
-            Bool = 3,
-            Int8 = 4,
-            UInt8 = 5,
-            Int16 = 6,
-            UInt16 = 7,
-            Int32 = 8,
-            UInt32 = 9,
-            Int64 = 10,
-            UInt64 = 11,
+            Decimal = 21,
 
-            IntPtr = 12,
-            UIntPtr = 13,
+            DateTime = 22,
+            TimeSpan = 23,
+            DateTimeOffset = 24,
 
-            Single = 14,
-            Double = 15,
-            Decimal = 16,
+            Version = 25,
+            Guid = 26,
 
-            Char = 17,
-            String = 18,
-            StringBuilder = 19,
-            Uri = 20,
+            BitArray = 27, // Too complex special handling would be needed as a collection so treated as simple type
+            BitVector32 = 28, // Non-serializable
+            BitVector32Section = 29, // Non-serializable
 
-            DateTime = 21,
-            TimeSpan = 22,
-            DateTimeOffset = 23,
+            // 30-31: 2 reserved pure types
 
-            Version = 24,
-            Guid = 25,
-
-            BitArray = 26, // too complex special handling would be needed as collection so treated as simple type
-            BitVector32 = 27, // too complex special handling would be needed as collection so treated as simple type
-            BitVector32Section = 28,
-
-            // 29-30: 2 reserved pure types
-
-            Void = 31,
-
-            // ...... impure types (they cannot be interpreted as a standalone value)
+            // ..... impure types (they cannot be interpreted as a standalone value) .....
             ImpureType = 1 << 5,
 
             // 32: Reserved (though it would have the same value as the ImpureType flag)
 
-            RuntimeType = 33, // followed by type
-            GenericTypeDefinition = 34, // combined with known generic types
-            Pointer = 35, // followed by DataTypes for element type
-            ByRef = 36, // followed by DataTypes for element type
+            GenericTypeDefinition = 33, // Combined with known generic types, not followed by more DataTypes
+            RuntimeType = 34, // A Type as an instance. Non-serializable in .NET Core. Followed by DataTypes. Cannot be combined.
+            Pointer = 35, // Followed by DataTypes. Cannot be combined.
+            ByRef = 36, // Followed by DataTypes. Cannot be combined.
 
             // 37-59: 23 reserved values
 
-            //SerializationEnd = 59, // TODO: a reference to a single private static object, which represents the end added objects by custom serialization
-            BinarySerializable = 60, // Implements IBinarySerializable
-            RawStruct = 61, // any ValueType
-            RecursiveObjectGraph = 62, // Represents an object graph with serialized fields or custom name/value data
+            //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
+            BinarySerializable = 60, // IBinarySerializable implementation. Can be combined. Followed by WriteTypeNamesAndRanks.
+            RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections. Followed by WriteTypeNamesAndRanks.
+            RecursiveObjectGraph = 62, // Represents a recursively serialized object graph or any unsupported type. Can be combined. Followed by WriteTypeNamesAndRanks.
             // 63: Reserved (though it would have has the same value as the SimpleTypes mask)
 
-            // ------ flags:
+            // ----- flags: -----
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
-            Extended = 1 << 7, // When serialized, indicates that high byte also is used
+            Extended = 1 << 7, // For a serialized DataTypes indicates that high byte also is used
 
-            // ====== HIGH BYTE ======
+            // ===== HIGH BYTE =====
 
-            // ------ collection types:
+            // ----- collection types: -----
             CollectionTypes = 0x3F00, // 8-13 bits (6 bits - up to 64 types)
 
-            // ...... generic collections:
+            // ..... generic collections: .....
             Array = 1 << 8, // actually not a generic type but can be encoded the same way
             List = 2 << 8,
             LinkedList = 3 << 8,
