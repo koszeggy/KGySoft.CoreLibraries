@@ -18,6 +18,7 @@ namespace System
         internal static int CombineHashCodes(int h1, int h2, int h3) => CombineHashCodes(CombineHashCodes(h1, h2), h3);
     }
 
+    [Serializable]
     internal struct ValueTuple<T1, T2> : IEquatable<ValueTuple<T1, T2>>
     {
         public T1 Item1;
@@ -37,6 +38,7 @@ namespace System
         public static bool operator !=(ValueTuple<T1, T2> left, ValueTuple<T1, T2> right) => !left.Equals(right);
     }
 
+    [Serializable]
     internal struct ValueTuple<T1, T2, T3> : IEquatable<ValueTuple<T1, T2, T3>>
     {
         public T1 Item1;
