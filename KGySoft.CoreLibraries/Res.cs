@@ -498,7 +498,7 @@ namespace KGySoft
         /// <summary>Invalid enum base type: {0}. Serialization stream corrupted?</summary>
         internal static string BinarySerializationInvalidEnumBase(string dataType) => Get("BinarySerialization_InvalidEnumBaseFormat", dataType);
 
-        /// <summary>Cannot deserialize as standalone object: {0}</summary>
+        /// <summary>Cannot deserialize as a standalone object: {0}</summary>
         internal static string BinarySerializationCannotDeserializeObject(string dataType) => Get("BinarySerialization_CannotDeserializeObjectFormat", dataType);
 
         /// <summary>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</summary>
@@ -770,6 +770,9 @@ namespace KGySoft
 
         /// <summary>Failed to load assembly by name: "{0}".</summary>
         internal static string ReflectionCannotLoadAssembly(string name) => Get("Reflection_CannotLoadAssemblyFormat", name);
+
+        /// <summary>Pointer type '{0}' is not supported.</summary>
+        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_ReflectionPointerTypeNotSupportedFormat", type.GetTypeName(false));
 
         #endregion
 

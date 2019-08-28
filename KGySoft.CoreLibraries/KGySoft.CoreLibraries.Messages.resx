@@ -503,7 +503,7 @@ Hit rate: {8:P2}</value>
     <value>Syntax error in generic/array type: "{0}".</value>
   </data>
   <data name="BinarySerialization_CannotDeserializeObjectFormat" xml:space="preserve">
-    <value>Cannot deserialize as standalone object: {0}</value>
+    <value>Cannot deserialize as a standalone object: {0}</value>
   </data>
   <data name="BinarySerialization_IEnumerableExpectedFormat" xml:space="preserve">
     <value>An IEnumerable type expected but {0} found during deserialization.</value>
@@ -543,6 +543,9 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="Reflection_CannotLoadAssemblyFormat" xml:space="preserve">
     <value>Failed to load assembly by name: "{0}".</value>
+  </data>
+  <data name="Reflection_ReflectionPointerTypeNotSupportedFormat" xml:space="preserve">
+    <value>Pointer type '{0}' is not supported.</value>
   </data>
   <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">
     <value>Could not resolve type name "{0}".</value>
