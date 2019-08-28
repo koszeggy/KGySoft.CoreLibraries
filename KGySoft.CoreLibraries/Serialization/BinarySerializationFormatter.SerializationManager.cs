@@ -348,6 +348,9 @@ namespace KGySoft.Serialization
                     case DataTypes.UIntPtr:
                         WriteDynamicInt(bw, DataTypes.UIntPtr, 8, (ulong)(UIntPtr)data);
                         return true;
+                    case DataTypes.Void:
+                        WriteDataType(bw, DataTypes.Void); // though it doesn't really make sense as an instance
+                        return true;
                     default:
                         return false;
                 }
@@ -505,13 +508,12 @@ namespace KGySoft.Serialization
                 if (TryWriteCollection(bw, data, isRoot))
                     return;
 
-                // f.) Other non-pure types. DataTypes enum does not describe exact type information for them.
+                // f.) Other non-pure types. DataTypes does not describe exact type information for them.
 
                 // RuntimeType
                 if (type == Reflector.RuntimeType)
                 {
-                    WriteDataType(bw, DataTypes.RuntimeType);
-                    WriteType(bw, (Type)data, true);
+                    WriteRuntimeType(bw, (Type)data);
                     return;
                 }
 
@@ -591,7 +593,7 @@ namespace KGySoft.Serialization
                     byte rank = (byte)type.GetArrayRank();
 
                     // 0-based generic array is differentiated from nonzero-based 1D array (matters if no instance is created so bounds are not queried)
-                    if (rank == 1 && type.IsImplementationOfGenericType(Reflector.IListGenType))
+                    if (rank == 1 && type.Name.EndsWith("[]", StringComparison.Ordinal)) // checking the IList<> interface does not work for pointer arrays
                         rank = 0;
                     bw.Write(rank);
                     return;
@@ -850,6 +852,13 @@ namespace KGySoft.Serialization
                     Write7BitLong(bw, enumValue);
                 else
                     bw.Write(BitConverter.GetBytes(enumValue), 0, size);
+            }
+
+            [SecurityCritical]
+            private void WriteRuntimeType(BinaryWriter bw, Type type)
+            {
+                WriteDataType(bw, DataTypes.RuntimeType);
+                WriteType(bw, type, true);
             }
 
             [SecurityCritical]
@@ -1190,6 +1199,8 @@ namespace KGySoft.Serialization
                     case DataTypes.Object:
                         Write(bw, element, false);
                         break;
+                    case DataTypes.Void:
+                        break; // though it doesn't really make sense as a collection element
                     default:
                         if ((elementDataType & DataTypes.Nullable) == DataTypes.Nullable)
                         {

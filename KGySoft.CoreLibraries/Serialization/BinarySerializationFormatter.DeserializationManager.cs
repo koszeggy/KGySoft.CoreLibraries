@@ -547,6 +547,10 @@ namespace KGySoft.Serialization
                             return createdResult = new IntPtr(is7BitEncoded ? Read7BitLong(br) : br.ReadInt64());
                         case DataTypes.UIntPtr:
                             return createdResult = new UIntPtr(is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
+                        case DataTypes.Void: // though it does not really make sense as an instance, even BinaryFormatter supports it
+                            if (!Reflector.TryCreateUninitializedObject(Reflector.VoidType, out createdResult))
+                                throw new NotSupportedException(Res.BinarySerializationCannotCreateUninitializedObject(Reflector.VoidType));
+                            return createdResult;
                         case DataTypes.Object:
                             // object - returning object instance on root level, otherwise, doing recursion because can mean any type as an element type
                             if (collectionDescriptor == null)

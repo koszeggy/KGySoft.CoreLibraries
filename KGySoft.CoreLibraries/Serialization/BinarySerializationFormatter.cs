@@ -338,16 +338,22 @@ namespace KGySoft.Serialization
             BitArray = 26, // too complex special handling would be needed as collection so treated as simple type
             BitVector32 = 27, // too complex special handling would be needed as collection so treated as simple type
             BitVector32Section = 28,
-            // 29-31: 3 reserved pure types
 
-            // ...... impure types (they require an exact type name)
+            // 29-30: 2 reserved pure types
+
+            Void = 31,
+
+            // ...... impure types (they cannot be interpreted as a standalone value)
             ImpureType = 1 << 5,
 
             // 32: Reserved (though it would have the same value as the ImpureType flag)
-            RuntimeType = 33,
-            GenericTypeDefinition = 34,
-            
-            // 35-59: 25 reserved values
+
+            RuntimeType = 33, // followed by type
+            GenericTypeDefinition = 34, // combined with known generic types
+            Pointer = 35, // followed by DataTypes for element type
+            ByRef = 36, // followed by DataTypes for element type
+
+            // 37-59: 23 reserved values
 
             //SerializationEnd = 59, // TODO: a reference to a single private static object, which represents the end added objects by custom serialization
             BinarySerializable = 60, // Implements IBinarySerializable
@@ -680,6 +686,7 @@ namespace KGySoft.Serialization
             { Reflector.DoubleType, DataTypes.Double },
             { Reflector.IntPtrType, DataTypes.IntPtr },
             { Reflector.UIntPtrType, DataTypes.UIntPtr },
+            { Reflector.VoidType, DataTypes.Void },
         };
 
         private static readonly Dictionary<Type, DataTypes> supportedNonPrimitiveElementTypes = new Dictionary<Type, DataTypes>

@@ -318,6 +318,9 @@ namespace KGySoft.Serialization
                         return typeof(StringBuilder);
                     case DataTypes.Object:
                         return Reflector.ObjectType;
+                    case DataTypes.Void:
+                        return Reflector.VoidType;
+
                     case DataTypes.RuntimeType:
                         return manager.ReadType(br, true);
 
