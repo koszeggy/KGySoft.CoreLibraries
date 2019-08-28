@@ -261,6 +261,8 @@ namespace KGySoft.Reflection
             Type declaringType = field.DeclaringType;
             if (!field.IsStatic && declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (field.FieldType.IsPointer)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
             MemberExpression member = Expression.Field(
                     // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
                     field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
@@ -278,6 +280,8 @@ namespace KGySoft.Reflection
             Type declaringType = field.DeclaringType;
             if (declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (field.FieldType.IsPointer)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
 
             // Expressions would not work for value types so using always dynamic methods
             DynamicMethod dm = new DynamicMethod(setterPrefix + field.Name, // setter method name

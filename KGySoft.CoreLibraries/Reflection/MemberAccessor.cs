@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Security;
@@ -88,6 +89,9 @@ namespace KGySoft.Reflection
         {
             MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.ArgumentNull);
             ParameterTypes = parameterTypes ?? Type.EmptyTypes;
+            Type pointerType = ParameterTypes.FirstOrDefault(p => p.IsPointer);
+            if (pointerType != null)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerType));
         }
 
         #endregion

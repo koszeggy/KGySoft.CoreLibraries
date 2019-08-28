@@ -71,6 +71,8 @@ namespace KGySoft.Reflection
             Type declaringType = getterMethod.DeclaringType;
             if (declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (property.PropertyType.IsPointer)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes and static properties: Lambda expression
             if (!declaringType.IsValueType || getterMethod.IsStatic)
@@ -112,6 +114,8 @@ namespace KGySoft.Reflection
             Type declaringType = setterMethod.DeclaringType;
             if (declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (property.PropertyType.IsPointer)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes and static properties: Lambda expression
             if (!declaringType.IsValueType || setterMethod.IsStatic)

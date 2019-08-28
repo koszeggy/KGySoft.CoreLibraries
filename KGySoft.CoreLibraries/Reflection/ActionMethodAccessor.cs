@@ -78,10 +78,13 @@ namespace KGySoft.Reflection
             Type declaringType = methodBase.DeclaringType;
             if (!methodBase.IsStatic && declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            var method  = methodBase as MethodInfo;
+            if (method?.ReturnType.IsPointer == true)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
             // for classes and static methods that have no ref parameters: Lambda expression
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-            if (!hasRefParameters && (methodBase.IsStatic || !declaringType.IsValueType) && methodBase is MethodInfo method)
+            if (!hasRefParameters && (methodBase.IsStatic || !declaringType.IsValueType) && method != null)
             {
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
                 ParameterExpression parametersParameter = Expression.Parameter(typeof(object[]), "parameters");

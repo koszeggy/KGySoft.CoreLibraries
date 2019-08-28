@@ -62,7 +62,7 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Internal Methods
 
         internal /*private protected*/ override Delegate CreateGetter()
         {
@@ -72,11 +72,12 @@ namespace KGySoft.Reflection
             Type declaringType = getterMethod.DeclaringType;
             if (declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (property.PropertyType.IsPointer)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes: Lambda expression
             if (!declaringType.IsValueType)
             {
-
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
                 ParameterExpression indexArgumentsParameter = Expression.Parameter(typeof(object[]), "indexArguments");
                 var getterParameters = new Expression[ParameterTypes.Length];
@@ -107,6 +108,8 @@ namespace KGySoft.Reflection
             Type declaringType = setterMethod.DeclaringType;
             if (declaringType == null)
                 throw new InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (property.PropertyType.IsPointer)
+                throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes: Lambda expression
             if (!declaringType.IsValueType)
