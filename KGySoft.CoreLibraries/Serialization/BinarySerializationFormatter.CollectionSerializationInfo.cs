@@ -117,7 +117,6 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
             /// </summary>
-            [SecurityCritical]
             internal void WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
                 if (IsSingleElement)
@@ -167,7 +166,6 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
-            [SecurityCritical]
             internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, out int count)
             {
                 object result;

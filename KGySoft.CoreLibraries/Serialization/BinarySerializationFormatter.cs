@@ -300,7 +300,7 @@ namespace KGySoft.Serialization
             SimpleTypes = 0x3F, // bits 0-5 (6 bits - up to 64 types)
 
             // ..... pure types (they are unambiguous without a type name): .....
-            //PureTypes = 0x1F, // bits 0-4 (5 bits - up to 32 types)
+            PureTypes = 0x1F, // bits 0-4 (5 bits - up to 32 types)
 
             // . . . Primitive types (they are never custom serialized) . . .
             //PrimitiveTypes = 0x0F, // bits 0-3 (4 bits - up to 16 types)
@@ -345,13 +345,14 @@ namespace KGySoft.Serialization
             DateTimeOffset = 24,
 
             Version = 25,
+
             Guid = 26,
 
             BitArray = 27, // Too complex special handling would be needed as a collection so treated as simple type
             BitVector32 = 28, // Non-serializable
             BitVector32Section = 29, // Non-serializable
 
-            // 30-31: 2 reserved pure types
+            // 30-31: 2 reserved pure types (though 31 would have the same value as the PureTypes mask)
 
             // ..... impure types (they cannot be interpreted as a standalone value) .....
             ImpureType = 1 << 5,
@@ -368,7 +369,7 @@ namespace KGySoft.Serialization
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined. Followed by WriteTypeNamesAndRanks.
             RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections. Followed by WriteTypeNamesAndRanks.
-            RecursiveObjectGraph = 62, // Represents a recursively serialized object graph or any unsupported type. Can be combined. Followed by WriteTypeNamesAndRanks.
+            RecursiveObjectGraph = 62, // Represents a recursively serialized object graph. As a type, represents any unspecified type. Can be combined. Followed by WriteTypeNamesAndRanks.
             // 63: Reserved (though it would have has the same value as the SimpleTypes mask)
 
             // ----- flags: -----

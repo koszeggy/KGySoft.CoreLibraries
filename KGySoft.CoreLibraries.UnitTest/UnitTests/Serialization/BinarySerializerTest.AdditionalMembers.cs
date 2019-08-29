@@ -83,7 +83,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                         name += " (" + frames[2].GetMethod().Name + ")";
                     string valueStr = value.ToString("X2");
                     if (name == "WriteDataType")
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (ushort)value)}]";
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (int)value)}]";
                     Console.WriteLine($"byte: {value} ({valueStr}) - {name}");
                 }
                 base.Write(value);
@@ -218,7 +218,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     string name = frames[1].GetMethod().Name;
                     string valueStr = value.ToString("X4");
                     if (name == "WriteDataType")
-                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", value)}]";
+                        valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (int)value)}]";
                     Console.WriteLine($"ushort: {value} ({valueStr}) - {name}");
                 }
                 base.Write(value);
