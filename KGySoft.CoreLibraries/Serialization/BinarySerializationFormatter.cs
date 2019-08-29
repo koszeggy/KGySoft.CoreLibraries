@@ -43,18 +43,18 @@ using KGySoft.Reflection;
  * 1. Add type to DataTypes 0-5 bits (adjust free places in comments)
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
  *    Otherwise, handle it in SerializationManager.GetDataType under b.)
- * 3. If type is pure handle it type in SerializationManager.TryWriteSimpleNonPrimitive. Create a static WriteXXX.
- *    Otherwise, handle it in SerializationManager.Write under f.). Create a WriteXXX and use WriteType.
- * 4. Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX.
+ * 3. If type is pure handle it type in SerializationManager.WritePureObject. If serialization is more than one line create a static WriteXXX.
+ *    Otherwise, handle it in SerializationManager.WriteImpureObject and WriteImpureElement. Create a WriteXXX that can be called separately from writing type.
+ *    Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX.
+ * 4. Handle type in DeserializationManager.ReadObject: for reference types call TryGetFromCache. Always set createdResult.
  * 5. Add type to DataTypeDescriptor.GetElementType (to the private overload).
  *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
- * 6. Handle type in DeserializationManager.ReadObject: for reference types call TryGetFromCache. Always set createdResult.
- * 7. Add type to unit test:
+ * 6. Add type to unit test:
  *    - SerializeSimpleTypes
  *    - SerializeSimpleArrays
  *    - SerializeNullableArrays (value types)
  *    - SerializationSurrogateTest
- * 8. Add type to description - Natively supported simple types
+ * 7. Add type to description - Natively supported simple types
  *
  * II. Adding a collection type
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -708,6 +708,7 @@ namespace KGySoft.Serialization
             { Reflector.DateTimeOffsetType, DataTypes.DateTimeOffset },
             { Reflector.TimeSpanType, DataTypes.TimeSpan },
             { Reflector.ObjectType, DataTypes.Object },
+            { Reflector.RuntimeType, DataTypes.RuntimeType },
             { typeof(DBNull), DataTypes.DBNull },
             { typeof(Version), DataTypes.Version },
             { typeof(Guid), DataTypes.Guid },

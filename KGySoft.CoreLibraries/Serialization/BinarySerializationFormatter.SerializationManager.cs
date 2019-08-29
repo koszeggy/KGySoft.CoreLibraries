@@ -246,106 +246,6 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
-            {
-                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WritePureObject)}");
-
-                switch (dataType)
-                {
-                    case DataTypes.Bool:
-                        bw.Write((bool)obj);
-                        return;
-                    case DataTypes.Int8:
-                        bw.Write((sbyte)obj);
-                        return;
-                    case DataTypes.UInt8:
-                        bw.Write((byte)obj);
-                        return;
-                    case DataTypes.Int16:
-                        bw.Write((short)obj);
-                        return;
-                    case DataTypes.UInt16:
-                        bw.Write((ushort)obj);
-                        return;
-                    case DataTypes.Int32:
-                        bw.Write((int)obj);
-                        return;
-                    case DataTypes.UInt32:
-                        bw.Write((uint)obj);
-                        return;
-                    case DataTypes.Int64:
-                        bw.Write((long)obj);
-                        return;
-                    case DataTypes.UInt64:
-                        bw.Write((ulong)obj);
-                        return;
-                    case DataTypes.Single:
-                        bw.Write((float)obj);
-                        return;
-                    case DataTypes.Double:
-                        bw.Write((double)obj);
-                        return;
-                    case DataTypes.Char:
-                        bw.Write((ushort)(char)obj);
-                        return;
-                    case DataTypes.IntPtr:
-                        bw.Write(((IntPtr)obj).ToInt64());
-                        return;
-                    case DataTypes.UIntPtr:
-                        bw.Write(((UIntPtr)obj).ToUInt64());
-                        return;
-                    case DataTypes.String:
-                        bw.Write((string)obj);
-                        return;
-                    case DataTypes.StringBuilder:
-                        WriteStringBuilder(bw, (StringBuilder)obj);
-                        return;
-                    case DataTypes.Uri:
-                        WriteUri(bw, (Uri)obj);
-                        return;
-                    case DataTypes.Decimal:
-                        bw.Write((decimal)obj);
-                        return;
-                    case DataTypes.DateTime:
-                        WriteDateTime(bw, (DateTime)obj);
-                        return;
-                    case DataTypes.TimeSpan:
-                        bw.Write(((TimeSpan)obj).Ticks);
-                        return;
-                    case DataTypes.DateTimeOffset:
-                        WriteDateTimeOffset(bw, (DateTimeOffset)obj);
-                        return;
-                    case DataTypes.Version:
-                        WriteVersion(bw, (Version)obj);
-                        return;
-                    case DataTypes.Guid:
-                        bw.Write(((Guid)obj).ToByteArray());
-                        return;
-                    case DataTypes.BitArray:
-                        WriteBitArray(bw, (BitArray)obj);
-                        return;
-                    case DataTypes.BitVector32:
-                        bw.Write(((BitVector32)obj).Data);
-                        return;
-                    case DataTypes.BitVector32Section:
-                        WriteSection(bw, (BitVector32.Section)obj);
-                        return;
-                    case DataTypes.RuntimeType:
-                        WriteType(bw, (Type)obj, true);
-                        return;
-
-                    // these types have no effective data
-                    case DataTypes.Void:
-                    case DataTypes.DBNull:
-                    case DataTypes.Object:
-                        return;
-
-                    default:
-                        // should never occur, throwing internal error without resource
-                        throw new ArgumentOutOfRangeException($"Unexpected pure type: {dataType}");
-                }
-            }
-
             private static void WriteDateTime(BinaryWriter bw, DateTime dateTime)
             {
                 bw.Write((byte)dateTime.Kind);
@@ -502,10 +402,6 @@ namespace KGySoft.Serialization
                 if (type.IsEnum)
                     return DataTypes.Enum | primitiveTypes[Enum.GetUnderlyingType(type)];
 
-                // RuntimeType
-                if (type == Reflector.RuntimeType)
-                    return DataTypes.RuntimeType;
-
                 // supported collection
                 Type collType = type.IsGenericType ? type.GetGenericTypeDefinition()
                     : type.IsGenericParameter ? type.DeclaringType
@@ -620,6 +516,106 @@ namespace KGySoft.Serialization
                     case 8:
                         bw.Write(value);
                         return;
+                }
+            }
+
+            private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
+            {
+                Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WritePureObject)}");
+
+                switch (dataType)
+                {
+                    case DataTypes.Bool:
+                        bw.Write((bool)obj);
+                        return;
+                    case DataTypes.Int8:
+                        bw.Write((sbyte)obj);
+                        return;
+                    case DataTypes.UInt8:
+                        bw.Write((byte)obj);
+                        return;
+                    case DataTypes.Int16:
+                        bw.Write((short)obj);
+                        return;
+                    case DataTypes.UInt16:
+                        bw.Write((ushort)obj);
+                        return;
+                    case DataTypes.Int32:
+                        bw.Write((int)obj);
+                        return;
+                    case DataTypes.UInt32:
+                        bw.Write((uint)obj);
+                        return;
+                    case DataTypes.Int64:
+                        bw.Write((long)obj);
+                        return;
+                    case DataTypes.UInt64:
+                        bw.Write((ulong)obj);
+                        return;
+                    case DataTypes.Single:
+                        bw.Write((float)obj);
+                        return;
+                    case DataTypes.Double:
+                        bw.Write((double)obj);
+                        return;
+                    case DataTypes.Char:
+                        bw.Write((ushort)(char)obj);
+                        return;
+                    case DataTypes.IntPtr:
+                        bw.Write(((IntPtr)obj).ToInt64());
+                        return;
+                    case DataTypes.UIntPtr:
+                        bw.Write(((UIntPtr)obj).ToUInt64());
+                        return;
+                    case DataTypes.String:
+                        bw.Write((string)obj);
+                        return;
+                    case DataTypes.StringBuilder:
+                        WriteStringBuilder(bw, (StringBuilder)obj);
+                        return;
+                    case DataTypes.Uri:
+                        WriteUri(bw, (Uri)obj);
+                        return;
+                    case DataTypes.Decimal:
+                        bw.Write((decimal)obj);
+                        return;
+                    case DataTypes.DateTime:
+                        WriteDateTime(bw, (DateTime)obj);
+                        return;
+                    case DataTypes.TimeSpan:
+                        bw.Write(((TimeSpan)obj).Ticks);
+                        return;
+                    case DataTypes.DateTimeOffset:
+                        WriteDateTimeOffset(bw, (DateTimeOffset)obj);
+                        return;
+                    case DataTypes.Version:
+                        WriteVersion(bw, (Version)obj);
+                        return;
+                    case DataTypes.Guid:
+                        bw.Write(((Guid)obj).ToByteArray());
+                        return;
+                    case DataTypes.BitArray:
+                        WriteBitArray(bw, (BitArray)obj);
+                        return;
+                    case DataTypes.BitVector32:
+                        bw.Write(((BitVector32)obj).Data);
+                        return;
+                    case DataTypes.BitVector32Section:
+                        WriteSection(bw, (BitVector32.Section)obj);
+                        return;
+                    case DataTypes.RuntimeType:
+                        WriteType(bw, (Type)obj, true);
+                        return;
+
+                    // these types have no effective data
+                    case DataTypes.Void:
+                    case DataTypes.DBNull:
+                    case DataTypes.Object:
+                        return;
+
+                    default:
+                        // should never occur, throwing internal error without resource
+                        throw new ArgumentOutOfRangeException($"Unexpected pure type: {dataType}");
                 }
             }
 
