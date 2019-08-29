@@ -121,13 +121,14 @@ namespace KGySoft.Serialization
                 CollectionDataType = dataType & DataTypes.CollectionTypes;
                 ElementDataType = dataType & ~DataTypes.CollectionTypes;
 
-                if (CollectionDataType == DataTypes.Null || ElementDataType == DataTypes.GenericTypeDefinition)
+                if (ElementDataType == DataTypes.GenericTypeDefinition)
                     return;
 
-                // recursion 2: nested type
-                if (ElementDataType == DataTypes.Null)
+                // recursion 1: Element type in collections, pointers and ByRef types
+                if (CollectionDataType != DataTypes.Null && ElementDataType == DataTypes.Null || ElementDataType.In(DataTypes.Pointer, DataTypes.ByRef))
                     ElementDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
-                // recursion 3: TValue in dictionaries
+
+                // recursion 2: TValue in dictionaries
                 if (IsDictionary)
                     DictionaryValueDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
             }
@@ -147,25 +148,26 @@ namespace KGySoft.Serialization
             /// <summary>
             /// Decodes self and element types
             /// </summary>
-            internal void DecodeType(BinaryReader br, DeserializationManager manager)
+            internal Type DecodeType(BinaryReader br, DeserializationManager manager)
             {
-                // not a collection (in case of dictionary TValue or when a supported type is passed to AqnManeger by a SerializationInfo)
+                // not a collection
                 if (CollectionDataType == DataTypes.Null)
                 {
                     Type = GetElementType(ElementDataType, br, manager);
-                    return;
+                    return Type;
                 }
 
+                // generic type definition
                 if (ElementDataType == DataTypes.GenericTypeDefinition)
                 {
                     Type = GetCollectionType(CollectionDataType);
-                    return;
+                    return Type;
                 }
 
                 // simple collection element or dictionary key
                 if (ElementDataType != DataTypes.Null)
                     ElementType = GetElementType(ElementDataType, br, manager);
-                else // if (ElementDataType == DataTypes.Null)
+                else
                 {
                     ElementDescriptor.DecodeType(br, manager);
                     ElementType = ElementDescriptor.Type;
@@ -185,12 +187,12 @@ namespace KGySoft.Serialization
                     Type = rank == 0
                         ? ElementType.MakeArrayType()
                         : ElementType.MakeArrayType(rank);
-                    return;
+                    return Type;
                 }
 
                 Type = GetCollectionType(CollectionDataType);
                 if (!Type.ContainsGenericParameters)
-                    return;
+                    return Type;
 
                 bool isNullable = Type.IsNullable();
                 Type typeDef = isNullable ? Type.GetGenericArguments()[0] : Type;
@@ -198,6 +200,7 @@ namespace KGySoft.Serialization
                     ? typeDef.GetGenericType(ElementType)
                     : typeDef.GetGenericType(ElementType, DictionaryValueType);
                 Type = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
+                return Type;
             }
 
             internal bool AreAllElementsQualified(bool isTValue)
@@ -323,10 +326,16 @@ namespace KGySoft.Serialization
                     case DataTypes.RuntimeType:
                         return Reflector.RuntimeType;
 
+                    case DataTypes.Pointer:
+                        return ElementDescriptor.DecodeType(br, manager).MakePointerType();
+                    case DataTypes.ByRef:
+                        return ElementDescriptor.DecodeType(br, manager).MakeByRefType();
+
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
                         return manager.ReadType(br);
+
                     default:
                         // nullable
                         if ((dataType & DataTypes.Nullable) == DataTypes.Nullable)

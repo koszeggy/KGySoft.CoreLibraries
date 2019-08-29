@@ -180,7 +180,7 @@ namespace KGySoft.Serialization
                 if (surrogateSelector == null)
                     return false;
 
-                if (type.IsPrimitive || type.IsArray || type == Reflector.StringType || type == Reflector.ObjectType)
+                if (type.IsPrimitive || type.IsArray || type == Reflector.StringType || type == Reflector.ObjectType || type.IsPointer || type.IsByRef)
                     return false;
 
                 return TryGetSurrogate(type, out var _, out var _);

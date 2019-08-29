@@ -285,8 +285,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             object[] referenceObjects =
             {
                 // Simple types
-                typeof(int), // 3
-                typeof(int?), // 4
+                typeof(int),
+                typeof(int?),
 
                 typeof(int).MakeByRefType(),
                 typeof(int).MakePointerType(),
@@ -304,15 +304,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(Array), // unspecified array
 
                 // Pointers and References
-                typeof(int*), // 17
-                typeof(int**), // 18
-                typeof(void*), // 16
-                typeof(void**), // 17
-                typeof(int*[]), // 21
-                typeof(int**[,]), // 22
-                typeof(int*[][]), // 24
-                typeof(int).MakeByRefType(), // int& - 17
-                typeof(int*).MakeByRefType(), // int*& - 18
+                typeof(int*),
+                typeof(int**),
+                typeof(void*),
+                typeof(void**),
+                typeof(int*[]),
+                typeof(int**[,]),
+                typeof(int*[][]),
+                typeof(int).MakeByRefType(), // int&
+                typeof(int*).MakeByRefType(), // int*&
+                typeof(int[]).MakePointerType(), // int[]* - actually not a valid type
+                typeof(int[]).MakePointerType().MakePointerType(), // int[]** - actually not a valid type
+                typeof(int[]).MakePointerType().MakePointerType().MakeByRefType(), // int[]**& - actually not a valid type
 
                 // Closed Constructed Generics
                 typeof(List<int>), // supported generic

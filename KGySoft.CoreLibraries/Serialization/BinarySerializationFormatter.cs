@@ -352,7 +352,7 @@ namespace KGySoft.Serialization
             BitVector32 = 28, // Non-serializable
             BitVector32Section = 29, // Non-serializable
 
-            RuntimeType = 30, // A Type as an instance. Non-serializable in .NET Core. Followed by DataTypes. Cannot be combined.
+            RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined but it can happen if collection element type is RuntimeType.
 
             // 31: reserved (though it would have the same value as the PureTypes mask)
 
@@ -361,16 +361,16 @@ namespace KGySoft.Serialization
 
             // 32: Reserved (though it would have the same value as the ImpureType flag)
 
-            GenericTypeDefinition = 33, // Combined with known generic types, not followed by more DataTypes
+            GenericTypeDefinition = 33, // Must be combined with a supported generic collection type.
             Pointer = 34, // Followed by DataTypes. Cannot be combined.
             ByRef = 35, // Followed by DataTypes. Cannot be combined.
 
             // 37-59: 23 reserved values
 
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
-            BinarySerializable = 60, // IBinarySerializable implementation. Can be combined. Followed by WriteTypeNamesAndRanks.
-            RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections. Followed by WriteTypeNamesAndRanks.
-            RecursiveObjectGraph = 62, // Represents a recursively serialized object graph. As a type, represents any unspecified type. Can be combined. Followed by WriteTypeNamesAndRanks.
+            BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
+            RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections.
+            RecursiveObjectGraph = 62, // Represents a recursively serialized object graph. As a type, represents any unspecified type. Can be combined.
             // 63: Reserved (though it would have has the same value as the SimpleTypes mask)
 
             // ----- flags: -----
