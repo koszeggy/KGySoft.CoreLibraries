@@ -135,12 +135,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // further natively supported types, which are not serializable in every framework
             referenceObjects = new object[]
             {
-                null,
-                DBNull.Value,
-                new BitVector32(13),
-                BitVector32.CreateSection(13),
-                BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
-                typeof(int)
+                            null,
+                            DBNull.Value,
+                            new BitVector32(13),
+                            BitVector32.CreateSection(13),
+                            BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
+                            typeof(int)
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -474,8 +474,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new DBNull[] { DBNull.Value, null },
                 new BitVector32[] { new BitVector32(13) },
                 new BitVector32.Section[] { BitVector32.CreateSection(13), BitVector32.CreateSection(42, BitVector32.CreateSection(13)) },
-                new Type[] { typeof(int), typeof(List<int>), null }
+                new Type[] { typeof(int), typeof(List<int>), null },
+                Array.CreateInstance(Reflector.RuntimeType, 3) // runtime type array, set below
             };
+
+            ((Array)referenceObjects[4]).SetValue(typeof(int), 0);
+            ((Array)referenceObjects[4]).SetValue(Reflector.RuntimeType, 1);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);

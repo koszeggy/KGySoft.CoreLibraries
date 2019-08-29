@@ -166,10 +166,10 @@ namespace KGySoft.Serialization
 
             private static bool IsElementType(DataTypes dt) => GetElementDataType(dt) != DataTypes.Null;
             private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypes) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
-
             private static bool IsPureType(DataTypes dt) => (dt & (DataTypes.ImpureType | DataTypes.Enum)) == DataTypes.Null;
-            private static bool IsPureSimpleType(DataTypes dt) =>  (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
+            private static bool IsPureSimpleType(DataTypes dt) => (dt & (DataTypes.PureTypes | DataTypes.Nullable)) == dt;
             private static bool IsCollectionType(DataTypes dt) => GetCollectionDataType(dt) != DataTypes.Null;
+            private static bool CanContainReferenceToSelf(DataTypes dt) => (dt & DataTypes.SimpleTypes).In(DataTypes.Object, DataTypes.RecursiveObjectGraph, DataTypes.BinarySerializable);
 
             /// <summary>
             /// Retrieves the value type(s) for a dictionary.
@@ -246,7 +246,7 @@ namespace KGySoft.Serialization
                 return result;
             }
 
-            private static void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
+            private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
             {
                 Debug.Assert(obj != null, $"{nameof(obj)} must not be null in {nameof(WritePureObject)}");
 
@@ -330,6 +330,9 @@ namespace KGySoft.Serialization
                     case DataTypes.BitVector32Section:
                         WriteSection(bw, (BitVector32.Section)obj);
                         return;
+                    case DataTypes.RuntimeType:
+                        WriteType(bw, (Type)obj, true);
+                        return;
 
                     // these types have no effective data
                     case DataTypes.Void:
@@ -404,6 +407,7 @@ namespace KGySoft.Serialization
             /// </summary>>
             internal void Write(BinaryWriter bw, object obj, bool isRoot)
             {
+                // a.) Special cases
                 // if an existing id found, returning
                 if (!isRoot && WriteId(bw, obj))
                     return;
@@ -418,23 +422,22 @@ namespace KGySoft.Serialization
                 Type type = obj.GetType();
                 DataTypes dataType = GetDataType(type); // here collection and element types are not combined yet
 
-                // a.) Pure simple types and enums
+                // b.) Pure simple types and enums
                 if (IsPureSimpleType(dataType) || (dataType & DataTypes.Enum) != DataTypes.Null)
                 {
                     WriteSimpleObjectWithType(bw, obj, dataType);
                     return;
                 }
 
-                // b.) Impure types
-                if (!IsPureType(dataType))
+                // c.) Supported collections
+                if (IsCollectionType(dataType))
                 {
-                    WriteImpureObject(bw, obj, dataType, isRoot);
+                    WriteCollectionWithType(bw, obj, dataType, isRoot);
                     return;
                 }
 
-                // c.) Supported collection or compound of collections
-                Debug.Assert(IsCollectionType(dataType), $"Not a collection type: {dataType}");
-                WriteCollectionWithType(bw, obj, dataType, isRoot);
+                // d.) Impure types
+                WriteImpureObject(bw, obj, dataType, isRoot);
             }
 
             #endregion
@@ -622,49 +625,32 @@ namespace KGySoft.Serialization
 
             private void WriteImpureObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
+                WriteDataType(bw, dataType);
+                if (isRoot && CanContainReferenceToSelf(dataType))
+                {
+                    // at root level writing the id even if the object is value type because the boxed reference can be shared
+                    if (WriteId(bw, obj))
+                    {
+                        Debug.Fail("Id of recursive object should be unknown on top level.");
+                        return;
+                    }
+                }
+
                 switch (GetUnderlyingSimpleType(dataType))
                 {
-                    case DataTypes.RuntimeType:
-                        WriteDataType(bw, DataTypes.RuntimeType);
-                        WriteType(bw, (Type)obj, true);
-                        return;
-
                     case DataTypes.BinarySerializable:
-                        WriteDataType(bw, DataTypes.BinarySerializable);
-
-                        if (isRoot)
-                        {
-                            // on root level writing the id even if the object is value type because the boxed reference can be shared
-                            if (WriteId(bw, obj))
-                                Debug.Fail("Id of recursive object should be unknown on top level.");
-                        }
-
                         WriteType(bw, obj.GetType());
                         WriteBinarySerializable(bw, (IBinarySerializable)obj);
                         return;
-
                     case DataTypes.RawStruct:
-                        WriteDataType(bw, DataTypes.RawStruct);
                         WriteType(bw, obj.GetType());
                         WriteValueType(bw, (ValueType)obj);
                         return;
-
                     case DataTypes.RecursiveObjectGraph:
-                        Debug.Assert(!(obj is Array), "Arrays cannot be serialized as an object graph.");
-                        WriteDataType(bw, DataTypes.RecursiveObjectGraph);
-
-                        if (isRoot)
-                        {
-                            // on root level writing the id even if the object is value type because the boxed reference can be shared
-                            if (WriteId(bw, obj))
-                            {
-                                Debug.Fail("Id of recursive object should be unknown on top level.");
-                                return;
-                            }
-                        }
-
                         WriteObjectGraph(bw, obj, null);
                         return;
+                    default:
+                        throw new InvalidOperationException($"Unexpected impure type: {dataType}");
                 }
             }
 
@@ -841,7 +827,7 @@ namespace KGySoft.Serialization
                     throw new ArgumentException("Type description is invalid", nameof(collectionTypeDescriptor));
 
                 DataTypes dataType = collectionTypeDescriptor[0];
-                DataTypes elementDataType = GetElementDataType(dataType) & ~DataTypes.Enum;
+                DataTypes elementDataType = GetElementDataType(dataType);
                 DataTypes collectionDataType = GetCollectionDataType(dataType);
 
                 // array
@@ -974,128 +960,68 @@ namespace KGySoft.Serialization
             /// Contains the actual generic type parameter or array base type from which <see cref="IBinarySerializable"/> or the type of the recursively serialized object is assignable.</param>
             private void WriteElement(BinaryWriter bw, object element, IEnumerable<DataTypes> elementCollectionDataTypes, DataTypes elementDataType, Type collectionElementType)
             {
+                // a.) Special cases
+                // Null element type means that element is a nested collection type: recursion.
+                if (elementDataType == DataTypes.Null)
+                {
+                    // Writing id except for value types (KeyValuePair, DictionaryEntry)
+                    if (!collectionElementType.IsValueType || collectionElementType.IsNullable())
+                    {
+                        if (WriteId(bw, element))
+                            return;
+                        Debug.Assert(element != null, "When element is null, WriteId should return true");
+                    }
+
+                    // creating a new copy for this call be cause the processed elements will be consumed
+                    WriteCollection(bw, new CircularList<DataTypes>(elementCollectionDataTypes), element);
+                    return;
+                }
+
+                // As an element type, object means any type
+                if (elementDataType == DataTypes.Object)
+                {
+                    Write(bw, element, false);
+                    return;
+                }
+
+                // Nullables: writing an IsNotNull value
+                if ((elementDataType & DataTypes.Nullable) != DataTypes.Null)
+                {
+                    // Here writing a boolean value instead of id; otherwise, nullables would get an id while non-nullables would not.
+                    bw.Write(element != null);
+                    if (element == null)
+                        return;
+                }
+
+                elementDataType = GetUnderlyingSimpleType(elementDataType);
+
+                // b.) Pure simple types
+                if (IsPureType(elementDataType))
+                {
+                    // Writing Id for reference types. Nullables were already checked above.
+                    if (element == null || !element.GetType().IsValueType)
+                    {
+                        if (WriteId(bw, element))
+                            return;
+                        Debug.Assert(element != null, "When element is null, WriteId should return true");
+                    }
+
+                    WritePureObject(bw, element, elementDataType);
+                    return;
+                }
+
+                // c.) Impure types
+                WriteImpureElement(bw, element, elementDataType, collectionElementType);
+            }
+
+            private void WriteImpureElement(BinaryWriter bw, object element, DataTypes elementDataType, Type collectionElementType)
+            {
                 switch (elementDataType)
                 {
-                    case DataTypes.Null:
-                        // Null element type means that element is a nested collection type: recursion.
-                        // Writing id except for value types (KeyValuePair, DictionaryEntry) - for nullables IsNotNull was written in default
-                        if (!collectionElementType.IsValueType || collectionElementType.IsNullable())
-                        {
-                            if (WriteId(bw, element))
-                                break;
-                            Debug.Assert(element != null, "When element is null, WriteId should return true");
-                        }
-
-                        // creating a new copy for this call be cause the processed elements will be consumed
-                        WriteCollection(bw, new CircularList<DataTypes>(elementCollectionDataTypes), element);
-                        break;
-                    case DataTypes.Bool:
-                        bw.Write((bool)element);
-                        break;
-                    case DataTypes.Int8:
-                        bw.Write((sbyte)element);
-                        break;
-                    case DataTypes.UInt8:
-                        bw.Write((byte)element);
-                        break;
-                    case DataTypes.Int16:
-                        bw.Write((short)element);
-                        break;
-                    case DataTypes.UInt16:
-                        bw.Write((ushort)element);
-                        break;
-                    case DataTypes.Int32:
-                        bw.Write((int)element);
-                        break;
-                    case DataTypes.UInt32:
-                        bw.Write((uint)element);
-                        break;
-                    case DataTypes.Int64:
-                        bw.Write((long)element);
-                        break;
-                    case DataTypes.UInt64:
-                        bw.Write((ulong)element);
-                        break;
-                    case DataTypes.Char:
-                        bw.Write((ushort)(char)element);
-                        break;
-                    case DataTypes.String:
-                        if (WriteId(bw, element))
-                            break;
-                        Debug.Assert(element != null, "When element is null, WriteId should return true");
-                        bw.Write((string)element);
-                        break;
-                    case DataTypes.Single:
-                        bw.Write((float)element);
-                        break;
-                    case DataTypes.Double:
-                        bw.Write((double)element);
-                        break;
-                    case DataTypes.Decimal:
-                        bw.Write((decimal)element);
-                        break;
-                    case DataTypes.DateTime:
-                        WriteDateTime(bw, (DateTime)element);
-                        break;
-                    case DataTypes.DBNull:
-                        // as a collection element DBNull can be also a null reference, hence writing the id.
-                        WriteId(bw, element);
-                        break;
-                    case DataTypes.IntPtr:
-                        bw.Write(((IntPtr)element).ToInt64());
-                        break;
-                    case DataTypes.UIntPtr:
-                        bw.Write(((UIntPtr)element).ToUInt64());
-                        break;
-                    case DataTypes.Version:
-                        if (WriteId(bw, element))
-                            break;
-                        WriteVersion(bw, (Version)element);
-                        break;
-                    case DataTypes.Guid:
-                        bw.Write(((Guid)element).ToByteArray());
-                        break;
-                    case DataTypes.TimeSpan:
-                        bw.Write(((TimeSpan)element).Ticks);
-                        break;
-                    case DataTypes.DateTimeOffset:
-                        WriteDateTimeOffset(bw, (DateTimeOffset)element);
-                        break;
-                    case DataTypes.Uri:
-                        if (WriteId(bw, element))
-                            break;
-                        Debug.Assert(element != null, "When element is null, WriteId should return true");
-                        WriteUri(bw, (Uri)element);
-                        break;
-                    case DataTypes.BitArray:
-                        if (WriteId(bw, element))
-                            break;
-                        Debug.Assert(element != null, "When element is null, WriteId should return true");
-                        WriteBitArray(bw, (BitArray)element);
-                        break;
-                    case DataTypes.BitVector32:
-                        bw.Write(((BitVector32)element).Data);
-                        break;
-                    case DataTypes.BitVector32Section:
-                        WriteSection(bw, (BitVector32.Section)element);
-                        break;
-                    case DataTypes.StringBuilder:
-                        if (WriteId(bw, element))
-                            break;
-                        Debug.Assert(element != null, "When element is null, WriteId should return true");
-                        WriteStringBuilder(bw, (StringBuilder)element);
-                        break;
-                    case DataTypes.RuntimeType:
-                        if (WriteId(bw, element))
-                            break;
-                        Debug.Assert(element != null, "When element is null, WriteId should return true");
-                        WriteType(bw, (Type)element, true);
-                        break;
-
                     case DataTypes.BinarySerializable:
                         // 1. instance id for classes or when element is defined as interface in the collection (for nullables IsNotNull was already written in default case)
                         if ((!collectionElementType.IsValueType) && WriteId(bw, element))
-                            break;
+                            return;
 
                         Debug.Assert(element != null, "When element is null, WriteId should return true");
                         Type elementType = element.GetType();
@@ -1111,48 +1037,33 @@ namespace KGySoft.Serialization
                         if (typeNeeded)
                             WriteType(bw, elementType);
                         WriteBinarySerializable(bw, (IBinarySerializable)element);
-                        break;
+                        return;
+
                     case DataTypes.RecursiveObjectGraph:
-                        // When element types may differ, writing element with data type. This prevents the following errors:
-                        // - Writing array element as a graph - new IList<int>[] { new int[] {1} }
-                        // - Writing primitive/enum/other supported element as a graph - new ValueType[] { 1, ConsoleColor.Black }
-                        // - Writing compressible struct or IBinarySerializable as a graph - new IAnything[] { new BinarySerializable(), new MyStruct() }
+                 
+                        // When element types may differ, writing element as a completely new object. This prevents a lot of issues.
                         if (collectionElementType.CanBeDerived())
                         {
                             Write(bw, element, false);
-                            break;
+                            return;
                         }
 
                         // 1. instance id for classes or when element is defined as interface in the collection (for nullables IsNotNull was already written in default case)
                         if (!collectionElementType.IsValueType && WriteId(bw, element))
-                            break;
+                            return;
 
                         Debug.Assert(element != null, "When element is null, WriteId should return true");
 
                         // 2. Serialize
                         WriteObjectGraph(bw, element, collectionElementType);
-                        break;
+                        return;
+
                     case DataTypes.RawStruct:
                         WriteValueType(bw, (ValueType)element);
-                        break;
-                    case DataTypes.Object:
-                        Write(bw, element, false);
-                        break;
-                    case DataTypes.Void:
-                        break; // though it doesn't really make sense as a collection element
-                    default:
-                        if ((elementDataType & DataTypes.Nullable) == DataTypes.Nullable)
-                        {
-                            // When boxed, nullable elements are either a null reference or a non-nullable instance in the object.
-                            // Here writing IsNotNull instead of id; otherwise, nullables would get an id while non-nullables would not.
-                            bw.Write(element != null);
-                            if (element != null)
-                                WriteElement(bw, element, elementCollectionDataTypes, elementDataType & ~DataTypes.Nullable, collectionElementType);
-                            break;
-                        }
+                        return;
 
-                        // should never occur, throwing internal error without resource
-                        throw new InvalidOperationException("Can not serialize elementType " + DataTypeToString(elementDataType));
+                    default:
+                        throw new InvalidOperationException($"Unexpected impure type: {elementDataType}");
                 }
             }
 
@@ -1164,6 +1075,8 @@ namespace KGySoft.Serialization
             /// <param name="collectionElementType">Element type of collection or null if not in collection</param>
             private void WriteObjectGraph(BinaryWriter bw, object data, Type collectionElementType)
             {
+                Debug.Assert(!(data is Array), "Arrays cannot be serialized as an object graph.");
+
                 // Common order: 1: not in a collection -> store type, 2: serialize
                 OnSerializing(data);
 

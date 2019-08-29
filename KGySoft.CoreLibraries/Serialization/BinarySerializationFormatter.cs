@@ -305,7 +305,7 @@ namespace KGySoft.Serialization
             // . . . Primitive types (they are never custom serialized) . . .
             //PrimitiveTypes = 0x0F, // bits 0-3 (4 bits - up to 16 types)
 
-            Null = 0, // not a type but represents the null reference and has also none/unknown semantics
+            Null = 0, // Not a type but represents null/none values. As a collection element represents no simple element type (nested collection).
             Void = 1, // used rather as a type than an instance
 
             Bool = 2,
@@ -352,17 +352,18 @@ namespace KGySoft.Serialization
             BitVector32 = 28, // Non-serializable
             BitVector32Section = 29, // Non-serializable
 
-            // 30-31: 2 reserved pure types (though 31 would have the same value as the PureTypes mask)
+            RuntimeType = 30, // A Type as an instance. Non-serializable in .NET Core. Followed by DataTypes. Cannot be combined.
 
-            // ..... impure types (they cannot be interpreted as a standalone value) .....
+            // 31: reserved (though it would have the same value as the PureTypes mask)
+
+            // ..... impure types (their type cannot be they cannot be interpreted as a standalone value) .....
             ImpureType = 1 << 5,
 
             // 32: Reserved (though it would have the same value as the ImpureType flag)
 
             GenericTypeDefinition = 33, // Combined with known generic types, not followed by more DataTypes
-            RuntimeType = 34, // A Type as an instance. Non-serializable in .NET Core. Followed by DataTypes. Cannot be combined.
-            Pointer = 35, // Followed by DataTypes. Cannot be combined.
-            ByRef = 36, // Followed by DataTypes. Cannot be combined.
+            Pointer = 34, // Followed by DataTypes. Cannot be combined.
+            ByRef = 35, // Followed by DataTypes. Cannot be combined.
 
             // 37-59: 23 reserved values
 

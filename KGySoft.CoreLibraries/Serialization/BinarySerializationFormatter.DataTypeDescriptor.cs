@@ -320,9 +320,8 @@ namespace KGySoft.Serialization
                         return Reflector.ObjectType;
                     case DataTypes.Void:
                         return Reflector.VoidType;
-
                     case DataTypes.RuntimeType:
-                        return manager.ReadType(br, true);
+                        return Reflector.RuntimeType;
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
