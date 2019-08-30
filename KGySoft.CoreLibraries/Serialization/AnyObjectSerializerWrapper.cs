@@ -72,6 +72,8 @@ namespace KGySoft.Serialization
 
         #region Private Constructors
 
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
+            Justification = "False alarm, serialization constructor has an exact signature.")]
         private AnyObjectSerializerWrapper(SerializationInfo info, StreamingContext context)
         {
             byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType);

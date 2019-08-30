@@ -131,8 +131,6 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-#if !NET35 && !NET40 && !NET45
-
         /// <summary>
         /// Deconstructs this <see cref="Range{T}"/> instance.
         /// </summary>
@@ -144,7 +142,6 @@ namespace KGySoft.CoreLibraries
             lowerBound = LowerBound;
             upperBound = UpperBound;
         }
-#endif
 
         /// <summary>
         /// Indicates whether the current <see cref="Range{T}"/> instance is equal to another one specified in the <paramref name="other"/> prameter.

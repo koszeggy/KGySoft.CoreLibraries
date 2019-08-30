@@ -607,6 +607,7 @@ namespace KGySoft.ComponentModel
             if (!disposing || disposed)
                 return;
 
+            monitor.Dispose();
             propertyChangedHandler = null;
             collectionChangedHandler = null;
             listChangedHandler = null;
@@ -1013,8 +1014,12 @@ namespace KGySoft.ComponentModel
         [NotifyPropertyChangedInvocator]
         private void FirePropertyChanged([CallerMemberName] string propertyName = null) => OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods. And moving them outside this method would be a bad idea.")]
         private void ProcessCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
+            #region Local Methods
+
             void HookNewItems(IList newItems)
             {
                 if (newItems == null || !HookItemsPropertyChanged)
@@ -1038,6 +1043,8 @@ namespace KGySoft.ComponentModel
                         UnhookPropertyChanged(t);
                 }
             }
+
+            #endregion
 
             using (BlockReentrancy())
             {

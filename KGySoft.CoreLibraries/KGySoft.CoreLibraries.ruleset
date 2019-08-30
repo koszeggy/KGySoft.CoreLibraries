@@ -1,17 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="Rules for KGySoft.CoreLibraries" Description="Code analysis rules for KGySoft.CoreLibraries.csproj." ToolsVersion="15.0">
+<RuleSet Name="Rules for KGySoft.CoreLibraries" Description="Code analysis rules for KGySoft.CoreLibraries.csproj." ToolsVersion="16.0">
   <IncludeAll Action="Warning" />
   <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
     <Rule Id="CA1000" Action="None" />
     <Rule Id="CA1006" Action="None" />
     <Rule Id="CA1007" Action="None" />
+    <Rule Id="CA1010" Action="None" />
     <Rule Id="CA1011" Action="None" />
     <Rule Id="CA1021" Action="None" />
     <Rule Id="CA1024" Action="None" />
     <Rule Id="CA1026" Action="None" />
     <Rule Id="CA1031" Action="Error" />
     <Rule Id="CA1033" Action="None" />
+    <Rule Id="CA1036" Action="Error" />
+    <Rule Id="CA1304" Action="Error" />
     <Rule Id="CA1305" Action="Error" />
+    <Rule Id="CA1307" Action="Error" />
+    <Rule Id="CA1309" Action="Error" />
     <Rule Id="CA1502" Action="Warning" />
     <Rule Id="CA1702" Action="None" />
     <Rule Id="CA1703" Action="None" />
@@ -20,10 +25,12 @@
     <Rule Id="CA1710" Action="None" />
     <Rule Id="CA1716" Action="None" />
     <Rule Id="CA1720" Action="None" />
+    <Rule Id="CA1724" Action="None" />
     <Rule Id="CA1726" Action="None" />
     <Rule Id="CA1819" Action="Warning" />
     <Rule Id="CA1822" Action="Error" />
     <Rule Id="CA2122" Action="None" />
+    <Rule Id="CA2123" Action="Error" />
     <Rule Id="CA2130" Action="Error" />
     <Rule Id="CA2131" Action="Error" />
     <Rule Id="CA2140" Action="Error" />
@@ -51,5 +58,8 @@
     <Rule Id="CS3024" Action="Error" />
     <Rule Id="CS3026" Action="Error" />
     <Rule Id="CS3027" Action="Error" />
+  </Rules>
+  <Rules AnalyzerId="Microsoft.CodeQuality.CSharp.Analyzers" RuleNamespace="Microsoft.CodeQuality.CSharp.Analyzers">
+    <Rule Id="CA1200" Action="None" />
   </Rules>
 </RuleSet>

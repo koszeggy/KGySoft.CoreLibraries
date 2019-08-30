@@ -210,7 +210,6 @@ namespace KGySoft.Serialization
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         public static XElement Serialize(object obj, XmlSerializationOptions options = defaultOptions)
             => new XElementSerializer(options).Serialize(obj);
 
@@ -275,18 +274,24 @@ namespace KGySoft.Serialization
         /// <exception cref="InvalidOperationException">The writer is closed.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+            Justification = "The XmlWriter must not be disposed because that would close the TextWriter.")]
         public static void Serialize(TextWriter writer, object obj, XmlSerializationOptions options = defaultOptions)
         {
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);
 
-            XmlWriter xmlWriter = XmlWriter.Create(writer, new XmlWriterSettings
+            XmlWriterSettings settings = new XmlWriterSettings
             {
                 Indent = true,
+                CloseOutput = false,
                 // NewLineHandling = NewLineHandling.Entitize - entitizes only /r and not /n. Deserialize preserves now not entitized newlines and escaping still can be enabled in options
-            });
-            Serialize(xmlWriter, obj, options);
-            xmlWriter.Flush();
+            };
+            using (XmlWriter xmlWriter = XmlWriter.Create(writer, settings))
+            {
+                Serialize(xmlWriter, obj, options);
+                xmlWriter.Flush();
+            }
         }
 
         /// <summary>
@@ -308,13 +313,17 @@ namespace KGySoft.Serialization
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream), Res.ArgumentNull);
 
-            XmlWriter writer = XmlWriter.Create(stream, new XmlWriterSettings
+            XmlWriterSettings settings = new XmlWriterSettings
             {
                 Indent = true,
+                CloseOutput = false,
                 // NewLineHandling = NewLineHandling.Entitize - entitizes only /r and not /n. Deserialize preserves now not entitized newlines and escaping still can be enabled in options
-            });
-            Serialize(writer, obj, options);
-            writer.Flush();
+            };
+            using (XmlWriter writer = XmlWriter.Create(stream, settings))
+            {
+                Serialize(writer, obj, options);
+                writer.Flush();
+            }
         }
 
         /// <summary>
@@ -329,7 +338,6 @@ namespace KGySoft.Serialization
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         /// <remarks>
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
@@ -350,7 +358,6 @@ namespace KGySoft.Serialization
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="writer"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         /// <remarks>
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize(XmlWriter,object,XmlSerializationOptions)"/> method.
@@ -383,7 +390,7 @@ namespace KGySoft.Serialization
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
-        /// <exception cref="ArgumentException">XML content is incosistent or corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         public static object Deserialize(XmlReader reader) => XmlReaderDeserializer.Deserialize(reader);
 
@@ -395,8 +402,10 @@ namespace KGySoft.Serialization
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
-        /// <exception cref="ArgumentException">XML content is incosistent or corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+            Justification = "XmlTextReader must not be disposed because that would close the underlying reader.")]
         public static object Deserialize(TextReader reader)
         {
             if (reader == null)
@@ -408,6 +417,7 @@ namespace KGySoft.Serialization
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
                 XmlResolver = null,
+                DtdProcessing = DtdProcessing.Prohibit
             };
 
             return Deserialize(xmlReader);
@@ -435,6 +445,7 @@ namespace KGySoft.Serialization
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
                 XmlResolver = null,
+                DtdProcessing = DtdProcessing.Prohibit
             })
             {
                 return Deserialize(xmlReader);
@@ -451,6 +462,8 @@ namespace KGySoft.Serialization
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+            Justification = "XmlTextReader must not be disposed because that would close the underlying stream.")]
         public static object Deserialize(Stream stream)
         {
             if (stream == null)
@@ -460,7 +473,8 @@ namespace KGySoft.Serialization
             {
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
-                XmlResolver = null
+                XmlResolver = null,
+                DtdProcessing = DtdProcessing.Prohibit
             };
 
             //XmlReader xmlReader = XmlReader.Create(stream, new XmlReaderSettings

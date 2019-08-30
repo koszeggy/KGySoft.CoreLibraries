@@ -1,8 +1,8 @@
 ﻿#if NET35 || NET40 || NET45
 // ReSharper disable NonReadonlyMemberInGetHashCode
 // ReSharper disable FieldCanBeMadeReadOnly.Global
-
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 // ReSharper disable once CheckNamespace
 namespace System
@@ -19,6 +19,7 @@ namespace System
     }
 
     [Serializable]
+    [SuppressMessage("Design", "CA1066:Type {0} should implement IEquatable<T> because it overrides Equals", Justification = "False alarm")]
     internal struct ValueTuple<T1, T2> : IEquatable<ValueTuple<T1, T2>>
     {
         public T1 Item1;
@@ -39,6 +40,7 @@ namespace System
     }
 
     [Serializable]
+    [SuppressMessage("Design", "CA1066:Type {0} should implement IEquatable<T> because it overrides Equals", Justification = "False alarm")]
     internal struct ValueTuple<T1, T2, T3> : IEquatable<ValueTuple<T1, T2, T3>>
     {
         public T1 Item1;

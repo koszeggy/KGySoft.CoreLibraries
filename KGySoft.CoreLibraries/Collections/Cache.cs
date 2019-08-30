@@ -1187,7 +1187,7 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
                 return this[(TKey)key];
             }
             set
@@ -1195,9 +1195,9 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
                 if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 this[(TKey)key] = (TValue)value;
             }
         }
@@ -1350,6 +1350,8 @@ namespace KGySoft.Collections
         /// <param name="context">The destination (see <see cref="StreamingContext"/>) for this deserialization.</param>
         /// <remarks><note type="inherit">If an inherited type serializes data, which may affect the hashes of the keys, then override
         /// the <see cref="OnDeserialization">OnDeserialization</see> method and use that to restore the data of the derived instance.</note></remarks>
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
+            Justification = "False alarm, serialization constructor has an exact signature.")]
         protected Cache(SerializationInfo info, StreamingContext context)
         {
             // deferring the actual deserialization until all objects are finalized and hashes do not change anymore
@@ -1949,7 +1951,7 @@ namespace KGySoft.Collections
         void ICache.Touch(object key)
         {
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
             Touch((TKey)key);
         }
 
@@ -1960,7 +1962,7 @@ namespace KGySoft.Collections
         void ICache.RefreshValue(object key)
         {
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
             RefreshValue((TKey)key);
         }
 
@@ -1975,7 +1977,7 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
             return GetValueUncached((TKey)key);
         }
 
@@ -2063,9 +2065,9 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
             if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
 
             Add((TKey)key, (TValue)value);
         }

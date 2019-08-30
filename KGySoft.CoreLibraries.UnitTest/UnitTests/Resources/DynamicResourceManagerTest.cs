@@ -129,7 +129,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 cibHuRunic.Register();
             }
-            catch (UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException)
             {
                 //Assert.Inconclusive("To run the tests in this class, administrator rights are required: " + e);
                 return; // no admin rights - basic tests will be executed

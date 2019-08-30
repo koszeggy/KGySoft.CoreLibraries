@@ -352,10 +352,10 @@ Hit rate: {8:P2}</value>
   <data name="Array_InvalidOffsLen" xml:space="preserve">
     <value>Offset and length were out of bounds for the array.</value>
   </data>
-  <data name="IDictionary_NongenericKeyTypeInvalidFormat" xml:space="preserve">
+  <data name="IDictionary_NonGenericKeyTypeInvalidFormat" xml:space="preserve">
     <value>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>
-  <data name="ICollection_NongenericValueTypeInvalidFormat" xml:space="preserve">
+  <data name="ICollection_NonGenericValueTypeInvalidFormat" xml:space="preserve">
     <value>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</value>
   </data>
   <data name="IDictionary_KeyNotFound" xml:space="preserve">
@@ -426,6 +426,9 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="General_ValueContainsIllegalPathCharactersFormat" xml:space="preserve">
     <value>Value "{0}" contains illegal path characters.</value>
+  </data>
+  <data name="General_InternalErrorFormat" xml:space="preserve">
+    <value>Internal Error: {0}</value>
   </data>
   <data name="Reflection_CannotCreateGenericMethod" xml:space="preserve">
     <value>Could not create generic method. For details see inner exception.</value>
@@ -544,7 +547,7 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_CannotLoadAssemblyFormat" xml:space="preserve">
     <value>Failed to load assembly by name: "{0}".</value>
   </data>
-  <data name="Reflection_ReflectionPointerTypeNotSupportedFormat" xml:space="preserve">
+  <data name="Reflection_PointerTypeNotSupportedFormat" xml:space="preserve">
     <value>Pointer type '{0}' is not supported.</value>
   </data>
   <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">

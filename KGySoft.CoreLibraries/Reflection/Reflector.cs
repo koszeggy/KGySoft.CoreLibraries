@@ -2686,10 +2686,13 @@ namespace KGySoft.Reflection
             return result;
         }
 
+#if NETFRAMEWORK
+        [SecurityCritical] 
+#endif
         private static string GetGacPath(string assemblyName)
         {
 #if NETFRAMEWORK
-            return Fusion.GetGacPath(assemblyName); 
+            return Fusion.GetGacPath(assemblyName);
 #else
             return null;
 #endif

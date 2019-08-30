@@ -814,7 +814,7 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)), nameof(key));
                 return this[(TKey)key];
             }
             set
@@ -822,9 +822,9 @@ namespace KGySoft.Collections
                 if (key == null)
                     throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
                 if (!typeKey.CanAcceptValue(key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
                 if (!typeValue.CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
                 this[(TKey)key] = (TValue)value;
             }
         }
@@ -1317,9 +1317,9 @@ namespace KGySoft.Collections
             if (key == null)
                 throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
             if (!typeKey.CanAcceptValue(key))
-                throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
+                throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(value, typeof(TKey)), nameof(key));
             if (!typeValue.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)), nameof(value));
             Add((TKey)key, (TValue)value);
         }
 
@@ -1388,9 +1388,9 @@ namespace KGySoft.Collections
             if (value is DictionaryEntry dictionaryEntry)
             {
                 if (!typeKey.CanAcceptValue(dictionaryEntry.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(dictionaryEntry, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(dictionaryEntry, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(dictionaryEntry.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(dictionaryEntry, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(dictionaryEntry, typeof(TValue)), nameof(value));
                 return Add((TKey)dictionaryEntry.Key, (TValue)dictionaryEntry.Value);
             }
 
@@ -1405,9 +1405,9 @@ namespace KGySoft.Collections
             if (value is DictionaryEntry entry)
             {
                 if (!typeKey.CanAcceptValue(entry.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(entry.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
                 return IndexOf(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value)) >= 0;
             }
 
@@ -1422,9 +1422,9 @@ namespace KGySoft.Collections
             if (value is DictionaryEntry entry)
             {
                 if (!typeKey.CanAcceptValue(entry.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(entry.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
                 return IndexOf(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value));
             }
 
@@ -1444,9 +1444,9 @@ namespace KGySoft.Collections
             if (value is DictionaryEntry entry)
             {
                 if (!typeKey.CanAcceptValue(entry.Key))
-                    throw new ArgumentException(Res.IDictionaryNongenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
+                    throw new ArgumentException(Res.IDictionaryNonGenericKeyTypeInvalid(entry, typeof(TKey)), nameof(value));
                 if (!typeValue.CanAcceptValue(entry.Value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(entry, typeof(TValue)), nameof(value));
                 ((ICollection<KeyValuePair<TKey, TValue>>)this).Remove(new KeyValuePair<TKey, TValue>((TKey)entry.Key, (TValue)entry.Value));
             }
         }

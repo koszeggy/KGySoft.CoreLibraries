@@ -711,15 +711,11 @@ namespace KGySoft.Resources
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
-
-            if (fileRef == null)
-                throw new ArgumentNullException(nameof(fileRef), Res.ArgumentNull);
-
             if (name.Length == 0)
                 throw new ArgumentException(Res.ArgumentEmpty, nameof(name));
 
+            this.fileRef = fileRef ?? throw new ArgumentNullException(nameof(fileRef), Res.ArgumentNull);
             this.name = name;
-            this.fileRef = fileRef;
             fileRefBasePath = basePath;
         }
 
@@ -741,6 +737,8 @@ namespace KGySoft.Resources
 
         #region Private Constructors
 
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters",
+            Justification = "False alarm, serialization constructor has an exact signature.")]
         private ResXDataNode(SerializationInfo info, StreamingContext context)
         {
             nodeInfo = new DataNodeInfo
@@ -1272,50 +1270,39 @@ namespace KGySoft.Resources
         {
             nodeInfo.AssemblyAliasValue = null;
             nodeInfo.CompatibleFormat = true;
-            string stringValue = cachedValue as string;
-            nodeInfo.TypeName = stringValue != null
+            nodeInfo.TypeName = cachedValue is string
                 ? null
                 : ResXCommon.GetAssemblyQualifiedName(cachedValue.GetType(), typeNameConverter, false);
 
-            if (stringValue != null)
+            switch (cachedValue)
             {
-                nodeInfo.ValueData = stringValue;
-                return;
-            }
-            if (cachedValue is DateTime)
-            {
-                nodeInfo.ValueData = XmlConvert.ToString((DateTime)cachedValue, XmlDateTimeSerializationMode.RoundtripKind);
-                return;
-            }
-            if (cachedValue is DateTimeOffset)
-            {
-                nodeInfo.ValueData = XmlConvert.ToString((DateTimeOffset)cachedValue);
-                return;
-            }
-            if (cachedValue is double)
-            {
-                nodeInfo.ValueData = ((double)cachedValue).ToRoundtripString();
-                return;
-            }
-            if (cachedValue is float)
-            {
-                nodeInfo.ValueData = ((float)cachedValue).ToRoundtripString();
-                return;
-            }
-            if (cachedValue is decimal)
-            {
-                nodeInfo.ValueData = ((decimal)cachedValue).ToRoundtripString();
-                return;
-            }
+                case string str:
+                    nodeInfo.ValueData = str;
+                    return;
+                case DateTime dateTime:
+                    nodeInfo.ValueData = XmlConvert.ToString(dateTime, XmlDateTimeSerializationMode.RoundtripKind);
+                    return;
+                case DateTimeOffset dateTimeOffset:
+                    nodeInfo.ValueData = XmlConvert.ToString(dateTimeOffset);
+                    return;
+                case double d:
+                    nodeInfo.ValueData = d.ToRoundtripString();
+                    return;
+                case float f:
+                    nodeInfo.ValueData = f.ToRoundtripString();
+                    return;
+                case decimal dec:
+                    nodeInfo.ValueData = dec.ToRoundtripString();
+                    return;
 
-            // char/byte/sbyte/short/ushort/int/uint/long/ulong/bool/DBNull
-            IConvertible convertibleValue = cachedValue as IConvertible;
-            if (convertibleValue != null)
-            {
-                nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
-                if (cachedValue is DBNull)
-                    nodeInfo.CompatibleFormat = false;
-                return;
+                // char/byte/sbyte/short/ushort/int/uint/long/ulong/bool/DBNull
+                case IConvertible _:
+                {
+                    nodeInfo.ValueData = Convert.ToString(cachedValue, NumberFormatInfo.InvariantInfo);
+                    if (cachedValue is DBNull)
+                        nodeInfo.CompatibleFormat = false;
+                    return;
+                }
             }
 
             // the types below are supported natively only in non-compatibility mode
@@ -1410,6 +1397,8 @@ namespace KGySoft.Resources
             }
         }
 
+        [SuppressMessage("IDE", "IDE0017:Object initialization can be simplified",
+            Justification = "Setting Binder is long enough to initialize it as a separate statement.")]
         private object NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService typeResolver)
         {
             string mimeType = dataNodeInfo.MimeType;
@@ -1437,7 +1426,7 @@ namespace KGySoft.Resources
             }
 
             // 2.) By TypeConverter from byte[]
-            if (String.Equals(mimeType, ResXCommon.ByteArraySerializedObjectMimeType))
+            if (mimeType == ResXCommon.ByteArraySerializedObjectMimeType)
             {
                 string typeName = AssemblyQualifiedName;
                 if (String.IsNullOrEmpty(typeName))

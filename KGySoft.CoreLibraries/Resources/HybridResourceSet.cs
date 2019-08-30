@@ -184,8 +184,7 @@ namespace KGySoft.Resources
                         return false;
 
                     default:
-                        // internal error, no res is needed
-                        throw new InvalidOperationException("Invalid state");
+                        throw new InvalidOperationException(Res.InternalError($"Invalid state: {state}"));
                 }
             }
 

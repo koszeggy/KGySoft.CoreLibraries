@@ -1014,9 +1014,7 @@ namespace KGySoft.Serialization
 
             private void TrySetField(FieldInfo field, object obj, object value)
             {
-                IObjectReference objRef;
-                if ((Options & BinarySerializationOptions.IgnoreIObjectReference) == BinarySerializationOptions.None
-                    && (objRef = value as IObjectReference) != null)
+                if (!IgnoreIObjectReference && value is IObjectReference objRef)
                 {
                     // the object reference cannot be set yet so storing the new usage of the reference to be set later.
                     if (objectReferences == null)

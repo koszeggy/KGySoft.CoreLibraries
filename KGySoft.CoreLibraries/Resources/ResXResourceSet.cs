@@ -14,6 +14,8 @@
 
 #endregion
 
+#region Usings
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,7 +26,8 @@ using System.Reflection;
 using System.Resources;
 using System.Threading;
 using System.Xml;
-using KGySoft.Reflection;
+
+#endregion
 
 namespace KGySoft.Resources
 {
@@ -553,12 +556,14 @@ namespace KGySoft.Resources
                 Initialize(new ResXResourceReader(fileName) { BasePath = basePath ?? Path.GetDirectoryName(fileName) });
         }
 
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ResXResourceSet"/> class using the <see cref="ResXResourceReader"/> to read resources from the specified <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> of resources to be read. The stream should refer to a valid resource file content.</param>
         /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. If <see langword="null"/>, the current directory will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The using block is in Initialize")]
         public ResXResourceSet(Stream stream, string basePath = null)
             : this(basePath)
         {
@@ -571,6 +576,7 @@ namespace KGySoft.Resources
         /// <param name="textReader">The <see cref="TextReader"/> of resources to be read. The reader should refer to a valid resource file content.</param>
         /// <param name="basePath">The base path for the relative file paths specified in a <see cref="ResXFileRef"/> object. If <see langword="null"/>, the current directory will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The using block is in Initialize")]
         public ResXResourceSet(TextReader textReader, string basePath = null)
             : this(basePath)
         {

@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable 1591
 // ReSharper disable UnusedMember.Global
@@ -414,6 +415,7 @@ namespace KGySoft.Annotations
     /// which should not be removed and so is treated as used.
     /// </summary>
     [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
+    [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
     internal sealed class PublicAPIAttribute : Attribute
     {
         public PublicAPIAttribute() { }

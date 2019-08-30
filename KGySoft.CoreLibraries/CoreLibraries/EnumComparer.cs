@@ -18,8 +18,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Security; 
+
 using KGySoft.Collections;
 
 #endregion
@@ -60,6 +62,7 @@ namespace KGySoft.CoreLibraries
     /// </code>
     /// </example>
     [Serializable]
+    [SuppressMessage("Usage", "CA2229:Implement serialization constructors", Justification = "False alarm, SerializationUnityHolder will be deserialized.")]
     public abstract class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>, ISerializable
     {
         #region SerializationUnityHolder class
@@ -168,6 +171,7 @@ namespace KGySoft.CoreLibraries
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical] 
+        [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.SetType(typeof(SerializationUnityHolder));
 
         #endregion

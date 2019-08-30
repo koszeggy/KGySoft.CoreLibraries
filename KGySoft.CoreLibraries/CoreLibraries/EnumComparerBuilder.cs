@@ -210,8 +210,7 @@ namespace KGySoft.CoreLibraries
             if (underlyingType == Reflector.ULongType)
                 return OpCodes.Conv_U8;
 
-            // internal error, no Res needed
-            throw new InvalidOperationException("Unexpected underlying type");
+            throw new InvalidOperationException(Res.InternalError($"Unexpected underlying type {underlyingType}"));
         }
 
         #endregion

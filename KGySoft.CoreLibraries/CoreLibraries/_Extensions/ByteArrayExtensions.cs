@@ -266,13 +266,8 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             if (algorithm == null)
                 throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (iv == null)
-                throw new ArgumentNullException(nameof(iv), Res.ArgumentNull);
-
-            algorithm.Key = key;
-            algorithm.IV = iv;
+            algorithm.Key = key ?? throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+            algorithm.IV = iv ?? throw new ArgumentNullException(nameof(iv), Res.ArgumentNull);
 
             ICryptoTransform encryptor = algorithm.CreateEncryptor();
             using (MemoryStream encryptedResult = new MemoryStream())
@@ -284,6 +279,7 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+
         /// <summary>
         /// Encrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
         /// </summary>
@@ -292,6 +288,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="password">Password of encryption.</param>
         /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
+#if NET35 || NET40 || NET45
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")] 
+#endif
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (password == null)
@@ -300,7 +299,11 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
 
             CheckSalt(ref salt);
+#if NET35 || NET40 || NET45
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
+#else
+#error Use overload with a strong HashAlgorithmName
+#endif
 #if !NET35
             using (passwordKey)
 #endif
@@ -373,13 +376,8 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(bytes), Res.ArgumentNull);
             if (algorithm == null)
                 throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
-            if (key == null)
-                throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
-            if (iv == null)
-                throw new ArgumentNullException(nameof(iv), Res.ArgumentNull);
-
-            algorithm.Key = key;
-            algorithm.IV = iv;
+            algorithm.Key = key ?? throw new ArgumentNullException(nameof(key), Res.ArgumentNull);
+            algorithm.IV = iv ?? throw new ArgumentNullException(nameof(iv), Res.ArgumentNull);
 
             ICryptoTransform decryptor = algorithm.CreateDecryptor();
             using (CryptoStream encryptStream = new CryptoStream(new MemoryStream(bytes), decryptor, CryptoStreamMode.Read))
@@ -417,6 +415,9 @@ namespace KGySoft.CoreLibraries
         /// <param name="password">Password of decryption.</param>
         /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
+#if NET35 || NET40 || NET45
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (algorithm == null)
@@ -425,7 +426,11 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
+#if NET35 || NET40 || NET45
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
+#else
+#error Use overload with a strong HashAlgorithmName
+#endif
 #if !NET35
             using (passwordKey)
 #endif

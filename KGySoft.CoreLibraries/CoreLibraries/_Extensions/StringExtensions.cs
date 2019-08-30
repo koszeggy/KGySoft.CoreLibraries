@@ -18,10 +18,12 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+
 using KGySoft.Reflection;
 
 #endregion
@@ -350,6 +352,7 @@ namespace KGySoft.CoreLibraries
             return s.IndexOf(value, comparison) >= 0;
         }
 
+
         /// <summary>
         /// Gets whether the specified string <paramref name="s"/> equals any of the strings in the specified <paramref name="set"/> set by case sensitive ordinal comparison.
         /// </summary>
@@ -364,7 +367,7 @@ namespace KGySoft.CoreLibraries
 
             for (int i = 0; i < length; i++)
             {
-                if (String.Equals(s, set[i]))
+                if (s == set[i])
                     return true;
             }
 

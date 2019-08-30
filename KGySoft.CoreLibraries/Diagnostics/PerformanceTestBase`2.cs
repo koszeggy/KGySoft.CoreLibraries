@@ -155,8 +155,12 @@ namespace KGySoft.Diagnostics
 
             #region Methods
 
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+                Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
             public void DumpResults(TextWriter writer, bool dumpConfig, bool dumpReturnValue, bool forceShowSize)
             {
+                #region Local Methods
+
                 string DumpDiff(double currentValue, double baseValue, string unit = null)
                 {
                     double diff = currentValue - baseValue;
@@ -182,7 +186,9 @@ namespace KGySoft.Diagnostics
                     if (test.cases.Count > 1)
                         writer.WriteLine(Res.PerformanceTestSortOfCases(test.SortBySize ? Res.PerformanceTestSortBySize : test.Iterations > 0 ? Res.PerformanceTestSortByTime : Res.PerformanceTestSortByIterations));
                     writer.WriteLine(Res.PerformanceTestSeparator);
-                }
+                } 
+               
+                #endregion
 
                 if (writer == null)
                     throw new ArgumentNullException(nameof(writer), Res.ArgumentNull);

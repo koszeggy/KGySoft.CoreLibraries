@@ -98,8 +98,8 @@ namespace KGySoft.CoreLibraries.UnitTests
                 var method = mi.IsGenericMethodDefinition ? mi.MakeGenericMethod(random.NextObject(typeof(Enum)).GetType()) : mi;
                 object[] parameters = method.GetParameters().Select(p => random.NextObject(p.ParameterType, generateSettings)).ToArray();
                 string value = method.Invoke(null, parameters).ToString();
-                Assert.IsTrue(!value.StartsWith(unavailableResourcePrefix, StringComparison.Ordinal), $"{nameof(Res)}.{method.Name} refers to an undefined resource.");
-                Assert.IsTrue(!value.StartsWith(invalidResourcePrefix, StringComparison.Ordinal), $"{nameof(Res)}.{method.Name} uses too few parameters.");
+                Assert.IsFalse(value.StartsWith(unavailableResourcePrefix, StringComparison.Ordinal), $"{nameof(Res)}.{method.Name} refers to an undefined resource.");
+                Assert.IsFalse(value.StartsWith(invalidResourcePrefix, StringComparison.Ordinal), $"{nameof(Res)}.{method.Name} uses too few parameters.");
                 for (int i = 0; i < parameters.Length; i++)
                 {
                     var parameter = parameters[i];
@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries.UnitTests
                     uncovered.Add((string)enumerator.Key);
             }
 
-            Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan compiled resources detected:{Environment.NewLine}{String.Join(Environment.NewLine, uncovered.ToArray())}");
+            Assert.IsTrue(uncovered.Count == 0, $"{uncovered.Count} orphan or wrongly named compiled resources detected:{Environment.NewLine}{String.Join(Environment.NewLine, uncovered.ToArray())}");
         }
 
         #endregion

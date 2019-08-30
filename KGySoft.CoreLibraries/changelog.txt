@@ -6,12 +6,18 @@
 ===============================================================================
 
 ~~~~~~~~~
-! v4.8.0:
+! v5.0.0:
 ~~~~~~~~~
 
 + Global changes:
 =================
 + New Target Framework: .NET Core 2.0 is supported.
+
+! KGySoft namespace
+===================
+! PublicResources Class:
+  ! ICollectionNongenericValueTypeInvalid method has been renamed to ICollectionNonGenericValueTypeInvalid
+  ! IDictionaryNongenericKeyTypeInvalid method has been renamed to IDictionaryNonGenericKeyTypeInvalid
 
 ! KGySoft.CoreLibraries namespace:
 ==================================
@@ -27,7 +33,7 @@
 	to the current interface inheritance. In case of non-dictionary instances a sequential search is performed.
 + Range<T> struct:
   + New Deconstruct method.
-  + New operators for converting from T, (T, T) and to (T, T).
+  + New operators for converting from T, (T, T) and to (T, T). Not available in .NET 3.5, .NET 4.0 and .NET 4.5 versions.
 
 - KGySoft.Diagnostics namespace:
 ================================

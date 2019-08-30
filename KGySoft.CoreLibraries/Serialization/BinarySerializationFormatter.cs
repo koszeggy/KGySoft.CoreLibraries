@@ -42,7 +42,7 @@ using KGySoft.Reflection;
  * ~~~~~~~~~~~~~~~~~~~~~~~
  * 1. Add type to DataTypes 0-5 bits (adjust free places in comments)
  * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
- *    Otherwise, handle it in SerializationManager.GetDataType under b.)
+ *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
  * 3. If type is pure handle it type in SerializationManager.WritePureObject. If serialization is more than one line create a static WriteXXX.
  *    Otherwise, handle it in SerializationManager.WriteImpureObject and WriteImpureElement. Create a WriteXXX that can be called separately from writing type.
  *    Handle type in SerializationManager.WriteElement: For reference types call WriteId first, then simply call WriteXXX.
@@ -988,6 +988,8 @@ namespace KGySoft.Serialization
 #if !NET35
         [SecuritySafeCritical]
 #endif
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+            Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
         public void SerializeToStream(Stream stream, object data) => SerializeByWriter(new BinaryWriter(stream), data);
 
         /// <summary>
@@ -995,6 +997,8 @@ namespace KGySoft.Serialization
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
+            Justification = "Stream must not be disposed and the leaveOpen argument is not available in .NET 3.5. No leaks will happen.")]
         public object DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
 
         /// <summary>

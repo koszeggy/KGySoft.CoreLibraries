@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -38,12 +39,6 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static class EnumerableExtensions
     {
-        #region Constants
-
-        private const string indexerName = "Item";
-
-        #endregion
-
         #region Fields
 
         private static IThreadSafeCacheAccessor<Type, Type> genericEnumerableCache;
@@ -1435,6 +1430,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="element">The element to search.</param>
         /// <returns>The index of the found element, or -1 if <paramref name="element"/> was not found.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/> is <see langword="null"/>.</exception>
+        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "False alarm: see the null case")]
         public static int IndexOf<T>(this IEnumerable<T> source, T element)
         {
             switch (source)

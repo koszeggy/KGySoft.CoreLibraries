@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -265,6 +266,7 @@ namespace KGySoft.Serialization
         /// XmlWriter version. Start element must be opened and closed by caller.
         /// obj.GetType and type can be different (properties)
         /// </summary>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         private void SerializeObject(object obj, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
         {
             #region Local Methods to reduce complexity

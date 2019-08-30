@@ -20,12 +20,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization;
 using System.Security;
+
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -769,13 +771,14 @@ namespace KGySoft.Resources
         private static void ToDictionary(ResourceSet source, Dictionary<string, object> target)
         {
             // when merging resource sets, always cloning the values because they meant to be different (and when loading from file later they will be)
-            var expandoRs = source as IExpandoResourceSetInternal;
             IDictionaryEnumerator enumerator = source.GetEnumerator();
             while (enumerator.MoveNext())
             {
                 // ReSharper disable once PossibleNullReferenceException
                 string key = enumerator.Key.ToString();
-                target[key] = expandoRs != null ? expandoRs.GetResource(key, false, false, true, true) : enumerator.Value;
+                target[key] = source is IExpandoResourceSetInternal expandoRs
+                    ? expandoRs.GetResource(key, false, false, true, true)
+                    : enumerator.Value;
             }
         }
 
@@ -1205,10 +1208,10 @@ namespace KGySoft.Resources
                     isFirstNeutral = false;
             }
 
-            // Internal error, no res is needed (we did not reached the proxied culture)
-            throw new InvalidOperationException("Proxied culture not found in hierarchy");
+            throw new InvalidOperationException(Res.InternalError("Proxied culture not found in hierarchy"));
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         internal /*private protected*/ override object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             #region Local Methods to reduce complexity
@@ -1528,6 +1531,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Applies the AppenOnLoad rule.
         /// </summary>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         private void EnsureLoadedWithMerge(CultureInfo culture, ResourceSetRetrieval behavior)
         {
             #region Local Methods to reduce complexity

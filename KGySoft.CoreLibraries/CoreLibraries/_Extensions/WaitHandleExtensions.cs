@@ -14,7 +14,7 @@
 
 #endregion
 
-#if !NET35 && !NET40
+#if !(NET35 || NET40)
 
 #region Usings
 
@@ -59,7 +59,7 @@ namespace KGySoft.CoreLibraries
                 var completionSource = new TaskCompletionSource<bool>();
                 registeredHandle = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) => ((TaskCompletionSource<bool>)state).TrySetResult(!timedOut), completionSource, timeout, true);
                 tokenRegistration = cancellationToken.Register(state => ((TaskCompletionSource<bool>)state).TrySetResult(false), completionSource);
-                return await completionSource.Task;
+                return await completionSource.Task.ConfigureAwait(false);
             }
             finally
             {

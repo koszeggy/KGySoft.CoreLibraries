@@ -599,7 +599,7 @@ namespace KGySoft.Collections
             set
             {
                 if (!typeOfT.CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -2708,7 +2708,7 @@ namespace KGySoft.Collections
         int IList.Add(object value)
         {
             if (!typeOfT.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT), nameof(value));
             AddLast((T)value);
             return size - 1;
         }
@@ -2720,14 +2720,14 @@ namespace KGySoft.Collections
         void IList.Insert(int index, object value)
         {
             if (!typeOfT.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT), nameof(value));
             Insert(index, (T)value);
         }
 
         void IList.Remove(object value)
         {
             if (!typeOfT.CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeOfT), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeOfT), nameof(value));
             Remove((T)value);
         }
 

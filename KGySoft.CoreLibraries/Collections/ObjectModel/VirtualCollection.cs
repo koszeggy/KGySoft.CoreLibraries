@@ -154,7 +154,7 @@ namespace KGySoft.Collections.ObjectModel
             set
             {
                 if (!typeof(T).CanAcceptValue(value))
-                    throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                    throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
                 this[index] = (T)value;
             }
         }
@@ -417,7 +417,7 @@ namespace KGySoft.Collections.ObjectModel
         int IList.Add(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
             T item = (T)value;
             Add(item);
             return GetItemIndex(item);
@@ -426,14 +426,14 @@ namespace KGySoft.Collections.ObjectModel
         void IList.Insert(int index, object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Insert(index, (T)value);
         }
 
         void IList.Remove(object value)
         {
             if (!typeof(T).CanAcceptValue(value))
-                throw new ArgumentException(Res.ICollectionNongenericValueTypeInvalid(value, typeof(T)), nameof(value));
+                throw new ArgumentException(Res.ICollectionNonGenericValueTypeInvalid(value, typeof(T)), nameof(value));
             Remove((T)value);
         }
 

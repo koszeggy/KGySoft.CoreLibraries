@@ -247,7 +247,7 @@ namespace KGySoft.Resources
         {
             #region Constants
 
-            private const string errorMessage = "Internal error: This operation is invalid on a ProxyResourceSet";
+            private const string errorMessage = "This operation is invalid on a ProxyResourceSet";
 
             #endregion
 
@@ -298,11 +298,11 @@ namespace KGySoft.Resources
 
             #region Methods
 
-            public override object GetObject(string name, bool ignoreCase) => throw new InvalidOperationException(errorMessage);
-            public override object GetObject(string name) => throw new InvalidOperationException(errorMessage);
-            public override string GetString(string name) => throw new InvalidOperationException(errorMessage);
-            public override string GetString(string name, bool ignoreCase) => throw new InvalidOperationException(errorMessage);
-            public override IDictionaryEnumerator GetEnumerator() => throw new InvalidOperationException(errorMessage);
+            public override object GetObject(string name, bool ignoreCase) => throw new InvalidOperationException(Res.InternalError(errorMessage));
+            public override object GetObject(string name) => throw new InvalidOperationException(Res.InternalError(errorMessage));
+            public override string GetString(string name) => throw new InvalidOperationException(Res.InternalError(errorMessage));
+            public override string GetString(string name, bool ignoreCase) => throw new InvalidOperationException(Res.InternalError(errorMessage));
+            public override IDictionaryEnumerator GetEnumerator() => throw new InvalidOperationException(Res.InternalError(errorMessage));
 
             #endregion
         }
@@ -564,11 +564,8 @@ namespace KGySoft.Resources
         {
             if (rs == null)
                 return null;
-
-            ProxyResourceSet proxy = rs as ProxyResourceSet;
-            if (proxy != null)
+            if (rs is ProxyResourceSet proxy)
                 return proxy.WrappedResourceSet;
-
             return rs;
         }
 
@@ -780,7 +777,7 @@ namespace KGySoft.Resources
             lock (SyncRoot)
             {
                 resourceSets = null;
-                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+                lastUsedResourceSet = default;
                 resxResources.ReleaseAllResources();
                 base.ReleaseAllResources();
             }
@@ -1076,7 +1073,7 @@ namespace KGySoft.Resources
                 // they will be obtained and property merged again on next Get...
                 source = value;
                 resourceSets = null;
-                lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+                lastUsedResourceSet = default;
             }
         }
 
@@ -1087,10 +1084,7 @@ namespace KGySoft.Resources
         internal bool IsNonProxyLoaded(CultureInfo culture)
         {
             lock (SyncRoot)
-            {
-                ResourceSet rs;
-                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && !(rs is ProxyResourceSet);
-            }
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet rs) && !(rs is ProxyResourceSet);
         }
 
         /// <summary>
@@ -1110,10 +1104,7 @@ namespace KGySoft.Resources
         internal bool IsExpandoExists(CultureInfo culture)
         {
             lock (SyncRoot)
-            {
-                ResourceSet rs;
-                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out rs) && rs is IExpandoResourceSet;
-            }
+                return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet rs) && rs is IExpandoResourceSet;
         }
 
         /// <summary>
@@ -1183,6 +1174,7 @@ namespace KGySoft.Resources
         /// Warning: It CAN return a proxy
         /// </summary>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         internal ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
         {
             #region Local Methods to reduce complexity
@@ -1538,7 +1530,7 @@ namespace KGySoft.Resources
             }
 
             resourceSets = null;
-            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+            lastUsedResourceSet = default;
         }
 
         #endregion
@@ -1616,7 +1608,7 @@ namespace KGySoft.Resources
             else
                 resourceSets.Add(cultureName, rs);
 
-            lastUsedResourceSet = default(KeyValuePair<string, ResourceSet>);
+            lastUsedResourceSet = default;
         }
 
         private object GetMetaInternal(string name, CultureInfo culture, bool isString, bool cloneValue)

@@ -1154,8 +1154,7 @@ namespace KGySoft.Resources
                     return false;
             }
 
-            var resx = rs as ResXResourceSet;
-            if (resx == null || !(force || resx.IsModified))
+            if (!(rs is ResXResourceSet resx) || !(force || resx.IsModified))
                 return false;
 
             resx.Save(GetResourceFileName(culture), compatibleFormat);
@@ -1188,8 +1187,7 @@ namespace KGySoft.Resources
                 bool first = true;
                 while (enumerator.MoveNext())
                 {
-                    ResXResourceSet rs = enumerator.Value as ResXResourceSet;
-                    if (rs == null || (!rs.IsModified && !force))
+                    if (!(enumerator.Value is ResXResourceSet rs) || (!rs.IsModified && !force))
                         continue;
 
                     if (first)
@@ -1222,7 +1220,7 @@ namespace KGySoft.Resources
             ReleaseResourceSets(ResourceSets);
             base.ReleaseAllResources();
             ResetResourceSets();
-            lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
+            lastUsedResourceSet = default;
         }
 
         /// <summary>
@@ -1285,6 +1283,7 @@ namespace KGySoft.Resources
         #region Internal Methods
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         internal ResXResourceSet GetResXResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents)
         {
             #region Local Methods to reduce complexity
@@ -1431,7 +1430,7 @@ namespace KGySoft.Resources
                         AddResourceSet(context.ResourceSets, updateCultureInfo.Name, ref newProxy);
                     }
 
-                    lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
+                    lastUsedResourceSet = default;
                 }
             }
 
@@ -1450,7 +1449,7 @@ namespace KGySoft.Resources
             lock (SyncRoot)
             {
                 AddResourceSet(ResourceSets, culture.Name, ref result);
-                lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
+                lastUsedResourceSet = default;
             }
 
             Debug.Assert(result is ResXResourceSet, "AddResourceSet has replaced the ResXResourceSet to a proxy.");
@@ -1509,7 +1508,7 @@ namespace KGySoft.Resources
             ResourceSets = null;
             resxDirFullPath = null;
             syncRoot = null;
-            lastUsedResourceSet = default(KeyValuePair<string, ResXResourceSet>);
+            lastUsedResourceSet = default;
         }
 
         #endregion
@@ -1599,8 +1598,7 @@ namespace KGySoft.Resources
 
                 // Look in the ResourceSet table
                 var localResourceSets = ResourceSets; // this is Hashtable in .NET 3.5, Dictionary above
-                ResourceSet rs;
-                if (!TryGetResource(localResourceSets, culture.Name, out rs))
+                if (!TryGetResource(localResourceSets, culture.Name, out ResourceSet rs))
                     return null;
 
                 // update the cache with the most recent ResourceSet

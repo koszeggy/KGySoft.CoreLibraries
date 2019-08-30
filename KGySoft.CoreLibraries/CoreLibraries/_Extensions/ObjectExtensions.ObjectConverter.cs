@@ -1,11 +1,33 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ObjectExtensions.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+
 using KGySoft.Reflection;
 using KGySoft.Serialization;
+
+#endregion
 
 namespace KGySoft.CoreLibraries
 {
@@ -13,6 +35,32 @@ namespace KGySoft.CoreLibraries
     {
         private static class ObjectConverter
         {
+            #region ConversionContext struct
+
+            private struct ConversionContext
+            {
+                #region Fields
+
+                internal readonly CultureInfo Culture;
+                internal Exception Error;
+                internal HashSet<(object Instance, Type SourceType, Type TargetType)> FailedAttempts;
+                internal Dictionary<(Type SourceType, Type TargetType), Delegate> LastUsedConversion;
+
+                #endregion
+
+                #region Constructors
+
+                [SuppressMessage("Globalization", "CA1304:Specify CultureInfo",
+                    Justification = "False alarm, culture is set after calling this()")]
+                public ConversionContext(CultureInfo culture) : this() => Culture = culture; 
+                
+                #endregion
+            }
+
+            #endregion
+
+            #region Constructors
+
             static ObjectConverter()
             {
                 // Practically the [u]long -> IConvertible conversion makes no sense but these make possible every IConvertible
@@ -26,6 +74,32 @@ namespace KGySoft.CoreLibraries
                 Reflector.KeyValuePairType.RegisterConversion(Reflector.DictionaryEntryType, ConvertKeyValuePairToDictionaryEntry);
             }
 
+            #endregion
+
+            #region Methods
+
+            #region Internal Methods
+
+            internal static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
+            {
+                if (targetType == null)
+                    throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
+
+                if (culture == null)
+                    culture = CultureInfo.InvariantCulture;
+
+                var context = new ConversionContext(culture);
+                bool result = DoConvert(ref context, obj, targetType, out value);
+                error = context.Error;
+                return result;
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Private Methods
+
             private static bool TryConvertKeyValuePair(object obj, Type targetType, CultureInfo culture, out object result)
             {
                 if (obj.GetType() == targetType)
@@ -35,7 +109,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 Type[] types = targetType.GetGenericArguments();
-                if (!Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key)).TryConvert(types[0], culture, out object key) || !Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value)).TryConvert(types[1], culture, out object value))
+                if (!Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key)).TryConvert(types[0], culture, out object key) || !Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value)).TryConvert(types[1], culture, out object value))
                 {
                     result = null;
                     return false;
@@ -60,32 +134,7 @@ namespace KGySoft.CoreLibraries
             }
 
             private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo culture)
-                => new DictionaryEntry(Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Key)), Reflector.GetProperty(obj, nameof(KeyValuePair<_,_>.Value)));
-
-            private struct ConversionContext
-            {
-                internal readonly CultureInfo Culture;
-                internal Exception Error;
-                internal HashSet<(object Instance, Type SourceType, Type TargetType)> FailedAttempts;
-                internal Dictionary<(Type SourceType, Type TargetType), Delegate> LastUsedConversion;
-
-                public ConversionContext(CultureInfo culture) : this() => Culture = culture;
-            }
-
-            internal static bool TryConvert(object obj, Type targetType, CultureInfo culture, out object value, out Exception error)
-            {
-                if (targetType == null)
-                    throw new ArgumentNullException(nameof(targetType), Res.ArgumentNull);
-
-                error = null;
-                if (culture == null)
-                    culture = CultureInfo.InvariantCulture;
-
-                var context = new ConversionContext(culture);
-                bool result = DoConvert(ref context, obj, targetType, out value);
-                error = context.Error;
-                return result;
-            }
+                => new DictionaryEntry(Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key)), Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value)));
 
             private static bool DoConvert(ref ConversionContext context, object obj, Type targetType, out object value)
             {
@@ -182,7 +231,7 @@ namespace KGySoft.CoreLibraries
                             value = conversion.Invoke(obj, targetType, context.Culture);
                             return targetType.CanAcceptValue(value);
                         default:
-                            throw new InvalidOperationException("Invalid conversion delegate type");
+                            throw new InvalidOperationException(Res.InternalError($"Invalid conversion delegate type: {targetType}"));
                     }
                 }
                 catch (Exception e) when (!e.IsCritical())
@@ -266,10 +315,10 @@ namespace KGySoft.CoreLibraries
                 if (defaultCtor == null && !targetType.IsValueType)
                     return TryPopulateByInitializerCollection(ref context, collection, collectionCtor, targetElementType, isDictionary, out value);
 
-				var targetCollection = (IEnumerable)Reflector.CreateInstance(targetType);
+                var targetCollection = (IEnumerable)Reflector.CreateInstance(targetType);
                 if (!targetType.IsReadWriteCollection(targetCollection))
                 {
-					// read-only collection: trying again by initializer collection
+                    // read-only collection: trying again by initializer collection
                     if (collectionCtor != null)
                         return TryPopulateByInitializerCollection(ref context, collection, collectionCtor, targetElementType, isDictionary, out value);
                     return false;
@@ -352,7 +401,7 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryPopulateByInitializerCollection(ref ConversionContext context, IEnumerable sourceCollection, ConstructorInfo collectionCtor, Type targetElementType, bool isDictionary, out object value)
             {
-				IEnumerable initializerCollection = targetElementType.CreateInitializerCollection(isDictionary);
+                IEnumerable initializerCollection = targetElementType.CreateInitializerCollection(isDictionary);
                 if (!TryPopulateCollection(ref context, sourceCollection, initializerCollection, targetElementType))
                 {
                     value = null;
@@ -402,6 +451,8 @@ namespace KGySoft.CoreLibraries
 
                 return false;
             }
+
+            #endregion
         }
     }
 }

@@ -881,8 +881,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            // should never occur, throwing internal error without resource
-            throw new InvalidOperationException("Unexpected signed base type");
+            throw new InvalidOperationException(Res.InternalError($"Unexpected signed base type: {typeCode}"));
         }
 
         #endregion

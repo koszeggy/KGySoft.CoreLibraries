@@ -876,7 +876,7 @@ namespace KGySoft.CoreLibraries
             if (maxLength < minLength)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), Res.MaxLengthLessThanMinLength);
             if (!Enum<StringCreation>.IsDefined(strategy))
-                throw new ArgumentOutOfRangeException(nameof(strategy), Res.ArgumentOutOfRange);
+                throw new ArgumentOutOfRangeException(nameof(strategy), Res.EnumOutOfRange(strategy));
 
             int length = random.NextInt32(minLength, maxLength, true);
             if (length == 0)
@@ -928,7 +928,7 @@ namespace KGySoft.CoreLibraries
                     return WordGenerator.GenerateSentence(random, length);
 
                 default:
-                    throw new InvalidOperationException("Unexpected strategy");
+                    throw new InvalidOperationException(Res.InternalError(nameof(strategy)));
             }
         }
 

@@ -217,13 +217,13 @@ namespace KGySoft
         /// <param name="value">The provided value.</param>
         /// <param name="type">The expected type.</param>
         /// <returns>A localized string similar to <c>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</c></returns>
-        public static string ICollectionNongenericValueTypeInvalid(object value, Type type) => Res.ICollectionNongenericValueTypeInvalid(value, type);
+        public static string ICollectionNonGenericValueTypeInvalid(object value, Type type) => Res.ICollectionNonGenericValueTypeInvalid(value, type);
 
         /// <summary>Looks up a localized string similar to <c>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</c></summary>
         /// <param name="key">The provided key.</param>
         /// <param name="type">The expected type.</param>
         /// <returns>A localized string similar to <c>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</c></returns>
-        public static string IDictionaryNongenericKeyTypeInvalid(object key, Type type) => Res.IDictionaryNongenericKeyTypeInvalid(key, type);
+        public static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Res.IDictionaryNonGenericKeyTypeInvalid(key, type);
         // ReSharper restore InconsistentNaming
 
         #endregion

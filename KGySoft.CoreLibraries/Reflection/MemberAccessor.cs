@@ -19,10 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Security;
+
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
@@ -211,6 +213,7 @@ namespace KGySoft.Reflection
         /// or <c>(<see cref="object"/> instance, <see cref="object"/> value, <see cref="object"/>[] indexerParameters)</c>.
         /// For constructors, generated parameter is always <c><see cref="object"/>[] parameters</c>.
         /// </returns>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         internal /*private protected*/ DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
             #region Local Methods

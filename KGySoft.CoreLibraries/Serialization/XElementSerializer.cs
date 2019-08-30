@@ -282,6 +282,7 @@ namespace KGySoft.Serialization
         /// Serializes a whole object. May throw exceptions on invalid or inappropriate options.
         /// XElement version.
         /// </summary>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         private void SerializeObject(object obj, bool typeNeeded, XElement parent, DesignerSerializationVisibility visibility)
         {
             #region Local Methods to reduce complexity

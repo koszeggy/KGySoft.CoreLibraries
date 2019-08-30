@@ -137,6 +137,80 @@ namespace KGySoft.Serialization
 
             #region Methods
 
+            #region Static Methods
+
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
+            private static Type GetCollectionType(DataTypes collectionDataType)
+            {
+                switch (collectionDataType)
+                {
+                    case DataTypes.List:
+                        return Reflector.ListGenType;
+                    case DataTypes.LinkedList:
+                        return typeof(LinkedList<>);
+                    case DataTypes.HashSet:
+                        return typeof(HashSet<>);
+                    case DataTypes.Queue:
+                        return typeof(Queue<>);
+                    case DataTypes.Stack:
+                        return typeof(Stack<>);
+                    case DataTypes.CircularList:
+                        return typeof(CircularList<>);
+#if !NET35
+                    case DataTypes.SortedSet:
+                        return typeof(SortedSet<>);
+#endif
+
+                    case DataTypes.ArrayList:
+                        return typeof(ArrayList);
+                    case DataTypes.Hashtable:
+                        return typeof(Hashtable);
+                    case DataTypes.QueueNonGeneric:
+                        return typeof(Queue);
+                    case DataTypes.StackNonGeneric:
+                        return typeof(Stack);
+                    case DataTypes.StringCollection:
+                        return Reflector.StringCollectionType;
+
+
+                    case DataTypes.Dictionary:
+                        return Reflector.DictionaryGenType;
+                    case DataTypes.SortedList:
+                        return typeof(SortedList<,>);
+                    case DataTypes.SortedDictionary:
+                        return typeof(SortedDictionary<,>);
+                    case DataTypes.CircularSortedList:
+                        return typeof(CircularSortedList<,>);
+
+                    case DataTypes.SortedListNonGeneric:
+                        return typeof(SortedList);
+                    case DataTypes.ListDictionary:
+                        return typeof(ListDictionary);
+                    case DataTypes.HybridDictionary:
+                        return typeof(HybridDictionary);
+                    case DataTypes.OrderedDictionary:
+                        return typeof(OrderedDictionary);
+                    case DataTypes.StringDictionary:
+                        return typeof(StringDictionary);
+
+                    case DataTypes.DictionaryEntry:
+                        return Reflector.DictionaryEntryType;
+                    case DataTypes.DictionaryEntryNullable:
+                        return typeof(DictionaryEntry?);
+                    case DataTypes.KeyValuePair:
+                        return Reflector.KeyValuePairType;
+                    case DataTypes.KeyValuePairNullable:
+                        return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
+
+                    default:
+                        throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
+                }
+            }
+
+            #endregion
+
+            #region Instance Methods
+
             #region Public Methods
 
             public override string ToString() => DataTypeToString(ElementDataType | CollectionDataType);
@@ -343,73 +417,7 @@ namespace KGySoft.Serialization
                 }
             }
 
-            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
-            private Type GetCollectionType(DataTypes collectionDataType)
-            {
-                switch (collectionDataType)
-                {
-                    case DataTypes.List:
-                        return Reflector.ListGenType;
-                    case DataTypes.LinkedList:
-                        return typeof(LinkedList<>);
-                    case DataTypes.HashSet:
-                        return typeof(HashSet<>);
-                    case DataTypes.Queue:
-                        return typeof(Queue<>);
-                    case DataTypes.Stack:
-                        return typeof(Stack<>);
-                    case DataTypes.CircularList:
-                        return typeof(CircularList<>);
-#if !NET35
-                    case DataTypes.SortedSet:
-                        return typeof(SortedSet<>);
-#endif
-
-                    case DataTypes.ArrayList:
-                        return typeof(ArrayList);
-                    case DataTypes.Hashtable:
-                        return typeof(Hashtable);
-                    case DataTypes.QueueNonGeneric:
-                        return typeof(Queue);
-                    case DataTypes.StackNonGeneric:
-                        return typeof(Stack);
-                    case DataTypes.StringCollection:
-                        return Reflector.StringCollectionType;
-
-
-                    case DataTypes.Dictionary:
-                        return Reflector.DictionaryGenType;
-                    case DataTypes.SortedList:
-                        return typeof(SortedList<,>);
-                    case DataTypes.SortedDictionary:
-                        return typeof(SortedDictionary<,>);
-                    case DataTypes.CircularSortedList:
-                        return typeof(CircularSortedList<,>);
-
-                    case DataTypes.SortedListNonGeneric:
-                        return typeof(SortedList);
-                    case DataTypes.ListDictionary:
-                        return typeof(ListDictionary);
-                    case DataTypes.HybridDictionary:
-                        return typeof(HybridDictionary);
-                    case DataTypes.OrderedDictionary:
-                        return typeof(OrderedDictionary);
-                    case DataTypes.StringDictionary:
-                        return typeof(StringDictionary);
-
-                    case DataTypes.DictionaryEntry:
-                        return Reflector.DictionaryEntryType;
-                    case DataTypes.DictionaryEntryNullable:
-                        return typeof(DictionaryEntry?);
-                    case DataTypes.KeyValuePair:
-                        return Reflector.KeyValuePairType;
-                    case DataTypes.KeyValuePairNullable:
-                        return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
-
-                    default:
-                        throw new SerializationException(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));
-                }
-            }
+            #endregion
 
             #endregion
 

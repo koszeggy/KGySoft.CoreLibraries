@@ -28,6 +28,7 @@ using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
+
 using KGySoft.Reflection;
 using KGySoft.Serialization;
 
@@ -516,22 +517,29 @@ namespace KGySoft.Resources
         {
             #region Constructors
 
+            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")]
             internal ResXReader(Stream stream)
                 : base(stream, InitNameTable())
             {
                 WhitespaceHandling = WhitespaceHandling.Significant;
+                DtdProcessing = DtdProcessing.Prohibit;
+                XmlResolver = null;
             }
 
             [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, stream is passed to the overloaded constructor.")]
+            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")]
             internal ResXReader(string fileName)
                 : this(File.OpenRead(fileName))
             {
             }
 
+            [SuppressMessage("Security", "CA3077:InsecureDTDProcessing", Justification = "False alarm, DTD processing is set to prohibited in the constructor body.")]
             internal ResXReader(TextReader reader)
                 : base(reader, InitNameTable())
             {
                 WhitespaceHandling = WhitespaceHandling.Significant;
+                DtdProcessing = DtdProcessing.Prohibit;
+                XmlResolver = null;
             }
 
             #endregion
@@ -769,6 +777,8 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <note type="tip">To create a <see cref="ResXResourceReader"/> from a string use the <see cref="FromFileContents">FromFileContents</see> method.</note>
         /// </remarks>
+        [SuppressMessage("Security", "CA3075:Insecure DTD processing in XML",
+            Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")]
         public ResXResourceReader(string fileName, ITypeResolutionService typeResolver = null)
         {
             if (fileName == null)
@@ -784,6 +794,8 @@ namespace KGySoft.Resources
         /// <param name="reader">A text stream reader that contains resources.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+        [SuppressMessage("Security", "CA3075:Insecure DTD processing in XML",
+            Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")]
         public ResXResourceReader(TextReader reader, ITypeResolutionService typeResolver = null)
         {
             if (reader == null)
@@ -799,6 +811,8 @@ namespace KGySoft.Resources
         /// <param name="stream">An input stream that contains resources.</param>
         /// <param name="typeResolver">An object that resolves type names specified in a resource. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
+        [SuppressMessage("Security", "CA3075:Insecure DTD processing in XML",
+            Justification = "False alarm, DTD processing is set to prohibited in ResXReader constructor.")]
         public ResXResourceReader(Stream stream, ITypeResolutionService typeResolver = null)
         {
             if (stream == null)
@@ -846,8 +860,7 @@ namespace KGySoft.Resources
 
         private static void AddNode(ICollection<KeyValuePair<string, ResXDataNode>> collection, string key, ResXDataNode value)
         {
-            var dict = collection as Dictionary<string, ResXDataNode>;
-            if (dict != null)
+            if (collection is Dictionary<string, ResXDataNode> dict)
                 dict[key] = value;
             else
                 collection.Add(new KeyValuePair<string, ResXDataNode>(key, value));
@@ -1110,8 +1123,7 @@ namespace KGySoft.Resources
                 return null;
 
             // alias value found
-            string asmName;
-            if (activeAliases.TryGetValue(alias, out asmName))
+            if (activeAliases.TryGetValue(alias, out string asmName))
                 return asmName;
 
             // type name is with assembly name
@@ -1129,8 +1141,7 @@ namespace KGySoft.Resources
             switch (state)
             {
                 case States.Created:
-                    // internal error, no resource is needed
-                    throw new InvalidOperationException("State should not be in Created in ReadNext");
+                    throw new InvalidOperationException(Res.InternalError($"State should not be in {States.Created} in {nameof(ReadNext)}"));
                 case States.Reading:
                     if (!Advance(mode, out key, out value))
                     {

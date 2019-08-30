@@ -110,7 +110,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region NonSerializableClass class
 
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class NonSerializableClass
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -174,7 +176,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region BinarySerializableClass class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class BinarySerializableClass : AbstractClass, IBinarySerializable
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -278,7 +282,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region SystemSerializableClass class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SystemSerializableClass : AbstractClass
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -353,7 +359,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region SerializationEventsClass class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SerializationEventsClass : IDeserializationCallback
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -432,8 +440,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public override bool Equals(object obj)
             {
-                SerializationEventsClass other = obj as SerializationEventsClass;
-                if (other == null)
+                if (!(obj is SerializationEventsClass other))
                     return base.Equals(obj);
 
                 return Id == other.Id
@@ -491,7 +498,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region CustomSerializedClass class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class CustomSerializedClass : SerializationEventsClass, ISerializable
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -537,14 +546,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 info.AddValue("dummy", null, typeof(List<string[]>));
             }
 
-            public override bool Equals(object obj)
-            {
-                CustomSerializedClass other = obj as CustomSerializedClass;
-                if (other == null)
-                    return base.Equals(obj);
-
-                return Bool == other.Bool && base.Equals(obj);
-            }
+            public override bool Equals(object obj) => !(obj is CustomSerializedClass other) ? base.Equals(obj) : Bool == other.Bool && base.Equals(obj);
 
             #endregion
 
@@ -686,7 +688,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region DefaultGraphObjRef class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class DefaultGraphObjRef : IObjectReference
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -752,7 +756,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region CustomGraphDefaultObjRef class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private sealed class CustomGraphDefaultObjRef : ISerializable
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Properties
 
@@ -771,8 +777,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public override bool Equals(object obj)
             {
-                var other = obj as CustomGraphDefaultObjRef;
-                if (other == null)
+                if (!(obj is CustomGraphDefaultObjRef other))
                     return false;
                 return Name == other.Name;
             }
@@ -787,17 +792,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         [Serializable]
         private class CustomGraphDefaultObjRefDeserializer : IObjectReference
         {
-            #region Uncovered parts
-
-#pragma warning disable 649
-
-#pragma warning restore 649
-
-            #endregion
-
             #region Fields
 
+#pragma warning disable 649
             private string name;
+#pragma warning restore 649
 
             #endregion
 
@@ -885,14 +884,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region MemoryStreamWithEquals class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private sealed class MemoryStreamWithEquals : MemoryStream
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Methods
 
             public override bool Equals(object obj)
             {
-                MemoryStreamWithEquals other = obj as MemoryStreamWithEquals;
-                if (other == null)
+                if (!(obj is MemoryStreamWithEquals other))
                     return base.Equals(obj);
 
                 return this.CanRead == other.CanRead && this.CanSeek == other.CanSeek && this.CanTimeout == other.CanTimeout && this.CanWrite == other.CanWrite
@@ -907,7 +907,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region CircularReferenceClass class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private sealed class CircularReferenceClass
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 
@@ -960,8 +962,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             public override bool Equals(object obj)
             {
-                CircularReferenceClass other = obj as CircularReferenceClass;
-                if (other == null)
+                if (!(obj is CircularReferenceClass other))
                     return base.Equals(obj);
 
                 return Id == other.Id
@@ -982,7 +983,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region SelfReferencer class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SelfReferencer : ISerializable
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Nested classes
 
@@ -1069,7 +1072,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         #region SelfReferencerEvil class
 
         [Serializable]
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private class SelfReferencerEvil : SelfReferencer
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Constructors
 
@@ -1281,7 +1286,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region NonSerializableStruct struct
 
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         private struct NonSerializableStruct
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
         {
             #region Fields
 

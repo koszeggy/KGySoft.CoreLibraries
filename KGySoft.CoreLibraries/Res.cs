@@ -479,11 +479,19 @@ namespace KGySoft
 
         // ReSharper disable InconsistentNaming
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string ICollectionNongenericValueTypeInvalid(object value, Type type) => Get("ICollection_NongenericValueTypeInvalidFormat", value, type);
+        internal static string ICollectionNonGenericValueTypeInvalid(object value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string IDictionaryNongenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NongenericKeyTypeInvalidFormat", key, type);
+        internal static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NonGenericKeyTypeInvalidFormat", key, type);
         // ReSharper restore InconsistentNaming
+
+        #endregion
+
+        #region General Internal
+
+        /// <summary>Internal Error: {0}</summary>
+        /// <remarks>Use this method to avoid CA1303 for using string literals in internal errors that never supposed to occur.</remarks>
+        internal static string InternalError(string msg) => Get("General_InternalErrorFormat", msg);
 
         #endregion
 
@@ -772,7 +780,7 @@ namespace KGySoft
         internal static string ReflectionCannotLoadAssembly(string name) => Get("Reflection_CannotLoadAssemblyFormat", name);
 
         /// <summary>Pointer type '{0}' is not supported.</summary>
-        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_ReflectionPointerTypeNotSupportedFormat", type.GetTypeName(false));
+        internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetTypeName(false));
 
         #endregion
 

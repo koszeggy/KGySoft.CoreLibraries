@@ -208,6 +208,7 @@ namespace KGySoft.Serialization
         /// <paramref name="existingInstance"/> is considered for IXmlSerializable, arrays, collections and recursive objects.
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
         private static bool TryDeserializeObject(Type type, XElement element, object existingInstance, out object result)
         {
             #region Local Methods to reduce complexity
