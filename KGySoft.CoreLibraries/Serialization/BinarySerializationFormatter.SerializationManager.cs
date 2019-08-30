@@ -1366,6 +1366,9 @@ namespace KGySoft.Serialization
                     return true;
                 }
 
+                if (!indexWritten)
+                    Write7BitInt(bw, InvariantAssemblyIndex);
+
                 Debug.Assert(IsCollectionType(dataType), $"Not a collection data type: {dataType}");
 
                 bool isGeneric = type.IsGenericType;
@@ -1381,16 +1384,12 @@ namespace KGySoft.Serialization
                 if (!(isTypeDef || isGenericParam || (isGeneric && type.ContainsGenericParameters)))
                 {
                     CircularList<DataTypes> encodedCollectionType = EncodeDataType(type, dataType);
-                    if (!indexWritten)
-                        Write7BitInt(bw, InvariantAssemblyIndex);
                     encodedCollectionType.ForEach(dt => WriteDataType(bw, dt));
                     WriteTypeNamesAndRanks(bw, type, dataType);
                     return true;
                 }
 
                 Debug.Assert(typeDef != null, "Generics are expected at this point");
-                if (!indexWritten)
-                    Write7BitInt(bw, InvariantAssemblyIndex);
 
                 // Here we have a supported generic type definition or a constructed generic type with unsupported or impure arguments.
                 WriteDataType(bw, dataType | DataTypes.GenericTypeDefinition); // note: no multiple DataTypes even for dictionaries!

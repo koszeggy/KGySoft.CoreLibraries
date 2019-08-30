@@ -152,17 +152,11 @@ namespace KGySoft.Serialization
             {
                 // not a collection
                 if (CollectionDataType == DataTypes.Null)
-                {
-                    Type = GetElementType(ElementDataType, br, manager);
-                    return Type;
-                }
+                    return Type = GetElementType(ElementDataType, br, manager);
 
                 // generic type definition
                 if (ElementDataType == DataTypes.GenericTypeDefinition)
-                {
-                    Type = GetCollectionType(CollectionDataType);
-                    return Type;
-                }
+                    return Type = GetCollectionType(CollectionDataType);
 
                 // simple collection element or dictionary key
                 if (ElementDataType != DataTypes.Null)
@@ -184,10 +178,9 @@ namespace KGySoft.Serialization
                 {
                     // 0 means zero based 1D array
                     byte rank = br.ReadByte();
-                    Type = rank == 0
+                    return Type = rank == 0
                         ? ElementType.MakeArrayType()
                         : ElementType.MakeArrayType(rank);
-                    return Type;
                 }
 
                 Type = GetCollectionType(CollectionDataType);
@@ -199,8 +192,7 @@ namespace KGySoft.Serialization
                 Type result = typeDef.GetGenericArguments().Length == 1
                     ? typeDef.GetGenericType(ElementType)
                     : typeDef.GetGenericType(ElementType, DictionaryValueType);
-                Type = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
-                return Type;
+                return Type = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
             }
 
             internal bool AreAllElementsQualified(bool isTValue)
