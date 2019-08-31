@@ -396,8 +396,10 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         internal static IEnumerable CreateInitializerCollection(this Type collectionElementType, bool isDictionary)
             => isDictionary
-                ? (IEnumerable)(collectionElementType.IsGenericType ? Reflector.CreateInstance(Reflector.DictionaryGenType.GetGenericType(collectionElementType.GetGenericArguments())) : new Dictionary<object, object>())
-                : (IEnumerable)Reflector.CreateInstance(Reflector.ListGenType.GetGenericType(collectionElementType));
+                ? (IEnumerable)(collectionElementType.IsGenericType
+                    ? CreateInstanceAccessor.GetAccessor(Reflector.DictionaryGenType.GetGenericType(collectionElementType.GetGenericArguments())).CreateInstance()
+                    : new Dictionary<object, object>())
+                : (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.ListGenType.GetGenericType(collectionElementType)).CreateInstance();
 
         /// <summary>
         /// Gets whether given type is a collection type and is capable to add/remove/clear items

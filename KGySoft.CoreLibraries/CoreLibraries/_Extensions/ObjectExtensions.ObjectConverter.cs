@@ -109,13 +109,15 @@ namespace KGySoft.CoreLibraries
                 }
 
                 Type[] types = targetType.GetGenericArguments();
-                if (!Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key)).TryConvert(types[0], culture, out object key) || !Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value)).TryConvert(types[1], culture, out object value))
+                if (!Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)).TryConvert(types[0], culture, out object key)
+                    || !Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)).TryConvert(types[1], culture, out object value))
                 {
                     result = null;
                     return false;
                 }
 
-                result = Reflector.CreateInstance(targetType, key, value);
+                result = Activator.CreateInstance(targetType);
+                Accessors.SetKeyValue(result, key, value);
                 return true;
             }
 
@@ -129,12 +131,13 @@ namespace KGySoft.CoreLibraries
                     return false;
                 }
 
-                result = Reflector.CreateInstance(targetType, key, value);
+                result = Activator.CreateInstance(targetType);
+                Accessors.SetKeyValue(result, key, value);
                 return true;
             }
 
             private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo culture)
-                => new DictionaryEntry(Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Key)), Reflector.GetProperty(obj, nameof(KeyValuePair<_, _>.Value)));
+                => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)), Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)));
 
             private static bool DoConvert(ref ConversionContext context, object obj, Type targetType, out object value)
             {
@@ -315,7 +318,7 @@ namespace KGySoft.CoreLibraries
                 if (defaultCtor == null && !targetType.IsValueType)
                     return TryPopulateByInitializerCollection(ref context, collection, collectionCtor, targetElementType, isDictionary, out value);
 
-                var targetCollection = (IEnumerable)Reflector.CreateInstance(targetType);
+                var targetCollection = (IEnumerable)(targetType.IsValueType ? Activator.CreateInstance(targetType) : CreateInstanceAccessor.GetAccessor(targetType).CreateInstance());
                 if (!targetType.IsReadWriteCollection(targetCollection))
                 {
                     // read-only collection: trying again by initializer collection
@@ -384,7 +387,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // case 2: source size is not known: using a List
-                IList resultList = (IList)Reflector.CreateInstance(Reflector.ListGenType.GetGenericType(targetElementType));
+                IList resultList = (IList)CreateInstanceAccessor.GetAccessor(Reflector.ListGenType.GetGenericType(targetElementType)).CreateInstance();
                 foreach (object sourceItem in sourceCollection)
                 {
                     if (!DoConvert(ref context, sourceItem, targetElementType, out object targetItem))
@@ -409,7 +412,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 initializerCollection = initializerCollection.AdjustInitializerCollection(collectionCtor);
-                value = Reflector.CreateInstance(collectionCtor, initializerCollection);
+                value = CreateInstanceAccessor.GetAccessor(collectionCtor).CreateInstance(initializerCollection);
                 return true;
             }
 

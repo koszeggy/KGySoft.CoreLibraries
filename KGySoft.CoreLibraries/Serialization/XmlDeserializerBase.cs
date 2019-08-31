@@ -98,18 +98,20 @@ namespace KGySoft.Serialization
         protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object> members)
         {
             initializerCollection = initializerCollection.AdjustInitializerCollection(collectionCtor);
-            object result = Reflector.CreateInstance(collectionCtor, initializerCollection);
+            object result = CreateInstanceAccessor.GetAccessor(collectionCtor).CreateInstance(initializerCollection);
 
             // restoring fields and properties of the final collection
             foreach (KeyValuePair<MemberInfo, object> member in members)
             {
                 var property = member.Key as PropertyInfo;
+                var propertyAccessor = property == null ? null : PropertyAccessor.GetAccessor(property);
                 var field = property != null ? null : member.Key as FieldInfo;
+                
 
                 // read-only property
                 if (property?.CanWrite == false)
                 {
-                    object existingValue = Reflector.GetProperty(result, property);
+                    object existingValue = propertyAccessor.Get(result);
                     if (property.PropertyType.IsValueType)
                     {
                         if (Equals(existingValue, member.Value))
@@ -133,12 +135,12 @@ namespace KGySoft.Serialization
                 // read-write property
                 if (property != null)
                 {
-                    Reflector.SetProperty(result, property, member.Value);
+                    propertyAccessor.Set(result, member.Value);
                     continue;
                 }
 
                 // field
-                Reflector.SetField(result, field, member.Value);
+                FieldAccessor.GetAccessor(field).Set(result, member.Value);
             }
 
             return result;
@@ -197,7 +199,7 @@ namespace KGySoft.Serialization
                 }
 
                 if (ctor != null)
-                    converter = Reflector.CreateInstance(ctor, ctorParams) as TypeConverter;
+                    converter = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(ctorParams) as TypeConverter;
             }
 
             if (converter?.CanConvertFrom(Reflector.StringType) != true)
@@ -227,7 +229,7 @@ namespace KGySoft.Serialization
             // Field
             if (member is FieldInfo field)
             {
-                Reflector.SetField(obj, field, deserializedValue);
+                FieldAccessor.GetAccessor(field).Set(obj, deserializedValue);
                 return;
             }
 
@@ -255,7 +257,7 @@ namespace KGySoft.Serialization
             }
 
             // Read-write property
-            Reflector.SetProperty(obj, property, deserializedValue);
+            PropertyAccessor.GetAccessor(property).Set(obj, deserializedValue);
         }
 
         protected static void AssertCollectionItem(Type objRealType, Type collectionElementType, string name)
@@ -294,8 +296,7 @@ namespace KGySoft.Serialization
                             throw new ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
 
                         string escapedChar = result.ToString(i + 1, 4);
-                        ushort charValue;
-                        if (!UInt16.TryParse(escapedChar, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out charValue))
+                        if (!UInt16.TryParse(escapedChar, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out ushort charValue))
                             throw new ArgumentException(Res.XmlSerializationInvalidEscapedContent(s));
 
                         result.Replace("\\" + escapedChar, ((char)charValue).ToString(null), i, 5);
@@ -347,7 +348,10 @@ namespace KGySoft.Serialization
             for (Type t = target.GetType(); t != null; t = t.BaseType)
             {
                 foreach (FieldInfo field in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    Reflector.SetField(target, field, Reflector.GetField(source, field));
+                {
+                    FieldAccessor accessor = FieldAccessor.GetAccessor(field);
+                    accessor.Set(target, accessor.Get(source));
+                }
             }
         }
 

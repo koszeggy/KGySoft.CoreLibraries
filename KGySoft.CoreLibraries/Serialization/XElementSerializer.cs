@@ -119,7 +119,6 @@ namespace KGySoft.Serialization
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided options.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         public XElement Serialize(object obj)
         {
             XElement result = new XElement(XmlSerializer.ElementObject);
@@ -139,7 +138,6 @@ namespace KGySoft.Serialization
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <see cref="XmlSerializerBase.Options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <exception cref="InvalidOperationException">This method cannot be called parallelly from different threads.</exception>
         /// <remarks>
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize"/> method.
@@ -305,8 +303,8 @@ namespace KGySoft.Serialization
                     if (ctx.TypeNeeded)
                         ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
 
-                    object key = Reflector.GetProperty(ctx.Object, nameof(KeyValuePair<_, _>.Key));
-                    object value = Reflector.GetProperty(ctx.Object, nameof(KeyValuePair<_, _>.Value));
+                    object key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Key));
+                    object value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Value));
                     XElement xKey = new XElement(nameof(KeyValuePair<_, _>.Key));
                     XElement xValue = new XElement(nameof(KeyValuePair<_, _>.Value));
                     ctx.Parent.Add(xKey, xValue);
@@ -477,7 +475,8 @@ namespace KGySoft.Serialization
 
                     if (ctor != null)
                     {
-                        if (Reflector.CreateInstance(ctor, ctorParams) is TypeConverter converter && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
+                        if (CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(ctorParams) is TypeConverter converter
+                            && converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
                         {
                             // ReSharper disable once AssignNullToNotNullAttribute - false alarm: it CAN be null
                             WriteStringValue(converter.ConvertToInvariantString(value), memberElement);

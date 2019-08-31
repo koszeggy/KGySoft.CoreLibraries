@@ -855,13 +855,14 @@ namespace KGySoft.CoreLibraries
             {
                 Type[] args = type.GetGenericArguments();
                 object key, value;
+                object result = Activator.CreateInstance(type);
 
                 // if key or value cannot be created just returning a default instance (by Activator, which is fast for value types)
                 context.PushMember(nameof(KeyValuePair<_, _>.Key));
                 try
                 {
                     if (!TryGenerateObject(args[0], ref context, out key))
-                        return Activator.CreateInstance(type);
+                        return result;
                 }
                 finally
                 {
@@ -872,14 +873,15 @@ namespace KGySoft.CoreLibraries
                 try
                 {
                     if (!TryGenerateObject(args[1], ref context, out value))
-                        return Activator.CreateInstance(type);
+                        return result;
                 }
                 finally
                 {
                     context.PopMember();
                 }
 
-                return Reflector.CreateInstance(type, key, value);
+                Accessors.SetKeyValue(result, key, value);
+                return result;
             }
 
             [SecurityCritical]

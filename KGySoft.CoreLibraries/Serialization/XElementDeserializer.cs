@@ -173,7 +173,9 @@ namespace KGySoft.Serialization
                 // 1.) real member
                 if (member != null)
                 {
-                    object existingValue = members != null ? null : property != null ? Reflector.GetProperty(obj, property) : Reflector.GetField(obj, field);
+                    object existingValue = members != null ? null : property != null
+                        ? PropertyAccessor.GetAccessor(property).Get(obj)
+                        : FieldAccessor.GetAccessor(field).Get(obj);
                     if (!TryDeserializeByConverter(member, itemType, () => ReadStringValue(memberOrItem), out var result) && !TryDeserializeObject(itemType, memberOrItem, existingValue, out result))
                         throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(itemType));
 
@@ -243,8 +245,8 @@ namespace KGySoft.Serialization
                         throw new NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
                     }
 
-                    var ctor = ctx.Type.GetConstructor(new[] { keyType, valueType });
-                    ctx.Result = Reflector.CreateInstance(ctor, key, value);
+                    ctx.Result = Activator.CreateInstance(ctx.Type);
+                    Accessors.SetKeyValue(ctx.Result, key, value);
                     return true;
                 }
 
@@ -295,7 +297,7 @@ namespace KGySoft.Serialization
                     }
 
                     ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
-                            ? Reflector.CreateInstance(ctx.Type)
+                            ? ctx.Type.IsValueType ? Activator.CreateInstance(ctx.Type) : CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
                             : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
 
                     // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
@@ -343,8 +345,8 @@ namespace KGySoft.Serialization
             if (type != null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
-                            ? Reflector.CreateInstance(type)
-                            : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
+                    ? type.IsValueType ? Activator.CreateInstance(type) : CreateInstanceAccessor.GetAccessor(type).CreateInstance()
+                    : throw new ReflectionException(Res.XmlSerializationNoDefaultCtor(type)));
                 if (!(instance is IXmlSerializable xmlSerializable))
                     throw new ArgumentException(Res.XmlSerializationNotAnIXmlSerializable(type));
                 DeserializeXmlSerializable(xmlSerializable, element);
