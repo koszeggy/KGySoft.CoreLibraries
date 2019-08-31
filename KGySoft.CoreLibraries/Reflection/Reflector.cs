@@ -54,7 +54,12 @@ namespace KGySoft.Reflection
 
         private static class EmptyArrayHelper<T>
         {
-            internal static readonly T[] Instance = new T[0];
+            internal static readonly T[] Instance =
+#if NET35 || NET40 || NET45
+                new T[0];
+#else
+                Array.Empty<T>();
+#endif
         }
 
         #endregion
@@ -2654,10 +2659,12 @@ namespace KGySoft.Reflection
             Justification = "The way it is used ensures that only GAC assemblies are loaded. This is how the obsolete Assembly.LoadWithPartialName can be avoided.")]
         private static Assembly LoadAssemblyWithPartialName(AssemblyName assemblyName)
         {
+#if NETFRAMEWORK
             // 1. In case of a system assembly, returning it from the GAC
-            string gacPath = GetGacPath(assemblyName.Name);
+            string gacPath = Fusion.GetGacPath(assemblyName.Name);
             if (gacPath != null)
-                return Assembly.LoadFrom(gacPath);
+                return Assembly.LoadFrom(gacPath); 
+#endif
 
             Assembly result = null;
 
@@ -2684,18 +2691,6 @@ namespace KGySoft.Reflection
             }
 
             return result;
-        }
-
-#if NETFRAMEWORK
-        [SecurityCritical] 
-#endif
-        private static string GetGacPath(string assemblyName)
-        {
-#if NETFRAMEWORK
-            return Fusion.GetGacPath(assemblyName);
-#else
-            return null;
-#endif
         }
 
         #endregion

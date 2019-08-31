@@ -33,6 +33,8 @@ using NUnit.Framework;
 
 #endregion
 
+#pragma warning disable IDE0067 // Dispose objects before losing scope - managers in test methods
+
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     /// <summary>
@@ -83,22 +85,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Static Fields
 
-        private static CultureInfo inv = CultureInfo.InvariantCulture;
-        private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
-        private static CultureInfo en = CultureInfo.GetCultureInfo("en");
-        private static CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
-        private static CultureInfo de = CultureInfo.GetCultureInfo("de");
-        private static CultureInfo deDE = CultureInfo.GetCultureInfo("de-DE");
-        private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
-        private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
+        private static readonly CultureInfo inv = CultureInfo.InvariantCulture;
+        private static readonly CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
+        private static readonly CultureInfo en = CultureInfo.GetCultureInfo("en");
+        private static readonly CultureInfo hu = CultureInfo.GetCultureInfo("hu");
+        private static readonly CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
 
         #endregion
 
         #region Instance Fields
 
+#pragma warning disable 649, IDE0044 // they are assigned in .NET Framework versions
         private CultureInfo huRunic; // hu-Runic: neutral under hu
         private CultureInfo huRunicHU; // hu-Runic-HU: specific under hu-Runic
-        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU  
+        private CultureInfo huRunicHULowland; // hu-Runic-HU-lowland: specific under hu-Runic-HU    
+#pragma warning restore 649, IDE0044
 
         #endregion
 

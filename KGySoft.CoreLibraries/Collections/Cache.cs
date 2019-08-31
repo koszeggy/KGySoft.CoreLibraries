@@ -265,6 +265,8 @@ namespace KGySoft.Collections
 
             private int position;
             private int currentIndex;
+
+            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion

@@ -302,7 +302,7 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
 #else
-#error Use overload with a strong HashAlgorithmName
+            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 1000, HashAlgorithmName.SHA256);
 #endif
 #if !NET35
             using (passwordKey)
@@ -429,7 +429,7 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
 #else
-#error Use overload with a strong HashAlgorithmName
+            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 1000, HashAlgorithmName.SHA256);
 #endif
 #if !NET35
             using (passwordKey)

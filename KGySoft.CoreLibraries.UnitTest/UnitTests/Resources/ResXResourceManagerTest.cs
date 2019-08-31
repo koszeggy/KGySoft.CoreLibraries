@@ -39,6 +39,8 @@ using NUnit.Framework;
 
 #endregion
 
+#pragma warning disable IDE0067 // Dispose objects before losing scope - managers in test methods
+
 namespace KGySoft.CoreLibraries.UnitTests.Resources
 {
     [TestFixture]
@@ -46,12 +48,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
     {
         #region Fields
 
-        private static CultureInfo inv = CultureInfo.InvariantCulture;
-        private static CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
-        private static CultureInfo en = CultureInfo.GetCultureInfo("en");
-        private static CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
-        private static CultureInfo hu = CultureInfo.GetCultureInfo("hu");
-        private static CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
+        private static readonly CultureInfo inv = CultureInfo.InvariantCulture;
+        private static readonly CultureInfo enUS = CultureInfo.GetCultureInfo("en-US");
+        private static readonly CultureInfo en = CultureInfo.GetCultureInfo("en");
+        private static readonly CultureInfo enGB = CultureInfo.GetCultureInfo("en-GB");
+        private static readonly CultureInfo hu = CultureInfo.GetCultureInfo("hu");
+        private static readonly CultureInfo huHU = CultureInfo.GetCultureInfo("hu-HU");
 
         #endregion
 

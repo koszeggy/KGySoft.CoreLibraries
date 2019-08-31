@@ -46,6 +46,7 @@ namespace KGySoft.Collections
 
         #region Fields
 
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, Dictionary<TKey, TValue> is serializable")]
         private readonly Dictionary<TKey, TValue> dict;
 
         private bool hasNullKey;

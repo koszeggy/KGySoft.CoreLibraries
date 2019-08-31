@@ -337,6 +337,9 @@ namespace KGySoft.Resources
         #region Fields
 
         private readonly ResXResourceManager resxResources; // used as sync obj as well because this reference lives along with parent lifetime and is invisible from outside
+
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
+            Justification = "In .NET Core 2.0 CultureInfo is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
         private readonly CultureInfo neutralResourcesCulture;
 
         private ResourceManagerSources source = ResourceManagerSources.CompiledAndResX;

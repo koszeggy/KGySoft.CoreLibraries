@@ -407,6 +407,8 @@ namespace KGySoft.Resources
 
         #region Fields
 
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
+            Justification = "In .NET Core 2.0 CultureInfo is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
         private readonly CultureInfo neutralResourcesCulture;
 
         private string resxResourcesDir = "Resources";
@@ -429,6 +431,8 @@ namespace KGySoft.Resources
         /// Local cache of the resource sets.
         /// Before serializing we remove proxies and unmodified sets.
         /// </summary>
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
+            Justification = "In .NET Core 2.0 ResourceSet is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
         private Dictionary<string, ResourceSet> resourceSets;
 #endif
 
@@ -563,6 +567,7 @@ namespace KGySoft.Resources
 #else
         private Dictionary<string, ResourceSet> InternalResourceSets => resourceSets;
 
+        [SuppressMessage("Compiler", "CS0109:Member does not hide an accessible member", Justification = "Required for .NET Framework")]
         private new Dictionary<string, ResourceSet> ResourceSets
         {
             get

@@ -115,8 +115,8 @@ namespace KGySoft.CoreLibraries
 #endif
 
         /// <summary>
-        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key. Unlike in the <see cref="GetValueOrDefault{TKey,TValue}(IDictionary{TKey,TValue},TKey,TValue)"/> overload,
-        /// here <paramref name="defaultValue"/> can have a different type than <typeparamref name="TValue"/>.
+        /// Tries to get the typed value from a <paramref name="dictionary"/> for the given key.
+        /// In this method <paramref name="defaultValue"/> can have a different type than <typeparamref name="TValue"/>.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>

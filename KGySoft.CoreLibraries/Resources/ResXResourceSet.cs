@@ -386,11 +386,19 @@ namespace KGySoft.Resources
 
         private readonly string origFileName;
 
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, Dictionary<string, ResXDataNode> is serializable")]
         private Dictionary<string, ResXDataNode> resources;
-        [NonSerialized] private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
+        [NonSerialized]
+        private Dictionary<string, ResXDataNode> resourcesIgnoreCase;
+
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, Dictionary<string, ResXDataNode> is serializable")]
         private Dictionary<string, ResXDataNode> metadata;
-        [NonSerialized] private Dictionary<string, ResXDataNode> metadataIgnoreCase;
+        [NonSerialized]
+        private Dictionary<string, ResXDataNode> metadataIgnoreCase;
+
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, Dictionary<string, string> is serializable")]
         private Dictionary<string, string> aliases;
+
         private bool safeMode;
         private bool autoFreeXmlData = true;
         private string basePath;

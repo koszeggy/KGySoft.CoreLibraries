@@ -70,7 +70,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(Range<T> left, Range<T> right) => !left.Equals(right);
 
-#if !NET35 && !NET40 && !NET45
+#if !(NET35 || NET40 || NET45)
 
         /// <summary>
         /// Performs an implicit conversion from <typeparamref name="T"/> to <see cref="Range{T}"/> using the provided value as upper bound.
@@ -79,6 +79,8 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="Range{T}"/> instance representing a range between the default value of <typeparamref name="T"/> and <paramref name="upperBound"/>.
         /// </returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "False alarm, T.ToRange would mean an extension method for any object, which is not acceptable.")]
         public static implicit operator Range<T>(T upperBound) => new Range<T>(upperBound);
 
         /// <summary>
@@ -88,16 +90,10 @@ namespace KGySoft.CoreLibraries
         /// <returns>
         /// A <see cref="Range{T}"/> instance representing a range between the provided <see cref="ValueTuple{T, T}.Item1"/> and <see cref="ValueTuple{T, T}.Item2"/>.
         /// </returns>
+        [SuppressMessage("Usage", "CA2225:Operator overloads have named alternates",
+            Justification = "False alarm, (T, T).ToRange would mean an extension method for any ValueTuple<T, T>, which is not acceptable.")]
         public static implicit operator Range<T>((T LowerBound, T UpperBound) bounds) => new Range<T>(bounds.LowerBound, bounds.UpperBound);
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="Range{T}"/> to <see cref="ValueTuple{T, T}"/>.
-        /// </summary>
-        /// <param name="range">The range to convert.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator (T LowerBound, T UpperBound)(Range<T> range) => (range.LowerBound, range.UpperBound);
 #endif
 
         #endregion

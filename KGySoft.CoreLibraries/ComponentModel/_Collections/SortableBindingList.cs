@@ -62,6 +62,8 @@ namespace KGySoft.ComponentModel
         [NonSerialized] private bool sortPending; // indicates that the list is sorted but contains unsorted elements due to insertion
         [NonSerialized] private PropertyDescriptor sortProperty;
         private string sortPropertyName; // for serialization
+
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, nullable enums are serializable")]
         private ListSortDirection? sortDirection;
         [NonSerialized] private CircularList<SortIndex> sortedToBaseIndex; // int is not enough, because contains the evaluated property value can be used for comparison when an item is inserted/changed
         [NonSerialized] private IComparer<SortIndex> itemComparer;

@@ -257,6 +257,8 @@ namespace KGySoft.Collections
 
             private int index;
             private int steps;
+
+            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion
@@ -392,6 +394,8 @@ namespace KGySoft.Collections
             private readonly TValue[] values;
 
             private int index;
+
+            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion
@@ -487,6 +491,8 @@ namespace KGySoft.Collections
 
             private int index;
             private int steps;
+
+            [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, KeyValuePair<TKey, TValue> is serializable")]
             private KeyValuePair<TKey, TValue> current;
 
             #endregion

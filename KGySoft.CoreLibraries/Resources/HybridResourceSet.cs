@@ -206,7 +206,11 @@ namespace KGySoft.Resources
         #region Fields
 
         private ResXResourceSet resxResourceSet;
+
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
+            Justification = "In .NET Core 2.0 ResourceSet is not serializable. We still allow serialization in general, which may fail on unsupported targets.")]
         private ResourceSet compiledResourceSet;
+
         [NonSerialized] private HashSet<string> compiledKeys;
         [NonSerialized] private HashSet<string> compiledKeysCaseInsensitive;
 

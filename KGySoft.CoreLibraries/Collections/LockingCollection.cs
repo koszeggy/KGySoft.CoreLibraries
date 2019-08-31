@@ -20,8 +20,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
+
 using KGySoft.Diagnostics;
 
 #endregion
@@ -81,6 +83,8 @@ namespace KGySoft.Collections
         #region Fields
 
         private readonly ICollection<T> collection;
+
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields", Justification = "False alarm, object is serializable")]
         private readonly object syncRoot = new object();
 
         #endregion

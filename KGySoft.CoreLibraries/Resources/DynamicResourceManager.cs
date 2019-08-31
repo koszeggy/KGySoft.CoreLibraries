@@ -562,6 +562,9 @@ namespace KGySoft.Resources
         /// If <see cref="autoAppend"/> contains <see cref="AutoAppendOptions.AppendOnLoad"/> flag,
         /// contains the up-to-date cultures. Value is <see langword="true"/>&#160;if that culture is merged so it can be taken as a base for merge.
         /// </summary>
+        [SuppressMessage("Usage", "CA2235:Mark all non-serializable fields",
+            Justification = "In .NET Core 2.0 CultureInfo is not serializable. Unfortunately we cannot switch to ISerializable due to the ResourceManager base. " +
+                "But KGySoft.Serialization.BinarySerializationFormatter is still able to serialize CultureInfo")]
         private Dictionary<CultureInfo, bool> mergedCultures;
 
         #endregion
