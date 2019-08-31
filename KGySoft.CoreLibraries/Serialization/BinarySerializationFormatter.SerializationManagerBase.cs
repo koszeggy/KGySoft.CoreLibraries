@@ -60,6 +60,7 @@ namespace KGySoft.Serialization
             protected static readonly Type[] KnownTypes =
             {
                 Reflector.NullableType,
+                Reflector.Type,
                 Reflector.ArrayType,
                 Reflector.EnumType,
                 typeof(IBinarySerializable)
