@@ -69,12 +69,12 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Properties
+        #region Private Protected Properties
 
         /// <summary>
         /// Gets the type of parameters of the accessed member in the reflected type.
         /// </summary>
-        internal /*private protected*/ Type[] ParameterTypes { get; }
+        private protected Type[] ParameterTypes { get; }
 
         #endregion
 
@@ -87,7 +87,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="member">The <see cref="MemberInfo"/> for which the accessor is created.</param>
         /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
-        protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
+        private protected MemberAccessor(MemberInfo member, Type[] parameterTypes)
         {
             MemberInfo = member ?? throw new ArgumentNullException(nameof(member), Res.ArgumentNull);
             ParameterTypes = parameterTypes ?? Type.EmptyTypes;
@@ -115,7 +115,7 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-        internal /*private protected*/ static bool IsSecurityConflict(VerificationException ve, string accessorPrefix = null)
+        private protected static bool IsSecurityConflict(VerificationException ve, string accessorPrefix = null)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Methods
+        #region Private Protected Methods
 
         /// <summary>
         /// Gets a <see cref="DynamicMethod"/> that invokes the referred <paramref name="methodBase"/> (method or constructor).
@@ -214,7 +214,7 @@ namespace KGySoft.Reflection
         /// For constructors, generated parameter is always <c><see cref="object"/>[] parameters</c>.
         /// </returns>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        internal /*private protected*/ DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
+        private protected DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
             #region Local Methods
 

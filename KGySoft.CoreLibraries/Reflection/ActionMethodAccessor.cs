@@ -69,9 +69,9 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Methods
+        #region Private Protected Methods
 
-        internal /*private protected*/ override Delegate CreateInvoker()
+        private protected override Delegate CreateInvoker()
         {
             var methodBase = (MethodBase)MemberInfo;
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);

@@ -37,9 +37,9 @@ namespace KGySoft.Serialization
     {
         #region Methods
 
-        #region Protected Methods
+        #region Private Protected Methods
 
-        protected static void ParseArrayDimensions(string attrLength, string attrDim, out int[] lengths, out int[] lowerBounds)
+        private protected static void ParseArrayDimensions(string attrLength, string attrDim, out int[] lengths, out int[] lowerBounds)
         {
             if (attrLength == null && attrDim == null)
                 throw new ArgumentException(Res.XmlSerializationArrayNoLength);
@@ -72,7 +72,7 @@ namespace KGySoft.Serialization
             }
         }
 
-        protected static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
+        private protected static bool CheckArray(Array array, int[] lengths, int[] lowerBounds, bool throwError)
         {
             if (lengths.Length != array.Rank)
                 return throwError ? throw new ArgumentException(Res.XmlSerializationArrayRankMismatch(array.GetType(), lengths.Length)) : false;
@@ -95,7 +95,7 @@ namespace KGySoft.Serialization
             return true;
         }
 
-        protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object> members)
+        private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object> members)
         {
             initializerCollection = initializerCollection.AdjustInitializerCollection(collectionCtor);
             object result = CreateInstanceAccessor.GetAccessor(collectionCtor).CreateInstance(initializerCollection);
@@ -146,7 +146,7 @@ namespace KGySoft.Serialization
             return result;
         }
 
-        protected static void ResolveMember(Type type, string memberOrItemName, string strDeclaringType, string strItemType, out PropertyInfo property, out FieldInfo field, out Type itemType)
+        private protected static void ResolveMember(Type type, string memberOrItemName, string strDeclaringType, string strItemType, out PropertyInfo property, out FieldInfo field, out Type itemType)
         {
             property = null;
             field = null;
@@ -181,7 +181,7 @@ namespace KGySoft.Serialization
                 itemType = property?.PropertyType ?? field?.FieldType;
         }
 
-        protected static bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string> readStringValue, out object result)
+        private protected static bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string> readStringValue, out object result)
         {
             TypeConverter converter = null;
 
@@ -212,7 +212,7 @@ namespace KGySoft.Serialization
             return true;
         }
 
-        protected static void HandleDeserializedMember(object obj, MemberInfo member, object deserializedValue, object existingValue, Dictionary<MemberInfo, object> members)
+        private protected static void HandleDeserializedMember(object obj, MemberInfo member, object deserializedValue, object existingValue, Dictionary<MemberInfo, object> members)
         {
             // 1/a.) Cache for later (obj is an initializer collection)
             if (members != null)
@@ -260,7 +260,7 @@ namespace KGySoft.Serialization
             PropertyAccessor.GetAccessor(property).Set(obj, deserializedValue);
         }
 
-        protected static void AssertCollectionItem(Type objRealType, Type collectionElementType, string name)
+        private protected static void AssertCollectionItem(Type objRealType, Type collectionElementType, string name)
         {
             if (collectionElementType == null)
             {
@@ -273,7 +273,7 @@ namespace KGySoft.Serialization
                 throw new ArgumentException(Res.XmlSerializationItemExpected(name));
         }
 
-        protected static string Unescape(string s)
+        private protected static string Unescape(string s)
         {
             StringBuilder result = new StringBuilder(s);
 

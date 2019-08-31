@@ -557,10 +557,7 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
-        /// <summary>
-        /// Actually should be protected AND internal...
-        /// </summary>
-        internal /*private protected*/ static ResourceSet Unwrap(ResourceSet rs)
+        private protected static ResourceSet Unwrap(ResourceSet rs)
         {
             if (rs == null)
                 return null;
@@ -569,18 +566,14 @@ namespace KGySoft.Resources
             return rs;
         }
 
-        /// <summary>
-        /// Actually should be protected AND internal...
-        /// </summary>
-        internal /*private protected*/ static bool IsProxy(ResourceSet rs) => rs is ProxyResourceSet;
+        private protected static bool IsProxy(ResourceSet rs) => rs is ProxyResourceSet;
 
         [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily", Justification = "False alarm due to Debug.Assert")]
-        internal /*private protected*/ static CultureInfo GetWrappedCulture(ResourceSet proxy)
+        private protected static CultureInfo GetWrappedCulture(ResourceSet proxy)
         {
             Debug.Assert(proxy is ProxyResourceSet);
             return ((ProxyResourceSet)proxy).WrappedCulture;
         }
-
 
         #endregion
 
@@ -1059,13 +1052,53 @@ namespace KGySoft.Resources
 
         #endregion
 
-        #region Internal Methods
+        #region Protected Methods
+
+        /// <summary>
+        /// Provides the implementation for finding a resource set.
+        /// </summary>
+        /// <param name="culture">The culture object to look for.</param>
+        /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
+        /// <param name="tryParents"><see langword="true"/>&#160;to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
+        /// <returns>
+        /// The specified resource set.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
+        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
+        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
+        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
+        {
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from CoreLibraries assembly.");
+            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (resxResources.IsDisposed)
+                return;
+
+            if (disposing)
+            {
+                resxResources.Dispose();
+                base.ReleaseAllResources();
+            }
+
+            resourceSets = null;
+            lastUsedResourceSet = default;
+        }
+
+        #endregion
+
+        #region Private Protected Methods
 
         /// <summary>
         /// Sets the source of the resources.
-        /// Actually protected but should be visible only in this project.
         /// </summary>
-        internal virtual void SetSource(ResourceManagerSources value)
+        private protected virtual void SetSource(ResourceManagerSources value)
         {
             lock (SyncRoot)
             {
@@ -1079,9 +1112,8 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets whether a non-proxy resource set is present for the specified culture.
-        /// Actually protected but should be visible only in this project.
         /// </summary>
-        internal bool IsNonProxyLoaded(CultureInfo culture)
+        private protected bool IsNonProxyLoaded(CultureInfo culture)
         {
             lock (SyncRoot)
                 return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet rs) && !(rs is ProxyResourceSet);
@@ -1089,9 +1121,8 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets whether a proxy resource set is present for any culture.
-        /// Actually protected but should be visible only in this project.
         /// </summary>
-        internal bool IsAnyProxyLoaded()
+        private protected bool IsAnyProxyLoaded()
         {
             lock (SyncRoot)
                 return resourceSets?.Values.Any(v => v is ProxyResourceSet) == true;
@@ -1099,19 +1130,14 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets whether an expando resource set is present for the specified culture.
-        /// Actually protected but should be visible only in this project.
         /// </summary>
-        internal bool IsExpandoExists(CultureInfo culture)
+        private protected bool IsExpandoExists(CultureInfo culture)
         {
             lock (SyncRoot)
                 return resourceSets != null && resourceSets.TryGetValue(culture.Name, out ResourceSet rs) && rs is IExpandoResourceSet;
         }
 
-        /// <summary>
-        /// Actually should be protected AND internal...
-        /// Warning: it CAN return a proxy
-        /// </summary>
-        internal ResourceSet TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, bool cloneValue, out object value)
+        private protected ResourceSet TryGetFromCachedResourceSet(string name, CultureInfo culture, bool isString, bool cloneValue, out object value)
         {
             ResourceSet cachedRs = GetFirstResourceSet(culture);
             if (cachedRs == null)
@@ -1126,18 +1152,14 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Updates last used ResourceSet
-        /// Actually should be protected AND internal...
         /// </summary>
-        internal void SetCache(CultureInfo culture, ResourceSet rs)
+        private protected void SetCache(CultureInfo culture, ResourceSet rs)
         {
             lock (SyncRoot)
                 lastUsedResourceSet = new KeyValuePair<string, ResourceSet>(culture.Name, rs);
         }
 
-        /// <summary>
-        /// Actually should be protected AND internal...
-        /// </summary>
-        internal object GetResourceFromAny(ResourceSet rs, string name, bool isString, bool cloneValue)
+        private protected object GetResourceFromAny(ResourceSet rs, string name, bool isString, bool cloneValue)
         {
             ResourceSet realRs = Unwrap(rs);
             bool safeMode = SafeMode;
@@ -1160,12 +1182,11 @@ namespace KGySoft.Resources
         }
 
         /// <summary>
-        /// Gets whether a cached proxy
-        /// Actually should be protected AND internal...
+        /// Gets whether a cached proxy can be accepted as a result.
         /// </summary>
         /// <param name="proxy">The found proxy</param>
         /// <param name="culture">The requested culture</param>
-        internal virtual bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
+        private protected virtual bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
             // In HRM proxy is accepted only if hierarchy is loaded. This is ok because GetFirstResourceSet is called only from
             // methods, which call InternalGetResourceSet with LoadIfExists
             => ((ProxyResourceSet)proxy).HierarchyLoaded;
@@ -1175,7 +1196,7 @@ namespace KGySoft.Resources
         /// </summary>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Created resource sets are added to cache and they must not be disposed until they are released.")]
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        internal ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
+        private protected ResourceSet InternalGetResourceSet(CultureInfo culture, ResourceSetRetrieval behavior, bool tryParents, bool forceExpandoResult)
         {
             #region Local Methods to reduce complexity
 
@@ -1438,7 +1459,7 @@ namespace KGySoft.Resources
             }
         }
 
-        internal /*private protected*/ virtual object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
+        private protected virtual object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             if (name == null)
                 throw new ArgumentNullException(nameof(name), Res.ArgumentNull);
@@ -1490,47 +1511,6 @@ namespace KGySoft.Resources
             }
 
             return null;
-        }
-
-        #endregion
-
-        #region Protected Methods
-
-        /// <summary>
-        /// Provides the implementation for finding a resource set.
-        /// </summary>
-        /// <param name="culture">The culture object to look for.</param>
-        /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
-        /// <param name="tryParents"><see langword="true"/>&#160;to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
-        /// <returns>
-        /// The specified resource set.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
-        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="ThrowException"/> are both <see langword="true"/>.</exception>
-        [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "1#", Justification = "Renaming was intended, see class description.")]
-        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
-        {
-            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from CoreLibraries assembly.");
-            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
-        }
-
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (resxResources.IsDisposed)
-                return;
-
-            if (disposing)
-            {
-                resxResources.Dispose();
-                base.ReleaseAllResources();
-            }
-
-            resourceSets = null;
-            lastUsedResourceSet = default;
         }
 
         #endregion

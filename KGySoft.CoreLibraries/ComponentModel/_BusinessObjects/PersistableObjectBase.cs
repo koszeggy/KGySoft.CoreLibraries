@@ -47,12 +47,6 @@ namespace KGySoft.ComponentModel
     /// <seealso cref="ModelBase" />
     public abstract class PersistableObjectBase : ObservableObjectBase, IPersistableObject
     {
-        #region Properties
-
-        internal IPersistableObject AsPersistable => this;
-
-        #endregion
-
         #region Methods
 
         bool IPersistableObject.TryGetPropertyValue(string propertyName, out object value)

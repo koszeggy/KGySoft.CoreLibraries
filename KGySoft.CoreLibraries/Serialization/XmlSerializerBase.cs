@@ -43,7 +43,7 @@ namespace KGySoft.Serialization
     {
         #region Member struct
 
-        protected struct Member
+        private protected struct Member
         {
             #region Fields
 
@@ -71,7 +71,7 @@ namespace KGySoft.Serialization
 
             #region Constructors
 
-            public Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
+            internal Member(MemberInfo memberInfo, Dictionary<string, int> memberNamesCounts)
             {
                 MemberInfo = memberInfo;
                 this.memberNamesCounts = memberNamesCounts;
@@ -123,15 +123,15 @@ namespace KGySoft.Serialization
 
         #region Properties
 
-        #region Protected Properties
+        #region Private Protected Properties
 
-        protected XmlSerializationOptions Options { get; }
-        protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
-        protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
-        protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
-        protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
-        protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
-        protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
+        private protected XmlSerializationOptions Options { get; }
+        private protected bool IsRecursiveSerializationEnabled => (Options & XmlSerializationOptions.RecursiveSerializationAsFallback) != XmlSerializationOptions.None;
+        private protected bool IsBinarySerializationEnabled => (Options & XmlSerializationOptions.BinarySerializationAsFallback) != XmlSerializationOptions.None;
+        private protected bool IsCompactSerializationValueTypesEnabled => (Options & XmlSerializationOptions.CompactSerializationOfStructures) != XmlSerializationOptions.None;
+        private protected bool ProcessXmlSerializable => (Options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None;
+        private protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
+        private protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
 
         #endregion
 
@@ -145,7 +145,7 @@ namespace KGySoft.Serialization
 
         #region Constructors
 
-        protected XmlSerializerBase(XmlSerializationOptions options)
+        private protected XmlSerializerBase(XmlSerializationOptions options)
         {
             if (!options.AllFlagsDefined())
                 throw new ArgumentOutOfRangeException(nameof(options), Res.FlagsEnumOutOfRange(options));
@@ -158,11 +158,11 @@ namespace KGySoft.Serialization
 
         #region Static Methods
 
-        #region Protected Methods
+        #region Private Protected Methods
 
-        protected static bool IsTrustedType(Type type) => trustedTypesCache[type];
+        private protected static bool IsTrustedType(Type type) => trustedTypesCache[type];
 
-        protected static bool IsTrustedCollection(Type type)
+        private protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
 
         #endregion
@@ -246,7 +246,7 @@ namespace KGySoft.Serialization
 
         #region Instance Methods
 
-        protected BinarySerializationOptions GetBinarySerializationOptions()
+        private protected BinarySerializationOptions GetBinarySerializationOptions()
         {
             // compact, recursive: always enabled when binary serializing because they cause no problem
             BinarySerializationOptions result = BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback; // | CompactSerializationOfBoolCollections
@@ -258,7 +258,7 @@ namespace KGySoft.Serialization
             return result;
         }
 
-        protected IEnumerable<Member> GetMembersToSerialize(object obj)
+        private protected IEnumerable<Member> GetMembersToSerialize(object obj)
         {
             Type type = obj.GetType();
 
@@ -308,7 +308,7 @@ namespace KGySoft.Serialization
             return result;
         }
 
-        protected bool SkipMember(object obj, MemberInfo member, out object value, ref DesignerSerializationVisibility visibility)
+        private protected bool SkipMember(object obj, MemberInfo member, out object value, ref DesignerSerializationVisibility visibility)
         {
             value = null;
 
@@ -357,7 +357,7 @@ namespace KGySoft.Serialization
         /// Registers object to detect circular reference.
         /// Must be called from inside of try-finally to remove lock in finally if necessary.
         /// </summary>
-        protected void RegisterSerializedObject(object obj)
+        private protected void RegisterSerializedObject(object obj)
         {
             if (obj == null || obj.GetType().IsValueType)
                 return;
@@ -367,16 +367,16 @@ namespace KGySoft.Serialization
             serObjects.Add(obj);
         }
 
-        protected void UnregisterSerializedObject(object obj)
+        private protected void UnregisterSerializedObject(object obj)
         {
             if (obj == null || obj.GetType().IsValueType)
                 return;
             serObjects.Remove(obj);
         }
 
-        protected string GetTypeString(Type type) => type.GetTypeName((Options & XmlSerializationOptions.FullyQualifiedNames) != XmlSerializationOptions.None);
+        private protected string GetTypeString(Type type) => type.GetTypeName((Options & XmlSerializationOptions.FullyQualifiedNames) != XmlSerializationOptions.None);
 
-        protected string GetStringValue(object value, out bool spacePreserve, out bool escaped)
+        private protected string GetStringValue(object value, out bool spacePreserve, out bool escaped)
         {
             spacePreserve = false;
             escaped = false;

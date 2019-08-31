@@ -172,7 +172,7 @@ namespace KGySoft.Reflection
         /// Initializes a new instance of the <see cref="FieldAccessor"/> class.
         /// </summary>
         /// <param name="field">The field for which the accessor is to be created.</param>
-        internal FieldAccessor(FieldInfo field) : base(field, null)
+        private FieldAccessor(FieldInfo field) : base(field, null)
         {
         }
 

@@ -38,7 +38,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Performs a binary search on the list using the comparer.
         /// </summary>
-        protected static int BinarySearchWithComparer(CircularList<T> list, int index, int length, T value, IComparer<T> comparer)
+        private protected static int BinarySearchWithComparer(CircularList<T> list, int index, int length, T value, IComparer<T> comparer)
         {
             int lo = index;
             int hi = index + length - 1;

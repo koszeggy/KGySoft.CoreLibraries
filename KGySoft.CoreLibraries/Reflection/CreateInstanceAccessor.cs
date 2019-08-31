@@ -106,7 +106,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance creator delegate.
         /// </summary>
-        internal /*private protected*/ Delegate Initializer => initializer ?? (initializer = CreateInitializer());
+        private protected Delegate Initializer => initializer ?? (initializer = CreateInitializer());
 
         #endregion
 
@@ -116,7 +116,7 @@ namespace KGySoft.Reflection
         /// Initializes a new instance of the <see cref="CreateInstanceAccessor"/> class.
         /// </summary>
         /// <param name="member">Can be a <see cref="Type"/> or a <see cref="ConstructorInfo"/>.</param>
-        protected CreateInstanceAccessor(MemberInfo member) :
+        private protected CreateInstanceAccessor(MemberInfo member) :
             base(member, (member as ConstructorInfo)?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -190,13 +190,13 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Methods
+        #region Private Protected Methods
 
         /// <summary>
         /// In a derived class returns a delegate that creates the new instance.
         /// </summary>
         /// <returns>A delegate instance that can be used to invoke the method.</returns>
-        internal /*private protected*/ abstract Delegate CreateInitializer();
+        private protected abstract Delegate CreateInitializer();
 
         #endregion
 

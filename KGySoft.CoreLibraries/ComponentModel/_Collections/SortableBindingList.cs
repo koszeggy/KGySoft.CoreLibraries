@@ -233,20 +233,6 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Internal Methods
-
-        internal /*private protected*/ override void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
-        {
-            base.ItemPropertyChanged(item, itemIndex, property);
-            if (sortDirection == null)
-                return;
-
-            if (property != null && property.Name == sortProperty?.Name)
-                sortedToBaseIndex[itemIndex] = new SortIndex(GetBaseIndex(itemIndex), sortProperty == null ? item : sortProperty.GetValue(item));
-        }
-
-        #endregion
-
         #region Protected Methods
 
         /// <summary>
@@ -584,6 +570,20 @@ namespace KGySoft.ComponentModel
         {
             addNewPos = -1;
             base.EndNew();
+        }
+
+        #endregion
+
+        #region Private Protected Methods
+
+        private protected override void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
+        {
+            base.ItemPropertyChanged(item, itemIndex, property);
+            if (sortDirection == null)
+                return;
+
+            if (property != null && property.Name == sortProperty?.Name)
+                sortedToBaseIndex[itemIndex] = new SortIndex(GetBaseIndex(itemIndex), sortProperty == null ? item : sortProperty.GetValue(item));
         }
 
         #endregion

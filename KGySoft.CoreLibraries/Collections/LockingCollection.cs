@@ -121,12 +121,12 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region Protected Properties
+        #region Private Protected Properties
 
         /// <summary>
         /// Gets the inner collection.
         /// </summary>
-        protected ICollection<T> InnerCollection => collection;
+        private protected ICollection<T> InnerCollection => collection;
 
         #endregion
 

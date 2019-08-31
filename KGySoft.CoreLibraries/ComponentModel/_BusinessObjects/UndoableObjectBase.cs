@@ -103,20 +103,6 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Internal Properties
-
-        internal UndoableHelper Undoable
-        {
-            get
-            {
-                if (undoable == null)
-                    Interlocked.CompareExchange(ref undoable, new UndoableHelper(this), null);
-                return undoable;
-            }
-        }
-
-        #endregion
-
         #region Protected Properties
 
         /// <summary>
@@ -128,6 +114,20 @@ namespace KGySoft.ComponentModel
         {
             get => Undoable.UndoCapacity;
             set => Undoable.UndoCapacity = value;
+        }
+
+        #endregion
+
+        #region Private Properties
+
+        private UndoableHelper Undoable
+        {
+            get
+            {
+                if (undoable == null)
+                    Interlocked.CompareExchange(ref undoable, new UndoableHelper(this), null);
+                return undoable;
+            }
         }
 
         #endregion
@@ -177,7 +177,7 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Protected-Internal Methods
+        #region Protected Internal Methods
 
         /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)

@@ -1153,9 +1153,47 @@ namespace KGySoft.Resources
 
         #endregion
 
-        #region Internal Methods
+        #region Protected Methods
 
-        internal override void SetSource(ResourceManagerSources value)
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)
+                DoAutoSave();
+            mergedCultures = null;
+            UnhookEvents();
+            base.Dispose(disposing);
+        }
+
+        /// <summary>
+        /// Provides the implementation for finding a resource set.
+        /// </summary>
+        /// <param name="culture">The culture object to look for.</param>
+        /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
+        /// <param name="tryParents"><see langword="true"/>&#160;to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
+        /// <returns>
+        /// The specified resource set.
+        /// </returns>
+        /// <remarks>Unlike in case of <see cref="GetResourceSet">GetResourceSet</see> and <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> methods,
+        /// no auto appending occurs when this method is called.</remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
+        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are both <see langword="true"/>.</exception>
+        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
+        {
+            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
+            ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
+
+            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
+        }
+
+        #endregion
+
+        #region Private Protected Methods
+
+        private protected override void SetSource(ResourceManagerSources value)
         {
             lock (SyncRoot)
             {
@@ -1173,7 +1211,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="proxy">The found proxy</param>
         /// <param name="culture">The requested culture</param>
-        internal override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
+        private protected override bool IsCachedProxyAccepted(ResourceSet proxy, CultureInfo culture)
         {
             // if invariant culture is requested, this method should not be reached
             Debug.Assert(!Equals(culture, CultureInfo.InvariantCulture), "There should be no proxy for the invariant culture");
@@ -1212,7 +1250,7 @@ namespace KGySoft.Resources
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        internal /*private protected*/ override object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
+        private protected override object GetObjectInternal(string name, CultureInfo culture, bool isString, bool cloneValue)
         {
             #region Local Methods to reduce complexity
 
@@ -1360,44 +1398,6 @@ namespace KGySoft.Resources
             // If the resource set of the requested level does not exist, it can be created (as a proxy) by the base class by using tryParent=true in all levels.
             SetCache(culture, context.ToCache ?? InternalGetResourceSet(culture, ResourceSetRetrieval.LoadIfExists, true, false));
             return context.Result;
-        }
-
-        #endregion
-
-        #region Protected Methods
-
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/>&#160;to release both managed and unmanaged resources; <see langword="false"/>&#160;to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (AutoSave & AutoSaveOptions.Dispose) == AutoSaveOptions.Dispose)
-                DoAutoSave();
-            mergedCultures = null;
-            UnhookEvents();
-            base.Dispose(disposing);
-        }
-
-        /// <summary>
-        /// Provides the implementation for finding a resource set.
-        /// </summary>
-        /// <param name="culture">The culture object to look for.</param>
-        /// <param name="loadIfExists"><see langword="true"/>&#160;to load the resource set, if it has not been loaded yet; otherwise, <see langword="false"/>.</param>
-        /// <param name="tryParents"><see langword="true"/>&#160;to check parent <see cref="CultureInfo" /> objects if the resource set cannot be loaded; otherwise, <see langword="false"/>.</param>
-        /// <returns>
-        /// The specified resource set.
-        /// </returns>
-        /// <remarks>Unlike in case of <see cref="GetResourceSet">GetResourceSet</see> and <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> methods,
-        /// no auto appending occurs when this method is called.</remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
-        /// <exception cref="MissingManifestResourceException">The .resx file of the neutral culture was not found, while <paramref name="tryParents"/> and <see cref="HybridResourceManager.ThrowException"/> are both <see langword="true"/>.</exception>
-        protected override ResourceSet InternalGetResourceSet(CultureInfo culture, bool loadIfExists, bool tryParents)
-        {
-            Debug.Assert(Assembly.GetCallingAssembly() != Assembly.GetExecutingAssembly(), "InternalGetResourceSet is called from Libraries assembly.");
-            ReviseCanAcceptProxy(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents);
-
-            return Unwrap(InternalGetResourceSet(culture, loadIfExists ? ResourceSetRetrieval.LoadIfExists : ResourceSetRetrieval.GetIfAlreadyLoaded, tryParents, false));
         }
 
         #endregion

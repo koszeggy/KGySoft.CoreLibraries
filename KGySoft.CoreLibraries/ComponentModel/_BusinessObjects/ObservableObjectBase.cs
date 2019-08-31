@@ -168,11 +168,11 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Internal Properties
+        #region Private Protected Properties
 
-        internal LockingDictionary<string, object> PropertiesInternal => properties;
+        private protected LockingDictionary<string, object> PropertiesInternal => properties;
 
-        internal /*private protected*/ object WriteLock
+        private protected object WriteLock
         {
             get
             {
@@ -248,16 +248,21 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
-        internal /*private protected*/ bool TryGetPropertyValue(string propertyName, out object value)
+        internal void ReplaceProperties(IDictionary<string, object> newProperties, bool invokeChangedEvent)
         {
-            if (propertyName == null)
-                throw new ArgumentNullException(nameof(propertyName));
-            if (!CanGetProperty(propertyName))
-                throw new InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
-            return properties.TryGetValue(propertyName, out value);
+            // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
+            lock (WriteLock)
+            {
+                IEnumerable<string> toRemove = properties.Keys.Except(newProperties.Select(p => p.Key));
+                foreach (var propertyName in toRemove)
+                    ResetProperty(propertyName, invokeChangedEvent);
+
+                foreach (var property in newProperties)
+                    Set(property.Value, invokeChangedEvent, property.Key);
+            }
         }
 
-        internal /*private protected*/ bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool invokeChangedEvent)
+        internal bool TryReplaceProperty(string propertyName, object originalValue, object newValue, bool invokeChangedEvent)
         {
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
@@ -277,20 +282,6 @@ namespace KGySoft.ComponentModel
             }
 
             return true;
-        }
-
-        internal void ReplaceProperties(IDictionary<string, object> newProperties, bool invokeChangedEvent)
-        {
-            // Firstly remove the properties, which are not among the new ones. We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
-            lock (WriteLock)
-            {
-                IEnumerable<string> toRemove = properties.Keys.Except(newProperties.Select(p => p.Key));
-                foreach (var propertyName in toRemove)
-                    ResetProperty(propertyName, invokeChangedEvent);
-
-                foreach (var property in newProperties)
-                    Set(property.Value, invokeChangedEvent, property.Key);
-            }
         }
 
         internal IDictionary<string, object> CloneProperties()
@@ -501,7 +492,7 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Protected-Internal Methods
+        #region Protected Internal Methods
 
         /// <summary>
         /// Raises the <see cref="PropertyChanged"/> event.
@@ -515,6 +506,19 @@ namespace KGySoft.ComponentModel
                 SetModified(true);
             if (suspendCounter <= 0)
                 propertyChanged?.Invoke(this, e);
+        }
+
+        #endregion
+
+        #region Private Protected Methods
+
+        private protected bool TryGetPropertyValue(string propertyName, out object value)
+        {
+            if (propertyName == null)
+                throw new ArgumentNullException(nameof(propertyName));
+            if (!CanGetProperty(propertyName))
+                throw new InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
+            return properties.TryGetValue(propertyName, out value);
         }
 
         #endregion

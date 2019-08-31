@@ -166,7 +166,7 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Protected-Internal Methods
+        #region Protected Internal Methods
 
         /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)

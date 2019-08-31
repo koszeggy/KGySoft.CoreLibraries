@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries
         #region Constructors
 
         /// <summary>
-        /// Private constructor to prevent direct instantiation.
+        /// Protected constructor to prevent direct instantiation.
         /// </summary>
         protected EnumComparer()
         {

@@ -31,7 +31,7 @@ namespace KGySoft.Diagnostics
     {
         #region Repetition class
 
-        internal /*private protected*/ sealed class Repetition : ITestCaseRepetition
+        private protected sealed class Repetition : ITestCaseRepetition
         {
             #region Properties
 
@@ -66,7 +66,7 @@ namespace KGySoft.Diagnostics
 
         #region Fields
 
-        internal static readonly Dictionary<Type, string> KnownTypes = new Dictionary<Type, string>
+        private protected static readonly Dictionary<Type, string> KnownTypes = new Dictionary<Type, string>
         {
             [typeof(bool)] = "bool",
             [typeof(byte)] = "byte",

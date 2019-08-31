@@ -58,12 +58,12 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Protected Methods
+        #region Private Protected Methods
 
         /// <summary>
         /// Creates object initialization delegate.
         /// </summary>
-        internal /*private protected*/ override Delegate CreateInitializer()
+        private protected override Delegate CreateInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);

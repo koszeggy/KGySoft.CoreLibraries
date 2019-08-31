@@ -226,12 +226,6 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Internal Properties
-
-        internal /*private protected*/ bool IsAddingNew => isAddingNew;
-
-        #endregion
-
         #region Protected Properties
 
         /// <summary>
@@ -283,6 +277,12 @@ namespace KGySoft.ComponentModel
         /// <br/>The base implementation returns <see cref="ListSortDirection.Ascending"/>.
         /// </summary>
         protected virtual ListSortDirection SortDirectionCore => default;
+
+        #endregion
+
+        #region Private Protected Properties
+
+        private protected bool IsAddingNew => isAddingNew;
 
         #endregion
 
@@ -534,28 +534,6 @@ namespace KGySoft.ComponentModel
             if (disposed)
                 throw new ObjectDisposedException(null, Res.ObjectDisposed);
             FireListChanged(ListChangedType.ItemChanged, position);
-        }
-
-        #endregion
-
-        #region Internal Methods
-
-        internal /*private protected*/ void FireListChanged(ListChangedType type, int index)
-        {
-            if (!raiseListChangedEvents)
-                return;
-            OnListChanged(new ListChangedEventArgs(type, index));
-        }
-
-        /// <summary>
-        /// Called when an item contained in the <see cref="FastBindingList{T}"/> changes. Can be used if the binding list is sorted or uses indices.
-        /// <br/>The base implementation does nothing.
-        /// </summary>
-        /// <param name="item">The changed item.</param>
-        /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
-        /// <param name="property">The descriptor of the changed property.</param>
-        internal /*private protected*/ virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property)
-        {
         }
 
         #endregion
@@ -818,6 +796,26 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="e">The <see cref="ListChangedEventArgs" /> instance containing the event data.</param>
         protected virtual void OnListChanged(ListChangedEventArgs e) => listChangedHandler?.Invoke(this, e);
+
+        #endregion
+
+        #region Private Protected Methods
+
+        private protected void FireListChanged(ListChangedType type, int index)
+        {
+            if (!raiseListChangedEvents)
+                return;
+            OnListChanged(new ListChangedEventArgs(type, index));
+        }
+
+        /// <summary>
+        /// Called when an item contained in the <see cref="FastBindingList{T}"/> changes. Can be used if the binding list is sorted or uses indices.
+        /// <br/>The base implementation does nothing.
+        /// </summary>
+        /// <param name="item">The changed item.</param>
+        /// <param name="itemIndex">Index of the item determined by the virtual <see cref="FastLookupCollection{T}.GetItemIndex">GetItemIndex</see> method.</param>
+        /// <param name="property">The descriptor of the changed property.</param>
+        private protected virtual void ItemPropertyChanged(T item, int itemIndex, PropertyDescriptor property) { }
 
         #endregion
 

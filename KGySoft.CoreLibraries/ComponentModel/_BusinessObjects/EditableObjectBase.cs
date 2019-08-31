@@ -108,20 +108,6 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Internal Properties
-
-        internal EditableHelper Editable
-        {
-            get
-            {
-                if (editable == null)
-                    Interlocked.CompareExchange(ref editable, new EditableHelper(this), null);
-                return editable;
-            }
-        }
-
-        #endregion
-
         #region Protected Properties
 
         /// <summary>
@@ -134,6 +120,20 @@ namespace KGySoft.ComponentModel
         /// <seealso cref="ComponentModel.EditableObjectBehavior"/>
         /// <seealso cref="IEditableObject"/>
         protected virtual EditableObjectBehavior EditableObjectBehavior => EditableObjectBehavior.DisableNesting;
+
+        #endregion
+
+        #region Private Properties
+
+        private EditableHelper Editable
+        {
+            get
+            {
+                if (editable == null)
+                    Interlocked.CompareExchange(ref editable, new EditableHelper(this), null);
+                return editable;
+            }
+        }
 
         #endregion
 

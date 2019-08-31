@@ -234,7 +234,6 @@ namespace KGySoft.Serialization
                 bool valueRead = false;
                 object key = null;
                 object value = null;
-                Type keyType = null, valueType = null;
 
                 while (true)
                 {
@@ -250,7 +249,7 @@ namespace KGySoft.Serialization
 
                                     keyRead = true;
                                     string attrType = ctx.Reader[XmlSerializer.AttributeType];
-                                    keyType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[0];
+                                    Type keyType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[0];
                                     if (!TryDeserializeObject(keyType, ctx.Reader, null, out key))
                                     {
                                         if (attrType != null && keyType == null)
@@ -265,7 +264,7 @@ namespace KGySoft.Serialization
 
                                     valueRead = true;
                                     attrType = ctx.Reader[XmlSerializer.AttributeType];
-                                    valueType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[1];
+                                    Type valueType = attrType != null ? Reflector.ResolveType(attrType) : ctx.Type.GetGenericArguments()[1];
                                     if (!TryDeserializeObject(valueType, ctx.Reader, null, out value))
                                     {
                                         if (attrType != null && valueType == null)

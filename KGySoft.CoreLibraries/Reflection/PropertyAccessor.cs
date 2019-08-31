@@ -123,19 +123,19 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Properties
+        #region Private Protected Properties
 
         /// <summary>
         /// Gets the property getter delegate.
         /// </summary>
-        internal /*private protected*/ Delegate Getter => getter ?? (getter = CanRead
+        private protected Delegate Getter => getter ?? (getter = CanRead
             ? CreateGetter()
             : throw new NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name)));
 
         /// <summary>
         /// Gets the property setter delegate.
         /// </summary>
-        internal /*private protected*/ Delegate Setter => setter ?? (setter = CanWrite
+        private protected Delegate Setter => setter ?? (setter = CanWrite
             ? CreateSetter()
             : throw new NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name)));
 
@@ -149,7 +149,7 @@ namespace KGySoft.Reflection
         /// Initializes a new instance of the <see cref="PropertyAccessor"/> class.
         /// </summary>
         /// <param name="property">The property for which the accessor is to be created.</param>
-        protected PropertyAccessor(PropertyInfo property) :
+        private protected PropertyAccessor(PropertyInfo property) :
             base(property, property?.GetIndexParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -226,19 +226,19 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Methods
+        #region Private Protected Methods
 
         /// <summary>
         /// In a derived class returns a delegate that executes the getter method of the property.
         /// </summary>
         /// <returns>A delegate instance that can be used to get the value of the property.</returns>
-        internal /*private protected*/ abstract Delegate CreateGetter();
+        private protected abstract Delegate CreateGetter();
 
         /// <summary>
         /// In a derived class returns a delegate that executes the setter method of the property.
         /// </summary>
         /// <returns>A delegate instance that can be used to set the property.</returns>
-        internal /*private protected*/ abstract Delegate CreateSetter();
+        private protected abstract Delegate CreateSetter();
 
         #endregion
 

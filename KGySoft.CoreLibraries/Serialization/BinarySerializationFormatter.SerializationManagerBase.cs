@@ -34,7 +34,7 @@ namespace KGySoft.Serialization
         {
             #region Enumerations
 
-            protected enum GenericTypeSpecifier
+            private protected enum GenericTypeSpecifier
             {
                 TypeDefinition,
                 ConstructedType,
@@ -47,7 +47,7 @@ namespace KGySoft.Serialization
 
             #region Static Fields
 
-            protected static readonly Assembly[] KnownAssemblies =
+            private protected static readonly Assembly[] KnownAssemblies =
             {
                 Reflector.SystemCoreLibrariesAssembly,
                 Reflector.KGySoftCoreLibrariesAssembly,
@@ -57,7 +57,7 @@ namespace KGySoft.Serialization
 #endif
             };
 
-            protected static readonly Type[] KnownTypes =
+            private protected static readonly Type[] KnownTypes =
             {
                 Reflector.NullableType,
                 Reflector.Type,
@@ -70,13 +70,11 @@ namespace KGySoft.Serialization
 
             #region Instance Fields
 
-            #region Protected Fields
+            #region Private Protected Fields
 
-            protected readonly BinarySerializationOptions Options;
-
-            protected readonly StreamingContext Context;
-
-            protected readonly SerializationBinder Binder;
+            private protected readonly BinarySerializationOptions Options;
+            private protected readonly StreamingContext Context;
+            private protected readonly SerializationBinder Binder;
 
             #endregion
 
@@ -93,25 +91,25 @@ namespace KGySoft.Serialization
 
             #region Properties
 
-            protected bool ForceRecursiveSerializationOfSupportedTypes => (Options & BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes) != BinarySerializationOptions.None;
+            private protected bool ForceRecursiveSerializationOfSupportedTypes => (Options & BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes) != BinarySerializationOptions.None;
 #pragma warning disable 618
-            protected bool ForcedSerializationValueTypesAsFallback => (Options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None;
+            private protected bool ForcedSerializationValueTypesAsFallback => (Options & BinarySerializationOptions.ForcedSerializationValueTypesAsFallback) != BinarySerializationOptions.None;
 #pragma warning restore 618
-            protected bool RecursiveSerializationAsFallback => (Options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None;
-            protected bool IgnoreSerializationMethods => (Options & BinarySerializationOptions.IgnoreSerializationMethods) != BinarySerializationOptions.None;
-            protected bool IgnoreIBinarySerializable => (Options & BinarySerializationOptions.IgnoreIBinarySerializable) != BinarySerializationOptions.None;
-            protected bool OmitAssemblyQualifiedNames => (Options & BinarySerializationOptions.OmitAssemblyQualifiedNames) != BinarySerializationOptions.None;
-            protected bool CompactSerializationOfStructures => (Options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None;
-            protected bool IgnoreISerializable => (Options & BinarySerializationOptions.IgnoreISerializable) != BinarySerializationOptions.None;
-            protected bool IgnoreIObjectReference => (Options & BinarySerializationOptions.IgnoreIObjectReference) != BinarySerializationOptions.None;
-            protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
-            protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
+            private protected bool RecursiveSerializationAsFallback => (Options & BinarySerializationOptions.RecursiveSerializationAsFallback) != BinarySerializationOptions.None;
+            private protected bool IgnoreSerializationMethods => (Options & BinarySerializationOptions.IgnoreSerializationMethods) != BinarySerializationOptions.None;
+            private protected bool IgnoreIBinarySerializable => (Options & BinarySerializationOptions.IgnoreIBinarySerializable) != BinarySerializationOptions.None;
+            private protected bool OmitAssemblyQualifiedNames => (Options & BinarySerializationOptions.OmitAssemblyQualifiedNames) != BinarySerializationOptions.None;
+            private protected bool CompactSerializationOfStructures => (Options & BinarySerializationOptions.CompactSerializationOfStructures) != BinarySerializationOptions.None;
+            private protected bool IgnoreISerializable => (Options & BinarySerializationOptions.IgnoreISerializable) != BinarySerializationOptions.None;
+            private protected bool IgnoreIObjectReference => (Options & BinarySerializationOptions.IgnoreIObjectReference) != BinarySerializationOptions.None;
+            private protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
+            private protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
 
             #endregion
 
             #region Constructors
 
-            protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
+            private protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder binder, ISurrogateSelector surrogateSelector)
             {
                 Options = options;
                 Context = context;
@@ -215,9 +213,9 @@ namespace KGySoft.Serialization
 
             #endregion
 
-            #region Protected Methods
+            #region Private Protected Methods
 
-            protected void ExecuteMethodsOfAttribute(object obj, Type attributeType)
+            private protected void ExecuteMethodsOfAttribute(object obj, Type attributeType)
             {
                 if (IgnoreSerializationMethods)
                     return;

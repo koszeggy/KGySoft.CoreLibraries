@@ -98,12 +98,12 @@ namespace KGySoft.Collections.ObjectModel
 
         #region Static Methods
 
-        #region Internal Methods
+        #region Private Protected Methods
 
 #if !NET35 && !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        internal /*private protected*/ static HashSet<T> CreateAdjustSet(int length)
+        private protected static HashSet<T> CreateAdjustSet(int length)
         {
 #if NET35 || NET40 || NET45
             HashSet<T> result = new HashSet<T>();
@@ -116,17 +116,17 @@ namespace KGySoft.Collections.ObjectModel
             return result;
         }
 
-        internal /*private protected*/ static bool AreEqual(T x, T y)
+        private protected static bool AreEqual(T x, T y)
             => EqualityComparer<T>.Default.Equals(x, y);
 
-        internal /*private protected*/ static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item)
+        private protected static int GetFirstIndex(AllowNullDictionary<T, CircularList<int>> map, T item)
             => map.TryGetValue(item, out CircularList<int> indices) ? indices[0] : -1;
 
-        internal /*private protected*/ static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+        private protected static bool ContainsIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
             => map.TryGetValue(item, out var indices) && indices.Contains(index);
 
         /// <summary>Adds an index to the map and returns whether things still seem to be consistent.</summary>
-        internal /*private protected*/ static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+        private protected static bool AddIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
         {
             if (!map.TryGetValue(item, out CircularList<int> indices))
             {
@@ -148,7 +148,7 @@ namespace KGySoft.Collections.ObjectModel
         }
 
         /// <summary>Removes an index from the map and returns whether things still seem to be consistent.</summary>
-        internal /*private protected*/ static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
+        private protected static bool RemoveIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int index)
         {
             if (!map.TryGetValue(item, out CircularList<int> indices) || !RemoveIndex(indices, index))
                 return false;
@@ -157,7 +157,7 @@ namespace KGySoft.Collections.ObjectModel
             return true;
         }
 
-        internal /*private protected*/ static bool AdjustIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int startIndex, int diff, HashSet<T> adjustedValues)
+        private protected static bool AdjustIndex(AllowNullDictionary<T, CircularList<int>> map, T item, int startIndex, int diff, HashSet<T> adjustedValues)
         {
             if (adjustedValues.Contains(item))
                 return true;

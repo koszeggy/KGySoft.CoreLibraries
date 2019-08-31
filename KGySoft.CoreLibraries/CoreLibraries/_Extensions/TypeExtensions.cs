@@ -614,6 +614,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+        [SuppressMessage("Style", "IDE0016:Use 'throw' expression", Justification = "Throwing at the beginning may spare a lot of calculations")]
         private static void DoRegisterConversion(Type sourceType, Type targetType, Delegate conversion)
         {
             if (sourceType == null)

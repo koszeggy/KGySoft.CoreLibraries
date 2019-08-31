@@ -96,30 +96,6 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Internal Properties
-
-        internal UndoableHelper Undoable
-        {
-            get
-            {
-                if (undoable == null)
-                    Interlocked.CompareExchange(ref undoable, new UndoableHelper(this), null);
-                return undoable;
-            }
-        }
-
-        internal EditableHelper Editable
-        {
-            get
-            {
-                if (editable == null)
-                    Interlocked.CompareExchange(ref editable, new EditableHelper(this), null);
-                return editable;
-            }
-        }
-
-        #endregion
-
         #region Protected Properties
 
         /// <summary>
@@ -143,6 +119,30 @@ namespace KGySoft.ComponentModel
         /// <seealso cref="ComponentModel.EditableObjectBehavior"/>
         /// <seealso cref="IEditableObject"/>
         protected virtual EditableObjectBehavior EditableObjectBehavior => EditableObjectBehavior.DisableNesting;
+
+        #endregion
+
+        #region Private Properties
+
+        private UndoableHelper Undoable
+        {
+            get
+            {
+                if (undoable == null)
+                    Interlocked.CompareExchange(ref undoable, new UndoableHelper(this), null);
+                return undoable;
+            }
+        }
+
+        private EditableHelper Editable
+        {
+            get
+            {
+                if (editable == null)
+                    Interlocked.CompareExchange(ref editable, new EditableHelper(this), null);
+                return editable;
+            }
+        }
 
         #endregion
 
@@ -209,7 +209,7 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Protected-Internal Methods
+        #region Protected Internal Methods
 
         /// <inheritdoc />
         protected internal override void OnPropertyChanged(PropertyChangedExtendedEventArgs e)

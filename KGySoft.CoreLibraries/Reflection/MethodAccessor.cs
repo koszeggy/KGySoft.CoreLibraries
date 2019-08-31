@@ -92,7 +92,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the method invoker delegate.
         /// </summary>
-        internal /*private protected*/ Delegate Invoker => invoker ?? (invoker = CreateInvoker());
+        private protected Delegate Invoker => invoker ?? (invoker = CreateInvoker());
 
         #endregion
 
@@ -161,13 +161,13 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Internal Methods
+        #region Private Protected Methods
 
         /// <summary>
         /// In a derived class returns a delegate that executes the method.
         /// </summary>
         /// <returns>A delegate instance that can be used to invoke the method.</returns>
-        internal /*private protected*/ abstract Delegate CreateInvoker();
+        private protected abstract Delegate CreateInvoker();
 
         #endregion
 
