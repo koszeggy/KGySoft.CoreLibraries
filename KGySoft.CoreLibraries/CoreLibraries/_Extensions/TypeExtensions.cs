@@ -463,58 +463,8 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         internal static string GetTypeName(this Type type, bool useAqn)
         {
-            StringBuilder sb;
-            if (type.IsArray)
-            {
-                string result = GetTypeName(type.GetElementType(), useAqn);
-                int rank = type.GetArrayRank();
-                sb = new StringBuilder("[", 2 + rank);
-                if (rank == 1 && !type.GetInterfaces().Any(i => i.IsGenericType))
-                    sb.Append('*');
-                else if (rank > 1)
-                    sb.Append(new string(',', rank - 1));
-                sb.Append(']');
-                return result + sb;
-            }
-
-            if (type.IsByRef)
-                return GetTypeName(type.GetElementType(), useAqn) + "&";
-
-            if (type.IsPointer)
-                return GetTypeName(type.GetElementType(), useAqn) + "*";
-
-            // non-generic type or generic type definition
-            if (!(type.IsGenericType && !type.IsGenericTypeDefinition)) // same as: !type.IsConstructedGenericType from .NET4
-                return useAqn && type.Assembly != Reflector.SystemCoreLibrariesAssembly ? type.AssemblyQualifiedName : type.FullName;
-
-            // generic type without aqn: ToString
-            if (!useAqn)
-                return type.ToString();
-
-            // generic type with aqn: appending assembly only for non-mscorlib types
-            sb = new StringBuilder(type.GetGenericTypeDefinition().FullName);
-            sb.Append('[');
-            int len = type.GetGenericArguments().Length;
-            for (int i = 0; i < len; i++)
-            {
-                Type genericArgument = type.GetGenericArguments()[i];
-                bool isMscorlibArg = genericArgument.Assembly == Reflector.SystemCoreLibrariesAssembly;
-                if (!isMscorlibArg)
-                    sb.Append('[');
-                sb.Append(GetTypeName(genericArgument, true));
-                if (!isMscorlibArg)
-                    sb.Append(']');
-
-                if (i < len - 1)
-                    sb.Append(", ");
-            }
-            sb.Append(']');
-            if (type.Assembly != Reflector.SystemCoreLibrariesAssembly)
-            {
-                sb.Append(", ");
-                sb.Append(type.Assembly.FullName);
-            }
-
+            var sb = new StringBuilder(128);
+            DoGetTypeName(type, sb, useAqn, false);
             return sb.ToString();
         }
 
@@ -631,6 +581,68 @@ namespace KGySoft.CoreLibraries
             }
 
             conversionsOfTarget[sourceType] = conversion;
+        }
+
+        private static void DoGetTypeName(Type type, StringBuilder result, bool useAqn, bool isElementType)
+        {
+            // array
+            if (type.IsArray)
+            {
+                DoGetTypeName(type.GetElementType(), result, useAqn, true);
+                int rank = type.GetArrayRank();
+                result.Append('[');
+                if (rank == 1 && !type.Name.EndsWith("[]", StringComparison.Ordinal))
+                    result.Append('*');
+                else if (rank > 1)
+                    result.Append(new string(',', rank - 1));
+                result.Append(']');
+            }
+            // pointer
+            else if (type.IsPointer)
+            {
+                DoGetTypeName(type.GetElementType(), result, useAqn, true);
+                result.Append('*');
+            }
+            // ByRef
+            else if (type.IsByRef)
+            {
+                DoGetTypeName(type.GetElementType(), result, useAqn, true);
+                result.Append('&');
+            }
+            // non-generic type or generic type definition
+            else if (!(type.IsGenericType && !type.IsGenericTypeDefinition)) // same as: !type.IsConstructedGenericType from .NET4
+                result.Append(type.FullName);
+            // generic type without aqn: ToString
+            else if (!useAqn)
+                result.Append(type.ToString());
+            // generic type with aqn: appending assembly only for non-mscorlib types
+            else
+            {
+                result.Append(type.GetGenericTypeDefinition().FullName);
+                result.Append('[');
+                int len = type.GetGenericArguments().Length;
+                for (int i = 0; i < len; i++)
+                {
+                    Type genericArgument = type.GetGenericArguments()[i];
+                    bool isMscorlibArg = genericArgument.Assembly == Reflector.SystemCoreLibrariesAssembly;
+                    if (!isMscorlibArg)
+                        result.Append('[');
+                    DoGetTypeName(genericArgument, result, true, false);
+                    if (!isMscorlibArg)
+                        result.Append(']');
+                    if (i < len - 1)
+                        result.Append(", ");
+                }
+
+                result.Append(']');
+            }
+
+            // appending assembly, except for element types, which will be appended on returning from recursion
+            if (useAqn && !isElementType && type.Assembly != Reflector.SystemCoreLibrariesAssembly)
+            {
+                result.Append(", ");
+                result.Append(type.Assembly.FullName);
+            }
         }
 
         private static int GetSize(Type type)

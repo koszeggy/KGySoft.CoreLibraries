@@ -9,9 +9,9 @@
 ! v5.0.0:
 ~~~~~~~~~
 
-+ Global changes:
-=================
-+ New Target Framework: .NET Core 2.0 is supported.
++ Assembly changes:
+===================
++ Supporting .NET Core 2.0.
 
 ! KGySoft namespace
 ===================
@@ -55,6 +55,7 @@
 	custom serialized data.
 + BinarySerializationOptions: New ForceRecursiveSerializationOfSupportedTypes flag.
 + BinarySerializer: Adding optional BinarySerializationOptions parameter to deserialization methods.
+- XmlSerializer: Fixing array type names when XmlSerializationOptions.FullyQualifiedNames is set.
 
 
 ~~~~~~~~~

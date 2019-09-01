@@ -37,6 +37,7 @@ namespace KGySoft.CoreLibraries
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             typeof(Bitmap).RegisterTypeConverter<BitmapConverter>();
+            typeof(Icon).RegisterTypeConverter<IconConverter>();
         }
 
         #endregion

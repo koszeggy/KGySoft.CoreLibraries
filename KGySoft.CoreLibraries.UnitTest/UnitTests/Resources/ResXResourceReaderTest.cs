@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Xml;
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -144,14 +145,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 try
                 {
-                    Console.WriteLine("Key: {0}; Value: {1}", enumerator.Key, enumerator.Value);
+                    Console.WriteLine($"Key: {enumerator.Key}; Value: {enumerator.Value}");
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
 
 #if NETCOREAPP2_0
-                    if (e.InnerException is FileNotFoundException fe && fe.Message.Contains("System.Windows.Forms", StringComparison.Ordinal))
+                    if (e.InnerException is FileNotFoundException fe && fe.Message.Contains("System.Windows.Forms"))
+                        continue;
+                    if (e is SerializationException se && se.Message.Contains("Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable."))
                         continue;
 #endif
                     throw;

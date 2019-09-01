@@ -1,7 +1,7 @@
 ﻿#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: XmlSerializerTest.cs
+//  File: XmlSerializerTest.Tests.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -16,49 +16,26 @@
 
 #region Usings
 
-#if !NET35
-using System.Collections.Concurrent;
-#endif
-
-#region Used Namespaces
-
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent; 
+#endif
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
-
 using KGySoft.Collections;
 using KGySoft.ComponentModel;
-using KGySoft.Reflection;
 using KGySoft.Serialization;
 
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 
 #endregion
-
-#region Used Aliases
-
-using KGyXmlSerializer = KGySoft.Serialization.XmlSerializer;
-using SystemXmlSerializer = System.Xml.Serialization.XmlSerializer;
-
-#endregion
-
-#endregion
-
-#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode() - test types
 
 namespace KGySoft.CoreLibraries.UnitTests.Serialization
 {
@@ -66,1049 +43,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
     /// Test for XmlSerializer
     /// </summary>
     [TestFixture]
-    public class XmlSerializerTest : TestBase
+    public partial class XmlSerializerTest : TestBase
     {
-        #region Nested types
-
-        #region Enumerations
-
-        public enum TestEnum
-        {
-            One,
-            Two
-        }
-
-        #endregion
-
-        #region Nested classes
-
-        #region EmptyType class
-
-        public class EmptyType
-        {
-            #region Methods
-
-            public override bool Equals(object obj) => true;
-
-            public override int GetHashCode() => 0;
-
-            #endregion
-        }
-
-        #endregion
-
-        #region IntList class
-
-        public class IntList : List<int>, ICollection<int>
-        {
-            #region Properties
-
-            #region Public Properties
-
-            public bool IsReadOnly => false;
-
-            #endregion
-
-            #region Explicitly Implemented Interface Properties
-
-            bool ICollection<int>.IsReadOnly => (this as ICollection<int>).IsReadOnly;
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region CustomGenericCollection class
-
-        [Serializable]
-        private class CustomGenericCollection<T> : List<T>
-        {
-        }
-
-        #endregion
-
-        #region CustomNonGenericCollection class
-
-        [Serializable]
-        private class CustomNonGenericCollection : ArrayList
-        {
-        }
-
-        #endregion
-
-        #region CustomGenericDictionary class
-
-        [Serializable]
-        private class CustomGenericDictionary<TKey, TValue> : Dictionary<TKey, TValue>
-        {
-            #region Constructors
-
-            public CustomGenericDictionary()
-            {
-            }
-
-            public CustomGenericDictionary(SerializationInfo info, StreamingContext context) :
-                base(info, context)
-            {
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region CustomNonGenericDictionary class
-
-        [Serializable]
-        private class CustomNonGenericDictionary : Hashtable
-        {
-            #region Constructors
-
-            public CustomNonGenericDictionary()
-            {
-            }
-
-            public CustomNonGenericDictionary(SerializationInfo info, StreamingContext context) :
-                base(info, context)
-            {
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region XmlSerializableClass class
-
-        [XmlRoot("root")]
-        public class XmlSerializableClass : IXmlSerializable
-        {
-            #region Fields
-
-            private int backingFieldOfRealReadOnlyProperty;
-
-            #endregion
-
-            #region Properties
-
-            public int ReadWriteProperty { get; set; }
-
-            public int SemiReadOnlyProperty { get; private set; }
-
-            public int RealReadOnlyProperty => backingFieldOfRealReadOnlyProperty;
-
-            #endregion
-
-            #region Constructors
-
-            #region Public Constructors
-
-            public XmlSerializableClass(int realProp, int semiReadOnlyProp, int realReadOnlyProp)
-            {
-                ReadWriteProperty = realProp;
-                SemiReadOnlyProperty = semiReadOnlyProp;
-                backingFieldOfRealReadOnlyProperty = realReadOnlyProp;
-            }
-
-            #endregion
-
-            #region Internal Constructors
-
-            internal XmlSerializableClass()
-            {/*needed for deserialization*/
-            }
-
-            #endregion
-
-            #endregion
-
-            #region Methods
-
-            public System.Xml.Schema.XmlSchema GetSchema()
-            {
-                throw new NotImplementedException();
-            }
-
-            public void ReadXml(XmlReader reader)
-            {
-                if (reader.Settings != null && !reader.Settings.IgnoreWhitespace)
-                {
-                    reader = XmlReader.Create(reader, new XmlReaderSettings { IgnoreWhitespace = true });
-                    reader.Read();
-                }
-
-                reader.ReadStartElement();
-                ReadWriteProperty = reader.ReadElementContentAsInt("ReadWriteProperty", String.Empty);
-                SemiReadOnlyProperty = reader.ReadElementContentAsInt("ReadOnlyAutoProperty", String.Empty);
-                backingFieldOfRealReadOnlyProperty = reader.ReadElementContentAsInt("ReadOnlyProperty", String.Empty);
-            }
-
-            public void WriteXml(XmlWriter writer)
-            {
-                writer.WriteElementString("ReadWriteProperty", ReadWriteProperty.ToString(CultureInfo.InvariantCulture));
-                writer.WriteElementString("ReadOnlyAutoProperty", SemiReadOnlyProperty.ToString(CultureInfo.InvariantCulture));
-                writer.WriteElementString("ReadOnlyProperty", RealReadOnlyProperty.ToString(CultureInfo.InvariantCulture));
-            }
-
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
-
-            public override int GetHashCode() => backingFieldOfRealReadOnlyProperty.GetHashCode() ^ ReadWriteProperty.GetHashCode() ^ SemiReadOnlyProperty.GetHashCode();
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ReadOnlyProperties class
-
-        public class ReadOnlyProperties
-        {
-            #region Properties
-
-            public XmlSerializableClass XmlSerializable { get; } = new XmlSerializableClass();
-
-            public object[] Array3 { get; } = new object[3];
-
-            public Cache<int, string> Cache { get; } = new Cache<int, string>(i => i.ToString());
-
-            public ReadOnlyCollection<object> ReadOnlyCollection { get; set; }
-
-            public ReadOnlyCollection<object> ConstReadOnlyCollection { get; } = new ReadOnlyCollection<object>(new object[] { 42, 'x' });
-
-            #endregion
-
-            #region Methods
-
-            public ReadOnlyProperties Init(XmlSerializableClass xmlSerializableClass = null, object[] array = null, int[] toCache = null, ReadOnlyCollection<object> readOnlyCollection = null)
-            {
-                CopyContent(XmlSerializable, xmlSerializableClass);
-                CopyContent(Array3, array);
-                toCache?.ForEach(i => { var dummy = Cache[i]; });
-                ReadOnlyCollection = readOnlyCollection;
-                return this;
-            }
-
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
-
-            #endregion
-        }
-
-        #endregion
-
-        #region PopulatableCollectionWithReadOnlyProperties class
-
-        public class PopulatableCollectionWithReadOnlyProperties : ReadOnlyProperties, ICollection<string>
-        {
-            #region Fields
-
-            private readonly List<string> list = new List<string>();
-
-            #endregion
-
-            #region Properties
-
-            public int Count => list.Count;
-
-            public bool IsReadOnly => false;
-
-            #endregion
-
-            #region Methods
-
-            #region Public Methods
-
-            public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
-
-            public void Add(string item) => list.Add(item);
-
-            public void Clear() => list.Clear();
-
-            public bool Contains(string item) => throw new NotImplementedException();
-
-            public void CopyTo(string[] array, int arrayIndex) => throw new NotImplementedException();
-
-            public bool Remove(string item) => throw new NotImplementedException();
-
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
-            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ReadOnlyCollectionWithInitCtorAndReadOnlyProperties class
-
-        public class ReadOnlyCollectionWithInitCtorAndReadOnlyProperties : ReadOnlyProperties, IEnumerable<string>
-        {
-            #region Fields
-
-            private readonly List<string> list;
-
-            #endregion
-
-            #region Constructors
-
-            public ReadOnlyCollectionWithInitCtorAndReadOnlyProperties(IEnumerable<string> collection) => list = new List<string>(collection);
-
-            #endregion
-
-            #region Methods
-
-            #region Public Methods
-
-            public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
-
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
-            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties class
-
-        public class ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties : ReadOnlyProperties, IEnumerable<string>
-        {
-            #region Fields
-
-            private readonly List<string> list;
-
-            #endregion
-
-            #region Constructors
-
-            public ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties() => list = new List<string> { "1", "2" };
-
-            #endregion
-
-            #region Methods
-
-            #region Public Methods
-
-            public IEnumerator<string> GetEnumerator() => list.GetEnumerator();
-
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
-            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region FullExtraComponent class
-
-        public class FullExtraComponent
-        {
-            #region Nested types
-
-            #region Nested classes
-
-            #region TestInner class
-
-            public class TestInner
-            {
-                #region Properties
-
-                public string InnerString { get; set; }
-
-                public int InnerInt { get; set; }
-
-                #endregion
-
-                #region Constructors
-
-                public TestInner()
-                {
-                    InnerString = "InnerStringValue";
-                    InnerInt = 15;
-                }
-
-                #endregion
-            }
-
-            #endregion
-
-            #endregion
-
-            #region Nested structs
-
-            #region InnerStructure struct
-
-            public struct InnerStructure
-            {
-                #region Properties
-
-                public string InnerString { get; set; }
-
-                public int InnerInt { get; set; }
-
-                #endregion
-
-                #region Constructors
-
-                public InnerStructure(string s, int i)
-                    : this()
-                {
-                    InnerString = s;
-                    InnerInt = i;
-                }
-
-                #endregion
-            }
-
-            #endregion
-
-            #endregion
-
-            #endregion
-
-            #region Fields
-
-            readonly int[] readOnlyIntArray = new int[5];
-            private readonly List<TestInner> innerList = new List<TestInner>();
-
-            #endregion
-
-            #region Properties
-
-            [DefaultValue(0)]
-            public int IntProp { get; set; }
-
-            [DefaultValue(null)]
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public IntList IntList { get; set; }
-
-            public int[] IntArray { get; set; }
-
-            public int[] ReadOnlyIntArray
-            {
-                get { return readOnlyIntArray; }
-            }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public TestInner Inner { get; set; }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public List<TestInner> InnerList
-            {
-                get { return innerList; }
-            }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public LinkedList<int> IntLinkedList { get; set; }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public TestInner[] InnerArray { get; set; }
-
-            public XmlSerializableClass InnerXmlSerializable { get; set; }
-
-            public Point Point { get; set; }
-
-            public Point[] PointArray { get; set; }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public InnerStructure Structure { get; set; }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public InnerStructure[] StructureArray { get; set; }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public List<InnerStructure> StructureList { get; set; }
-
-            public string StringValue { get; set; }
-
-            [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-            public Dictionary<string, object> StrObjDictionary { get; set; }
-
-            #endregion
-
-            #region Constructors
-
-            public FullExtraComponent()
-            {
-            }
-
-            public FullExtraComponent(bool init)
-            {
-                if (init)
-                {
-                    IntProp = 1;
-                    Inner = new TestInner();
-                    IntArray = new int[] { 1, 2, 3, 4, 5 };
-                    readOnlyIntArray = new int[] { 1, 2, 3, 4, 5 };
-                    IntList = new IntList { 1, 2 };
-                    innerList = new List<TestInner>
-                    {
-                        new TestInner {InnerInt = 1, InnerString = "One"},
-                        new TestInner {InnerInt = 2, InnerString = "Two"},
-                        null
-                    };
-                    InnerXmlSerializable = new XmlSerializableClass(1, 2, 3);
-                    IntLinkedList = new LinkedList<int>(new[] { 1, 2 });
-                    Point = new Point(13, 13);
-                    PointArray = new Point[] { new Point(1, 2), new Point(3, 4) };
-                    InnerArray = new TestInner[] { new TestInner { InnerInt = 1, InnerString = "One" }, new TestInner { InnerInt = 2, InnerString = "Two" } };
-                    Structure = new InnerStructure("InnerStructureString", 13);
-                    StructureArray = new InnerStructure[] { new InnerStructure("Egyeske", 1), new InnerStructure("Ketteske", 2), };
-                    StructureList = new List<InnerStructure> { new InnerStructure("Első", 1), new InnerStructure("Második", 2) };
-                    StringValue = String.Empty;
-                    StrObjDictionary = new Dictionary<string, object>
-                    {
-                        {"Kulcs1", "Érték1"},
-                        {"Kulcs2", 15},
-                        {"Kulcs3", new Point(13, 10)},
-                        {"Kulcs4", new TestInner{InnerInt = 13, InnerString = "Trallala"}},
-                        {"Kulcs5", new InnerStructure("StructValue", 111)},
-                        {"Kulcs6", null}
-                    };
-                }
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region BinarySerializableClass class
-
-        [Serializable]
-        public class BinarySerializableClass : AbstractClass, IBinarySerializable
-        {
-            #region Properties
-
-            public int IntProp { get; set; }
-
-            public string StringProp { get; set; }
-
-            public object ObjectProp { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            public byte[] Serialize(BinarySerializationOptions options)
-            {
-                MemoryStream ms = new MemoryStream();
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write(IntProp);
-                    bw.Write(StringProp);
-                    BinarySerializer.SerializeByWriter(bw, ObjectProp);
-                }
-
-                return ms.ToArray();
-            }
-
-            public void Deserialize(BinarySerializationOptions options, byte[] serData)
-            {
-                using (BinaryReader br = new BinaryReader(new MemoryStream(serData)))
-                {
-                    IntProp = br.ReadInt32();
-                    StringProp = br.ReadString();
-                    ObjectProp = BinarySerializer.DeserializeByReader(br);
-                }
-            }
-
-            /// <summary>
-            /// Overridden for the test equality check
-            /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
-
-            #endregion
-        }
-
-        #endregion
-
-        #region BinarySerializableSealedClass class
-
-        [Serializable]
-        public sealed class BinarySerializableSealedClass : BinarySerializableClass
-        {
-        }
-
-        #endregion
-
-        #region AbstractClass class
-
-        [Serializable]
-        public abstract class AbstractClass
-        {
-        }
-
-        #endregion
-
-        #region SystemSerializableClass class
-
-        [Serializable]
-        public class SystemSerializableClass : AbstractClass
-        {
-            #region Properties
-
-            public int IntProp { get; set; }
-
-            public string StringProp { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            /// <summary>
-            /// Overridden for the test equality check
-            /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
-
-            #endregion
-        }
-
-        #endregion
-
-        #region SystemSerializableSealedClass class
-
-        [Serializable]
-        private sealed class SystemSerializableSealedClass : SystemSerializableClass
-        {
-        }
-
-        #endregion
-
-        #region ExplicitTypeConverterHolder class
-
-        private class ExplicitTypeConverterHolder
-        {
-            #region Nested classes
-
-            #region MultilineTypeConverter class
-
-            private class MultilineTypeConverter : TypeConverter
-            {
-                #region Methods
-
-                public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) =>
-                    value == null ? null :
-                    $"{value.GetType()}{Environment.NewLine}{(value is IFormattable formattable ? formattable.ToString(null, culture) : value.ToString())}";
-
-                public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.CanBeParsedNatively();
-
-                public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-                {
-                    var parts = ((string)value).Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                    Type type = Reflector.ResolveType(parts[0]);
-                    return parts[1].Parse(type, culture);
-                }
-
-                #endregion
-            }
-
-            #endregion
-
-            #endregion
-
-            #region Properties
-
-            [TypeConverter(typeof(MultilineTypeConverter))]
-            public object ExplicitTypeConverterProperty { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ConflictNameBase class
-
-        private class ConflictNameBase
-        {
-            #region Fields
-
-            public object item;
-
-            public object ConflictingField;
-
-            #endregion
-
-            #region Properties
-
-            public object ConflictingProperty { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            public ConflictNameBase SetBase(object item, object field, object prop)
-            {
-                this.item = item;
-                ConflictingField = field;
-                ConflictingProperty = prop;
-                return this;
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ConflictNameChild class
-
-        private class ConflictNameChild : ConflictNameBase
-        {
-            #region Fields
-
-            public new string item;
-
-            public new string ConflictingField;
-
-            #endregion
-
-            #region Properties
-
-            public new string ConflictingProperty { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            public ConflictNameChild SetChild(string item, string field, string prop)
-            {
-                this.item = item;
-                ConflictingField = field;
-                ConflictingProperty = prop;
-                return this;
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region ConflictingCollection class
-
-        class ConflictingCollection<T> : ConflictNameChild, ICollection<T>
-        {
-            #region Fields
-
-            private List<T> list = new List<T>();
-
-            #endregion
-
-            #region Properties
-
-            public new T item { get; set; }
-
-            public int Count => list.Count;
-
-            public bool IsReadOnly => false;
-
-            #endregion
-
-            #region Methods
-
-            #region Public Methods
-
-            public IEnumerator<T> GetEnumerator() => list.GetEnumerator();
-
-            public void Add(T item) => list.Add(item);
-
-            public void Clear() => list.Clear();
-
-            public bool Contains(T item) => throw new NotImplementedException();
-
-            public void CopyTo(T[] array, int arrayIndex) => throw new NotImplementedException();
-
-            public bool Remove(T item) => throw new NotImplementedException();
-
-            #endregion
-
-            #region Explicitly Implemented Interface Methods
-
-            IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
-
-            #endregion
-
-            #endregion
-        }
-
-        #endregion
-
-        #region BinaryMembers class
-
-        class BinaryMembers
-        {
-            #region Properties
-
-            [TypeConverter(typeof(BinaryTypeConverter))]
-            public object BinProp { get; set; }
-
-            [TypeConverter(typeof(BinaryTypeConverter))]
-            public Queue<string> BinPropReadOnly { get; } = new Queue<string>();
-
-            #endregion
-
-            #region Constructors
-
-            public BinaryMembers()
-            {
-            }
-
-            public BinaryMembers(params string[] elements) => BinPropReadOnly = new Queue<string>(elements);
-
-            #endregion
-        }
-
-        #endregion
-
-        #region StrongBox class
-#if NET35
-
-        private class StrongBox<T> : System.Runtime.CompilerServices.StrongBox<T>
-        {
-            public StrongBox() : base(default(T)) { }
-            public StrongBox(T value) : base(value) { }
-        }
-
-#endif
-        #endregion
-
-        #endregion
-
-        #region Nested structs
-
-        #region XmlSerializableStruct struct
-
-        public struct XmlSerializableStruct : IXmlSerializable
-        {
-            #region Fields
-
-            private int backingFieldOfRealReadOnlyProperty;
-
-            #endregion
-
-            #region Properties
-
-            public int ReadWriteProperty { get; set; }
-
-            public int SemiReadOnlyProperty { get; private set; }
-
-            public int RealReadOnlyProperty => backingFieldOfRealReadOnlyProperty;
-
-            #endregion
-
-            #region Constructors
-
-            public XmlSerializableStruct(int realProp, int semiReadOnlyProp, int realReadOnlyProp)
-                : this()
-            {
-                ReadWriteProperty = realProp;
-                SemiReadOnlyProperty = semiReadOnlyProp;
-                backingFieldOfRealReadOnlyProperty = realReadOnlyProp;
-            }
-
-            #endregion
-
-            #region Methods
-
-            public System.Xml.Schema.XmlSchema GetSchema()
-            {
-                throw new NotImplementedException();
-            }
-
-            public void ReadXml(XmlReader reader)
-            {
-                if (reader.Settings != null && !reader.Settings.IgnoreWhitespace)
-                {
-                    reader = XmlReader.Create(reader, new XmlReaderSettings { IgnoreWhitespace = true });
-                    reader.Read();
-                }
-
-                reader.ReadStartElement();
-                ReadWriteProperty = reader.ReadElementContentAsInt("ReadWriteProperty", String.Empty);
-                SemiReadOnlyProperty = reader.ReadElementContentAsInt("ReadOnlyAutoProperty", String.Empty);
-                backingFieldOfRealReadOnlyProperty = reader.ReadElementContentAsInt("ReadOnlyProperty", String.Empty);
-            }
-
-            public void WriteXml(XmlWriter writer)
-            {
-                writer.WriteElementString("ReadWriteProperty", ReadWriteProperty.ToString(CultureInfo.InvariantCulture));
-                writer.WriteElementString("ReadOnlyAutoProperty", SemiReadOnlyProperty.ToString(CultureInfo.InvariantCulture));
-                writer.WriteElementString("ReadOnlyProperty", RealReadOnlyProperty.ToString(CultureInfo.InvariantCulture));
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region NonSerializableStruct struct
-
-        public struct NonSerializableStruct
-        {
-            #region Fields
-
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
-            private string str10;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-            private byte[] bytes3;
-
-            #endregion
-
-            #region Properties
-
-            public int IntProp { get; set; }
-
-            public string Str10
-            {
-                get { return str10; }
-                set { str10 = value; }
-            }
-
-            public byte[] Bytes3
-            {
-                get { return bytes3; }
-                set { bytes3 = value; }
-            }
-
-            #endregion
-
-            #region Methods
-
-            /// <summary>
-            /// Overridden for the test equality check
-            /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
-
-            #endregion
-        }
-
-        #endregion
-
-        #region BinarySerializableStruct struct
-
-        [Serializable]
-        public struct BinarySerializableStruct : IBinarySerializable
-        {
-            #region Fields
-
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 6)]
-            private string stringProp;
-
-            #endregion
-
-            #region Properties
-
-            public int IntProp { get; set; }
-
-            public string StringProp
-            {
-                get { return stringProp; }
-                set { stringProp = value; }
-            }
-
-            public Point Point { get; set; }
-
-            #endregion
-
-            #region Constructors
-
-            public BinarySerializableStruct(int i, string s)
-                : this()
-            {
-                IntProp = i;
-                StringProp = s;
-                Point = new Point(10, 10);
-            }
-
-            public BinarySerializableStruct(BinarySerializationOptions options, byte[] serData)
-                : this()
-            {
-                using (BinaryReader br = new BinaryReader(new MemoryStream(serData)))
-                {
-                    IntProp = br.ReadInt32();
-                    StringProp = br.ReadString();
-                }
-            }
-
-            #endregion
-
-            #region Methods
-
-            public byte[] Serialize(BinarySerializationOptions options)
-            {
-                MemoryStream ms = new MemoryStream();
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write(IntProp);
-                    bw.Write(StringProp);
-                }
-
-                return ms.ToArray();
-            }
-
-            public void Deserialize(BinarySerializationOptions options, byte[] serData)
-            {
-                throw new InvalidOperationException("This method never will be called");
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #region SystemSerializableStruct struct
-
-        [Serializable]
-        public struct SystemSerializableStruct
-        {
-            #region Properties
-
-            public int IntProp { get; set; }
-
-            public string StringProp { get; set; }
-
-            #endregion
-
-            #region Methods
-
-            [OnDeserializing]
-            private void OnDeserializing(StreamingContext ctx)
-            {
-                IntProp = -1;
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #endregion
-
-        #endregion
-
         #region Methods
-
-        #region Public Methods
 
         [Test]
         public void SerializeNativelySupportedTypes()
@@ -1122,7 +59,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     (byte)1,
                     (short)1,
                     (ushort)1,
-                    (int)1,
+                    1,
                     (uint)1,
                     (long)1,
                     (ulong)1,
@@ -1213,7 +150,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                     '\t', // U+0009 = <control> HORIZONTAL TAB
                     '\n', // U+000a = <control> LINE FEED
                     '\v', // U+000b = <control> VERTICAL TAB
-                    '\f', // U+000c = <contorl> FORM FEED
+                    '\f', // U+000c = <control> FORM FEED
                     '\r', // U+000d = <control> CARRIAGE RETURN
                     '\x85', // U+0085 = <control> NEXT LINE
                     '\xa0', // U+00a0 = NO-BREAK SPACE
@@ -1843,30 +780,36 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
             {
-                new LinkedList<int>(new[] { 1, 2, 3 }),
-                new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                            new LinkedList<int>(new[] { 1, 2, 3 }),
+                            new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
 
-                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
-                new Dictionary<object, object> { { 1, "alpha" }, { "beta", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alpha", DateTime.Now, null } }, { 5, null } },
+                            new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                            new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
+                            new Dictionary<object, object> { { 1, "alpha" }, { "beta", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alpha", DateTime.Now, null } }, { 5, null } },
 
-                new SortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new SortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                            new SortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                            new SortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
 
-                new SortedDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new SortedDictionary<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                            new SortedDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                            new SortedDictionary<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
 
-                #if !NET35
-                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
-                #endif
+                            #if !NET35
+                            new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
+                            #endif
 
 
-                new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                            new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+#if !NETCOREAPP2_0
+                        KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+                        KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList  
+#else
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but LinkedList
+                | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentDictionary exists also in System.Private.CoreLib
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but LinkedList
+                | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentDictionary exists also in System.Private.CoreLib
+#endif
 
             // these collections are not supported content recursively because they implement neither ICollection<T> nor IList
             referenceObjects = new IEnumerable[]
@@ -1875,6 +818,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new Queue<int>(new[] { 1, 2, 3 }),
                 new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
                 new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) },
+                new Queue<int>[][] { new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) } },
                 #if !NET35
                 new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
                 new ConcurrentBag<int> { 1, 2, 3 },
@@ -1882,7 +826,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new ArraySegment<int>(new[] { 1, 2, 3 }),
                 #endif
                 #endif
-
 
                 // non-populatable, reverse
                 new Stack<int>(new[] { 1, 2, 3 }),
@@ -1900,23 +843,34 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
+#if !NETCOREAPP2_0
+                        KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
+                        KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary  
+#else
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
+                | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentQueue/ConcurrentStack and ReadOnlyDictionary exists also in System.Private.CoreLib
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
+                | XmlSerializationOptions.FullyQualifiedNames, false); // an internal ConcurrentQueue/ConcurrentStack and ReadOnlyDictionary exists also in System.Private.CoreLib
+#endif
 
 #if !NET35
             // these collections are not supported recursively at all
             referenceObjects = new IEnumerable[]
             {
-                #if !NET40
-                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
-                #endif
-                new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
+                            #if !NET40
+                            new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
+                            #endif
+                            new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
+#if !NETCOREAPP2_0
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false); 
+#else
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames, false);
 #endif
-
+#endif // !NET35
         }
 
         [Test]
@@ -2047,8 +1001,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new OrderedDictionary { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
             };
 
+#if !NETCOREAPP2_0
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all  
+#else
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // all
+                | XmlSerializationOptions.FullyQualifiedNames); // an internal Hashtable exists also in System.Private.CoreLib
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // all  
+                | XmlSerializationOptions.FullyQualifiedNames); // an internal Hashtable exists also in System.Private.CoreLib
+#endif
 
             // these collections cannot be populated but they have supported initializer constructor
             referenceObjects = new IEnumerable[]
@@ -2167,239 +1128,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
         }
-
-        #endregion
-
-        #region Private Methods
-
-        private void SystemSerializeObject(object obj)
-        {
-            using (new TestExecutionContext.IsolatedContext())
-            {
-                Type type = obj.GetType();
-                Console.WriteLine("------------------System XmlSerializer ({0})--------------------", type);
-                try
-                {
-                    SystemXmlSerializer serializer = new SystemXmlSerializer(type);
-                    StringBuilder sb = new StringBuilder();
-                    using (StringWriter sw = new StringWriter(sb))
-                    {
-                        serializer.Serialize(sw, obj);
-                    }
-
-                    Console.WriteLine(sb);
-                    object deserializedObject = serializer.Deserialize(new StringReader(sb.ToString()));
-                    AssertDeepEquals(obj, deserializedObject);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("System serialization failed: {0}", e);
-                }
-            }
-        }
-
-        private void SystemSerializeObjects(object[] referenceObjects)
-        {
-            using (new TestExecutionContext.IsolatedContext())
-            {
-                Console.WriteLine("------------------System XmlSerializer (Items Count: {0})--------------------", referenceObjects.Length);
-                try
-                {
-                    List<object> deserializedObjects = new List<object>();
-                    foreach (object item in referenceObjects)
-                    {
-                        if (item == null)
-                        {
-                            Console.WriteLine("Skipping null");
-                            deserializedObjects.Add(null);
-                            continue;
-                        }
-
-                        SystemXmlSerializer serializer = new SystemXmlSerializer(item.GetType());
-                        StringBuilder sb = new StringBuilder();
-                        using (StringWriter sw = new StringWriter(sb))
-                        {
-                            serializer.Serialize(sw, item);
-                        }
-
-                        Console.WriteLine(sb);
-                        Console.WriteLine();
-                        deserializedObjects.Add(serializer.Deserialize(new StringReader(sb.ToString())));
-                    }
-
-                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("System serialization failed: {0}", e);
-                }
-            }
-        }
-
-        private void KGySerializeObject(object obj, XmlSerializationOptions options)
-        {
-            Type type = obj.GetType();
-            Console.WriteLine("------------------KGySoft XmlSerializer ({0} - options: {1})--------------------", type, options.ToString<XmlSerializationOptions>());
-            try
-            {
-                // XElement - as object
-                //Console.WriteLine(".....As object.....");
-                XElement xElement = KGyXmlSerializer.Serialize(obj, options);
-                Console.WriteLine(xElement);
-                object deserializedObject = KGyXmlSerializer.Deserialize(xElement);
-                AssertDeepEquals(obj, deserializedObject);
-
-                // XmlReader/Writer - as object
-                StringBuilder sb = new StringBuilder();
-                using (XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
-                {
-                    KGyXmlSerializer.Serialize(writer, obj, options);
-                }
-
-                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
-                using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true }))
-                {
-                    deserializedObject = KGyXmlSerializer.Deserialize(reader);
-                }
-
-                AssertDeepEquals(obj, deserializedObject);
-                Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
-
-                // XElement - as component
-                //Console.WriteLine();
-                //Console.WriteLine(".....As component.....");
-                var xElementComp = new XElement("test");
-                KGyXmlSerializer.SerializeContent(xElementComp, obj, options);
-                //Console.WriteLine(xElementComp);
-                deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.CreateInstance(type);
-                KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
-                AssertDeepEquals(obj, deserializedObject);
-
-                // XmlReader/Writer - as component
-                sb = new StringBuilder();
-                using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
-                {
-                    writer.WriteStartElement("test");
-                    KGyXmlSerializer.SerializeContent(writer, obj, options);
-                    writer.WriteFullEndElement();
-                    writer.Flush();
-                }
-
-                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
-                using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true }))
-                {
-                    deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.CreateInstance(type);
-                    reader.Read(); // to node "test"
-                    KGyXmlSerializer.DeserializeContent(reader, deserializedObject);
-                    reader.ReadEndElement();
-                }
-
-                AssertDeepEquals(obj, deserializedObject);
-                Assert.AreEqual(xElementComp.ToString(), sb.ToString(), "XElement and XmlWriter SerializeContent are not compatible");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("KGySoft serialization failed: {0}", e);
-                throw;
-            }
-        }
-
-        private void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options, bool alsoContent = true)
-        {
-            Console.WriteLine("------------------KGySoft XmlSerializer (Items Count: {0}; options: {1})--------------------", referenceObjects.Length, options.ToString<XmlSerializationOptions>());
-            try
-            {
-                XElement xElement = new XElement("test");
-                StringBuilder sb = new StringBuilder();
-                using (XmlWriter writer = XmlWriter.Create(sb, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true }))
-                {
-                    writer.WriteStartElement("test");
-
-                    foreach (var item in referenceObjects)
-                    {
-                        xElement.Add(KGyXmlSerializer.Serialize(item, options));
-                        KGyXmlSerializer.Serialize(writer, item, options);
-
-                        if (!alsoContent)
-                            continue;
-
-                        // content serialization test for element
-                        if (item == null)
-                        {
-                            Console.WriteLine("Skipping null");
-                            continue;
-                        }
-
-                        XElement xItem = new XElement("itemContent");
-                        StringBuilder sbItem = new StringBuilder();
-                        using (XmlWriter itemWriter = XmlWriter.Create(sbItem, new XmlWriterSettings { OmitXmlDeclaration = true, Indent = true }))
-                        {
-                            KGyXmlSerializer.SerializeContent(xItem, item, options);
-                            Console.WriteLine(xItem);
-                            Console.WriteLine();
-                            itemWriter.WriteStartElement("itemContent");
-                            KGyXmlSerializer.SerializeContent(itemWriter, item, options);
-                            itemWriter.WriteFullEndElement();
-                        }
-
-                        object deserXElement;
-                        object deserReader;
-                        using (XmlReader itemReader = XmlReader.Create(new StringReader(sbItem.ToString()), new XmlReaderSettings { IgnoreWhitespace = true }))
-                        {
-                            var itemType = item.GetType();
-                            deserXElement = itemType.IsArray ? item.DeepClone() : Reflector.CreateInstance(itemType);
-                            KGyXmlSerializer.DeserializeContent(xItem, deserXElement);
-                            deserReader = itemType.IsArray ? item.DeepClone() : Reflector.CreateInstance(itemType);
-                            itemReader.Read(); // to node "itemContent"
-                            KGyXmlSerializer.DeserializeContent(itemReader, deserReader);
-                            itemReader.ReadEndElement();
-                        }
-
-                        AssertDeepEquals(item, deserXElement);
-                        AssertDeepEquals(item, deserReader);
-                        Assert.AreEqual(xItem.ToString(), sbItem.ToString(), "XElement and XmlWriter serializers are not compatible");
-                    }
-                    writer.WriteEndDocument();
-                    writer.Flush();
-                }
-
-                Console.WriteLine(xElement);
-
-                List<object> deserializedObjects = new List<object>();
-                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
-                using (XmlReader reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { IgnoreWhitespace = true }))
-                {
-                    try
-                    {
-                        reader.Read(); // test
-                        foreach (XElement element in xElement.Elements())
-                        {
-                            object deserXElement = KGyXmlSerializer.Deserialize(element);
-                            object deserReader = KGyXmlSerializer.Deserialize(reader);
-                            AssertDeepEquals(deserXElement, deserReader);
-
-                            deserializedObjects.Add(deserXElement);
-                        }
-
-                    }
-                    finally
-                    {
-                        reader.Close();
-                    }
-                }
-
-                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
-
-                Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter serializers are not compatible");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("KGySoft serialization failed: {0}", e);
-                throw;
-            }
-        }
-
-        #endregion
 
         #endregion
     }

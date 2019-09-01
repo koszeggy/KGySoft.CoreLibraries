@@ -475,7 +475,7 @@ namespace KGySoft.Reflection
 #if NET35 || NET40 || NET45
         private static PropertyAccessor Point_X(object point) => propertyPoint_X ?? (propertyPoint_X = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("X")));
         private static PropertyAccessor Point_Y(object point) => propertyPoint_Y ?? (propertyPoint_Y = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("Y")));
-#elif !NETCOREAPP2_0 
+#elif !NETCOREAPP2_0
 #error .NET version is not set or not supported!
 #endif
 

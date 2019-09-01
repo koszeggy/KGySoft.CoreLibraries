@@ -2,7 +2,7 @@
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: BitmapConverter.cs
+//  File: IconConverter.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
 //
@@ -32,7 +32,7 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Needed for <see cref="Bitmap"/> type to be able to be serialized to and from byte[] the same way as in the .NET Framework.
     /// </summary>
-    internal class BitmapConverter : TypeConverter
+    internal class IconConverter : TypeConverter
     {
         #region Methods
 
@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             if (value is byte[] byteArray)
-                return new Bitmap(new MemoryStream(byteArray));
+                return new Icon(new MemoryStream(byteArray));
             return base.ConvertFrom(context, culture, value);
         }
 

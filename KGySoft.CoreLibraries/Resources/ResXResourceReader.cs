@@ -1164,8 +1164,8 @@ namespace KGySoft.Resources
         /// </summary>
         private IEnumerable<KeyValuePair<string, ResXDataNode>> ReadToEnd(ResXEnumeratorModes mode)
         {
-            ICollection<KeyValuePair<string, ResXDataNode>> result = allowDuplicatedKeys 
-                ? (ICollection<KeyValuePair<string, ResXDataNode>>)new List<KeyValuePair<string, ResXDataNode>>() 
+            ICollection<KeyValuePair<string, ResXDataNode>> result = allowDuplicatedKeys
+                ? (ICollection<KeyValuePair<string, ResXDataNode>>)new List<KeyValuePair<string, ResXDataNode>>()
                 : new Dictionary<string, ResXDataNode>();
             while (ReadNext(mode, out string key, out ResXDataNode value))
                 AddNode(result, key, value);
@@ -1315,9 +1315,9 @@ namespace KGySoft.Resources
             value = new ResXDataNode(nodeInfo, basePath);
         }
 
-#endregion
+        #endregion
 
-#region Explicitly Implemented Interface Methods
+        #region Explicitly Implemented Interface Methods
 
         [SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "There is the public Close method. Same as System.Resources.ResXResourceReader.")]
         void IDisposable.Dispose()
@@ -1328,10 +1328,10 @@ namespace KGySoft.Resources
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }
