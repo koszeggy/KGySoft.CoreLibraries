@@ -65,6 +65,16 @@ namespace KGySoft.CoreLibraries
                 yield return new KeyValuePair<TKey, TValue>((TKey)enumerator.Key, (TValue)enumerator.Value);
         }
 
+        public static IEnumerable<object> GetKeysEnumerator(this IDictionaryEnumerator enumerator)
+        {
+            if (enumerator == null)
+                throw new ArgumentNullException(nameof(enumerator), Res.ArgumentNull);
+
+            while (enumerator.MoveNext())
+                yield return enumerator.Key;
+        }
+
+
         #endregion
     }
 }

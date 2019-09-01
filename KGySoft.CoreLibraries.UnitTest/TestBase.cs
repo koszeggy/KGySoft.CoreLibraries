@@ -201,22 +201,25 @@ namespace KGySoft.CoreLibraries
             if (typeRef == typeof(AnyObjectSerializerWrapper))
                 return CheckDeepEquals(Reflector.GetField(reference, "obj"), check, forceEqualityByMembers, errors, checkedObjects);
 
-            if (typeRef == typeof(ResXFileRef))
-                return Check(CheckDeepEquals(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
+            if (typeRef != typeChk)
+            {
+                if (typeRef == typeof(ResXFileRef))
+                    return Check(CheckDeepEquals(Reflector.ResolveType(((ResXFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 
-            if (typeRef == typeof(ResXDataNode))
-                return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
+                if (typeRef == typeof(ResXDataNode))
+                    return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
 
 #if !NETCOREAPP
             if (typeRef == typeof(SystemFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 
             if (typeRef == typeof(SystemDataNode))
-                return CheckDeepEquals(((SystemDataNode)reference).GetValue((ITypeResolutionService)null), check, forceEqualityByMembers, errors, checkedObjects); 
+                return CheckDeepEquals(((SystemDataNode)reference).GetValue((ITypeResolutionService)null), check, forceEqualityByMembers, errors, checkedObjects);
 #endif
 
-            if (!Check(typeRef == typeChk, $"Types are different. {typeRef} <-> {typeChk}", errors))
+                Fail($"Types are different. {typeRef} <-> {typeChk}", errors);
                 return false;
+            }
 
             if (typeRef == typeof(object))
                 return true;
@@ -284,9 +287,11 @@ namespace KGySoft.CoreLibraries
                 }  
 #endif
 
+                bool simpleEquals = typeof(Encoding).IsAssignableFrom(typeRef);
+
                 // Structural equality if forced for non-primitive types or when Equals is not overridden
                 if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
-                    || !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
+                    || !simpleEquals && !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
                     return CheckMembersAndItemsEqual(reference, check, errors, checkedObjects);
 
                 // Equals as fallback
@@ -373,11 +378,11 @@ namespace KGySoft.CoreLibraries
 
             // public fields
             foreach (FieldInfo field in typeRef.GetFields(BindingFlags.Instance | BindingFlags.Public))
-                result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", Reflector.GetField(reference, field), Reflector.GetField(check, field), true, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef}.{field.Name}", Reflector.GetField(reference, field), Reflector.GetField(check, field), false, errors, checkedObjects);
 
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
-                result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", Reflector.GetProperty(reference, property), Reflector.GetProperty(check, property), true, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef}.{property.Name}", Reflector.GetProperty(reference, property), Reflector.GetProperty(check, property), false, errors, checkedObjects);
 
             // collection elements
             var collSrc = reference as IEnumerable;
@@ -477,10 +482,11 @@ namespace KGySoft.CoreLibraries
         {
             if (condition)
                 return true;
-
-            errors?.Add(message);
+            Fail(message, errors);
             return false;
         }
+
+        private static void Fail(string message, List<string> errors) => errors?.Add(message);
 
 #if NETFRAMEWORK
         private static PermissionSet GetPermissionSet(IPermission[] permissions)

@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Drawing.Text;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -71,6 +72,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         #endregion
 
         #region Methods
+
+        #region Public Methods
 
         /// <summary>
         /// Tests whether the different kinds of objects can be deserialized.
@@ -206,15 +209,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // delete
             rs.RemoveObject("TestString");
             Assert.IsNull(rs.GetObject("TestString"));
-            Assert.IsFalse(rs.GetEnumerator().ToEnumerable<string, object>().Any(e => e.Key == "TestString"));
+            Assert.IsFalse(rs.GetEnumerator().GetKeysEnumerator().Any(e => e.ToString() == "TestString"));
 
             // nullifying
             rs.SetObject("NotExist", null);
             Assert.IsNull(rs.GetObject("TestString"));
-            Assert.IsTrue(rs.GetEnumerator().ToEnumerable<string, object>().Any(e => e.Key.ToString() == "NotExist"));
+            Assert.IsTrue(rs.GetEnumerator().GetKeysEnumerator().Any(e => e.ToString() == "NotExist"));
+
 
             // save and reload
             StringBuilder sb = new StringBuilder();
+#if NETCOREAPP2_0
+            RemoveUnsupportedItems(rs);
+#endif
             rs.Save(new StringWriter(sb));
             var rsReloaded = new ResXResourceSet(new StringReader(sb.ToString()), Path.GetDirectoryName(path));
             AssertItemsEqual(rs, rsReloaded);
@@ -375,7 +382,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void CloneValuesTest()
         {
-            string key = "TestImage";
+            string key = "TestBinFile";
             var path = Path.Combine(Files.GetExecutingPath(), "Resources\\TestResourceResX.resx");
             var rs = new ResXResourceSet(path);
             Assert.IsFalse(rs.CloneValues);
@@ -386,13 +393,40 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // if cloning values, references are different
             rs.CloneValues = true;
-            Assert.AreNotSame(rs.GetObject(key), rs.GetObject(key));
+            Assert.AreNotSame(rs.GetObject(key), rs.GetObject(key)); 
 
             // but strings are always the same reference
             key = "TestString";
             Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
             Assert.AreSame(rs.GetString(key), rs.GetString(key));
+        } 
+
+        #endregion
+
+        #region Private Methods
+
+#if NETCOREAPP2_0
+        private void RemoveUnsupportedItems(ResXResourceSet rs)
+        {
+            string[] unsupported = { "System.Drawing", "System.Windows.Forms" };
+
+            bool origMode = rs.SafeMode;
+            rs.SafeMode = true;
+            foreach (var item in rs.GetEnumerator().ToEnumerable<string, ResXDataNode>().ToList())
+            {
+                if (item.Value.AssemblyQualifiedName?.ContainsAny(unsupported) == true
+                    || item.Value.FileRef?.TypeName.ContainsAny(unsupported) == true
+                    || item.Value.MimeType == ResXCommon.BinSerializedObjectMimeType)
+                {
+                    rs.RemoveObject(item.Key);
+                }
+            }
+
+            rs.SafeMode = origMode;
         }
+#endif 
+
+        #endregion
 
         #endregion
     }

@@ -203,7 +203,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void CloneValuesTest()
         {
-            string resName = "TestImage";
+            string resName = "TestBinFile";
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
             Assert.IsTrue(manager.CloneValues);
 
