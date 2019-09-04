@@ -406,6 +406,7 @@ namespace KGySoft.Serialization
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
             Justification = "XmlTextReader must not be disposed because that would close the underlying reader.")]
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
         public static object Deserialize(TextReader reader)
         {
             if (reader == null)
@@ -417,7 +418,9 @@ namespace KGySoft.Serialization
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
                 XmlResolver = null,
+#if !NET35
                 DtdProcessing = DtdProcessing.Prohibit
+#endif
             };
 
             return Deserialize(xmlReader);
@@ -434,6 +437,7 @@ namespace KGySoft.Serialization
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, used in using")]
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
         public static object Deserialize(string fileName)
         {
             if (fileName == null)
@@ -445,7 +449,9 @@ namespace KGySoft.Serialization
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
                 XmlResolver = null,
+#if !NET35
                 DtdProcessing = DtdProcessing.Prohibit
+#endif
             })
             {
                 return Deserialize(xmlReader);
@@ -464,6 +470,7 @@ namespace KGySoft.Serialization
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
             Justification = "XmlTextReader must not be disposed because that would close the underlying stream.")]
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
         public static object Deserialize(Stream stream)
         {
             if (stream == null)
@@ -474,7 +481,9 @@ namespace KGySoft.Serialization
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
                 XmlResolver = null,
+#if !NET35
                 DtdProcessing = DtdProcessing.Prohibit
+#endif
             };
 
             //XmlReader xmlReader = XmlReader.Create(stream, new XmlReaderSettings

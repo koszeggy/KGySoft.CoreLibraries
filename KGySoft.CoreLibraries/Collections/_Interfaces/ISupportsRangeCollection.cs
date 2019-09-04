@@ -1,8 +1,32 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ISupportsRangeCollection.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
+
+#endregion
 
 namespace KGySoft.Collections
 {
+#if NET35 || NET40
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a collection that supports the <see cref="AddRange">AddRange</see> method.
     /// </summary>
@@ -14,12 +38,17 @@ namespace KGySoft.Collections
 #if !(NET35 || NET40)
         , IReadOnlyCollection<T>
 #endif
+
     {
+        #region Methods
+
         /// <summary>
         /// Adds a <paramref name="collection"/> to this <see cref="ISupportsRangeCollection{T}"/>.
         /// </summary>
         /// <param name="collection">The collection to add to the <see cref="ISupportsRangeCollection{T}"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="collection"/> must not be <see langword="null"/>.</exception>
         void AddRange(IEnumerable<T> collection);
+
+        #endregion
     }
 }

@@ -31,7 +31,7 @@ namespace KGySoft.Diagnostics
     {
         #region Repetition class
 
-        private protected sealed class Repetition : ITestCaseRepetition
+        internal sealed class Repetition : ITestCaseRepetition
         {
             #region Properties
 

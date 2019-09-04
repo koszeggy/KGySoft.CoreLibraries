@@ -32,6 +32,10 @@ using System.Collections.Concurrent;
 
 #endregion
 
+#if NET35 || NET40
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
@@ -148,8 +152,9 @@ namespace KGySoft.CoreLibraries
             try
             {
                 // 1.) IList
-                // ReSharper disable once UsePatternMatching - must be "as" cast due to the second .NET 3.5 part at the end
+#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
                 IList list = collection as IList;
+#pragma warning restore IDE0019 // Use pattern matching
                 if (list != null)
                 {
                     if (checkReadOnly && (list.IsReadOnly || list.IsFixedSize))
@@ -497,8 +502,9 @@ namespace KGySoft.CoreLibraries
 
             try
             {
-                // ReSharper disable once UsePatternMatching - must be "as" cast due to the second .NET 3.5 part at the end
+#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
                 IList list = collection as IList;
+#pragma warning restore IDE0019 // Use pattern matching
                 if (list != null)
                 {
                     if (checkReadOnlyAndBounds && (list.IsReadOnly || list.IsFixedSize || index < 0 || index > list.Count))
@@ -742,8 +748,9 @@ namespace KGySoft.CoreLibraries
 
             try
             {
-                // ReSharper disable once UsePatternMatching - must be "as" cast due to the second .NET 3.5 part at the end
+#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
                 IList list = collection as IList;
+#pragma warning restore IDE0019 // Use pattern matching
                 if (list != null)
                 {
                     if (checkReadOnly && (list.IsReadOnly || list.IsFixedSize))
@@ -1094,8 +1101,9 @@ namespace KGySoft.CoreLibraries
 
             try
             {
-                // ReSharper disable once UsePatternMatching - must be "as" cast due to the second .NET 3.5 part at the end
+#pragma warning disable IDE0019 // Use pattern matching - must be "as" cast due to the second .NET 3.5 part at the end
                 IList list = collection as IList;
+#pragma warning restore IDE0019 // Use pattern matching
                 if (list != null)
                 {
                     if (checkReadOnlyAndBounds && (list.IsReadOnly || index < 0 || index >= list.Count || list is Array array && array.Rank != 1))

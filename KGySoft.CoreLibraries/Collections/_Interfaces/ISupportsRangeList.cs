@@ -1,8 +1,32 @@
-﻿using System;
+﻿#region Copyright
+
+///////////////////////////////////////////////////////////////////////////////
+//  File: ISupportsRangeList.cs
+///////////////////////////////////////////////////////////////////////////////
+//  Copyright (C) KGy SOFT, 2005-2019 - All Rights Reserved
+//
+//  You should have received a copy of the LICENSE file at the top-level
+//  directory of this distribution. If not, then this file is considered as
+//  an illegal copy.
+//
+//  Unauthorized copying of this file, via any medium is strictly prohibited.
+///////////////////////////////////////////////////////////////////////////////
+
+#endregion
+
+#region Usings
+
+using System;
 using System.Collections.Generic;
+
+#endregion
 
 namespace KGySoft.Collections
 {
+#if NET35 || NET40
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
     /// <summary>
     /// Represents a list that supports range operations.
     /// </summary>
@@ -15,7 +39,10 @@ namespace KGySoft.Collections
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif
+
     {
+        #region Methods
+
         /// <summary>
         /// Inserts a <paramref name="collection"/> into this <see cref="ISupportsRangeList{T}"/> at the specified <paramref name="index"/>.
         /// </summary>
@@ -51,5 +78,7 @@ namespace KGySoft.Collections
         /// <para>If capacity increase is needed (considering actual list size), or when the replacement of different amount of elements to remove and insert is performed in the middle of the <see cref="CircularList{T}"/>, the cost is O(Max(n, m)), and in practice no more than n/2 elements are moved.</para>
         /// </remarks>
         void ReplaceRange(int index, int count, IEnumerable<T> collection);
+
+        #endregion
     }
 }

@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Resources;
 using System.Threading;
 using System.Xml;
+using KGySoft.Reflection;
 
 #endregion
 

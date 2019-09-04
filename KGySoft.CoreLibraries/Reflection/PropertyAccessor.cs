@@ -202,7 +202,7 @@ namespace KGySoft.Reflection
         /// <param name="indexerParameters">The parameters if the property is an indexer.</param>
         /// <remarks>
         /// <note>
-        /// Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object)">System.Reflection.PropertyInfo.SetValue</see>
+        /// Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
         /// method but further calls are much faster.
         /// </note>
         /// </remarks>

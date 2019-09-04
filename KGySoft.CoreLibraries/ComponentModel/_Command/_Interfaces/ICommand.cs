@@ -14,6 +14,10 @@
 
 #endregion
 
+#if NET35 || NET40
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
 namespace KGySoft.ComponentModel
 {
     /// <summary>

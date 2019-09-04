@@ -1358,13 +1358,15 @@ namespace KGySoft.Serialization
                 WriteNewType(bw, type, true, allowOpenTypes, binderAsmName, binderTypeName);
             }
 
+#if NET35
+            [SuppressMessage("Performance", "CA1822:MarkMembersAsStatic", Justification = "It cannot be static but in .NET 3.5 the method does nothing.")]
+            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")]
+#endif
             private void GetBoundNames(Type type, out string binderAsmName, out string binderTypeName)
             {
                 binderAsmName = null;
                 binderTypeName = null;
-#if NET35
-                return;
-#else
+#if !NET35
                 if (Binder == null || type.FullName == null)
                     return;
 
@@ -1383,6 +1385,9 @@ namespace KGySoft.Serialization
 #endif
             }
 
+#if NET35
+            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")] 
+#endif
             private int GetAssemblyIndex(Type type, string binderAsmName)
             {
 #if !NET35
@@ -1392,6 +1397,9 @@ namespace KGySoft.Serialization
                 return AssemblyIndexCache.GetValueOrDefault(type.Assembly, -1);
             }
 
+#if NET35
+            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "They are used except in .NET 3.5")]
+#endif
             private int GetTypeIndex(Type type, string binderAsmName, string binderTypeName)
             {
 #if !NET35
@@ -1485,6 +1493,9 @@ namespace KGySoft.Serialization
                 return true;
             }
 
+#if NET35
+            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")]
+#endif
             private void WriteNewAssembly(BinaryWriter bw, Type type, string binderAsmName)
             {
 #if !NET35
@@ -1506,6 +1517,9 @@ namespace KGySoft.Serialization
             /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
             [SecurityCritical]
+#if NET35
+            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "It is used except in .NET 3.5")]
+#endif
             private void WriteNewType(BinaryWriter bw, Type type, bool knownAssembly, bool allowOpenTypes, string binderAsmName, string binderTypeName)
             {
 #if !NET35
@@ -1580,6 +1594,9 @@ namespace KGySoft.Serialization
                 AddToTypeCache(type, binderAsmName, null);
             }
 
+#if NET35
+            [SuppressMessage("Usage", "CA1801:ReviewUnusedParameters", Justification = "They are used except in .NET 3.5")]
+#endif
             private void AddToTypeCache(Type type, string binderAsmName, string binderTypeName)
             {
 #if !NET35

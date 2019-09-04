@@ -31,6 +31,7 @@ using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 using System.Threading;
+
 using KGySoft.CoreLibraries;
 
 #endregion
@@ -567,7 +568,9 @@ namespace KGySoft.Resources
 #else
         private Dictionary<string, ResourceSet> InternalResourceSets => resourceSets;
 
-        [SuppressMessage("Compiler", "CS0109:Member does not hide an accessible member", Justification = "Required for .NET Framework")]
+#if !NETFRAMEWORK
+        [SuppressMessage("Compiler", "CS0109:Member does not hide an accessible member", Justification = "Required for .NET Framework targets")]
+#endif
         private new Dictionary<string, ResourceSet> ResourceSets
         {
             get

@@ -35,6 +35,10 @@ using KGySoft.Reflection;
 
 #endregion
 
+#if NET35
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
 /* HOWTO
  * =====
  *
@@ -730,7 +734,6 @@ namespace KGySoft.Serialization
 #if !NET35
             { typeof(SortedSet<>), DataTypes.SortedSet },
 #endif
-
 
             { typeof(Dictionary<,>), DataTypes.Dictionary },
             { typeof(SortedList<,>), DataTypes.SortedList },

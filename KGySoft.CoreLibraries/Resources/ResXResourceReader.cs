@@ -522,8 +522,10 @@ namespace KGySoft.Resources
                 : base(stream, InitNameTable())
             {
                 WhitespaceHandling = WhitespaceHandling.Significant;
-                DtdProcessing = DtdProcessing.Prohibit;
                 XmlResolver = null;
+#if !NET35
+                DtdProcessing = DtdProcessing.Prohibit; 
+#endif
             }
 
             [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "False alarm, stream is passed to the overloaded constructor.")]
@@ -538,8 +540,10 @@ namespace KGySoft.Resources
                 : base(reader, InitNameTable())
             {
                 WhitespaceHandling = WhitespaceHandling.Significant;
-                DtdProcessing = DtdProcessing.Prohibit;
                 XmlResolver = null;
+#if !NET35
+                DtdProcessing = DtdProcessing.Prohibit; 
+#endif
             }
 
             #endregion
