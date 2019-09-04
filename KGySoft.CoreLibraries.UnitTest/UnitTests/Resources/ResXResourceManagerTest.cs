@@ -269,7 +269,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SetObjectTest()
         {
             LanguageSettings.DisplayLanguage = enUS;
-            var manager = new ResXResourceManager("UnknownBaseName");
+            var manager = new ResXResourceManager("UnknownBaseName", inv);
 
             // not existing base: an exception is thrown when an object is about to obtain
             Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
@@ -319,7 +319,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SetNullAndRemoveTest()
         {
-            var manager = new ResXResourceManager("TestResourceResX");
+            var manager = new ResXResourceManager("TestResourceResX", inv);
             var resName = "TestString";
             var resEnUs = manager.GetObject(resName, enUS);
 
@@ -360,7 +360,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // text file by reference
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_0 // TODO: re-enable when possible
             // icon by reference
             reference = refManager.GetObject("TestIcon");
             check = manager.GetObject("TestIcon");
@@ -389,8 +389,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Bitmap>(check);
             Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
             Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid); 
-#endif
 
+#endif
             // byte array by reference
             reference = refManager.GetObject("TestBinFile");
             check = manager.GetObject("TestBinFile");
@@ -403,21 +403,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<MemoryStream>(reference);
             AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 
+#if !NETCOREAPP2_0
             // point embedded by type converter
-            reference = refManager.GetObject("TestPoint");
+            reference = refManager.GetObject("TestPoint"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
             check = manager.GetObject("TestPoint");
             Assert.IsInstanceOf<Point>(reference);
             Assert.AreEqual(reference, check);
 
-#if !NETCOREAPP2_0
             // bmp embedded as bytearray.base64 (created by a ctor from stream): they are visually equal, however different DPIs are stored
-            reference = refManager.GetObject("TestImageEmbedded");
+            reference = refManager.GetObject("TestImageEmbedded"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
             check = manager.GetObject("TestImageEmbedded");
             Assert.IsInstanceOf<Bitmap>(reference);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
             // any object embedded as binary.base64 (created by BinaryFormatter)
-            reference = refManager.GetObject("TestObjectEmbedded");
+            reference = refManager.GetObject("TestObjectEmbedded"); // WinForms type
             check = manager.GetObject("TestObjectEmbedded");
             Assert.IsInstanceOf<ImageListStreamer>(reference);
             var il1 = new ImageList { ImageStream = (ImageListStreamer)reference };
@@ -428,29 +428,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
 
             // icon embedded as bytearray.base64 (created by a ctor from stream)
-            reference = refManager.GetObject("TestIconEmbedded");
+            reference = refManager.GetObject("TestIconEmbedded"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
             check = manager.GetObject("TestIconEmbedded");
             Assert.IsInstanceOf<Icon>(reference);
-            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check)); 
-#endif
+            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
             // stream embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestSoundEmbedded");
-            check = manager.GetObject("TestSoundEmbedded");
+            check = manager.GetObject("TestSoundEmbedded"); // Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable.
             Assert.IsInstanceOf<MemoryStream>(reference);
             AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 
             // color embedded by type converter without <value> element
-            reference = refManager.GetObject("TestColorWithoutValue");
+            reference = refManager.GetObject("TestColorWithoutValue"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
             check = manager.GetObject("TestColorWithoutValue");
             Assert.IsInstanceOf<Color>(reference);
             Assert.AreEqual(reference, check);
 
             // color embedded by type converter with <value> element
-            reference = refManager.GetObject("TestColorData");
+            reference = refManager.GetObject("TestColorData"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
             check = manager.GetObject("TestColorData");
             Assert.IsInstanceOf<Color>(reference);
             Assert.AreEqual(reference, check);
+#endif
         }
 
         [Test]
@@ -607,7 +607,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SaveTest()
         {
-            var manager = new ResXResourceManager("TestResourceResX");
+            var manager = new ResXResourceManager("TestResourceResX", inv);
 
             // empty manager: save all is false even if forcing
             Assert.IsFalse(manager.IsModified);
@@ -647,6 +647,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Clean(manager, enGB);
         }
 
+#if !NETCOREAPP2_0
         [Test]
         public void SerializationTest()
         {
@@ -676,7 +677,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager = manager.DeepClone();
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));
-        }
+        } 
+#endif
 
         [Test]
         public void DisposeTest()

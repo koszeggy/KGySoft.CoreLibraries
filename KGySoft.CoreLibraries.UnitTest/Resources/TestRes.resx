@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- NOTE: This resource contains duplicated names for edge-case unit tests but suppressing MSB3568 does not work. -->
 <root>
   <!-- 
         Microsoft ResX Schema

@@ -116,7 +116,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNull(compiled);
 
             // Non string throws an exception if not is in safe mode
-            resName = "TestImage";
+            resName = "TestBinFile";
             Assert.IsFalse(manager.SafeMode);
             manager.Source = ResourceManagerSources.CompiledOnly;
             Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
@@ -298,6 +298,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<MemoryStream>(resx);
             Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd());
 
+#if !NETCOREAPP2_0 // System.NotSupportedException : Cannot read resources that depend on serialization.
             // even for non-string resources
             resName = "TestImage";
             manager.Source = ResourceManagerSources.CompiledOnly;
@@ -307,7 +308,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Source = ResourceManagerSources.ResXOnly;
             resx = manager.GetStream(resName, inv);
             Assert.IsInstanceOf<MemoryStream>(resx);
-            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd());
+            Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd()); 
+#endif
         }
 
         [Test]
@@ -597,9 +599,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var enumHybrid = manager.GetResourceSet(inv, true, false).GetEnumerator();
 
             // the hybrid enumerator filters the duplicates
-            string[] keysCompiled = enumCompiled.ToEnumerable().Select(e => e.Key.ToString()).ToArray();
-            string[] keysResx = enumResx.ToEnumerable().Select(e => e.Key.ToString()).ToArray();
-            string[] keysHybrid = enumHybrid.ToEnumerable().Select(e => e.Key.ToString()).ToArray();
+            string[] keysCompiled = enumCompiled.GetKeysEnumerator().ToArray();
+            string[] keysResx = enumResx.GetKeysEnumerator().ToArray();
+            string[] keysHybrid = enumHybrid.GetKeysEnumerator().ToArray();
             Assert.IsTrue(keysCompiled.Length + keysResx.Length > keysHybrid.Length);
             Assert.AreEqual(keysHybrid.Length, keysCompiled.Union(keysResx).Count());
             Assert.AreEqual(keysHybrid.Length, keysHybrid.Distinct().Count());
@@ -610,7 +612,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // reset works properly
             enumHybrid.Reset();
-            Assert.IsTrue(keysHybrid.SequenceEqual(enumHybrid.ToEnumerable().Select(e => e.Key.ToString())));
+            Assert.IsTrue(keysHybrid.SequenceEqual(enumHybrid.GetKeysEnumerator()));
 
             // during the enumeration an exception occurs in any state of the enumeration
             // 1. during the resx enumeration
@@ -680,6 +682,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Clean(manager, enGB);
         }
 
+#if !NETCOREAPP2_0
         [Test]
         public void SerializationTest()
         {
@@ -709,7 +712,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager = manager.DeepClone();
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));
-        }
+        } 
+#endif
 
         [Test]
         public void DisposeTest()

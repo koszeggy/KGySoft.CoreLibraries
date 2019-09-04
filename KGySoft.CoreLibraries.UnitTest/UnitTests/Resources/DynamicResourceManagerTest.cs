@@ -756,6 +756,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
         }
 
+#if !NETCOREAPP2_0
         [Test]
         public void SerializationTest()
         {
@@ -790,7 +791,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager = manager.DeepClone();
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));
-        }
+        } 
+#endif
 
         [Test]
         public void DisposeTest()

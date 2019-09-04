@@ -209,12 +209,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // delete
             rs.RemoveObject("TestString");
             Assert.IsNull(rs.GetObject("TestString"));
-            Assert.IsFalse(rs.GetEnumerator().GetKeysEnumerator().Any(e => e.ToString() == "TestString"));
+            Assert.IsFalse(rs.GetEnumerator().GetKeysEnumerator().Any(e => e == "TestString"));
 
             // nullifying
             rs.SetObject("NotExist", null);
             Assert.IsNull(rs.GetObject("TestString"));
-            Assert.IsTrue(rs.GetEnumerator().GetKeysEnumerator().Any(e => e.ToString() == "NotExist"));
+            Assert.IsTrue(rs.GetEnumerator().GetKeysEnumerator().Any(e => e == "NotExist"));
 
 
             // save and reload
