@@ -1,4 +1,6 @@
-Thank you for installing KGy SOFT Core Libraries
+Thank you for installing KGy SOFT Core Libraries 5.0.0-alpha.1
+
+Main new feature in this version: Supporting .NET Core 2.0 and later (more targets, including .NET Standard will be available in the final release).
 
 Release Notes: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt
 

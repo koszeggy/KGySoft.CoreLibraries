@@ -1,20 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--<TargetFrameworks>net35;net40;net45;netcoreapp2.0</TargetFrameworks>-->
-    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net45;netcoreapp2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>KGySoft</RootNamespace>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\KGySoft.snk</AssemblyOriginatorKeyFile>
-    <!-- Takes 5 seconds but emits the "Post-build Code Analysis has been deprecated" message -->
     <!--<RunCodeAnalysis>true</RunCodeAnalysis>-->
     <CodeAnalysisRuleSet>KGySoft.CoreLibraries.ruleset</CodeAnalysisRuleSet>
     <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Authors>György Kőszeg</Authors>
   </PropertyGroup>
 
-  <!-- Takes forever, eats up every CPU and RAM -->
+  <ItemGroup>
+    <Compile Remove="HelpOut\**" />
+    <EmbeddedResource Remove="HelpOut\**" />
+    <None Remove="HelpOut\**" />
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include=".nuspec\readme.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include=".nuspec\KGySoft.CoreLibraries.nuspec" />
+    <None Include=".nuspec\readme.md" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
       <PrivateAssets>all</PrivateAssets>

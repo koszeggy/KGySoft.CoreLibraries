@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>4.7.0</version>
+    <version>5.0.0-alpha.1</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -37,20 +37,23 @@ Online Documentation: https://docs.kgysoft.net/corelibraries</description>
     <language>en-US</language>
     <repository type="git" url="https://github.com/koszeggy/KGySoft.CoreLibraries" />
     <dependencies>
-      <group targetFramework=".NETFramework3.5" />
-      <group targetFramework=".NETFramework4.0" />
-      <group targetFramework=".NETFramework4.5" />
+      <group targetFramework="net35" />
+      <group targetFramework="net40" />
+      <group targetFramework="net45" />
+      <group targetFramework="netcoreapp2.0" />
     </dependencies>
   </metadata>
   <files>
     <file src="..\..\LICENSE" />
     <file src="..\Help\KGySoft.CoreLibraries.chm" target="Help" />
     <file src="readme.txt"/>
-    <file src="..\bin\Release_NET35\KGySoft.CoreLibraries.dll" target="lib\net35" />
-    <file src="..\bin\Release_NET35\KGySoft.CoreLibraries.xml" target="lib\net35" />
-    <file src="..\bin\Release_NET40\KGySoft.CoreLibraries.dll" target="lib\net40" />
-    <file src="..\bin\Release_NET40\KGySoft.CoreLibraries.xml" target="lib\net40" />
-    <file src="..\bin\Release_NET45\KGySoft.CoreLibraries.dll" target="lib\net45" />
-    <file src="..\bin\Release_NET45\KGySoft.CoreLibraries.xml" target="lib\net45" />
+    <file src="..\bin\Release\net35\KGySoft.CoreLibraries.dll" target="lib\net35" />
+    <file src="..\bin\Release\net35\KGySoft.CoreLibraries.xml" target="lib\net35" />
+    <file src="..\bin\Release\net40\KGySoft.CoreLibraries.dll" target="lib\net40" />
+    <file src="..\bin\Release\net40\KGySoft.CoreLibraries.xml" target="lib\net40" />
+    <file src="..\bin\Release\net45\KGySoft.CoreLibraries.dll" target="lib\net45" />
+    <file src="..\bin\Release\net45\KGySoft.CoreLibraries.xml" target="lib\net45" />
+    <file src="..\bin\Release\netcoreapp2.0\KGySoft.CoreLibraries.dll" target="lib\netcoreapp2.0" />
+    <file src="..\bin\Release\netcoreapp2.0\KGySoft.CoreLibraries.xml" target="lib\netcoreapp2.0" />
   </files>
 </package>
