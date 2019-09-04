@@ -40,6 +40,8 @@ However, the preferred way is to install the package in VisualStudio either by l
 
     PM> Install-Package KGySoft.CoreLibraries
 
+Alternatively, you can download the binaries as a .zip file attached to the [releases](https://github.com/koszeggy/KGySoft.CoreLibraries/releases).
+
 ### Download Demo App:
 
 [KGySoft.ComponentModelDemo](https://github.com/koszeggy/KGySoft.ComponentModelDemo) is a desktop application, which focuses mainly on the features of the [KGySoft.ComponentModel](http://docs.kgysoft.net/corelibraries/?topic=html/N_KGySoft_ComponentModel.htm) namespace of KGy SOFT Core Libraries (see also the [business objects](#business-objects) and [command binding](#command-binding) examples below). Furthermore, it also provides some useful code samples for using the KGy SOFT Core Libraries in WPF and Windows Forms applications.
@@ -403,7 +405,7 @@ XmlSerializer.DeserializeContent(root, cloneWithNewId);
 
 ### Dynamic Resource Management
 
-The KGy SOFT Core Libraries contains numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used in any projects) and they got a bunch of improvements at the same time. For example, `ResXResourceSet` is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
+The KGy SOFT Core Libraries contains numerous classes for working with resources directly from .resx files. Some classes can be familiar from the .NET Framework. For example, [`ResXResourceReader`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceReader.htm), [`ResXResourceWriter`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceWriter.htm) and [`ResXResourceSet`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceSet.htm) are reimplemented by referencing only the core system assemblies (the original versions of these reside in `System.Windows.Forms.dll`, which cannot be used in all circumstances) and they got a bunch of improvements at the same time. For example, `ResXResourceSet` is now a read-write collection and the changes can be saved in a new .resx file (see the links above for details and comparisons and examples).
 
 On top of those, KGy SOFT Core Libraries introduces a sort of new types that can be used the same way as a standard `ResourceManager` class:
 - [`ResXResourceManager`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_Resources_ResXResourceManager.htm) works the same way as the regular `ResourceManager` but works on .resx files instead of compiled resources and supports adding and saving new resources, .resx metadata and assembly aliases.
@@ -620,7 +622,7 @@ The possible drawback of the polling way is that `Enabled` is set only in the mo
 
 - #### [ICommandStateUpdater](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_ICommandStateUpdater.htm):
 
-A [`ICommandState`][ICommandState] can store not just the predefined `Enabled` state but also any other data. If these states can be rendered meaningfully by the command sources (for example, when `Enabled` is false, then a source button or menu item can be disabled), then an `ICommandStateUpdater` can be used to apply the states to the sources. If the states are properties on the source, then the [`PropertyCommandStateUpdater`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_PropertyCommandStateUpdater.htm) can be added to the binding:
+An [`ICommandState`][ICommandState] can store not just the predefined `Enabled` state but also any other data. If these states can be rendered meaningfully by the command sources (for example, when `Enabled` is false, then a source button or menu item can be disabled), then an `ICommandStateUpdater` can be used to apply the states to the sources. If the states are properties on the source, then the [`PropertyCommandStateUpdater`](https://docs.kgysoft.net/corelibraries/?topic=html/T_KGySoft_ComponentModel_PropertyCommandStateUpdater.htm) can be added to the binding:
 
 ```cs
 // we can pass a string-object dictionary to the constructor, or we can treat it as a dynamic object.
