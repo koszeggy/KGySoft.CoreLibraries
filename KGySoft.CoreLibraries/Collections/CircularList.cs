@@ -561,6 +561,7 @@ namespace KGySoft.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Count"/>.</exception>
         public T this[int index]
         {
+            [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, ArgumentOutOfRangeException is expected")]
             get
             {
                 // casting to uint reduces the range check by one

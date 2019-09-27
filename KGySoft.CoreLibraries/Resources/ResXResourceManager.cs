@@ -786,7 +786,7 @@ namespace KGySoft.Resources
 
         private static string GetExecutingPath()
         {
-#if NETCOREAPP2_0
+#if NETCOREAPP2_0 || NETSTANDARD2_1
             return Files.GetExecutingPath();
 #else
             try

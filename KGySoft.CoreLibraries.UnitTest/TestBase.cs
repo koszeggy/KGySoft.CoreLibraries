@@ -53,7 +53,7 @@ using NUnit.Framework;
 #region Used Aliases
 
 using Assert = NUnit.Framework.Assert;
-#if NETFRAMEWORK
+#if NETFRAMEWORK || NETCOREAPP3_0
 using SystemDataNode = System.Resources.ResXDataNode;
 using SystemFileRef = System.Resources.ResXFileRef; 
 #endif
@@ -209,7 +209,7 @@ namespace KGySoft.CoreLibraries
                 if (typeRef == typeof(ResXDataNode))
                     return CheckDeepEquals(((ResXDataNode)reference).GetValue(), check, forceEqualityByMembers, errors, checkedObjects);
 
-#if !NETCOREAPP
+#if !NETCOREAPP2_0
             if (typeRef == typeof(SystemFileRef))
                 return Check(CheckDeepEquals(Reflector.ResolveType(((SystemFileRef)reference).TypeName), typeChk, forceEqualityByMembers, errors, checkedObjects), $"File reference type error. Expected type: {typeChk}", errors);
 

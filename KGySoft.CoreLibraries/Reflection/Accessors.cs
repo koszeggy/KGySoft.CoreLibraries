@@ -27,7 +27,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if NET35 || NET40 || NET45
+#if !NETCOREAPP2_0
 using System.Text;
 #endif
 using System.Threading;
@@ -36,7 +36,7 @@ using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
-#if NETCOREAPP2_0
+#if NETCOREAPP2_0 || NETSTANDARD2_1
 using CollectionExtensions = KGySoft.CoreLibraries.CollectionExtensions;
 #endif
 
@@ -118,49 +118,6 @@ namespace KGySoft.Reflection
 
 #if NET35 || NET40 || NET45 // from .NET 4.72 capacity ctor is available
         private static IDictionary<Type, ActionMethodAccessor> methodsHashSet_Initialize;
-#endif
-
-        #endregion
-
-        #region ResXFileRef
-
-#if NET35 || NET40 || NET45
-        private static PropertyAccessor propertyResXFileRef_FileName;
-        private static PropertyAccessor propertyResXFileRef_TypeName;
-        private static PropertyAccessor propertyResXFileRef_TextFileEncoding;
-#endif
-
-        #endregion
-
-        #region ResXDataNode
-
-#if NET35 || NET40 || NET45
-        private static FieldAccessor fieldResXDataNode_value;
-        private static FieldAccessor fieldResXDataNode_comment;
-        private static FieldAccessor fieldResXDataNode_fileRef;
-        private static FieldAccessor fieldResXDataNode_nodeInfo;
-#endif
-
-        #endregion
-
-        #region DataNodeInfo
-
-#if NET35 || NET40 || NET45
-        private static FieldAccessor fieldDataNodeInfo_Name;
-        private static FieldAccessor fieldDataNodeInfo_Comment;
-        private static FieldAccessor fieldDataNodeInfo_TypeName;
-        private static FieldAccessor fieldDataNodeInfo_MimeType;
-        private static FieldAccessor fieldDataNodeInfo_ValueData;
-        private static FieldAccessor fieldDataNodeInfo_ReaderPosition;
-#endif
-
-        #endregion
-
-        #region Point
-
-#if NET35 || NET40 || NET45
-        private static PropertyAccessor propertyPoint_X;
-        private static PropertyAccessor propertyPoint_Y;
 #endif
 
         #endregion
@@ -427,65 +384,11 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region ResXFileRef
-        // though we access only public ResXFileRef properties we treat it as it wasn't public because we need to check every added frameworks whether we can use this type
-
-#if NET35 || NET40 || NET45
-        private static PropertyAccessor ResXFileRef_FileName(object fileRef) => propertyResXFileRef_FileName ?? (propertyResXFileRef_FileName = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("FileName", BindingFlags.Instance | BindingFlags.Public)));
-        private static PropertyAccessor ResXFileRef_TypeName(object fileRef) => propertyResXFileRef_TypeName ?? (propertyResXFileRef_TypeName = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("TypeName", BindingFlags.Instance | BindingFlags.Public)));
-        private static PropertyAccessor ResXFileRef_TextFileEncoding(object fileRef) => propertyResXFileRef_TextFileEncoding ?? (propertyResXFileRef_TextFileEncoding = PropertyAccessor.CreateAccessor(fileRef.GetType().GetProperty("TextFileEncoding", BindingFlags.Instance | BindingFlags.Public)));
-#elif !NETCOREAPP2_0 // No WinForms version has to be supported in .NET Core 2.0
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
-        #region ResXDataNode
-        // Note: some of these are available as public properties but they must be accessed as fields because property getters alter the real values
-
-#if NET35 || NET40 || NET45
-        private static FieldAccessor ResXDataNode_value(object node) => fieldResXDataNode_value ?? (fieldResXDataNode_value = FieldAccessor.CreateAccessor(node.GetType().GetField("value", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor ResXDataNode_comment(object node) => fieldResXDataNode_comment ?? (fieldResXDataNode_comment = FieldAccessor.CreateAccessor(node.GetType().GetField("comment", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor ResXDataNode_fileRef(object node) => fieldResXDataNode_fileRef ?? (fieldResXDataNode_fileRef = FieldAccessor.CreateAccessor(node.GetType().GetField("fileRef", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor ResXDataNode_nodeInfo(object node) => fieldResXDataNode_nodeInfo ?? (fieldResXDataNode_nodeInfo = FieldAccessor.CreateAccessor(node.GetType().GetField("nodeInfo", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !NETCOREAPP2_0 // No WinForms version has to be supported in .NET Core 2.0
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
-        #region DataNodeInfo
-
-#if NET35 || NET40 || NET45
-        private static FieldAccessor DataNodeInfo_Name(object nodeInfo) => fieldDataNodeInfo_Name ?? (fieldDataNodeInfo_Name = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Name", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_Comment(object nodeInfo) => fieldDataNodeInfo_Comment ?? (fieldDataNodeInfo_Comment = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("Comment", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_TypeName(object nodeInfo) => fieldDataNodeInfo_TypeName ?? (fieldDataNodeInfo_TypeName = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("TypeName", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_MimeType(object nodeInfo) => fieldDataNodeInfo_MimeType ?? (fieldDataNodeInfo_MimeType = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("MimeType", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_ValueData(object nodeInfo) => fieldDataNodeInfo_ValueData ?? (fieldDataNodeInfo_ValueData = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ValueData", BindingFlags.Instance | BindingFlags.NonPublic)));
-        private static FieldAccessor DataNodeInfo_ReaderPosition(object nodeInfo) => fieldDataNodeInfo_ReaderPosition ?? (fieldDataNodeInfo_ReaderPosition = FieldAccessor.CreateAccessor(nodeInfo.GetType().GetField("ReaderPosition", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif !NETCOREAPP2_0 // No WinForms version has to be supported in .NET Core 2.0
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
-        #region Point
-        // Since used only for DataNodeInfo.ReaderPosition the same applies for it
-
-#if NET35 || NET40 || NET45
-        private static PropertyAccessor Point_X(object point) => propertyPoint_X ?? (propertyPoint_X = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("X")));
-        private static PropertyAccessor Point_Y(object point) => propertyPoint_Y ?? (propertyPoint_Y = PropertyAccessor.CreateAccessor(point.GetType().GetProperty("Y")));
-#elif !NETCOREAPP2_0
-#error .NET version is not set or not supported!
-#endif
-
-        #endregion
-
         #region MemoryStream
 
 #if NET35 || NET40 || NET45
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif NETCOREAPP2_0
+#elif NETCOREAPP2_0 || NETSTANDARD2_1
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer
         {
             get
@@ -513,7 +416,7 @@ namespace KGySoft.Reflection
 
         private static PropertyAccessor GetProperty(Type type, string propertyName)
         {
-            PropertyAccessor GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
+            static PropertyAccessor GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
             {
                 // Properties are meant to be used for visible members so always exact names are searched
                 PropertyInfo property = key.DeclaringType.GetProperty(key.PropertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
@@ -530,9 +433,11 @@ namespace KGySoft.Reflection
             FieldAccessor GetFieldAccessor((Type DeclaringType, Type FieldType, string FieldNamePattern) key)
             {
                 // Fields are meant to be used for non-visible members either by type or name pattern (or both)
-                FieldInfo field = key.DeclaringType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
-                                         && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
+                var fields = key.DeclaringType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                FieldInfo field =
+                    fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType) && f.Name == key.FieldNamePattern) // exact name first
+                    ?? fields.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
+                        && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
                 return field == null ? null : FieldAccessor.GetAccessor(field);
             }
 
@@ -649,45 +554,11 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region ResXFileRef
-
-#if NET35 || NET40 || NET45
-        internal static string ResXFileRef_GetFileName(object fileRef) => (string)ResXFileRef_FileName(fileRef).Get(fileRef);
-        internal static string ResXFileRef_GetTypeName(object fileRef) => (string)ResXFileRef_TypeName(fileRef).Get(fileRef);
-        internal static Encoding ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding)ResXFileRef_TextFileEncoding(fileRef).Get(fileRef);
-#endif
-
-        #endregion
-
-        #region ResXDataNode
-
-#if NET35 || NET40 || NET45
-        internal static object ResXDataNode_GetValue(object node) => ResXDataNode_value(node).Get(node);
-        internal static string ResXDataNode_GetComment(object node) => (string)ResXDataNode_comment(node).Get(node);
-        internal static object ResXDataNode_GetFileRef(object node) => ResXDataNode_fileRef(node).Get(node);
-        internal static object ResXDataNode_GetNodeInfo(object node) => ResXDataNode_nodeInfo(node).Get(node);
-#endif
-
-        #endregion
-
-        #region DataNodeInfo
-
-#if NET35 || NET40 || NET45
-        internal static string DataNodeInfo_GetName(object nodeInfo) => (string)DataNodeInfo_Name(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetComment(object nodeInfo) => (string)DataNodeInfo_Comment(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetTypeName(object nodeInfo) => (string)DataNodeInfo_TypeName(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetMimeType(object nodeInfo) => (string)DataNodeInfo_MimeType(nodeInfo).Get(nodeInfo);
-        internal static string DataNodeInfo_GetValueData(object nodeInfo) => (string)DataNodeInfo_ValueData(nodeInfo).Get(nodeInfo);
-        internal static object DataNodeInfo_GetReaderPosition(object nodeInfo) => DataNodeInfo_ReaderPosition(nodeInfo).Get(nodeInfo);
-#endif
-
-        #endregion
-
         #region Point
 
-#if NET35 || NET40 || NET45
-        internal static int Point_GetX(object point) => (int)Point_X(point).Get(point);
-        internal static int Point_GetY(object point) => (int)Point_Y(point).Get(point);
+#if !NETCOREAPP2_0
+        internal static int Point_GetX(object point) => point == null ? 0 : (int)GetPropertyValue(point, "X");
+        internal static int Point_GetY(object point) => point == null ? 0 : (int)GetPropertyValue(point, "Y");
 #endif
 
         #endregion
@@ -707,6 +578,42 @@ namespace KGySoft.Reflection
         //            For non-visible members we always have to provide some default value.
 
         #region Specific Members
+
+        #region ResXFileRef
+
+#if !NETCOREAPP2_0
+        internal static string ResXFileRef_GetFileName(object fileRef) => (string)GetPropertyValue(fileRef, "FileName");
+        internal static string ResXFileRef_GetTypeName(object fileRef) => (string)GetPropertyValue(fileRef, "TypeName");
+        internal static Encoding ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding)GetPropertyValue(fileRef, "TextFileEncoding");
+#endif
+
+        #endregion
+
+        #region ResXDataNode
+
+#if !NETCOREAPP2_0
+        internal static object ResXDataNode_GetValue(object node) => GetFieldValueOrDefault<object>(node, null, "value");
+        internal static string ResXDataNode_GetComment(object node) => GetFieldValueOrDefault<string>(node, null, "comment");
+        internal static object ResXDataNode_GetFileRef(object node) => GetField(node.GetType(), null, "fileRef")?.Get(node);
+        internal static object ResXDataNode_GetNodeInfo(object node) => GetField(node.GetType(), null, "nodeInfo")?.Get(node);
+#endif
+
+        #endregion
+
+        #region DataNodeInfo
+
+#if !NETCOREAPP2_0
+        internal static string DataNodeInfo_GetName(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "Name");
+        internal static string DataNodeInfo_GetComment(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "Comment");
+        internal static string DataNodeInfo_GetTypeName(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "TypeName");
+        internal static string DataNodeInfo_GetMimeType(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "MimeType");
+        internal static string DataNodeInfo_GetValueData(object nodeInfo) => GetFieldValueOrDefault<string>(nodeInfo, null, "ValueData");
+        internal static object DataNodeInfo_GetReaderPosition(object nodeInfo) => GetField(nodeInfo.GetType(), null, "ReaderPosition")?.Get(nodeInfo);
+#endif
+
+        #endregion
+
+        #region IEnumerables
 
         internal static int Count([NoEnumeration] this IEnumerable collection)
         {
@@ -740,8 +647,16 @@ namespace KGySoft.Reflection
             return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary
         }
 
+        #endregion
+
+        #region Comparer
+
         internal static CompareInfo CompareInfo(this Comparer comparer)
             => GetFieldValueOrDefault<CompareInfo>(comparer);
+
+        #endregion
+
+        #region BitArray
 
         internal static int[] GetUnderlyingArray(this BitArray bitArray)
         {
@@ -761,9 +676,13 @@ namespace KGySoft.Reflection
             return result;
         }
 
+        #endregion
+
+        #region DictionaryEntry/KeyValuePair
+
         internal static void SetKeyValue(object instance, object key, object value)
         {
-            // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of boxing
+            // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of the boxed struct
             if (instance is DictionaryEntry)
             {
                 Type type = instance.GetType();
@@ -776,6 +695,8 @@ namespace KGySoft.Reflection
             SetFieldValue(instance, "key", key);
             SetFieldValue(instance, "value", value);
         }
+
+        #endregion
 
         #endregion
 

@@ -494,6 +494,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         public bool IsModified
         {
+            [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, ObjectDisposedException is expected")]
             get
             {
                 if (resources == null)
@@ -604,7 +605,7 @@ namespace KGySoft.Resources
         /// <remarks>This constructor is private so the single string parameter in the public constructors means file name, which is compatible with the system version.</remarks>
         private ResXResourceSet(string basePath)
         {
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
             // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
             Table = null;
 #endif

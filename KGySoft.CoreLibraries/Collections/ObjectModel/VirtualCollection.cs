@@ -21,7 +21,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
@@ -128,6 +130,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <exception cref="NotSupportedException">The value is set and <see cref="CanSetItem"/> returns <see langword="false"/>.</exception>
         public T this[int index]
         {
+            [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, ArgumentOutOfRangeException is expected")]
             get
             {
                 if (index < 0 || index >= Count)

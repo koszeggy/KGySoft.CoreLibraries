@@ -19,7 +19,7 @@
 using System;
 using System.Collections;
 #if !NET35
-using System.Collections.Concurrent; 
+using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -754,17 +754,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         public void SerializeSimpleGenericCollections()
         {
             IEnumerable[] referenceObjects =
-                {
-                    new List<int> { 1, 2, 3 },
-                    new List<int?> { 1, 2, null},
-                    new List<int[]> { new int[]{1, 2, 3}, null },
+            {
+                new List<int> { 1, 2, 3 },
+                new List<int?> { 1, 2, null },
+                new List<int[]> { new int[] { 1, 2, 3 }, null },
 
-                    new Collection<int> { 1, 2, 3 },
-                    new Collection<int[]> { new int[]{1, 2, 3}, null },
+                new Collection<int> { 1, 2, 3 },
+                new Collection<int[]> { new int[] { 1, 2, 3 }, null },
 
-                    new HashSet<int> { 1, 2, 3},
-                    new HashSet<int[]> { new int[]{1, 2, 3}, null },
-                };
+                new HashSet<int> { 1, 2, 3 },
+                new HashSet<int[]> { new int[] { 1, 2, 3 }, null },
+            };
 
             //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
             SystemSerializeObjects(referenceObjects);
@@ -780,30 +780,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // these collections are not supported by system serializer
             referenceObjects = new IEnumerable[]
             {
-                            new LinkedList<int>(new[] { 1, 2, 3 }),
-                            new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new LinkedList<int>(new[] { 1, 2, 3 }),
+                new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
 
-                            new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                            new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
-                            new Dictionary<object, object> { { 1, "alpha" }, { "beta", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alpha", DateTime.Now, null } }, { 5, null } },
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
+                new Dictionary<object, object> { { 1, "alpha" }, { "beta", DateTime.Now }, { new object(), new object() }, { 4, new object[] { 1, "alpha", DateTime.Now, null } }, { 5, null } },
 
-                            new SortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                            new SortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                new SortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new SortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
 
-                            new SortedDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                            new SortedDictionary<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                new SortedDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new SortedDictionary<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
 
-                            #if !NET35
-                            new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
-                            #endif
+#if !NET35
+                new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
+#endif
 
 
-                            new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
             };
 
 #if !NETCOREAPP2_0
-                        KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
-                        KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList  
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList  
 #else
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // everything but LinkedList
                 | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentDictionary exists also in System.Private.CoreLib
@@ -843,9 +843,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
             };
 
-#if !NETCOREAPP2_0
-                        KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
-                        KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary  
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary  
 #else
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
                 | XmlSerializationOptions.FullyQualifiedNames); // an internal ConcurrentQueue/ConcurrentStack and ReadOnlyDictionary exists also in System.Private.CoreLib
@@ -857,18 +857,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             // these collections are not supported recursively at all
             referenceObjects = new IEnumerable[]
             {
-                            #if !NET40
-                            new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
-                            #endif
-                            new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
+#if !NET40
+                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
+#endif
+                new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false); 
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
 #else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames, randomContent: true);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames, alsoAsContent: false);
 #endif
 #endif // !NET35
         }
@@ -877,25 +877,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         public void SerializeObjectsWithReadonlyProperties()
         {
             object[] referenceObjects =
-                {
-                    new ReadOnlyProperties().Init(
-                        xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                        array: new object[]{1, "string", DateTime.Now},
-                        toCache: new []{1, 2, 3},
-                        readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} )
-                    ),
-                    new PopulatableCollectionWithReadOnlyProperties{"one", "two"}.Init(
-                        xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                        array: new object[]{1, "string", DateTime.Now},
-                        toCache: new []{1, 2, 3},
-                        readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} )
-                    ),
-                    new ReadOnlyCollectionWithInitCtorAndReadOnlyProperties(new[]{"one", "two"}).Init(
-                        xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
-                        array: new object[]{1, "string", DateTime.Now},
-                        toCache: new []{1, 2, 3},
-                        readOnlyCollection: new ReadOnlyCollection<object>(new object[] {'x', 1, "abc"} )),
-                };
+            {
+                new ReadOnlyProperties().Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[] { 1, "string", DateTime.Now },
+                    toCache: new[] { 1, 2, 3 },
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })
+                ),
+                new PopulatableCollectionWithReadOnlyProperties { "one", "two" }.Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[] { 1, "string", DateTime.Now },
+                    toCache: new[] { 1, 2, 3 },
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })
+                ),
+                new ReadOnlyCollectionWithInitCtorAndReadOnlyProperties(new[] { "one", "two" }).Init(
+                    xmlSerializableClass: new XmlSerializableClass(1, 2, 3),
+                    array: new object[] { 1, "string", DateTime.Now },
+                    toCache: new[] { 1, 2, 3 },
+                    readOnlyCollection: new ReadOnlyCollection<object>(new object[] { 'x', 1, "abc" })),
+            };
 
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties was not expected. Use the XmlInclude or SoapInclude attribute to specify types that are not known statically.
             //SystemSerializeObjects(referenceObjects); // InvalidOperationException: There was an error reflecting type '_LibrariesTest.Libraries.Serialization.XmlSerializerTest.ReadOnlyProperties'. ---> System.NotSupportedException: Cannot serialize member _LibrariesTest.Libraries.Serialization.XmlSerializerTest+ReadOnlyProperties.Cache of type KGySoft.CoreLibraries.Collections.Cache`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], because it implements IDictionary.

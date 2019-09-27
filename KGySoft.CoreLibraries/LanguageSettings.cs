@@ -121,7 +121,7 @@ namespace KGySoft
 
         #region Fields
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
         private static bool captureSystemLocaleChange;
 #endif
         private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
@@ -264,7 +264,7 @@ namespace KGySoft
             }
         }
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
         /// <summary>
         /// Gets or sets whether changes of system regional settings should be captured.
         /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
@@ -276,7 +276,8 @@ namespace KGySoft
         /// <see langword="true"/>&#160;if system regional settings should be captured; otherwise, <see langword="false"/>.
         /// </value>
         /// <remarks>
-        /// <note>This property is not available in .NET Core. However, if you use .NET Core 2.1 or newer you can reference the <c>Microsoft.Win32.SystemEvents</c> package
+        /// <note>This property is not available in the .NET Core and .NET Standard packages.
+        /// However, if you use .NET Core 2.1 or newer you can reference the <c>Microsoft.Win32.SystemEvents</c> package
         /// to use <see cref="SystemEvents.UserPreferenceChanged"/> event.</note>
         /// </remarks>
         public static bool CaptureSystemLocaleChange
@@ -438,7 +439,7 @@ namespace KGySoft
 
         #region Event handlers
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
 #if !NET35
         [SecuritySafeCritical]
 #endif

@@ -84,7 +84,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
             var coll = new FastLookupCollection<string>(inner) { CheckConsistency = false };
             inner.Add("a");
             Throws<AssertionException>(() => AssertConsistency(coll));
-            Console.WriteLine("still runs!");
             coll.CheckConsistency = true;
             coll.Insert(0, "b");
             AssertConsistency(coll);

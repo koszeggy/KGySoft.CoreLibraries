@@ -782,6 +782,7 @@ namespace KGySoft.Collections
         /// </remarks>
         public TValue this[TKey key]
         {
+            [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "False alarm in .NET Standard 2.1, KeyNotFoundException is expected")]
             get
             {
                 int index = IndexOfKey(key);

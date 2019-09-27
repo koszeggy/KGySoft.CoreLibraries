@@ -380,6 +380,9 @@ namespace KGySoft.Serialization
 
         internal static bool CanSerializeValueType(Type type, bool strict)
         {
+            if (type.IsGenericType)
+                return false;
+
             HashSet<FieldInfo> fields = new HashSet<FieldInfo>(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance));
 
             // adding private fields from base types

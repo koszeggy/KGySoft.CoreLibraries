@@ -286,7 +286,7 @@ namespace KGySoft.Resources
             resxResourceSet = resx ?? throw new ArgumentNullException(nameof(resx), Res.ArgumentNull);
             compiledResourceSet = compiled ?? throw new ArgumentNullException(nameof(compiled), Res.ArgumentNull);
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
             // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
             Table = null;
 #endif

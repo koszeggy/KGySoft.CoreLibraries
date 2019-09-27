@@ -1,7 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
-    <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;netcoreapp2.0</TargetFrameworks>
+  <PropertyGroup>
+    <!--<TargetFrameworks>net35;net40;net45;netcoreapp2.0</TargetFrameworks>-->
+    <TargetFrameworks>netcoreapp3.0</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
     <SignAssembly>true</SignAssembly>
@@ -23,15 +25,7 @@
   </ItemGroup>
 
   <!-- .NET Core only references -->
-  <!--<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0'">
-    <PackageReference Include="System.Drawing.Common">
-      <Version>4.5.1</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.Encoding.CodePages">
-      <Version>4.5.1</Version>
-    </PackageReference>
-  </ItemGroup>-->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp3.0'">
     <PackageReference Include="System.Drawing.Common">
       <Version>4.5.1</Version>
     </PackageReference>
@@ -40,7 +34,7 @@
     </PackageReference>
   </ItemGroup>
 
-
+  <!-- Project references -->
   <ItemGroup>
     <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
   </ItemGroup>

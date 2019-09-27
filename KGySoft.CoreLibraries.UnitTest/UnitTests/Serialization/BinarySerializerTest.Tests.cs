@@ -77,8 +77,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
 
         #region Constants
 
-        private const bool dumpDetails = true;
-        private const bool dumpSerContent = true;
+        private const bool dumpDetails = false;
+        private const bool dumpSerContent = false;
 
         #endregion
 
@@ -105,7 +105,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 (double)1,
                 new IntPtr(1),
                 new UIntPtr(1),
-                FormatterServices.GetUninitializedObject(typeof(void)), // doesn't really make sense as an instance but even BinaryFormatter supports it
 
                 // simple non-primitive types
                 new object(),
@@ -138,6 +137,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             referenceObjects = new object[]
             {
                 null,
+                FormatterServices.GetUninitializedObject(typeof(void)), // doesn't really make sense as an instance but even BinaryFormatter supports it (only in .NET Framework)
                 DBNull.Value,
                 new BitVector32(13),
                 BitVector32.CreateSection(13),
@@ -148,9 +148,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-#if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+#if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData. In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 #endif
         }
 
@@ -348,7 +348,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
             };
 
-#if !NETCOREAPP2_0 // Type is not serializable in .NET Core
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // Type is not serializable in .NET Core
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 #endif
@@ -356,9 +356,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-#if !NETCOREAPP2_0 // Type is not serializable in .NET Core
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+#if !NETCOREAPP2_0 // RuntimeType.GetObjectData throws PlatformNotSupportedException in .NET Core 2.0. In .NET Core 3.0 it works but the Equals fails for the clones, hence safeCompare
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 #endif
         }
 
@@ -489,9 +489,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-#if !NETCOREAPP2_0 // type is not serializable in .NET Core
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+#if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData. In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 #endif
         }
 
@@ -740,7 +740,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes); 
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
         }
 
         [Test]
@@ -963,7 +963,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new Cache<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
                 new Cache<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
                 new Cache<TestEnumByte, int> { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // SerializationException : Serializing delegates is not supported on this platform.
                 new Cache<string, string>(s => s.ToUpper()) { { "alpha", "ALPHA" } },
 #endif
             };
@@ -975,7 +975,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
-#if !NETCOREAPP
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
         [Test]
         public void SerializeRemoteObjects()
         {
@@ -1129,7 +1129,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
-                typeof(int),
+#if !NETCOREAPP3_0 // works but Equals fails on the clone
+		        typeof(int),  
+#endif
 
                 TestEnumByte.Two,
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
@@ -1234,7 +1236,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 new CircularReferenceClass { Name = "Single" }, // no circular reference
                 new CircularReferenceClass { Name = "Parent" }.AddChild("Child").AddChild("Grandchild").Parent.Parent, // circular reference, but logically alright
                 new SelfReferencer("name"),
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // PlatformNotSupportedException : Operation is not supported on this platform.
                 Encoding.GetEncoding("shift_jis") // circular reference via IObjectReference instances but with no custom serialization  
 #endif
             };
@@ -1337,6 +1339,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None));
         }
 
-#endregion
+        [TestCase(typeof(int), true)]
+        [TestCase(typeof(KeyValuePair<int, string>), false)]
+        [TestCase(typeof(KeyValuePair<int, int>), false)]
+        public void CanSerializeValueType(Type type, bool expectedResult)
+        {
+            Assert.AreEqual(expectedResult, BinarySerializer.CanSerializeValueType(type, true));
+
+            if (!expectedResult)
+                return;
+
+            BinarySerializer.SerializeValueType((ValueType)Activator.CreateInstance(type, true));
+        }
+
+        #endregion
     }
 }

@@ -219,7 +219,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // save and reload
             StringBuilder sb = new StringBuilder();
-#if NETCOREAPP2_0
+#if NETCOREAPP2_0 || NETCOREAPP3_0
             RemoveUnsupportedItems(rs);
 #endif
             rs.Save(new StringWriter(sb));
@@ -405,10 +405,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Private Methods
 
-#if NETCOREAPP2_0
+#if NETCOREAPP2_0 || NETCOREAPP3_0
         private void RemoveUnsupportedItems(ResXResourceSet rs)
         {
-            string[] unsupported = { "System.Drawing", "System.Windows.Forms" };
+            string[] unsupported =
+#if NETCOREAPP2_0 // .NET Core 2.0 Drawing and WinForms types are not supported
+        		{ "System.Drawing", "System.Windows.Forms" }; 
+#else // .NET Core 3.0 and above: Drawing and WinForms types are supported, only binary serialized types are removed
+                new string[0];
+#endif
 
             bool origMode = rs.SafeMode;
             rs.SafeMode = true;

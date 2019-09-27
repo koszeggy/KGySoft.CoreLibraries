@@ -519,8 +519,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 };
 
             SystemSerializeObjects(referenceObjects);
+#if !NETCOREAPP3_0
             KGySerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects, false);
+            KGySerializeObjects(referenceObjects, false); 
+#else // .NET Core 3.0 fails to deserialize empty byte array - returns null instead
+            KGySerializeObjects(referenceObjects, checkCompatibleEquality: false);
+            KGySerializeObjects(referenceObjects, false, false);
+#endif
         }
 
         /// <summary>
@@ -664,7 +669,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             object[] referenceObjects =
                 {
                     DBNull.Value, // type name must not be set -> UnitySerializationHolder is used
-#if !NETCOREAPP2_0 // PlatformNotSupportedException
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0) // '932 | Japanese (Shift-JIS)' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.
                     Encoding.GetEncoding("shift_jis"), // type name must not be set -> encoding type is changed  
 #endif
                     CultureInfo.CurrentCulture, // special handling for culture info

@@ -243,8 +243,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void SerializationTest()
         {
-#if NETCOREAPP
-            // .NET Core does not support delegate serialization
+#if NETCOREAPP2_0 || NETCOREAPP3_0
+            // .NET Core 2.0/3.0 does not support delegate serialization
             var cache = new Cache<string, int>(StringComparer.OrdinalIgnoreCase)
             {
                 EnsureCapacity = true,

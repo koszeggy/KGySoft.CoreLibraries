@@ -111,7 +111,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void KGySerializeObject(object obj, XmlSerializationOptions options)
+        private void KGySerializeObject(object obj, XmlSerializationOptions options, bool randomContent = false)
         {
             Type type = obj.GetType();
             Console.WriteLine($"------------------KGySoft XmlSerializer ({type} - options: {options.ToString<XmlSerializationOptions>()})--------------------");
@@ -138,7 +138,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                 }
 
                 AssertDeepEquals(obj, deserializedObject);
-                Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
+                if (!randomContent)
+                    Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
 
                 // XElement - as component
                 //Console.WriteLine();
@@ -179,7 +180,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
             }
         }
 
-        private void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options, bool alsoContent = true)
+        private void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options, bool alsoAsContent = true)
         {
             Console.WriteLine($"------------------KGySoft XmlSerializer (Items Count: {referenceObjects.Length}; options: {options.ToString<XmlSerializationOptions>()})--------------------");
             try
@@ -195,7 +196,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
                         xElement.Add(KGyXmlSerializer.Serialize(item, options));
                         KGyXmlSerializer.Serialize(writer, item, options);
 
-                        if (!alsoContent)
+                        if (!alsoAsContent)
                             continue;
 
                         // content serialization test for element

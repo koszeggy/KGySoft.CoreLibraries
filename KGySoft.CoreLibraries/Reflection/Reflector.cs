@@ -146,7 +146,7 @@ namespace KGySoft.Reflection
             => defaultMemberCache ?? (defaultMemberCache = new Cache<Type, string>(GetDefaultMember).GetThreadSafeAccessor());
 
         private static LockingDictionary<string, Type> TypeCacheByString
-            => typeCacheByString ?? (typeCacheByString = new Cache<string, Type>().AsThreadSafe());
+            => typeCacheByString ?? (typeCacheByString = new Cache<string, Type>(256).AsThreadSafe());
 
         private static IThreadSafeCacheAccessor<Assembly, LockingDictionary<string, Type>> TypeCacheByAssembly
             => typeCacheByAssembly ?? (typeCacheByAssembly = new Cache<Assembly, LockingDictionary<string, Type>>(a => new Cache<string, Type>(64).AsThreadSafe()).GetThreadSafeAccessor(true)); // true because the inner creation is fast

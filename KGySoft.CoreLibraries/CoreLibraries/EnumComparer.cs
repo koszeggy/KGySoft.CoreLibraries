@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
-using System.Security; 
+using System.Security;
 
 using KGySoft.Collections;
 
@@ -75,7 +75,7 @@ namespace KGySoft.CoreLibraries
         {
             #region Methods
 
-            [SecurityCritical] 
+            [SecurityCritical]
             public object GetRealObject(StreamingContext context) => Comparer;
 
             #endregion
@@ -170,7 +170,7 @@ namespace KGySoft.CoreLibraries
 
         #region Explicitly Implemented Interface Methods
 
-        [SecurityCritical] 
+        [SecurityCritical]
         [SuppressMessage("Microsoft.Security", "CA2123:OverrideLinkDemandsShouldBeIdenticalToBase", Justification = "False alarm, SecurityCriticalAttribute is applied.")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.SetType(typeof(SerializationUnityHolder));
 

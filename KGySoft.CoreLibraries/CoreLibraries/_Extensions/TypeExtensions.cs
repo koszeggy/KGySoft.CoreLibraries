@@ -541,7 +541,7 @@ namespace KGySoft.CoreLibraries
         internal static Type GetGenericType(this Type genTypeDef, Type t1, Type t2 = null)
         {
             if (genericTypeCache == null)
-                Interlocked.CompareExchange(ref genericTypeCache, genericTypeCache = new Cache<(Type, Type, Type), Type>(CreateGenericType).GetThreadSafeAccessor(), null);
+                Interlocked.CompareExchange(ref genericTypeCache, genericTypeCache = new Cache<(Type, Type, Type), Type>(CreateGenericType, 256).GetThreadSafeAccessor(), null);
             return genericTypeCache[(genTypeDef, t1, t2)];
         }
 

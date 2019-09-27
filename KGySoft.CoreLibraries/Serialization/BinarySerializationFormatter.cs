@@ -340,7 +340,7 @@ namespace KGySoft.Serialization
 
             // ReSharper disable once InconsistentNaming
             DBNull = 19, // Non-serializable in .NET Core
-            Object = 20, 
+            Object = 20,
 
             Decimal = 21,
 
@@ -531,12 +531,12 @@ namespace KGySoft.Serialization
                 DataTypes.HashSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-#if NETCOREAPP2_0
+#if NETCOREAPP2_0 || NETSTANDARD2_1
                         CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
 #elif NET35 || NET40 || NET45
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
 #else
-                        #error Select ctor arguments for the newly added .NET version.
+#error Select ctor arguments for the newly added .NET version.
 #endif
 
                     SpecificAddMethod = nameof(HashSet<_>.Add) // because faster than via ICollection<T>.Add
@@ -682,7 +682,7 @@ namespace KGySoft.Serialization
         };
 
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>>> methodsByAttributeCache
-            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4)).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
+            = new Cache<Type, Dictionary<Type, IEnumerable<MethodInfo>>>(t => new Dictionary<Type, IEnumerable<MethodInfo>>(4), 256).GetThreadSafeAccessor(true); // true for use just a single lock because the loader is simply a new statement
 
         // including string and the abstract enum and array types
         private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
