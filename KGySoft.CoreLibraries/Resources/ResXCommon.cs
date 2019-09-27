@@ -69,6 +69,12 @@ namespace KGySoft.Resources
 
         internal const string Version = "2.0";
 
+#if NET35
+        internal const string WinFormsPostfix = ", Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+#else
+        internal const string WinFormsPostfix = ", Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+#endif
+
         #endregion
 
         #region Private Constants
@@ -77,12 +83,6 @@ namespace KGySoft.Resources
         private const string compatBinSerializedObjectMimeType = "text/microsoft-urt/binary-serialized/base64";
         private const string soapSerializedObjectMimeType = "application/x-microsoft.net.object.soap.base64";
         private const string compatSoapSerializedObjectMimeType = "text/microsoft-urt/soap-serialized/base64";
-
-#if NET35
-        private const string winformsPostfix = ", Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-#else
-        private const string winformsPostfix = ", Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-#endif
 
         private const string soapFormatterTypeName = "System.Runtime.Serialization.Formatters.Soap.SoapFormatter, System.Runtime.Serialization.Formatters.Soap";
 
@@ -129,15 +129,15 @@ namespace KGySoft.Resources
                 if (compatibleFormat)
                 {
                     if (type == typeof(ResXFileRef))
-                        result = ResXFileRefNameWinForms + winformsPostfix;
+                        result = ResXFileRefNameWinForms + WinFormsPostfix;
                     else if (type == Reflector.ByteArrayType)
                         return Reflector.ByteArrayType.AssemblyQualifiedName; // byte[]: The System.ResXReader recognizes it only with aqn
                     else if (type == typeof(ResXNullRef))
-                        result = ResXNullRefNameWinForms + winformsPostfix;
+                        result = ResXNullRefNameWinForms + WinFormsPostfix;
                     else if (type == typeof(ResXResourceReader))
-                        result = ResXResourceReaderNameWinForms + winformsPostfix;
+                        result = ResXResourceReaderNameWinForms + WinFormsPostfix;
                     else if (type == typeof(ResXResourceWriter))
-                        result = ResXResourceWriterNameWinForms + winformsPostfix;
+                        result = ResXResourceWriterNameWinForms + WinFormsPostfix;
                 }
 
                 if (result == null)

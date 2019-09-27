@@ -491,20 +491,7 @@ namespace KGySoft.Resources
 
         #region Static Properties
 
-        private static string CompatibleFileRefTypeName
-        {
-            get
-            {
-                if (compatibleFileRefTypeName == null)
-                {
-                    AssemblyName asmName = Reflector.SystemCoreLibrariesAssembly.GetName();
-                    asmName.Name = "System.Windows.Forms";
-                    compatibleFileRefTypeName = "System.Resources.ResXFileRef, " + asmName.FullName;
-                }
-
-                return compatibleFileRefTypeName;
-            }
-        }
+        private static string CompatibleFileRefTypeName => compatibleFileRefTypeName ?? (compatibleFileRefTypeName = ResXCommon.ResXFileRefNameWinForms + ResXCommon.WinFormsPostfix);
 
         #endregion
 
