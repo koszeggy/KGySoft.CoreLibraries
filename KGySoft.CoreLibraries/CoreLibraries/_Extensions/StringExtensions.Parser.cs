@@ -113,7 +113,7 @@ namespace KGySoft.CoreLibraries
                     // ReSharper disable once PossibleNullReferenceException
                     if (type.IsEnum)
                     {
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
                         value = Enum.Parse(type, s);
                         return true;
 #else

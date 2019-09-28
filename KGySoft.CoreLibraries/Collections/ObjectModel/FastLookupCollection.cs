@@ -105,7 +105,7 @@ namespace KGySoft.Collections.ObjectModel
 #endif
         private protected static HashSet<T> CreateAdjustSet(int length)
         {
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
             HashSet<T> result = new HashSet<T>();
             if (length > 50) // based on performance tests, preallocating capacity by reflection starts to be beneficial from 50 elements
                 result.Initialize(length);

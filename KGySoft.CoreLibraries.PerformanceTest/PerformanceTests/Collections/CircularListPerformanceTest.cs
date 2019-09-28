@@ -49,10 +49,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
         {
             CircularList<T> result = new CircularList<T>(capacity);
             Reflector.SetField(result, "startIndex", startIndex);
-            Type type = typeof(T);
-            if (type.IsNullable())
-                type = Nullable.GetUnderlyingType(type);
-
             for (int i = 0; i < count; i++)
                 result.Add(i.Convert<T>());
             return result;

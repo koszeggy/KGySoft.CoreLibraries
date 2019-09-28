@@ -54,6 +54,7 @@ namespace KGySoft.CoreLibraries
     /// at least one <see cref="IEqualityComparer{T}.Equals(T,T)">Equals</see> call for each lookup, for example).</item>
     /// </list>
     /// </note>
+    /// <note>In .NET Standard 2.0 building dynamic assembly is not supported so the .NET Standard 2.0 version falls back to using <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> classes.</note>
     /// </remarks>
     /// <example>
     /// Example for initializing of a <see cref="Dictionary{TKey,TValue}"/> with <see cref="EnumComparer{TEnum}"/>:
@@ -65,6 +66,8 @@ namespace KGySoft.CoreLibraries
     [SuppressMessage("Usage", "CA2229:Implement serialization constructors", Justification = "False alarm, SerializationUnityHolder will be deserialized.")]
     public abstract class EnumComparer<TEnum> : IEqualityComparer<TEnum>, IComparer<TEnum>, ISerializable
     {
+        #region Nested Classes
+        
         #region SerializationUnityHolder class
 
         /// <summary>
@@ -83,6 +86,26 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region FallbackEnumComparer
+#if NETSTANDARD2_0
+
+        [Serializable]
+        private sealed class FallbackEnumComparer : EnumComparer<TEnum>
+        {
+            #region Methods
+            
+            public override bool Equals(TEnum x, TEnum y) => EqualityComparer<TEnum>.Default.Equals(x, y);
+            public override int GetHashCode(TEnum obj) => EqualityComparer<TEnum>.Default.GetHashCode(obj);
+            public override int Compare(TEnum x, TEnum y) => Comparer<TEnum>.Default.Compare(x, y); 
+            
+            #endregion
+        }
+
+#endif
+        #endregion
+
+        #endregion
+
         #region Fields
 
         private static EnumComparer<TEnum> comparer;
@@ -94,7 +117,12 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the comparer instance for <typeparamref name="TEnum"/> type.
         /// </summary>
-        public static EnumComparer<TEnum> Comparer => comparer ?? (comparer = EnumComparerBuilder.GetComparer<TEnum>());
+        public static EnumComparer<TEnum> Comparer => comparer ??=
+#if NETSTANDARD2_0
+            new FallbackEnumComparer();
+#else
+            EnumComparerBuilder.GetComparer<TEnum>();
+#endif
 
         #endregion
 

@@ -74,8 +74,10 @@ namespace KGySoft.Reflection
             if (property.PropertyType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
-            // for classes and static properties: Lambda expression
+            // For classes and static properties: Lambda expression (.NET Standard 2.0: also for structs, mutated content might be lost)
+#if !NETSTANDARD2_0
             if (!declaringType.IsValueType || getterMethod.IsStatic)
+#endif           
             {
                 //---by property expression---
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -102,9 +104,11 @@ namespace KGySoft.Reflection
                 //return lambda.Compile();
             }
 
+#if !NETSTANDARD2_0
             // for struct instance properties: Dynamic method
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
             return dm.CreateDelegate(typeof(PropertyGetter));
+#endif 
         }
 
         private protected override Delegate CreateSetter()
@@ -118,7 +122,9 @@ namespace KGySoft.Reflection
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes and static properties: Lambda expression
-            if (!declaringType.IsValueType || setterMethod.IsStatic)
+#if !NETSTANDARD2_0
+            if (!declaringType.IsValueType || setterMethod.IsStatic) 
+#endif
             {
                 // Calling the setter method (works even in .NET 3.5, while Assign is available from .NET 4 only)
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -137,9 +143,11 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if !NETSTANDARD2_0
             // for struct instance properties: Dynamic method
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
-            return dm.CreateDelegate(typeof(PropertySetter));
+            return dm.CreateDelegate(typeof(PropertySetter)); 
+#endif
         }
 
         #endregion

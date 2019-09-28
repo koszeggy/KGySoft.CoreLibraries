@@ -1,4 +1,5 @@
-﻿#region Copyright
+﻿#if !NETSTANDARD2_0
+#region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
 //  File: EnumComparerBuilder.cs
@@ -218,3 +219,4 @@ namespace KGySoft.CoreLibraries
         #endregion
     }
 }
+#endif

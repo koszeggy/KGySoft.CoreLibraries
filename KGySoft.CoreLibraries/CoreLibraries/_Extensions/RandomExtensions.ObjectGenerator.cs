@@ -484,6 +484,9 @@ namespace KGySoft.CoreLibraries
 
             private static Delegate CreateDelegate(Type type)
             {
+#if NETSTANDARD2_0
+                return null;
+#else
                 MethodInfo mi = type.GetMethod(nameof(Action.Invoke));
                 // ReSharper disable once PossibleNullReferenceException
                 Type returnType = mi.ReturnType;
@@ -532,6 +535,7 @@ namespace KGySoft.CoreLibraries
                 {
                     return null;
                 }
+#endif
             }
 
             private static object GenerateBoolean(ref GeneratorContext context) => context.Random.NextBoolean();

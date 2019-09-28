@@ -288,7 +288,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="password">Password of encryption.</param>
         /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")] 
 #endif
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
@@ -299,7 +299,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(algorithm), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
 #else
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 1000, HashAlgorithmName.SHA256);
@@ -415,7 +415,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="password">Password of decryption.</param>
         /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/>&#160;or is empty, a default salt will be used.</param>
         /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
 #endif
         public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
@@ -426,7 +426,7 @@ namespace KGySoft.CoreLibraries
                 throw new ArgumentNullException(nameof(password), Res.ArgumentNull);
 
             CheckSalt(ref salt);
-#if NET35 || NET40 || NET45
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
 #else
             var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 1000, HashAlgorithmName.SHA256);

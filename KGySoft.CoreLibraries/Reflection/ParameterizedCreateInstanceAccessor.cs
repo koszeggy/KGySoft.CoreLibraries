@@ -69,7 +69,9 @@ namespace KGySoft.Reflection
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
 
             // for constructors that have no ref parameters: Lambda expression
-            if (!hasRefParameters)
+#if !NETSTANDARD2_0
+            if (!hasRefParameters) 
+#endif
             {
                 ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
                 var ctorParameters = new Expression[ParameterTypes.Length];
@@ -77,18 +79,20 @@ namespace KGySoft.Reflection
                     ctorParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), ParameterTypes[i]);
 
                 NewExpression construct = Expression.New(
-                        ctor, // constructor info
-                        ctorParameters); // arguments cast to target types
+                    ctor, // constructor info
+                    ctorParameters); // arguments cast to target types
 
                 LambdaExpression lambda = Expression.Lambda<Ctor>(
-                        Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
-                        argumentsParameter);
+                    Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
+                    argumentsParameter);
                 return lambda.Compile();
             }
 
+#if !NETSTANDARD2_0
             // for constructors with ref/out parameters: Dynamic method
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.HandleByRefParameters);
-            return dm.CreateDelegate(typeof(Ctor));
+            return dm.CreateDelegate(typeof(Ctor)); 
+#endif
         }
 
         #endregion

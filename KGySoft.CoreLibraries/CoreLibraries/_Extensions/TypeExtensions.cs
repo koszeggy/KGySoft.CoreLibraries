@@ -24,9 +24,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
+
 using KGySoft.Collections;
 using KGySoft.Reflection;
 
@@ -653,13 +655,29 @@ namespace KGySoft.CoreLibraries
                 return Buffer.ByteLength(array);
             }
 
-            // Emitting the SizeOf OpCode for the type (TODO: use TypedReferene instead and drop cache)
+            if (!type.IsValueType)
+                return IntPtr.Size;
+
+#if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: using Marshal.SizeOf (which has a different result sometimes)
+            try
+            {
+                // not SizeOf(Type) because that throws an exception for generics such as KeyValuePair<int, int>, whereas an instance of it works.
+                return Marshal.SizeOf(Activator.CreateInstance(type));
+            }
+            catch (ArgumentException)
+            {
+                // contains a reference or whatever
+                return 0;
+            }
+#else
+            // Emitting the SizeOf OpCode for the type
             var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
             ILGenerator gen = dm.GetILGenerator();
             gen.Emit(OpCodes.Sizeof, type);
             gen.Emit(OpCodes.Ret);
             var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
             return (int)method.Invoke();
+#endif
         }
 
         private static Type CreateGenericType((Type GenTypeDef, Type T1, Type T2) key) => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });

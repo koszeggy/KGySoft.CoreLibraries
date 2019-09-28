@@ -114,7 +114,7 @@ namespace KGySoft.Reflection
 
         #region HashSet<T>
 
-#if NET35 || NET40 || NET45 // from .NET 4.72 capacity ctor is available
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0 // from .NET 4.72 capacity ctor is available
         private static IDictionary<Type, ActionMethodAccessor> methodsHashSet_Initialize;
 #endif
 
@@ -365,14 +365,15 @@ namespace KGySoft.Reflection
 
         #region HashSet<T>
 
-#if NET35 || NET40 || NET45 // for other frameworks we expect that ctor with capacity is available. If not, the usages will provide the compile error
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0 // for other frameworks we expect that ctor with capacity is available. If not, the usages will provide the compile error
         private static MethodAccessor HashSet_Initialize<T>()
         {
             if (methodsHashSet_Initialize == null)
                 Interlocked.CompareExchange(ref methodsHashSet_Initialize, new Dictionary<Type, ActionMethodAccessor>().AsThreadSafe(), null);
             if (!methodsHashSet_Initialize.TryGetValue(typeof(T), out ActionMethodAccessor accessor))
             {
-                accessor = new ActionMethodAccessor(typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic));
+                MethodInfo mi = typeof(HashSet<T>).GetMethod("Initialize", BindingFlags.Instance | BindingFlags.NonPublic);
+                accessor = mi == null ? null : new ActionMethodAccessor(mi);
                 methodsHashSet_Initialize[typeof(T)] = accessor;
             }
 
@@ -386,7 +387,7 @@ namespace KGySoft.Reflection
 
 #if NET35 || NET40 || NET45
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif NETCOREAPP2_0 || NETCOREAPP3_0 ||NETSTANDARD2_1
+#elif NETCOREAPP2_0 || NETCOREAPP3_0|| NETSTANDARD2_0 || NETSTANDARD2_1
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer
         {
             get
@@ -546,8 +547,8 @@ namespace KGySoft.Reflection
 
         #region HashSet<T>
 
-#if NET35 || NET40 || NET45
-        internal static void Initialize<T>(this HashSet<T> hashSet, int capacity) => HashSet_Initialize<T>().Invoke(hashSet, capacity);
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
+        internal static void Initialize<T>(this HashSet<T> hashSet, int capacity) => HashSet_Initialize<T>()?.Invoke(hashSet, capacity);
 #endif
 
         #endregion

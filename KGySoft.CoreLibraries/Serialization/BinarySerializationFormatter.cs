@@ -533,12 +533,11 @@ namespace KGySoft.Serialization
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
 #if NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_1
                         CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
-#elif NET35 || NET40 || NET45
+#elif NET35 || NET40 || NET45 || NETSTANDARD2_0
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
 #else
 #error Select ctor arguments for the newly added .NET version.
 #endif
-
                     SpecificAddMethod = nameof(HashSet<_>.Add) // because faster than via ICollection<T>.Add
                 }
             },

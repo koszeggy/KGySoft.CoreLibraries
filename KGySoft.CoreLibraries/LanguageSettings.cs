@@ -19,11 +19,15 @@
 using System;
 using System.Globalization;
 using System.Resources;
-using System.Security;
+#if NET40 || NET45
+using System.Security; 
+#endif
 using System.Threading;
 using KGySoft.CoreLibraries;
 using KGySoft.Resources;
-using Microsoft.Win32;
+#if NETFRAMEWORK
+using Microsoft.Win32; 
+#endif
 
 #endregion
 
@@ -264,7 +268,7 @@ namespace KGySoft
             }
         }
 
-#if !(NETCOREAPP2_0|| NETCOREAPP3_0 || NETSTANDARD2_1)
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
         /// <summary>
         /// Gets or sets whether changes of system regional settings should be captured.
         /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
@@ -439,7 +443,7 @@ namespace KGySoft
 
         #region Event handlers
 
-#if !(NETCOREAPP2_0|| NETCOREAPP3_0 || NETSTANDARD2_1)
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
 #if !NET35
         [SecuritySafeCritical]
 #endif

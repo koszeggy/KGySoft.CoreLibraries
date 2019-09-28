@@ -283,6 +283,27 @@ namespace KGySoft.Reflection
             if (field.FieldType.IsPointer)
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(field.FieldType));
 
+#if NETSTANDARD2_0
+            // DynamicMethod is not available in .NET Standard 2.0 so using expressions, which cannot be used for instance struct fields
+            //if (!declaringType.IsValueType || field.IsStatic)
+            {
+                ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+                ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
+                UnaryExpression castValue = Expression.Convert(valueParameter, field.FieldType);
+
+                MemberExpression member = Expression.Field(
+                    field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                    field);
+
+                BinaryExpression assign = Expression.Assign(member, castValue);
+                Expression<FieldSetter> lambda = Expression.Lambda<FieldSetter>(
+                    assign,
+                    instanceParameter, // instance (object)
+                    valueParameter);
+                return lambda.Compile();
+            }
+
+#else
             // Expressions would not work for value types so using always dynamic methods
             DynamicMethod dm = new DynamicMethod(setterPrefix + field.Name, // setter method name
                 Reflector.VoidType, // return type
@@ -337,6 +358,7 @@ namespace KGySoft.Reflection
             il.Emit(OpCodes.Ret);
 
             return (FieldSetter)dm.CreateDelegate(typeof(FieldSetter));
+#endif
         }
 
         #endregion

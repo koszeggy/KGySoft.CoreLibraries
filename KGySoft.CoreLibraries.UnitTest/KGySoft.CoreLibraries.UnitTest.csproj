@@ -56,13 +56,6 @@
     <EmbeddedResource Update="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <!--<EmbeddedResource Condition="'$(TargetFramework)' != 'netcoreapp3.0'" Update="Resources\TestRes.resx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>-->
-    <!--<EmbeddedResource Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Remove="Resources\TestRes.resx" />
-    <None Condition="'$(TargetFramework)' == 'netcoreapp3.0'" Include="Resources\TestRes.resx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>-->
   </ItemGroup>
 
   <ItemGroup>

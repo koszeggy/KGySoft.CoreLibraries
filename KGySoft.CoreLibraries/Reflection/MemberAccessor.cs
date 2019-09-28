@@ -17,13 +17,16 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Security;
+
+#if !NETSTANDARD2_0
+using System.Collections.Generic; 
+using System.Diagnostics.CodeAnalysis; 
+using System.Reflection.Emit; 
+#endif
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -197,6 +200,7 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Gets a <see cref="DynamicMethod"/> that invokes the referred <paramref name="methodBase"/> (method or constructor).
         /// An overridden class may use this to create a delegate optionally.
@@ -427,6 +431,7 @@ namespace KGySoft.Reflection
             ilGenerator.Emit(OpCodes.Ret);
             return dm;
         }
+#endif
 
         #endregion
 

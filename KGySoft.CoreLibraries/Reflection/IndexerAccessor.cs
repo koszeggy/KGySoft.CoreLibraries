@@ -76,7 +76,9 @@ namespace KGySoft.Reflection
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes: Lambda expression
-            if (!declaringType.IsValueType)
+#if !NETSTANDARD2_0
+            if (!declaringType.IsValueType) 
+#endif
             {
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
                 ParameterExpression indexArgumentsParameter = Expression.Parameter(typeof(object[]), "indexArguments");
@@ -96,9 +98,11 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if !NETSTANDARD2_0
             // for structs: Dynamic method
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.None);
-            return dm.CreateDelegate(typeof(IndexerGetter));
+            return dm.CreateDelegate(typeof(IndexerGetter)); 
+#endif
         }
 
         private protected override Delegate CreateSetter()
@@ -112,7 +116,9 @@ namespace KGySoft.Reflection
                 throw new NotSupportedException(Res.ReflectionPointerTypeNotSupported(property.PropertyType));
 
             // for classes: Lambda expression
-            if (!declaringType.IsValueType)
+#if !NETSTANDARD2_0
+            if (!declaringType.IsValueType) 
+#endif
             {
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
                 ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
@@ -139,9 +145,11 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if !NETSTANDARD2_0
             // for structs: Dynamic method
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
-            return dm.CreateDelegate(typeof(IndexerSetter));
+            return dm.CreateDelegate(typeof(IndexerSetter)); 
+#endif
         }
 
         #endregion

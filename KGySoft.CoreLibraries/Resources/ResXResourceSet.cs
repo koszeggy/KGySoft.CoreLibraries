@@ -605,7 +605,7 @@ namespace KGySoft.Resources
         /// <remarks>This constructor is private so the single string parameter in the public constructors means file name, which is compatible with the system version.</remarks>
         private ResXResourceSet(string basePath)
         {
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_1)
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_0 || NETSTANDARD2_1)
             // base ctor initializes a Hashtable that we don't need (and the base(false) ctor is not available).
             Table = null;
 #endif

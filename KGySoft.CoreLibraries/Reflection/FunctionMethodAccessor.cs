@@ -82,7 +82,9 @@ namespace KGySoft.Reflection
 
             // for classes and static methods that have no ref parameters: Lambda expression
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-            if (!hasRefParameters && (method.IsStatic || !declaringType.IsValueType))
+#if !NETSTANDARD2_0
+            if (!hasRefParameters && (method.IsStatic || !declaringType.IsValueType)) 
+#endif
             {
                 ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "target");
                 ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
@@ -103,9 +105,11 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+#if !NETSTANDARD2_0
             // for struct instance methods or methods with ref/out parameters: Dynamic method
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
-            return dm.CreateDelegate(typeof(AnyFunction));
+            return dm.CreateDelegate(typeof(AnyFunction)); 
+#endif
         }
 
         #endregion
