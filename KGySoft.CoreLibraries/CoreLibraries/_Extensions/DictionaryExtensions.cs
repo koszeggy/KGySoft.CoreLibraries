@@ -32,7 +32,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
-#if !(NETCOREAPP2_0 || NETSTANDARD2_1) // These methods are not included into .NET Core/Standard versions to prevent conflict with CollectionExtensions
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_1) // These methods are not included into .NET Core/Standard versions to prevent conflict with CollectionExtensions
         /// <summary>
         /// Tries to get a value from a <paramref name="dictionary"/> for the given key.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="GetValueOrDefault{TActualValue}(IDictionary{string,object},string,TActualValue)"/> method for some examples.

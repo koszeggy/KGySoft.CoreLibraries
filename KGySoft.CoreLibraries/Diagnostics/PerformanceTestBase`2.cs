@@ -161,7 +161,7 @@ namespace KGySoft.Diagnostics
             {
                 #region Local Methods
 
-                string DumpDiff(double currentValue, double baseValue, string unit = null)
+                static string DumpDiff(double currentValue, double baseValue, string unit = null)
                 {
                     double diff = currentValue - baseValue;
                     if (diff.Equals(0d))

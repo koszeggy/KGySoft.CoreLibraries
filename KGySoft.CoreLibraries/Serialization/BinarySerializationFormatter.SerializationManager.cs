@@ -723,7 +723,7 @@ namespace KGySoft.Serialization
             [SecurityCritical]
             private void WriteCollectionWithType(BinaryWriter bw, object data, DataTypes dataType, bool isRoot)
             {
-                bool CanHaveRecursion(CircularList<DataTypes> dataTypes)
+                static bool CanHaveRecursion(CircularList<DataTypes> dataTypes)
                     => dataTypes.Exists(dt =>
                         (dt & DataTypes.SimpleTypes) == DataTypes.BinarySerializable
                         || (dt & DataTypes.SimpleTypes) == DataTypes.RecursiveObjectGraph
@@ -1617,7 +1617,7 @@ namespace KGySoft.Serialization
             /// </summary>
             private bool WriteId(BinaryWriter bw, object data)
             {
-                bool IsComparedByValue(Type type) =>
+                static bool IsComparedByValue(Type type) =>
                     type.IsPrimitive || type.BaseType == Reflector.EnumType || // always instance so can be used than the slower IsEnum
                     type.In(Reflector.StringType, Reflector.DecimalType, Reflector.DateTimeType, Reflector.TimeSpanType, Reflector.DateTimeOffsetType, typeof(Guid));
 

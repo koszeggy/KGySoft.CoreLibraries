@@ -65,7 +65,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void GetString()
         {
             var refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", enUS);
-            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
+            var manager = new ResXResourceManager("TestResourceResX", enUS);
             var resName = "TestString";
             Assert.AreEqual(refManager.GetString(resName, inv), manager.GetString(resName, inv));
 
@@ -109,7 +109,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetMetaString()
         {
-            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
+            var manager = new ResXResourceManager("TestResourceResX", enUS);
             var resName = "TestString";
 
             Assert.IsNotNull(manager.GetMetaString(resName, inv));
@@ -133,7 +133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void GetObject()
         {
             var refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", enUS);
-            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
+            var manager = new ResXResourceManager("TestResourceResX", enUS);
             var resName = "TestString";
             Assert.AreEqual(refManager.GetObject(resName, inv), manager.GetObject(resName, inv));
 
@@ -225,11 +225,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void GetStream()
         {
             var refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", enUS);
-            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
+            var manager = new ResXResourceManager("TestResourceResX", enUS);
             var resName = "TestSound";
 
+#if !NETCOREAPP3_0 // .NET Core 3.0 bug: System.MissingMethodException : Constructor on type 'System.IO.MemoryStream' not found.
             AssertItemsEqual(refManager.GetStream(resName, inv).ToArray(), manager.GetStream(resName, inv).ToArray());
-
+#endif
             // when CloneValues is true, GetObject returns always a new instance including the inner buffer
             Assert.IsTrue(manager.CloneValues);
             Assert.AreNotSame(((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer(), ((MemoryStream)manager.GetObject(resName, inv)).InternalGetBuffer());
@@ -360,20 +361,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // text file by reference
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
-#if !NETCOREAPP2_0 // TODO: re-enable when possible
+#if !NETCOREAPP2_0 // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
             // icon by reference
             reference = refManager.GetObject("TestIcon");
             check = manager.GetObject("TestIcon");
             Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
-            // icon bmp by reference: system manager retrieves it as a png, while resx manager preserves its icon raw format
+            // icon bmp by reference
             reference = refManager.GetObject("TestIconBitmap");
             check = manager.GetObject("TestIconBitmap");
             Assert.IsInstanceOf<Bitmap>(reference);
             Assert.IsInstanceOf<Bitmap>(check);
-            Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
-            Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid);
+#if NETFRAMEWORK // system manager retrieves it as a png, while resx manager preserves its icon raw format
+            Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat); 
+#else
+            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
+#endif
+            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 
             // multi-res icon by reference
@@ -387,8 +392,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             check = manager.GetObject("TestIconMultiBitmap"); // icon of 5 images
             Assert.IsInstanceOf<Bitmap>(reference);
             Assert.IsInstanceOf<Bitmap>(check);
-            Assert.AreEqual(ImageFormat.Png.Guid, ((Bitmap)reference).RawFormat.Guid);
-            Assert.AreEqual(ImageFormat.Icon.Guid, ((Bitmap)check).RawFormat.Guid); 
+#if NETFRAMEWORK // system manager retrieves it as a png, while resx manager preserves its icon raw format
+            Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat);
+#else
+            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
+#endif
+            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat); 
 
 #endif
             // byte array by reference
@@ -398,10 +407,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             AssertDeepEquals(reference, check);
 
             // stream by reference
-            reference = refManager.GetObject("TestSound");
             check = manager.GetObject("TestSound");
-            Assert.IsInstanceOf<MemoryStream>(reference);
-            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
+            Assert.IsInstanceOf<MemoryStream>(check);
+#if !NETCOREAPP3_0 // .NET Core 3.0 bug: Constructor on type 'System.IO.MemoryStream' not found.
+            reference = refManager.GetObject("TestSound");
+            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray()); 
+#endif
 
 #if !NETCOREAPP2_0
             // point embedded by type converter
@@ -433,11 +444,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<Icon>(reference);
             AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
+#if !NETCOREAPP3_0 // Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable.
             // stream embedded as binary.base64 (created by BinaryFormatter)
             reference = refManager.GetObject("TestSoundEmbedded");
-            check = manager.GetObject("TestSoundEmbedded"); // Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable.
+            check = manager.GetObject("TestSoundEmbedded");
             Assert.IsInstanceOf<MemoryStream>(reference);
-            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
+            AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray()); 
+#endif
 
             // color embedded by type converter without <value> element
             reference = refManager.GetObject("TestColorWithoutValue"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
@@ -457,7 +470,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void GetResourceSetTest()
         {
             var refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", enUS);
-            var manager = new ResXResourceManager("TestResourceResX", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
+            var manager = new ResXResourceManager("TestResourceResX", enUS);
             var rsInv = manager.GetResourceSet(inv, loadIfExists: true, tryParents: false);
 
             // just checking that invariant exists
@@ -647,7 +660,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Clean(manager, enGB);
         }
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
         [Test]
         public void SerializationTest()
         {

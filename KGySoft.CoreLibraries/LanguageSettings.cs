@@ -121,7 +121,7 @@ namespace KGySoft
 
         #region Fields
 
-#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
+#if NETFRAMEWORK
         private static bool captureSystemLocaleChange;
 #endif
         private static ResourceManagerSources dynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
@@ -264,7 +264,7 @@ namespace KGySoft
             }
         }
 
-#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
+#if !(NETCOREAPP2_0|| NETCOREAPP3_0 || NETSTANDARD2_1)
         /// <summary>
         /// Gets or sets whether changes of system regional settings should be captured.
         /// When <see langword="true"/>, <see cref="FormattingLanguage"/> is updated on regional changes, and
@@ -439,7 +439,7 @@ namespace KGySoft
 
         #region Event handlers
 
-#if !(NETCOREAPP2_0 || NETSTANDARD2_1)
+#if !(NETCOREAPP2_0|| NETCOREAPP3_0 || NETSTANDARD2_1)
 #if !NET35
         [SecuritySafeCritical]
 #endif

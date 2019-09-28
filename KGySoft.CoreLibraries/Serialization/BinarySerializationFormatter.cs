@@ -531,7 +531,7 @@ namespace KGySoft.Serialization
                 DataTypes.HashSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-#if NETCOREAPP2_0 || NETSTANDARD2_1
+#if NETCOREAPP2_0 || NETCOREAPP3_0 || NETSTANDARD2_1
                         CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
 #elif NET35 || NET40 || NET45
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },

@@ -36,9 +36,7 @@ using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
-#if NETCOREAPP2_0 || NETSTANDARD2_1
 using CollectionExtensions = KGySoft.CoreLibraries.CollectionExtensions;
-#endif
 
 #endregion
 
@@ -388,7 +386,7 @@ namespace KGySoft.Reflection
 
 #if NET35 || NET40 || NET45
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer => methodMemoryStream_InternalGetBuffer ?? (methodMemoryStream_InternalGetBuffer = new FunctionMethodAccessor(typeof(MemoryStream).GetMethod("InternalGetBuffer", BindingFlags.Instance | BindingFlags.NonPublic)));
-#elif NETCOREAPP2_0 || NETSTANDARD2_1
+#elif NETCOREAPP2_0 || NETCOREAPP3_0 ||NETSTANDARD2_1
         private static FunctionMethodAccessor MemoryStream_InternalGetBuffer
         {
             get
@@ -468,7 +466,7 @@ namespace KGySoft.Reflection
 
         private static ActionMethodAccessor GetCtorMethod(Type type, object[] ctorArgs)
         {
-            ActionMethodAccessor GetCtorMethodAccessor((Type Type, Type P1, Type P2) key)
+            static ActionMethodAccessor GetCtorMethodAccessor((Type Type, Type P1, Type P2) key)
             {
                 ConstructorInfo ci = key.P1 == null 
                     ? key.Type.GetDefaultConstructor()

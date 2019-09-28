@@ -17,7 +17,6 @@
 #region Used Namespaces
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -31,6 +30,8 @@ using KGySoft.Serialization;
 using NUnit.Framework.Internal;
 
 #endregion
+
+#pragma warning disable 162 // Unreachable code may occur depending on values of constant fields
 
 namespace KGySoft.CoreLibraries.UnitTests.Serialization
 {
@@ -248,7 +249,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization
         {
             #region Fields
 
-            private bool log;
+            private readonly bool log;
             private long pos;
 
             #endregion

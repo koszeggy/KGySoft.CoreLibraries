@@ -109,7 +109,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Public Methods
 
-#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
+#if NETFRAMEWORK
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
@@ -327,7 +327,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.ReleaseAllResources();
             Assert.IsTrue(((string)manager.GetObject(key, huHU)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
             Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required"); 
 #endif
         }
@@ -354,7 +354,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             if (huRunic == null)
             {
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
                 Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
 #endif
                 return;
@@ -431,7 +431,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.SetObject(key, custom, hu);
             Assert.AreNotEqual(custom, manager.GetString(key, huHU));
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
             Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
 #endif
         }
@@ -496,7 +496,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreNotSame(rsinv, huHU);
             Assert.IsTrue(rshuHu.GetString(key).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
             Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
 #endif
         }
@@ -616,7 +616,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(3, resourceSets.Count);
             Assert.AreEqual(0, resourceSets.Count(kv => kv.Value.GetType().Name == proxyName));
 
-#if !NETCOREAPP2_0
+#if NETFRAMEWORK
             Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
 #endif
         }
@@ -756,7 +756,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
         }
 
-#if !NETCOREAPP2_0
+#if !(NETCOREAPP2_0 || NETCOREAPP3_0)
         [Test]
         public void SerializationTest()
         {
